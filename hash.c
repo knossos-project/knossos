@@ -1,7 +1,7 @@
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2011
+ *  (C) Copyright 2007-2012
  *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 
 /*
  *      Hashtable code.
- *      
+ *
  *      Hashes into a doubly linked list.
  *      Collision resolution via chaining in the linked list.
  *      The linked list can be used for quick iteration.
@@ -252,7 +252,7 @@ uint32_t ht_union(Hashtable *target,
         next = cur->next;
         ht_put(target, cur->coordinate, NULL);
         cur = next;
-    }    
+    }
 
     cur = h2->listEntry->next;
     while(cur != h2->listEntry) {
@@ -334,7 +334,7 @@ static uint32_t ht_ll_del(C2D_Element *delElement) {
 }
 
 uint32_t nextpow2(uint32_t a) {
-    /* 
+    /*
      * Compute the next power of two by copying the highest set bit to all the
      * lower bits until 2^n - 1 is reached, then increment by one.
      * This works FOR UNSIGNED 32-BIT INT ONLY.

@@ -1,7 +1,7 @@
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2011
+ *  (C) Copyright 2007-2012
  *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -191,7 +191,7 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         retval = remoteWalk(state, x_moves, y_moves, z_moves);
         *
         * This is a workaround to cover a bug in the workaround... ;)
-        
+
         SDL_Delay(100);
     }
     */
