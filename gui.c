@@ -879,7 +879,7 @@ void createConsoleWin(struct stateInfo *state) {
     AG_ConsoleSetFont (state->viewerState->ag->agConsole, monospace);
 
     AG_Expand(state->viewerState->ag->agConsole);
-    AG_ConsoleAppendLine(state->viewerState->ag->agConsole , "Welcome to KNOSSOS 3.0");
+    AG_ConsoleAppendLine(state->viewerState->ag->agConsole , "Welcome to KNOSSOS 3.1");
     AG_WindowSetCloseAction(state->viewerState->ag->consoleWin, AG_WINDOW_HIDE);
 	AG_WindowHide(state->viewerState->ag->consoleWin);
 }
