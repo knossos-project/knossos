@@ -1919,18 +1919,16 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
 
     /* calculate new size of VP windows.
     Enlarging win again does not work properly TDitem */
-    if(newWinLenX <= newWinLenY)
+
+    /* find out whether we're x or y limited with our window */
+    if(newWinLenX <= newWinLenY) {
         for(i = 0; i < state->viewerState->numberViewPorts; i++)
-            state->viewerState->viewPorts[i].edgeLength =
-                (uint32_t)((float)state->viewerState->viewPorts[i].edgeLength
-                * (float)newWinLenX
-                / (float)state->viewerState->screenSizeX);
-    else
-        for(i = 0; i < state->viewerState->numberViewPorts; i++)
-            state->viewerState->viewPorts[i].edgeLength =
-                (uint32_t)(state->viewerState->viewPorts[i].edgeLength
-                * (float)newWinLenY
-                / (float)state->viewerState->screenSizeY);
+            state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 50;
+    }
+    else {
+            for(i = 0; i < state->viewerState->numberViewPorts; i++)
+        state->viewerState->viewPorts[i].edgeLength = newWinLenY / 2 - 50;
+    }
 
 
     SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
