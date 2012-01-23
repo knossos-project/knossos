@@ -3180,60 +3180,42 @@ void UI_pasteClipboardCoordinates() {
 
 static Coordinate *parseRawCoordinateString(char *string) {
     Coordinate *extractedCoords = NULL;
-    char *nextWhiteSpace[4];
-    char currentCoordinateString[8192];
-    int32_t i = 0;
+    char str[strlen(string)];
+    strcpy(str, string);
+    char delims[] = "[]()./,; -";
+    char* result = NULL;
+    char* coords[3];
+    int i = 0;
 
     if(!(extractedCoords = malloc(sizeof(Coordinate)))) {
         LOG("Out of memory");
         _Exit(FALSE);
     }
 
-    nextWhiteSpace[i] = string;
-    while(nextWhiteSpace[i + 1] = strchr(nextWhiteSpace[i] + 1, ' ')) {
-        i++;
-
-        if(i == 2) {
-            nextWhiteSpace[i + 1] = &string[strlen(string)];
-            break;
-        }
+    result = strtok(str, delims);
+    while( result != NULL ) {
+        coords[i] = malloc(strlen(result)+1);
+        strcpy(coords[i], result);
+        result = strtok( NULL, delims );
+        ++i;
     }
 
-    if(i < 2) {
-        LOG("Paste string doesn't contain enough space-separated elements");
+	if(i < 2) {
+        LOG("Paste string doesn't contain enough delimiter-separated elements");
         goto fail;
     }
 
-    for(i = 1; i <= 3; i++) {
-        if((strlen(nextWhiteSpace[i - 1]) - strlen(nextWhiteSpace[i])) > 8191) {
-            LOG("Current string component is too long");
-            goto fail;
-        }
-
-        memset(currentCoordinateString, '\0', 8192);
-        strncpy(currentCoordinateString, nextWhiteSpace[i - 1], (strlen(nextWhiteSpace[i - 1]) - strlen(nextWhiteSpace[i])));
-
-        switch(i) {
-            case 1:
-                if((extractedCoords->x = atoi(currentCoordinateString)) < 1) {
-                    LOG("Error converting paste string to coordinate");
-                    goto fail;
-                }
-
-                break;
-            case 2:
-                if((extractedCoords->y = atoi(currentCoordinateString)) < 1) {
-                    LOG("Error converting paste string to coordinate");
-                    goto fail;
-                }
-
-                break;
-            case 3:
-                if((extractedCoords->z = atoi(currentCoordinateString)) < 1) {
-                    LOG("Error converting paste string to coordinate");
-                    goto fail;
-                }
-        }
+    if((extractedCoords->x = atoi(coords[0])) < 1) {
+        LOG("Error converting paste string to coordinate");
+        goto fail;
+    }
+    if((extractedCoords->y = atoi(coords[1])) < 1) {
+		LOG("Error converting paste string to coordinate");
+        goto fail;
+    }
+    if((extractedCoords->z = atoi(coords[2])) < 1) {
+        LOG("Error converting paste string to coordinate");
+        goto fail;
     }
 
     return extractedCoords;
