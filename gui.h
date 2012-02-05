@@ -124,6 +124,7 @@ static void UI_newTreeBtnPressed();
 static void UI_splitTreeBtnPressed();
 static void UI_mergeTreesBtnPressed();
 static void UI_newTreeBtnPressed();
+static void UI_helpDeleteTree();
 static void UI_renderModelRadioModified();
 static void UI_displayModeRadioModified();
 static void UI_setHighlightActiveTree();

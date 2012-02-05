@@ -2218,6 +2218,10 @@ static void UI_actNodeRadiusWdgtModified() {
 }
 
 static void UI_deleteTreeBtnPressed() {
+    yesNoPrompt(NULL, "Do you really want to delete the active tree?", UI_helpDeleteTree, NULL);
+}
+
+static void UI_helpDeleteTree(){
     delActiveTree(state);
 }
 
