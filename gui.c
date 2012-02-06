@@ -456,9 +456,9 @@ void createSkeletonVpToolsWin(struct stateInfo *state) {
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetGeometryBounded(win,
-                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 110,
+                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 160,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-                                100,
+                                150,
                                 20);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
     createSkeletonVpToolsWdgt(win);
@@ -1553,6 +1553,12 @@ void createSkeletonVpToolsWdgt(AG_Window *parent) {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
         AG_ExpandHoriz(button);
     }
+
+        button = AG_ButtonNewFn(box, 0, "reset", UI_setSkeletonPerspective, "%i", 5);
+    {
+        AG_ButtonSetPadding(button, 1, 1, 1, 1);
+        AG_ExpandHoriz(button);
+    }
 }
 
 void createCurrPosWdgt(AG_Window *parent) {
@@ -1983,9 +1989,9 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         AG_WINDOW_TR, 500, 20);
 
     AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
-                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 110,
+                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 160,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-                                100,
+                                150,
                                 20);
     /* reinit the rendering system - resizing the window leads to a new OGL context */
     initializeTextures();
@@ -3251,6 +3257,10 @@ static void UI_setSkeletonPerspective(AG_Event *event) {
             /* Flip */
 
             state->skeletonState->definedSkeletonVpView = 4;
+            break;
+        case 5:
+            /* Reset */
+            state->skeletonState->definedSkeletonVpView = 5;
             break;
     }
 

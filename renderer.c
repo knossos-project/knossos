@@ -1634,6 +1634,22 @@ uint32_t renderSkeletonVP(uint32_t currentVP, struct stateInfo *state) {
 
                 break;
 
+            case 5:
+                /* Resetting */
+                state->skeletonState->definedSkeletonVpView = 0;
+                state->skeletonState->translateX = 0;
+                state->skeletonState->translateY = 0;
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
+                glTranslatef((float)state->skeletonState->volBoundary / 2.,
+                             (float)state->skeletonState->volBoundary / 2.,
+                             (float)state->skeletonState->volBoundary / -2.);
+                glScalef(-1., 1., 1.);
+                glRotatef(235., 1., 0., 0.);
+                glRotatef(210., 0., 0., 1.);
+                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+                state->skeletonState->zoomLevel = 0;
+                break;
         }
 
         /*
