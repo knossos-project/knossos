@@ -1,5 +1,6 @@
 import numpy as np
-import Image, math
+import Image
+import math
 
 #
 #   Simple cubing of TIFF stacks.
@@ -12,11 +13,12 @@ stack = Image.open(filename)
 xpx = math.ceil(stack.size[0] / 128.) * 128.
 ypx = math.ceil(stack.size[1] / 128.) * 128.
 
-print "Will create (%s, %s) output" % (xpx, ypx)
+print("Will create (%s, %s) output" % (xpx, ypx))
 
 xdc = xpx / 128
 ydc = ypx / 128
 
+#single = [[0 for col in range(xpx)] for row in range(ypx)]
 single = np.zeros((ypx, xpx), np.dtype('b'))
 
 curzpx = 0.
@@ -29,8 +31,8 @@ while True:
         single[0:stack.size[1], 0:stack.size[0]] = curframe
     except EOFError:
         if curzpx % 128 != 0:
-            single = np.zeros((ypx, xpx), np.dtype('b'));
-            print "(%d, %d)" %(xpx, ypx)
+            single = np.zeros((ypx, xpx), np.dtype('b'))
+            print("(%d, %d)" %(xpx, ypx))
         else:
             break
 
@@ -45,7 +47,7 @@ while True:
                                curxdc * 128:curxdc * 128 + 128]
 
             if len(cubeslice.tostring()) == 0:
-                print "xdc = %d ydc = %d zdc = %d" % (curxdc, curydc, curzdc)
+                print("xdc = %d ydc = %d zdc = %d" % (curxdc, curydc, curzdc))
             
             fp.write(cubeslice.tostring())
 

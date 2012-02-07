@@ -721,7 +721,7 @@ struct viewerState {
     uint32_t numberViewPorts;
     uint32_t splash;
     uint32_t viewerReady;
-    int splashTexture;
+    GLuint splashTexture;
     //Flag to indicate user movement
 	uint32_t userMove;
     int32_t highlightVp;
@@ -933,11 +933,11 @@ struct skeletonState {
 
     uint32_t numberComments;
 
-	uint32_t lockPositions;
+	int lockPositions;
 	uint32_t positionLocked;
 	char onCommentLock[1024];
 	Coordinate lockedPosition;
-    uint32_t lockRadius;
+    long unsigned int lockRadius;
 
     int32_t rotateX;
     int32_t rotateY;

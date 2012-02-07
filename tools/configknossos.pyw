@@ -4,7 +4,7 @@
 #   This file is a part of KNOSSOS.
 # 
 #   (C) Copyright 2007-2011
-#   Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+#   Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
 # 
 #   KNOSSOS is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License version 2 of
@@ -26,7 +26,16 @@
 
 from configknossos_ui import ConfigKnossosUI
 from kconfig import DataError
-import Tkinter, re, tkFileDialog, tkMessageBox, subprocess, os, sys
+import re, subprocess, os, sys
+try:
+    import tkinter, tkinter.filedialog
+    interface = tkinter
+    fileDialog = tkinter.filedialog
+except ImportError:
+    import Tkinter, tkFileDialog
+    interface = Tkinter
+    fileDialog = tkFileDialog
+    
 
 class ConfigKnossos(ConfigKnossosUI):
     def __init__(self, root):
@@ -39,7 +48,7 @@ class ConfigKnossos(ConfigKnossosUI):
         try:
             configInfo = self.knossosconfig.read(path)
         except DataError:
-            tkMessageBox.showerror("Error detecting configuration parameters",
+            messageBox.showerror("Error detecting configuration parameters",
                                    "The directory specified does not appear "
                                    "to contain a valid knossos dataset.")
             return False
@@ -54,7 +63,7 @@ class ConfigKnossos(ConfigKnossosUI):
         # check() is False is we do not need further configuration
         # and True otherwise.
         if self.knossosconfig.check(self.config):
-            tkMessageBox.showinfo("Incomplete configuration",
+            messageBox.showinfo("Incomplete configuration",
                                   "The configuration information for this "
                                   "dataset is incomplete.\n"
                                   "Please finalize the configuration and "
@@ -63,17 +72,17 @@ class ConfigKnossos(ConfigKnossosUI):
 
         # Clear currently displayed configuration
         # options
-        self.path_entry.configure(state = Tkinter.NORMAL)
+        self.path_entry.configure(state = interface.NORMAL)
 
-        self.path_entry.delete(0, Tkinter.END)
-        self.name_entry.delete(0, Tkinter.END)
-        self.scalex_floatentry.delete(0, Tkinter.END)
-        self.scaley_floatentry.delete(0, Tkinter.END)
-        self.scalez_floatentry.delete(0, Tkinter.END)
-        self.boundaryx_intentry.delete(0, Tkinter.END)
-        self.boundaryy_intentry.delete(0, Tkinter.END)
-        self.boundaryz_intentry.delete(0, Tkinter.END)
-        self.magnification_intentry.delete(0, Tkinter.END)
+        self.path_entry.delete(0, interface.END)
+        self.name_entry.delete(0, interface.END)
+        self.scalex_floatentry.delete(0, interface.END)
+        self.scaley_floatentry.delete(0, interface.END)
+        self.scalez_floatentry.delete(0, interface.END)
+        self.boundaryx_intentry.delete(0, interface.END)
+        self.boundaryy_intentry.delete(0, interface.END)
+        self.boundaryz_intentry.delete(0, interface.END)
+        self.magnification_intentry.delete(0, interface.END)
 
         # Fill in the values for the current dataset
         self.name_entry.insert(0, self.config["Name"])
@@ -168,19 +177,19 @@ class ConfigKnossos(ConfigKnossosUI):
     # Open button
     #
     def open_button_command(self):
-        path = os.path.abspath(tkFileDialog.askdirectory())
+        path = os.path.abspath(fileDialog.askdirectory())
         self.openDataset(path)
 
     # Save configuration to disk button
     #
     def save_button_command(self):
         if self.updateDataset() == False:
-            tkMessageBox.showerror("Not saving data",
+            messageBox.showerror("Not saving data",
                                  "Please fill out all blank fields.\n")
             return False
 
         if self.knossosconfig.check(self.config):
-            tkMessageBox.showerror("Not saving data",
+            messageBox.showerror("Not saving data",
                                  "The configuration parameters given "
                                  "are not sufficient. You need to "
                                  "specifiy at least the experiment name "
@@ -190,13 +199,13 @@ class ConfigKnossos(ConfigKnossosUI):
         try:
             self.knossosconfig.write(self.config)
         except IOError:
-            tkMessageBox.showerror("Error saving data",
+            messageBox.showerror("Error saving data",
                                  "Error while trying to save the configuration.")
             return False
 
     def exit(self):
         if self.has_unsaved_changes():
-            if tkMessageBox.askyesno("Unsaved changes",
+            if messageBox.askyesno("Unsaved changes",
                                    "There are unsaved changes.\nSave now?"):
                 
                 if self.save_button_command() == False:
@@ -209,7 +218,7 @@ def main():
         userinit()
     except NameError:
         pass
-    root = Tkinter.Tk()
+    root = interface.Tk()
     configknossos = ConfigKnossos(root)
     root.title('Configure KNOSSOS data')
     try: run()

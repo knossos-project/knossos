@@ -37,7 +37,7 @@ for file in files:
         y = int(yReg.search(file).groups()[0])
         z = int(zReg.search(file).groups()[0])
     except AttributeError:
-        print "Incorrectly formatted .raw file: " + file
+        print("Incorrectly formatted .raw file: " + file)
         continue
 
     newDir = os.path.abspath('x%04d/y%04d/z%04d/' % (x, y, z))
@@ -46,5 +46,5 @@ for file in files:
     except OSError:
         pass
 
-    print os.path.normpath(newDir)
+    print(os.path.normpath(newDir))
     shutil.move(file, os.path.normpath(newDir + '/'))

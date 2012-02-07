@@ -2,7 +2,7 @@
 #   This file is a part of KNOSSOS.
 # 
 #   (C) Copyright 2007-2011
-#   Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+#   Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
 # 
 #   KNOSSOS is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License version 2 of
@@ -23,9 +23,13 @@
 #
 
 import Pmw
-import Tkinter
+try:
+    import tkinter
+    interface = tkinter
+except ImportError:
+    import Tkinter
+    interface = Tkinter
 import os
-import tkMessageBox
 import kconfig
 
 class ConfigKnossosUI():
@@ -39,46 +43,46 @@ class ConfigKnossosUI():
 
         # GUI elements to open / save configs
         #
-        self.open_button = Tkinter.Button(root,
+        self.open_button = interface.Button(root,
             text = "Open",
         )
-        self.save_button = Tkinter.Button(root,
+        self.save_button = interface.Button(root,
             text="Save"
         )
-        self.path_entry = Tkinter.Entry(root,
+        self.path_entry = interface.Entry(root,
             state="readonly",
         )
 
         # GUI elements to change configs
         #
-        self.dataconfig_labelframe = Tkinter.LabelFrame(root,
+        self.dataconfig_labelframe = interface.LabelFrame(root,
             text = "Configuration options for dataset"
         )
-        self.name_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.name_label = interface.Label(self.dataconfig_labelframe,
                 text = "Name"
         )
-        self.scalex_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.scalex_label = interface.Label(self.dataconfig_labelframe,
                 text = "Scale X"
         )
-        self.scaley_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.scaley_label = interface.Label(self.dataconfig_labelframe,
                 text = "Scale Y"
         )
-        self.scalez_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.scalez_label = interface.Label(self.dataconfig_labelframe,
                 text = "Scale Z"
         )
-        self.boundaryx_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.boundaryx_label = interface.Label(self.dataconfig_labelframe,
                 text = "Boundary X"
         )
-        self.boundaryy_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.boundaryy_label = interface.Label(self.dataconfig_labelframe,
                 text = "Boundary Y"
         )
-        self.boundaryz_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.boundaryz_label = interface.Label(self.dataconfig_labelframe,
                 text = "Boundary Z"
         )
-        self.magnification_label = Tkinter.Label(self.dataconfig_labelframe,
+        self.magnification_label = interface.Label(self.dataconfig_labelframe,
                 text = "Magnification"
         )
-        self.name_entry = Tkinter.Entry(self.dataconfig_labelframe,
+        self.name_entry = interface.Entry(self.dataconfig_labelframe,
                 text = "Name"
         )
         self.scalex_floatentry = FloatEntry(self.dataconfig_labelframe
@@ -229,9 +233,9 @@ class ConfigKnossosUI():
         root.grid_columnconfigure(2, weight = 0, minsize = 69, pad = 0)
         root.grid_columnconfigure(3, weight = 0, minsize = 40, pad = 0)
 
-class IntEntry(Tkinter.Entry):
+class IntEntry(interface.Entry):
     def __init__(self, parent):
-        Tkinter.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_int)
+        interface.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_int)
 
     def validate_int(self, *args):
         if self.get():
@@ -240,14 +244,14 @@ class IntEntry(Tkinter.Entry):
                 return True
             except ValueError:
                 tkMessageBox.showwarning("Incorrect data type", "Please input an integer")
-                self.delete(0, Tkinter.END)
+                self.delete(0, interface.END)
                 return False
         else:
             return True
 
-class FloatEntry(Tkinter.Entry):
+class FloatEntry(interface.Entry):
     def __init__(self, parent):
-        Tkinter.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_float)
+        interface.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_float)
 
     def validate_float(self, *args):
         if self.get():
@@ -256,7 +260,7 @@ class FloatEntry(Tkinter.Entry):
                 return True
             except ValueError:
                 tkMessageBox.showwarning("Incorrect data type", "Please input a floating point number (like 22.0)")
-                self.delete(0, Tkinter.END)
+                self.delete(0, interface.END)
                 return False
         else:
             return True

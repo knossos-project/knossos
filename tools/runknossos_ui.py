@@ -2,7 +2,7 @@
 #   This file is a part of KNOSSOS.
 # 
 #   (C) Copyright 2007-2011
-#   Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+#   Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
 # 
 #   KNOSSOS is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License version 2 of
@@ -22,8 +22,15 @@
 #       Fabian.Svara@mpimf-heidelberg.mpg.de
 #
 
-import Tkinter
-import threading, tkMessageBox
+try:
+    import tkinter, tkinter.messagebox
+    interface = tkinter
+    messageBox = tkinter.messagebox
+except ImportError:
+    import Tkinter, tkMessageBox
+    interface = Tkinter
+    messageBox = tkMessageBox
+import threading
 import kconfig
 from kiki import KikiServer
 
@@ -37,7 +44,7 @@ class RunKnossosUI():
         
         # Global configuration options
         # default values
-        self.globalConf["Autoconnect"] = Tkinter.IntVar()
+        self.globalConf["Autoconnect"] = interface.IntVar()
         self.globalConf["Supercube edge"] = 5
         self.globalConf["Profile name"] = ""
 
@@ -52,33 +59,33 @@ class RunKnossosUI():
         self.root = root
 
         # Widget Initialization
-        self.dataset_list = Tkinter.Listbox(root,
-            selectmode = Tkinter.EXTENDED,
+        self.dataset_list = interface.Listbox(root,
+            selectmode = interface.EXTENDED,
         )
-        self.add_button = Tkinter.Button(root,
+        self.add_button = interface.Button(root,
             text = "Add",
         )
-        self.del_button = Tkinter.Button(root,
+        self.del_button = interface.Button(root,
             text = "Remove",
         )
-        self.run_button = Tkinter.Button(root,
+        self.run_button = interface.Button(root,
             text = "Run",
         )
-        self.profilename_labelframe = Tkinter.LabelFrame(root,
+        self.profilename_labelframe = interface.LabelFrame(root,
             text = "Profile"
         )
-        self.profilename_stringentry = Tkinter.Entry(self.profilename_labelframe,
+        self.profilename_stringentry = interface.Entry(self.profilename_labelframe,
             width = 35
         )
-        self.globalconfig_labelframe = Tkinter.LabelFrame(root,
+        self.globalconfig_labelframe = interface.LabelFrame(root,
             text = "Global configuration options"
         )
-        self.m_label = Tkinter.Label(self.globalconfig_labelframe,
+        self.m_label = interface.Label(self.globalconfig_labelframe,
             text = "Supercube edge"
         )
         self.m_intentry = IntEntry(self.globalconfig_labelframe
         )
-        self.synchronize_checkbutton = Tkinter.Checkbutton(self.globalconfig_labelframe,
+        self.synchronize_checkbutton = interface.Checkbutton(self.globalconfig_labelframe,
             text = "Synchronize on start",
             variable = self.globalConf["Autoconnect"]
         )
@@ -188,9 +195,9 @@ class RunKnossosUI():
             sticky = ""
         )
 
-class IntEntry(Tkinter.Entry):
+class IntEntry(interface.Entry):
     def __init__(self, parent):
-        Tkinter.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_int)
+        interface.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_int)
 
     def validate_int(self, *args):
         if self.get():
@@ -198,15 +205,15 @@ class IntEntry(Tkinter.Entry):
                 v = int(self.get())
                 return True
             except ValueError:
-                tkMessageBox.showwarning("Incorrect data type", "Please input an integer")
-                self.delete(0, Tkinter.END)
+                messageBox.showwarning("Incorrect data type", "Please input an integer")
+                self.delete(0, interface.END)
                 return False
         else:
             return True
 
-class FloatEntry(Tkinter.Entry):
+class FloatEntry(interface.Entry):
     def __init__(self, parent):
-        Tkinter.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_float)
+        interface.Entry.__init__(self, parent, validate="focusout", validatecommand=self.validate_float)
 
     def validate_float(self, *args):
         if self.get():
@@ -214,8 +221,8 @@ class FloatEntry(Tkinter.Entry):
                 v = float(self.get())
                 return True
             except ValueError:
-                tkMessageBox.showwarning("Incorrect data type", "Please input a floating point number (like 22.0)")
-                self.delete(0, Tkinter.END)
+                messageBox.showwarning("Incorrect data type", "Please input a floating point number (like 22.0)")
+                self.delete(0, interface.END)
                 return False
         else:
             return True

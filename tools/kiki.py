@@ -2,7 +2,7 @@
 #   This file is a part of KNOSSOS.
 # 
 #   (C) Copyright 2007-2011
-#   Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+#   Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
 # 
 #   KNOSSOS is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License version 2 of
@@ -100,7 +100,7 @@ class KikiServer:
         self.serverSocket.setblocking(0)
         self.serverSocket.listen(5)
 
-        print "KIKI r374 waiting for KNOSSOS connections"
+        print("KIKI r374 waiting for KNOSSOS connections")
         while True:
             self.serverLoop()
         
@@ -116,7 +116,7 @@ class KikiServer:
         try:
             readReady, writeReady, errors = select.select(readFrom, writeTo, [])
         except:
-            print "Error " + str(sys.exc_info()[0])
+            print("Error " + str(sys.exc_info()[0]))
 
         # Need to do select error checking and remove offending sockets
         writeTo = []
@@ -126,7 +126,7 @@ class KikiServer:
         if self.serverSocket in readReady:
             # Serversocket is ready, looks like we got a new connection
             (clientSocket, clientAddress) = self.serverSocket.accept()
-            print "Accepted connection from " + str(clientAddress)
+            print("Accepted connection from " + str(clientAddress))
             self.addClient(clientSocket)
             # Subsequent operations are for client sockets only.
             i = 0
@@ -144,7 +144,7 @@ class KikiServer:
                                                self.KIKI_SAVEMASTER,
                                                self.curSavemaster)
 
-                print "Sending KIKI_SAVEMASTER for id " + str(self.curSavemaster)
+                print("Sending KIKI_SAVEMASTER for id " + str(self.curSavemaster))
 
                 for currentTargetClient in self.clients.iterkeys():
                     if self.clients[currentTargetClient][0] < 0:
@@ -159,12 +159,12 @@ class KikiServer:
             try:
                 readData = currentClient.recv(4096)
             except:
-                print "Error reading from client. " + str(sys.exc_info())
+                print("Error reading from client. " + str(sys.exc_info()))
                 readData = ""
 
             if(len(readData) == 0):
-                print str(self.clients[currentClient][1]) + \
-                    " (id " + str(self.clients[currentClient][0]) + ") closed the connection."
+                print(str(self.clients[currentClient][1]) + \
+                    " (id " + str(self.clients[currentClient][0]) + ") closed the connection.")
                 self.rmClient(currentClient)
                 
                 i = 0
@@ -198,7 +198,7 @@ class KikiServer:
                 try:
                     sentData = currentClient.send(self.outMessages[currentClient])
                 except:
-                    print "Error writing to client. " + str(sys.exc_info())
+                    print("Error writing to client. " + str(sys.exc_info()))
                     sentData = 0
 
             if(sentData == 0):
@@ -263,13 +263,13 @@ class KikiServer:
 
                         targetSocket = self.idToSock[clientId]
                         if(dataString[0] == self.KIKI_CONNECT):
-                            print "KIKI_CONNECT from " + \
-                                str(currentClient.getpeername())
+                            print("KIKI_CONNECT from " + \
+                                str(currentClient.getpeername()))
                             self.addConnection(currentClient, targetSocket)
 
                         if(dataString[0] == self.KIKI_DISCONNECT):
-                            print "KIKI_DISCONNECT from " + \
-                                str(currentClient.getpeername())
+                            print("KIKI_DISCONNECT from " + \
+                                str(currentClient.getpeername()))
                             self.rmConnection(currentClient, targetSocket)
 
                         ateBytes = messageLength
@@ -278,7 +278,7 @@ class KikiServer:
             elif dataString[0] == self.KIKI_HI:
     
                 if bufferLength >= messageLength:
-                    print "KIKI_HI from " + str(currentClient.getpeername())
+                    print("KIKI_HI from " + str(currentClient.getpeername()))
                     
                     # 5 bytes for the message type / length header, 6 times 4
                     # bytes for the trailing floats and ints. The rest is the
@@ -364,9 +364,9 @@ class KikiServer:
                         # This will connect every client to every
                         # other available client.
 
-                        print "Adding connection between " + \
+                        print("Adding connection between " + \
                             str(currentClient.getpeername()) + " and " + \
-                            str(currentAdvertisedClient.getpeername())
+                            str(currentAdvertisedClient.getpeername()))
                         self.addConnection(currentClient, currentAdvertisedClient)
                         self.addConnection(currentAdvertisedClient, currentClient)
 
@@ -374,7 +374,7 @@ class KikiServer:
                     totalEaten += ateBytes
 
             elif dataString[0] == self.KIKI_BYE:
-                print "KIKI_BYE from " + str(currentClient.getpeername())
+                print("KIKI_BYE from " + str(currentClient.getpeername()))
                 self.rmClient(currentClient)
                 ateBytes = 1
                 totalEaten += ateBytes
@@ -383,9 +383,9 @@ class KikiServer:
                 # This means any subsequent message from the current client cannot
                 # be interpreted correctly anymore.
 
-                print "Unknown message from " + str(currentClient.getpeername())
+                print("Unknown message from " + str(currentClient.getpeername()))
                 for i in dataString:
-                    print hex(ord(i)),
+                    print(hex(ord(i))),
                 ateBytes = len(dataString)
                 totalEaten += ateBytes
                 break
@@ -412,10 +412,10 @@ class KikiServer:
 
         for currentSocket in self.connections[sourceSocket]:
             if currentSocket == targetSocket:
-                print "Deleting connection between" \
+                print("Deleting connection between" \
                       + str(sourceSocket.getpeername()) \
                       +" and " \
-                      + str(targetSocket.getpeername())
+                      + str(targetSocket.getpeername()))
 
                 del self.connections[sourceSocket][i]
             i = i + 1
@@ -429,8 +429,8 @@ class KikiServer:
             newClientId = self.highID + 1
             self.highID = self.highID + 1
 
-        print "Assigning id " + str(newClientId) + " to new client " + \
-              str(socket.getpeername())
+        print("Assigning id " + str(newClientId) + " to new client " + \
+              str(socket.getpeername()))
            
         self.idToSock[newClientId] = socket
 
@@ -442,13 +442,13 @@ class KikiServer:
         self.reverseConnections[socket] = []
 
     def setupClient(self, socket, name, scaleX, scaleY, scaleZ, offsetX, offsetY, offsetZ):
-        print "Client " + str(socket.getpeername()) \
+        print("Client " + str(socket.getpeername()) \
               + " completed the connection with parameters: \n" \
               + "\tname: \"" + name + "\"\n" \
               + "\tscale (x, y, z): (" + str(scaleX) + ", " + str(scaleY) \
               + ", " + str(scaleZ) + ")\n" \
               + "\toffset (x, y, z): (" + str(offsetX) + ", " + str(offsetY) \
-              + ", " + str(offsetZ) + ")"
+              + ", " + str(offsetZ) + ")")
         
         # Switch sign to indicate finalized connection.
         self.clients[socket][0] = -self.clients[socket][0]
@@ -466,7 +466,7 @@ class KikiServer:
         if(self.clients[socket]):
             clientId = self.clients[socket][0]
 
-            print "Removing client " + str(self.clients[socket][1]) + " (id " + str(clientId) + ")"
+            print("Removing client " + str(self.clients[socket][1]) + " (id " + str(clientId) + ")")
 
             del self.idToSock[clientId]
             self.freeIDs.append(clientId)
