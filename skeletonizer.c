@@ -1157,7 +1157,7 @@ int32_t saveSkeleton() {
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
 
     xmlFreeDoc(xmlDocument);
-
+    addRecentFile(state->skeletonState->skeletonFile, FALSE);
     return r;
 }
 
@@ -1218,7 +1218,7 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
             state->skeletonState->saveCnt = 0;
         }
 
-        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml\0",
+        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml",
                 skeletonFileBase,
                 state->skeletonState->saveCnt);
     }
@@ -1639,8 +1639,9 @@ uint32_t loadSkeleton() {
 
     addRecentFile(state->skeletonState->skeletonFile, FALSE);
 
-    if(activeNodeID)
+    if(activeNodeID) {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
+    }
 
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&

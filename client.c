@@ -834,13 +834,12 @@ static uint32_t flushOutBuffer(struct stateInfo *state) {
      */
 
     struct clientState *clientState = state->clientState;
-    int32_t i;
 
     SDL_LockMutex(state->protectOutBuffer);
 
     if(state->clientState->outBuffer->length > 0) {
         /* check return value */
-        i = SDLNet_TCP_Send(clientState->remoteSocket,
+        SDLNet_TCP_Send(clientState->remoteSocket,
                 state->clientState->outBuffer->data,
                 state->clientState->outBuffer->length);
         memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->size);

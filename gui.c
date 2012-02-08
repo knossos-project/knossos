@@ -809,7 +809,7 @@ void createToolsWin() {
             AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
         }
         AG_LabelNew(nodesTab, 0, "Lock to Nodes With Comment:");
-        comment = AG_TextboxNew(nodesTab, AG_TEXTBOX_ABANDON_FOCUS, "");
+        comment = AG_TextboxNew(nodesTab, AG_TEXTBOX_ABANDON_FOCUS, NULL);
         {
             AG_ExpandHoriz(comment);
             AG_TextboxBindASCII(comment, state->skeletonState->onCommentLock, 1024);
@@ -1142,7 +1142,6 @@ void createSetDynRangeWin(struct stateInfo *state) {
 void createZoomingWin(struct stateInfo *state) {
     AG_Numerical *numerical;
     AG_Button *button;
-    AG_Slider *slider;
     AG_Box *box;
     AG_Window *win;
 
@@ -1158,12 +1157,12 @@ void createZoomingWin(struct stateInfo *state) {
             AG_ExpandHoriz(box);
             AG_LabelNew(box, 0, "Viewport XY");
 
-            slider = AG_SliderNewFltR(box,
-                                      AG_SLIDER_HORIZ,
-                                      0,
-                                      &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
-                                      0.02,
-                                      1.);
+            AG_SliderNewFltR(box,
+                             AG_SLIDER_HORIZ,
+                             0,
+                             &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
+                             0.02,
+                             1.);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
@@ -1183,12 +1182,12 @@ void createZoomingWin(struct stateInfo *state) {
             AG_ExpandHoriz(box);
             AG_LabelNew(box, 0, "Viewport XZ");
 
-            slider = AG_SliderNewFltR(box,
-                                      AG_SLIDER_HORIZ,
-                                      0,
-                                      &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
-                                      0.02,
-                                      1.);
+            AG_SliderNewFltR(box,
+                             AG_SLIDER_HORIZ,
+                             0,
+                             &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
+                             0.02,
+                             1.);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
@@ -1208,12 +1207,12 @@ void createZoomingWin(struct stateInfo *state) {
             AG_ExpandHoriz(box);
             AG_LabelNew(box, 0, "Viewport YZ");
 
-            slider = AG_SliderNewFltR(box,
-                                      AG_SLIDER_HORIZ,
-                                      0,
-                                      &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
-                                      0.02,
-                                      1.);
+            AG_SliderNewFltR(box,
+                             AG_SLIDER_HORIZ,
+                             0,
+                             &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
+                             0.02,
+                             1.);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
@@ -1233,12 +1232,12 @@ void createZoomingWin(struct stateInfo *state) {
             AG_ExpandHoriz(box);
             AG_LabelNew(box, 0, "Skeleton View");
 
-            slider = AG_SliderNewFltR(box,
-                                      AG_SLIDER_HORIZ,
-                                      0,
-                                      &state->skeletonState->zoomLevel,
-                                      0.,
-                                      0.49);
+            AG_SliderNewFltR(box,
+                             AG_SLIDER_HORIZ,
+                             0,
+                             &state->skeletonState->zoomLevel,
+                             0.,
+                             0.49);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
@@ -1268,7 +1267,6 @@ void createZoomingWin(struct stateInfo *state) {
 void createLoadImgJTableWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
-    AG_FileType *type;
 
     win = AG_WindowNew(0);
     {
@@ -1282,11 +1280,11 @@ void createLoadImgJTableWin() {
     dlg = AG_FileDlgNew(win, AG_FILEDLG_LOAD);
     {
         AG_Expand(dlg);
-        type = AG_FileDlgAddType(dlg,
-                                 "LUT file",
-                                 "*.*",
-                                 OkfileDlgLoadLUT,
-                                 NULL);
+        AG_FileDlgAddType(dlg,
+                          "LUT file",
+                          "*.*",
+                          OkfileDlgLoadLUT,
+                          NULL);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
 
         AG_FileDlgSetOptionContainer(dlg, AG_BoxNewVert(win, AG_BOX_HFILL));
@@ -1419,7 +1417,6 @@ static void createOpenFileDlgWin(struct stateInfo *state) {
 static void createSaveAsFileDlgWin(struct stateInfo *state) {
     AG_Window *win;
     AG_FileDlg *dlg;
-    AG_FileType *type;
 
     win = AG_WindowNew(0);
     {
@@ -1433,11 +1430,11 @@ static void createSaveAsFileDlgWin(struct stateInfo *state) {
     dlg = AG_FileDlgNew(win, AG_FILEDLG_CLOSEWIN);
     {
         AG_Expand(dlg);
-        type = AG_FileDlgAddType(dlg,
-                                 "KNOSSOS Skeleton File",
-                                 "*.nml",
-                                 OkfileDlgSaveAsSkel,
-                                 NULL);
+        AG_FileDlgAddType(dlg,
+                          "KNOSSOS Skeleton File",
+                          "*.nml",
+                          OkfileDlgSaveAsSkel,
+                          NULL);
 
         AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->skeletonDirectory);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
@@ -1454,7 +1451,6 @@ static void createSaveAsFileDlgWin(struct stateInfo *state) {
 static void createOpenCustomPrefsDlgWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
-    AG_FileType *type;
 
 	win = AG_WindowNew(0);
     {
@@ -1468,11 +1464,11 @@ static void createOpenCustomPrefsDlgWin() {
     dlg = AG_FileDlgNew(win, AG_FILEDLG_LOAD);
     {
         AG_Expand(dlg);
-        type = AG_FileDlgAddType(dlg,
-                                 "KNOSSOS GUI preferences File",
-                                 "*.xml",
-                                 OkfileDlgOpenPrefs,
-                                 NULL);
+        AG_FileDlgAddType(dlg,
+                          "KNOSSOS GUI preferences File",
+                          "*.xml",
+                          OkfileDlgOpenPrefs,
+                          NULL);
 
         AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->customPrefsDirectory);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
@@ -1489,7 +1485,6 @@ static void createOpenCustomPrefsDlgWin() {
 static void createSaveCustomPrefsAsDlgWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
-    AG_FileType *type;
 
 	win = AG_WindowNew(0);
     {
@@ -1503,11 +1498,11 @@ static void createSaveCustomPrefsAsDlgWin() {
     dlg = AG_FileDlgNew(win, AG_FILEDLG_SAVE);
     {
         AG_Expand(dlg);
-        type = AG_FileDlgAddType(dlg,
-                                 "KNOSSOS GUI preferences File",
-                                 "*.xml",
-                                 OkfileDlgSavePrefsAs,
-                                 NULL);
+        AG_FileDlgAddType(dlg,
+                          "KNOSSOS GUI preferences File",
+                          "*.xml",
+                          OkfileDlgSavePrefsAs,
+                          NULL);
 
         AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->customPrefsDirectory);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
@@ -1640,34 +1635,30 @@ void quitKnossos() {
     SDL_PushEvent(&quitUserEvent);
 }
 
-static void viewDataSetStats(AG_Event *event) {
-    /*
-     * TODO
-     *
-     */
+/*static void viewDataSetStats(AG_Event *event) {
+    TODO
 
     AG_WindowShow(state->viewerState->ag->dataSetStatsWin);
-}
+}*/
 
 
 static void viewZooming(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->zoomingWin);
 }
 
-static void viewLoadImgJTable(AG_Event *event) {
+/*static void viewLoadImgJTable(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->loadImgJTableWin);
 }
 
 
-/* TDitem */
+TDitem TODO
 static void prefAGoptions(AG_Event *event) {
-    //DEV_ConfigShow();
 }
 
 
 static void prefDispOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->dispOptWin);
-}
+}*/
 
 static void prefNavOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->navOptWin);
@@ -1682,7 +1673,7 @@ static void prefSyncOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->syncOptWin);
 }
 
-static void prefRenderingQualityOptions(AG_Event *event) {
+/*static void prefRenderingQualityOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->renderingOptWin);
 }
 
@@ -1692,7 +1683,7 @@ static void prefSpatialLockingOptions(AG_Event *event) {
 
 static void prefVolTracingOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->volTraceOptWin);
-}
+}*/
 
 static void prefSaveOptions(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->saveOptWin);
@@ -1710,9 +1701,9 @@ static void prefSaveCustomPrefsAs(AG_Event *event) {
     createSaveCustomPrefsAsDlgWin();
 }
 
-static void winShowNavigator(AG_Event *event) {
+/*static void winShowNavigator(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->navWin);
-}
+}*/
 
 static void winShowTools(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->toolsWin);
@@ -2142,9 +2133,9 @@ static void UI_unimplemented() {
 }
 
 static void UI_setDefaultZoom() {
-    tempConfig->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = 1.;
-    tempConfig->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = 1.;
-    tempConfig->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = 1.;
+    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = 1.;
+    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = 1.;
+    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = 1.;
     state->skeletonState->zoomLevel = 0.;
 }
 
@@ -3169,7 +3160,7 @@ void UI_pasteClipboardCoordinates() {
         return;
     }
 
-    if(extractedCoords = parseRawCoordinateString(pasteBuffer)) {
+    if((extractedCoords = parseRawCoordinateString(pasteBuffer))) {
         tempConfig->viewerState->currentPosition.x = extractedCoords->x - 1;
         tempConfig->viewerState->currentPosition.y = extractedCoords->y - 1;
         tempConfig->viewerState->currentPosition.z = extractedCoords->z - 1;

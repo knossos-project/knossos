@@ -52,22 +52,22 @@ static void actNodeCommentWdgtModified(AG_Event *event);
 static void fileOpenSkelFile(AG_Event *event);
 static void fileSaveAsSkelFile(AG_Event *event);
 
-static void viewDataSetStats(AG_Event *event);
+//static void viewDataSetStats(AG_Event *event);
 static void viewZooming(AG_Event *event);
-static void viewLoadImgJTable(AG_Event *event);
+//static void viewLoadImgJTable(AG_Event *event);
 
 static void prefNavOptions(AG_Event *event);
 static void prefLoadCustomPrefs(AG_Event *event);
 static void prefSaveCustomPrefsAs(AG_Event *event);
 static void prefSyncOptions(AG_Event *event);
-static void prefRenderingQualityOptions(AG_Event *event);
-static void prefVolTracingOptions(AG_Event *event);
-static void prefSpatialLockingOptions(AG_Event *event);
-static void prefAGoptions(AG_Event *event);
+//static void prefRenderingQualityOptions(AG_Event *event);
+//static void prefVolTracingOptions(AG_Event *event);
+//static void prefSpatialLockingOptions(AG_Event *event);
+//static void prefAGoptions(AG_Event *event);
 static void prefViewportPrefs();
 static void prefSaveOptions();
 
-static void winShowNavigator(AG_Event *event);
+//static void winShowNavigator(AG_Event *event);
 static void winShowTools(AG_Event *event);
 static void winShowConsole(AG_Event *event);
 
