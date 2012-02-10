@@ -1664,10 +1664,12 @@ uint32_t loadSkeleton() {
 }
 
 uint32_t delActiveNode(struct stateInfo *state) {
-    if(state->skeletonState->activeNode)
+    if(state->skeletonState->activeNode) {
         delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, state);
-    else
+    }
+    else {
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -3252,11 +3254,11 @@ exit_popbranchnode:
         if(!syncMessage(state, "br", KIKI_POPBRANCH))
             skeletonSyncBroken(state);
     }
-    else
+    else {
         refreshViewports(state);
+    }
 
     unlockSkeleton(TRUE, state);
-
     return TRUE;
 }
 

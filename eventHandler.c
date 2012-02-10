@@ -46,8 +46,6 @@
 #include "knossos-global.h"
 #include "eventHandler.h"
 
-//#include "gui.h"
-
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
@@ -1287,8 +1285,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
 */
     case SDLK_DELETE:
-        if(state->skeletonState->activeNode)
-            delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, state);
+        delActiveNode(state);
         break;
     default:
         ;
