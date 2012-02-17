@@ -1200,9 +1200,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
     case SDLK_i:
         UI_zoomOrthogonals(-0.1);
+        refreshDataSizeWin(state);
         break;
     case SDLK_o:
         UI_zoomOrthogonals(0.1);
+        refreshDataSizeWin(state);
         break;
     case SDLK_s:
         if(SDL_GetModState() & KMOD_CTRL) {

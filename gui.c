@@ -126,6 +126,7 @@ int32_t initGUI() {
     createMenuBar(state);
     createCoordBarWin(state);
     createSkeletonVpToolsWin(state);
+    createDataSizeWin(state);
     createNavWin(state);
     createToolsWin();
     createConsoleWin(state);
@@ -465,6 +466,43 @@ void createSkeletonVpToolsWin(struct stateInfo *state) {
     AG_WindowShow(win);
 
     state->viewerState->ag->skeletonVpToolsWin = win;
+}
+
+void refreshDataSizeWin(struct stateInfo *state) {
+    float height = state->viewerState->voxelDimX * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
+    float width = state->viewerState->voxelDimY * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
+    AG_LabelText(state->viewerState->ag->dataSizeLabel1, "Height %.2f µm", height);
+    AG_LabelText(state->viewerState->ag->dataSizeLabel2, "Width %.2f µm", width);
+}
+
+
+void createDataSizeWin(struct stateInfo *state) {
+    float height = state->viewerState->voxelDimX * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
+    float width = state->viewerState->voxelDimY * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
+    AG_Window *win;
+    AG_Label *label;
+    win = AG_WindowNew(AG_WINDOW_PLAIN);//|AG_WINDOW_NOBACKGROUND);
+    AG_WindowSetPadding(win, 0, 0, 3, 1);
+    label = AG_LabelNew(win,0,"Height %.2f µm", height);
+    {
+        AG_ButtonSetPadding(label, 1, 1, 1, 1);
+        AG_ExpandHoriz(label);
+        state->viewerState->ag->dataSizeLabel1 = label;
+    }
+
+    label = AG_LabelNew(win,0,"Width %.2f µm", width);
+    {
+        AG_ButtonSetPadding(label, 1, 1, 1, 1);
+        AG_ExpandHoriz(label);
+        state->viewerState->ag->dataSizeLabel2 = label;
+    }
+    AG_WindowSetGeometryBounded(win,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + 5,
+                                100,
+                                40);
+    AG_WindowShow(win);
+    state->viewerState->ag->dataSizeWin = win;
 }
 
 void createNavWin(struct stateInfo *state) {

@@ -619,6 +619,7 @@ struct agConfig {
     AG_Window *setDynRangeWin;
 	AG_Window *coordBarWin;
     AG_Window *skeletonVpToolsWin;
+    AG_Window *dataSizeWin;
 	AG_Window *navWin;
 	AG_Window *toolsWin;
 	AG_Window *aboutWin;
@@ -652,6 +653,8 @@ struct agConfig {
     AG_Numerical *actNodeIDWdgt1;
     AG_Numerical *actNodeIDWdgt2;
 
+    AG_Label *dataSizeLabel1;
+    AG_Label *dataSizeLabel2;
 };
 
 struct viewPort {
@@ -1366,6 +1369,7 @@ void createViewPortPrefWin();
  void createMenuBar(struct stateInfo *state);
  void createCoordBarWin(struct stateInfo *state);
  void createSkeletonVpToolsWin(struct stateInfo *state);
+ void createDataSizeWin(struct stateInfo *state);
  void createNavWin(struct stateInfo *state);
  void createConsoleWin(struct stateInfo *state);
  void createAboutWin();
