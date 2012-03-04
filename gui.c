@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur FÃ¶rderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -471,8 +471,8 @@ void createSkeletonVpToolsWin(struct stateInfo *state) {
 void refreshDataSizeWin(struct stateInfo *state) {
     float height = state->viewerState->voxelDimX * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
     float width = state->viewerState->voxelDimY * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
-    AG_LabelText(state->viewerState->ag->dataSizeLabel1, "Height %.2f Âµm", height);
-    AG_LabelText(state->viewerState->ag->dataSizeLabel2, "Width %.2f Âµm", width);
+    AG_LabelText(state->viewerState->ag->dataSizeLabel1, "Height %.2f µm", height);
+    AG_LabelText(state->viewerState->ag->dataSizeLabel2, "Width %.2f µm", width);
 }
 
 
@@ -483,16 +483,16 @@ void createDataSizeWin(struct stateInfo *state) {
     AG_Label *label;
     win = AG_WindowNew(AG_WINDOW_PLAIN);//|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0,"Height %.2f Âµm", height);
+    label = AG_LabelNew(win,0,"Height %.2f µm", height);
     {
-        AG_ButtonSetPadding(label, 1, 1, 1, 1);
+        AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
         state->viewerState->ag->dataSizeLabel1 = label;
     }
 
-    label = AG_LabelNew(win,0,"Width %.2f Âµm", width);
+    label = AG_LabelNew(win,0,"Width %.2f µm", width);
     {
-        AG_ButtonSetPadding(label, 1, 1, 1, 1);
+        AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
         state->viewerState->ag->dataSizeLabel2 = label;
     }
@@ -1621,7 +1621,7 @@ void createCurrPosWdgt(AG_Window *parent) {
         AG_SetEvent(numerical, "numerical-changed", currPosWdgtModified, NULL);
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        AG_WidgetSetSize(numerical, 100, 15);
+        AG_WidgetSetSize(numerical, 1, 15);
     }
 
 
@@ -2585,11 +2585,6 @@ void UI_saveSettings() {
 /* list of missing functionality
 remote host
 remote port
-
-zoom XY
-zoom XZ
-zomm YZ
-zoom skeleton
 */
     xmlChar attrString[1024];
     xmlDocPtr xmlDocument;
@@ -2792,6 +2787,24 @@ zoom skeleton
         xmlNewProp(currentXMLNode, BAD_CAST"dynRangeDelta", attrString);
     }
 
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsZoom", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+        xmlNewProp(currentXMLNode, BAD_CAST"XYPlane", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+        xmlNewProp(currentXMLNode, BAD_CAST"XZPlane", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+        xmlNewProp(currentXMLNode, BAD_CAST"YZPlane", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->skeletonState->zoomLevel);
+        xmlNewProp(currentXMLNode, BAD_CAST"SkelVP", attrString);
+    }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsSkelVP", NULL);
     {
         memset(attrString, '\0', 1024);
@@ -3061,6 +3074,29 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"dynRangeDelta");
             if(attribute)
                 state->viewerState->luminanceRangeDelta = atoi((char *)attribute);
+        }
+
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *) "vpSettingsZoom")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "XYPlane");
+            float zoomlevel = atof ((char *) attribute);
+            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
+                state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = zoomlevel;
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "XZPlane");
+            zoomlevel = atof ((char *) attribute);
+            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
+                state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = zoomlevel;
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "YZPlane");
+            zoomlevel = atof ((char *) attribute);
+            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
+                state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = zoomlevel;
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "SkelVP");
+            zoomlevel = atof ((char *) attribute);
+            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
+                state->viewerState->state->skeletonState->zoomLevel = zoomlevel;
+            }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSkelVP")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showXY");
