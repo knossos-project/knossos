@@ -29,6 +29,7 @@ import select
 import struct
 import sys
 
+
 class KikiServer:
     KIKI_REPEAT = chr(0)
     KIKI_CONNECT = chr(1)
@@ -106,11 +107,15 @@ class KikiServer:
         
     def serverLoop(self):
         writeTo = []
-        for messageTo in self.outMessages.iterkeys():
-            if len(self.outMessages[messageTo]) > 0:
-                writeTo.append(messageTo)
-
-        readFrom = self.clients.keys()
+        try:
+            for messageTo in self.outMessages.iterkeys():
+                if len(self.outMessages[messageTo]) > 0:
+                    writeTo.append(messageTo)
+        except AttributeError:
+            for messageTo in self.outMessages.keys():
+                if len(self.outMessages[messageTo]) > 0:
+                    writeTo.append(messageTo)
+        readFrom = list(self.clients.keys())
         readFrom.append(self.serverSocket)
 
         try:
@@ -145,15 +150,24 @@ class KikiServer:
                                                self.curSavemaster)
 
                 print("Sending KIKI_SAVEMASTER for id " + str(self.curSavemaster))
+                try:
+                    for currentTargetClient in self.clients.iterkeys():
+                        if self.clients[currentTargetClient][0] < 0:
+                            # See comment below.
+                            continue
 
-                for currentTargetClient in self.clients.iterkeys():
-                    if self.clients[currentTargetClient][0] < 0:
-                        # See comment below.
-                        continue
+                        self.outMessages[currentTargetClient] = \
+                            "".join([self.outMessages[currentTargetClient], saveMasterString])                
 
-                    self.outMessages[currentTargetClient] = \
-                        "".join([self.outMessages[currentTargetClient], saveMasterString])                
+                except AttributeError:
+                    for currentTargetClient in self.clients.keys():
+                        if self.clients[currentTargetClient][0] < 0:
+                            # See comment below.
+                            continue
 
+                        self.outMessages[currentTargetClient] = \
+                            "".join([self.outMessages[currentTargetClient], saveMasterString])
+                        
         # Handle clients sending us data.
         for currentClient in readReady:
             try:
@@ -314,22 +328,36 @@ class KikiServer:
                                                   unpacked[5], unpacked[6],
                                                   unpacked[0])
 
-                    for currentTargetClient in self.clients.iterkeys():
-                        if currentTargetClient == currentClient:
-                            continue
-                        if self.clients[currentTargetClient][0] < 0:
-                            # See comment below.
-                            continue
+                    try:
+                        for currentTargetClient in self.clients.iterkeys():
+                            if currentTargetClient == currentClient:
+                                continue
+                            if self.clients[currentTargetClient][0] < 0:
+                                # See comment below.
+                                continue
 
+                    except AttributeError:
+                        for currentTargetClient in self.clients.keys():
+                            if currentTargetClient == currentClient:
+                                continue
+                            if self.clients[currentTargetClient][0] < 0:
+                                # See comment below.
+                                continue
+                            
                         # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentTargetClient][0])
                         self.outMessages[currentTargetClient] = \
                             "".join([self.outMessages[currentTargetClient], advertiseString]) 
 
                     # Tell this new client about all currently connected clients
                     # And connect it to all clients ;)
-                    for currentAdvertisedClient in self.clients.iterkeys():
-                        if currentAdvertisedClient == currentClient:
-                            continue
+                    try:
+                        for currentAdvertisedClient in self.clients.iterkeys():
+                            if currentAdvertisedClient == currentClient:
+                                continue
+                    except AttributeError:
+                        for currentAdvertisedClient in self.clients.keys():
+                            if currentAdvertisedClient == currentClient:
+                                continue
 
                         if self.clients[currentAdvertisedClient][0] < 0:
                             # Positive client id indicates a successfully
@@ -499,11 +527,19 @@ class KikiServer:
 
     def updateSavemaster(self):
             self.curHighestSavePriority = [self.INFTY, self.INFTY]
-
-            for curClient in self.clients.iterkeys():
-                if self.clients[curClient][0] > 0:
-                    if (self.clients[curClient][2] < self.curHighestSavePriority[0]) or \
-                       (self.clients[curClient][2] == self.curHighestSavePriority[0] and \
-                        abs(self.clients[curClient][0]) < self.curHighestSavePriority[1]):
-                        self.curHighestSavePriority[0] = self.clients[curClient][2]
-                        self.curHighestSavePriority[1] = abs(self.clients[curClient][0])
+            try:
+                for curClient in self.clients.iterkeys():
+                    if self.clients[curClient][0] > 0:
+                        if (self.clients[curClient][2] < self.curHighestSavePriority[0]) or \
+                           (self.clients[curClient][2] == self.curHighestSavePriority[0] and \
+                            abs(self.clients[curClient][0]) < self.curHighestSavePriority[1]):
+                            self.curHighestSavePriority[0] = self.clients[curClient][2]
+                            self.curHighestSavePriority[1] = abs(self.clients[curClient][0])
+            except AttributeError:
+                for curClient in self.clients.keys():
+                    if self.clients[curClient][0] > 0:
+                        if (self.clients[curClient][2] < self.curHighestSavePriority[0]) or \
+                           (self.clients[curClient][2] == self.curHighestSavePriority[0] and \
+                            abs(self.clients[curClient][0]) < self.curHighestSavePriority[1]):
+                            self.curHighestSavePriority[0] = self.clients[curClient][2]
+                            self.curHighestSavePriority[1] = abs(self.clients[curClient][0])

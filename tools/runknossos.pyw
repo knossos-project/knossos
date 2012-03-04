@@ -27,9 +27,19 @@
 from runknossos_ui import RunKnossosUI
 from kiki import KikiServer
 from kconfig import DataError
-import Tkinter, tkFileDialog, tkMessageBox, subprocess, os, sys
+try:
+    import tkinter, tkinter.messagebox, tkinter.filedialog
+    filedialog = tkinter.filedialog
+    interface = tkinter
+    messageBox = tkinter.messagebox
+except ImportError:
+    import Tkinter, tkMessageBox, tkFileDialog
+    filedialog = tkFileDialog
+    interface = Tkinter
+    messageBox = tkMessageBox
+import subprocess, os, sys
 
-class RunKnossos(RunKnossosUI):
+class RunKnossos(RunKnossosUI):        
     def __init__(self, root):
         RunKnossosUI.__init__(self, root)
 
@@ -52,7 +62,7 @@ class RunKnossos(RunKnossosUI):
     # Add button
     #
     def add_button_command(self, *args):
-        path = os.path.abspath(tkFileDialog.askdirectory())
+        path = os.path.abspath(filedialog.askdirectory())
 
         self.addDataset(path)
 
@@ -164,7 +174,7 @@ class RunKnossos(RunKnossosUI):
         if(self.globalConf["Profile name"]):
             arguments.append("--profile=" + str(self.globalConf["Profile name"]))
 
-        print arguments
+        print(arguments)
 
         try:
             subprocess.Popen(arguments, cwd=knossosWD)
@@ -175,10 +185,14 @@ class RunKnossos(RunKnossosUI):
                                    "required permissions.")
 
     def updateList(self):
-        self.dataset_list.delete(0, Tkinter.END)
-
-        for currentDataset in self.datasets.iterkeys():
-            self.dataset_list.insert(Tkinter.END, currentDataset)
+        self.dataset_list.delete(0, interface.END)
+        
+        try:
+            for currentDataset in self.datasets.iterkeys():
+                self.dataset_list.insert(interface.END, currentDataset)
+        except AttributeError:
+            for currentDataset in self.datasets.keys():
+                self.dataset_list.insert(interface.END, currentDataset)
 
     def updateConfigInfo(self, *args):
         # Synchronize configuration data structures with UI
@@ -196,9 +210,14 @@ class RunKnossos(RunKnossosUI):
 
     def exit(self):
         pathListString = ""
-        for currentDataset in self.datasets.iterkeys():
-            currentPath = self.datasets[currentDataset]["Path"]
-            pathListString = pathListString + currentPath + '\n'
+        try:
+            for currentDataset in self.datasets.iterkeys():
+                currentPath = self.datasets[currentDataset]["Path"]
+                pathListString = pathListString + currentPath + '\n'
+        except AttributeError:
+            for currentDataset in self.datasets.keys():
+                currentPath = self.datasets[currentDataset]["Path"]
+                pathListString = pathListString + currentPath + '\n'
 
         if pathListString:
             try:
@@ -216,7 +235,7 @@ class RunKnossos(RunKnossosUI):
         pass
 
 def main():
-    root = Tkinter.Tk()
+    root = interface.Tk()
     runknossos = RunKnossos(root)
     root.title('Knossos starter')
     try:
