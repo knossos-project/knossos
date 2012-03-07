@@ -619,7 +619,9 @@ struct agConfig {
     AG_Window *setDynRangeWin;
 	AG_Window *coordBarWin;
     AG_Window *skeletonVpToolsWin;
-    AG_Window *dataSizeWin;
+    AG_Window *dataSizeWinxy;
+    AG_Window *dataSizeWinxz;
+    AG_Window *dataSizeWinyz;
 	AG_Window *navWin;
 	AG_Window *toolsWin;
 	AG_Window *aboutWin;
@@ -653,8 +655,13 @@ struct agConfig {
     AG_Numerical *actNodeIDWdgt1;
     AG_Numerical *actNodeIDWdgt2;
 
-    AG_Label *dataSizeLabel1;
-    AG_Label *dataSizeLabel2;
+    //Labels in Viewports for DataSize
+    AG_Label *dataSizeLabelxy;
+    AG_Label *dataSizeLabelxz;
+    AG_Label *dataSizeLabelyz;
+
+    //Zoom for Skeleton Viewport
+	float zoomSkeletonViewport;
 };
 
 struct viewPort {

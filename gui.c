@@ -468,41 +468,75 @@ void createSkeletonVpToolsWin(struct stateInfo *state) {
     state->viewerState->ag->skeletonVpToolsWin = win;
 }
 
-void refreshDataSizeWin(struct stateInfo *state) {
-    float height = state->viewerState->voxelDimX * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
-    float width = state->viewerState->voxelDimY * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
-    AG_LabelText(state->viewerState->ag->dataSizeLabel1, "Height %.2f µm", height);
-    AG_LabelText(state->viewerState->ag->dataSizeLabel2, "Width %.2f µm", width);
+void reloadDataSizeWin(struct stateInfo *state) {
+    float heightxy = state->viewerState->viewPorts[0].displayedlengthInNmY*0.001;
+    float widthxy = state->viewerState->viewPorts[0].displayedlengthInNmX*0.001;
+    float heightxz = state->viewerState->viewPorts[1].displayedlengthInNmY*0.001;
+    float widthxz = state->viewerState->viewPorts[1].displayedlengthInNmX*0.001;
+    float heightyz = state->viewerState->viewPorts[2].displayedlengthInNmY*0.001;
+    float widthyz = state->viewerState->viewPorts[2].displayedlengthInNmX*0.001;
+    AG_LabelText(state->viewerState->ag->dataSizeLabelxy, "Height %.2f, Width %.2f", heightxy, widthxy);
+    AG_LabelText(state->viewerState->ag->dataSizeLabelxz, "Height %.2f, Width %.2f", heightxz, widthxz);
+    AG_LabelText(state->viewerState->ag->dataSizeLabelyz, "Height %.2f, Width %.2f", heightyz, widthyz);
 }
 
-
 void createDataSizeWin(struct stateInfo *state) {
-    float height = state->viewerState->voxelDimX * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
-    float width = state->viewerState->voxelDimY * state->viewerState->viewPorts[0].texture.zoomLevel * 128 * state->magnification*0.001;
+    float heightxy = state->viewerState->viewPorts[0].displayedlengthInNmY*0.001;
+    float widthxy = state->viewerState->viewPorts[0].displayedlengthInNmX*0.001;
+    float heightxz = state->viewerState->viewPorts[1].displayedlengthInNmY*0.001;
+    float widthxz = state->viewerState->viewPorts[1].displayedlengthInNmX*0.001;
+    float heightyz = state->viewerState->viewPorts[2].displayedlengthInNmY*0.001;
+    float widthyz = state->viewerState->viewPorts[2].displayedlengthInNmX*0.001;
     AG_Window *win;
     AG_Label *label;
-    win = AG_WindowNew(AG_WINDOW_PLAIN);//|AG_WINDOW_NOBACKGROUND);
-    AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0,"Height %.2f µm", height);
-    {
-        AG_LabelSetPadding(label, 1, 1, 1, 1);
-        AG_ExpandHoriz(label);
-        state->viewerState->ag->dataSizeLabel1 = label;
-    }
 
-    label = AG_LabelNew(win,0,"Width %.2f µm", width);
+    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+    AG_WindowSetPadding(win, 0, 0, 3, 1);
+    label = AG_LabelNew(win, 0, "Height %.2f, Width %.2f", heightxy, widthxy);
     {
         AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
-        state->viewerState->ag->dataSizeLabel2 = label;
+        state->viewerState->ag->dataSizeLabelxy = label;
     }
     AG_WindowSetGeometryBounded(win,
                                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
                                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + 5,
-                                100,
-                                40);
+                                200,
+                                20);
     AG_WindowShow(win);
-    state->viewerState->ag->dataSizeWin = win;
+    state->viewerState->ag->dataSizeWinxy = win;
+
+    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+    AG_WindowSetPadding(win, 0, 0, 3, 1);
+    label = AG_LabelNew(win,0, "Height %.2f, Width %.2f", heightxz, widthxz);
+    {
+        AG_LabelSetPadding(label, 1, 1, 1, 1);
+        AG_ExpandHoriz(label);
+        state->viewerState->ag->dataSizeLabelxz = label;
+    }
+    AG_WindowSetGeometryBounded(win,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + 5,
+                                200,
+                                20);
+    AG_WindowShow(win);
+    state->viewerState->ag->dataSizeWinxz = win;
+
+    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+    AG_WindowSetPadding(win, 0, 0, 3, 1);
+    label = AG_LabelNew(win,0, "Height %.2f, Width %.2f", heightyz, widthyz);
+    {
+        AG_LabelSetPadding(label, 1, 1, 1, 1);
+        AG_ExpandHoriz(label);
+        state->viewerState->ag->dataSizeLabelyz = label;
+    }
+    AG_WindowSetGeometryBounded(win,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + 5,
+                                200,
+                                20);
+    AG_WindowShow(win);
+    state->viewerState->ag->dataSizeWinyz = win;
 }
 
 void createNavWin(struct stateInfo *state) {
@@ -1621,7 +1655,7 @@ void createCurrPosWdgt(AG_Window *parent) {
         AG_SetEvent(numerical, "numerical-changed", currPosWdgtModified, NULL);
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        AG_WidgetSetSize(numerical, 1, 15);
+        AG_WidgetSetSize(numerical, 100, 15);
     }
 
 
@@ -2049,6 +2083,23 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     state->skeletonState->skeletonSliceVPchanged = TRUE;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //updateDisplayListsSkeleton(state);
+
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + 5,
+                                200,
+                                20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + 5,
+                                200,
+                                20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + 5,
+                                200,
+                                20);
+
     drawGUI();
 
 }
@@ -3095,7 +3146,7 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "SkelVP");
             zoomlevel = atof ((char *) attribute);
             if(0.2 <= zoomlevel && zoomlevel <= 1.) {
-                state->viewerState->state->skeletonState->zoomLevel = zoomlevel;
+                state->skeletonState->zoomLevel = zoomlevel;
             }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSkelVP")) {

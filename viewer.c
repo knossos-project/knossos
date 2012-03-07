@@ -1623,7 +1623,8 @@ uint32_t recalcTextureOffsets() {
 
         }
     }
-
+    //Reload the height/width-windows in viewports
+    reloadDataSizeWin(state);
     return TRUE;
 }
 

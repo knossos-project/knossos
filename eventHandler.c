@@ -346,7 +346,12 @@ static int32_t checkForViewPortWdgt(AG_Widget *wdgt) {
     else {
         VPfound = -1;
     }
-
+    if (VPfound == VIEWPORT_SKELETON) {
+        state->viewerState->ag->zoomSkeletonViewport = TRUE;
+    }
+    if (VPfound != VIEWPORT_SKELETON) {
+        state->viewerState->ag->zoomSkeletonViewport = FALSE;
+    }
     return VPfound;
 }
 
@@ -425,6 +430,25 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
             }
     }
 
+
+    //Set Connection between Active Node and Clicked Node
+    if(SDL_GetModState() & KMOD_ALT) {
+        int32_t clickedNode;
+        clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
+                                                     event.button.x,
+                                                     (state->viewerState->screenSizeY - event.button.y),
+                                                     1,
+                                                     state);
+        if(clickedNode) {
+            clickedNode -= 50;
+            if(state->skeletonState->activeNode) {
+                addSegment(CHANGE_MANUAL,
+                           state->skeletonState->activeNode->nodeID,
+                           clickedNode,
+                           state);
+            }
+        }
+    }
     return TRUE;
 }
 
@@ -491,6 +515,39 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
 }
 
 static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
+    // Delete Connection between Active Node and Clicked Node
+    if(SDL_GetModState() & KMOD_ALT) {
+    int32_t clickedNode;
+    clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
+                                                     event.button.x,
+                                                     (state->viewerState->screenSizeY - event.button.y),
+                                                     1,
+                                                     state);
+    if(clickedNode) {
+        clickedNode -= 50;
+        if(state->skeletonState->activeNode) {
+            if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
+                                    clickedNode,
+                                    state)) {
+                delSegment(CHANGE_MANUAL,
+                           state->skeletonState->activeNode->nodeID,
+                           clickedNode,
+                           NULL,
+                           state);
+                }
+                if(findSegmentByNodeIDs(clickedNode,
+                                        state->skeletonState->activeNode->nodeID,
+                                        state)) {
+                    delSegment(CHANGE_MANUAL,
+                               clickedNode,
+                               state->skeletonState->activeNode->nodeID,
+                               NULL,
+                               state);
+                }
+            }
+        }
+        return;
+    }
     int32_t newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
@@ -1199,12 +1256,27 @@ static uint32_t handleKeyboard(SDL_Event event) {
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
         break;
     case SDLK_i:
-        UI_zoomOrthogonals(-0.1);
-        refreshDataSizeWin(state);
+        if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
+            UI_zoomOrthogonals(-0.1);
+        }
+        else if(!(state->skeletonState->zoomLevel + 0.2
+            * (0.5 - state->skeletonState->zoomLevel) > 0.4999)) {
+            state->skeletonState->zoomLevel += (0.2
+                * (0.5 - state->skeletonState->zoomLevel));
+            state->skeletonState->viewChanged = TRUE;
+        }
         break;
     case SDLK_o:
-        UI_zoomOrthogonals(0.1);
-        refreshDataSizeWin(state);
+        if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
+            UI_zoomOrthogonals(0.1);
+        }
+        else if(!(state->skeletonState->zoomLevel - 0.2
+            * (0.5 - state->skeletonState->zoomLevel) < 0.0001)) {
+            state->skeletonState->zoomLevel -= (0.2
+            * (0.5 - state->skeletonState->zoomLevel));
+            state->skeletonState->viewChanged = TRUE;
+        }
+
         break;
     case SDLK_s:
         if(SDL_GetModState() & KMOD_CTRL) {
