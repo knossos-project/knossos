@@ -776,7 +776,6 @@ struct viewerState {
 
     //Show height/width-labels inside VPs
     int showVPLabels;
-    int showVPLabelsState;
 
     int selectModeFlag;
 

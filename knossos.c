@@ -205,8 +205,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->adjustmentOn = FALSE;
     tempConfig->viewerState->viewerReady = FALSE;
     tempConfig->viewerState->drawVPCrosshairs = TRUE;
-    tempConfig->viewerState->showVPLabels = TRUE;
-    tempConfig->viewerState->showVPLabelsState = TRUE;
+    tempConfig->viewerState->showVPLabels = FALSE;
     tempConfig->viewerState->stepsPerSec = 40;
     tempConfig->viewerState->numberViewPorts = 4;
     tempConfig->viewerState->inputmap = NULL;
@@ -454,7 +453,6 @@ static int32_t initStates() {
     state->viewerState->adjustmentOn = tempConfig->viewerState->adjustmentOn;
     state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
     state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
-    state->viewerState->showVPLabelsState = tempConfig->viewerState->showVPLabelsState;
     state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
     state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
     state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;

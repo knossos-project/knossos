@@ -128,6 +128,7 @@ static void UI_helpDeleteTree();
 static void UI_renderModelRadioModified();
 static void UI_displayModeRadioModified();
 static void UI_setHighlightActiveTree();
+static void UI_setShowVPLabels();
 static void UI_setShowNodeIDs();
 static void UI_skeletonChanged();
 static void UI_enableSliceVPOverlayModified();

@@ -530,21 +530,6 @@ uint32_t renderOrthogonalVP(uint32_t currentVP, struct stateInfo *state)  {
             break;
     }
 
-    //Check if checkbox has changed, only then toggle visibility of labels
-    if(state->viewerState->showVPLabels != state->viewerState->showVPLabelsState){
-        if(state->viewerState->showVPLabels){
-            AG_WidgetShow(state->viewerState->ag->dataSizeLabelxy);
-            AG_WidgetShow(state->viewerState->ag->dataSizeLabelxz);
-            AG_WidgetShow(state->viewerState->ag->dataSizeLabelyz);
-        }
-        else{
-            AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
-            AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
-            AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
-        }
-        state->viewerState->showVPLabelsState = state->viewerState->showVPLabels;
-    }
-
     glDisable(GL_BLEND);
     renderViewportBorders(currentVP);
 

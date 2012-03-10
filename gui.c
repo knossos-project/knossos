@@ -548,6 +548,10 @@ void createDataSizeWin(struct stateInfo *state) {
                                 20);
     AG_WindowShow(win);
     state->viewerState->ag->dataSizeWinyz = win;
+
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
 }
 
 void createNavWin(struct stateInfo *state) {
@@ -1153,7 +1157,7 @@ void createViewPortPrefWin() {
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
             AG_ExpandHoriz(box2);
             AG_CheckboxNewInt(box2, 0, "Draw Intersection Crosshairs", &state->viewerState->drawVPCrosshairs);
-            AG_CheckboxNewInt(box2, 0, "Show Viewport Size", &state->viewerState->showVPLabels);
+            AG_CheckboxNewFn(box2, 0, "Show Viewport Size", UI_setShowVPLabels, NULL);
         }
     }
     tab = AG_NotebookAddTab(tabs, "Skeleton Viewport", AG_BOX_HOMOGENOUS);
@@ -2368,6 +2372,21 @@ static void UI_setHighlightActiveTree() {
         state->skeletonState->highlightActiveTree = TRUE;
 
     state->skeletonState->skeletonChanged = TRUE;
+}
+
+static void UI_setShowVPLabels() {
+    if(state->viewerState->showVPLabels){
+        state->viewerState->showVPLabels = FALSE;
+        AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
+        AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
+        AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
+    }
+    else{
+        state->viewerState->showVPLabels = TRUE;
+        AG_WidgetShow(state->viewerState->ag->dataSizeLabelxy);
+        AG_WidgetShow(state->viewerState->ag->dataSizeLabelxz);
+        AG_WidgetShow(state->viewerState->ag->dataSizeLabelyz);
+    }
 }
 
 static void UI_setShowNodeIDs() {
