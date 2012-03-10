@@ -475,24 +475,35 @@ void reloadDataSizeWin(struct stateInfo *state) {
     float widthxz = state->viewerState->viewPorts[1].displayedlengthInNmX*0.001;
     float heightyz = state->viewerState->viewPorts[2].displayedlengthInNmY*0.001;
     float widthyz = state->viewerState->viewPorts[2].displayedlengthInNmX*0.001;
-    AG_LabelText(state->viewerState->ag->dataSizeLabelxy, "Height %.2f, Width %.2f", heightxy, widthxy);
-    AG_LabelText(state->viewerState->ag->dataSizeLabelxz, "Height %.2f, Width %.2f", heightxz, widthxz);
-    AG_LabelText(state->viewerState->ag->dataSizeLabelyz, "Height %.2f, Width %.2f", heightyz, widthyz);
+
+    if ((heightxy > 1.0) && (widthxy > 1.0)){
+        AG_LabelText(state->viewerState->ag->dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
+    }
+    else{
+        AG_LabelText(state->viewerState->ag->dataSizeLabelxy, "Height %.0f nm, Width %.0f nm", heightxy*1000, widthxy*1000);
+    }
+    if ((heightxz > 1.0) && (widthxz > 1.0)){
+        AG_LabelText(state->viewerState->ag->dataSizeLabelxz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxz, widthxz);
+    }
+    else{
+        AG_LabelText(state->viewerState->ag->dataSizeLabelxz, "Height %.0f nm, Width %.0f nm", heightxz*1000, widthxz*1000);
+    }
+
+    if ((heightyz > 1.0) && (widthyz > 1.0)){
+        AG_LabelText(state->viewerState->ag->dataSizeLabelyz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightyz, widthyz);
+    }
+    else{
+        AG_LabelText(state->viewerState->ag->dataSizeLabelyz, "Height %.0f nm, Width %.0f nm", heightyz*1000, widthyz*1000);
+    }
 }
 
 void createDataSizeWin(struct stateInfo *state) {
-    float heightxy = state->viewerState->viewPorts[0].displayedlengthInNmY*0.001;
-    float widthxy = state->viewerState->viewPorts[0].displayedlengthInNmX*0.001;
-    float heightxz = state->viewerState->viewPorts[1].displayedlengthInNmY*0.001;
-    float widthxz = state->viewerState->viewPorts[1].displayedlengthInNmX*0.001;
-    float heightyz = state->viewerState->viewPorts[2].displayedlengthInNmY*0.001;
-    float widthyz = state->viewerState->viewPorts[2].displayedlengthInNmX*0.001;
     AG_Window *win;
     AG_Label *label;
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win, 0, "Height %.2f, Width %.2f", heightxy, widthxy);
+    label = AG_LabelNew(win, 0, " ");
     {
         AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
@@ -508,7 +519,7 @@ void createDataSizeWin(struct stateInfo *state) {
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0, "Height %.2f, Width %.2f", heightxz, widthxz);
+    label = AG_LabelNew(win,0, " ");
     {
         AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
@@ -524,7 +535,7 @@ void createDataSizeWin(struct stateInfo *state) {
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0, "Height %.2f, Width %.2f", heightyz, widthyz);
+    label = AG_LabelNew(win,0, " ");
     {
         AG_LabelSetPadding(label, 1, 1, 1, 1);
         AG_ExpandHoriz(label);
@@ -1138,10 +1149,11 @@ void createViewPortPrefWin() {
 
         box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
         {
-            AG_LabelNew(box2, 0, "Highlighting");
+            AG_LabelNew(box2, 0, "Viewport Objects");
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
             AG_ExpandHoriz(box2);
             AG_CheckboxNewInt(box2, 0, "Draw Intersection Crosshairs", &state->viewerState->drawVPCrosshairs);
+            AG_CheckboxNewInt(box2, 0, "Show Viewport Size", &state->viewerState->showVPLabels);
         }
     }
     tab = AG_NotebookAddTab(tabs, "Skeleton Viewport", AG_BOX_HOMOGENOUS);

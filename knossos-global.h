@@ -774,6 +774,10 @@ struct viewerState {
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     int drawVPCrosshairs;
 
+    //Show height/width-labels inside VPs
+    int showVPLabels;
+    int showVPLabelsState;
+
     int selectModeFlag;
 
     uint32_t dropFrames;

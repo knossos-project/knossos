@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur FÃ¶rderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -205,6 +205,8 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->adjustmentOn = FALSE;
     tempConfig->viewerState->viewerReady = FALSE;
     tempConfig->viewerState->drawVPCrosshairs = TRUE;
+    tempConfig->viewerState->showVPLabels = TRUE;
+    tempConfig->viewerState->showVPLabelsState = TRUE;
     tempConfig->viewerState->stepsPerSec = 40;
     tempConfig->viewerState->numberViewPorts = 4;
     tempConfig->viewerState->inputmap = NULL;
@@ -451,6 +453,8 @@ static int32_t initStates() {
     state->viewerState->colortableOn = tempConfig->viewerState->colortableOn;
     state->viewerState->adjustmentOn = tempConfig->viewerState->adjustmentOn;
     state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
+    state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
+    state->viewerState->showVPLabelsState = tempConfig->viewerState->showVPLabelsState;
     state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
     state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
     state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
