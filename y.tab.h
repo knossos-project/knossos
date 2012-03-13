@@ -66,10 +66,11 @@
      TILLLOAD_TK = 282,
      RUNTRAJECTORY_TK = 283,
      MAGNIFICATION = 284,
-     _INTEGER = 285,
-     STRING = 286,
-     BLOCK = 287,
-     _FLOAT = 288
+     BOERGENS = 285,
+     _INTEGER = 286,
+     STRING = 287,
+     BLOCK = 288,
+     _FLOAT = 289
    };
 #endif
 /* Tokens.  */
@@ -100,10 +101,11 @@
 #define TILLLOAD_TK 282
 #define RUNTRAJECTORY_TK 283
 #define MAGNIFICATION 284
-#define _INTEGER 285
-#define STRING 286
-#define BLOCK 287
-#define _FLOAT 288
+#define BOERGENS 285
+#define _INTEGER 286
+#define STRING 287
+#define BLOCK 288
+#define _FLOAT 289
 
 
 
@@ -113,7 +115,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 33 "config.y"
+#line 58 "config.y"
 
     int integer;
     float floating;
@@ -122,7 +124,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 126 "y.tab.h"
+#line 128 "y.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

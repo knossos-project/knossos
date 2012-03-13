@@ -231,29 +231,59 @@ static uint32_t loadCube(Coordinate coordinate,
     memset(filename, '\0', strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38);
 
 #ifdef LINUX
-    snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
-             "%sx%.4d/y%.4d/z%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
-             state->path,
-             coordinate.x,
-             coordinate.y,
-             coordinate.z,
-             state->name,
-             coordinate.x,
-             coordinate.y,
-             coordinate.z,
-             typeExtension);
+    if(state->boergens) {
+        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+                 "%sz%.4d/y%.4d/x%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
+                 state->path,
+                 coordinate.z,
+                 coordinate.y,
+                 coordinate.x,
+                 state->name,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 typeExtension);
+    }
+    else {
+        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+                 "%sx%.4d/y%.4d/z%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
+                 state->path,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 state->name,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 typeExtension);
+    }
 #else
-    snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
-             "%sx%.4d\\y%.4d\\z%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
-             state->path,
-             coordinate.x,
-             coordinate.y,
-             coordinate.z,
-             state->name,
-             coordinate.x,
-             coordinate.y,
-             coordinate.z,
-             typeExtension);
+    if(state->boergens) {
+        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+                 "%sz%.4d\\y%.4d\\x%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
+                 state->path,
+                 coordinate.z,
+                 coordinate.y,
+                 coordinate.x,
+                 state->name,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 typeExtension);
+    }
+    else {
+        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+                 "%sx%.4d\\y%.4d\\z%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
+                 state->path,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 state->name,
+                 coordinate.x,
+                 coordinate.y,
+                 coordinate.z,
+                 typeExtension);
+    }
 #endif
 
     // The b is for compatibility with non-UNIX systems and denotes a

@@ -52,7 +52,7 @@ extern struct stateInfo *tempConfig;
 %token EXPERIMENT DATAPATH SERVER LOCKRADIUS LOCKPOSITIONS LOCKCOMMENT
 %token REMOTEPORT M_TOK DCEDGE SCALEX SCALEY SCALEZ OFFSETX OFFSETY
 %token OFFSETZ BOUNDX BOUNDY BOUNDZ TRAJECTORY_TK JUMPTO_TK SLEEP_TK WALK_TK
-%token STEP_TK IN_TK TILLLOAD_TK RUNTRAJECTORY_TK MAGNIFICATION
+%token STEP_TK IN_TK TILLLOAD_TK RUNTRAJECTORY_TK MAGNIFICATION BOERGENS
 
 %union
 {
@@ -145,6 +145,11 @@ intassn:
         MAGNIFICATION _INTEGER
         {
                 tempConfig->magnification = $2;
+        }
+        |
+        BOERGENS _INTEGER
+        {
+                tempConfig->boergens = TRUE;
         }
         ;
 wordassn:

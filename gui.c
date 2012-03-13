@@ -2002,8 +2002,7 @@ static void drawSkelViewport(AG_Event *event) {
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     uint32_t i = 0;
 
-    /* calculate new size of VP windows.
-    Enlarging win again does not work properly TDitem */
+    /* calculate new size of VP windows. */
 
     /* find out whether we're x or y limited with our window */
     if(newWinLenX <= newWinLenY) {

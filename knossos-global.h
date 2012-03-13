@@ -401,6 +401,9 @@ struct stateInfo {
 		int32_t M;
 		uint32_t cubeSetElements;
 
+        // Cube hierarchy mode
+        int32_t boergens;
+
         // Bytes in one supercube (This is pretty much the memory
         // footprint of KNOSSOS): M^3 * 2^3M
         uint32_t cubeSetBytes;
