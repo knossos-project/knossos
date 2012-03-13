@@ -40,7 +40,7 @@ experiment\ name        return EXPERIMENT;
 data\ path              return DATAPATH;
 server\ at				return SERVER;
 lock\ comment\ filter   return LOCKCOMMENT;
-boergensorder           return BOERGENS;
+zfirstorder             return BOERGENS;
 
  /* Numeric variables for assignments */
 remote\ port			return REMOTEPORT;
