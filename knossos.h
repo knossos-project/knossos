@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -32,7 +32,8 @@ static struct stateInfo *emptyState();
 static int32_t readDataConfAndLocalConf(struct stateInfo *state);
 static int32_t stripNewlines(char *string);
 static int32_t configFromCli(struct stateInfo *state, int argCount, char *arguments[]);
-static int32_t loadNeutralLUT(GLuint *lut);
+static int32_t loadNeutralDatasetLUT(GLuint *lut);
+static int32_t loadNeutralTreeLUT(float *treeLut);
 int32_t readConfigFile(char *path, struct stateInfo *state);
 #ifdef LINUX
 static int32_t catchSegfault(int signum);
@@ -40,7 +41,7 @@ static int32_t catchSegfault(int signum);
 
 
 /*
-2. Funktion zum durch-switchen von nodes ohne comment, auch branchpoints ohne comment sollen dabei gefunden werden (für offizielle Version nicht nötig)
+2. Funktion zum durch-switchen von nodes ohne comment, auch branchpoints ohne comment sollen dabei gefunden werden (fuer offizielle Version nicht noetig)
 1. Menu schließen bei klick irgendwo rein
 2. cursor wechsel resize
 3. allg. cursor Fadenkreuz

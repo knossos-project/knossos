@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -581,8 +581,10 @@ struct agConfig {
     AG_FileType *fileTypeNml;
 
     char skeletonDirectory[2048];
-    char LUTDirectory[2048];
-    char imgJDirectory[2048];
+    char datasetLUTDirectory[2048];
+    char datasetImgJDirectory[2048];
+    char treeImgJDirectory[2048];
+    char treeLUTDirectory[2048];
     char customPrefsDirectory[2048];
 
     /* file saving settings win buffer variables */
@@ -801,11 +803,19 @@ struct viewerState {
     int32_t luminanceBias;
     int32_t luminanceRangeDelta;
 
-    GLuint colortable[3][256];
-    GLuint adjustmentTable[3][256];
-    GLuint neutralTable[3][256];
-    int colortableOn;
-    int adjustmentOn;
+    GLuint datasetColortable[3][256];
+    GLuint datasetAdjustmentTable[3][256];
+    int datasetColortableOn;
+    int datasetAdjustmentOn;
+    GLuint neutralDatasetTable[3][256];
+
+    uint32_t treeLutSize;
+    int treeLutSet;
+    int treeColortableOn;
+    float treeColortable[24];
+    float treeAdjustmentTable[24];
+    float neutralTreeTable[24];
+
 
     /*
      * This array holds the table for overlay coloring.
@@ -1204,7 +1214,9 @@ int32_t newTrajectory(struct stateInfo *state, char *trajName, char *trajectory)
  *	For viewer.c
  */
 
-int32_t loadColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state);
+int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state);
+int32_t loadTreeColorTable(const char *path, float *table, struct stateInfo *state);
+int32_t updateTreeColors();
 int32_t updatePosition(struct stateInfo *state, int32_t serverMovement);
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
@@ -1397,5 +1409,6 @@ void createViewPortPrefWin();
 
  void createDataSetStatsWin(struct stateInfo *state);
  void createZoomingWin(struct stateInfo *state);
- void createLoadImgJTableWin();
+ void createLoadDatasetImgJTableWin();
+ void createLoadTreeImgJTableWin();
  void createSetDynRangeWin(struct stateInfo *state);

@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -178,7 +178,24 @@ uint32_t updateSkeletonState(struct stateInfo *state) {
 
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode)
         setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode, state);
+    return TRUE;
+}
 
+//update tree colors if preferences were changed.
+int32_t updateTreeColors() {
+    struct treeListElement *tree = state->skeletonState->firstTree;
+    while(tree) {
+        uint32_t index = state->viewerState->treeLutSize - 3;
+        if(tree->treeID % (state->viewerState->treeLutSize/3) != 0) {
+            index = (tree->treeID % (state->viewerState->treeLutSize/3) - 1) * 3;
+        }
+        tree->color.r = state->viewerState->treeAdjustmentTable[index];
+        tree->color.g = state->viewerState->treeAdjustmentTable[index + 1];
+        tree->color.b = state->viewerState->treeAdjustmentTable[index + 2];
+        tree->color.a = 1.;
+        tree = tree->next;
+    }
+    state->skeletonState->skeletonChanged = TRUE;
     return TRUE;
 }
 
@@ -649,11 +666,24 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     }
 
     /* calling function sets values < 0 when no color was specified */
-    if(color.r < 0) {
-        //Set a tree color
-        newElement->color.r = 0.5 / (float)((newElement->treeID % 5) + 1);
-        newElement->color.g = 1. / (float)((newElement->treeID % 3) + 1);
-        newElement->color.b = 1. / (float)((newElement->treeID % 7) + 1);
+    if(color.r < 0 && state->viewerState->treeColortableOn) {//Set a tree color
+        uint32_t index = state->viewerState->treeLutSize - 3;
+        if(state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) != 0) {
+            index = (state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) - 1) * 3;
+        }
+        newElement->color.r = state->viewerState->treeAdjustmentTable[index];
+        newElement->color.g = state->viewerState->treeAdjustmentTable[index+1];
+        newElement->color.b = state->viewerState->treeAdjustmentTable[index+2];
+        newElement->color.a = 1.;
+    }
+    else if(color.r < 0 && state->viewerState->treeColortableOn == FALSE) {
+        uint32_t index = state->viewerState->treeLutSize - 3;
+        if(state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) != 0) {
+            index = (state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) - 1) * 3;
+        }
+        newElement->color.r = state->viewerState->neutralTreeTable[index];
+        newElement->color.g = state->viewerState->neutralTreeTable[index+1];
+        newElement->color.b = state->viewerState->neutralTreeTable[index+2];
         newElement->color.a = 1.;
     }
     else {

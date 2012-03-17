@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -1107,13 +1107,21 @@ void createViewPortPrefWin() {
         box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
         {
             AG_ExpandHoriz(box2);
-            AG_LabelNew(box2, 0, "Dataset color lookup table");
+            AG_LabelNew(box2, 0, "Color lookup tables");
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-            checkbox = AG_CheckboxNewInt(box2, 0, "Enable LUT", &state->viewerState->colortableOn);
+            checkbox = AG_CheckboxNewInt(box2, 0, "Use own Dataset colors", &state->viewerState->datasetColortableOn);
             {
-                AG_SetEvent(checkbox, "checkbox-changed", colorAdjustmentsChanged, NULL);
+                AG_SetEvent(checkbox, "checkbox-changed", datasetColorAdjustmentsChanged, NULL);
             }
-            button = AG_ButtonNewFn(box2, 0, "Load Color Lookup Table", createLoadImgJTableWin, NULL);
+            checkbox = AG_CheckboxNewInt(box2, 0, "Use own Tree colors", &state->viewerState->treeColortableOn);
+            {
+                AG_SetEvent(checkbox, "checkbox-changed", treeColorAdjustmentsChanged, NULL);
+            }
+            button = AG_ButtonNewFn(box2, 0, "Load Dataset Color Lookup Table", createLoadDatasetImgJTableWin, NULL);
+            {
+                AG_ExpandHoriz(button);
+            }
+            button = AG_ButtonNewFn(box2, 0, "Load Tree Color Lookup Table", createLoadTreeImgJTableWin, NULL);
             {
                 AG_ExpandHoriz(button);
             }
@@ -1126,13 +1134,13 @@ void createViewPortPrefWin() {
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
             numerical = AG_NumericalNewIntR(box2, 0, NULL, "Bias: ", &state->viewerState->luminanceBias, 0, 255);
             {
-                AG_SetEvent(numerical, "numerical-changed", colorAdjustmentsChanged, NULL);
+                AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
             numerical = AG_NumericalNewIntR(box2, 0, NULL, "Range Delta: ", &state->viewerState->luminanceRangeDelta, 0, 255);
             {
-                AG_SetEvent(numerical, "numerical-changed", colorAdjustmentsChanged, NULL);
+                AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1351,8 +1359,7 @@ void createZoomingWin(struct stateInfo *state) {
 
     state->viewerState->ag->zoomingWin = win;
 }
-
-void createLoadImgJTableWin() {
+void createLoadTreeImgJTableWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
 
@@ -1360,7 +1367,36 @@ void createLoadImgJTableWin() {
     {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
-        AG_WindowSetCaption(win, "Load Color Lookup Table");
+        AG_WindowSetCaption(win, "Load Tree Color Lookup Table");
+        AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
+        AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
+    }
+
+    dlg = AG_FileDlgNew(win, AG_FILEDLG_LOAD);
+    {
+        AG_Expand(dlg);
+        AG_FileDlgAddType(dlg,
+                          "",
+                          "*.xml",
+                          OkfileDlgLoadTreeLUT,
+                          NULL);
+        AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
+
+        AG_FileDlgSetOptionContainer(dlg, AG_BoxNewVert(win, AG_BOX_HFILL));
+        AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->treeImgJDirectory);
+    }
+
+    AG_WindowShow(win);
+}
+void createLoadDatasetImgJTableWin() {
+    AG_Window *win;
+    AG_FileDlg *dlg;
+
+    win = AG_WindowNew(0);
+    {
+        AG_WindowSetSideBorders(win, 3);
+        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetCaption(win, "Load Dataset Color Lookup Table");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
     }
@@ -1371,12 +1407,12 @@ void createLoadImgJTableWin() {
         AG_FileDlgAddType(dlg,
                           "LUT file",
                           "*.*",
-                          OkfileDlgLoadLUT,
+                          OkfileDlgLoadDatasetLUT,
                           NULL);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
 
         AG_FileDlgSetOptionContainer(dlg, AG_BoxNewVert(win, AG_BOX_HFILL));
-        AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->imgJDirectory);
+        AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->datasetImgJDirectory);
     }
 
     AG_WindowShow(win);
@@ -1881,20 +1917,38 @@ void WRAP_saveSkeleton() {
     }
 }
 
-void OkfileDlgLoadLUT(AG_Event *event) {
+void OkfileDlgLoadTreeLUT(AG_Event *event) {
     AG_FileDlg *dlg = AG_SELF();
     char *filename = AG_STRING(1);
 
-    cpBaseDirectory(state->viewerState->ag->LUTDirectory, filename, 2048);
+    cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, filename, 2048);
+    state->viewerState->treeLutSet = TRUE;
+    if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), state) != TRUE) {
+        LOG("Error loading Tree LUT.\n");
+        memcpy(&(state->viewerState->treeColortable[0]),
+               &(state->viewerState->neutralTreeTable[0]),
+                 state->viewerState->treeLutSize);
+        state->viewerState->treeLutSet = FALSE;
+    }
 
-    if(loadColorTable(filename, &(state->viewerState->colortable[0][0]), GL_RGB, state) != TRUE) {
-        LOG("Error loading LUT.\n");
-        memcpy(&(state->viewerState->colortable[0][0]),
-               &(state->viewerState->neutralTable[0][0]),
+    treeColorAdjustmentsChanged();
+
+    AG_ObjectDetach(AG_WidgetParentWindow(dlg));
+}
+void OkfileDlgLoadDatasetLUT(AG_Event *event) {
+    AG_FileDlg *dlg = AG_SELF();
+    char *filename = AG_STRING(1);
+
+    cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, filename, 2048);
+
+    if(loadDatasetColorTable(filename, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state) != TRUE) {
+        LOG("Error loading Dataset LUT.\n");
+        memcpy(&(state->viewerState->datasetColortable[0][0]),
+               &(state->viewerState->neutralDatasetTable[0][0]),
                768);
     }
 
-    colorAdjustmentsChanged();
+    datasetColorAdjustmentsChanged();
 
     AG_ObjectDetach(AG_WidgetParentWindow(dlg));
 }
@@ -1908,16 +1962,19 @@ void OkfileDlgOpenSkel(AG_Event *event) {
 
 	state->skeletonState->mergeOnLoadFlag = AG_FileOptionBool(state->viewerState->ag->fileTypeNml, "merge");
 
-    if(state->skeletonState->mergeOnLoadFlag)
+    if(state->skeletonState->mergeOnLoadFlag) {
         AG_EventArgs(&ev,
                      "%s,%s",
                      filename,
                      "Do you really want to merge the new skeleton into the currently loaded one?");
-    else
+    }
+
+    else {
         AG_EventArgs(&ev,
                      "%s,%s",
                      filename,
                      "This will overwrite the currently loaded skeleton. Are you sure?");
+    }
 
     UI_loadSkeleton(&ev);
 
@@ -2002,7 +2059,8 @@ static void drawSkelViewport(AG_Event *event) {
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     uint32_t i = 0;
 
-    /* calculate new size of VP windows. */
+    /* calculate new size of VP windows.
+    Enlarging win again does not work properly TDitem */
 
     /* find out whether we're x or y limited with our window */
     if(newWinLenX <= newWinLenY) {
@@ -2471,22 +2529,47 @@ static void UI_enableLinearFilteringModified(AG_Event *event) {
     }
 
 }
+static void treeColorAdjustmentsChanged() {
+    if(state->viewerState->treeColortableOn) {
+        if(state->viewerState->treeLutSet) {
+            memcpy(state->viewerState->treeAdjustmentTable,
+            state->viewerState->treeColortable,
+            state->viewerState->treeLutSize * sizeof(float));
+            updateTreeColors();
+        }
+        else {
+            memcpy(state->viewerState->treeAdjustmentTable,
+            state->viewerState->neutralTreeTable,
+            state->viewerState->treeLutSize * sizeof(float));
+        }
+    }
+    else {
+        if(memcmp(state->viewerState->treeAdjustmentTable,
+            state->viewerState->neutralTreeTable,
+            state->viewerState->treeLutSize * sizeof(float)) != 0) {
+            memcpy(state->viewerState->treeAdjustmentTable,
+                state->viewerState->neutralTreeTable,
+                state->viewerState->treeLutSize * sizeof(float));
+                updateTreeColors();
+        }
+    }
+}
 
-static void colorAdjustmentsChanged() {
+static void datasetColorAdjustmentsChanged() {
     int32_t doAdjust = FALSE;
     int32_t i = 0;
     int32_t dynIndex;
     GLuint tempTable[3][256];
 
-    if(state->viewerState->colortableOn) {
-        memcpy(state->viewerState->adjustmentTable,
-               state->viewerState->colortable,
+    if(state->viewerState->datasetColortableOn) {
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->datasetColortable,
                768 * sizeof(GLuint));
         doAdjust = TRUE;
     }
     else {
-        memcpy(state->viewerState->adjustmentTable,
-               state->viewerState->neutralTable,
+        memcpy(state->viewerState->datasetAdjustmentTable,
+               state->viewerState->neutralDatasetTable,
                768 * sizeof(GLuint));
     }
 
@@ -2506,21 +2589,21 @@ static void colorAdjustmentsChanged() {
             if(dynIndex > 255)
                 dynIndex = 255;
 
-            tempTable[0][i] = state->viewerState->adjustmentTable[0][dynIndex];
-            tempTable[1][i] = state->viewerState->adjustmentTable[1][dynIndex];
-            tempTable[2][i] = state->viewerState->adjustmentTable[2][dynIndex];
+            tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
+            tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
+            tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
         }
 
         for(i = 0; i < 256; i++) {
-            state->viewerState->adjustmentTable[0][i] = tempTable[0][i];
-            state->viewerState->adjustmentTable[1][i] = tempTable[1][i];
-            state->viewerState->adjustmentTable[2][i] = tempTable[2][i];
+            state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
+            state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
+            state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
         }
 
         doAdjust = TRUE;
     }
 
-    state->viewerState->adjustmentOn = doAdjust;
+    state->viewerState->datasetAdjustmentOn = doAdjust;
 }
 
 static void UI_helpShowAbout() {

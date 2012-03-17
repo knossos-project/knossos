@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -218,7 +218,7 @@ static int32_t initViewer(struct stateInfo *state) {
 
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
-        if(loadColorTable("stdOverlay.lut",
+        if(loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
                           GL_RGBA,
                           state) == FALSE) {
@@ -456,7 +456,7 @@ static uint32_t dcSliceExtract(Byte *datacube,
 
     datacube += dcOffset;
 
-    if(state->viewerState->adjustmentOn) {
+    if(state->viewerState->datasetAdjustmentOn) {
         /* Texture type GL_RGB and we need to adjust coloring */
         sliceExtract_adjust(datacube, slice, viewPort, state);
     }
@@ -600,9 +600,9 @@ static uint32_t sliceExtract_adjust(Byte *datacube,
     switch(viewPort->type) {
 		case SLICE_XY:
             for(i = 0; i < state->cubeSliceArea; i++) {
-                slice[0] = state->viewerState->adjustmentTable[0][*datacube];
-                slice[1] = state->viewerState->adjustmentTable[1][*datacube];
-                slice[2] = state->viewerState->adjustmentTable[2][*datacube];
+                slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
 
                 datacube++;
                 slice += 3;
@@ -613,9 +613,9 @@ static uint32_t sliceExtract_adjust(Byte *datacube,
         case SLICE_XZ:
             for(j = 0; j < state->cubeEdgeLength; j++) {
                 for(i = 0; i < state->cubeEdgeLength; i++) {
-                    slice[0] = state->viewerState->adjustmentTable[0][*datacube];
-                    slice[1] = state->viewerState->adjustmentTable[1][*datacube];
-                    slice[2] = state->viewerState->adjustmentTable[2][*datacube];
+                    slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                    slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                    slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
 
                     datacube++;
                     slice += 3;
@@ -630,9 +630,9 @@ static uint32_t sliceExtract_adjust(Byte *datacube,
 
         case SLICE_YZ:
             for(i = 0; i < state->cubeSliceArea; i++) {
-                slice[0] = state->viewerState->adjustmentTable[0][*datacube];
-                slice[1] = state->viewerState->adjustmentTable[1][*datacube];
-                slice[2] = state->viewerState->adjustmentTable[2][*datacube];
+                slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
 
                 datacube += state->cubeEdgeLength;
                 slice += 3;
@@ -1639,7 +1639,42 @@ int32_t refreshViewports(struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t loadColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state) {
+int32_t loadTreeColorTable(const char *path, float *table, struct stateInfo *state) {
+    xmlDocPtr xmlDocument;
+    xmlNodePtr currentXMLNode, currentColor;
+
+    LOG("Reading Tree LUT at %s\n", path);
+    xmlDocument = xmlParseFile(path);
+    if(xmlDocument == NULL) {
+        LOG("Unable to open Tree LUT at %s.", path);
+        return FALSE;
+    }
+    currentXMLNode = xmlDocGetRootElement(xmlDocument);
+    if(currentXMLNode == NULL) {
+        LOG("Empty LUT. Not loading.");
+        xmlFreeDoc(xmlDocument);
+        return FALSE;
+    }
+    if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"TreeColor_Lookup_Table") == FALSE) {
+        LOG("Root element %s in file %s unrecognized. Not loading.",
+            currentXMLNode->name,
+            state->viewerState->ag->settingsFile);
+        return FALSE;
+    }
+
+    currentColor = currentXMLNode->xmlChildrenNode->next; //skip next node, because every second node is text
+    for(int i = 0; i < state->viewerState->treeLutSize; i+= 3) {
+        table[i]   = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "r"));
+        table[i+1] = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "g"));
+        table[i+2] = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "b"));
+        currentColor = currentColor->next->next;
+    }
+
+    xmlFreeDoc(xmlDocument);
+    return TRUE;
+}
+
+int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[1024];
     int32_t readBytes = 0, i = 0;
@@ -1648,11 +1683,11 @@ int32_t loadColorTable(const char *path, GLuint *table, int32_t type, struct sta
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
 
-    LOG("Reading LUT at %s\n", path);
+    LOG("Reading Dataset LUT at %s\n", path);
 
     lutFile = fopen(path, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open LUT at %s.", path);
+        LOG("Unable to open Dataset LUT at %s.", path);
         return FALSE;
     }
 
@@ -1667,7 +1702,7 @@ int32_t loadColorTable(const char *path, GLuint *table, int32_t type, struct sta
 
     readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d / %d bytes from LUT file %s.", readBytes, size, path);
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
         if(fclose(lutFile) != 0) {
             LOG("Additionally, an error occured closing the file.");
         }

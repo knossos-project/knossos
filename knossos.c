@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -181,7 +181,6 @@ static int32_t tempConfigDefaults() {
     }
 
     /* General stuff */
-    tempConfig->boergens = FALSE;
     tempConfig->boundary.x = 1000;
     tempConfig->boundary.y = 1000;
     tempConfig->boundary.z = 1000;
@@ -202,8 +201,9 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
     tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
     tempConfig->viewerState->overlayVisible = FALSE;
-    tempConfig->viewerState->colortableOn = FALSE;
-    tempConfig->viewerState->adjustmentOn = FALSE;
+    tempConfig->viewerState->datasetColortableOn = FALSE;
+    tempConfig->viewerState->datasetAdjustmentOn = FALSE;
+    tempConfig->viewerState->treeColortableOn = FALSE;
     tempConfig->viewerState->viewerReady = FALSE;
     tempConfig->viewerState->drawVPCrosshairs = TRUE;
     tempConfig->viewerState->showVPLabels = FALSE;
@@ -399,7 +399,7 @@ static int32_t configFromCli(struct stateInfo *state, int argCount, char *argume
                         tempConfig->M = (int32_t)atoi(rval);
                         break;
                     case 10:
-                        loadColorTable(rval, &(state->viewerState->colortable[0][0]), GL_RGB, state);
+                        loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
                         break;
                     case 11:
                         readConfigFile(rval, state);
@@ -427,7 +427,6 @@ static int32_t initStates() {
     uint32_t i;
 
     /* General stuff */
-    state->boergens = tempConfig->boergens;
     strncpy(state->path, tempConfig->path, 1024);
     strncpy(state->name, tempConfig->name, 1024);
     state->boundary.x = tempConfig->boundary.x;
@@ -451,8 +450,9 @@ static int32_t initStates() {
     state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
     state->viewerState->vpKeyDirection[VIEWPORT_YZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ];
     state->viewerState->overlayVisible = tempConfig->viewerState->overlayVisible;
-    state->viewerState->colortableOn = tempConfig->viewerState->colortableOn;
-    state->viewerState->adjustmentOn = tempConfig->viewerState->adjustmentOn;
+    state->viewerState->datasetColortableOn = tempConfig->viewerState->datasetColortableOn;
+    state->viewerState->datasetAdjustmentOn = tempConfig->viewerState->datasetAdjustmentOn;
+    state->viewerState->treeColortableOn = tempConfig->viewerState->treeColortableOn;
     state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
     state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
     state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
@@ -476,7 +476,10 @@ static int32_t initStates() {
     state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
     state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
     state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
-    loadNeutralLUT(&(state->viewerState->neutralTable[0][0]));
+    loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
+    loadNeutralTreeLUT(&(state->viewerState->neutralTreeTable[0]));
+    state->viewerState->treeLutSize = 24;
+    state->viewerState->treeLutSet = FALSE;
 
     state->viewerState->viewPorts = malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(state->viewerState->viewPorts == NULL)
@@ -604,7 +607,7 @@ static int32_t initStates() {
 }
 
 int32_t printConfigValues(struct stateInfo *state) {
-    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
+    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\n",
            state->path,
            state->name,
            state->boundary.x,
@@ -618,8 +621,7 @@ int32_t printConfigValues(struct stateInfo *state) {
            state->cubeSliceArea,
            state->M,
            state->cubeSetElements,
-           state->cubeSetBytes,
-           state->boergens);
+           state->cubeSetBytes);
 
     return TRUE;
 }
@@ -851,15 +853,32 @@ int32_t readConfigFile(char *path, struct stateInfo *state) {
 
 }
 
-int32_t loadNeutralLUT(GLuint *lut) {
+int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
     int32_t i;
 
     for(i = 0; i < 256; i++) {
-        lut[0 * 256 + i] = i;
-        lut[1 * 256 + i] = i;
-        lut[2 * 256 + i] = i;
+        datasetLut[0 * 256 + i] = i;
+        datasetLut[1 * 256 + i] = i;
+        datasetLut[2 * 256 + i] = i;
     }
 
+    return TRUE;
+}
+
+int32_t loadNeutralTreeLUT(float *treeLut) {
+    float tempTable[24] = {
+        1., 0, 0,
+        0, 1., 0,
+        0, 0, 1.,
+        1., 1., 0,
+        0, 1., 1.,
+        0.5, 0.5, 0,
+        0.5, 0, 0.5,
+        1., 0.5, 0
+        };
+    for(int i = 0; i < 24; i++) {
+        treeLut[i] = tempTable[i];
+    }
     return TRUE;
 }
 
