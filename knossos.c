@@ -866,6 +866,7 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 int32_t loadNeutralTreeLUT(float *treeLut) {
+    int i;
     float tempTable[24] = {
         0.25, 0, 0,
         0, 1., 0,
@@ -876,7 +877,7 @@ int32_t loadNeutralTreeLUT(float *treeLut) {
         0.5, 0, 0.5,
         1., 0.5, 0
         };
-    for(int i = 0; i < 24; i++) {
+    for(i = 0; i < 24; i++) {
         treeLut[i] = tempTable[i];
     }
     return TRUE;
