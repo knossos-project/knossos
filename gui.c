@@ -1012,7 +1012,7 @@ void createViewPortPrefWin() {
         AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
         AG_BoxSetDepth(box2, 3);
         AG_CheckboxNewInt(box2, 0, "Light effects", &state->viewerState->lightOnOff);
-        AG_CheckboxNewFn(box2, 0, "Don't Highlight Active Tree", UI_setHighlightActiveTree, NULL);
+        AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
         AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
 
         box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
@@ -3419,8 +3419,8 @@ void UI_pasteClipboardCoordinates() {
 
 static Coordinate *parseRawCoordinateString(char *string) {
     Coordinate *extractedCoords = NULL;
-    char str[strlen(string)];
-    strcpy(str, string);
+    char coordStr[strlen(string)];
+    strcpy(coordStr, string);
     char delims[] = "[]()./,; -";
     char* result = NULL;
     char* coords[3];
@@ -3431,11 +3431,11 @@ static Coordinate *parseRawCoordinateString(char *string) {
         _Exit(FALSE);
     }
 
-    result = strtok(str, delims);
-    while( result != NULL ) {
+    result = strtok(coordStr, delims);
+    while(result != NULL && i < 4) {
         coords[i] = malloc(strlen(result)+1);
         strcpy(coords[i], result);
-        result = strtok( NULL, delims );
+        result = strtok(NULL, delims);
         ++i;
     }
 
