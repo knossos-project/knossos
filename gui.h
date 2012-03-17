@@ -2,7 +2,7 @@
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2012
- *  Max-Planck-Gesellschaft zur Förderung der Wissenschaften e.V.
+ *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 of
@@ -27,7 +27,8 @@ void setGUIcolors();
 /* general callbacks */
 void OkfileDlgOpenSkel(AG_Event *event);
 void OkfileDlgSaveAsSkel(AG_Event *event);
-void OkfileDlgLoadLUT(AG_Event *event);
+void OkfileDlgLoadDatasetLUT(AG_Event *event);
+void OkfileDlgLoadTreeLUT(AG_Event *event);
 void OkfileDlgOpenPrefs(AG_Event *event);
 void OkfileDlgSavePrefsAs(AG_Event *event);
 static void CancelFileDlg(AG_Event *event);
@@ -88,7 +89,8 @@ static void createSaveAsFileDlgWin(struct stateInfo *state);
  void createCurrPosWdgt(AG_Window *parent);
  void createSkeletonVpToolsWdgt(AG_Window *parent);
  void createActNodeWdgt(struct stateInfo *state, AG_Widget *parent);
-static void colorAdjustmentsChanged();
+static void datasetColorAdjustmentsChanged();
+static void treeColorAdjustmentsChanged();
 
 static void createOpenCustomPrefsDlgWin();
 static void createSaveCustomPrefsAsDlgWin();
