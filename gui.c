@@ -1904,16 +1904,22 @@ void UI_saveSkeleton(int32_t increment) {
 }
 
 void WRAP_saveSkeleton() {
-    if(saveSkeleton() == -1) {
+    int32_t r = saveSkeleton();
+    if(r == -1) {
         AG_TextError("The skeleton was not saved successfully.\n"
                      "Check disk space and access rights.\n"
                      "Attempted to write to: %s", state->skeletonState->skeletonFile);
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
+    else if (r == 0) {
+        AG_TextError("There is no skeleton to save. Abort.");
+        LOG("No skeleton to save.");
+    }
     else {
         updateTitlebar(TRUE);
         LOG("Successfully saved to %s", state->skeletonState->skeletonFile);
         state->skeletonState->unsavedChanges = FALSE;
+        addRecentFile(state->skeletonState->skeletonFile, FALSE);
     }
 }
 
@@ -2059,10 +2065,9 @@ static void drawSkelViewport(AG_Event *event) {
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     uint32_t i = 0;
 
-    /* calculate new size of VP windows.
-    Enlarging win again does not work properly TDitem */
+    // calculate new size of VP windows.
 
-    /* find out whether we're x or y limited with our window */
+    // find out whether we're x or y limited with our window
     if(newWinLenX <= newWinLenY) {
         for(i = 0; i < state->viewerState->numberViewPorts; i++)
             state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 50;

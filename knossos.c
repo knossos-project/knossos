@@ -181,6 +181,7 @@ static int32_t tempConfigDefaults() {
     }
 
     /* General stuff */
+    tempConfig->boergens = FALSE;
     tempConfig->boundary.x = 1000;
     tempConfig->boundary.y = 1000;
     tempConfig->boundary.z = 1000;
@@ -427,6 +428,7 @@ static int32_t initStates() {
     uint32_t i;
 
     /* General stuff */
+    state->boergens = tempConfig->boergens;
     strncpy(state->path, tempConfig->path, 1024);
     strncpy(state->name, tempConfig->name, 1024);
     state->boundary.x = tempConfig->boundary.x;
@@ -607,7 +609,7 @@ static int32_t initStates() {
 }
 
 int32_t printConfigValues(struct stateInfo *state) {
-    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\n",
+    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
            state->path,
            state->name,
            state->boundary.x,
@@ -621,7 +623,8 @@ int32_t printConfigValues(struct stateInfo *state) {
            state->cubeSliceArea,
            state->M,
            state->cubeSetElements,
-           state->cubeSetBytes);
+           state->cubeSetBytes;
+           state->boergens);
 
     return TRUE;
 }

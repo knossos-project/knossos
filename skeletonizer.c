@@ -1060,8 +1060,7 @@ int32_t saveSkeleton() {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        LOG("No skeleton to save.");
-        return;
+        return 0; //No Skeleton to save
     }
 
     while(currentTree) {
@@ -1187,7 +1186,6 @@ int32_t saveSkeleton() {
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
 
     xmlFreeDoc(xmlDocument);
-    addRecentFile(state->skeletonState->skeletonFile, FALSE);
     return r;
 }
 
