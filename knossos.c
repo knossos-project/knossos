@@ -623,7 +623,7 @@ int32_t printConfigValues(struct stateInfo *state) {
            state->cubeSliceArea,
            state->M,
            state->cubeSetElements,
-           state->cubeSetBytes;
+           state->cubeSetBytes,
            state->boergens);
 
     return TRUE;
