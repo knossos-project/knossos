@@ -2416,7 +2416,7 @@ static void UI_mergeTreesBtnPressed() {
 
 static void UI_renderModelRadioModified() {
 
-    /* true, if lines and points is disabled */
+    /* true if lines and points is disabled */
     if(state->viewerState->ag->radioRenderingModel) {
         state->skeletonState->displayMode &= ~DSP_LINES_POINTS;
     }

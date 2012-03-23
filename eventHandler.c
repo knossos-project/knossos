@@ -357,6 +357,7 @@ static int32_t checkForViewPortWdgt(AG_Widget *wdgt) {
 
 static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
     int32_t clickedNode;
+    struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
     /* these variables store the relative mouse position inside the VP
@@ -381,18 +382,29 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
     }
     */
 
-    clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
+    //new active node selected
+    if(SDL_GetModState() & KMOD_SHIFT) {
+        //if lines and points activated, find nearest node
+        if (!(state->viewerState->ag->radioRenderingModel)) {
+            clickedCoordinate =
+                    getCoordinateFromOrthogonalClick(ORIGINAL_MAG_COORDINATES,
+                                                     event,
+                                                     VPfound);
+            newActiveNode = findNearbyNode(NULL, *clickedCoordinate, state);
+            setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+            return TRUE;
+        }
+        else {
+            clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
                                                      1,
                                                      state);
-    if(clickedNode) {
-        clickedNode -= 50;
-
-        if(SDL_GetModState() & KMOD_SHIFT) {
-            setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
-
-            return TRUE;
+            if(clickedNode) {
+                clickedNode -= 50;
+                setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
+                return TRUE;
+            }
         }
     }
 
