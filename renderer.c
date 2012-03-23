@@ -2142,7 +2142,7 @@ uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP,
     }
 
     state->viewerState->selectModeFlag = FALSE;
-    if(ptrName) return *ptrName;
+    if(ptrName) return *ptrName - 50;
     else return FALSE;
 }
 

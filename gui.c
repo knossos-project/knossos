@@ -80,7 +80,7 @@ int32_t initGUI() {
         SDL_WM_SetIcon(icon, NULL);
     }
 
-    if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == -1) {
+    if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) {
         LOG("Error setting key repeat parameters.");
     }
 
@@ -1904,14 +1904,14 @@ void UI_saveSkeleton(int32_t increment) {
 }
 
 void WRAP_saveSkeleton() {
-    int32_t r = saveSkeleton();
-    if(r == -1) {
+    int32_t saved = saveSkeleton();
+    if(saved == FAIL) {
         AG_TextError("The skeleton was not saved successfully.\n"
                      "Check disk space and access rights.\n"
                      "Attempted to write to: %s", state->skeletonState->skeletonFile);
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
-    else if (r == 0) {
+    else if (saved == FALSE) {
         AG_TextError("There is no skeleton to save. Abort.");
         LOG("No skeleton to save.");
     }
@@ -2510,8 +2510,7 @@ static void UI_pushBranchBtnPressed() {
     SDL_Event ev;
 
     ev.type = SDL_USEREVENT;
-    LOG("pushing something.");
-    if(SDL_PushEvent(&ev) == -1) {
+    if(SDL_PushEvent(&ev) == FAIL) {
         LOG("pushevent returned -1");
     }
 

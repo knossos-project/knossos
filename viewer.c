@@ -195,7 +195,7 @@ static int32_t initViewer(struct stateInfo *state) {
         return FALSE;
     }
 
-    if(SDLNet_Init() == -1) {
+    if(SDLNet_Init() == FAIL) {
         LOG("Error initializing SDLNet: %s.", SDLNet_GetError());
         return FALSE;
     }
@@ -349,7 +349,7 @@ int32_t updateViewerState(struct stateInfo *state) {
     if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
         state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
 
-        if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == -1)
+        if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL)
             LOG("Error setting key repeat parameters.");
     }
 
@@ -665,9 +665,9 @@ static int32_t vpListAddElement(
     newElement = malloc(sizeof(struct vpListElement));
     if(newElement == NULL) {
         LOG("Out of memory\n");
-        /* Do not return FALSE here. That's a bug. -1 is hackish... Is there a
+        /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a
          * better way? */
-        return -1;
+        return FAIL;
     }
 
     newElement->viewPort = viewPort;
@@ -727,7 +727,7 @@ static int32_t vpListDelElement(struct vpList *list, struct vpListElement *eleme
     if(backlogDel(element->backlog) == FALSE) {
         LOG("Error deleting backlog at %p of vpList element at %p.",
                element->backlog, element);
-        return -1;
+        return FAIL;
     }
     free(element);
 
@@ -794,8 +794,8 @@ static int32_t backlogAddElement(struct vpBacklog *backlog,
     newElement = malloc(sizeof(struct vpBacklogElement));
     if(newElement == NULL) {
         LOG("Out of memory.");
-        /* Do not return FALSE here. That's a bug. -1 is hackish... Is there a better way? */
-        return -1;
+        /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
+        return FAIL;
     }
 
     newElement->slice = slice;

@@ -375,7 +375,7 @@ static int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube) {
     newElement = malloc(sizeof(CubeSlot));
     if(newElement == NULL) {
         printf("Out of memory\n");
-        return -1;
+        return FAIL;
     }
 
     newElement->cube = datacube;

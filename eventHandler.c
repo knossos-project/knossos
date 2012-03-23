@@ -401,7 +401,6 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                                                      1,
                                                      state);
             if(clickedNode) {
-                clickedNode -= 50;
                 setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
                 return TRUE;
             }
@@ -1050,12 +1049,12 @@ static uint32_t handleMouseMotionMiddleHold(SDL_Event event, int32_t VPfound) {
 
 
 static uint32_t handleKeyboard(SDL_Event event) {
-
     /* This is a workaround for agars behavior of processing / labeling
     events. Without it, input into a textbox would still trigger global
     shortcut actions.*/
-    if(state->viewerState->ag->agInputWdgtFocused)
+    if(state->viewerState->ag->agInputWdgtFocused) {
         return TRUE;
+    }
     color4F treeCol;
 
     switch(event.key.keysym.sym) {
@@ -1063,7 +1062,6 @@ static uint32_t handleKeyboard(SDL_Event event) {
     //cursor key ... pressed. behaviour of an enduring key press can be
     //specified further with
     //int SDL_EnableKeyRepeat  (int delay, int interval);
-
     case SDLK_LEFT:
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
@@ -1289,6 +1287,17 @@ static uint32_t handleKeyboard(SDL_Event event) {
             state->skeletonState->viewChanged = TRUE;
         }
 
+        break;
+    case SDLK_F4:
+        if(SDL_GetModState() & KMOD_ALT) {
+            if(state->skeletonState->unsavedChanges) {
+                yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
+            }
+            else {
+                quitKnossos();
+            }
+            break;
+        }
         break;
     case SDLK_s:
         if(SDL_GetModState() & KMOD_CTRL) {

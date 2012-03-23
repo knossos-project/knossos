@@ -40,6 +40,7 @@
 
 #define TRUE    1
 #define FALSE   0
+#define FAIL    -1
 
 #define MIN_N   1
 

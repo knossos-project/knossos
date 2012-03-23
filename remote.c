@@ -336,7 +336,7 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
 
             moveEvent.user.data1 = sendMove;
 
-            while(SDL_PushEvent(&moveEvent) == -1) {
+            while(SDL_PushEvent(&moveEvent) == FAIL) {
                 printf("get error: %s\n", SDL_GetError());
                 SDL_Delay(10);
             }

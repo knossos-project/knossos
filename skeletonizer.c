@@ -1060,7 +1060,7 @@ int32_t saveSkeleton() {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        return 0; //No Skeleton to save
+        return FALSE; //No Skeleton to save
     }
 
     while(currentTree) {

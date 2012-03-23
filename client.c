@@ -131,7 +131,7 @@ static int32_t clientRun(struct stateInfo *state) {
          *
          */
 
-        if(SDL_PushEvent(&autoSaveOffEvent) == -1)
+        if(SDL_PushEvent(&autoSaveOffEvent) == FAIL)
             LOG("SDL_PushEvent returned -1");
 
         /*
@@ -727,7 +727,7 @@ int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int3
     if(len == 0) {
         /* This should never happen but would lead to an infinite loop. */
         LOG("Invalid message length from peer.");
-        return -1;
+        return FAIL;
     }
 
     if(buffer->length < len) {
@@ -741,7 +741,7 @@ int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int3
         printf("\n");
         */
 
-        return 0;
+        return FALSE;
     }
 
     while(*fmt) {
@@ -783,7 +783,7 @@ int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int3
 
 overflow:
     LOG("Overflow in client.c, parseInBufferByFmt(). Tell the developers to fix the bug.");
-    return -1;
+    return FAIL;
 
 }
 
