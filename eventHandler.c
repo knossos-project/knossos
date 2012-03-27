@@ -384,15 +384,20 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
 
     //new active node selected
     if(SDL_GetModState() & KMOD_SHIFT) {
-        //if lines and points activated, find nearest node
-        if (!(state->viewerState->ag->radioRenderingModel)) {
-            clickedCoordinate =
+        clickedCoordinate =
                     getCoordinateFromOrthogonalClick(ORIGINAL_MAG_COORDINATES,
                                                      event,
                                                      VPfound);
-            newActiveNode = findNearbyNode(NULL, *clickedCoordinate, state);
-            setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-            return TRUE;
+        if(clickedCoordinate == NULL) {
+            return FALSE;
+        }
+        //if lines and points activated, find nearest node
+        if (state->skeletonState->displayMode & DSP_LINES_POINTS) {
+            newActiveNode = findNodeInRadius(*clickedCoordinate, state);
+            if(newActiveNode != NULL) {
+                setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                return TRUE;
+            }
         }
         else {
             clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
@@ -404,7 +409,15 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                 setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
                 return TRUE;
             }
+            else {
+                newActiveNode = findNodeInRadius(*clickedCoordinate, state);
+                if(newActiveNode != NULL) {
+                    setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                    return TRUE;
+                }
+            }
         }
+        return FALSE;
     }
 
     /* check in which type of VP the user clicked and perform appropriate operation */

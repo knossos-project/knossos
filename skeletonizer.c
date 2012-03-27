@@ -1710,7 +1710,7 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
     struct nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
     struct treeListElement *currentTree = NULL;
     floatCoordinate distanceVector;
-    float smallestDistance = 10000000000.; //:-(
+    float smallestDistance = 0;
 
     /*
      *  If available, search for a node within nearbyTree first.
@@ -1723,8 +1723,8 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
             distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
             distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
             distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
-
-            if(euclidicNorm(&distanceVector) < smallestDistance) {
+            //set nearest distance to distance to first node found, then to distance of any nearer node found.
+            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
                 smallestDistance = euclidicNorm(&distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
@@ -1741,6 +1741,43 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
      */
 
     currentTree = state->skeletonState->firstTree;
+    smallestDistance = 0;
+    while(currentTree) {
+        currentNode = currentTree->firstNode;
+
+        while(currentNode) {
+            //We make the nearest node the next active node
+            distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
+            distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
+            distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
+
+            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(&distanceVector);
+                nodeWithCurrentlySmallestDistance = currentNode;
+            }
+
+            currentNode = currentNode->next;
+        }
+
+       currentTree = currentTree->next;
+    }
+
+    if(nodeWithCurrentlySmallestDistance) {
+        return nodeWithCurrentlySmallestDistance;
+    }
+
+    return NULL;
+}
+
+struct nodeListElement *findNodeInRadius(Coordinate searchPosition,
+                                         struct stateInfo *state) {
+    struct nodeListElement *currentNode = NULL;
+    struct nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
+    struct treeListElement *currentTree = NULL;
+    floatCoordinate distanceVector;
+    float smallestDistance = CATCH_RADIUS;
+
+    currentTree = state->skeletonState->firstTree;
     while(currentTree) {
         currentNode = currentTree->firstNode;
 
@@ -1754,19 +1791,17 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
                 smallestDistance = euclidicNorm(&distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
-
             currentNode = currentNode->next;
         }
-
        currentTree = currentTree->next;
     }
 
-    if(nodeWithCurrentlySmallestDistance)
+    if(nodeWithCurrentlySmallestDistance) {
         return nodeWithCurrentlySmallestDistance;
-    else
-        return NULL;
-}
+    }
 
+    return NULL;
+}
 uint32_t delActiveTree(struct stateInfo *state) {
     if(state->skeletonState->activeTree)
         delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, state);
