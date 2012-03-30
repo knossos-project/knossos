@@ -1929,11 +1929,11 @@ void OkfileDlgLoadTreeLUT(AG_Event *event) {
 
     cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, filename, 2048);
     state->viewerState->treeLutSet = TRUE;
-    if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), state) != TRUE) {
+    if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), GL_RGB, state) != TRUE) {
         LOG("Error loading Tree LUT.\n");
         memcpy(&(state->viewerState->treeColortable[0]),
                &(state->viewerState->neutralTreeTable[0]),
-                 state->viewerState->treeLutSize);
+                 TREELUT_SIZE);
         state->viewerState->treeLutSet = FALSE;
     }
 
@@ -2538,22 +2538,23 @@ static void treeColorAdjustmentsChanged() {
         if(state->viewerState->treeLutSet) {
             memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->treeColortable,
-            state->viewerState->treeLutSize * sizeof(float));
+            TREELUT_SIZE * sizeof(float));
             updateTreeColors();
         }
         else {
+            LOG("No LUT selected yet.");
             memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->neutralTreeTable,
-            state->viewerState->treeLutSize * sizeof(float));
+            TREELUT_SIZE * sizeof(float));
         }
     }
     else {
         if(memcmp(state->viewerState->treeAdjustmentTable,
             state->viewerState->neutralTreeTable,
-            state->viewerState->treeLutSize * sizeof(float)) != 0) {
+            TREELUT_SIZE * sizeof(float)) != 0) {
             memcpy(state->viewerState->treeAdjustmentTable,
                 state->viewerState->neutralTreeTable,
-                state->viewerState->treeLutSize * sizeof(float));
+                TREELUT_SIZE * sizeof(float));
                 updateTreeColors();
         }
     }

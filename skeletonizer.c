@@ -185,9 +185,9 @@ uint32_t updateSkeletonState(struct stateInfo *state) {
 int32_t updateTreeColors() {
     struct treeListElement *tree = state->skeletonState->firstTree;
     while(tree) {
-        uint32_t index = state->viewerState->treeLutSize - 3;
-        if(tree->treeID % (state->viewerState->treeLutSize/3) != 0) {
-            index = (tree->treeID % (state->viewerState->treeLutSize/3) - 1) * 3;
+        uint32_t index = TREELUT_SIZE - 3;
+        if(tree->treeID % (TREELUT_SIZE/3) != 0) {
+            index = (tree->treeID % (TREELUT_SIZE/3) - 1) * 3;
         }
         tree->color.r = state->viewerState->treeAdjustmentTable[index];
         tree->color.g = state->viewerState->treeAdjustmentTable[index + 1];
@@ -667,9 +667,9 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
 
     /* calling function sets values < 0 when no color was specified */
     if(color.r < 0 && state->viewerState->treeColortableOn) {//Set a tree color
-        uint32_t index = state->viewerState->treeLutSize - 3;
-        if(state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) != 0) {
-            index = (state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) - 1) * 3;
+        uint32_t index = TREELUT_SIZE - 3;
+        if(state->skeletonState->treeElements % (TREELUT_SIZE/3) != 0) {
+            index = (state->skeletonState->treeElements % (TREELUT_SIZE/3) - 1) * 3;
         }
         newElement->color.r = state->viewerState->treeAdjustmentTable[index];
         newElement->color.g = state->viewerState->treeAdjustmentTable[index+1];
@@ -677,9 +677,9 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
         newElement->color.a = 1.;
     }
     else if(color.r < 0 && state->viewerState->treeColortableOn == FALSE) {
-        uint32_t index = state->viewerState->treeLutSize - 3;
-        if(state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) != 0) {
-            index = (state->skeletonState->treeElements % (state->viewerState->treeLutSize/3) - 1) * 3;
+        uint32_t index = TREELUT_SIZE/3;
+        if(state->skeletonState->treeElements % (TREELUT_SIZE/3) != 0) {
+            index = (state->skeletonState->treeElements % (TREELUT_SIZE/3) - 1) * 3;
         }
         newElement->color.r = state->viewerState->neutralTreeTable[index];
         newElement->color.g = state->viewerState->neutralTreeTable[index+1];
@@ -689,14 +689,6 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     else {
         newElement->color = color;
     }
-/* old buggy way of color assignment */
-/*
-        newElement->color.r = 0.5 / (float)(newElement->treeID % 5);
-        newElement->color.g = 1. / (float)(newElement->treeID % 3);
-        newElement->color.b = 1. / (float)(newElement->treeID % 4);
-        newElement->color.a = 1.;
-*/
-
     //Insert the new tree at the beginning of the tree list
     newElement->next = state->skeletonState->firstTree;
     newElement->previous = NULL;

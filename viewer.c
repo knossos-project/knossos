@@ -1639,38 +1639,49 @@ int32_t refreshViewports(struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t loadTreeColorTable(const char *path, float *table, struct stateInfo *state) {
-    xmlDocPtr xmlDocument;
-    xmlNodePtr currentXMLNode, currentColor;
+int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state) {
+    FILE *lutFile = NULL;
+    uint8_t lutBuffer[1024];
+    int32_t readBytes = 0, i = 0;
+    uint32_t size = TREELUT_SIZE;
 
+    // The b is for compatibility with non-UNIX systems and denotes a
+    // binary file.
     LOG("Reading Tree LUT at %s\n", path);
-    xmlDocument = xmlParseFile(path);
-    if(xmlDocument == NULL) {
+
+    lutFile = fopen(path, "rb");
+    if(lutFile == NULL) {
         LOG("Unable to open Tree LUT at %s.", path);
         return FALSE;
     }
-    currentXMLNode = xmlDocGetRootElement(xmlDocument);
-    if(currentXMLNode == NULL) {
-        LOG("Empty LUT. Not loading.");
-        xmlFreeDoc(xmlDocument);
-        return FALSE;
-    }
-    if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"TreeColor_Lookup_Table") == FALSE) {
-        LOG("Root element %s in file %s unrecognized. Not loading.",
-            currentXMLNode->name,
-            state->viewerState->ag->settingsFile);
+
+    if(type != GL_RGB) {
+        AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type);
+        LOG("Chosen color was of type %x, but expected GL_RGB", type);
         return FALSE;
     }
 
-    currentColor = currentXMLNode->xmlChildrenNode->next; //skip next node, because every second node is text
-    for(int i = 0; i < state->viewerState->treeLutSize; i+= 3) {
-        table[i]   = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "r"));
-        table[i+1] = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "g"));
-        table[i+2] = atof((char*) xmlGetProp(currentColor, (const xmlChar *) "b"));
-        currentColor = currentColor->next->next;
+    readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
+    if(readBytes != size) {
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
+        if(fclose(lutFile) != 0) {
+            LOG("Additionally, an error occured closing the file.");
+        }
+        return FALSE;
     }
 
-    xmlFreeDoc(xmlDocument);
+    if(fclose(lutFile) != 0) {
+        LOG("Error closing LUT file.");
+        return FALSE;
+    }
+
+    //Get RGB-Values in percent
+    for(i = 0; i < TREELUT_SIZE; i+=3) {
+        table[i]   = lutBuffer[i]/MAX_COLORVAL;
+        table[i+1] = lutBuffer[i + 1]/MAX_COLORVAL;
+        table[i+2] = lutBuffer[i + 2]/MAX_COLORVAL;
+    }
+
     return TRUE;
 }
 

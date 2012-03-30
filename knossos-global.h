@@ -111,13 +111,14 @@
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_SELECT   2
 #define SKELETONIZER      2
+#define MAX_COLORVAL      255.
 
 /*
  *  For the GUI.
  */
 
 #define MAX_RECENT_FILES 10
-
+#define TREELUT_SIZE     768
 /*
  *	For the remote.
  */
@@ -811,12 +812,11 @@ struct viewerState {
     int datasetAdjustmentOn;
     GLuint neutralDatasetTable[3][256];
 
-    uint32_t treeLutSize;
     int treeLutSet;
     int treeColortableOn;
-    float treeColortable[24];
-    float treeAdjustmentTable[24];
-    float neutralTreeTable[24];
+    float treeColortable[TREELUT_SIZE];
+    float treeAdjustmentTable[TREELUT_SIZE];
+    float neutralTreeTable[TREELUT_SIZE];
 
 
     /*
@@ -1217,7 +1217,7 @@ int32_t newTrajectory(struct stateInfo *state, char *trajName, char *trajectory)
  */
 
 int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state);
-int32_t loadTreeColorTable(const char *path, float *table, struct stateInfo *state);
+int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state);
 int32_t updateTreeColors();
 int32_t updatePosition(struct stateInfo *state, int32_t serverMovement);
 
