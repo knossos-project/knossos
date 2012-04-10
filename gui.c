@@ -985,7 +985,6 @@ void createDataSetStatsWin(struct stateInfo *state) {
 void createViewPortPrefWin() {
     AG_Box *box1, *box2, *box3;
     AG_Numerical *numerical;
-    AG_Button *button;
     AG_Notebook *tabs;
     AG_NotebookTab *tab;
     AG_Radio *radio;
@@ -1113,14 +1112,14 @@ void createViewPortPrefWin() {
                 {
                     checkbox = AG_CheckboxNewInt(box3, 0, "Use own Dataset colors: ", &state->viewerState->datasetColortableOn);
                     AG_SetEvent(checkbox, "checkbox-changed", datasetColorAdjustmentsChanged, NULL);
-                    button = AG_ButtonNewFn(box3, AG_BOX_HFILL, "Load...", createLoadDatasetImgJTableWin, NULL);
+                    AG_ButtonNewFn(box3, AG_BOX_HFILL, "Load...", createLoadDatasetImgJTableWin, NULL);
                 }
 
                 box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
                 {
                     checkbox = AG_CheckboxNewInt(box3, 0, "Use own Tree colors: ", &state->viewerState->treeColortableOn);
                     AG_SetEvent(checkbox, "checkbox-changed", treeColorAdjustmentsChanged, NULL);
-                    button = AG_ButtonNewFn(box3, 0, "Load...", createLoadTreeImgJTableWin, NULL);
+                    AG_ButtonNewFn(box3, 0, "Load...", createLoadTreeImgJTableWin, NULL);
                 }
             }
 
@@ -1866,8 +1865,8 @@ static void fileSaveAsSkelFile(AG_Event *event) {
         createSaveAsFileDlgWin(state);
     }
     else {
-        AG_TextError("There is no skeleton to save.");
-        LOG("No skeleton to save.");
+        AG_TextWarning("No SaveAs warning", "No skeleton was found. Not saving.");
+        LOG("No skeleton was found. Not saving.");
     }
 }
 
@@ -1926,11 +1925,6 @@ void UI_saveSkeleton(int32_t increment) {
         fclose(saveFile);
         return;
     }
-    //can't auto save without existing skeleton file.
-    else if(increment && !saveFile){
-        LOG("Not auto-saving. No Skeleton file found.");
-        return;
-    }
 
     WRAP_saveSkeleton();
 }
@@ -1944,8 +1938,8 @@ void WRAP_saveSkeleton() {
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
     else if (saved == FALSE) {
-        AG_TextError("There is no skeleton to save.");
-        LOG("No skeleton to save.");
+        AG_TextWarning("No Save warning", "No skeleton was found. Not saving.");
+        LOG("No skeleton was found. Not saving.");
     }
     else {
         updateTitlebar(TRUE);
