@@ -240,7 +240,7 @@ void createMenuBar(struct stateInfo *state) {
 	{
 		AG_MenuAction(menuItem, "Open...", NULL, fileOpenSkelFile, "%p", state);
         AG_MenuNode(menuItem, "Recent Files", NULL);
-		AG_MenuAction(menuItem, "Save (CTRL+s)", NULL, UI_saveSkeleton, "%d", TRUE);
+		AG_MenuAction(menuItem, "Save (CTRL+s)", NULL, UI_saveSkeleton, "\0");
 		AG_MenuAction(menuItem, "Save As...", NULL, fileSaveAsSkelFile, "%p", state);
         AG_MenuSeparator(menuItem);
 		AG_MenuAction(menuItem, "Quit", agIconClose.s, UI_checkQuitKnossos, NULL);
@@ -995,7 +995,7 @@ void createViewPortPrefWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 500, 300);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 300);
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
@@ -1069,89 +1069,99 @@ void createViewPortPrefWin() {
     tab = AG_NotebookAddTab(tabs, "Slice Plane Viewports", AG_BOX_HOMOGENOUS);
     {
         box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        AG_ExpandHoriz(box1);
-
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        AG_ExpandHoriz(box2);
-        AG_LabelNew(box2, 0, "Skeleton Overlay");
-
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-        AG_BoxSetDepth(box2, 3);
-        checkbox = AG_CheckboxNewInt(box2, 0, "Enable Overlay (1)", &state->viewerState->ag->enableOrthoSkelOverlay);
-        {
-            AG_SetEvent(checkbox, "checkbox-changed", UI_enableSliceVPOverlayModified, NULL);
-        }
-        checkbox = AG_CheckboxNewInt(box2, 0, "Highlight Intersections", &state->skeletonState->showIntersections);
-        {
-            AG_SetEvent(checkbox, "checkbox-changed", UI_skeletonChanged, NULL);
-        }
-        numerical = AG_NumericalNewFltR(box2, 0, NULL, "Depth Cutoff: ", &state->viewerState->depthCutOff, 0.51, 32.);
-        {
-            AG_NumericalSetIncrement(numerical, 0.5);
-            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        }
-
-
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        AG_ExpandHoriz(box2);
-        AG_LabelNew(box2, 0, "Voxel Filtering");
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-        AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
-
-        box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             AG_ExpandHoriz(box1);
-        }
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_LabelNew(box2, 0, "Skeleton Overlay");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                checkbox = AG_CheckboxNewInt(box2, 0, "Enable Overlay (1)", &state->viewerState->ag->enableOrthoSkelOverlay);
+                AG_SetEvent(checkbox, "checkbox-changed", UI_enableSliceVPOverlayModified, NULL);
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        {
-            AG_ExpandHoriz(box2);
-            AG_LabelNew(box2, 0, "Color lookup tables");
-            AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-            checkbox = AG_CheckboxNewInt(box2, 0, "Use own Dataset colors", &state->viewerState->datasetColortableOn);
-            {
-                AG_SetEvent(checkbox, "checkbox-changed", datasetColorAdjustmentsChanged, NULL);
-            }
-            checkbox = AG_CheckboxNewInt(box2, 0, "Use own Tree colors", &state->viewerState->treeColortableOn);
-            {
-                AG_SetEvent(checkbox, "checkbox-changed", treeColorAdjustmentsChanged, NULL);
-            }
-            button = AG_ButtonNewFn(box2, 0, "Load Dataset Color Lookup Table", createLoadDatasetImgJTableWin, NULL);
-            {
-                AG_ExpandHoriz(button);
-            }
-            button = AG_ButtonNewFn(box2, 0, "Load Tree Color Lookup Table", createLoadTreeImgJTableWin, NULL);
-            {
-                AG_ExpandHoriz(button);
-            }
-        }
+                checkbox = AG_CheckboxNewInt(box2, 0, "Highlight Intersections", &state->skeletonState->showIntersections);
+                AG_SetEvent(checkbox, "checkbox-changed", UI_skeletonChanged, NULL);
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        {
-            AG_ExpandHoriz(box2);
-            AG_LabelNew(box2, 0, "Dataset Dynamic Range");
-            AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-            numerical = AG_NumericalNewIntR(box2, 0, NULL, "Bias: ", &state->viewerState->luminanceBias, 0, 255);
-            {
-                AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
-                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                numerical = AG_NumericalNewFltR(box2, 0, NULL, "Depth Cutoff: ", &state->viewerState->depthCutOff, 0.51, 32.);
+                {
+                    AG_NumericalSetIncrement(numerical, 0.5);
+                    AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                    AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                }
             }
-            numerical = AG_NumericalNewIntR(box2, 0, NULL, "Range Delta: ", &state->viewerState->luminanceRangeDelta, 0, 255);
+
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
             {
-                AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
-                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                AG_ExpandHoriz(box2);
+                AG_LabelNew(box2, 0, "Voxel Filtering");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
+
             }
+
         }
 
         box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             AG_ExpandHoriz(box1);
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_LabelNew(box2, 0, "Color lookup tables");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
+                {
+                    checkbox = AG_CheckboxNewInt(box3, 0, "Use own Dataset colors: ", &state->viewerState->datasetColortableOn);
+                    AG_SetEvent(checkbox, "checkbox-changed", datasetColorAdjustmentsChanged, NULL);
+                    button = AG_ButtonNewFn(box3, AG_BOX_HFILL, "Load...", createLoadDatasetImgJTableWin, NULL);
+                }
+
+                box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
+                {
+                    checkbox = AG_CheckboxNewInt(box3, 0, "Use own Tree colors: ", &state->viewerState->treeColortableOn);
+                    AG_SetEvent(checkbox, "checkbox-changed", treeColorAdjustmentsChanged, NULL);
+                    button = AG_ButtonNewFn(box3, 0, "Load...", createLoadTreeImgJTableWin, NULL);
+                }
+            }
+
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_LabelNew(box2, 0, "Dataset Dynamic Range");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+
+                box3 = AG_BoxNew(box2, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+                {
+                    AG_ExpandHoriz(box3);
+                    AG_LabelNew(box3, 0, "Bias");
+                    AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceBias, 0, 255);
+                    numerical = AG_NumericalNewIntR(box3, 0, NULL, "", &state->viewerState->luminanceBias, 0, 255);
+                    {
+                        AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
+                        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                    }
+                }
+                box3 = AG_BoxNew(box2, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+                {
+                    AG_ExpandHoriz(box3);
+                    AG_LabelNew(box3, 0, "Range Delta");
+                    AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceRangeDelta, 0, 255);
+                    numerical = AG_NumericalNewIntR(box3, 0, NULL, "", &state->viewerState->luminanceRangeDelta, 0, 255);
+                    {
+                        AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
+                        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                    }
+                }
+            }
+
         }
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+        box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box1);
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
         {
             AG_LabelNew(box2, 0, "Object ID Overlay");
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
@@ -1171,46 +1181,56 @@ void createViewPortPrefWin() {
     tab = AG_NotebookAddTab(tabs, "Skeleton Viewport", AG_BOX_HOMOGENOUS);
     {
         box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        AG_ExpandHoriz(box1);
+            AG_ExpandHoriz(box1);
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        AG_ExpandHoriz(box2);
-        AG_BoxSetDepth(box2, 3);
-        AG_LabelNew(box2, 0, "Dataset Visualization");
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_BoxSetDepth(box2, 3);
+                AG_LabelNew(box2, 0, "Dataset Visualization");
 
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
 
-        AG_CheckboxNewInt(box2, 0, "Show XY Plane", &state->skeletonState->showXYplane);
-        AG_CheckboxNewInt(box2, 0, "Show XZ Plane", &state->skeletonState->showXZplane);
-        AG_CheckboxNewInt(box2, 0, "Show YZ Plane", &state->skeletonState->showYZplane);
+                AG_CheckboxNewInt(box2, 0, "Show XY Plane", &state->skeletonState->showXYplane);
+                AG_CheckboxNewInt(box2, 0, "Show XZ Plane", &state->skeletonState->showXZplane);
+                AG_CheckboxNewInt(box2, 0, "Show YZ Plane", &state->skeletonState->showYZplane);
+            }
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        AG_ExpandHoriz(box2);
-        AG_LabelNew(box2, 0, "Skeleton Display Modes");
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-        AG_BoxSetDepth(box2, 3);
 
-        radio = AG_RadioNewFn(box2, 0, NULL, UI_displayModeRadioModified, NULL, NULL);
-        {
-            AG_BindInt(radio, "value", &state->viewerState->ag->radioSkeletonDisplayMode);
-            AG_ExpandHoriz(radio);
-            AG_RadioAddItem(radio, "Whole Skeleton");
-            AG_RadioAddItem(radio, "Only Current Cube");
-            AG_RadioAddItem(radio, "Only Active Tree");
-            AG_RadioAddItem(radio, "Hide Skeleton (fast)");
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_LabelNew(box2, 0, "Skeleton Display Modes");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                AG_BoxSetDepth(box2, 3);
+
+                radio = AG_RadioNewFn(box2, 0, NULL, UI_displayModeRadioModified, NULL, NULL);
+                {
+                    AG_BindInt(radio, "value", &state->viewerState->ag->radioSkeletonDisplayMode);
+                    AG_ExpandHoriz(radio);
+                    AG_RadioAddItem(radio, "Whole Skeleton");
+                    AG_RadioAddItem(radio, "Only Current Cube");
+                    AG_RadioAddItem(radio, "Only Active Tree");
+                    AG_RadioAddItem(radio, "Hide Skeleton (fast)");
+                }
+            }
+
         }
 
         box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        AG_ExpandHoriz(box1);
+        {
+            AG_ExpandHoriz(box1);
 
-        box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
-        AG_ExpandHoriz(box2);
-        AG_BoxSetDepth(box2, 3);
-        AG_LabelNew(box2, 0, "3D View");
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-        AG_CheckboxNewInt(box2, 0, "Rotate around Active Node", &state->skeletonState->rotateAroundActiveNode);
+            box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
+            {
+                AG_ExpandHoriz(box2);
+                AG_BoxSetDepth(box2, 3);
+                AG_LabelNew(box2, 0, "3D View");
+                AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
+                AG_CheckboxNewInt(box2, 0, "Rotate around Active Node", &state->skeletonState->rotateAroundActiveNode);
+            }
+        }
     }
-
     AG_WindowSetCloseAction(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_HIDE);
 	AG_WindowHide(state->viewerState->ag->viewPortPrefWin);
 }
@@ -1842,7 +1862,13 @@ static void fileOpenSkelFile(AG_Event *event) {
 }
 
 static void fileSaveAsSkelFile(AG_Event *event) {
-    createSaveAsFileDlgWin(state);
+    if(state->skeletonState->firstTree != NULL) {
+        createSaveAsFileDlgWin(state);
+    }
+    else {
+        AG_TextError("There is no skeleton to save.");
+        LOG("No skeleton to save.");
+    }
 }
 
 /* GUI event handler functions */
@@ -1860,6 +1886,7 @@ void yesNoPrompt(AG_Widget *par, char *promptString, void (*yesCb)(), void (*noC
     win = AG_TextPromptOptions(btns, 2, "%s", promptString);
 
     AG_ButtonText(btns[0], "Yes");
+    AG_SetEvent(btns[0], "button-pushed", yesNoPromptHitYes, "%p,%p,%p", win, yesCb, par);
     AG_SetEvent(btns[0], "button-pushed", yesNoPromptHitYes, "%p,%p,%p", win, yesCb, par);
 
     AG_ButtonText(btns[1], "No");
@@ -1884,8 +1911,7 @@ void UI_zoomOrthogonals(float step) {
 }
 void UI_saveSkeleton(int32_t increment) {
     FILE *saveFile;
-
-    if(increment) {
+    if(increment) { //auto save
         increment = state->skeletonState->autoFilenameIncrementBool;
     }
 
@@ -1894,9 +1920,15 @@ void UI_saveSkeleton(int32_t increment) {
                            state->skeletonState->skeletonFile);
 
     saveFile = fopen(state->skeletonState->skeletonFile, "r");
-    if(saveFile) {
+
+    if(saveFile) { //No auto save
         yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
         fclose(saveFile);
+        return;
+    }
+    //can't auto save without existing skeleton file.
+    else if(increment && !saveFile){
+        LOG("Not auto-saving. No Skeleton file found.");
         return;
     }
 
@@ -1912,7 +1944,7 @@ void WRAP_saveSkeleton() {
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
     else if (saved == FALSE) {
-        AG_TextError("There is no skeleton to save. Abort.");
+        AG_TextError("There is no skeleton to save.");
         LOG("No skeleton to save.");
     }
     else {
