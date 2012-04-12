@@ -338,7 +338,7 @@ void createNavOptionsWin(struct stateInfo *state) {
     }
     AG_NumericalSetWriteable(numerical, FALSE);
     state->viewerState->ag->autoTracingStepNumerical = numerical;
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time [ms]: ", &tempConfig->viewerState->autoTracingDelay);
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time per Step [ms]: ", &tempConfig->viewerState->autoTracingDelay);
     {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
