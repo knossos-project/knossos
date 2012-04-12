@@ -244,7 +244,13 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     walkVector.z = (float) z;
 
     //Not locked...
-    uint32_t recenteringTime = state->viewerState->recenteringTime;
+    uint32_t recenteringTime;
+    if (state->viewerState->autoTracingEnabled == FALSE){
+        recenteringTime = state->viewerState->recenteringTime;
+        }
+    else{
+        recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
+    }
 
     uint32_t timePerStep;
 
@@ -346,8 +352,9 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
         SDL_Delay(eventDelay);
+        //AUTOTRACING 1: if (!state->viewerState->autoTracingLocked) SDL_Delay(eventDelay);
     }
-
+    //AUTOTRACING 1: if ((!state->viewerState->autoTracingLocked) && (state->viewerState->autoTracingEnabled)) autoTracing(state);
     return TRUE;
 }
 
@@ -402,3 +409,42 @@ static int32_t remoteTrajectory(struct stateInfo *state, int32_t trajNumber) {
 
     return TRUE;
 }
+
+/* AUTOTRACING 1: void autoTracing(struct stateInfo *state){
+    int i;
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
+    while ((tempConfig->viewerState->autoTracingSteps != state->viewerState->autoTracingSteps) || (state->viewerState->autoTracingDelay != tempConfig->viewerState->autoTracingDelay)){
+        SDL_Delay(20);
+    }
+    state->viewerState->autoTracingLocked = TRUE;
+    for (i = 0; i < state->viewerState->autoTracingSteps; i++){
+        switch(state->viewerState->autoTracingDirection) {
+            case 1:
+                remoteWalk(state, 0,0,1);
+                break;
+            case 2:
+                remoteWalk(state, 0,0,-1);
+                break;
+            case 3:
+                remoteWalk(state, 0,1,0);
+                break;
+            case 4:
+                remoteWalk(state, 0,-1,0);
+                break;
+            case 5:
+                remoteWalk(state, 1,0,0);
+                break;
+            case 6:
+                remoteWalk(state, -1,0,0);
+                break;
+            }
+        SDL_Delay(state->viewerState->autoTracingDelay);
+    }
+    state->viewerState->autoTracingLocked = FALSE;
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, TRUE);
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, TRUE);
+    refreshViewports(state);
+}
+*/

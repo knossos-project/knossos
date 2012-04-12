@@ -291,13 +291,16 @@ void createMenuBar(struct stateInfo *state) {
 
 void createNavOptionsWin(struct stateInfo *state) {
     AG_Numerical *numerical;
+    AG_Box *box;
 
 	state->viewerState->ag->navOptWin = AG_WindowNew(0);
 
     AG_WindowSetSideBorders(state->viewerState->ag->navOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->navOptWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->navOptWin, AG_WINDOW_MC, 200, 95);
+    AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
+    AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->navOptWin, AG_WINDOW_MC, 250, 235);
 
     numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
     {
@@ -316,6 +319,27 @@ void createNavOptionsWin(struct stateInfo *state) {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
+    box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+        }
+    AG_LabelNew(state->viewerState->ag->navOptWin, 0, "Semi-Auto-Tracing");
+    AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
+    AG_CheckboxNewFn(state->viewerState->ag->navOptWin, 0, "Enable Semi-Auto-Tracing", UI_setEnableAutoTracing, NULL);
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Number of Steps: ", &tempConfig->viewerState->autoTracingSteps);
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
+    AG_NumericalSetWriteable(numerical, FALSE);
+    state->viewerState->ag->autoTracingStepNumerical = numerical;
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time [ms]: ", &tempConfig->viewerState->autoTracingDelay);
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
+    AG_NumericalSetWriteable(numerical, FALSE);
+    state->viewerState->ag->autoTracingDelayNumerical = numerical;
 
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
 	AG_WindowHide(state->viewerState->ag->navOptWin);
@@ -1908,6 +1932,20 @@ void UI_zoomOrthogonals(float step) {
     recalcTextureOffsets();
     drawGUI(state);
 }
+
+void UI_setEnableAutoTracing(){
+    if (state->viewerState->autoTracingEnabled == TRUE) {
+        state->viewerState->autoTracingEnabled = FALSE;
+        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
+        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
+    }
+    else{
+        state->viewerState->autoTracingEnabled = TRUE;
+        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, TRUE);
+        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, TRUE);
+    }
+}
+
 void UI_saveSkeleton(int32_t increment) {
     FILE *saveFile;
     if(increment) { //auto save

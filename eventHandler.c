@@ -669,10 +669,84 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
 
                             /* Move to the new node position */
                             tempConfig->remoteState->type = REMOTE_RECENTERING;
+                            if (!state->viewerState->autoTracingEnabled){
                             SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                            clickedCoordinate->x / state->magnification,
                                            clickedCoordinate->y / state->magnification,
                                            clickedCoordinate->z / state->magnification);
+                            }
+                            /* AUTOTRACING 1: FIRST RECENTER; THEN MOVE 10 STEPS
+                            if (state->viewerState->autoTracingEnabled){
+                                if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1) state->viewerState->autoTracingDirection = 1;
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1) state->viewerState->autoTracingDirection = 2;
+                                }
+                                if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1) state->viewerState->autoTracingDirection = 3;
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1) state->viewerState->autoTracingDirection = 4;
+                                }
+                                if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1) state->viewerState->autoTracingDirection = 5;
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1) state->viewerState->autoTracingDirection = 6;
+                                }
+                                if (state->viewerState->autoTracingDelay < 25) tempConfig->viewerState->autoTracingDelay = 25;
+                                if (state->viewerState->autoTracingDelay > 200) tempConfig->viewerState->autoTracingDelay = 200;
+                                if (state->viewerState->autoTracingSteps < 1) tempConfig->viewerState->autoTracingSteps = 1;
+                                if (state->viewerState->autoTracingSteps > 25) tempConfig->viewerState->autoTracingSteps = 25;
+                            }*/
+
+                            if (state->viewerState->autoTracingEnabled){
+
+                                if (state->viewerState->autoTracingDelay < 25) tempConfig->viewerState->autoTracingDelay = 25;
+                                if (state->viewerState->autoTracingDelay > 200) tempConfig->viewerState->autoTracingDelay = 200;
+                                if (state->viewerState->autoTracingSteps < 1) tempConfig->viewerState->autoTracingSteps = 1;
+                                if (state->viewerState->autoTracingSteps > 25) tempConfig->viewerState->autoTracingSteps = 25;
+
+                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification,
+                                           clickedCoordinate->y / state->magnification,
+                                           clickedCoordinate->z / state->magnification + state->viewerState->autoTracingSteps);
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification,
+                                           clickedCoordinate->y / state->magnification,
+                                           clickedCoordinate->z / state->magnification - state->viewerState->autoTracingSteps);
+                                    }
+                                }
+                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification,
+                                           clickedCoordinate->y / state->magnification + state->viewerState->autoTracingSteps,
+                                           clickedCoordinate->z / state->magnification);
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification,
+                                           clickedCoordinate->y / state->magnification - state->viewerState->autoTracingSteps,
+                                           clickedCoordinate->z / state->magnification);
+                                    }
+                                }
+                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification + state->viewerState->autoTracingSteps,
+                                           clickedCoordinate->y / state->magnification,
+                                           clickedCoordinate->z / state->magnification);
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
+                                        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                                           clickedCoordinate->x / state->magnification - state->viewerState->autoTracingSteps,
+                                           clickedCoordinate->y / state->magnification,
+                                           clickedCoordinate->z / state->magnification);
+                                    }
+
+                                }
+                            }
+                            updateViewerState(state);
                             sendRemoteSignal(state);
                         }
                     }

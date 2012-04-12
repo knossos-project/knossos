@@ -670,6 +670,10 @@ struct agConfig {
 
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
+
+	AG_Numerical *autoTracingStepNumerical;
+	AG_Numerical *autoTracingDelayNumerical;
+
 };
 
 struct viewPort {
@@ -827,6 +831,11 @@ struct viewerState {
     GLuint overlayColorMap[4][256];
 
     int overlayVisible;
+
+    uint8_t autoTracingEnabled;
+    uint32_t autoTracingSteps;
+    uint32_t autoTracingDelay;
+    uint8_t autoTracingDirection;
 };
 
 struct commentListElement {

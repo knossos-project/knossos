@@ -356,6 +356,12 @@ int32_t updateViewerState(struct stateInfo *state) {
     if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime)
         state->viewerState->recenteringTime = tempConfig->viewerState->recenteringTime;
 
+    if(state->viewerState->autoTracingDelay != tempConfig->viewerState->autoTracingDelay)
+        state->viewerState->autoTracingDelay = tempConfig->viewerState->autoTracingDelay;
+
+    if(state->viewerState->autoTracingSteps != tempConfig->viewerState->autoTracingSteps)
+        state->viewerState->autoTracingSteps = tempConfig->viewerState->autoTracingSteps;
+
     return TRUE;
 }
 

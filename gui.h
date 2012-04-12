@@ -132,6 +132,7 @@ static void UI_displayModeRadioModified();
 static void UI_setHighlightActiveTree();
 static void UI_setShowVPLabels();
 static void UI_setShowNodeIDs();
+static void UI_setEnableAutoTracing();
 static void UI_skeletonChanged();
 static void UI_enableSliceVPOverlayModified();
 static void UI_pushBranchBtnPressed();

@@ -227,6 +227,9 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->depthCutOff = 5.;
     tempConfig->viewerState->luminanceBias = 0;
     tempConfig->viewerState->luminanceRangeDelta = 255;
+    tempConfig->viewerState->autoTracingEnabled = FALSE;
+    tempConfig->viewerState->autoTracingDelay = 50;
+    tempConfig->viewerState->autoTracingSteps = 10;
 
     tempConfig->viewerState->viewPorts = malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(tempConfig->viewerState->viewPorts == NULL) {
@@ -469,6 +472,9 @@ static int32_t initStates() {
     state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
     state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
     state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
+    state->viewerState->autoTracingEnabled = tempConfig->viewerState->autoTracingEnabled;
+    state->viewerState->autoTracingDelay = tempConfig->viewerState->autoTracingDelay;
+    state->viewerState->autoTracingSteps = tempConfig->viewerState->autoTracingSteps;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;
