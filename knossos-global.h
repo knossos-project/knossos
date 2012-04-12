@@ -774,6 +774,8 @@ struct viewerState {
 	Coordinate currentPosition;
 
     uint32_t recenteringTime;
+    uint32_t recenteringTimeOrth;
+    uint32_t walkOrth;
 
 	SDL_Surface *screen;
 

@@ -1262,6 +1262,64 @@ static uint32_t handleKeyboard(SDL_Event event) {
             }
         }
         break;
+    case SDLK_r:
+        state->viewerState->walkOrth = 1;
+        switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            case VIEWPORT_XY:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x,
+                               tempConfig->viewerState->currentPosition.y,
+                               tempConfig->viewerState->currentPosition.z += 10);
+                               sendRemoteSignal(state);
+            break;
+            case VIEWPORT_XZ:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x,
+                               tempConfig->viewerState->currentPosition.y += 10,
+                               tempConfig->viewerState->currentPosition.z);
+                               sendRemoteSignal(state);
+            break;
+            case VIEWPORT_YZ:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x += 10,
+                               tempConfig->viewerState->currentPosition.y,
+                               tempConfig->viewerState->currentPosition.z);
+                               sendRemoteSignal(state);
+            break;
+        }
+        break;
+    case SDLK_e:
+        state->viewerState->walkOrth = 1;
+        switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            case VIEWPORT_XY:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x,
+                               tempConfig->viewerState->currentPosition.y,
+                               tempConfig->viewerState->currentPosition.z -= 10);
+                               sendRemoteSignal(state);
+            break;
+            case VIEWPORT_XZ:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x,
+                               tempConfig->viewerState->currentPosition.y -= 10,
+                               tempConfig->viewerState->currentPosition.z);
+                               sendRemoteSignal(state);
+            break;
+            case VIEWPORT_YZ:
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               tempConfig->viewerState->currentPosition.x -= 10,
+                               tempConfig->viewerState->currentPosition.y,
+                               tempConfig->viewerState->currentPosition.z);
+                               sendRemoteSignal(state);
+            break;
+        }
+    break;
     case SDLK_f:
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {

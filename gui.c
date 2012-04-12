@@ -314,7 +314,12 @@ void createNavOptionsWin(struct stateInfo *state) {
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
 
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Recentering Time [ms]: ", &tempConfig->viewerState->recenteringTime);
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Recentering Time parallel [ms]: ", &tempConfig->viewerState->recenteringTime);
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Recentering Time orthogonal [ms]: ", &tempConfig->viewerState->recenteringTimeOrth);
     {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
