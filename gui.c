@@ -1023,7 +1023,7 @@ void createViewPortPrefWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 300);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 315);
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
