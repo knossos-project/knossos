@@ -37,6 +37,9 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <SDL/SDL.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -131,6 +134,7 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
             localtimestruct->tm_hour,
             localtimestruct->tm_min);
 #endif
+    state->skeletonState->fileBaseLen = 34;
 
     state->skeletonState->commentBuffer = malloc(10240 * sizeof(char));
     memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
@@ -1182,9 +1186,11 @@ int32_t saveSkeleton() {
 }
 
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
-    int32_t extensionDelim = -1, countDelim = -1;
+    int32_t extensionDelim = -1;
+    int32_t countDelim = state->skeletonState->fileBaseLen+1;
     char count[8192];
     char origFilename[8192], skeletonFileBase[8192];
+    struct stat st;
     int32_t i;
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
@@ -1195,6 +1201,8 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     }
 
     memset(skeletonFileBase, '\0', 8192);
+    strncpy(skeletonFileBase, filename, countDelim - 1);
+
     memset(origFilename, '\0', 8192);
     strncpy(origFilename, filename, 8192 - 1);
 
@@ -1206,33 +1214,16 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
             }
         }
 
-        for(i--; i >= 0; i--) {
-            if(filename[i] == '.') {
-                countDelim = i;
-                break;
+        if(extensionDelim > countDelim) {
+            strncpy(count, &filename[countDelim], extensionDelim - countDelim);
+            //default filename starts with count 000, others start with no count.
+            if(strncmp(count, "000", 3) == 0 && stat(filename, &st) != 0) {
+                return TRUE;
             }
-        }
-
-        if(countDelim > -1) {
-            strncpy(skeletonFileBase,
-                    filename,
-                    countDelim);
-        }
-        else if(extensionDelim > -1){
-            strncpy(skeletonFileBase,
-                    filename,
-                    extensionDelim);
-        }
-        else {
-            strncpy(skeletonFileBase,
-                    filename,
-                    8192 - 1);
-        }
-
-        if(countDelim && extensionDelim) {
-            strncpy(count, &filename[countDelim + 1], extensionDelim - countDelim);
-            state->skeletonState->saveCnt = atoi(count);
-            state->skeletonState->saveCnt++;
+            else {
+                state->skeletonState->saveCnt = atoi(count);
+                state->skeletonState->saveCnt++;
+            }
         }
         else {
             state->skeletonState->saveCnt = 0;
@@ -1249,8 +1240,9 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
         if(!syncMessage(state, "blrds", KIKI_SKELETONFILENAME, increment, origFilename))
             skeletonSyncBroken(state);
     }
-    else
+    else {
         refreshViewports(state);
+    }
 
     unlockSkeleton(TRUE, state);
 

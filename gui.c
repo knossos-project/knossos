@@ -32,6 +32,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_Clipboard.h>
@@ -2058,16 +2060,46 @@ void OkfileDlgOpenSkel(AG_Event *event) {
 
 void OkfileDlgSaveAsSkel(AG_Event *event) {
     char *filename = AG_STRING(1);
-
-    /*
-     *  TODO Sanity check path.
-     */
+    char *shortFilename;
+    char *extension;
+    struct stat st;
 
     cpBaseDirectory(state->viewerState->ag->skeletonDirectory, filename, 2048);
+    LOG("%s", state->viewerState->ag->skeletonDirectory);
+    shortFilename = malloc(2048);
 
-    strncpy(state->skeletonState->skeletonFile, filename, 8192);
+    strncpy(shortFilename,
+            filename + strlen(state->viewerState->ag->skeletonDirectory),
+            strlen(filename) - strlen(state->viewerState->ag->skeletonDirectory));
 
-    UI_saveSkeleton(FALSE);
+    extension = malloc(4);
+    memset(extension, '\0', 4);
+
+    //check if directory exists
+    if(stat(state->viewerState->ag->skeletonDirectory, &st) == 0) {
+        //check if filename already contains extension.
+        //doesn't contain one if filename shorter than 4 chars
+        if(strlen(shortFilename) >= 4) {
+            strncpy(extension, filename + strlen(filename) - 4, 4);
+
+            if(strncmp(extension, ".nml", 4) == 0) {
+                strncpy(state->skeletonState->skeletonFile, filename, 8192);
+            }
+        }
+        if(strlen(shortFilename) < 3 || strncmp(extension, ".nml", 4) != 0) {
+            sprintf(state->skeletonState->skeletonFile, "%s%s",
+                        filename,
+                        ".nml");
+        }
+
+        state->skeletonState->fileBaseLen = strlen(state->skeletonState->skeletonFile) - 4;
+        UI_saveSkeleton(FALSE);
+    }
+
+    else {
+        AG_TextError("The specified path does not exists.");
+        LOG("The specified path does not exist.");
+    }
 }
 
 void OkfileDlgOpenPrefs(AG_Event *event) {
