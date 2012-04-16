@@ -674,6 +674,9 @@ struct agConfig {
 	AG_Numerical *autoTracingStepNumerical;
 	AG_Numerical *autoTracingDelayNumerical;
 
+	AG_Checkbox *vpLabelBox;
+	AG_Checkbox *highlightActiveTree;
+    AG_Checkbox *showAllNodeIDs;
 };
 
 struct viewPort {

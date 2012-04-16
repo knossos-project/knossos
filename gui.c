@@ -579,10 +579,6 @@ void createDataSizeWin(struct stateInfo *state) {
                                 20);
     AG_WindowShow(win);
     state->viewerState->ag->dataSizeWinyz = win;
-
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
 }
 
 void createNavWin(struct stateInfo *state) {
@@ -1042,8 +1038,8 @@ void createViewPortPrefWin() {
         AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
         AG_BoxSetDepth(box2, 3);
         AG_CheckboxNewInt(box2, 0, "Light effects", &state->viewerState->lightOnOff);
-        AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
-        AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
+        state->viewerState->ag->highlightActiveTree = AG_CheckboxNewFn(box2, 0, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
+        state->viewerState->ag->showAllNodeIDs = AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
 
         box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
         {
@@ -1205,7 +1201,7 @@ void createViewPortPrefWin() {
             AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
             AG_ExpandHoriz(box2);
             AG_CheckboxNewInt(box2, 0, "Draw Intersection Crosshairs", &state->viewerState->drawVPCrosshairs);
-            AG_CheckboxNewFn(box2, 0, "Show Viewport Size", UI_setShowVPLabels, NULL);
+            state->viewerState->ag->vpLabelBox = AG_CheckboxNewFn(box2, 0, "Show Viewport Size", UI_setShowVPLabels, NULL);
         }
     }
     tab = AG_NotebookAddTab(tabs, "Skeleton Viewport", AG_BOX_HOMOGENOUS);
@@ -2976,6 +2972,10 @@ remote port
         xmlNewProp(currentXMLNode, BAD_CAST"recenteringTime", attrString);
 
         memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->recenteringTimeOrth);
+        xmlNewProp(currentXMLNode, BAD_CAST"recenteringTimeOrth", attrString);
+
+        memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->stepsPerSec);
         xmlNewProp(currentXMLNode, BAD_CAST"movementSpeed", attrString);
 
@@ -3032,6 +3032,10 @@ remote port
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsSliceVPs", NULL);
     {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->showVPLabels);
+        xmlNewProp(currentXMLNode, BAD_CAST"vpLabels", attrString);
+
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->drawVPCrosshairs);
         xmlNewProp(currentXMLNode, BAD_CAST"vpCrosshairs", attrString);
@@ -3220,7 +3224,7 @@ static void UI_loadSettings() {
                     if(attribute)
                         visible_win = atoi((char *)attribute);
 
-                    if(win && x_win && y_win) {
+                    if(win) {
                         /* Open and position window. */
                         if(strcmp(win, "tools") == 0) {
                             win_ptr = state->viewerState->ag->toolsWin;
@@ -3286,7 +3290,10 @@ static void UI_loadSettings() {
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"datasetNavigation")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"recenteringTime");
             if(attribute)
-                state->viewerState->recenteringTime = atoi((char *)attribute);
+                tempConfig->viewerState->recenteringTime = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"recenteringTimeOrth");
+            if(attribute)
+                tempConfig->viewerState->recenteringTimeOrth = atoi((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"movementSpeed");
             if(attribute)
                 tempConfig->viewerState->stepsPerSec = atoi((char *)attribute);
@@ -3310,11 +3317,17 @@ static void UI_loadSettings() {
             if(attribute)
                 state->viewerState->lightOnOff = atoi((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"highlActiveTree");
-            if(attribute)
+            if(attribute){
                 state->skeletonState->highlightActiveTree = atoi((char *)attribute);
+            }
+            if (state->skeletonState->highlightActiveTree) state->viewerState->ag->highlightActiveTree->state = TRUE;
+            else  state->viewerState->ag->highlightActiveTree->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showAllNodeIDs");
-            if(attribute)
+            if(attribute){
                 state->skeletonState->showNodeIDs = atoi((char *)attribute);
+            }
+            if (state->skeletonState->showNodeIDs) state->viewerState->ag->showAllNodeIDs->state = TRUE;
+            else state->viewerState->ag->showAllNodeIDs->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableOverrideNodeRadius");
             if(attribute)
                 state->skeletonState->overrideNodeRadiusBool = atoi((char *)attribute);
@@ -3329,6 +3342,19 @@ static void UI_loadSettings() {
                 state->skeletonState->displayMode = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSliceVPs")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"vpLabels");
+            if(attribute)
+                state->viewerState->showVPLabels = atoi((char *)attribute);
+            if (state->viewerState->showVPLabels)
+                state->viewerState->ag->vpLabelBox->state = TRUE;
+            else{
+                AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
+                AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
+                AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"vpCrosshairs");
+            if(attribute)
+                state->viewerState->drawVPCrosshairs = atoi((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"highlIntersections");
             if(attribute)
                 state->skeletonState->showIntersections = atoi((char *)attribute);
