@@ -1017,6 +1017,7 @@ void createViewPortPrefWin() {
     AG_NotebookTab *tab;
     AG_Radio *radio;
     AG_Checkbox *checkbox;
+    AG_Slider *slider;
 
 	state->viewerState->ag->viewPortPrefWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
@@ -1161,7 +1162,12 @@ void createViewPortPrefWin() {
                 {
                     AG_ExpandHoriz(box3);
                     AG_LabelNew(box3, 0, "Bias");
-                    AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceBias, 0, 255);
+                    slider = AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceBias, 0, 255);
+                    {
+                        AG_SetEvent(slider, "slider-changed", datasetColorAdjustmentsChanged, NULL);
+                        AG_SetEvent(slider, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                        AG_SetEvent(slider, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                    }
                     numerical = AG_NumericalNewIntR(box3, 0, NULL, "", &state->viewerState->luminanceBias, 0, 255);
                     {
                         AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
@@ -1173,7 +1179,12 @@ void createViewPortPrefWin() {
                 {
                     AG_ExpandHoriz(box3);
                     AG_LabelNew(box3, 0, "Range Delta");
-                    AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceRangeDelta, 0, 255);
+                    slider = AG_SliderNewIntR(box3, AG_SLIDER_HORIZ, 0, &state->viewerState->luminanceRangeDelta, 0, 255);
+                    {
+                        AG_SetEvent(slider, "slider-changed", datasetColorAdjustmentsChanged, NULL);
+                        AG_SetEvent(slider, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                        AG_SetEvent(slider, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                    }
                     numerical = AG_NumericalNewIntR(box3, 0, NULL, "", &state->viewerState->luminanceRangeDelta, 0, 255);
                     {
                         AG_SetEvent(numerical, "numerical-changed", datasetColorAdjustmentsChanged, NULL);
