@@ -270,6 +270,7 @@ void createMenuBar(struct stateInfo *state) {
 	{
         AG_MenuAction(menuItem, "Load Custom Preferences", NULL, prefLoadCustomPrefs, NULL, NULL);
         AG_MenuAction(menuItem, "Save Custom Preferences As", NULL, prefSaveCustomPrefsAs, NULL, NULL);
+        AG_MenuAction(menuItem, "Default Preferences", NULL, prefDefaultPrefsWindow, NULL, NULL);
         AG_MenuAction(menuItem, "Dataset Navigation", NULL, prefNavOptions, NULL);
         AG_MenuAction(menuItem, "Synchronization", NULL, prefSyncOptions, NULL);
 		AG_MenuAction(menuItem, "Data Saving Options", NULL, prefSaveOptions, NULL);
@@ -1038,8 +1039,8 @@ void createViewPortPrefWin() {
         AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
         AG_BoxSetDepth(box2, 3);
         AG_CheckboxNewInt(box2, 0, "Light effects", &state->viewerState->lightOnOff);
-        state->viewerState->ag->highlightActiveTree = AG_CheckboxNewFn(box2, 0, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
-        state->viewerState->ag->showAllNodeIDs = AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
+        state->viewerState->ag->highlightActiveTreeBox = AG_CheckboxNewFn(box2, 0, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
+        state->viewerState->ag->showAllNodeIDsBox = AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
 
         box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
         {
@@ -1121,7 +1122,7 @@ void createViewPortPrefWin() {
                 AG_ExpandHoriz(box2);
                 AG_LabelNew(box2, 0, "Voxel Filtering");
                 AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-                AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
+                state->viewerState->ag->datasetLinearFilteringBox = AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
 
             }
 
@@ -3320,14 +3321,14 @@ static void UI_loadSettings() {
             if(attribute){
                 state->skeletonState->highlightActiveTree = atoi((char *)attribute);
             }
-            if (state->skeletonState->highlightActiveTree) state->viewerState->ag->highlightActiveTree->state = TRUE;
-            else  state->viewerState->ag->highlightActiveTree->state = FALSE;
+            if (state->skeletonState->highlightActiveTree) state->viewerState->ag->highlightActiveTreeBox->state = TRUE;
+            else  state->viewerState->ag->highlightActiveTreeBox->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showAllNodeIDs");
             if(attribute){
                 state->skeletonState->showNodeIDs = atoi((char *)attribute);
             }
-            if (state->skeletonState->showNodeIDs) state->viewerState->ag->showAllNodeIDs->state = TRUE;
-            else state->viewerState->ag->showAllNodeIDs->state = FALSE;
+            if (state->skeletonState->showNodeIDs) state->viewerState->ag->showAllNodeIDsBox->state = TRUE;
+            else state->viewerState->ag->showAllNodeIDsBox->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableOverrideNodeRadius");
             if(attribute)
                 state->skeletonState->overrideNodeRadiusBool = atoi((char *)attribute);
@@ -3724,4 +3725,95 @@ uint32_t cpBaseDirectory(char *target, char *path, size_t len) {
     target[baseLen] = '\0';
 
     return TRUE;
+}
+
+void prefDefaultPrefsWindow(){
+    yesNoPrompt(NULL, "Do you really want to load the default preferences?", prefDefaultPrefs, NULL);
+}
+
+void prefDefaultPrefs(){
+    tempConfig->viewerState->screenSizeX = 1024;
+    tempConfig->viewerState->screenSizeY = 740;
+    state->viewerState->ag->toolsWin->visible = FALSE;
+    state->viewerState->ag->zoomingWin->visible = FALSE;
+    state->viewerState->ag->navOptWin->visible = FALSE;
+    state->viewerState->ag->syncOptWin->visible = FALSE;
+    state->viewerState->ag->viewPortPrefWin->visible = FALSE;
+    state->viewerState->ag->saveOptWin->visible = FALSE;
+    state->viewerState->ag->consoleWin->visible = FALSE;
+    ((AG_Widget *)state->viewerState->ag->toolsWin)->x = 714;
+    ((AG_Widget *)state->viewerState->ag->toolsWin)->y = 170;
+    ((AG_Widget *)state->viewerState->ag->toolsWin)->w = 310;
+    ((AG_Widget *)state->viewerState->ag->toolsWin)->h = 400;
+    ((AG_Widget *)state->viewerState->ag->zoomingWin)->x = 362;
+    ((AG_Widget *)state->viewerState->ag->zoomingWin)->y = 280;
+    ((AG_Widget *)state->viewerState->ag->zoomingWin)->w = 300;
+    ((AG_Widget *)state->viewerState->ag->zoomingWin)->h = 180;
+    ((AG_Widget *)state->viewerState->ag->navOptWin)->x = 387;
+    ((AG_Widget *)state->viewerState->ag->navOptWin)->y = 253;
+    ((AG_Widget *)state->viewerState->ag->navOptWin)->w = 250;
+    ((AG_Widget *)state->viewerState->ag->navOptWin)->h = 235;
+    ((AG_Widget *)state->viewerState->ag->syncOptWin)->x = 412;
+    ((AG_Widget *)state->viewerState->ag->syncOptWin)->y = 310;
+    ((AG_Widget *)state->viewerState->ag->syncOptWin)->w = 200;
+    ((AG_Widget *)state->viewerState->ag->syncOptWin)->h = 120;
+    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->x = 257;
+    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->y = 213;
+    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->w = 510;
+    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->h = 315;
+    ((AG_Widget *)state->viewerState->ag->saveOptWin)->x = 412;
+    ((AG_Widget *)state->viewerState->ag->saveOptWin)->y = 330;
+    ((AG_Widget *)state->viewerState->ag->saveOptWin)->w = 200;
+    ((AG_Widget *)state->viewerState->ag->saveOptWin)->h = 80;
+    ((AG_Widget *)state->viewerState->ag->consoleWin)->x = 724;
+    ((AG_Widget *)state->viewerState->ag->consoleWin)->y = 303;
+    ((AG_Widget *)state->viewerState->ag->consoleWin)->w = 300;
+    ((AG_Widget *)state->viewerState->ag->consoleWin)->h = 135;
+    tempConfig->viewerState->recenteringTime = 0;
+    tempConfig->viewerState->recenteringTimeOrth = 500;
+    tempConfig->viewerState->stepsPerSec = 40;
+    tempConfig->viewerState->dropFrames = 1;
+    state->skeletonState->autoSaveBool = 1;
+    state->skeletonState->autoSaveInterval = 5;
+    state->skeletonState->autoFilenameIncrementBool = 1;
+    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = 1.0;
+    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = 1.0;
+    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = 1.0;
+    state->skeletonState->zoomLevel = 0.0;
+    state->skeletonState->showXYplane = 1;
+    state->skeletonState->showXZplane = 1;
+    state->skeletonState->showYZplane = 1;
+    state->viewerState->drawVPCrosshairs = 1;
+    state->viewerState->showVPLabels = 0;
+    state->viewerState->ag->vpLabelBox->state = FALSE;
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
+    state->skeletonState->showIntersections = 0;
+    state->viewerState->depthCutOff = 5.0;
+    state->viewerState->luminanceBias = 0;
+    state->viewerState->luminanceRangeDelta = 255;
+    state->viewerState->ag->highlightActiveTreeBox->state = TRUE;
+    state->skeletonState->highlightActiveTree = 1;
+    state->skeletonState->showNodeIDs = 0;
+    state->viewerState->ag->showAllNodeIDsBox->state = FALSE;
+    state->skeletonState->overrideNodeRadiusBool = 0;
+    state->skeletonState->overrideNodeRadiusVal = 1.0;
+    state->skeletonState->segRadiusToNodeRadius = 0.5;
+    state->skeletonState->rotateAroundActiveNode = 1;
+    state->skeletonState->lockPositions = 0;
+    state->skeletonState->lockRadius = 100;
+    state->viewerState->ag->useLastActNodeRadiusAsDefault = 0;
+    state->skeletonState->defaultNodeRadius = 1.5;
+    state->viewerState->lightOnOff = 0;
+    tempConfig->viewerState->filterType = 9729;
+    state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
+    tempConfig->viewerState->workMode = 0;
+    //Not integrated:
+    //tempConfig->skeletonState->displayMode = 1;
+    //tempConfig->skeletonState->workMode = 0;  does not connect the new node with the previous node
+    refreshViewports(state);
+    updateTreeColors();
+    updateSkeletonState(state);
+    datasetColorAdjustmentsChanged();
 }

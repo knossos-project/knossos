@@ -142,3 +142,5 @@ static void UI_helpShowAbout();
 static void UI_loadSettings();
 static void UI_setSkeletonPerspective(AG_Event *event);
 static Coordinate *parseRawCoordinateString(char *string);
+static void prefDefaultPrefsWindow();
+static void prefDefaultPrefs();
