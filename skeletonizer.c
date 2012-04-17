@@ -3256,7 +3256,7 @@ int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state) {
     }
 
     /* Nodes on the branch stack may not actually exist anymore */
-    while(branchNode == NULL) {
+    while((branchNode == NULL) || (branchNode->isBranchNode == FALSE)) {
         branchNodeID = (PTRSIZEINT)popStack(state->skeletonState->branchStack);
         if(branchNodeID == 0) {
             AG_TextMsg(AG_MSG_INFO, "No branch points remain.");
