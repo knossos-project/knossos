@@ -1794,7 +1794,7 @@ uint32_t delActiveTree(struct stateInfo *state) {
        return FALSE;
     }
 
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
 
     return TRUE;
 }
