@@ -1833,10 +1833,6 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
         delComment(CHANGE_MANUAL, nodeToDel->comment, 0, state);
     }
 
-    if(nodeToDel->isBranchNode) {
-        popStack(state->skeletonState->branchStack);
-    }
-
     /*
      * First, delete all segments pointing towards and away of the nodeToDelhas
      * been */

@@ -464,7 +464,6 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                                                      1,
                                                      state);
         if(clickedNode) {
-            clickedNode -= 50;
             if(state->skeletonState->activeNode) {
                 addSegment(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
@@ -486,8 +485,6 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
                                                      state);
 
     if(clickedNode) {
-        clickedNode -= 50;
-
         if(SDL_GetModState() & KMOD_SHIFT) {
             if(SDL_GetModState() & KMOD_CTRL) {
                 /* Pressed SHIFT and CTRL */
@@ -548,7 +545,6 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                                      1,
                                                      state);
     if(clickedNode) {
-        clickedNode -= 50;
         if(state->skeletonState->activeNode) {
             if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
                                     clickedNode,
