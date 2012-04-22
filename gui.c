@@ -33,7 +33,7 @@
 #include <string.h>
 #include <math.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <dirent.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_Clipboard.h>
@@ -1023,7 +1023,7 @@ void createViewPortPrefWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 315);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 319);
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
@@ -2070,12 +2070,11 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
     char *filename = AG_STRING(1);
     char *shortFilename;
     char *extension;
-    struct stat st;
+    DIR *skelDir;
 
     cpBaseDirectory(state->viewerState->ag->skeletonDirectory, filename, 2048);
-    LOG("%s", state->viewerState->ag->skeletonDirectory);
-    shortFilename = malloc(2048);
 
+    shortFilename = malloc(2048);
     strncpy(shortFilename,
             filename + strlen(state->viewerState->ag->skeletonDirectory),
             strlen(filename) - strlen(state->viewerState->ag->skeletonDirectory));
@@ -2083,10 +2082,12 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
     extension = malloc(4);
     memset(extension, '\0', 4);
 
+    skelDir = opendir(state->viewerState->ag->skeletonDirectory);
     //check if directory exists
-    if(stat(state->viewerState->ag->skeletonDirectory, &st) == 0) {
+    if(skelDir) {
         //check if filename already contains extension.
         //doesn't contain one if filename shorter than 4 chars
+
         if(strlen(shortFilename) >= 4) {
             strncpy(extension, filename + strlen(filename) - 4, 4);
 
@@ -2108,6 +2109,7 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
         AG_TextError("The specified path does not exists.");
         LOG("The specified path does not exist.");
     }
+    closedir(skelDir);
 }
 
 void OkfileDlgOpenPrefs(AG_Event *event) {
@@ -3771,7 +3773,7 @@ void prefDefaultPrefs(){
     ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->x = 257;
     ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->y = 213;
     ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->w = 510;
-    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->h = 315;
+    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->h = 319;
     ((AG_Widget *)state->viewerState->ag->saveOptWin)->x = 412;
     ((AG_Widget *)state->viewerState->ag->saveOptWin)->y = 330;
     ((AG_Widget *)state->viewerState->ag->saveOptWin)->w = 200;

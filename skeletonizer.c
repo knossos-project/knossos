@@ -37,8 +37,6 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include <SDL/SDL.h>
 #include <libxml/xmlmemory.h>
@@ -1190,10 +1188,10 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     int32_t countDelim = state->skeletonState->fileBaseLen+1;
     char count[8192];
     char origFilename[8192], skeletonFileBase[8192];
-    struct stat st;
+    FILE *skelFile;
     int32_t i;
 
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(lockSkeleton(targetRevision, state) == FALSE) {
         unlockSkeleton(FALSE, state);
@@ -1217,13 +1215,16 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
         if(extensionDelim > countDelim) {
             strncpy(count, &filename[countDelim], extensionDelim - countDelim);
             //default filename starts with count 000, others start with no count.
-            if(strncmp(count, "000", 3) == 0 && stat(filename, &st) != 0) {
+            skelFile = fopen(filename, "r");
+            if(strncmp(count, "000", 3) == 0 && !skelFile) {
+                state->skeletonState->saveCnt = 0;
                 return TRUE;
             }
             else {
                 state->skeletonState->saveCnt = atoi(count);
                 state->skeletonState->saveCnt++;
             }
+            fclose(skelFile);
         }
         else {
             state->skeletonState->saveCnt = 0;
