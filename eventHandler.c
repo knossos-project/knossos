@@ -399,6 +399,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                 return TRUE;
             }
         }
+        //if 3D-mode, first check if node clicked, otherwise  find nearest node.
         else {
             clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
