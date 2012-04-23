@@ -84,6 +84,10 @@ class RunKnossos(RunKnossosUI):
         except ValueError:
             pass
 
+        if len(items) == 0:
+            tkMessageBox.showerror("No dataset selected",
+                                   "Please select the dataset(s) that you want to load.")
+ 
         for currentDataset in items:
             self.runDataset(self.dataset_list.get(currentDataset))
 
