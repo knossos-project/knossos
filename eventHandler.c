@@ -384,33 +384,23 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
 
     //new active node selected
     if(SDL_GetModState() & KMOD_SHIFT) {
-        clickedCoordinate =
-                    getCoordinateFromOrthogonalClick(ORIGINAL_MAG_COORDINATES,
-                                                     event,
-                                                     VPfound);
-        if(clickedCoordinate == NULL) {
-            return FALSE;
+        //first try to activate clicked node
+        clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
+                                                event.button.x,
+                                                (state->viewerState->screenSizeY - event.button.y),
+                                                1,
+                                                state);
+        if(clickedNode) {
+            setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
+            return TRUE;
         }
-        //if lines and points activated, find nearest node
-        if (state->skeletonState->displayMode & DSP_LINES_POINTS) {
-            newActiveNode = findNodeInRadius(*clickedCoordinate, state);
-            if(newActiveNode != NULL) {
-                setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-                return TRUE;
-            }
-        }
-        //if 3D-mode, first check if node clicked, otherwise  find nearest node.
+        //if no node clicked, activate node in catch radius
         else {
-            clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
-                                                     event.button.x,
-                                                     (state->viewerState->screenSizeY - event.button.y),
-                                                     1,
-                                                     state);
-            if(clickedNode) {
-                setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
-                return TRUE;
-            }
-            else {
+            clickedCoordinate = getCoordinateFromOrthogonalClick(
+                                ORIGINAL_MAG_COORDINATES,
+                                event,
+                                VPfound);
+            if(clickedCoordinate) {
                 newActiveNode = findNodeInRadius(*clickedCoordinate, state);
                 if(newActiveNode != NULL) {
                     setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
