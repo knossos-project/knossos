@@ -943,6 +943,7 @@ uint32_t setActiveTreeByID(int32_t treeID, struct stateInfo *state) {
 
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
 
     state->viewerState->ag->activeTreeID = currentTree->treeID;
 
@@ -1178,7 +1179,6 @@ int32_t saveSkeleton() {
     }
 
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
-
     xmlFreeDoc(xmlDocument);
     return r;
 }

@@ -1901,10 +1901,16 @@ static void fileOpenSkelFile(AG_Event *event) {
 
 static void fileSaveAsSkelFile(AG_Event *event) {
     if(state->skeletonState->firstTree != NULL) {
-        createSaveAsFileDlgWin(state);
+        if(state->skeletonState->unsavedChanges) {
+            createSaveAsFileDlgWin(state);
+        }
+        else {
+            AG_TextWarning("No Changes SaveAs-warning", "No changes since last save event. Not saving.");
+            LOG("No changes since last save event. Not saving.");
+        }
     }
     else {
-        AG_TextWarning("No SaveAs warning", "No skeleton was found. Not saving.");
+        AG_TextWarning("No SaveAs-warning", "No skeleton was found. Not saving.");
         LOG("No skeleton was found. Not saving.");
     }
 }
@@ -1962,6 +1968,12 @@ void UI_setEnableAutoTracing(){
 }
 
 void UI_saveSkeleton(int32_t increment) {
+    //if no changes since last save, don't save
+    if(state->skeletonState->unsavedChanges == FALSE) {
+        LOG("No changes since last save event. Not saving.");
+        return;
+    }
+
     FILE *saveFile;
     if(increment) { //auto save
         increment = state->skeletonState->autoFilenameIncrementBool;
@@ -1991,7 +2003,6 @@ void WRAP_saveSkeleton() {
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
     else if (saved == FALSE) {
-        AG_TextWarning("No Save warning", "No skeleton was found. Not saving.");
         LOG("No skeleton was found. Not saving.");
     }
     else {
@@ -2569,12 +2580,10 @@ static void UI_setShowNodeIDs() {
         state->skeletonState->showNodeIDs = TRUE;
 
     state->skeletonState->skeletonChanged = TRUE;
-
 }
 
 static void UI_skeletonChanged() {
     state->skeletonState->skeletonChanged = TRUE;
-
 }
 
 static void UI_displayModeRadioModified() {

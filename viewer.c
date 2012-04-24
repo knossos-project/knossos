@@ -400,8 +400,9 @@ uint32_t updateZoomCube() {
             if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
         }
     }
-    if(oldZoomCube != state->viewerState->zoomCube)
+    if(oldZoomCube != state->viewerState->zoomCube) {
         state->skeletonState->skeletonChanged = TRUE;
+    }
 
     return TRUE;
 }
