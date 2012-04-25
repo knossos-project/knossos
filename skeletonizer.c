@@ -1002,6 +1002,11 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"name", attrString);
     memset(attrString, '\0', 128);
 
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"filename", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->fileBaseLen);
+    xmlNewProp(currentXMLNode, BAD_CAST"fileBaseLength", attrString);
+    memset(attrString, '\0', 128);
+
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"scale", NULL);
     xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.x / state->magnification);
     xmlNewProp(currentXMLNode, BAD_CAST"x", attrString);
@@ -1217,8 +1222,7 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
             //default filename starts with count 000, others start with no count.
             skelFile = fopen(filename, "r");
             if(strncmp(count, "000", 3) == 0 && !skelFile) {
-                state->skeletonState->saveCnt = 0;
-                return TRUE;
+                state->skeletonState->saveCnt = 1;
             }
             else {
                 state->skeletonState->saveCnt = atoi(count);
@@ -1227,7 +1231,7 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
             fclose(skelFile);
         }
         else {
-            state->skeletonState->saveCnt = 0;
+            state->skeletonState->saveCnt = 1;
         }
 
         sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml",
@@ -1268,6 +1272,7 @@ uint32_t loadSkeleton() {
     int32_t time, activeNodeID = 0;
     int32_t skeletonTime = 0;
     color4F neuronColor;
+    int noFileBaseLen = FALSE;
 
     LOG("Starting to load skeleton...");
 
@@ -1334,6 +1339,15 @@ uint32_t loadSkeleton() {
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
             currentXMLNode = thingOrParamXMLNode->children;
             while(currentXMLNode) {
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *) "filename")) {
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "fileBaseLength");
+                    if(attribute) {
+                        state->skeletonState->fileBaseLen = atoi((char *) attribute);
+                    }
+                }
+                else {
+                    noFileBaseLen = TRUE;
+                }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"magnification")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"factor");
                     /*
@@ -1405,6 +1419,33 @@ uint32_t loadSkeleton() {
                 }
 
                 currentXMLNode = currentXMLNode->next;
+            }
+        }
+
+        if(noFileBaseLen){
+            int i;
+            int extensionDelim = -1, countDelim = -1;
+
+            for(i = 8192 - 1; i >= 0; i--) {
+                if(state->skeletonState->skeletonFile[i] == '.') {
+                    extensionDelim = i;
+                    break;
+                }
+            }
+            for(i--; i >= 0; i--) {
+                if(state->skeletonState->skeletonFile[i] == '.') {
+                    countDelim = i;
+                    break;
+                }
+            }
+            if(countDelim > -1) {
+                state->skeletonState->fileBaseLen = countDelim;
+            }
+            else if(extensionDelim > -1){
+                state->skeletonState->fileBaseLen = extensionDelim;
+            }
+            else {
+                state->skeletonState->fileBaseLen = 8192 - 1;
             }
         }
 
@@ -1672,7 +1713,6 @@ uint32_t loadSkeleton() {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
-
     return TRUE;
 }
 
