@@ -767,7 +767,6 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
                             TELL_COORDINATE_CHANGE, state);
                         break;
                 }
-                drawGUI(state);
             }
         }
     }
@@ -832,7 +831,6 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
                             TELL_COORDINATE_CHANGE, state);
                         break;
                 }
-                drawGUI(state);
             }
         }
     }
