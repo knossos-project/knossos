@@ -875,7 +875,29 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 int32_t loadNeutralTreeLUT(float *treeLut) {
-    loadTreeColorTable("random.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state);
+    int i;
+    if(loadTreeColorTable("random.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state) == FALSE) {
+        LOG("Could not load default tree lut.");
+        for(i = 0; i < 768; i += 12) {
+            //blue
+            state->viewerState->neutralTreeTable[i]     = 0.;
+            state->viewerState->neutralTreeTable[i + 1] = 0.;
+            state->viewerState->neutralTreeTable[i + 2] = 1.;
+            //yellow
+            state->viewerState->neutralTreeTable[i + 3] = 1.;
+            state->viewerState->neutralTreeTable[i + 4] = 1.;
+            state->viewerState->neutralTreeTable[i + 5] = 0.;
+            //green
+            state->viewerState->neutralTreeTable[i + 6] = 0.;
+            state->viewerState->neutralTreeTable[i + 7] = 1.;
+            state->viewerState->neutralTreeTable[i + 8] = 0.;
+            //orange
+            state->viewerState->neutralTreeTable[i + 9] = 1.;
+            state->viewerState->neutralTreeTable[i + 10] = 0.5;
+            state->viewerState->neutralTreeTable[i + 11] = 0.;
+        }
+        return FALSE;
+    }
     return TRUE;
 }
 
