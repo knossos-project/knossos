@@ -333,15 +333,15 @@ void createNavOptionsWin(struct stateInfo *state) {
         }
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "Semi-Auto-Tracing");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    AG_CheckboxNewFn(state->viewerState->ag->navOptWin, 0, "Enable Semi-Auto-Tracing", UI_setEnableAutoTracing, NULL);
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Number of Steps: ", &tempConfig->viewerState->autoTracingSteps);
+    state->viewerState->ag->AutoTracingBox = AG_CheckboxNewFn(state->viewerState->ag->navOptWin, 0, "Enable Semi-Auto-Tracing", UI_setEnableAutoTracing, NULL);
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Number of Steps: ", &state->viewerState->autoTracingSteps);
     {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
     AG_NumericalSetWriteable(numerical, FALSE);
     state->viewerState->ag->autoTracingStepNumerical = numerical;
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time per Step [ms]: ", &tempConfig->viewerState->autoTracingDelay);
+    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time per Step [ms]: ", &state->viewerState->autoTracingDelay);
     {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -1123,7 +1123,7 @@ void createViewPortPrefWin() {
                 AG_ExpandHoriz(box2);
                 AG_LabelNew(box2, 0, "Voxel Filtering");
                 AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-                state->viewerState->ag->datasetLinearFilteringBox = AG_CheckboxNewFn(box2, AG_CHECKBOX_SET, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
+                state->viewerState->ag->datasetLinearFilteringBox = AG_CheckboxNewFn(box2, 0, "Dataset Linear Filtering", UI_enableLinearFilteringModified , NULL);
 
             }
 
@@ -3143,6 +3143,31 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->skeletonState->onCommentLock);
         xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     }
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"Semi-Auto-Tracing", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingDelay);
+        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingDelay", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingSteps);
+        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingSteps", attrString);
+    }
+
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"FilePaths", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->skeletonDirectory);
+        xmlNewProp(currentXMLNode, BAD_CAST"SkeletonPath", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->datasetLUTDirectory);
+        xmlNewProp(currentXMLNode, BAD_CAST"LUTPath", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->treeImgJDirectory);
+        xmlNewProp(currentXMLNode, BAD_CAST"TreeColorPath", attrString);
+    }
 
     LOG("saved settings to %s\n", state->viewerState->ag->settingsFile);
     xmlSaveFormatFile(state->viewerState->ag->settingsFile, xmlDocument, 1);
@@ -3386,7 +3411,9 @@ static void UI_loadSettings() {
                 state->viewerState->depthCutOff = atof((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLinearFiltering");
             if(attribute)
-                state->viewerState->filterType = atoi((char *)attribute);
+                 tempConfig->viewerState->filterType = atoi((char *)attribute);
+            if(tempConfig->viewerState->filterType == 9729) state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
+            if(tempConfig->viewerState->filterType == 9728) state->viewerState->ag->datasetLinearFilteringBox->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"dynRangeBias");
             if(attribute)
                 state->viewerState->luminanceBias = atoi((char *)attribute);
@@ -3447,6 +3474,25 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockToNodesWithComment");
             if(attribute)
 				strcpy(state->skeletonState->onCommentLock, (char *)attribute);
+        }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"Semi-Auto-Tracing")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingDelay");
+            if(attribute)
+                state->viewerState->autoTracingDelay = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingSteps");
+            if(attribute)
+                state->viewerState->autoTracingSteps = atoi((char *)attribute);
+        }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"SkeletonPath");
+            if(attribute)
+                strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"LUTPath");
+            if(attribute)
+                strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"TreeColorPath");
+            if(attribute)
+                strcpy(state->viewerState->ag->treeImgJDirectory, (char *)attribute);
         }
 
         currentXMLNode = currentXMLNode->next;

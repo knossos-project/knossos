@@ -227,9 +227,6 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->depthCutOff = 5.;
     tempConfig->viewerState->luminanceBias = 0;
     tempConfig->viewerState->luminanceRangeDelta = 255;
-    tempConfig->viewerState->autoTracingEnabled = FALSE;
-    tempConfig->viewerState->autoTracingDelay = 50;
-    tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = FALSE;
 
@@ -474,9 +471,9 @@ static int32_t initStates() {
     state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
     state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
     state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
-    state->viewerState->autoTracingEnabled = tempConfig->viewerState->autoTracingEnabled;
-    state->viewerState->autoTracingDelay = tempConfig->viewerState->autoTracingDelay;
-    state->viewerState->autoTracingSteps = tempConfig->viewerState->autoTracingSteps;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
+    state->viewerState->autoTracingEnabled = FALSE;
     state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
     state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */

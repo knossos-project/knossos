@@ -678,6 +678,7 @@ struct agConfig {
 	AG_Checkbox *highlightActiveTreeBox;
     AG_Checkbox *showAllNodeIDsBox;
     AG_Checkbox *datasetLinearFilteringBox;
+    AG_Checkbox *AutoTracingBox;
 };
 
 struct viewPort {

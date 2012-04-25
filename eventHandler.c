@@ -620,33 +620,33 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
 
                             if (state->viewerState->autoTracingEnabled){
 
-                                if (state->viewerState->autoTracingDelay < 25) tempConfig->viewerState->autoTracingDelay = 25;
-                                if (state->viewerState->autoTracingDelay > 200) tempConfig->viewerState->autoTracingDelay = 200;
-                                if (state->viewerState->autoTracingSteps < 1) tempConfig->viewerState->autoTracingSteps = 1;
-                                if (state->viewerState->autoTracingSteps > 25) tempConfig->viewerState->autoTracingSteps = 25;
+                                if (state->viewerState->autoTracingDelay < 25) state->viewerState->autoTracingDelay = 25;
+                                if (state->viewerState->autoTracingDelay > 200) state->viewerState->autoTracingDelay = 200;
+                                if (state->viewerState->autoTracingSteps < 1) state->viewerState->autoTracingSteps = 1;
+                                if (state->viewerState->autoTracingSteps > 25) state->viewerState->autoTracingSteps = 25;
 
                                 if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
-                                        clickedCoordinate->z += 10;
+                                        clickedCoordinate->z += state->viewerState->autoTracingSteps;
                                     }
                                     else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
-                                        clickedCoordinate->z -= 10;
+                                        clickedCoordinate->z -= state->viewerState->autoTracingSteps;
                                     }
                                 }
                                 if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
-                                        clickedCoordinate->y += 10;
+                                        clickedCoordinate->y += state->viewerState->autoTracingSteps;
                                     }
                                     else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
-                                        clickedCoordinate->y -= 10;
+                                        clickedCoordinate->y -= state->viewerState->autoTracingSteps;
                                     }
                                 }
                                 else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
-                                        clickedCoordinate->x += 10;
+                                        clickedCoordinate->x += state->viewerState->autoTracingSteps;
                                     }
                                     else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
-                                        clickedCoordinate->x -= 10;
+                                        clickedCoordinate->x -= state->viewerState->autoTracingSteps;
                                     }
 
                                 }
