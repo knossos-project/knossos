@@ -1057,6 +1057,37 @@ int32_t saveSkeleton() {
     xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->viewerState->currentPosition.z + 1);
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
     memset(attrString, '\0', 128);
+    {
+        int j = 0;
+        char element [8];
+        currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"skeletonVPState", NULL);
+        for (j = 0; j < 16; j++){
+            sprintf (element, "E%d", j);
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->skeletonVpModelView[j]);
+            xmlNewProp(currentXMLNode, BAD_CAST(element), attrString);
+            memset(attrString, '\0', 128);
+        }
+    }
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->translateX);
+    xmlNewProp(currentXMLNode, BAD_CAST"translateX", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->translateY);
+    xmlNewProp(currentXMLNode, BAD_CAST"translateY", attrString);
+    memset(attrString, '\0', 128);
+
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"vpSettingsZoom", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    xmlNewProp(currentXMLNode, BAD_CAST"XYPlane", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    xmlNewProp(currentXMLNode, BAD_CAST"XZPlane", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    xmlNewProp(currentXMLNode, BAD_CAST"YZPlane", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->zoomLevel);
+    xmlNewProp(currentXMLNode, BAD_CAST"SkelVP", attrString);
+    memset(attrString, '\0', 128);
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
@@ -1416,6 +1447,40 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"z");
                     if(attribute)
                         loadedPosition.z = atoi((char *)attribute);
+                }
+
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"skeletonVPState")) {
+                    int j = 0;
+                    char element [8];
+                    for (j = 0; j < 16; j++){
+                        sprintf (element, "E%d", j);
+                        attribute = xmlGetProp(currentXMLNode, (const xmlChar *)element);
+                        state->skeletonState->skeletonVpModelView[j] = atof((char *)attribute);
+                    }
+                    glMatrixMode(GL_MODELVIEW);
+                    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"translateX");
+                    state->skeletonState->translateX = atof((char *)attribute);
+
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"translateY");
+                    state->skeletonState->translateY = atof((char *)attribute);
+                }
+
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsZoom")) {
+
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"XYPlane");
+                    if(attribute)
+                        state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = atof((char *)attribute);
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"XZPlane");
+                    if(attribute)
+                        state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = atof((char *)attribute);
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"YZPlane");
+                    if(attribute)
+                        state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = atof((char *)attribute);
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"SkelVP");
+                    if(attribute)
+                        state->skeletonState->zoomLevel = atof((char *)attribute);
                 }
 
                 currentXMLNode = currentXMLNode->next;

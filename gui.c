@@ -3084,24 +3084,6 @@ remote port
         xmlNewProp(currentXMLNode, BAD_CAST"dynRangeDelta", attrString);
     }
 
-    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsZoom", NULL);
-    {
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
-        xmlNewProp(currentXMLNode, BAD_CAST"XYPlane", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
-        xmlNewProp(currentXMLNode, BAD_CAST"XZPlane", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
-        xmlNewProp(currentXMLNode, BAD_CAST"YZPlane", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->skeletonState->zoomLevel);
-        xmlNewProp(currentXMLNode, BAD_CAST"SkelVP", attrString);
-    }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsSkelVP", NULL);
     {
         memset(attrString, '\0', 1024);
@@ -3422,28 +3404,6 @@ static void UI_loadSettings() {
                 state->viewerState->luminanceRangeDelta = atoi((char *)attribute);
         }
 
-        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *) "vpSettingsZoom")) {
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "XYPlane");
-            float zoomlevel = atof ((char *) attribute);
-            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
-                state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = zoomlevel;
-            }
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "XZPlane");
-            zoomlevel = atof ((char *) attribute);
-            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
-                state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = zoomlevel;
-            }
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "YZPlane");
-            zoomlevel = atof ((char *) attribute);
-            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
-                state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = zoomlevel;
-            }
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "SkelVP");
-            zoomlevel = atof ((char *) attribute);
-            if(0.2 <= zoomlevel && zoomlevel <= 1.) {
-                state->skeletonState->zoomLevel = zoomlevel;
-            }
-        }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSkelVP")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showXY");
             if(attribute)
