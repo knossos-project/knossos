@@ -1434,8 +1434,8 @@ void createLoadTreeImgJTableWin() {
     {
         AG_Expand(dlg);
         AG_FileDlgAddType(dlg,
-                          "",
-                          "*.xml",
+                          "LUT file",
+                          "*.*",
                           OkfileDlgLoadTreeLUT,
                           NULL);
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
@@ -3144,11 +3144,11 @@ remote port
 
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->datasetLUTDirectory);
-        xmlNewProp(currentXMLNode, BAD_CAST"LUTPath", attrString);
+        xmlNewProp(currentXMLNode, BAD_CAST"datasetLUTPath", attrString);
 
         memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->treeImgJDirectory);
-        xmlNewProp(currentXMLNode, BAD_CAST"TreeColorPath", attrString);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->treeLUTDirectory);
+        xmlNewProp(currentXMLNode, BAD_CAST"TreeLUTPath", attrString);
     }
 
     LOG("saved settings to %s\n", state->viewerState->ag->settingsFile);
@@ -3447,12 +3447,12 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"SkeletonPath");
             if(attribute)
                 strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"LUTPath");
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTPath");
             if(attribute)
                 strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"TreeColorPath");
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"TreeLUTPath");
             if(attribute)
-                strcpy(state->viewerState->ag->treeImgJDirectory, (char *)attribute);
+                strcpy(state->viewerState->ag->treeLUTDirectory, (char *)attribute);
         }
 
         currentXMLNode = currentXMLNode->next;
