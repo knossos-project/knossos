@@ -1315,15 +1315,15 @@ void createZoomingWin(struct stateInfo *state) {
                              AG_SLIDER_HORIZ,
                              0,
                              &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
-                             0.02,
-                             1.);
+                             VPZOOMMAX,
+                             VPZOOMMIN);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
                                             "",
                                             &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
-                                            0.02,
-                                            1.);
+                                            VPZOOMMAX,
+                                            VPZOOMMIN);
             {
                 AG_NumericalSetIncrement(numerical, 0.01);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
@@ -1340,15 +1340,15 @@ void createZoomingWin(struct stateInfo *state) {
                              AG_SLIDER_HORIZ,
                              0,
                              &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
-                             0.02,
-                             1.);
+                             VPZOOMMAX,
+                             VPZOOMMIN);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
                                             "",
                                             &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
-                                            0.02,
-                                            1.);
+                                            VPZOOMMAX,
+                                            VPZOOMMIN);
             {
                 AG_NumericalSetIncrement(numerical, 0.01);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
@@ -1365,15 +1365,15 @@ void createZoomingWin(struct stateInfo *state) {
                              AG_SLIDER_HORIZ,
                              0,
                              &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
-                             0.02,
-                             1.);
+                             VPZOOMMAX,
+                             VPZOOMMIN);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
                                             "",
                                             &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
-                                            0.02,
-                                            1.);
+                                            VPZOOMMAX,
+                                            VPZOOMMIN);
             {
                 AG_NumericalSetIncrement(numerical, 0.01);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
@@ -1390,15 +1390,15 @@ void createZoomingWin(struct stateInfo *state) {
                              AG_SLIDER_HORIZ,
                              0,
                              &state->skeletonState->zoomLevel,
-                             0.,
-                             0.49);
+                             SKELZOOMMIN,
+                             SKELZOOMMAX);
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
                                             "",
                                             &state->skeletonState->zoomLevel,
-                                            0.,
-                                            0.49);
+                                            SKELZOOMMIN,
+                                            SKELZOOMMAX);
             {
                 AG_NumericalSetIncrement(numerical, 0.01);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
@@ -1942,8 +1942,8 @@ void UI_zoomOrthogonals(float step) {
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
-            if(!(state->viewerState->viewPorts[i].texture.zoomLevel + step < 0.09999) &&
-               !(state->viewerState->viewPorts[i].texture.zoomLevel + step > 1.00001)) {
+            if((state->viewerState->viewPorts[i].texture.zoomLevel + step >= VPZOOMMAX) &&
+               (state->viewerState->viewPorts[i].texture.zoomLevel + step <= VPZOOMMIN)) {
                 state->viewerState->viewPorts[i].texture.zoomLevel += step;
             }
         }
@@ -2422,10 +2422,11 @@ static void UI_unimplemented() {
 }
 
 static void UI_setDefaultZoom() {
-    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = 1.;
-    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = 1.;
-    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = 1.;
-    state->skeletonState->zoomLevel = 0.;
+    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = VPZOOMMIN;
+    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = VPZOOMMIN;
+    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = VPZOOMMIN;
+    state->skeletonState->zoomLevel = SKELZOOMMIN;
+    refreshViewports(state);
 }
 
 static void UI_SyncConnect() {
@@ -3804,10 +3805,7 @@ void prefDefaultPrefs(){
     state->skeletonState->autoSaveBool = 1;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->autoFilenameIncrementBool = 1;
-    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = 1.0;
-    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = 1.0;
-    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = 1.0;
-    state->skeletonState->zoomLevel = 0.0;
+    UI_setDefaultZoom();
     state->skeletonState->showXYplane = 1;
     state->skeletonState->showXZplane = 1;
     state->skeletonState->showYZplane = 1;

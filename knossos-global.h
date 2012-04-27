@@ -113,6 +113,11 @@
 #define SKELETONIZER      2
 #define MAX_COLORVAL      255.
 
+#define VPZOOMMAX  0.1
+#define VPZOOMMIN   1.0
+#define SKELZOOMMAX 0.49
+#define SKELZOOMMIN 0.0
+
 /*
  *  For the GUI.
  */

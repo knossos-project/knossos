@@ -1649,7 +1649,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP, struct stateInfo *state) {
                 glRotatef(235., 1., 0., 0.);
                 glRotatef(210., 0., 0., 1.);
                 glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-                state->skeletonState->zoomLevel = 0;
+                state->skeletonState->zoomLevel = SKELZOOMMIN;
                 break;
         }
 

@@ -738,10 +738,8 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
         /* Skeleton VP */
         if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
 
-            if(!(state->skeletonState->zoomLevel + 0.2
-                * (0.5 - state->skeletonState->zoomLevel) > 0.4999)) {
-                state->skeletonState->zoomLevel += (0.2
-                    * (0.5 - state->skeletonState->zoomLevel));
+            if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+                state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
                 state->skeletonState->viewChanged = TRUE;
             }
         }
@@ -802,10 +800,9 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
         /* Skeleton VP */
         if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
 
-            if(!(state->skeletonState->zoomLevel - 0.2
-                * (0.5 - state->skeletonState->zoomLevel) < 0.0001)) {
-                state->skeletonState->zoomLevel -= (0.2
-                * (0.5 - state->skeletonState->zoomLevel));
+            if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+                state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
+                if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
                 state->skeletonState->viewChanged = TRUE;
             }
         }
@@ -1359,10 +1356,8 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
             UI_zoomOrthogonals(-0.1);
         }
-        else if(!(state->skeletonState->zoomLevel + 0.2
-            * (0.5 - state->skeletonState->zoomLevel) > 0.4999)) {
-            state->skeletonState->zoomLevel += (0.2
-                * (0.5 - state->skeletonState->zoomLevel));
+        else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+            state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
             state->skeletonState->viewChanged = TRUE;
         }
         break;
@@ -1370,10 +1365,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
             UI_zoomOrthogonals(0.1);
         }
-        else if(!(state->skeletonState->zoomLevel - 0.2
-            * (0.5 - state->skeletonState->zoomLevel) < 0.0001)) {
-            state->skeletonState->zoomLevel -= (0.2
-            * (0.5 - state->skeletonState->zoomLevel));
+        else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+            state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
+            if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
             state->skeletonState->viewChanged = TRUE;
         }
 
