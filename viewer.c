@@ -1363,7 +1363,7 @@ uint32_t userMove(
                        viewerState->currentPosition.y,
                        viewerState->currentPosition.z);
     }
-
+    checkIdleTime();
     return TRUE;
 }
 

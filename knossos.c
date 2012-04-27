@@ -239,8 +239,6 @@ static int32_t tempConfigDefaults() {
     memset(tempConfig->viewerState->viewPorts, '\0', tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
 
     for(i = 0; i < tempConfig->viewerState->numberViewPorts; i++) {
-        tempConfig->viewerState->viewPorts[i].texture.zoomLevel = 1;
-
         switch(i) {
         case VIEWPORT_XY:
             SET_COORDINATE(tempConfig->viewerState->viewPorts[i].upperLeftCorner, 5, 30, 0);
@@ -270,7 +268,7 @@ static int32_t tempConfigDefaults() {
 
         //This variable indicates the current zoom value for a viewport.
         //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        tempConfig->viewerState->viewPorts[i].texture.zoomLevel = 1.;
+        tempConfig->viewerState->viewPorts[i].texture.zoomLevel = VPZOOMMIN;
     }
 
     /* For the GUI */
@@ -585,6 +583,9 @@ static int32_t initStates() {
     state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
     state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
     state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
+    state->skeletonState->idleTime = 0;
+    state->skeletonState->idleTimeNow = 0;
+    state->skeletonState->idleTimeLast = 0;
 
     /* For the remote */
     state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;

@@ -962,6 +962,10 @@ struct skeletonState {
     int32_t skeletonTime;
     int32_t skeletonTimeCorrection;
 
+    int32_t idleTime;
+    int32_t idleTimeNow;
+    int32_t idleTimeLast;
+
     Hashtable *skeletonDCs;
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;

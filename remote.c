@@ -357,6 +357,7 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         // granularity isn't fine enough and it doesn't matter anyway.
         SDL_Delay(eventDelay);
     }
+    checkIdleTime();
     return TRUE;
 }
 
@@ -410,4 +411,15 @@ static int32_t remoteTrajectory(struct stateInfo *state, int32_t trajNumber) {
     }
 
     return TRUE;
+}
+
+
+void checkIdleTime(){
+    state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
+    state->skeletonState->idleTimeNow = SDL_GetTicks();
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 5000){
+        state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
+        LOG("idleTime: %i", state->skeletonState->idleTime);
+    }
+
 }

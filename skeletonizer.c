@@ -805,6 +805,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype, struct s
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID, state);
         addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID, state);
     }
+    checkIdleTime();
 
     return TRUE;
 }
@@ -845,6 +846,7 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
 
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID, state);
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, state);
+        checkIdleTime();
     }
 
     return targetNodeID;
@@ -1088,6 +1090,12 @@ int32_t saveSkeleton() {
     xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->zoomLevel);
     xmlNewProp(currentXMLNode, BAD_CAST"SkelVP", attrString);
     memset(attrString, '\0', 128);
+
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%i", state->skeletonState->idleTime);
+    xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
+    memset(attrString, '\0', 128);
+    LOG("Saved idleTime: %i", state->skeletonState->idleTime);
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
@@ -1483,6 +1491,14 @@ uint32_t loadSkeleton() {
                         state->skeletonState->zoomLevel = atof((char *)attribute);
                 }
 
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
+
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
+                    if(attribute)
+                        state->skeletonState->idleTime = atof((char *)attribute);
+                    state->skeletonState->idleTimeNow = SDL_GetTicks();
+                }
+
                 currentXMLNode = currentXMLNode->next;
             }
         }
@@ -1774,7 +1790,7 @@ uint32_t loadSkeleton() {
 
         updatePosition(state, TELL_COORDINATE_CHANGE);
     }
-
+    LOG("Loaded idleTime: %i", state->skeletonState->idleTime);
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
