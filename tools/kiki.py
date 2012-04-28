@@ -111,12 +111,14 @@ class KikiServer:
             for messageTo in self.outMessages.iterkeys():
                 if len(self.outMessages[messageTo]) > 0:
                     writeTo.append(messageTo)
-        except AttributeError:
+            readFrom = self.clients.keys()
+            readFrom.append(self.serverSocket)
+        except:
             for messageTo in self.outMessages.keys():
                 if len(self.outMessages[messageTo]) > 0:
                     writeTo.append(messageTo)
-        readFrom = list(self.clients.keys())
-        readFrom.append(self.serverSocket)
+            readFrom = self.clients.copy().keys()
+            readFrom.append(self.serverSocket)
 
         try:
             readReady, writeReady, errors = select.select(readFrom, writeTo, [])
@@ -335,18 +337,20 @@ class KikiServer:
                             if self.clients[currentTargetClient][0] < 0:
                                 # See comment below.
                                 continue
-
+                            
+                            # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentTargetClient][0])
+                            self.outMessages[currentTargetClient] = \
+                                "".join([self.outMessages[currentTargetClient], advertiseString]) 
                     except AttributeError:
                         for currentTargetClient in self.clients.keys():
                             if currentTargetClient == currentClient:
                                 continue
                             if self.clients[currentTargetClient][0] < 0:
-                                # See comment below.
                                 continue
                             
-                        # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentTargetClient][0])
-                        self.outMessages[currentTargetClient] = \
-                            "".join([self.outMessages[currentTargetClient], advertiseString]) 
+                            # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentTargetClient][0])
+                            self.outMessages[currentTargetClient] = \
+                                "".join([self.outMessages[currentTargetClient], advertiseString]) 
 
                     # Tell this new client about all currently connected clients
                     # And connect it to all clients ;)
@@ -354,49 +358,88 @@ class KikiServer:
                         for currentAdvertisedClient in self.clients.iterkeys():
                             if currentAdvertisedClient == currentClient:
                                 continue
+                            
+                            if self.clients[currentAdvertisedClient][0] < 0:
+                                # Positive client id indicates a successfully
+                                # negotiated connection. Negative id means a
+                                # connection is established but KIKI_HI has not yet
+                                # been received.
+                                continue
+
+                            currentNameLength = len(self.clients[currentAdvertisedClient][1]) 
+                            currentLength = 5 + 4 + currentNameLength + 6 * 4
+                            clientID = self.clients[currentAdvertisedClient][0]
+                            
+                            advertiseString = struct.pack("<cii3f3i" + \
+                                                            str(currentNameLength) + "s",
+                                                            self.KIKI_ADVERTISE,
+                                                            currentLength,
+                                                            clientID,
+                                                            self.clients[currentAdvertisedClient][2],
+                                                            self.clients[currentAdvertisedClient][3],
+                                                            self.clients[currentAdvertisedClient][4],
+                                                            self.clients[currentAdvertisedClient][5],
+                                                            self.clients[currentAdvertisedClient][6],
+                                                            self.clients[currentAdvertisedClient][7],
+                                                            self.clients[currentAdvertisedClient][1])
+
+                            # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentClient][0])
+                            # print "advertising info: " + str(self.clients[currentAdvertisedClient])
+        
+                            self.outMessages[currentClient] = \
+                                "".join([self.outMessages[currentClient], advertiseString])
+
+                            # This will connect every client to every
+                            # other available client.
+
+                            print("Adding connection between " + \
+                                str(currentClient.getpeername()) + " and " + \
+                                str(currentAdvertisedClient.getpeername()))
+                            self.addConnection(currentClient, currentAdvertisedClient)
+                            self.addConnection(currentAdvertisedClient, currentClient)
                     except AttributeError:
                         for currentAdvertisedClient in self.clients.keys():
                             if currentAdvertisedClient == currentClient:
                                 continue
 
-                        if self.clients[currentAdvertisedClient][0] < 0:
-                            # Positive client id indicates a successfully
-                            # negotiated connection. Negative id means a
-                            # connection is established but KIKI_HI has not yet
-                            # been received.
-                            continue
+                            if self.clients[currentAdvertisedClient][0] < 0:
+                                # Positive client id indicates a successfully
+                                # negotiated connection. Negative id means a
+                                # connection is established but KIKI_HI has not yet
+                                # been received.
+                                continue
 
-                        currentNameLength = len(self.clients[currentAdvertisedClient][1]) 
-                        currentLength = 5 + 4 + currentNameLength + 6 * 4
-                        clientID = self.clients[currentAdvertisedClient][0]
-                        
-                        advertiseString = struct.pack("<cii3f3i" + \
-                                                        str(currentNameLength) + "s",
-                                                        self.KIKI_ADVERTISE,
-                                                        currentLength,
-                                                        clientID,
-                                                        self.clients[currentAdvertisedClient][2],
-                                                        self.clients[currentAdvertisedClient][3],
-                                                        self.clients[currentAdvertisedClient][4],
-                                                        self.clients[currentAdvertisedClient][5],
-                                                        self.clients[currentAdvertisedClient][6],
-                                                        self.clients[currentAdvertisedClient][7],
-                                                        self.clients[currentAdvertisedClient][1])
+                            currentNameLength = len(self.clients[currentAdvertisedClient][1]) 
+                            currentLength = 5 + 4 + currentNameLength + 6 * 4
+                            clientID = self.clients[currentAdvertisedClient][0]
+                            
+                            advertiseString = struct.pack("<cii3f3i" + \
+                                                            str(currentNameLength) + "s",
+                                                            self.KIKI_ADVERTISE,
+                                                            currentLength,
+                                                            clientID,
+                                                            self.clients[currentAdvertisedClient][2],
+                                                            self.clients[currentAdvertisedClient][3],
+                                                            self.clients[currentAdvertisedClient][4],
+                                                            self.clients[currentAdvertisedClient][5],
+                                                            self.clients[currentAdvertisedClient][6],
+                                                            self.clients[currentAdvertisedClient][7],
+                                                            self.clients[currentAdvertisedClient][1])
 
-                        # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentClient][0])
-                        # print "advertising info: " + str(self.clients[currentAdvertisedClient])
-    
-                        self.outMessages[currentClient] = \
-                            "".join([self.outMessages[currentClient], advertiseString])
+                            # print "Kuku advertising id " + str(clientID) + " to " + str(self.clients[currentClient][0])
+                            # print "advertising info: " + str(self.clients[currentAdvertisedClient])
+        
+                            self.outMessages[currentClient] = \
+                                "".join([self.outMessages[currentClient], advertiseString])
 
-                        # This will connect every client to every
-                        # other available client.
+                            # This will connect every client to every
+                            # other available client.
 
-                        print("Adding connection between " + \
-                            str(currentClient.getpeername()) + " and " + \
-                            str(currentAdvertisedClient.getpeername()))
-                        self.addConnection(currentClient, currentAdvertisedClient)
-                        self.addConnection(currentAdvertisedClient, currentClient)
+                            print("Adding connection between " + \
+                                str(currentClient.getpeername()) + " and " + \
+                                str(currentAdvertisedClient.getpeername()))
+                            self.addConnection(currentClient, currentAdvertisedClient)
+                            self.addConnection(currentAdvertisedClient, currentClient)
 
                     ateBytes = messageLength
                     totalEaten += ateBytes
