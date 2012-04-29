@@ -303,7 +303,7 @@ void createNavOptionsWin(struct stateInfo *state) {
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    AG_WindowSetGeometryAligned(state->viewerState->ag->navOptWin, AG_WINDOW_MC, 250, 235);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 235);
 
     numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
     {
@@ -350,7 +350,7 @@ void createNavOptionsWin(struct stateInfo *state) {
     state->viewerState->ag->autoTracingDelayNumerical = numerical;
 
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
-	AG_WindowHide(state->viewerState->ag->navOptWin);
+	AG_WindowShow(state->viewerState->ag->navOptWin);
 }
 
 void createSpatialLockingOptionsWin(struct stateInfo *state) {
@@ -410,7 +410,7 @@ void createSyncOptionsWin(struct stateInfo *state) {
     AG_WindowSetSideBorders(state->viewerState->ag->syncOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->syncOptWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->syncOptWin, "Synchronization Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->syncOptWin, AG_WINDOW_MC, 200, 120);
+    AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
 
     state->viewerState->ag->syncOptLabel = AG_LabelNew(state->viewerState->ag->syncOptWin, 0, NULL);
     {
@@ -456,7 +456,7 @@ void createSaveOptionsWin(struct stateInfo *state) {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Data Saving Options");
-        AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 200, 80);
+            AG_WindowSetGeometry(win, 618, 348, 200, 80);
 
         AG_CheckboxNewInt(win, 0, "Auto-Saving", &state->skeletonState->autoSaveBool);
 
@@ -609,7 +609,7 @@ void createToolsWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->toolsWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->toolsWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->toolsWin, "tools");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->toolsWin, AG_WINDOW_MR, 310, 400);
+    AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
 
     /* Create notebook with tabs in window */
     toolTabs = AG_NotebookNew(state->viewerState->ag->toolsWin, AG_NOTEBOOK_EXPAND);
@@ -947,7 +947,7 @@ void createToolsWin() {
     }
 
     AG_WindowSetCloseAction(state->viewerState->ag->toolsWin, AG_WINDOW_HIDE);
-	AG_WindowHide(state->viewerState->ag->toolsWin);
+	AG_WindowShow(state->viewerState->ag->toolsWin);
 }
 
 void createAboutWin() {
@@ -988,7 +988,7 @@ void createConsoleWin(struct stateInfo *state) {
     AG_WindowSetSideBorders(state->viewerState->ag->consoleWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->consoleWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->consoleWin, "log");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->consoleWin, AG_WINDOW_MR, 300, 135);
+    AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
 
     state->viewerState->ag->agConsole = AG_ConsoleNew(state->viewerState->ag->consoleWin, AG_CONSOLE_EXPAND|AG_CONSOLE_AUTOSCROLL);
     AG_ConsoleSetFont (state->viewerState->ag->agConsole, monospace);
@@ -1023,7 +1023,7 @@ void createViewPortPrefWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
-    AG_WindowSetGeometryAligned(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_MC, 510, 319);
+    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 618, 30, 497, 317);
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
@@ -1270,7 +1270,7 @@ void createViewPortPrefWin() {
         }
     }
     AG_WindowSetCloseAction(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_HIDE);
-	AG_WindowHide(state->viewerState->ag->viewPortPrefWin);
+	AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
 }
 
 void createSetDynRangeWin(struct stateInfo *state) {
@@ -1304,7 +1304,7 @@ void createZoomingWin(struct stateInfo *state) {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Viewport Zooming");
-        AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 300, 180);
+        AG_WindowSetGeometry(win, 739, 348, 300, 180);
 
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
@@ -1412,7 +1412,7 @@ void createZoomingWin(struct stateInfo *state) {
         }
 
         AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
-    	AG_WindowHide(win);
+    	AG_WindowShow(win);
     }
 
     state->viewerState->ag->zoomingWin = win;
@@ -3763,41 +3763,20 @@ void prefDefaultPrefsWindow(){
 void prefDefaultPrefs(){
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
-    state->viewerState->ag->toolsWin->visible = FALSE;
-    state->viewerState->ag->zoomingWin->visible = FALSE;
-    state->viewerState->ag->navOptWin->visible = FALSE;
-    state->viewerState->ag->syncOptWin->visible = FALSE;
-    state->viewerState->ag->viewPortPrefWin->visible = FALSE;
-    state->viewerState->ag->saveOptWin->visible = FALSE;
-    state->viewerState->ag->consoleWin->visible = FALSE;
-    ((AG_Widget *)state->viewerState->ag->toolsWin)->x = 714;
-    ((AG_Widget *)state->viewerState->ag->toolsWin)->y = 170;
-    ((AG_Widget *)state->viewerState->ag->toolsWin)->w = 310;
-    ((AG_Widget *)state->viewerState->ag->toolsWin)->h = 400;
-    ((AG_Widget *)state->viewerState->ag->zoomingWin)->x = 362;
-    ((AG_Widget *)state->viewerState->ag->zoomingWin)->y = 280;
-    ((AG_Widget *)state->viewerState->ag->zoomingWin)->w = 300;
-    ((AG_Widget *)state->viewerState->ag->zoomingWin)->h = 180;
-    ((AG_Widget *)state->viewerState->ag->navOptWin)->x = 387;
-    ((AG_Widget *)state->viewerState->ag->navOptWin)->y = 253;
-    ((AG_Widget *)state->viewerState->ag->navOptWin)->w = 250;
-    ((AG_Widget *)state->viewerState->ag->navOptWin)->h = 235;
-    ((AG_Widget *)state->viewerState->ag->syncOptWin)->x = 412;
-    ((AG_Widget *)state->viewerState->ag->syncOptWin)->y = 310;
-    ((AG_Widget *)state->viewerState->ag->syncOptWin)->w = 200;
-    ((AG_Widget *)state->viewerState->ag->syncOptWin)->h = 120;
-    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->x = 257;
-    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->y = 213;
-    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->w = 510;
-    ((AG_Widget *)state->viewerState->ag->viewPortPrefWin)->h = 319;
-    ((AG_Widget *)state->viewerState->ag->saveOptWin)->x = 412;
-    ((AG_Widget *)state->viewerState->ag->saveOptWin)->y = 330;
-    ((AG_Widget *)state->viewerState->ag->saveOptWin)->w = 200;
-    ((AG_Widget *)state->viewerState->ag->saveOptWin)->h = 80;
-    ((AG_Widget *)state->viewerState->ag->consoleWin)->x = 724;
-    ((AG_Widget *)state->viewerState->ag->consoleWin)->y = 303;
-    ((AG_Widget *)state->viewerState->ag->consoleWin)->w = 300;
-    ((AG_Widget *)state->viewerState->ag->consoleWin)->h = 135;
+    AG_WindowShow(state->viewerState->ag->toolsWin);
+    AG_WindowShow(state->viewerState->ag->zoomingWin);
+    AG_WindowShow(state->viewerState->ag->navOptWin);
+    AG_WindowHide(state->viewerState->ag->syncOptWin);
+    AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
+    AG_WindowHide(state->viewerState->ag->saveOptWin);
+    AG_WindowHide(state->viewerState->ag->consoleWin);
+    AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
+    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 180);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 235);
+    AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
+    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 618, 30, 497, 317);
+    AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);
+    AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
     tempConfig->viewerState->recenteringTime = 0;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->stepsPerSec = 40;
@@ -3835,9 +3814,15 @@ void prefDefaultPrefs(){
     tempConfig->viewerState->filterType = 9729;
     state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
     tempConfig->viewerState->workMode = 0;
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+    state->viewerState->autoTracingDelay=50;
+    state->viewerState->autoTracingSteps=10;
+    state->viewerState->autoTracingEnabled = FALSE;
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
+    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
+    state->viewerState->ag->AutoTracingBox->state = FALSE;
     //Not integrated:
     //tempConfig->skeletonState->displayMode = 1;
-    //tempConfig->skeletonState->workMode = 0;  does not connect the new node with the previous node
     refreshViewports(state);
     updateTreeColors();
     updateSkeletonState(state);
