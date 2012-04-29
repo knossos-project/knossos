@@ -782,6 +782,7 @@ void createToolsWin() {
             AG_BoxSetPadding(box, 0);
             numerical = AG_NumericalNewFltR(box, 0, NULL, "R: ", &state->viewerState->ag->actTreeColor.r, 0., 1.);
             {
+                AG_NumericalSetIncrement(numerical, 0.1);
                 AG_SetEvent(numerical, "numerical-changed", actTreeColorWdgtModified, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -789,6 +790,7 @@ void createToolsWin() {
 
             numerical = AG_NumericalNewFltR(box, 0, NULL, "G: ", &state->viewerState->ag->actTreeColor.g, 0., 1.);
             {
+                AG_NumericalSetIncrement(numerical, 0.1);
                 AG_SetEvent(numerical, "numerical-changed", actTreeColorWdgtModified, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -796,6 +798,7 @@ void createToolsWin() {
 
             numerical = AG_NumericalNewFltR(box, 0, NULL, "B: ", &state->viewerState->ag->actTreeColor.b, 0., 1.);
             {
+                AG_NumericalSetIncrement(numerical, 0.1);
                 AG_SetEvent(numerical, "numerical-changed", actTreeColorWdgtModified, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -803,6 +806,7 @@ void createToolsWin() {
 
             numerical = AG_NumericalNewFltR(box, 0, NULL, "A: ", &state->viewerState->ag->actTreeColor.a, 0., 1.);
             {
+                AG_NumericalSetIncrement(numerical, 0.1);
                 AG_SetEvent(numerical, "numerical-changed", actTreeColorWdgtModified, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -2331,6 +2335,7 @@ static void actTreeColorWdgtModified(AG_Event *event) {
         state->skeletonState->activeTree->color =
             state->viewerState->ag->actTreeColor;
     }
+    state->skeletonState->skeletonChanged = TRUE;
 }
 
 
@@ -3083,6 +3088,14 @@ remote port
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->luminanceRangeDelta);
         xmlNewProp(currentXMLNode, BAD_CAST"dynRangeDelta", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->datasetColortableOn);
+        xmlNewProp(currentXMLNode, BAD_CAST"datasetColortableOn", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->treeColortableOn);
+        xmlNewProp(currentXMLNode, BAD_CAST"treeColortableOn", attrString);
     }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsSkelVP", NULL);
@@ -3403,6 +3416,12 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"dynRangeDelta");
             if(attribute)
                 state->viewerState->luminanceRangeDelta = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetColortableOn");
+            if(attribute)
+                state->viewerState->datasetColortableOn = atof((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeColortableOn");
+            if(attribute)
+                state->viewerState->treeColortableOn = atof((char *)attribute);
         }
 
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSkelVP")) {
@@ -3784,7 +3803,6 @@ void prefDefaultPrefs(){
     state->skeletonState->autoSaveBool = 1;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->autoFilenameIncrementBool = 1;
-    UI_setDefaultZoom();
     state->skeletonState->showXYplane = 1;
     state->skeletonState->showXZplane = 1;
     state->skeletonState->showYZplane = 1;
@@ -3821,10 +3839,15 @@ void prefDefaultPrefs(){
     AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
     AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
     state->viewerState->ag->AutoTracingBox->state = FALSE;
-    //Not integrated:
-    //tempConfig->skeletonState->displayMode = 1;
+    state->skeletonState->displayMode = 0;
+    state->skeletonState->displayMode &= ~DSP_LINES_POINTS;
+    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+    state->viewerState->ag->radioRenderingModel = 1;
+    state->viewerState->ag->radioSkeletonDisplayMode = 0;
+    state->viewerState->datasetColortableOn = FALSE;
+    state->viewerState->treeColortableOn = FALSE;
     refreshViewports(state);
-    updateTreeColors();
+    state->skeletonState->skeletonChanged = TRUE;
     updateSkeletonState(state);
     datasetColorAdjustmentsChanged();
 }
