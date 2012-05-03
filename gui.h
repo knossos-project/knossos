@@ -90,7 +90,7 @@ static void createSaveAsFileDlgWin(struct stateInfo *state);
  void createSkeletonVpToolsWdgt(AG_Window *parent);
  void createActNodeWdgt(struct stateInfo *state, AG_Widget *parent);
 static void datasetColorAdjustmentsChanged();
-static void treeColorAdjustmentsChanged();
+ void treeColorAdjustmentsChanged();
 
 static void createOpenCustomPrefsDlgWin();
 static void createSaveCustomPrefsAsDlgWin();

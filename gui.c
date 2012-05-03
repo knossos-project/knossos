@@ -1447,7 +1447,6 @@ void createLoadTreeImgJTableWin() {
         AG_FileDlgSetOptionContainer(dlg, AG_BoxNewVert(win, AG_BOX_HFILL));
         AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->treeImgJDirectory);
     }
-
     AG_WindowShow(win);
 }
 void createLoadDatasetImgJTableWin() {
@@ -2027,7 +2026,7 @@ void OkfileDlgLoadTreeLUT(AG_Event *event) {
         LOG("Error loading Tree LUT.\n");
         memcpy(&(state->viewerState->treeColortable[0]),
                &(state->viewerState->neutralTreeTable[0]),
-                 TREELUT_SIZE);
+                 RGB_LUTSIZE);
         state->viewerState->treeLutSet = FALSE;
     }
 
@@ -2045,7 +2044,7 @@ void OkfileDlgLoadDatasetLUT(AG_Event *event) {
         LOG("Error loading Dataset LUT.\n");
         memcpy(&(state->viewerState->datasetColortable[0][0]),
                &(state->viewerState->neutralDatasetTable[0][0]),
-               768);
+               RGB_LUTSIZE);
     }
 
     datasetColorAdjustmentsChanged();
@@ -2641,7 +2640,6 @@ static void UI_pushBranchBtnPressed() {
     }
 
     pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
-
 }
 static void UI_popBranchBtnPressed() {
     UI_popBranchNode(CHANGE_MANUAL, state);
@@ -2659,30 +2657,28 @@ static void UI_enableLinearFilteringModified(AG_Event *event) {
     }
 
 }
-static void treeColorAdjustmentsChanged() {
+void treeColorAdjustmentsChanged() {
+    //user lut activated
     if(state->viewerState->treeColortableOn) {
+        //user lut selected
         if(state->viewerState->treeLutSet) {
             memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->treeColortable,
-            TREELUT_SIZE * sizeof(float));
+            RGB_LUTSIZE * sizeof(float));
             updateTreeColors();
         }
         else {
-            LOG("No LUT selected yet.");
             memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->neutralTreeTable,
-            TREELUT_SIZE * sizeof(float));
+            RGB_LUTSIZE * sizeof(float));
         }
     }
+    //use of default lut
     else {
-        if(memcmp(state->viewerState->treeAdjustmentTable,
-            state->viewerState->neutralTreeTable,
-            TREELUT_SIZE * sizeof(float)) != 0) {
-            memcpy(state->viewerState->treeAdjustmentTable,
-                state->viewerState->neutralTreeTable,
-                TREELUT_SIZE * sizeof(float));
-                updateTreeColors();
-        }
+        memcpy(state->viewerState->treeAdjustmentTable,
+        state->viewerState->neutralTreeTable,
+        RGB_LUTSIZE * sizeof(float));
+        updateTreeColors();
     }
 }
 
@@ -2695,13 +2691,13 @@ static void datasetColorAdjustmentsChanged() {
     if(state->viewerState->datasetColortableOn) {
         memcpy(state->viewerState->datasetAdjustmentTable,
                state->viewerState->datasetColortable,
-               768 * sizeof(GLuint));
+               RGB_LUTSIZE * sizeof(GLuint));
         doAdjust = TRUE;
     }
     else {
         memcpy(state->viewerState->datasetAdjustmentTable,
                state->viewerState->neutralDatasetTable,
-               768 * sizeof(GLuint));
+               RGB_LUTSIZE * sizeof(GLuint));
     }
 
     /*
@@ -2710,15 +2706,15 @@ static void datasetColorAdjustmentsChanged() {
      */
 
     if((state->viewerState->luminanceBias != 0) ||
-       (state->viewerState->luminanceRangeDelta != 255)) {
+       (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
         for(i = 0; i < 256; i++) {
             dynIndex = (int32_t)((i - state->viewerState->luminanceBias) /
-                                 (state->viewerState->luminanceRangeDelta / 255.));
+                                 (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
 
             if(dynIndex < 0)
                 dynIndex = 0;
-            if(dynIndex > 255)
-                dynIndex = 255;
+            if(dynIndex > MAX_COLORVAL)
+                dynIndex = MAX_COLORVAL;
 
             tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
             tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];

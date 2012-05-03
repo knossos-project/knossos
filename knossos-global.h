@@ -111,7 +111,6 @@
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_SELECT   2
 #define SKELETONIZER      2
-#define MAX_COLORVAL      255.
 
 #define VPZOOMMAX  0.1
 #define VPZOOMMIN   1.0
@@ -119,11 +118,16 @@
 #define SKELZOOMMIN 0.0
 
 /*
+ * For the Lookup tables
+ */
+ #define RGB_LUTSIZE  768
+ #define RGBA_LUTSIZE 1024
+ #define MAX_COLORVAL  255.
+
+/*
  *  For the GUI.
  */
-
 #define MAX_RECENT_FILES 10
-#define TREELUT_SIZE     768
 /*
  *	For the remote.
  */
@@ -216,8 +220,8 @@
 #define DSP_SLICE_VP_HIDE       8
 #define DSP_ACTIVETREE          16
 #define DSP_LINES_POINTS        32
-#define CATCH_RADIUS            10
 
+#define CATCH_RADIUS            10
 
 /*
  * For the renderer
@@ -830,9 +834,9 @@ struct viewerState {
 
     int treeLutSet;
     int treeColortableOn;
-    float treeColortable[TREELUT_SIZE];
-    float treeAdjustmentTable[TREELUT_SIZE];
-    float neutralTreeTable[TREELUT_SIZE];
+    float treeColortable[RGB_LUTSIZE];
+    float treeAdjustmentTable[RGB_LUTSIZE];
+    float neutralTreeTable[RGB_LUTSIZE];
 
 
     /*

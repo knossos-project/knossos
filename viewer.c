@@ -1645,9 +1645,9 @@ int32_t refreshViewports(struct stateInfo *state) {
 
 int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state) {
     FILE *lutFile = NULL;
-    uint8_t lutBuffer[1024];
+    uint8_t lutBuffer[RGB_LUTSIZE];
     int32_t readBytes = 0, i = 0;
-    uint32_t size = TREELUT_SIZE;
+    uint32_t size = RGB_LUTSIZE;
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
@@ -1680,20 +1680,21 @@ int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct 
     }
 
     //Get RGB-Values in percent
-    for(i = 0; i < TREELUT_SIZE; i+=3) {
+    for(i = 0; i < 256; i++) {
         table[i]   = lutBuffer[i]/MAX_COLORVAL;
-        table[i+1] = lutBuffer[i + 1]/MAX_COLORVAL;
-        table[i+2] = lutBuffer[i + 2]/MAX_COLORVAL;
+        table[i + 256] = lutBuffer[i+256]/MAX_COLORVAL;
+        table[i + 512] = lutBuffer[i + 512]/MAX_COLORVAL;
     }
 
+    treeColorAdjustmentsChanged();
     return TRUE;
 }
 
 int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state) {
     FILE *lutFile = NULL;
-    uint8_t lutBuffer[1024];
+    uint8_t lutBuffer[RGBA_LUTSIZE];
     int32_t readBytes = 0, i = 0;
-    uint32_t size = 768;
+    uint32_t size = RGB_LUTSIZE;
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
@@ -1707,9 +1708,9 @@ int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, str
     }
 
     if(type == GL_RGB)
-        size = 768;
+        size = RGB_LUTSIZE;
     else if(type == GL_RGBA)
-        size = 1024;
+        size = RGBA_LUTSIZE;
     else {
         LOG("Requested color type %x does not exist.", type);
         return FALSE;

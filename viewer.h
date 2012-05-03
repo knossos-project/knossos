@@ -59,3 +59,5 @@ static int32_t texIndex(uint32_t x,
                         struct viewPortTexture *texture,
                         struct stateInfo *state);
 static SDL_Cursor *GenCursor(char *xpm[], int xHot, int yHot);
+
+void treeColorAdjustmentsChanged();
