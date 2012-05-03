@@ -1445,3 +1445,5 @@ void createViewPortPrefWin();
  void createLoadDatasetImgJTableWin();
  void createLoadTreeImgJTableWin();
  void createSetDynRangeWin(struct stateInfo *state);
+
+ void treeColorAdjustmentsChanged();
