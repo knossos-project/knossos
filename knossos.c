@@ -877,7 +877,7 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 
 int32_t loadNeutralTreeLUT(float *treeLut) {
     int i;
-    if(loadTreeColorTable("random.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state) == FALSE) {
+    if(loadTreeColorTable("default.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state) == FALSE) {
         LOG("Could not load default tree lut.");
         for(i = 0; i < 768; i += 12) {
             //blue
