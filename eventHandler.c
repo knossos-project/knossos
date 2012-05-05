@@ -882,6 +882,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->viewPorts[i].edgeLength);
+                        checkIdleTime();
                     break;
                 case VIEWPORT_XY:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
@@ -947,7 +948,7 @@ static uint32_t handleMouseMotionRightHold(SDL_Event event, int32_t VPfound) {
             state->skeletonState->rotateZ += event.motion.xrel;
         else state->skeletonState->rotateX += event.motion.yrel;
             state->skeletonState->viewChanged = TRUE;
-
+        checkIdleTime();
         return TRUE;
     }
 
