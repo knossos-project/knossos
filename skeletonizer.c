@@ -132,7 +132,6 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
             localtimestruct->tm_hour,
             localtimestruct->tm_min);
 #endif
-    state->skeletonState->fileBaseLen = 34;
 
     state->skeletonState->commentBuffer = malloc(10240 * sizeof(char));
     memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
@@ -987,11 +986,6 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"name", attrString);
     memset(attrString, '\0', 128);
 
-    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"filename", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->fileBaseLen);
-    xmlNewProp(currentXMLNode, BAD_CAST"fileBaseLength", attrString);
-    memset(attrString, '\0', 128);
-
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"scale", NULL);
     xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.x / state->magnification);
     xmlNewProp(currentXMLNode, BAD_CAST"x", attrString);
@@ -1211,14 +1205,13 @@ int32_t saveSkeleton() {
 }
 
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
-    int32_t extensionDelim = -1;
-    int32_t countDelim = state->skeletonState->fileBaseLen+1;
+    int32_t extensionDelim = -1, countDelim = -1;
+    char betweenDots[8192];
     char count[8192];
     char origFilename[8192], skeletonFileBase[8192];
-    FILE *skelFile;
-    int32_t i;
+    int32_t i, j;
 
-    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     if(lockSkeleton(targetRevision, state) == FALSE) {
         unlockSkeleton(FALSE, state);
@@ -1226,8 +1219,6 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     }
 
     memset(skeletonFileBase, '\0', 8192);
-    strncpy(skeletonFileBase, filename, countDelim - 1);
-
     memset(origFilename, '\0', 8192);
     strncpy(origFilename, filename, 8192 - 1);
 
@@ -1239,24 +1230,48 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
             }
         }
 
-        if(extensionDelim > countDelim) {
-            strncpy(count, &filename[countDelim], extensionDelim - countDelim);
-            //default filename starts with count 000, others start with no count.
-            skelFile = fopen(filename, "r");
-            if(strncmp(count, "000", 3) == 0 && !skelFile) {
-                state->skeletonState->saveCnt = 1;
+        for(i--; i >= 0; i--) {
+            if(filename[i] == '.') {
+                //check if string between dots represents a number
+                strncpy(betweenDots, &filename[i+1], extensionDelim - i-1);
+                for(j = 0; j < extensionDelim - i - 1; j++) {
+                    if(atoi(&betweenDots[j]) == 0 && betweenDots[j] != '0') {
+                        goto noCounter;
+                    }
+                }
+                //string between dots is a number
+                countDelim = i;
+                break;
             }
-            else {
-                state->skeletonState->saveCnt = atoi(count);
-                state->skeletonState->saveCnt++;
-            }
-            fclose(skelFile);
-        }
-        else {
-            state->skeletonState->saveCnt = 1;
         }
 
-        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml",
+        noCounter:
+        if(countDelim > -1) {
+            strncpy(skeletonFileBase,
+                    filename,
+                    countDelim);
+        }
+        else if(extensionDelim > -1){
+            strncpy(skeletonFileBase,
+                    filename,
+                    extensionDelim);
+        }
+        else {
+            strncpy(skeletonFileBase,
+                    filename,
+                    8192 - 1);
+        }
+
+        if(countDelim && extensionDelim) {
+            strncpy(count, &filename[countDelim + 1], extensionDelim - countDelim);
+            state->skeletonState->saveCnt = atoi(count);
+            state->skeletonState->saveCnt++;
+        }
+        else {
+            state->skeletonState->saveCnt = 0;
+        }
+
+        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml\0",
                 skeletonFileBase,
                 state->skeletonState->saveCnt);
     }
@@ -1267,9 +1282,8 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
         if(!syncMessage(state, "blrds", KIKI_SKELETONFILENAME, increment, origFilename))
             skeletonSyncBroken(state);
     }
-    else {
+    else
         refreshViewports(state);
-    }
 
     unlockSkeleton(TRUE, state);
 
@@ -1294,7 +1308,6 @@ uint32_t loadSkeleton() {
     int32_t time, activeNodeID = 0;
     int32_t skeletonTime = 0;
     color4F neuronColor;
-    int noFileBaseLen = FALSE;
 
     LOG("Starting to load skeleton...");
 
@@ -1361,15 +1374,6 @@ uint32_t loadSkeleton() {
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
             currentXMLNode = thingOrParamXMLNode->children;
             while(currentXMLNode) {
-                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *) "filename")) {
-                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "fileBaseLength");
-                    if(attribute) {
-                        state->skeletonState->fileBaseLen = atoi((char *) attribute);
-                    }
-                }
-                else {
-                    noFileBaseLen = TRUE;
-                }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"magnification")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"factor");
                     /*
@@ -1483,33 +1487,6 @@ uint32_t loadSkeleton() {
                 }
 
                 currentXMLNode = currentXMLNode->next;
-            }
-        }
-
-        if(noFileBaseLen){
-            int i;
-            int extensionDelim = -1, countDelim = -1;
-
-            for(i = 8192 - 1; i >= 0; i--) {
-                if(state->skeletonState->skeletonFile[i] == '.') {
-                    extensionDelim = i;
-                    break;
-                }
-            }
-            for(i--; i >= 0; i--) {
-                if(state->skeletonState->skeletonFile[i] == '.') {
-                    countDelim = i;
-                    break;
-                }
-            }
-            if(countDelim > -1) {
-                state->skeletonState->fileBaseLen = countDelim;
-            }
-            else if(extensionDelim > -1){
-                state->skeletonState->fileBaseLen = extensionDelim;
-            }
-            else {
-                state->skeletonState->fileBaseLen = 8192 - 1;
             }
         }
 

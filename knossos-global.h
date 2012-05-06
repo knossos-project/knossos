@@ -1059,7 +1059,6 @@ struct skeletonState {
     int32_t autoSaveBool;
     uint32_t autoSaveInterval;
     uint32_t saveCnt;
-    uint32_t fileBaseLen;
     char *skeletonFile;
 
     char *deleteSegment;
@@ -1383,6 +1382,8 @@ uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode, struct s
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
 
+void checkIdleTime();
+
 /*
  * For client.c
  */
@@ -1423,6 +1424,7 @@ void UI_copyClipboardCoordinates();
 void UI_zoomOrthogonals(float step);
 void createToolsWin();
 void createViewPortPrefWin();
+void reloadDataSizeWin(struct stateInfo *state);
 
  void createMenuBar(struct stateInfo *state);
  void createCoordBarWin(struct stateInfo *state);

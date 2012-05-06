@@ -2109,13 +2109,12 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
                 strncpy(state->skeletonState->skeletonFile, filename, 8192);
             }
         }
-        if(strlen(shortFilename) < 3 || strncmp(extension, ".nml", 4) != 0) {
+        if (strlen(shortFilename) < 4 || strncmp(extension, ".nml", 4) != 0) {
+            memset(state->skeletonState->skeletonFile, '\0', 8192);
             sprintf(state->skeletonState->skeletonFile, "%s%s",
                         filename,
                         ".nml");
         }
-
-        state->skeletonState->fileBaseLen = strlen(state->skeletonState->skeletonFile) - 4;
         UI_saveSkeleton(FALSE);
     }
 

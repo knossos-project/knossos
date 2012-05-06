@@ -877,7 +877,6 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 int32_t loadNeutralTreeLUT(float *treeLut) {
-    int i;
     if(loadTreeColorTable("default.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state) == FALSE) {
         loadTreeLUTFallback(state);
         treeColorAdjustmentsChanged();

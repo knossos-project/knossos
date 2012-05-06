@@ -422,7 +422,6 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
-
                 updateSkeletonFileName(d[0], d[1], (char *)s);
 
                 break;
