@@ -292,7 +292,6 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
 
     if(state->remoteState->type == REMOTE_RECENTERING)
         eventDelay = timePerStep;
-        LOG("eventdelay: %i", eventDelay);
 
     if(abs(x) >= abs(y) && abs(x) >= abs(z)) {
         totalMoves = abs(x);
