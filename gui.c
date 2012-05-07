@@ -2019,7 +2019,7 @@ void WRAP_saveSkeleton() {
 void OkfileDlgLoadTreeLUT(AG_Event *event) {
     AG_FileDlg *dlg = AG_SELF();
     char *filename = AG_STRING(1);
-
+    strcpy(state->viewerState->ag->treeLUTFile, (char *)filename);
     cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, filename, 2048);
     state->viewerState->treeLutSet = TRUE;
     if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), GL_RGB, state) != TRUE) {
@@ -2037,7 +2037,7 @@ void OkfileDlgLoadTreeLUT(AG_Event *event) {
 void OkfileDlgLoadDatasetLUT(AG_Event *event) {
     AG_FileDlg *dlg = AG_SELF();
     char *filename = AG_STRING(1);
-
+    strcpy(state->viewerState->ag->datasetLUTFile, (char *)filename);
     cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, filename, 2048);
 
     if(loadDatasetColorTable(filename, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state) != TRUE) {
@@ -3149,7 +3149,7 @@ remote port
     {
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->skeletonDirectory);
-        xmlNewProp(currentXMLNode, BAD_CAST"SkeletonPath", attrString);
+        xmlNewProp(currentXMLNode, BAD_CAST"skeletonPath", attrString);
 
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->datasetLUTDirectory);
@@ -3157,7 +3157,15 @@ remote port
 
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->treeLUTDirectory);
-        xmlNewProp(currentXMLNode, BAD_CAST"TreeLUTPath", attrString);
+        xmlNewProp(currentXMLNode, BAD_CAST"treeLUTPath", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->datasetLUTFile);
+        xmlNewProp(currentXMLNode, BAD_CAST"datasetLUTFile", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->treeLUTFile);
+        xmlNewProp(currentXMLNode, BAD_CAST"treeLUTFile", attrString);
     }
 
     LOG("saved settings to %s\n", state->viewerState->ag->settingsFile);
@@ -3459,15 +3467,30 @@ static void UI_loadSettings() {
                 state->viewerState->autoTracingSteps = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"SkeletonPath");
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"skeletonPath");
             if(attribute)
                 strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTPath");
             if(attribute)
                 strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"TreeLUTPath");
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTPath");
             if(attribute)
                 strcpy(state->viewerState->ag->treeLUTDirectory, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTFile");
+            if(attribute){
+                strcpy(state->viewerState->ag->datasetLUTFile, (char *)attribute);
+                cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, state->viewerState->ag->datasetLUTFile, 2048);
+                loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
+                datasetColorAdjustmentsChanged();
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTFile");
+            if(attribute){
+                strcpy(state->viewerState->ag->treeLUTFile, (char *)attribute);
+                cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, state->viewerState->ag->treeLUTFile, 2048);
+                state->viewerState->treeLutSet = TRUE;
+                loadTreeColorTable(state->viewerState->ag->treeLUTFile, &(state->viewerState->treeColortable[0]), GL_RGB, state);
+                treeColorAdjustmentsChanged();
+            }
         }
 
         currentXMLNode = currentXMLNode->next;
@@ -3841,6 +3864,10 @@ void prefDefaultPrefs(){
     state->viewerState->ag->radioSkeletonDisplayMode = 0;
     state->viewerState->datasetColortableOn = FALSE;
     state->viewerState->treeColortableOn = FALSE;
+    loadTreeLUTFallback(state);
+    state->viewerState->treeLutSet = FALSE;
+    treeColorAdjustmentsChanged();
+    datasetColorAdjustmentsChanged();
     refreshViewports(state);
     state->skeletonState->skeletonChanged = TRUE;
     updateSkeletonState(state);

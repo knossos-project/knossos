@@ -1,21 +1,23 @@
 <?xml version="1.0"?>
 <KNOSSOS_GUI_settings>
   <recentFiles/>
-  <windowSize screenSizeX="1920" screenSizeY="1177"/>
+  <windowSize screenSizeX="1024" screenSizeY="740"/>
   <windows>
-    <window type="tools" x="714" y="170" w="310" h="400" visible="0"/>
-    <window type="zoom" x="362" y="280" w="300" h="180" visible="0"/>
-    <window type="nav-options" x="412" y="323" w="200" h="95" visible="0"/>
-    <window type="sync-options" x="412" y="310" w="200" h="120" visible="0"/>
-    <window type="vp-options" x="262" y="220" w="500" h="300" visible="0"/>
-    <window type="saving-options" x="412" y="330" w="200" h="80" visible="0"/>
-    <window type="console" x="724" y="303" w="300" h="135" visible="0"/>
+    <window type="tools" x="1040" y="298" w="326" h="408" visible="1"/>
+    <window type="zoom" x="739" y="348" w="300" h="180" visible="1"/>
+    <window type="nav-options" x="1116" y="30" w="250" h="235" visible="1"/>
+    <window type="sync-options" x="618" y="429" w="200" h="120" visible="0"/>
+    <window type="vp-options" x="618" y="30" w="497" h="317" visible="1"/>
+    <window type="saving-options" x="618" y="348" w="200" h="80" visible="0"/>
+    <window type="console" x="618" y="529" w="421" h="129" visible="0"/>
   </windows>
   <workModes skeletonWorkMode="0" viewWorkMode="0"/>
-  <datasetNavigation recenteringTime="0" movementSpeed="40" jumpFrames="1"/>
+  <datasetNavigation recenteringTime="0" recenteringTimeOrth="500" movementSpeed="40" jumpFrames="1"/>
   <dataSavingOptions autoSaving="1" savingInterval="5" autoIncrFileName="1"/>
   <vpSettingsGeneral lightEffects="0" highlActiveTree="1" showAllNodeIDs="0" enableOverrideNodeRadius="0" overrideNodeRadius="1.000000" edgeNodeRadiusRatio="0.500000" displayModeBitFlags="1"/>
-  <vpSettingsSliceVPs vpCrosshairs="1" highlIntersections="0" depthCutoff="5.000000" datasetLinearFiltering="9729" dynRangeBias="0" dynRangeDelta="255"/>
+  <vpSettingsSliceVPs vpLabels="0" vpCrosshairs="1" highlIntersections="0" depthCutoff="5.000000" datasetLinearFiltering="9729" dynRangeBias="0" dynRangeDelta="255" datasetColortableOn="0" treeColortableOn="0"/>
   <vpSettingsSkelVP showXY="1" showXZ="1" showYZ="1" rotateAroundActNode="1"/>
   <toolsNodesTab useLastRadiusAsDefault="0" defaultRadius="1.500000" enableCommentLocking="0" lockingRadius="100" lockToNodesWithComment="seed"/>
+  <Semi-Auto-Tracing autoTracingDelay="50" autoTracingSteps="10"/>
+  <FilePaths skeletonPath="" datasetLUTPath="" treeLUTPath="" datasetLUTFile="" treeLUTFile=""/>
 </KNOSSOS_GUI_settings>

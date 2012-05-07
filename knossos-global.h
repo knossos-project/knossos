@@ -598,6 +598,8 @@ struct agConfig {
     char treeImgJDirectory[2048];
     char treeLUTDirectory[2048];
     char customPrefsDirectory[2048];
+    char treeLUTFile[2048];
+    char datasetLUTFile[2048];
 
     /* file saving settings win buffer variables */
     uint32_t autoSaveInterval; /* in minutes */
