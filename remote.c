@@ -244,6 +244,20 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     walkVector.z = (float) z;
 
     //Not locked...
+
+    if (tempConfig->viewerState->recenteringTime > 5000){
+        tempConfig->viewerState->recenteringTime = 5000;
+        updateViewerState(state);
+    }
+    if (tempConfig->viewerState->recenteringTimeOrth < 300){
+        tempConfig->viewerState->recenteringTimeOrth = 300;
+        updateViewerState(state);
+    }
+    if (tempConfig->viewerState->recenteringTimeOrth > 5000){
+        tempConfig->viewerState->recenteringTimeOrth = 5000;
+        updateViewerState(state);
+    }
+
     uint32_t recenteringTime;
     if ((state->viewerState->walkOrth == FALSE) && (state->viewerState->autoTracingEnabled == FALSE)){
         recenteringTime = state->viewerState->recenteringTime;
@@ -278,6 +292,7 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
 
     if(state->remoteState->type == REMOTE_RECENTERING)
         eventDelay = timePerStep;
+        LOG("eventdelay: %i", eventDelay);
 
     if(abs(x) >= abs(y) && abs(x) >= abs(z)) {
         totalMoves = abs(x);
