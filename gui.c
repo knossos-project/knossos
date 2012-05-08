@@ -2631,13 +2631,6 @@ static void UI_enableSliceVPOverlayModified(AG_Event *event) {
 }
 
 static void UI_pushBranchBtnPressed() {
-    SDL_Event ev;
-
-    ev.type = SDL_USEREVENT;
-    if(SDL_PushEvent(&ev) == FAIL) {
-        LOG("pushevent returned -1");
-    }
-
     pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
 }
 static void UI_popBranchBtnPressed() {
