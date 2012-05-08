@@ -45,7 +45,7 @@ class RunKnossos(RunKnossosUI):
 
         # Add cached datasets to available datasets
         try:
-            kukuConf = open(os.path.abspath(sys.path[0] + "/kuku.conf"))
+            kukuConf = open(os.path.join(os.environ["APPDATA"],"kuku.conf"), "r")
             kukuConfString = kukuConf.read()
             kukuConf.close()
 
@@ -226,14 +226,14 @@ class RunKnossos(RunKnossosUI):
         if pathListString:
             try:
                 # Write kuku.conf to the current directory
-                kukuFile = open(os.path.abspath(sys.path[0] + "/kuku.conf"), "w")
+                kukuFile = open(os.path.join(os.environ["APPDATA"],"kuku.conf"), "w+")
                 kukuFile.write(pathListString)
                 kukuFile.close()
             except IOError:
                 pass
         else:
-            if os.path.isfile(os.path.abspath(sys.path[0] + "/kuku.conf")):
-                os.remove(os.path.abspath(sys.path[0] + "/kuku.conf"))
+            if os.path.isfile(os.path.join(os.environ["APPDATA"],"kuku.conf")):
+                os.remove(os.path.join(os.environ["APPDATA"],"kuku.conf"))
 
         self.root.destroy()
         pass
