@@ -50,6 +50,7 @@
 #include "knossos-global.h"
 #include "gui.h"
 #include "customStyle.h"
+#include "treeLUT_fallback.h"
 
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
