@@ -3462,23 +3462,23 @@ static void UI_loadSettings() {
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"skeletonPath");
-            if(attribute)
+            if(strncmp(attribute, "", 2048) != 0)
                 strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTPath");
-            if(attribute)
+            if(strncmp(attribute, "", 2048) != 0)
                 strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTPath");
-            if(attribute)
+            if(strncmp(attribute, "", 2048) != 0)
                 strcpy(state->viewerState->ag->treeLUTDirectory, (char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTFile");
-            if(attribute){
+            if(strncmp(attribute, "", 2048) != 0){
                 strcpy(state->viewerState->ag->datasetLUTFile, (char *)attribute);
                 cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, state->viewerState->ag->datasetLUTFile, 2048);
                 loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
                 datasetColorAdjustmentsChanged();
             }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTFile");
-            if(attribute){
+            if(strncmp(attribute, "", 2048) != 0){
                 strcpy(state->viewerState->ag->treeLUTFile, (char *)attribute);
                 cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, state->viewerState->ag->treeLUTFile, 2048);
                 state->viewerState->treeLutSet = TRUE;
