@@ -1347,6 +1347,8 @@ uint32_t clearSkeleton(int32_t targetRevision);
 
 uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, struct stateInfo *state);
 
+struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, struct stateInfo *state);
+struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, struct stateInfo *state);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID, struct stateInfo *state);
 struct nodeListElement *findNodeByCoordinate(Coordinate *position, struct stateInfo *state);
 struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);

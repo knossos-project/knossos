@@ -1085,6 +1085,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
     if(state->viewerState->ag->agInputWdgtFocused) {
         return TRUE;
     }
+
+    struct nodeListElement *prevNode;
+    struct nodeListElement *nextNode;
     color4F treeCol;
 
     switch(event.key.keysym.sym) {
@@ -1352,6 +1355,32 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
     case SDLK_b:
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
+        break;
+    case SDLK_x:
+        //Shift + x = previous node, x = next node
+        if(SDL_GetModState() & KMOD_SHIFT) {
+            if(state->skeletonState->activeNode == NULL) {
+                break;
+            }
+            prevNode = getNodeWithPrevID(state->skeletonState->activeNode, state);
+            if(prevNode != NULL) {
+                setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+            }
+            else {
+                LOG("Reached first node.");
+            }
+            break;
+        }
+        if(state->skeletonState->activeNode == NULL) {
+            break;
+        }
+        nextNode = getNodeWithNextID(state->skeletonState->activeNode, state);
+        if(nextNode != NULL) {
+            setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+        }
+        else {
+            LOG("Reached last node.");
+        }
         break;
     case SDLK_i:
         if (state->viewerState->ag->zoomSkeletonViewport == FALSE){

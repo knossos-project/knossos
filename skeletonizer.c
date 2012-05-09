@@ -318,8 +318,10 @@ int32_t addNode(int32_t targetRevision,
         }
     }
 
-    if(nodeID)
+    if(nodeID) {
         tempNode = findNodeByNodeID(nodeID, state);
+    }
+
     if(tempNode) {
         LOG("Node with ID %d already exists, no node added.", nodeID);
         unlockSkeleton(FALSE, state);
@@ -349,13 +351,18 @@ int32_t addNode(int32_t targetRevision,
         }
     }
 
-    tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag, state);
+    tempNode = addNodeListElement(nodeID, radius, &(state->skeletonState->activeNode), position, inMag, state);
     tempNode->correspondingTree = tempTree;
     tempNode->comment = NULL;
     tempNode->createdInVp = VPtype;
 
-    if(time == -1)
+    if(tempTree->firstNode == NULL) {
+        tempTree->firstNode = tempNode;
+    }
+
+    if(time == -1) {
         time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks();
+    }
 
     tempNode->timestamp = time;
 
@@ -388,8 +395,10 @@ int32_t addNode(int32_t targetRevision,
                                               position->z))
             skeletonSyncBroken(state);
     }
-    else
+
+    else {
         refreshViewports(state);
+    }
 
     unlockSkeleton(TRUE, state);
 
@@ -863,8 +872,10 @@ uint32_t setActiveNode(int32_t targetRevision,
         }
     }
 
-    if(node)
+    if(node) {
         nodeID = node->nodeID;
+    }
+
 
     state->skeletonState->activeNode = node;
     state->skeletonState->viewChanged = TRUE;
@@ -903,8 +914,10 @@ uint32_t setActiveNode(int32_t targetRevision,
         unlockSkeleton(TRUE, state);
     }
 
-    if(node)
+    if(node) {
         state->viewerState->ag->activeNodeID = node->nodeID;
+    }
+
 
     /*
      * Calling drawGUI() here leads to a crash during synchronizationn.
@@ -1784,6 +1797,7 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
 
     if(nearbyTree) {
         currentNode = nearbyTree->firstNode;
+
         while(currentNode) {
             // We make the nearest node the next active node
             distanceVector.x = (float)searchPosition.x - (float)currentNode->position.x;
@@ -1797,8 +1811,9 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
             currentNode = currentNode->next;
         }
 
-        if(nodeWithCurrentlySmallestDistance)
+        if(nodeWithCurrentlySmallestDistance) {
             return nodeWithCurrentlySmallestDistance;
+        }
     }
 
     /*
@@ -1941,13 +1956,16 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
     delNodeFromSkeletonStruct(nodeToDel, state);
 
-    if(nodeToDel == nodeToDel->correspondingTree->firstNode)
+    if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
+    }
     else {
-        if(nodeToDel->previous)
+        if(nodeToDel->previous) {
             nodeToDel->previous->next = nodeToDel->next;
-        if(nodeToDel->next)
+        }
+        if(nodeToDel->next) {
             nodeToDel->next->previous = nodeToDel->previous;
+        }
     }
 
     setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, NULL);
@@ -1974,11 +1992,13 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_DELNODE, nodeID))
+        if(!syncMessage(state, "brd", KIKI_DELNODE, nodeID)) {
             skeletonSyncBroken(state);
+        }
     }
-    else
+    else {
         refreshViewports(state);
+    }
 
     unlockSkeleton(TRUE, state);
 
@@ -2038,6 +2058,51 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state
     unlockSkeleton(TRUE, state);
 
     return TRUE;
+}
+
+struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, struct stateInfo *state) {
+    struct nodeListElement *node = currentNode->correspondingTree->firstNode;
+    struct nodeListElement *prevNode = NULL;
+    unsigned int idDistance = state->skeletonState->totalNodeElements;
+    unsigned int tempDistance = idDistance;
+
+    while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
+        LOG("id: %i", node->nodeID);
+        if(node != currentNode) {
+            if(node->nodeID < currentNode->nodeID) {
+                 tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
+            }
+
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                prevNode = node;
+            }
+        }
+        node = node->next;
+    }
+    return prevNode;
+}
+
+struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, struct stateInfo *state) {
+    struct nodeListElement *node = currentNode->correspondingTree->firstNode;
+    struct nodeListElement *nextNode = NULL;
+    unsigned int idDistance = state->skeletonState->totalNodeElements;
+    unsigned int tempDistance = idDistance;
+
+    while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
+        if(node != currentNode) {
+            if(node->nodeID > currentNode->nodeID) {
+                 tempDistance = node->nodeID - currentNode->nodeID;
+            }
+
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                nextNode = node;
+            }
+        }
+        node = node->next;
+    }
+    return nextNode;
 }
 
 struct nodeListElement *findNodeByNodeID(int32_t nodeID, struct stateInfo *state) {
