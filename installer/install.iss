@@ -41,8 +41,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 
 [Dirs]
-Name: "{app}\tools"
-Name: "{app}\skeletonFiles"
+Name: "{app}\tools"                             
+Name: "{app}\skeletonFiles"              
 [Files]
 Source: "{#KNOSSOS_SRC_PATH}knossos.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}icon"; DestDir: "{app}"; Flags: ignoreversion

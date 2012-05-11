@@ -11,7 +11,7 @@
 				<Option output="knossos" prefix_auto="1" extension_auto="1" />
 				<Option type="0" />
 				<Option compiler="gcc" />
-				<Option parameters="--data-path=d:\knossos-stacks\e1088\e1088_mag1\" />
+				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
 				<Compiler>
 					<Add option="-march=pentium4" />
 					<Add option="-O3" />
@@ -37,7 +37,6 @@
 					<Add library="z.dll" />
 					<Add library="msvcrt" />
 					<Add library="libglut32" />
-					
 					<Add library="freetype" />
 					<Add library="pthreadVC2" />
 					<Add library="libSDL_Clipboard" />
@@ -48,6 +47,7 @@
 				<Option output="knossos" prefix_auto="1" extension_auto="1" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-pg" />
@@ -73,7 +73,6 @@
 					<Add library="z.dll" />
 					<Add library="msvcrt" />
 					<Add library="libglut32" />
-					
 					<Add library="freetype" />
 					<Add library="pthreadVC2" />
 					<Add library="libSDL_Clipboard" />
@@ -84,6 +83,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-g" />
+			<Add option="-std=c99" />
 		</Compiler>
 		<Linker>
 			<Add library="ag_gui" />
@@ -104,7 +104,6 @@
 			<Add library="z.dll" />
 			<Add library="msvcrt" />
 			<Add library="libglut32" />
-			
 			<Add library="freetype" />
 			<Add library="pthreadVC2" />
 			<Add library="libSDL_Clipboard" />
@@ -156,10 +155,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="skeletonizer.h" />
-		<Unit filename="template.c">
+		<Unit filename="treeLUT_fallback.c">
 			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="treeLUT_fallback.h" />
 		<Unit filename="viewer.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -172,6 +171,9 @@
 			<code_completion />
 			<envvars />
 			<debugger />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+			</wxsmith>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
