@@ -568,7 +568,6 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
 
     /* If not, we look up which skeletonizer work mode is
     active and do the appropriate operation */
-
         clickedCoordinate =
             getCoordinateFromOrthogonalClick(ORIGINAL_MAG_COORDINATES, event, VPfound);
 
@@ -1357,26 +1356,35 @@ static uint32_t handleKeyboard(SDL_Event event) {
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
         break;
     case SDLK_x:
-        //Shift + x = previous node, x = next node
-        if(SDL_GetModState() & KMOD_SHIFT) {
-            if(state->skeletonState->activeNode == NULL) {
+        if(state->skeletonState->activeNode == NULL) {
                 break;
-            }
+        }
+        //Shift + x = previous node
+        if(SDL_GetModState() & KMOD_SHIFT) {
             prevNode = getNodeWithPrevID(state->skeletonState->activeNode, state);
             if(prevNode != NULL) {
                 setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+                tempConfig->remoteState->type = REMOTE_RECENTERING;
+                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               prevNode->position.x/state->magnification,
+                               prevNode->position.y/state->magnification,
+                               prevNode->position.z/state->magnification);
+                sendRemoteSignal(state);
             }
             else {
                 LOG("Reached first node.");
             }
             break;
         }
-        if(state->skeletonState->activeNode == NULL) {
-            break;
-        }
+        // x = next node
         nextNode = getNodeWithNextID(state->skeletonState->activeNode, state);
         if(nextNode != NULL) {
             setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               nextNode->position.x/state->magnification,
+                               nextNode->position.y/state->magnification,
+                               nextNode->position.z/state->magnification);
+            sendRemoteSignal(state);
         }
         else {
             LOG("Reached last node.");

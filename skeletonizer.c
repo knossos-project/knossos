@@ -252,14 +252,14 @@ static struct nodeListElement *addNodeListElement(
         *currentNode = newElement;
         newElement->previous = NULL;
         newElement->next = NULL;
-
     }
     else {
         newElement->previous = *currentNode;
         newElement->next = (*currentNode)->next;
         (*currentNode)->next = newElement;
-        if(newElement->next)
+        if(newElement->next) {
             newElement->next->previous = newElement;
+        }
     }
 
     SET_COORDINATE(newElement->position, position->x, position->y, position->z);
@@ -943,7 +943,6 @@ uint32_t setActiveTreeByID(int32_t treeID, struct stateInfo *state) {
     state->skeletonState->unsavedChanges = TRUE;
 
     state->viewerState->ag->activeTreeID = currentTree->treeID;
-
     return TRUE;
 }
 
@@ -2001,7 +2000,6 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     }
 
     unlockSkeleton(TRUE, state);
-
     return TRUE;
 }
 
@@ -2067,12 +2065,11 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, s
     unsigned int tempDistance = idDistance;
 
     while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
-        LOG("id: %i", node->nodeID);
-        if(node != currentNode) {
-            if(node->nodeID < currentNode->nodeID) {
-                 tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
+        if(node != currentNode && node->nodeID < currentNode->nodeID) {
+            tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
+            if(tempDistance == 1) { //smallest distance possible
+                return node;
             }
-
             if(tempDistance < idDistance) {
                 idDistance = tempDistance;
                 prevNode = node;
@@ -2090,11 +2087,12 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, s
     unsigned int tempDistance = idDistance;
 
     while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
-        if(node != currentNode) {
-            if(node->nodeID > currentNode->nodeID) {
-                 tempDistance = node->nodeID - currentNode->nodeID;
-            }
+        if(node != currentNode && node->nodeID > currentNode->nodeID) {
+            tempDistance = node->nodeID - currentNode->nodeID;
 
+            if(tempDistance == 1) { //smallest distance possible
+                return node;
+            }
             if(tempDistance < idDistance) {
                 idDistance = tempDistance;
                 nextNode = node;
@@ -2287,16 +2285,18 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, st
         //to the first node inside of tree1)
         firstNode = tree2->firstNode;
         lastNode = firstNode;
-        while(lastNode->next)
+        while(lastNode->next) {
             lastNode = lastNode->next;
+        }
 
         tree1->firstNode->previous = lastNode;
         lastNode->next = tree1->firstNode;
         tree1->firstNode = firstNode;
 
     }
-    else if(tree2->firstNode)
+    else if(tree2->firstNode) {
         tree1->firstNode = tree2->firstNode;
+    }
 
     // The new node count for tree1 is the old node count of tree1 plus the node
     // count of tree2
@@ -2338,7 +2338,6 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, st
         refreshViewports(state);
 
     unlockSkeleton(TRUE, state);
-
     return TRUE;
 }
 
@@ -2907,13 +2906,15 @@ int32_t splitConnectedComponent(int32_t targetRevision,
                         (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
                                                          n->correspondingTree->treeID) - 1));
 
-            if(n->previous != NULL)
+            if(n->previous != NULL) {
                 n->previous->next = n->next;
-            else
+            }
+            else {
                 n->correspondingTree->firstNode = n->next;
-
-            if(n->next != NULL)
+            }
+            if(n->next != NULL) {
                 n->next->previous = n->previous;
+            }
 
             // Inserting node list element into new list.
             setDynArray(state->skeletonState->nodeCounter, newTree->treeID,
@@ -2935,10 +2936,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
 
             n->correspondingTree = newTree;
         }
-
-
         state->skeletonState->skeletonChanged = TRUE;
-
     }
     else
         LOG("The connected component is equal to the entire tree, not splitting.");
