@@ -850,10 +850,12 @@ struct viewerState {
 
     int overlayVisible;
 
-    uint8_t autoTracingEnabled;
+    uint32_t autoTracingEnabled;
     uint32_t autoTracingSteps;
     uint32_t autoTracingDelay;
-    uint8_t autoTracingDirection;
+    uint32_t autoTracingDirection;
+    uint32_t autoTracingMoveInDirection;
+
 };
 
 struct commentListElement {

@@ -295,7 +295,6 @@ void createMenuBar(struct stateInfo *state) {
 
 void createNavOptionsWin(struct stateInfo *state) {
     AG_Numerical *numerical;
-    AG_Box *box;
 
 	state->viewerState->ag->navOptWin = AG_WindowNew(0);
 
@@ -304,7 +303,7 @@ void createNavOptionsWin(struct stateInfo *state) {
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 235);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 267);
 
     numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
     {
@@ -328,10 +327,6 @@ void createNavOptionsWin(struct stateInfo *state) {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
-    box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        {
-            AG_ExpandHoriz(box);
-        }
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "Semi-Auto-Tracing");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
     state->viewerState->ag->AutoTracingBox = AG_CheckboxNewFn(state->viewerState->ag->navOptWin, 0, "Enable Semi-Auto-Tracing", UI_setEnableAutoTracing, NULL);
@@ -349,6 +344,7 @@ void createNavOptionsWin(struct stateInfo *state) {
     }
     AG_NumericalSetWriteable(numerical, FALSE);
     state->viewerState->ag->autoTracingDelayNumerical = numerical;
+    AG_CheckboxNewInt(state->viewerState->ag->navOptWin, 0, "Additional move in tracing direction", &state->viewerState->autoTracingMoveInDirection);
 
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->navOptWin);
@@ -1961,6 +1957,7 @@ void UI_zoomOrthogonals(float step) {
 void UI_setEnableAutoTracing(){
     if (state->viewerState->autoTracingEnabled == TRUE) {
         state->viewerState->autoTracingEnabled = FALSE;
+        state->viewerState->autoTracingMoveInDirection = FALSE;
         AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
         AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
     }
@@ -3462,28 +3459,38 @@ static void UI_loadSettings() {
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"skeletonPath");
-            if(strncmp(attribute, "", 2048) != 0)
-                strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
+            if(attribute){
+                if(strncmp(attribute, "", 2048) != 0)
+                    strcpy(state->viewerState->ag->skeletonDirectory, (char *)attribute);
+            }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTPath");
-            if(strncmp(attribute, "", 2048) != 0)
-                strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
+            if(attribute){
+                if(strncmp(attribute, "", 2048) != 0)
+                    strcpy(state->viewerState->ag->datasetLUTDirectory, (char *)attribute);
+            }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTPath");
-            if(strncmp(attribute, "", 2048) != 0)
-                strcpy(state->viewerState->ag->treeLUTDirectory, (char *)attribute);
+            if(attribute){
+                if(strncmp(attribute, "", 2048) != 0)
+                    strcpy(state->viewerState->ag->treeLUTDirectory, (char *)attribute);
+            }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"datasetLUTFile");
-            if(strncmp(attribute, "", 2048) != 0){
-                strcpy(state->viewerState->ag->datasetLUTFile, (char *)attribute);
-                cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, state->viewerState->ag->datasetLUTFile, 2048);
-                loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
-                datasetColorAdjustmentsChanged();
+            if(attribute){
+                if(strncmp(attribute, "", 2048) != 0){
+                    strcpy(state->viewerState->ag->datasetLUTFile, (char *)attribute);
+                    cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, state->viewerState->ag->datasetLUTFile, 2048);
+                    loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
+                    datasetColorAdjustmentsChanged();
+                }
             }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"treeLUTFile");
-            if(strncmp(attribute, "", 2048) != 0){
-                strcpy(state->viewerState->ag->treeLUTFile, (char *)attribute);
-                cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, state->viewerState->ag->treeLUTFile, 2048);
-                state->viewerState->treeLutSet = TRUE;
-                loadTreeColorTable(state->viewerState->ag->treeLUTFile, &(state->viewerState->treeColortable[0]), GL_RGB, state);
-                treeColorAdjustmentsChanged();
+            if(attribute){
+                if(strncmp(attribute, "", 2048) != 0){
+                    strcpy(state->viewerState->ag->treeLUTFile, (char *)attribute);
+                    cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, state->viewerState->ag->treeLUTFile, 2048);
+                    state->viewerState->treeLutSet = TRUE;
+                    loadTreeColorTable(state->viewerState->ag->treeLUTFile, &(state->viewerState->treeColortable[0]), GL_RGB, state);
+                    treeColorAdjustmentsChanged();
+                }
             }
         }
 
@@ -3804,7 +3811,7 @@ void prefDefaultPrefs(){
     AG_WindowHide(state->viewerState->ag->consoleWin);
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
     AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 180);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 235);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 267);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 618, 30, 497, 317);
     AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);
