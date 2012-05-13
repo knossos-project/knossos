@@ -1319,6 +1319,8 @@ int32_t saveSkeleton();
 //uint32_t loadNMLSkeleton(struct stateInfo *state);
 uint32_t loadSkeleton();
 
+void setDefaultSkelFileName();
+
 uint32_t delActiveNode(struct stateInfo *state);
 uint32_t delActiveTree(struct stateInfo *state);
 
@@ -1343,7 +1345,7 @@ int32_t addNode(int32_t targetRevision,
                 struct stateInfo *state);
 uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct stateInfo *state);
 
-uint32_t clearSkeleton(int32_t targetRevision);
+uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
 uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, struct stateInfo *state);
 

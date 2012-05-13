@@ -642,7 +642,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                clearSkeleton(d[0]);
+                clearSkeleton(d[0], FALSE);
 
                 break;
 

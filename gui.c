@@ -2410,7 +2410,7 @@ static void UI_clearSkeleton() {
 }
 
 static void WRAP_clearSkeleton() {
-    clearSkeleton(CHANGE_MANUAL);
+    clearSkeleton(CHANGE_MANUAL, FALSE);
 }
 
 static void UI_setViewModeDrag() {
@@ -3534,6 +3534,7 @@ static void WRAP_loadSkeleton() {
                      "Check the log console for more details."
                      "Attempted to load %s", state->skeletonState->skeletonFile);
         LOG("Error loading %s", state->skeletonState->skeletonFile);
+        setDefaultSkelFileName();
     }
 }
 

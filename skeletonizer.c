@@ -49,9 +49,6 @@ extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
 uint32_t initSkeletonizer(struct stateInfo *state) {
-    time_t curtime;
-    struct tm *localtimestruct;
-
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
 
@@ -105,33 +102,7 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
     state->skeletonState->autoSaveInterval = 5;
 
     state->skeletonState->skeletonFile = malloc(8192 * sizeof(char));
-    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
-
-    /* Generate a default file name based on date and time. */
-    curtime = time(NULL);
-    localtimestruct = localtime(&curtime);
-    if(localtimestruct->tm_year >= 100)
-        localtimestruct->tm_year -= 100;
-
-#ifdef LINUX
-    snprintf(state->skeletonState->skeletonFile,
-            8192,
-            "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#else
-    snprintf(state->skeletonState->skeletonFile,
-            8192,
-            "skeletonFiles\\skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#endif
+    setDefaultSkelFileName();
 
     state->skeletonState->commentBuffer = malloc(10240 * sizeof(char));
     memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
@@ -1216,6 +1187,38 @@ int32_t saveSkeleton() {
     return r;
 }
 
+void setDefaultSkelFileName() {
+    /* Generate a default file name based on date and time. */
+    time_t curtime;
+    struct tm *localtimestruct;
+
+    curtime = time(NULL);
+    localtimestruct = localtime(&curtime);
+    if(localtimestruct->tm_year >= 100)
+        localtimestruct->tm_year -= 100;
+
+memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
+#ifdef LINUX
+    snprintf(state->skeletonState->skeletonFile,
+            8192,
+            "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
+            localtimestruct->tm_mday,
+            localtimestruct->tm_mon + 1,
+            localtimestruct->tm_year,
+            localtimestruct->tm_hour,
+            localtimestruct->tm_min);
+#else
+    snprintf(state->skeletonState->skeletonFile,
+            8192,
+            "skeletonFiles\\skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
+            localtimestruct->tm_mday,
+            localtimestruct->tm_mon + 1,
+            localtimestruct->tm_year,
+            localtimestruct->tm_hour,
+            localtimestruct->tm_min);
+#endif
+}
+
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
     int32_t extensionDelim = -1, countDelim = -1;
     char betweenDots[8192];
@@ -1350,7 +1353,7 @@ uint32_t loadSkeleton() {
 
     if(!state->skeletonState->mergeOnLoadFlag) {
         merge = FALSE;
-        clearSkeleton(CHANGE_MANUAL);
+        clearSkeleton(CHANGE_MANUAL, TRUE);
     }
     else {
         merge = TRUE;
@@ -1380,7 +1383,6 @@ uint32_t loadSkeleton() {
             state->skeletonState->skeletonFile);
         return FALSE;
     }
-
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
@@ -2166,7 +2168,7 @@ struct treeListElement *findTreeByTreeID(int32_t treeID, struct stateInfo *state
     return NULL;
 }
 
-uint32_t clearSkeleton(int32_t targetRevision) {
+uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct treeListElement *currentTree, *treeToDel;
@@ -2209,6 +2211,10 @@ uint32_t clearSkeleton(int32_t targetRevision) {
     state->skeletonState->treeElements = 0;
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
+
+    if(loadingSkeleton == FALSE) {
+        setDefaultSkelFileName();
+    }
 
     state->skeletonState->nodeCounter = newDynArray(128);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
