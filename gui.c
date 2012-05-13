@@ -2323,7 +2323,23 @@ static void actNodeIDWdgtModified(AG_Event *event) {
 
 
 static void actTreeIDWdgtModified(AG_Event *event) {
+    //set active tree and set its last node to active node
+    struct nodeListElement *activeNode;
+
     setActiveTreeByID(state->viewerState->ag->activeTreeID, state);
+    if(state->skeletonState->activeTree) {
+        //find last node of active tree
+        activeNode = state->skeletonState->activeTree->firstNode;
+        while(activeNode->next) {
+            if(activeNode->next->correspondingTree->treeID == state->skeletonState->activeTree->treeID) {
+                activeNode = activeNode->next;
+            }
+            else {
+                break;
+            }
+        }
+        setActiveNode(CHANGE_MANUAL, activeNode, 0);
+    }
 }
 
 static void actTreeColorWdgtModified(AG_Event *event) {

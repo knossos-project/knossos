@@ -826,7 +826,6 @@ uint32_t setActiveNode(int32_t targetRevision,
      * set to NULL.
      *
      */
-
     if(targetRevision != CHANGE_NOSYNC) {
         if(lockSkeleton(targetRevision, state) == FALSE) {
             unlockSkeleton(FALSE, state);
@@ -852,8 +851,10 @@ uint32_t setActiveNode(int32_t targetRevision,
     state->skeletonState->viewChanged = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
 
-    if(node)
+    if(node) {
         setActiveTreeByID(node->correspondingTree->treeID, state);
+    }
+
     else
         state->skeletonState->activeTree = NULL;
 
@@ -2066,8 +2067,9 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, s
     unsigned int idDistance = state->skeletonState->totalNodeElements;
     unsigned int tempDistance = idDistance;
 
-    while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
-        if(node != currentNode && node->nodeID < currentNode->nodeID) {
+    while(node) {
+        if(node->correspondingTree->treeID == currentNode->correspondingTree->treeID
+           && node->nodeID < currentNode->nodeID) {
             tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
             if(tempDistance == 1) { //smallest distance possible
                 return node;
@@ -2088,8 +2090,9 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, s
     unsigned int idDistance = state->skeletonState->totalNodeElements;
     unsigned int tempDistance = idDistance;
 
-    while(node && node->correspondingTree->treeID == currentNode->correspondingTree->treeID) {
-        if(node != currentNode && node->nodeID > currentNode->nodeID) {
+    while(node) {
+        if(node->correspondingTree->treeID == currentNode->correspondingTree->treeID
+           && node->nodeID > currentNode->nodeID) {
             tempDistance = node->nodeID - currentNode->nodeID;
 
             if(tempDistance == 1) { //smallest distance possible
