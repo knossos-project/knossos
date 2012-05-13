@@ -45,10 +45,11 @@ class RunKnossos(RunKnossosUI):
 
         # Add cached datasets to available datasets
         try:
-            kukuConf = open(os.path.join(os.environ["APPDATA"],"kuku.conf"), "r")
+            kukupath = self.configFilePath()
+            kukuConf = open(kukupath, "r") 
             kukuConfString = kukuConf.read()
             kukuConf.close()
-
+            
             for currentPath in kukuConfString.split('\n'):
                 if currentPath:
                     currentPath = os.path.abspath(currentPath)
@@ -212,6 +213,17 @@ class RunKnossos(RunKnossosUI):
         except ValueError:
             pass
 
+    def configFilePath(self):
+        if "APPDATA" in os.environ:         #Set directory to store conf file
+            configdir = os.environ["APPDATA"]
+        elif "XDG_CONFIG_HOME" in os.environ:
+            configdir = os.environ["XDG_CONFIG_HOME"]
+        else:
+            configdir = os.path.abspath(sys.path[0])
+
+        configpath = os.path.join(configdir,"kuku.conf")
+        return configpath
+
     def exit(self):
         pathListString = ""
         try:
@@ -223,20 +235,25 @@ class RunKnossos(RunKnossosUI):
                 currentPath = self.datasets[currentDataset]["Path"]
                 pathListString = pathListString + currentPath + '\n'
 
+        kukupath = self.configFilePath()
+        
         if pathListString:
             try:
                 # Write kuku.conf to the current directory
-                kukuFile = open(os.path.join(os.environ["APPDATA"],"kuku.conf"), "w+")
+                
+                kukuFile = open(kukupath, "w+")
+
                 kukuFile.write(pathListString)
                 kukuFile.close()
             except IOError:
                 pass
         else:
-            if os.path.isfile(os.path.join(os.environ["APPDATA"],"kuku.conf")):
-                os.remove(os.path.join(os.environ["APPDATA"],"kuku.conf"))
-
+            if os.path.isfile(kukupath):
+                os.remove(kukupath)
+                
         self.root.destroy()
         pass
+
 
 def main():
     root = interface.Tk()
