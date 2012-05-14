@@ -3839,9 +3839,9 @@ void prefDefaultPrefs(){
     state->skeletonState->autoSaveBool = 1;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->autoFilenameIncrementBool = 1;
-    state->skeletonState->showXYplane = 1;
-    state->skeletonState->showXZplane = 1;
-    state->skeletonState->showYZplane = 1;
+    state->skeletonState->showXYplane = FALSE;
+    state->skeletonState->showXZplane = FALSE;
+    state->skeletonState->showYZplane = FALSE;
     state->viewerState->drawVPCrosshairs = 1;
     state->viewerState->showVPLabels = 0;
     state->viewerState->ag->vpLabelBox->state = FALSE;

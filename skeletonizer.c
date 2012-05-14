@@ -80,9 +80,9 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
     state->skeletonState->autoFilenameIncrementBool = TRUE;
     state->skeletonState->greatestNodeID = 0;
 
-    state->skeletonState->showXYplane = TRUE;
-    state->skeletonState->showXZplane = TRUE;
-    state->skeletonState->showYZplane = TRUE;
+    state->skeletonState->showXYplane = FALSE;
+    state->skeletonState->showXZplane = FALSE;
+    state->skeletonState->showYZplane = FALSE;
     state->skeletonState->showNodeIDs = FALSE;
     state->skeletonState->highlightActiveTree = TRUE;
     state->skeletonState->rotateAroundActiveNode = TRUE;
