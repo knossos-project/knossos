@@ -1056,7 +1056,6 @@ int32_t saveSkeleton() {
     xmlStrPrintf(attrString, 128, BAD_CAST"%i", state->skeletonState->idleTime);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
-    LOG("Saved idleTime: %i", state->skeletonState->idleTime);
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
@@ -1765,7 +1764,6 @@ uint32_t loadSkeleton() {
 
         updatePosition(state, TELL_COORDINATE_CHANGE);
     }
-    LOG("Loaded idleTime: %i", state->skeletonState->idleTime);
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();

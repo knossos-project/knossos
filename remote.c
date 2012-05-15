@@ -431,9 +431,8 @@ static int32_t remoteTrajectory(struct stateInfo *state, int32_t trajNumber) {
 void checkIdleTime(){
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = SDL_GetTicks();
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 5000){
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 60000){
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
-        LOG("idleTime: %i", state->skeletonState->idleTime);
     }
 
 }
