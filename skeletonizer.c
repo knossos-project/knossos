@@ -322,7 +322,7 @@ int32_t addNode(int32_t targetRevision,
         }
     }
 
-    tempNode = addNodeListElement(nodeID, radius, &(state->skeletonState->activeNode), position, inMag, state);
+    tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag, state);
     tempNode->correspondingTree = tempTree;
     tempNode->comment = NULL;
     tempNode->createdInVp = VPtype;
@@ -2066,8 +2066,7 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, s
     unsigned int tempDistance = idDistance;
 
     while(node) {
-        if(node->correspondingTree->treeID == currentNode->correspondingTree->treeID
-           && node->nodeID < currentNode->nodeID) {
+        if(node->nodeID < currentNode->nodeID) {
             tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
             if(tempDistance == 1) { //smallest distance possible
                 return node;
@@ -2089,8 +2088,7 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, s
     unsigned int tempDistance = idDistance;
 
     while(node) {
-        if(node->correspondingTree->treeID == currentNode->correspondingTree->treeID
-           && node->nodeID > currentNode->nodeID) {
+        if(node->nodeID > currentNode->nodeID) {
             tempDistance = node->nodeID - currentNode->nodeID;
 
             if(tempDistance == 1) { //smallest distance possible

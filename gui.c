@@ -2331,12 +2331,7 @@ static void actTreeIDWdgtModified(AG_Event *event) {
         //find last node of active tree
         activeNode = state->skeletonState->activeTree->firstNode;
         while(activeNode->next) {
-            if(activeNode->next->correspondingTree->treeID == state->skeletonState->activeTree->treeID) {
-                activeNode = activeNode->next;
-            }
-            else {
-                break;
-            }
+            activeNode = activeNode->next;
         }
         setActiveNode(CHANGE_MANUAL, activeNode, 0);
     }
