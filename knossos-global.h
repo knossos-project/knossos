@@ -36,7 +36,7 @@
 #include <agar/gui.h>
 
 
-#define KVERSION "3.1.4"
+#define KVERSION "3.2"
 
 #define TRUE    1
 #define FALSE   0

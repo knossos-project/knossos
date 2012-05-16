@@ -102,6 +102,7 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
     state->skeletonState->autoSaveInterval = 5;
 
     state->skeletonState->skeletonFile = malloc(8192 * sizeof(char));
+    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
     setDefaultSkelFileName();
 
     state->skeletonState->prevSkeletonFile = malloc(8192 * sizeof(char));
@@ -1200,7 +1201,6 @@ void setDefaultSkelFileName() {
     if(localtimestruct->tm_year >= 100)
         localtimestruct->tm_year -= 100;
 
-memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
 #ifdef LINUX
     snprintf(state->skeletonState->skeletonFile,
             8192,
