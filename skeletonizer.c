@@ -104,6 +104,9 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
     state->skeletonState->skeletonFile = malloc(8192 * sizeof(char));
     setDefaultSkelFileName();
 
+    state->skeletonState->prevSkeletonFile = malloc(8192 * sizeof(char));
+    memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
+
     state->skeletonState->commentBuffer = malloc(10240 * sizeof(char));
     memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
 
@@ -1351,19 +1354,7 @@ uint32_t loadSkeleton() {
     }
     memset(currentCoordinate, '\0', sizeof(currentCoordinate));
 
-    if(!state->skeletonState->mergeOnLoadFlag) {
-        merge = FALSE;
-        clearSkeleton(CHANGE_MANUAL, TRUE);
-    }
-    else {
-        merge = TRUE;
-        greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
-        greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
-    }
-
     xmlDocument = xmlParseFile(state->skeletonState->skeletonFile);
-
-
 
     if(xmlDocument == NULL) {
         LOG("Document not parsed successfully.");
@@ -1383,6 +1374,17 @@ uint32_t loadSkeleton() {
             state->skeletonState->skeletonFile);
         return FALSE;
     }
+
+    if(!state->skeletonState->mergeOnLoadFlag) {
+        merge = FALSE;
+        clearSkeleton(CHANGE_MANUAL, TRUE);
+    }
+    else {
+        merge = TRUE;
+        greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
+        greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
+    }
+
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {

@@ -2421,6 +2421,7 @@ static void UI_clearSkeleton() {
 
 static void WRAP_clearSkeleton() {
     clearSkeleton(CHANGE_MANUAL, FALSE);
+    updateTitlebar(FALSE);
 }
 
 static void UI_setViewModeDrag() {
@@ -3533,6 +3534,7 @@ void UI_loadSkeleton(AG_Event *event) {
     char *path = AG_STRING(1);
     char *msg = AG_STRING(2);
 
+    strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, path, 8192);
 
     if(state->skeletonState->totalNodeElements != 0) {
@@ -3554,7 +3556,8 @@ static void WRAP_loadSkeleton() {
                      "Check the log console for more details."
                      "Attempted to load %s", state->skeletonState->skeletonFile);
         LOG("Error loading %s", state->skeletonState->skeletonFile);
-        setDefaultSkelFileName();
+        //restore name of previous skeleton file
+        strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
     }
 }
 

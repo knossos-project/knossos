@@ -1064,6 +1064,7 @@ struct skeletonState {
     uint32_t autoSaveInterval;
     uint32_t saveCnt;
     char *skeletonFile;
+    char * prevSkeletonFile;
 
     char *deleteSegment;
 
