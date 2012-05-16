@@ -2330,10 +2330,12 @@ static void actTreeIDWdgtModified(AG_Event *event) {
     if(state->skeletonState->activeTree) {
         //find last node of active tree
         activeNode = state->skeletonState->activeTree->firstNode;
-        while(activeNode->next) {
-            activeNode = activeNode->next;
+        if(activeNode != NULL) {
+            while(activeNode->next) {
+                activeNode = activeNode->next;
+            }
+            setActiveNode(CHANGE_MANUAL, activeNode, 0);
         }
-        setActiveNode(CHANGE_MANUAL, activeNode, 0);
     }
 }
 
