@@ -679,7 +679,8 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
         state->skeletonState->skeletonRevision++;
 
         if(targetRevision == CHANGE_MANUAL) {
-            if(!syncMessage(state, "brd", KIKI_ADDTREE, newElement->treeID))
+            if(!syncMessage(state, "brdfff", KIKI_ADDTREE, newElement->treeID,
+                            newElement->color.r, newElement->color.g, newElement->color.b))
                 skeletonSyncBroken(state);
         }
 
@@ -1578,8 +1579,9 @@ uint32_t loadSkeleton() {
                 neuronColor.r = (float)strtod((char *)attribute, (char **)NULL);
                 free(attribute);
             }
-            else
+            else {
                 neuronColor.r = -1.;
+            }
 
             attribute = xmlGetProp(thingOrParamXMLNode, (const xmlChar *) "color.g");
             if(attribute) {

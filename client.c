@@ -562,17 +562,16 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 break;
 
             case KIKI_ADDTREE:
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(21, "xddfff", f, s, d, clientState->inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
                 color4F treeCol;
-                /* -1 causes new color assignment */
-                treeCol.r = -1.;
-                treeCol.g = -1.;
-                treeCol.b = -1.;
+                treeCol.r = f[0];
+                treeCol.g = f[1];
+                treeCol.b = f[2];
                 treeCol.a = 1.;
                 addTreeListElement(TRUE, d[0], d[1], treeCol);
 
@@ -776,8 +775,6 @@ int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int3
                 break;
         }
     }
-
-
     return len;
 
 overflow:
