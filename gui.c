@@ -808,6 +808,7 @@ void createToolsWin() {
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
+            button = AG_ButtonNewFn(treesTab, 0, "Restore default color", restoreDefaultTreeColor, NULL, NULL);
         }
     }
 
@@ -2023,7 +2024,7 @@ void OkfileDlgLoadTreeLUT(AG_Event *event) {
     if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), GL_RGB, state) != TRUE) {
         LOG("Error loading Tree LUT.\n");
         memcpy(&(state->viewerState->treeColortable[0]),
-               &(state->viewerState->neutralTreeTable[0]),
+               &(state->viewerState->defaultTreeTable[0]),
                  RGB_LUTSIZE);
         state->viewerState->treeLutSet = FALSE;
     }
@@ -2344,7 +2345,9 @@ static void actTreeColorWdgtModified(AG_Event *event) {
         state->skeletonState->activeTree->color =
             state->viewerState->ag->actTreeColor;
     }
+    state->skeletonState->activeTree->colorSetManually = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
 }
 
 
@@ -2673,14 +2676,14 @@ void treeColorAdjustmentsChanged() {
         }
         else {
             memcpy(state->viewerState->treeAdjustmentTable,
-            state->viewerState->neutralTreeTable,
+            state->viewerState->defaultTreeTable,
             RGB_LUTSIZE * sizeof(float));
         }
     }
     //use of default lut
     else {
         memcpy(state->viewerState->treeAdjustmentTable,
-        state->viewerState->neutralTreeTable,
+        state->viewerState->defaultTreeTable,
         RGB_LUTSIZE * sizeof(float));
         updateTreeColors();
     }

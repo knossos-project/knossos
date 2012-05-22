@@ -838,7 +838,7 @@ struct viewerState {
     int treeColortableOn;
     float treeColortable[RGB_LUTSIZE];
     float treeAdjustmentTable[RGB_LUTSIZE];
-    float neutralTreeTable[RGB_LUTSIZE];
+    float defaultTreeTable[RGB_LUTSIZE];
 
 
     /*
@@ -875,6 +875,7 @@ struct treeListElement {
 
     int32_t treeID;
     color4F color;
+    int32_t colorSetManually;
 };
 
 struct nodeListElement {
@@ -1390,7 +1391,8 @@ int32_t pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_
 uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode, struct stateInfo *state);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
-
+int32_t loadDefaultTreeLUT();
+void restoreDefaultTreeColor();
 void checkIdleTime();
 
 /*

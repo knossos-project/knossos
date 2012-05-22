@@ -486,7 +486,7 @@ static int32_t initStates() {
     state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
     state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
     loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-    loadNeutralTreeLUT(&(state->viewerState->neutralTreeTable[0]));
+    loadDefaultTreeLUT();
     state->viewerState->treeLutSet = FALSE;
 
     state->viewerState->viewPorts = malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
@@ -877,8 +877,8 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
     return TRUE;
 }
 
-int32_t loadNeutralTreeLUT(float *treeLut) {
-    if(loadTreeColorTable("default.lut", &(state->viewerState->neutralTreeTable[0]), GL_RGB, state) == FALSE) {
+int32_t loadDefaultTreeLUT() {
+    if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB, state) == FALSE) {
         loadTreeLUTFallback(state);
         treeColorAdjustmentsChanged();
         return FALSE;

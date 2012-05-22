@@ -172,6 +172,18 @@ int32_t updateTreeColors() {
     return TRUE;
 }
 
+void restoreDefaultTreeColor() {
+    int32_t index = (state->skeletonState->activeTree->treeID - 1) % 256;
+    state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
+    state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
+    state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
+    state->skeletonState->activeTree->color.a = 1.;
+
+    state->skeletonState->activeTree->colorSetManually = FALSE;
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
+}
+
 uint32_t setSkeletonWorkMode(int32_t targetRevision,
                              uint32_t workMode,
                              struct stateInfo *state) {
@@ -657,6 +669,8 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     else {
         newElement->color = color;
     }
+    newElement->colorSetManually = FALSE;
+
     //Insert the new tree at the beginning of the tree list
     newElement->next = state->skeletonState->firstTree;
     newElement->previous = NULL;
@@ -1076,22 +1090,40 @@ int32_t saveSkeleton() {
         xmlStrPrintf(attrString, 128, BAD_CAST"%d", currentTree->treeID);
         xmlNewProp(currentXMLNode, BAD_CAST"id", attrString);
         memset(attrString, '\0', 128);
+        if(currentTree->colorSetManually) {
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.r);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.r", attrString);
+            memset(attrString, '\0', 128);
 
-        xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.r);
-        xmlNewProp(currentXMLNode, BAD_CAST"color.r", attrString);
-        memset(attrString, '\0', 128);
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.g);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.g", attrString);
+            memset(attrString, '\0', 128);
 
-        xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.g);
-        xmlNewProp(currentXMLNode, BAD_CAST"color.g", attrString);
-        memset(attrString, '\0', 128);
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.b);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.b", attrString);
+            memset(attrString, '\0', 128);
 
-        xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.b);
-        xmlNewProp(currentXMLNode, BAD_CAST"color.b", attrString);
-        memset(attrString, '\0', 128);
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.a);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.a", attrString);
+            memset(attrString, '\0', 128);
+        }
+        else {
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", -1.);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.r", attrString);
+            memset(attrString, '\0', 128);
 
-        xmlStrPrintf(attrString, 128, BAD_CAST"%f", currentTree->color.a);
-        xmlNewProp(currentXMLNode, BAD_CAST"color.a", attrString);
-        memset(attrString, '\0', 128);
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", -1.);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.g", attrString);
+            memset(attrString, '\0', 128);
+
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", -1.);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.b", attrString);
+            memset(attrString, '\0', 128);
+
+            xmlStrPrintf(attrString, 128, BAD_CAST"%f", 1.);
+            xmlNewProp(currentXMLNode, BAD_CAST"color.a", attrString);
+            memset(attrString, '\0', 128);
+        }
 
         nodesXMLNode = xmlNewTextChild(currentXMLNode, NULL, BAD_CAST"nodes", NULL);
         edgesXMLNode = xmlNewTextChild(currentXMLNode, NULL, BAD_CAST"edges", NULL);
