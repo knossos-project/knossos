@@ -585,6 +585,7 @@ static int32_t initStates() {
     state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
     state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
     state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
     state->skeletonState->idleTime = 0;
     state->skeletonState->idleTimeNow = 0;
     state->skeletonState->idleTimeLast = 0;

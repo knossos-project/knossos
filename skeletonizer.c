@@ -989,6 +989,16 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"name", attrString);
     memset(attrString, '\0', 128);
 
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"lastsavedin", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%s", KVERSION);
+    xmlNewProp(currentXMLNode, BAD_CAST"version", attrString);
+    memset(attrString, '\0', 128);
+
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"createdin", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%s", state->skeletonState->skeletonCreatedInVersion);
+    xmlNewProp(currentXMLNode, BAD_CAST"version", attrString);
+    memset(attrString, '\0', 128);
+
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"scale", NULL);
     xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.x / state->magnification);
     xmlNewProp(currentXMLNode, BAD_CAST"x", attrString);
@@ -1418,11 +1428,20 @@ uint32_t loadSkeleton() {
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
     }
 
+    //If "createdin"-node does not exist, skeleton was created in a former version of KNOSSOS
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "legacy version");
+
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
             currentXMLNode = thingOrParamXMLNode->children;
             while(currentXMLNode) {
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"createdin")) {
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"version");
+                    if(attribute){
+                        strcpy(state->skeletonState->skeletonCreatedInVersion, (char *)attribute);
+                    }
+                }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"magnification")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"factor");
                     /*

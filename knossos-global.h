@@ -1078,6 +1078,7 @@ struct skeletonState {
 
     /* This is for a workaround around agar bug #171*/
     int askingPopBranchConfirmation;
+    char skeletonCreatedInVersion[32];
 };
 
 struct remoteState {
