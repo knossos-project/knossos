@@ -84,7 +84,7 @@ static void createVpYzWin(struct stateInfo *state);
 static void createVpXzWin(struct stateInfo *state);
 
 static void createOpenFileDlgWin(struct stateInfo *state);
-static void createSaveAsFileDlgWin(struct stateInfo *state);
+static void createSaveAsFileDlgWin();
 
  void createCurrPosWdgt(AG_Window *parent);
  void createSkeletonVpToolsWdgt(AG_Window *parent);

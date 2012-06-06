@@ -1442,7 +1442,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
     case SDLK_s:
         if(SDL_GetModState() & KMOD_CTRL) {
-            UI_saveSkeleton(TRUE);
+            saveSkelCallback(NULL);
             break;
         }
         if(state->skeletonState->activeNode) {

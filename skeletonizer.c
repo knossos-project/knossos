@@ -1263,6 +1263,7 @@ void setDefaultSkelFileName() {
             localtimestruct->tm_hour,
             localtimestruct->tm_min);
 #endif
+    cpBaseDirectory(state->viewerState->ag->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
 }
 
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {

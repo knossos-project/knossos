@@ -243,7 +243,7 @@ void createMenuBar(struct stateInfo *state) {
 	{
 		AG_MenuAction(menuItem, "Open...", NULL, fileOpenSkelFile, "%p", state);
         AG_MenuNode(menuItem, "Recent Files", NULL);
-		AG_MenuAction(menuItem, "Save (CTRL+s)", NULL, UI_saveSkeleton, "\0");
+		AG_MenuAction(menuItem, "Save (CTRL+s)", NULL, saveSkelCallback, "%p", NULL);
 		AG_MenuAction(menuItem, "Save As...", NULL, fileSaveAsSkelFile, "%p", state);
         AG_MenuSeparator(menuItem);
 		AG_MenuAction(menuItem, "Quit", agIconClose.s, UI_checkQuitKnossos, NULL);
@@ -1597,7 +1597,7 @@ static void createOpenFileDlgWin(struct stateInfo *state) {
     AG_WindowShow(win);
 }
 
-static void createSaveAsFileDlgWin(struct stateInfo *state) {
+static void createSaveAsFileDlgWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
 
@@ -1900,14 +1900,30 @@ static void fileOpenSkelFile(AG_Event *event) {
     createOpenFileDlgWin(state);
 }
 
+void saveSkelCallback(AG_Event *event) {
+    if(state->skeletonState->firstTree != NULL) {
+        if(state->skeletonState->unsavedChanges) {
+            UI_saveSkeleton(TRUE);
+        }
+        else {
+            LOG("No changes since last save event. Not saving.");
+            return;
+        }
+    }
+    else {
+        AG_TextWarning("No SaveAs-warning", "No skeleton was found. Not saving.");
+        LOG("No skeleton was found. Not saving.");
+    }
+}
+
 static void fileSaveAsSkelFile(AG_Event *event) {
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
-            createSaveAsFileDlgWin(state);
+            createSaveAsFileDlgWin();
         }
         else {
-            AG_TextWarning("No Changes SaveAs-warning", "No changes since last save event. Not saving.");
-            LOG("No changes since last save event. Not saving.");
+            yesNoPrompt(NULL, "No changes since last save event. Save anyway?", createSaveAsFileDlgWin, NULL);
+            return;
         }
     }
     else {
@@ -1970,14 +1986,16 @@ void UI_setEnableAutoTracing(){
 }
 
 void UI_saveSkeleton(int32_t increment) {
-    //if no changes since last save, don't save
-    if(state->skeletonState->unsavedChanges == FALSE) {
-        LOG("No changes since last save event. Not saving.");
-        return;
+    //create directory if it does not exist
+    char *dirString;
+    cpBaseDirectory(dirString, state->skeletonState->skeletonFile, 2048);
+    DIR *directory = opendir(dirString);
+    if(!directory) {
+        mkdir(dirString);
     }
 
     FILE *saveFile;
-    if(increment) { //auto save
+    if(increment) {
         increment = state->skeletonState->autoFilenameIncrementBool;
     }
 
@@ -1986,8 +2004,7 @@ void UI_saveSkeleton(int32_t increment) {
                            state->skeletonState->skeletonFile);
 
     saveFile = fopen(state->skeletonState->skeletonFile, "r");
-
-    if(saveFile) { //No auto save
+    if(saveFile) {
         yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
         fclose(saveFile);
         return;
