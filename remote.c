@@ -163,6 +163,7 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     int32_t retval = TRUE;
 
     /*
+     *  TDItem
      *  The commented part below is a workaround that causes the so-called
      *  "jitter bug". I could not reproduce the underlying problem in the agar
      *  version of knossos, so I'll comment it out in the hope that the bug is
@@ -181,7 +182,7 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
      * This is very shitty and has a serious race condition now that the client
      * runs in a seperate thread.
      *
-
+    */
     while(state->viewerState->currentPosition.x != x || state->viewerState->currentPosition.y != y
             || state->viewerState->currentPosition.z != z) {
         x_moves = x - state->viewerState->currentPosition.x;
@@ -189,12 +190,12 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         z_moves = z - state->viewerState->currentPosition.z;
 
         retval = remoteWalk(state, x_moves, y_moves, z_moves);
-        *
-        * This is a workaround to cover a bug in the workaround... ;)
+
+        //* This is a workaround to cover a bug in the workaround... ;)
 
         SDL_Delay(100);
     }
-    */
+
 
     x_moves = x - state->viewerState->currentPosition.x;
     y_moves = y - state->viewerState->currentPosition.y;
