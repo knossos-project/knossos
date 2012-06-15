@@ -1939,6 +1939,47 @@ struct nodeListElement *findNodeInRadius(Coordinate searchPosition,
 
     return NULL;
 }
+
+/*Searches a node within catch radius of the click in the Skeleton Viewport.
+ *The click coordinates are openGL coordinates because we use
+ *retrieveVisibleObjectBeneathSquare here to detect the node.
+ *For other VPs use findNodeInRadius */
+uint32_t findNodeInRadiusSkelVP(Coordinate clickPos) {
+    floatCoordinate distanceVector;
+    distanceVector.x = distanceVector.y = distanceVector.z = 0;
+    Coordinate searchPos;
+    uint32_t node;
+    int32_t radius = 5;
+
+    for(searchPos.x = clickPos.x - radius; euclidicNorm(&distanceVector) <= radius; searchPos.x++) {
+        distanceVector.x = (float) clickPos.x - (float) searchPos.x;
+
+        for(searchPos.y = clickPos.y; euclidicNorm(&distanceVector) <= radius; searchPos.y++) {
+            node = retrieveVisibleObjectBeneathSquare(VIEWPORT_SKELETON, searchPos.x, searchPos.y, 1, state);
+            if(node) {
+                goto nodeFound;
+            }
+            distanceVector.y = (float) clickPos.y - (float) searchPos.y;
+        }
+
+        //no node found over click position
+        distanceVector.y = 0;
+        for(searchPos.y = clickPos.y - 1; euclidicNorm(&distanceVector) <= radius; searchPos.y--) {
+            node = retrieveVisibleObjectBeneathSquare(VIEWPORT_SKELETON, searchPos.x, searchPos.y, 1, state);
+            if(node) {
+                goto nodeFound;
+            }
+            distanceVector.y = (float) clickPos.y - (float) searchPos.y;
+        }
+        //no node found at this x position
+        distanceVector.y = 0;
+    }
+
+    return FALSE;
+nodeFound:
+    return node;
+}
+
 uint32_t delActiveTree(struct stateInfo *state) {
     if(state->skeletonState->activeTree)
         delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, state);

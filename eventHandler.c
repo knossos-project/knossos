@@ -367,6 +367,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         - state->viewerState->screenSizeY) * -1)
         - state->viewerState->viewPorts[VPfound].edgeLength);
 */
+
     /* check if the user wants to move or resize the VP */
     /* will be handled by agar TDitem
     if(xDistance < 10 && yDistance < 10) {
@@ -384,28 +385,43 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
 
     //new active node selected
     if(SDL_GetModState() & KMOD_SHIFT) {
-        //first try to activate clicked node
+        //first assume that user managed to hit the node
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                 event.button.x,
                                                 (state->viewerState->screenSizeY - event.button.y),
                                                 1,
                                                 state);
-        if(clickedNode) {
+         if(clickedNode) {
             setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
             return TRUE;
         }
-        //if no node clicked, activate node in catch radius
-        else {
-            clickedCoordinate = getCoordinateFromOrthogonalClick(
-                                ORIGINAL_MAG_COORDINATES,
-                                event,
-                                VPfound);
-            if(clickedCoordinate) {
-                newActiveNode = findNodeInRadius(*clickedCoordinate, state);
-                if(newActiveNode != NULL) {
-                    setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-                    return TRUE;
-                }
+        //else find node in catch radius of the click
+
+        //in skeleton VP each coordinate inside radius is checked for a node
+        if(VPfound == VIEWPORT_SKELETON) {
+            Coordinate clickPos;
+            clickPos.x = event.button.x;
+            clickPos.y = state->viewerState->screenSizeY - event.button.y;
+            clickPos.z = 0;
+
+            clickedNode = findNodeInRadiusSkelVP(clickPos);
+            if(clickedNode) {
+                setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
+                return TRUE;
+            }
+            return FALSE;
+        }
+
+        //in other VPs we traverse nodelist to find nearest node inside the radius
+        clickedCoordinate = getCoordinateFromOrthogonalClick(
+                            ORIGINAL_MAG_COORDINATES,
+                            event,
+                            VPfound);
+        if(clickedCoordinate) {
+            newActiveNode = findNodeInRadius(*clickedCoordinate, state);
+            if(newActiveNode != NULL) {
+                setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                return TRUE;
             }
         }
         return FALSE;
