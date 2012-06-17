@@ -250,8 +250,8 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         tempConfig->viewerState->recenteringTime = 5000;
         updateViewerState(state);
     }
-    if (tempConfig->viewerState->recenteringTimeOrth < 300){
-        tempConfig->viewerState->recenteringTimeOrth = 300;
+    if (tempConfig->viewerState->recenteringTimeOrth < 10){
+        tempConfig->viewerState->recenteringTimeOrth = 10;
         updateViewerState(state);
     }
     if (tempConfig->viewerState->recenteringTimeOrth > 5000){
