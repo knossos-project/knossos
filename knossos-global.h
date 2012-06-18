@@ -112,9 +112,9 @@
 #define ON_CLICK_SELECT   2
 #define SKELETONIZER      2
 
-#define VPZOOMMAX  0.1
+#define VPZOOMMAX  0.02
 #define VPZOOMMIN   1.0
-#define SKELZOOMMAX 0.49
+#define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
 /*
