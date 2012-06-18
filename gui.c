@@ -1911,7 +1911,6 @@ void saveSkelCallback(AG_Event *event) {
         }
     }
     else {
-        AG_TextWarning("No SaveAs-warning", "No skeleton was found. Not saving.");
         LOG("No skeleton was found. Not saving.");
     }
 }
@@ -1987,11 +1986,17 @@ void UI_setEnableAutoTracing(){
 
 void UI_saveSkeleton(int32_t increment) {
     //create directory if it does not exist
-    char *dirString;
-    cpBaseDirectory(dirString, state->skeletonState->skeletonFile, 2048);
-    DIR *directory = opendir(dirString);
-    if(!directory) {
-        mkdir(dirString);
+    DIR *skelDir;
+    cpBaseDirectory(state->viewerState->ag->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
+    skelDir = opendir(state->viewerState->ag->skeletonDirectory);
+    if(!skelDir) {
+        #ifdef LINUX
+            mode_t processMask = umask(022);
+            mkdir(state->viewerState->ag->skeletonDirectory, S_IRUSR | S_IWUSR);
+            umask(processMask);
+        #else
+            mkdir(state->viewerState->ag->skeletonDirectory);
+        #endif
     }
 
     FILE *saveFile;
