@@ -1025,7 +1025,7 @@ void createViewPortPrefWin() {
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
-    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 618, 30, 497, 317);
+    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
@@ -2210,11 +2210,11 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     // find out whether we're x or y limited with our window
     if(newWinLenX <= newWinLenY) {
         for(i = 0; i < state->viewerState->numberViewPorts; i++)
-            state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 50;
+            state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 20;
     }
     else {
-            for(i = 0; i < state->viewerState->numberViewPorts; i++)
-        state->viewerState->viewPorts[i].edgeLength = newWinLenY / 2 - 50;
+        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            state->viewerState->viewPorts[i].edgeLength = newWinLenY / 2 - 20;
     }
 
 
@@ -3849,7 +3849,7 @@ void prefDefaultPrefs(){
     AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 180);
     AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 267);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
-    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 618, 30, 497, 317);
+    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
     AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);
     AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
     tempConfig->viewerState->recenteringTime = 0;
