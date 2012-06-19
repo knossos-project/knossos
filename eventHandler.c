@@ -389,26 +389,14 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                 event.button.x,
                                                 (state->viewerState->screenSizeY - event.button.y),
-                                                1,
+                                                10,
                                                 state);
-         if(clickedNode) {
+        if(clickedNode) {
             setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
             return TRUE;
         }
-        //else find node in catch radius of the click
 
-        //in skeleton VP each coordinate inside radius is checked for a node
         if(VPfound == VIEWPORT_SKELETON) {
-            Coordinate clickPos;
-            clickPos.x = event.button.x;
-            clickPos.y = state->viewerState->screenSizeY - event.button.y;
-            clickPos.z = 0;
-
-            clickedNode = findNodeInRadiusSkelVP(clickPos);
-            if(clickedNode) {
-                setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
-                return TRUE;
-            }
             return FALSE;
         }
 

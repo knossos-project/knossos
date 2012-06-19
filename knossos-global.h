@@ -1335,7 +1335,6 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state
 
 struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree, Coordinate searchPosition, struct stateInfo *state);
 struct nodeListElement *findNodeInRadius(Coordinate searchPosition, struct stateInfo *state);
-uint32_t findNodeInRadiusSkelVP(Coordinate clickPos);
 
 uint32_t setActiveTreeByID(int32_t treeID,  struct stateInfo *state);
 uint32_t setActiveNode(int32_t targetRevision, struct nodeListElement *node, int32_t nodeID);
