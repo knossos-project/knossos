@@ -44,6 +44,10 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
+#ifdef LINUX
+#include <sys/stat.h>
+#endif
+
 #include <agar/core.h>
 #include <agar/gui.h>
 
@@ -1619,7 +1623,9 @@ static void createSaveAsFileDlgWin() {
                           OkfileDlgSaveAsSkel,
                           NULL);
 
+        //LOG("Setting skeleton dir: %s", state->viewerState->ag->skeletonDirectory);
         AG_FileDlgSetDirectory(dlg, "%s", state->viewerState->ag->skeletonDirectory);
+        //LOG("Agar error state: %s", AG_GetError());
         AG_FileDlgCancelAction(dlg, CancelFileDlg, NULL);
 
         AG_FileDlgSetOptionContainer(dlg, AG_BoxNewVert(win, AG_BOX_HFILL));
