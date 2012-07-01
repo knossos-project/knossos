@@ -331,25 +331,6 @@ void createNavOptionsWin(struct stateInfo *state) {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
-    AG_LabelNew(state->viewerState->ag->navOptWin, 0, "Semi-Auto-Tracing");
-    AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    state->viewerState->ag->AutoTracingBox = AG_CheckboxNewFn(state->viewerState->ag->navOptWin, 0, "Enable Semi-Auto-Tracing", UI_setEnableAutoTracing, NULL);
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Number of Steps: ", &state->viewerState->autoTracingSteps);
-    {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-    }
-    AG_NumericalSetWriteable(numerical, FALSE);
-    state->viewerState->ag->autoTracingStepNumerical = numerical;
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Delay Time per Step [ms]: ", &state->viewerState->autoTracingDelay);
-    {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-    }
-    AG_NumericalSetWriteable(numerical, FALSE);
-    state->viewerState->ag->autoTracingDelayNumerical = numerical;
-    AG_CheckboxNewInt(state->viewerState->ag->navOptWin, 0, "Additional move in tracing direction", &state->viewerState->autoTracingMoveInDirection);
-
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->navOptWin);
 }
@@ -1976,20 +1957,6 @@ void UI_zoomOrthogonals(float step) {
     drawGUI(state);
 }
 
-void UI_setEnableAutoTracing(){
-    if (state->viewerState->autoTracingEnabled == TRUE) {
-        state->viewerState->autoTracingEnabled = FALSE;
-        state->viewerState->autoTracingMoveInDirection = FALSE;
-        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
-        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
-    }
-    else{
-        state->viewerState->autoTracingEnabled = TRUE;
-        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, TRUE);
-        AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, TRUE);
-    }
-}
-
 void UI_saveSkeleton(int32_t increment) {
     //create directory if it does not exist
     DIR *skelDir;
@@ -3170,16 +3137,6 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->skeletonState->onCommentLock);
         xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     }
-    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"Semi-Auto-Tracing", NULL);
-    {
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingDelay);
-        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingDelay", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingSteps);
-        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingSteps", attrString);
-    }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"FilePaths", NULL);
     {
@@ -3493,14 +3450,6 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockToNodesWithComment");
             if(attribute)
 				strcpy(state->skeletonState->onCommentLock, (char *)attribute);
-        }
-        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"Semi-Auto-Tracing")) {
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingDelay");
-            if(attribute)
-                state->viewerState->autoTracingDelay = atoi((char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingSteps");
-            if(attribute)
-                state->viewerState->autoTracingSteps = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"skeletonPath");
@@ -3900,12 +3849,6 @@ void prefDefaultPrefs(){
     state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
     tempConfig->viewerState->workMode = 0;
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-    state->viewerState->autoTracingDelay=50;
-    state->viewerState->autoTracingSteps=10;
-    state->viewerState->autoTracingEnabled = FALSE;
-    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingDelayNumerical, FALSE);
-    AG_NumericalSetWriteable(state->viewerState->ag->autoTracingStepNumerical, FALSE);
-    state->viewerState->ag->AutoTracingBox->state = FALSE;
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode &= ~DSP_LINES_POINTS;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;

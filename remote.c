@@ -259,15 +259,12 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     }
 
     uint32_t recenteringTime;
-    if ((state->viewerState->walkOrth == FALSE) && (state->viewerState->autoTracingEnabled == FALSE)){
+    if (state->viewerState->walkOrth == FALSE){
         recenteringTime = state->viewerState->recenteringTime;
         }
-    if ((state->viewerState->walkOrth == TRUE) && (state->viewerState->autoTracingEnabled == FALSE)){
+    if (state->viewerState->walkOrth == TRUE){
         recenteringTime = state->viewerState->recenteringTimeOrth;
         state->viewerState->walkOrth = FALSE;
-    }
-    if (state->viewerState->autoTracingEnabled == TRUE){
-        recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
     }
 
     uint32_t timePerStep;

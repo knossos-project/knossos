@@ -620,42 +620,6 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                                                TRUE)) {
 
 
-                            if((!state->viewerState->autoTracingEnabled) && (state->viewerState->autoTracingMoveInDirection))
-                                state->viewerState->autoTracingMoveInDirection = FALSE;
-                            if (state->viewerState->autoTracingEnabled){
-
-                                if (state->viewerState->autoTracingDelay < 25) state->viewerState->autoTracingDelay = 25;
-                                if (state->viewerState->autoTracingDelay > 200) state->viewerState->autoTracingDelay = 200;
-                                if (state->viewerState->autoTracingSteps < 1) state->viewerState->autoTracingSteps = 1;
-                                if (state->viewerState->autoTracingSteps > 25) state->viewerState->autoTracingSteps = 25;
-
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
-                                        clickedCoordinate->z += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
-                                        clickedCoordinate->z -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
-                                        clickedCoordinate->y += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
-                                        clickedCoordinate->y -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
-                                        clickedCoordinate->x += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
-                                        clickedCoordinate->x -= state->viewerState->autoTracingSteps;
-                                    }
-
-                                }
-                            }
-
                             /* Highlight the viewport with the biggest movement component and set
                             behavior of f / d keys accordingly. */
                             movement.x = clickedCoordinate->x - lastPos.x;
@@ -692,27 +656,6 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                             }
                             else {
                                 state->viewerState->vpKeyDirection[VIEWPORT_XY] = -1;
-                            }
-
-                            if ((state->viewerState->autoTracingMoveInDirection) && (state->viewerState->autoTracingMoveInDirection)){
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
-                                    clickedCoordinate->x += movement.x;
-                                    clickedCoordinate->y += movement.y;
-                                }
-                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
-                                    clickedCoordinate->x += movement.x;
-                                    clickedCoordinate->z += movement.z;
-                                }
-                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
-                                    clickedCoordinate->y += movement.y;
-                                    clickedCoordinate->z += movement.z;
-                                }
-                                if (clickedCoordinate->x < 0) clickedCoordinate->x = 0;
-                                if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
-                                if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
-                                if (clickedCoordinate->x > state->boundary.x) clickedCoordinate->x = state->boundary.x;
-                                if (clickedCoordinate->y > state->boundary.y) clickedCoordinate->y = state->boundary.y;
-                                if (clickedCoordinate->z > state->boundary.z) clickedCoordinate->z = state->boundary.z;
                             }
 
                             /* Move to the new node position */

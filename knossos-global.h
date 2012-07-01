@@ -682,9 +682,6 @@ struct agConfig {
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
 
-	AG_Numerical *autoTracingStepNumerical;
-	AG_Numerical *autoTracingDelayNumerical;
-
 	AG_Checkbox *vpLabelBox;
 	AG_Checkbox *highlightActiveTreeBox;
     AG_Checkbox *showAllNodeIDsBox;
@@ -849,12 +846,6 @@ struct viewerState {
     GLuint overlayColorMap[4][256];
 
     int overlayVisible;
-
-    uint32_t autoTracingEnabled;
-    uint32_t autoTracingSteps;
-    uint32_t autoTracingDelay;
-    uint32_t autoTracingDirection;
-    uint32_t autoTracingMoveInDirection;
 
 };
 
