@@ -266,7 +266,9 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         recenteringTime = state->viewerState->recenteringTimeOrth;
         state->viewerState->walkOrth = FALSE;
     }
-
+    if ((state->viewerState->autoTracingMode != 0) && (state->viewerState->walkOrth == FALSE)){
+        recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
+    }
     uint32_t timePerStep;
 
     walkLength = euclidicNorm(&walkVector);

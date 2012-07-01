@@ -472,6 +472,9 @@ static int32_t initStates() {
     state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
     state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
     state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
+    state->viewerState->autoTracingMode = 0;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;

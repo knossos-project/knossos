@@ -299,6 +299,8 @@ void createMenuBar(struct stateInfo *state) {
 
 void createNavOptionsWin(struct stateInfo *state) {
     AG_Numerical *numerical;
+    AG_Radio *radio;
+    AG_Box *box;
 
 	state->viewerState->ag->navOptWin = AG_WindowNew(0);
 
@@ -307,29 +309,47 @@ void createNavOptionsWin(struct stateInfo *state) {
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 267);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
+    box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_VERT, 0);
+    {
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
 
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
-    {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-    }
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Jump Frames: ", &tempConfig->viewerState->dropFrames);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
 
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Jump Frames: ", &tempConfig->viewerState->dropFrames);
-    {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Recentering Time parallel [ms]: ", &tempConfig->viewerState->recenteringTime);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Recentering Time orthog. [ms]: ", &tempConfig->viewerState->recenteringTimeOrth);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
     }
-
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Recentering Time parallel [ms]: ", &tempConfig->viewerState->recenteringTime);
+    box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_VERT, 0);
     {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-    }
-    numerical = AG_NumericalNewUint(state->viewerState->ag->navOptWin, 0, NULL, "Recentering Time orthog. [ms]: ", &tempConfig->viewerState->recenteringTimeOrth);
-    {
-        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        AG_LabelNew(box, 0, "Advanced Tracing Modes");
+        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box), 0);
+        radio = AG_RadioNew(box, 0, NULL);
+        {
+            AG_BindInt(radio, "value", &state->viewerState->autoTracingMode);
+            AG_ExpandHoriz(radio);
+            AG_RadioAddItem(radio, "Normal Mode");
+            AG_RadioAddItem(radio, "Additional Viewport Direction Move");
+            AG_RadioAddItem(radio, "Additional Tracing Direction Move");
+            AG_RadioAddItem(radio, "Additional Mirrored Move");
+        }
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Delay Time per Step [ms]: ", &state->viewerState->autoTracingDelay);
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Number of Steps: ", &state->viewerState->autoTracingSteps);
     }
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->navOptWin);

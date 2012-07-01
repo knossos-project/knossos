@@ -230,6 +230,11 @@
 #define CURRENT_MAG_COORDINATES     0
 #define ORIGINAL_MAG_COORDINATES    1
 
+
+#define AUTOTRACING_NORMAL  0
+#define AUTOTRACING_VIEWPORT    1
+#define AUTOTRACING_TRACING 2
+#define AUTOTRACING_MIRROR  3
 /*
  *
  *      Structures and custom types
@@ -847,6 +852,14 @@ struct viewerState {
 
     int overlayVisible;
 
+    /*
+    *
+    * Advanced Tracing Modes Stuff
+    *
+    */
+    int autoTracingMode;
+    int autoTracingDelay;
+    int autoTracingSteps;
 };
 
 struct commentListElement {

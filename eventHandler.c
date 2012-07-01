@@ -626,6 +626,68 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                             movement.y = clickedCoordinate->y - lastPos.y;
                             movement.z = clickedCoordinate->z - lastPos.z;
 
+
+                            if (state->viewerState->autoTracingDelay < 10) state->viewerState->autoTracingDelay = 10;
+                            if (state->viewerState->autoTracingDelay > 500) state->viewerState->autoTracingDelay = 500;
+                            if (state->viewerState->autoTracingSteps < 1) state->viewerState->autoTracingSteps = 1;
+                            if (state->viewerState->autoTracingSteps > 50) state->viewerState->autoTracingSteps = 50;
+
+                            //AutoTracingModes 2 and 3
+                            if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING) || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR))
+                            {
+                                floatCoordinate walkingVector;
+
+                                walkingVector.x = movement.x;
+                                walkingVector.y = movement.y;
+                                walkingVector.z = movement.z;
+
+                                if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING){
+                                    clickedCoordinate->x += walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
+                                    clickedCoordinate->y += walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
+                                    clickedCoordinate->z += walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
+                                }
+                                if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR){
+                                clickedCoordinate->x += walkingVector.x;
+                                clickedCoordinate->y += walkingVector.y;
+                                clickedCoordinate->z += walkingVector.z;
+                                }
+                            }
+
+                            //AutoTracingMode 1
+                            if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT){
+                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
+                                        clickedCoordinate->z += state->viewerState->autoTracingSteps;
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
+                                        clickedCoordinate->z -= state->viewerState->autoTracingSteps;
+                                    }
+                                }
+                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
+                                        clickedCoordinate->y += state->viewerState->autoTracingSteps;
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
+                                        clickedCoordinate->y -= state->viewerState->autoTracingSteps;
+                                    }
+                                }
+                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
+                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
+                                        clickedCoordinate->x += state->viewerState->autoTracingSteps;
+                                    }
+                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
+                                        clickedCoordinate->x -= state->viewerState->autoTracingSteps;
+                                    }
+                                }
+                            }
+
+                            if (clickedCoordinate->x < 0) clickedCoordinate->x = 0;
+                            if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
+                            if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
+                            if (clickedCoordinate->x > state->boundary.x) clickedCoordinate->x = state->boundary.x;
+                            if (clickedCoordinate->y > state->boundary.y) clickedCoordinate->y = state->boundary.y;
+                            if (clickedCoordinate->z > state->boundary.z) clickedCoordinate->z = state->boundary.z;
+
                             /* Determine which viewport to highlight based on which movement component is biggest. */
                             if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
                                 state->viewerState->highlightVp = VIEWPORT_YZ;
