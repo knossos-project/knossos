@@ -642,9 +642,9 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                 walkingVector.z = movement.z;
 
                                 if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING){
-                                    clickedCoordinate->x += walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
-                                    clickedCoordinate->y += walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
-                                    clickedCoordinate->z += walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector);
+                                    clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                                    clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                                    clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
                                 }
                                 if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR){
                                 clickedCoordinate->x += walkingVector.x;

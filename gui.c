@@ -3157,6 +3157,20 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->skeletonState->onCommentLock);
         xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     }
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"Advanced-Tracing-Modes", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingDelay);
+        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingDelay", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingSteps);
+        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingSteps", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingMode);
+        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingMode", attrString);
+    }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"FilePaths", NULL);
     {
@@ -3507,6 +3521,20 @@ static void UI_loadSettings() {
                 }
             }
         }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"Advanced-Tracing-Modes")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingDelay");
+            if(attribute){
+                state->viewerState->autoTracingDelay = atoi((char *)attribute);
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingSteps");
+            if(attribute){
+                state->viewerState->autoTracingSteps = atoi((char *)attribute);
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingMode");
+            if(attribute){
+                state->viewerState->autoTracingMode = atoi((char *)attribute);
+            }
+        }
 
         currentXMLNode = currentXMLNode->next;
     }
@@ -3827,7 +3855,7 @@ void prefDefaultPrefs(){
     AG_WindowHide(state->viewerState->ag->consoleWin);
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
     AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 180);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 267);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
     AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);
@@ -3869,6 +3897,9 @@ void prefDefaultPrefs(){
     state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
     tempConfig->viewerState->workMode = 0;
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+    state->viewerState->autoTracingDelay=50;
+    state->viewerState->autoTracingSteps=10;
+    state->viewerState->autoTracingMode=0;
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode &= ~DSP_LINES_POINTS;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
