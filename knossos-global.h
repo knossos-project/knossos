@@ -48,6 +48,22 @@
 
 #define TEXTURE_EDGE_LEN 1024
 
+/* unneeded? */
+#define MAG1 0
+#define MAG2 1
+#define MAG4 2
+#define MAG8 3
+#define MAG16 4
+#define MAG32 5
+#define MAG64 6
+#define MAG128 7
+#define MAG256 8
+#define MAG512 9
+#define MAG1024 10
+
+#define NUM_MAG_DATASETS 20
+
+
 #ifdef ARCH_64
 #define PTRSIZEINT int64_t
 #else
@@ -98,6 +114,13 @@
 #define USER_YES 1
 #define USER_NO 0
 #define USER_UNDEFINED 2
+
+/* MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
+* a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
+* pixel size instead of 20 nm */
+#define MAG_DOWN 1
+#define MAG_UP 2
+#define NO_MAG_CHANGE 0
 
 #define CUBE_DATA       0
 #define CUBE_OVERLAY    1
@@ -384,22 +407,44 @@ struct stateInfo {
  * Info about the data
  */
 
-        // Path to the cube files.
+        /* stores the currently active magnification;
+        * it is set by magnification = 2^MAGx
+        * state->magnification should only be used by the viewer,
+        * but its value is copied over to loaderMagnification.
+        * This is locked for thread safety. */
+        int32_t magnification;
+
+        uint32_t highestAvailableMag;
+        uint32_t lowestAvailableMag;
+
+        /* This variable is used only by the loader.
+        * It is filled by the viewer and contains
+        * log2uint32(state->magnification)  */
+        uint32_t loaderMagnification;
+
+        // Path to the current cube files for the viewer and loader.
         char path[1024];
+        char loaderPath[1024];
+        // Paths to all available datasets of the 3-D image pyramid
+        char magPaths[NUM_MAG_DATASETS][1024];
 
-        // Name of the experiment.
+        // Current dataset identifier string
         char name[1024];
+        char loaderName[1024];
+        char magNames[NUM_MAG_DATASETS][1024];
 
-        // Edge length of the data set in data pixels.
+        char datasetBaseExpName[1024];
+
+        // Edge length of the current data set in data pixels.
         Coordinate boundary;
+        //Coordinate loaderBoundary;
+        Coordinate *magBoundaries[NUM_MAG_DATASETS];
 
 		// pixel-to-nanometer scale
 		floatCoordinate scale;
 
 		// offset for synchronization between datasets
 		Coordinate offset;
-
-        uint32_t magnification;
 
         // With 2^N being the edge length of a datacube in pixels and
         // M being the edge length of a supercube (the set of all
@@ -432,6 +477,12 @@ struct stateInfo {
 		/*
 		 * Inter-thread communication structures / signals / mutexes, etc.
 		 */
+
+		 /*
+		 * Tells the loading thread, that state->path and or state->name changed
+		 */
+		 int32_t datasetChangeSignal;
+
 
         // Tell the loading thread that it should interrupt its work /
         // its sleep and do something new.
@@ -476,6 +527,12 @@ struct stateInfo {
         SDL_mutex *protectCube2Pointer;
 
         /*
+        * Protects a dataset change i.e. the change of state->path and or
+        * state->name; used for the current multi-res. implementation
+        */
+        SDL_mutex *protectDatasetChange;
+
+        /*
          * Protect the network output buffer and the network peers list
          */
         SDL_mutex *protectOutBuffer;
@@ -502,8 +559,8 @@ struct stateInfo {
         // It is a set of key (cube coordinate) / value (pointer) pairs.
         // Whenever we access a datacube in memory, we do so through
         // this structure.
-        Hashtable *Dc2Pointer;
-        Hashtable *Oc2Pointer;
+        Hashtable *Dc2Pointer[NUM_MAG_DATASETS];
+        Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
 
 		struct viewerState *viewerState;
 		struct remoteState *remoteState;
@@ -584,6 +641,8 @@ struct agConfig {
     int32_t numBranchPoints;
     char *commentBuffer;
     char *commentSearchBuffer;
+
+
 
     int32_t mergeTreesID1;
     int32_t mergeTreesID2;
@@ -686,6 +745,7 @@ struct agConfig {
 
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
+    float zoomOrthoVPs;
 
 	AG_Checkbox *vpLabelBox;
 	AG_Checkbox *highlightActiveTreeBox;
@@ -713,8 +773,8 @@ struct viewPort {
     // original magnification. Node coordinates are stored that way to make
     // knossos instances working with different magnifications of the same data
     // work together well.
-    float screenPxXPerOrigMagUnit;
-    float screenPxYPerOrigMagUnit;
+    float screenPxXPerOrigMagUnit; //unused? jk 14.5.12
+    float screenPxYPerOrigMagUnit; //unused? jk 14.5.12
 
     float displayedlengthInNmX;
     float displayedlengthInNmY;
@@ -771,6 +831,8 @@ struct viewerState {
     //Unit: data cubes.
     int32_t zoomCube;
 
+    /* don't jump between mags on zooming */
+    int datasetMagLock;
 
     //Flag to indicate user repositioning
 	uint32_t userRepositioning;
@@ -843,6 +905,8 @@ struct viewerState {
     float defaultTreeTable[RGB_LUTSIZE];
 
 
+
+
     /*
      * This array holds the table for overlay coloring.
      * The colors should be "maximally different".
@@ -857,6 +921,7 @@ struct viewerState {
     * Advanced Tracing Modes Stuff
     *
     */
+    int autoTracingEnabled;
     int autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
@@ -1154,6 +1219,20 @@ struct inputmap {
 			(c1).z -= (c2).z; \
 	}
 
+#define DIV_COORDINATE(c1, c2) \
+	{ \
+			(c1).x /= (c2); \
+			(c1).y /= (c2); \
+			(c1).z /= (c2); \
+	}
+
+#define CPY_COORDINATE(c1, c2) \
+	{ \
+			(c1).x = (c2).x; \
+			(c1).y = (c2).y; \
+			(c1).z = (c2).z; \
+	}
+
 // This is used by the hash function. It rotates the bits by n to the left. It
 // works analogously to the 8086 assembly instruction ROL and should actually
 // compile to that instruction on a decent compiler (confirmed for gcc).
@@ -1232,6 +1311,9 @@ int32_t sendRemoteSignal(struct stateInfo *state);
 int32_t sendClientSignal(struct stateInfo *state);
 int32_t sendQuitSignal();
 int32_t sendServerSignal(struct stateInfo *state);
+int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag);
+uint32_t log2uint32(register uint32_t x);
+uint32_t ones32(register uint32_t x);
 
 /*
  *	For loader.c
@@ -1260,6 +1342,10 @@ int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, str
 int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state);
 int32_t updateTreeColors();
 int32_t updatePosition(struct stateInfo *state, int32_t serverMovement);
+
+/* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+uint32_t changeDatasetMag(uint32_t upOrDownFlag);
+
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
 int viewer();

@@ -3262,7 +3262,7 @@ struct commentListElement *nextComment(char *searchString, struct stateInfo *sta
 
     }
 
-    drawGUI(state);
+    drawGUI();
 
     return state->skeletonState->currentComment;
 }
@@ -3354,7 +3354,7 @@ struct commentListElement *previousComment(char *searchString, struct stateInfo 
     }
 
 
-    drawGUI(state);
+    drawGUI();
 
     return state->skeletonState->currentComment;
 }

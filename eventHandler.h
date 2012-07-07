@@ -35,5 +35,5 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound);
 static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound);
 static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound);
 static uint32_t handleKeyboard(SDL_Event event);
-static Coordinate *getCoordinateFromOrthogonalClick(int32_t coordinateMag, SDL_Event event, int32_t VPfound);
+static Coordinate *getCoordinateFromOrthogonalClick(SDL_Event event, int32_t VPfound);
 static int32_t checkForViewPortWdgt(AG_Widget *wdgt);

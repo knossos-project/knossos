@@ -35,6 +35,7 @@ static int32_t configFromCli(struct stateInfo *state, int argCount, char *argume
 static int32_t loadNeutralDatasetLUT(GLuint *lut);
 
 int32_t readConfigFile(char *path, struct stateInfo *state);
+static int32_t findAndRegisterAvailableDatasets();
 #ifdef LINUX
 static int32_t catchSegfault(int signum);
 #endif

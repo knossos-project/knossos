@@ -46,6 +46,8 @@ static uint32_t sliceExtract_adjust(Byte *datacube,
                                     struct viewPort *viewPort,
                                     struct stateInfo *state);
 static uint32_t vpGenerateTexture(struct vpListElement *currentVp, struct viewerState *viewerState, struct stateInfo *state);
+static uint32_t downsampleVPTexture(struct viewPort *viewPort);
+static uint32_t upsampleVPTexture(struct viewPort *viewPort);
 
 //Calculates the upper left pixel of the texture of an orthogonal slice, dependent on viewerState->currentPosition
 static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state);

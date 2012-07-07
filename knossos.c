@@ -73,6 +73,14 @@ int main(int argc, char *argv[]) {
     signal(SIGSEGV, (sig_t)catchSegfault);
 #endif
 
+    //FILE *temporaryStorage = stdout;
+    //stdout = fopen("stdout.txt","w");
+
+    //fclose(stdout);
+   // stdout = temporaryStorage;
+
+
+
     SDL_Init(SDL_INIT_TIMER);
 
     // The idea behind all this is that we have four sources of
@@ -228,6 +236,9 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->depthCutOff = 5.;
     tempConfig->viewerState->luminanceBias = 0;
     tempConfig->viewerState->luminanceRangeDelta = 255;
+    tempConfig->viewerState->autoTracingEnabled = FALSE;
+    tempConfig->viewerState->autoTracingDelay = 50;
+    tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = FALSE;
 
@@ -506,8 +517,15 @@ static int32_t initStates() {
         state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
         state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
         state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
+/*
         state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
                     (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
+                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                    * 2.;
+*/
+        /* make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering! */
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
                     / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
                     * 2.;
 
@@ -611,8 +629,17 @@ static int32_t initStates() {
     // Btw: A more clever implementation would be to use an array exactly the
     // size of the supercube and index using the modulo operator.
     // sadly, that realization came rather late. ;)
-    state->Dc2Pointer = ht_new(state->cubeSetElements * 10);
-    state->Oc2Pointer = ht_new(state->cubeSetElements * 10);
+
+    /* creating the hashtables is cheap, keeping the datacubes is
+     * memory expensive..  */
+    for(i = 0; i < NUM_MAG_DATASETS; i++) {
+        state->Dc2Pointer[log2uint32(i)] = ht_new(state->cubeSetElements * 10);
+        state->Oc2Pointer[log2uint32(i)] = ht_new(state->cubeSetElements * 10);
+    }
+
+    /* searches for multiple mag datasets and enables multires if more
+     * than one was found */
+    findAndRegisterAvailableDatasets();
 
     return TRUE;
 }
@@ -662,7 +689,14 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
     SDL_LockMutex(state->protectLoadSignal);
 
     state->loadSignal = TRUE;
-    SET_COORDINATE(state->currentPositionX, x, y, z);
+
+    /* Convert the coordinate to the right mag. The loader
+    * is agnostic to the different dataset magnifications.
+    * The int division is hopefully not too much of an issue here */
+    SET_COORDINATE(state->currentPositionX,
+                   x / state->magnification,
+                   y / state->magnification,
+                   z / state->magnification);
 
     SDL_UnlockMutex(state->protectLoadSignal);
 
@@ -670,6 +704,25 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
 
     return TRUE;
 }
+
+/* allows the on-the-fly change of the dataset name, making the simple uncached
+multi-res. implementation possible.
+this function should only be called from the viewer thread! */
+int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag) {
+    /* the loader is required to not block this mutex for too long,
+    * the user might experience short KNOSSOS lock-ups while zooming
+    * otherwise. */
+    SDL_LockMutex(state->protectDatasetChange);
+    state->datasetChangeSignal = upOrDownFlag;
+    SDL_UnlockMutex(state->protectDatasetChange);
+
+
+
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z);
+}
+
 
 int32_t sendClientSignal(struct stateInfo *state) {
     SDL_LockMutex(state->protectClientSignal);
@@ -879,12 +932,136 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 
 int32_t loadDefaultTreeLUT() {
     if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB, state) == FALSE) {
-        loadTreeLUTFallback(state);
+        loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
-        return FALSE;
+	}
+	return TRUE;
+}
+/* searches and registers other mags of the dataset that was given when K started,
+allowing K to dynamically switch the mag when the user zooms out or in */
+static int32_t findAndRegisterAvailableDatasets() {
+    /* state->path stores the path to the dataset K was launched with */
+    uint32_t currMag, i;
+    char pathBuffer[1024];
+    char currPath[1024];
+    char currExpName[1024];
+    char levelUpPath[1024];
+    char currKconfPath[1024];
+    char datasetBaseDirName[1024];
+    char datasetBaseExpName[1024];
+
+    /* take base path and go one level up */
+    uint32_t pathLen = strlen(state->path);
+
+    /* start at 1 and ignore last char, it is a path separator */
+    for(i = 1; i < pathLen; i++) {
+        if((state->path[pathLen-i] == '\\')
+            || (state->path[pathLen-i] == '/')) {
+            /* this contains the path "one level up" */
+            strncpy(levelUpPath, state->path, pathLen-i+1);
+            /* this contains the dataset dir without "mag1"
+             * K must be launched with state->path set to the
+             * mag1 dataset for multires to work! This is by convention. */
+            strncpy(datasetBaseDirName, state->path+(pathLen-i), i-5);
+
+            /* terminate... */
+            //levelUpPath[pathLen-i+1] = '\0';
+            //datasetBaseDirName[i-4] = '\0';
+
+            // does not work that early?!
+            LOG("multires extracted datasetBaseDirName: %s", datasetBaseDirName);
+            LOG("multires extracted levelUpPath: %s", levelUpPath);
+            break;
+        }
+    }
+
+    /* mag 1 is always available: it is the "fallback" for datasets
+     * that specify no mags. */
+    state->lowestAvailableMag = 1;
+    state->highestAvailableMag = 1;
+    currMag = 1;
+
+    /* iterate over all possible mags and test their availability */
+    for(i = 0; i < NUM_MAG_DATASETS; i++) {
+
+        /* compile the path to the currently tested directory */
+        //currMag = (uint32_t)(pow(2., (double)i)+0.5);
+        if(i!=0) currMag *= 2;
+#ifdef LINUX
+        sprintf(currPath,
+            "%s%smag%d/",
+            levelUpPath,
+            datasetBaseDirName,
+            currMag);
+#else
+        sprintf(currPath,
+            "%s%smag%d\\",
+            levelUpPath,
+            datasetBaseDirName,
+            currMag);
+#endif
+        FILE *testKconf;
+        sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+
+        /* try fopen() on knossos.conf of currently tested dataset */
+        if (testKconf = fopen(currKconfPath, "r")) {
+            //if(i!=0) state->highestAvailableMag *= 2;
+            state->highestAvailableMag = currMag;
+
+            fclose(testKconf);
+            /* add dataset path to magPaths; magPaths is used by the loader */
+            strcpy(state->magPaths[i], currPath);
+
+            /*add exp name to magNames; magNames is used by the loader */
+
+            /* the last 4 letters are "mag1" by convenvtion; if not,
+             * K multires won't work */
+            strncpy(datasetBaseExpName,
+                    state->name,
+                    strlen(state->name)-4);
+
+            strncpy(state->datasetBaseExpName,
+                    datasetBaseExpName,
+                    strlen(datasetBaseExpName)-1);
+
+            sprintf(state->magNames[i], "%smag%d", datasetBaseExpName, currMag);
+        } else break;
+    }
+
+    /* Enable multires by default if more than one dataset was found.
+     * The loaded gui config might lock K to the current mag later one, which is fine. */
+    if(state->highestAvailableMag > 1) {
+        state->viewerState->datasetMagLock = FALSE;
     }
     return TRUE;
 }
+
+/* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
+uint32_t log2uint32(register uint32_t x) {
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+
+	return(ones32(x >> 1));
+}
+
+/* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
+uint32_t ones32(register uint32_t x) {
+        /* 32-bit recursive reduction using SWAR...
+	   but first step is mapping 2-bit values
+	   into sum of 2 1-bit values in sneaky way
+	*/
+        x -= ((x >> 1) & 0x55555555);
+        x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+        x = (((x >> 4) + x) & 0x0f0f0f0f);
+        x += (x >> 8);
+        x += (x >> 16);
+        return(x & 0x0000003f);
+}
+
+
 
 #ifdef LINUX
 static int32_t catchSegfault(int signum) {

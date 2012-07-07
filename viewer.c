@@ -297,7 +297,8 @@ static int32_t initViewer(struct stateInfo *state) {
         return FALSE;
     }
 
-    sendLoadSignal(state->viewerState->currentPosition.x, state->viewerState->currentPosition.y,
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z);
 
 
@@ -363,6 +364,7 @@ int32_t updateViewerState(struct stateInfo *state) {
 }
 
 /* This function updates state->viewerState->zoomCube after the user changed the zoom factor. */
+
 uint32_t updateZoomCube() {
     int32_t i, residue, max, currentZoomCube, oldZoomCube;
 
@@ -457,7 +459,6 @@ static uint32_t dcSliceExtract(Byte *datacube,
                                size_t dcOffset,
                                struct viewPort *viewPort,
                                struct stateInfo *state) {
-
     datacube += dcOffset;
 
     if(state->viewerState->datasetAdjustmentOn) {
@@ -579,11 +580,11 @@ static uint32_t sliceExtract_standard(Byte *datacube,
             break;
 
         case SLICE_YZ:
+
             for(i = 0; i < state->cubeSliceArea; i++) {
                 slice[0] = slice[1]
                          = slice[2]
                          = *datacube;
-
                 datacube += state->cubeEdgeLength;
                 slice += 3;
             }
@@ -862,11 +863,17 @@ static int32_t vpHandleBacklog(struct vpListElement *currentVp,
 
         if(currentElement->cubeType == CUBE_DATA) {
             SDL_LockMutex(state->protectCube2Pointer);
-            cube = ht_get(state->Dc2Pointer, currentElement->cube);
+            cube = ht_get(state->Dc2Pointer[log2uint32(state->magnification)], currentElement->cube);
             SDL_UnlockMutex(state->protectCube2Pointer);
 
+
             if(cube == HT_FAILURE) {
-                /* */
+
+
+                                   // if(currentElement->cube.x >= 3) {
+                        //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
+                          //          }
+                //LOG("failed to get cube in viewer");
             }
             else {
                 dcSliceExtract(cube,
@@ -934,13 +941,25 @@ static uint32_t vpGenerateTexture(
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
-    uint32_t x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
+    int32_t x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
-    Byte *datacube = NULL, *overlayCube = NULL;
-    uint32_t dcOffset = 0, index = 0;
+    Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
 
-    currentPosition_dc = Px2DcCoord(viewerState->currentPosition, state);
-    upperLeftDc = Px2DcCoord(currentVp->viewPort->texture.leftUpperPxInAbsPx, state);
+    Byte *datacube = NULL, *overlayCube = NULL;
+    int32_t dcOffset = 0, index = 0;
+
+
+    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
+    DIV_COORDINATE(currPosTrans, state->magnification);
+
+    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->viewPort->texture.leftUpperPxInAbsPx);
+    DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
+
+    currentPosition_dc = Px2DcCoord(currPosTrans, state);
+
+    upperLeftDc = Px2DcCoord(leftUpperPxInAbsPxTrans, state);
+
+
 
     // We calculate the coordinate of the DC that holds the slice that makes up the upper left
     // corner of our texture.
@@ -951,18 +970,21 @@ static uint32_t vpGenerateTexture(
     switch(currentVp->viewPort->type) {
         case SLICE_XY:
             dcOffset = state->cubeSliceArea
-                       * (viewerState->currentPosition.z - state->cubeEdgeLength
+                       //* (viewerState->currentPosition.z - state->cubeEdgeLength
+                       * (currPosTrans.z - state->cubeEdgeLength
                        * currentPosition_dc.z);
             break;
 
         case SLICE_XZ:
             dcOffset = state->cubeEdgeLength
-                       * (viewerState->currentPosition.y - state->cubeEdgeLength
+                       * (currPosTrans.y  - state->cubeEdgeLength
+                       //     * (viewerState->currentPosition.y  - state->cubeEdgeLength
                        * currentPosition_dc.y);
             break;
 
         case SLICE_YZ:
-            dcOffset = viewerState->currentPosition.x - state->cubeEdgeLength
+            dcOffset = //viewerState->currentPosition.x - state->cubeEdgeLength
+                    currPosTrans.x - state->cubeEdgeLength
                        * currentPosition_dc.x;
             break;
 
@@ -1008,8 +1030,8 @@ static uint32_t vpGenerateTexture(
             }
 
             SDL_LockMutex(state->protectCube2Pointer);
-            datacube = ht_get(state->Dc2Pointer, currentDc);
-            overlayCube = ht_get(state->Oc2Pointer, currentDc);
+            datacube = ht_get(state->Dc2Pointer[log2uint32(state->magnification)], currentDc);
+            overlayCube = ht_get(state->Oc2Pointer[log2uint32(state->magnification)], currentDc);
             SDL_UnlockMutex(state->protectCube2Pointer);
 
             /*
@@ -1026,6 +1048,7 @@ static uint32_t vpGenerateTexture(
             index = texIndex(x_dc, y_dc, 3, &(currentVp->viewPort->texture), state);
 
             if(datacube == HT_FAILURE) {
+
                 backlogAddElement(currentVp->backlog,
                                   currentDc,
                                   dcOffset,
@@ -1214,12 +1237,19 @@ static int32_t texIndex(uint32_t x,
     return index;
 }
 
+/* this function calculates the mapping between the left upper texture pixel
+ * and the real dataset pixel */
+
 static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
     uint32_t i = 0;
-    Coordinate currentPosition_dc;
+    Coordinate currentPosition_dc, currPosTrans;
     struct viewerState *viewerState = state->viewerState;
 
-    currentPosition_dc = Px2DcCoord(viewerState->currentPosition, state);
+    /* why div first by mag and then multiply again with it?? */
+    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
+    DIV_COORDINATE(currPosTrans, state->magnification);
+
+    currentPosition_dc = Px2DcCoord(currPosTrans, state);
 
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
@@ -1228,17 +1258,30 @@ static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
         switch (viewerState->viewPorts[i].type) {
         case VIEWPORT_XY:
             //Set the coordinate of left upper data pixel currently stored in the texture
+            //viewerState->viewPorts[i].texture.usedTexLengthDc is state->M and even int.. very funny
+            // this guy is always in mag1, even if a different mag dataset is active!!!
+            // this might be buggy for very high mags, test that!
             SET_COORDINATE(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx,
-                           (currentPosition_dc.x - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength,
-                           (currentPosition_dc.y - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength,
-                           currentPosition_dc.z * state->cubeEdgeLength);
+                           (currentPosition_dc.x - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification,
+                           (currentPosition_dc.y - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification,
+                           currentPosition_dc.z
+                           * state->cubeEdgeLength * state->magnification);
+    //if(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x >1000000){ LOG("uninit x %d", viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x);}
+    //if(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y > 1000000){ LOG("uninit y %d", viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y);}
+    //if(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z > 1000000){ LOG("uninit z %d", viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z);}
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->viewPorts[i].leftUpperDataPxOnScreen,
-                           viewerState->currentPosition.x - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.) / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.y - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.) / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
+                           viewerState->currentPosition.x
+                           - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
+                           viewerState->currentPosition.y -
+                           (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
                            viewerState->currentPosition.z);
 
             break;
@@ -1246,34 +1289,45 @@ static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
         case VIEWPORT_XZ:
             //Set the coordinate of left upper data pixel currently stored in the texture
             SET_COORDINATE(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx,
-                           (currentPosition_dc.x - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength,
-                           currentPosition_dc.y * state->cubeEdgeLength,
-                           (currentPosition_dc.z - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength);
+                           (currentPosition_dc.x - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification,
+                           currentPosition_dc.y * state->cubeEdgeLength  * state->magnification,
+                           (currentPosition_dc.z - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification);
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->viewPorts[i].leftUpperDataPxOnScreen,
-                           viewerState->currentPosition.x - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.) / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
+                           viewerState->currentPosition.x
+                           - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
                            viewerState->currentPosition.y ,
-                           viewerState->currentPosition.z - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.) / viewerState->viewPorts[i].texture.texUnitsPerDataPx));
-
+                           viewerState->currentPosition.z
+                           - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx));
             break;
 
         case VIEWPORT_YZ:
             //Set the coordinate of left upper data pixel currently stored in the texture
             SET_COORDINATE(viewerState->viewPorts[i].texture.leftUpperPxInAbsPx,
-                           currentPosition_dc.x * state->cubeEdgeLength,
-                           (currentPosition_dc.y - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength,
-                           (currentPosition_dc.z - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2)) * state->cubeEdgeLength);
+                           currentPosition_dc.x * state->cubeEdgeLength   * state->magnification,
+                           (currentPosition_dc.y - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification,
+                           (currentPosition_dc.z - (viewerState->viewPorts[i].texture.usedTexLengthDc / 2))
+                           * state->cubeEdgeLength * state->magnification);
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->viewPorts[i].leftUpperDataPxOnScreen,
                            viewerState->currentPosition.x ,
-                           viewerState->currentPosition.y - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.)  / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
-                           viewerState->currentPosition.z - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.) / viewerState->viewPorts[i].texture.texUnitsPerDataPx));
+                           viewerState->currentPosition.y
+                           - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx),
+                           viewerState->currentPosition.z
+                           - (int)((viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.)
+                            / viewerState->viewPorts[i].texture.texUnitsPerDataPx));
 
 
             break;
@@ -1398,6 +1452,94 @@ int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen, struct s
     return tempNum;
 }
 
+/* takes care of all necessary changes inside the viewer and signals
+the loader to change the dataset */
+uint32_t changeDatasetMag(uint32_t upOrDownFlag) {
+    uint32_t i;
+
+    if(state->viewerState->datasetMagLock) {
+        return FALSE;
+    }
+
+    switch(upOrDownFlag) {
+        case MAG_DOWN:
+            if(state->magnification > state->lowestAvailableMag) {
+                state->magnification /= 2;
+                for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+                    if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                        state->viewerState->viewPorts[i].texture.zoomLevel *= 2.0;
+                        upsampleVPTexture(&state->viewerState->viewPorts[i]);
+                        state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                            *= 2.;
+                    }
+                }
+            }
+            else return FALSE;
+        break;
+
+        case MAG_UP:
+            if(state->magnification < state->highestAvailableMag) {
+                state->magnification *= 2;
+                for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+                    if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                        state->viewerState->viewPorts[i].texture.zoomLevel *= 0.5;
+                        downsampleVPTexture(&state->viewerState->viewPorts[i]);
+                        state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                            /= 2.;
+                    }
+                }
+            }
+            else return FALSE;
+        break;
+    }
+
+    /* necessary? */
+    state->viewerState->userMove = TRUE;
+    recalcTextureOffsets();
+
+    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+            LOG("left upper tex px of VP %d is: %d, %d, %d",i, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z);
+
+        }
+    }
+    sendDatasetChangeSignal(upOrDownFlag);
+    //refreshViewports(state);
+    /* set flags to trigger the necessary renderer updates */
+    //state->skeletonState->skeletonChanged = TRUE;
+
+
+    return TRUE;
+}
+
+
+/* For downsample & upsamleVPTexture:
+ * we read the texture to a CPU side - buffer,
+ * and send it to graphicscard after the resampling. Using
+ * OpenGL is certainly possible for the resampling
+ * but the CPU implementation appears to be
+ * more straightforward, with probably almost no
+ * performance penalty. We use a simple
+ * box filter for the downsampling */
+static uint32_t downsampleVPTexture(struct viewPort *viewPort) {
+    /* allocate 2 texture buffers */
+    //Byte *orig, *resampled;
+
+    /* get the texture */
+
+    /* downsample it */
+
+    /* send it to the graphicscard again */
+
+    return TRUE;
+}
+
+
+static uint32_t upsampleVPTexture(struct viewPort *viewPort) {
+
+    return TRUE;
+}
+
 uint32_t recalcTextureOffsets() {
     uint32_t i;
     float midX, midY;
@@ -1414,10 +1556,23 @@ uint32_t recalcTextureOffsets() {
                 || state->viewerState->viewPorts[i].type == VIEWPORT_XZ
                 || state->viewerState->viewPorts[i].type == VIEWPORT_YZ) {
             /*Don't remove /2 *2, integer division! */
+
+/* old code for smaller FOV
             state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
                 state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
                     ((float)(((state->M / 2) * 2 - 1) * state->cubeEdgeLength))
                     / ((float)state->viewerState->viewPorts[i].texture.edgeLengthPx);
+
+*/
+
+        /* new code for larger FOV */
+        /* displayedEdgeLength is in texture pixels, independent from the
+         * currently active mag! */
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                    state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
+                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                    * 2.;
 
 
             //Multiply the zoom factor. (only truncation possible! 1 stands for minimal zoom)
@@ -1437,7 +1592,8 @@ uint32_t recalcTextureOffsets() {
                         state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /=
                             state->viewerState->voxelXYRatio;
 
-                    //Display only entire pixels (only truncation possible!)
+                    //Display only entire pixels (only truncation possible!) WHY??
+
                     state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
                         (float) (
                             (int) (
@@ -1469,15 +1625,15 @@ uint32_t recalcTextureOffsets() {
                          state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
 
                     // Pixels on the screen per 1 unit in the data coordinate system at the
-                    // original magnification.
-                    state->viewerState->viewPorts[i].screenPxXPerOrigMagUnit =
+                    // original magnification. These guys appear to be unused!!! jk 14.5.12
+                    /*state->viewerState->viewPorts[i].screenPxXPerOrigMagUnit =
                         state->viewerState->viewPorts[i].screenPxXPerDataPx *
                         state->magnification;
 
                     state->viewerState->viewPorts[i].screenPxYPerOrigMagUnit =
                         state->viewerState->viewPorts[i].screenPxYPerDataPx *
                         state->magnification;
-
+*/
                     state->viewerState->viewPorts[i].displayedlengthInNmX =
                         state->viewerState->voxelDimX *
                         (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
@@ -1488,13 +1644,18 @@ uint32_t recalcTextureOffsets() {
                         (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
                         state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
 
-                    // scale to 0 - 1
+                    /* scale to 0 - 1; midX is the current pos in tex coords */
+                    /* leftUpperPxInAbsPx is in always in mag1, independent of
+                     * the currently active mag */
                     midX = (float)(state->viewerState->currentPosition.x -
-                             state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x) /
-                             (float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                             state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x)
+                             // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                             * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+
                     midY = (float)(state->viewerState->currentPosition.y -
-                             state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y) /
-                             (float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                             state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y)
+                             //(float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                             * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
                     calcLeftUpperTexAbsPx(state);
@@ -1545,9 +1706,9 @@ uint32_t recalcTextureOffsets() {
                          state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
 
                     midX = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x))
-                           / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx; //scale to 0 - 1
                     midY = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z))
-                           / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx; //scale to 0 - 1
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
                     calcLeftUpperTexAbsPx(state);
@@ -1600,9 +1761,11 @@ uint32_t recalcTextureOffsets() {
                          state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
 
                     midX = ((float)(state->viewerState->currentPosition.y - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y))
-                           / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
                     midY = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z))
-                           / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                           * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
                     calcLeftUpperTexAbsPx(state);
@@ -1615,6 +1778,7 @@ uint32_t recalcTextureOffsets() {
             }
 
             //Calculate the vertices in texture coordinates
+            /* mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0. */
             state->viewerState->viewPorts[i].texture.texLUx = midX - (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.);
             state->viewerState->viewPorts[i].texture.texLUy = midY - (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.);
             state->viewerState->viewPorts[i].texture.texRUx = midX + (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.);

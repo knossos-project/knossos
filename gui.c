@@ -115,6 +115,8 @@ int32_t initGUI() {
     state->viewerState->ag->totalNodes = 0;
     state->viewerState->ag->totalTrees = 0;
 
+    state->viewerState->ag->zoomOrthoVPs =
+        state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel;
 
     state->viewerState->ag->radioSkeletonDisplayMode = 0;
 
@@ -267,8 +269,8 @@ void createMenuBar(struct stateInfo *state) {
         subMenuItem = AG_MenuNode(menuItem, "Work Mode", NULL);
             AG_MenuAction(subMenuItem, "Drag Dataset", NULL, UI_setViewModeDrag, NULL);
             AG_MenuAction(subMenuItem, "Recenter on Click", NULL, UI_setViewModeRecenter, NULL);
-		AG_MenuAction(menuItem, "Dataset Statistics", NULL,  UI_unimplemented, NULL, NULL);
-        AG_MenuAction(menuItem, "Zoom...", NULL, viewZooming, NULL, NULL);
+		//AG_MenuAction(menuItem, "Dataset Statistics", NULL,  UI_unimplemented, NULL, NULL);
+        AG_MenuAction(menuItem, "Zoom and Multires...", NULL, viewZooming, NULL, NULL);
 	}
 
     menuItem = AG_MenuNode(appMenu->root, "Preferences", NULL);
@@ -314,40 +316,40 @@ void createNavOptionsWin(struct stateInfo *state) {
     {
         numerical = AG_NumericalNewUint(box, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
         {
-            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        }
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
 
         numerical = AG_NumericalNewUint(box, 0, NULL, "Jump Frames: ", &tempConfig->viewerState->dropFrames);
-        {
-            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        }
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
 
         numerical = AG_NumericalNewUint(box, 0, NULL, "Recentering Time parallel [ms]: ", &tempConfig->viewerState->recenteringTime);
-        {
-            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        }
-        numerical = AG_NumericalNewUint(box, 0, NULL, "Recentering Time orthog. [ms]: ", &tempConfig->viewerState->recenteringTimeOrth);
-        {
-            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-        }
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
     }
+        numerical = AG_NumericalNewUint(box, 0, NULL, "Recentering Time orthog. [ms]: ", &tempConfig->viewerState->recenteringTimeOrth);
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
+        }
     box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_VERT, 0);
     {
         AG_LabelNew(box, 0, "Advanced Tracing Modes");
         AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box), 0);
         radio = AG_RadioNew(box, 0, NULL);
-        {
+    {
             AG_BindInt(radio, "value", &state->viewerState->autoTracingMode);
             AG_ExpandHoriz(radio);
             AG_RadioAddItem(radio, "Normal Mode");
             AG_RadioAddItem(radio, "Additional Viewport Direction Move");
             AG_RadioAddItem(radio, "Additional Tracing Direction Move");
             AG_RadioAddItem(radio, "Additional Mirrored Move");
-        }
+    }
         numerical = AG_NumericalNewUint(box, 0, NULL, "Delay Time per Step [ms]: ", &state->viewerState->autoTracingDelay);
         numerical = AG_NumericalNewUint(box, 0, NULL, "Number of Steps: ", &state->viewerState->autoTracingSteps);
     }
@@ -1304,85 +1306,45 @@ void createZoomingWin(struct stateInfo *state) {
     AG_Numerical *numerical;
     AG_Button *button;
     AG_Box *box;
+    AG_Checkbox *checkbox;
     AG_Window *win;
+    AG_Slider *slider;
 
 	win = AG_WindowNew(0);
     {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
-        AG_WindowSetCaption(win, "Viewport Zooming");
+        AG_WindowSetCaption(win, "Zoom and Multiresolution Settings");
         AG_WindowSetGeometry(win, 739, 348, 300, 180);
 
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             AG_ExpandHoriz(box);
-            AG_LabelNew(box, 0, "Viewport XY");
+            AG_LabelNew(box, 0, "Orthogonal Data Viewports");
 
-            AG_SliderNewFltR(box,
+            slider = AG_SliderNewFltR(box,
                              AG_SLIDER_HORIZ,
                              0,
-                             &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
+                             //&state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
+                             /* direct mapping to texture.zoomLevel of all ortho VPs */
+                             &state->viewerState->ag->zoomOrthoVPs,
                              VPZOOMMAX,
                              VPZOOMMIN);
+
+            AG_SetEvent(slider, "slider-changed", UI_orthoVPzoomSliderModified, NULL);
+
+
             numerical = AG_NumericalNewFltR(box,
                                             0,
                                             NULL,
                                             "",
-                                            &state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
+                                            //&state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel,
+                                            &state->viewerState->ag->zoomOrthoVPs,
                                             VPZOOMMAX,
                                             VPZOOMMIN);
             {
                 AG_NumericalSetIncrement(numerical, 0.01);
-                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-            }
-        }
-
-        box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        {
-            AG_ExpandHoriz(box);
-            AG_LabelNew(box, 0, "Viewport XZ");
-
-            AG_SliderNewFltR(box,
-                             AG_SLIDER_HORIZ,
-                             0,
-                             &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
-                             VPZOOMMAX,
-                             VPZOOMMIN);
-            numerical = AG_NumericalNewFltR(box,
-                                            0,
-                                            NULL,
-                                            "",
-                                            &state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel,
-                                            VPZOOMMAX,
-                                            VPZOOMMIN);
-            {
-                AG_NumericalSetIncrement(numerical, 0.01);
-                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-            }
-        }
-
-        box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-        {
-            AG_ExpandHoriz(box);
-            AG_LabelNew(box, 0, "Viewport YZ");
-
-            AG_SliderNewFltR(box,
-                             AG_SLIDER_HORIZ,
-                             0,
-                             &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
-                             VPZOOMMAX,
-                             VPZOOMMIN);
-            numerical = AG_NumericalNewFltR(box,
-                                            0,
-                                            NULL,
-                                            "",
-                                            &state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel,
-                                            VPZOOMMAX,
-                                            VPZOOMMIN);
-            {
-                AG_NumericalSetIncrement(numerical, 0.01);
+                AG_SetEvent(numerical, "numerical-changed", UI_orthoVPzoomSliderModified, NULL);
                 AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1413,10 +1375,23 @@ void createZoomingWin(struct stateInfo *state) {
             }
         }
 
-        button = AG_ButtonNewFn(win, 0, "All Defaults", UI_setDefaultZoom, NULL);
+        button = AG_ButtonNewFn(win, 0, "All Zoom Defaults", UI_setDefaultZoom, NULL);
         {
             AG_ExpandHoriz(button);
         }
+
+        AG_SeparatorNewHoriz(win);
+
+        checkbox = AG_CheckboxNewInt(win, 0, "Lock dataset to current mag", &state->viewerState->datasetMagLock);
+        AG_SetEvent(checkbox, "checkbox-changed", UI_lockCurrentMagModified, NULL);
+
+
+        AG_ExpandHoriz(AG_LabelNewPolled(win, 0, "Currently active mag dataset: %i",
+                                         &state->magnification));
+        AG_ExpandHoriz(AG_LabelNewPolled(win, 0, "Highest mag dataset found: %i",
+                                         &state->lowestAvailableMag));
+        AG_ExpandHoriz(AG_LabelNewPolled(win, 0, "Lowest mag dataset found: %i",
+                                         &state->highestAvailableMag));
 
         AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
     	AG_WindowShow(win);
@@ -1962,19 +1937,53 @@ void yesNoPrompt(AG_Widget *par, char *promptString, void (*yesCb)(), void (*noC
 
 void UI_zoomOrthogonals(float step) {
     int32_t i = 0;
+    int32_t triggerMagChange = FALSE;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
-            if((state->viewerState->viewPorts[i].texture.zoomLevel + step >= VPZOOMMAX) &&
-               (state->viewerState->viewPorts[i].texture.zoomLevel + step <= VPZOOMMIN)) {
-                state->viewerState->viewPorts[i].texture.zoomLevel += step;
+
+            /* check if mag is locked */
+            if(state->viewerState->datasetMagLock) {
+                if(!(state->viewerState->viewPorts[i].texture.zoomLevel + step < VPZOOMMAX) &&
+                   !(state->viewerState->viewPorts[i].texture.zoomLevel + step > VPZOOMMIN)) {
+                    state->viewerState->viewPorts[i].texture.zoomLevel += step;
+                }
+            }
+            else {
+                /* trigger a mag change when possible */
+                if((state->viewerState->viewPorts[i].texture.zoomLevel + step < 0.5)
+                    && (state->viewerState->viewPorts[i].texture.zoomLevel >= 0.5)
+                    && (state->magnification != state->lowestAvailableMag)) {
+                    state->viewerState->viewPorts[i].texture.zoomLevel += step;
+                    triggerMagChange = MAG_DOWN;
+                }
+                if((state->viewerState->viewPorts[i].texture.zoomLevel + step > 1.0)
+                    && (state->viewerState->viewPorts[i].texture.zoomLevel <= 1.0)
+                    && (state->magnification != state->highestAvailableMag)) {
+                    state->viewerState->viewPorts[i].texture.zoomLevel += step;
+                    triggerMagChange = MAG_UP;
+                }
+                /* performe normal zooming otherwise. This case also covers
+                * the special case of zooming in further than 0.5 on mag1 */
+                if(!triggerMagChange) {
+                    if(!(state->viewerState->viewPorts[i].texture.zoomLevel + step < 0.09999) &&
+                       !(state->viewerState->viewPorts[i].texture.zoomLevel + step > 1.0000)) {
+                        state->viewerState->viewPorts[i].texture.zoomLevel += step;
+                    }
+                }
+
             }
         }
     }
 
-    /* TDitem */
+    /* keep the agar slider / numerical widget informed */
+    state->viewerState->ag->zoomOrthoVPs =
+        state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel;
+
+    if(triggerMagChange) changeDatasetMag(triggerMagChange);
+
     recalcTextureOffsets();
-    drawGUI(state);
+    //drawGUI(state);
 }
 
 void UI_saveSkeleton(int32_t increment) {
@@ -2174,6 +2183,18 @@ static void UI_commentLockWdgtModified(AG_Event *event) {
     }
 }
 
+static void  UI_lockCurrentMagModified(AG_Event *event) {
+    int lockOn = AG_INT(1);
+    if(lockOn) {
+        state->viewerState->datasetMagLock = TRUE;
+    }
+    else {
+        if(state->highestAvailableMag > state->lowestAvailableMag) {
+            state->viewerState->datasetMagLock = FALSE;
+        }
+    }
+}
+
 
 void actNodeWdgtChanged(AG_Event *event)
 {
@@ -2211,7 +2232,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
             state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 20;
     }
     else {
-        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            for(i = 0; i < state->viewerState->numberViewPorts; i++)
             state->viewerState->viewPorts[i].edgeLength = newWinLenY / 2 - 20;
     }
 
@@ -2620,6 +2641,17 @@ static void UI_skeletonChanged() {
     state->skeletonState->skeletonChanged = TRUE;
 }
 
+static void UI_orthoVPzoomSliderModified() {
+    /* is it safe to go directly into the array without looping and checking type? */
+    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel =
+        state->viewerState->ag->zoomOrthoVPs;
+    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel =
+        state->viewerState->ag->zoomOrthoVPs;
+    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel =
+        state->viewerState->ag->zoomOrthoVPs;
+
+}
+
 static void UI_displayModeRadioModified() {
     /* set the appropriate flag */
 
@@ -2697,11 +2729,11 @@ void treeColorAdjustmentsChanged() {
     }
     //use of default lut
     else {
-        memcpy(state->viewerState->treeAdjustmentTable,
+            memcpy(state->viewerState->treeAdjustmentTable,
         state->viewerState->defaultTreeTable,
         RGB_LUTSIZE * sizeof(float));
-        updateTreeColors();
-    }
+                updateTreeColors();
+        }
 }
 
 static void datasetColorAdjustmentsChanged() {
@@ -3529,11 +3561,11 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingSteps");
             if(attribute){
                 state->viewerState->autoTracingSteps = atoi((char *)attribute);
-            }
+        }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingMode");
             if(attribute){
                 state->viewerState->autoTracingMode = atoi((char *)attribute);
-            }
+        }
         }
 
         currentXMLNode = currentXMLNode->next;
@@ -3606,10 +3638,10 @@ static void updateTitlebar(int32_t useFilename) {
     }
 
     if(useFilename) {
-        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->name, filename);
+        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, filename);
     }
     else {
-        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->name, "no skeleton file");
+        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, "no skeleton file");
     }
 
     SDL_WM_SetCaption(state->viewerState->ag->titleString, NULL);
@@ -3739,8 +3771,8 @@ static void UI_setSkeletonPerspective(AG_Event *event) {
     }
 
     /* TODO WTF */
-    drawGUI(state);
-    drawGUI(state);
+    drawGUI();
+    drawGUI();
 }
 
 uint32_t addRecentFile(char *path, uint32_t pos) {
@@ -3907,7 +3939,7 @@ void prefDefaultPrefs(){
     state->viewerState->ag->radioSkeletonDisplayMode = 0;
     state->viewerState->datasetColortableOn = FALSE;
     state->viewerState->treeColortableOn = FALSE;
-    loadTreeLUTFallback(state);
+    loadTreeLUTFallback();
     state->viewerState->treeLutSet = FALSE;
     treeColorAdjustmentsChanged();
     datasetColorAdjustmentsChanged();

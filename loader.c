@@ -55,6 +55,7 @@ int loader() {
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
     while(TRUE) {
         while(state->loadSignal == FALSE) {
+            //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             SDL_CondWait(state->conditionLoadSignal, state->protectLoadSignal);
         }
@@ -64,6 +65,14 @@ int loader() {
             LOG("Loader quitting.");
             break;
         }
+
+        /* We protect all subsequent hash-table operations to avoid
+         * inconsistent Dcoi lists. However, the mutex will be unlocked
+         * for the time-consuming I/O operations in loadCubes().*/
+        SDL_LockMutex(state->protectDatasetChange);
+
+
+        //state->loaderBoundary = state->magBoundaries[state->loaderMagnification];
 
         // currentPositionX is updated only when the boundary is
         // crossed. Access to currentPositionX is synchronized through
@@ -80,17 +89,40 @@ int loader() {
         // DCOI now contains the coordinates of all cubes we want, based
         // on our current position. However, some of those might already be
         // in memory. We remove them.
-        if(removeLoadedCubes(state) != TRUE) {
+       /* if(state->datasetChangeSignal != NO_MAG_CHANGE) {
+            LOG("dataset change signal true, removing cubes");
+        }*/
+        if(removeLoadedCubes() != TRUE) {
             LOG("Error removing already loaded cubes from DCOI.");
             continue;
         }
+
+        state->loaderMagnification = log2uint32(state->magnification);
+        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
+        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
+        /* multires mag change triggered by viewer! */
+        if(state->datasetChangeSignal != NO_MAG_CHANGE) {
+
+            /* calculate a new dcoi list; not sure whether this is necessary..
+             * it might work with DcoiFromPos call a few lines above */
+            if(DcoiFromPos(loaderState->Dcoi, state) != TRUE) {
+                LOG("Error computing DCOI from position.");
+                continue;
+            }
+            LOG("loader mag change triggered, now in mag %d", state->loaderMagnification);
+            state->datasetChangeSignal = NO_MAG_CHANGE;
+        }
+
+        //state->datasetChangeSignal = FALSE;
+        SDL_UnlockMutex(state->protectDatasetChange);
+
 
         // DCOI is now a list of all datacubes that we want in memory, given
         // our current position and that are not yet in memory. We go through
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
         if(loadCubes(state) == FALSE) {
-            // LOG("Loading of all DCOI did not complete.");
+            //LOG("Loading of all DCOI did not complete.");
         }
 
         SDL_LockMutex(state->protectLoadSignal);
@@ -189,6 +221,7 @@ static uint32_t loadCube(Coordinate coordinate,
     char typeExtension[8] = "";
     FILE *cubeFile = NULL;
     int32_t readBytes = 0;
+    uint32_t cancelCubeLoading = FALSE;
 
     /*
      * Specify either freeDcSlot or freeOcSlot.
@@ -199,6 +232,17 @@ static uint32_t loadCube(Coordinate coordinate,
      * never occur.
      *
      */
+
+    /* check before we start to do time consuming I/O... */
+    SDL_LockMutex(state->protectDatasetChange);
+    if(state->datasetChangeSignal != NO_MAG_CHANGE) {
+        cancelCubeLoading = TRUE;
+    }
+    SDL_UnlockMutex(state->protectDatasetChange);
+    if(cancelCubeLoading == TRUE) {
+        goto loadcube_fail;
+    }
+
     if((freeDcSlot && freeOcSlot) ||
        (!freeDcSlot && !freeOcSlot)) {
         return FALSE;
@@ -223,74 +267,79 @@ static uint32_t loadCube(Coordinate coordinate,
     else
         strncpy(typeExtension, "overlay", 8);
 
-    filename = malloc(strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38);
+    filename = malloc(strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
     if(filename == NULL) {
         LOG("Out of memory.");
         goto loadcube_fail;
     }
-    memset(filename, '\0', strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38);
+    memset(filename, '\0', strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
 
 #ifdef LINUX
     if(state->boergens) {
-        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
                  "%sz%.4d/y%.4d/x%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->path,
+                 state->loaderPath,
                  coordinate.z,
                  coordinate.y,
                  coordinate.x,
-                 state->name,
+                 state->loaderName,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
     }
     else {
-        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
                  "%sx%.4d/y%.4d/z%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->path,
+                 state->loaderPath,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
-                 state->name,
+                 state->loaderName,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
     }
 #else
+    //state->boergens= 1;
     if(state->boergens) {
-        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
                  "%sz%.4d\\y%.4d\\x%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->path,
+                 state->loaderPath,
                  coordinate.z,
                  coordinate.y,
                  coordinate.x,
-                 state->name,
+                 state->loaderName,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
+                 //LOG("filename: %s", filename);
     }
     else {
-        snprintf(filename, strlen(state->path) + strlen(state->name) + strlen(typeExtension) + 38,
+        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
                  "%sx%.4d\\y%.4d\\z%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->path,
+                 state->loaderPath,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
-                 state->name,
+                 state->loaderName,
                  coordinate.x,
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
+                 //LOG("filename: %s", filename);
     }
 #endif
 
+
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-
     cubeFile = fopen(filename, "rb");
+    LOG("succesfully loaded: %s", filename);
     if(cubeFile == NULL) {
+        LOG("failed to load %s", filename);
         goto loadcube_fail;
     }
 
@@ -521,7 +570,7 @@ static int32_t initLoader(struct stateInfo *state) {
     return TRUE;
 }
 
-static uint32_t removeLoadedCubes(struct stateInfo *state) {
+static uint32_t removeLoadedCubes() {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     Byte *delCubePtr = NULL;
     Hashtable *mergeCube2Pointer = NULL;
@@ -547,9 +596,9 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
     }
 
     if(ht_union(mergeCube2Pointer,
-                state->Dc2Pointer,
-                state->Oc2Pointer) != HT_SUCCESS) {
-        LOG("Error merging Dc2Pointer and Oc2Pointer.");
+                state->Dc2Pointer[state->loaderMagnification],
+                state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
+        LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
         return FALSE;
     }
 
@@ -557,15 +606,21 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
     while(currentCube != mergeCube2Pointer->listEntry) {
         nextCube = currentCube->next;
 
-        if(ht_get(state->loaderState->Dcoi, currentCube->coordinate) == HT_FAILURE) {
+        if((ht_get(state->loaderState->Dcoi, currentCube->coordinate) == HT_FAILURE)
+           || (state->datasetChangeSignal != NO_MAG_CHANGE)) {
             /*
              * This element is not in Dcoi, which means we can reuse its
              * slots for new DCs / OCs.
+             * A mag change means that all slot elements can be reused (i.e. their
+             * data content became useless).
              * As we are using the merged list as a proxy for the actual lists,
              * we need to get the pointers out of the actual lists before we can
              * add them back to the free slots lists.
              *
              */
+             //        if(state->datasetChangeSignal != NO_MAG_CHANGE) {
+            //LOG("dataset change signal true, removing cubes");
+        //}
 
             SDL_LockMutex(state->protectCube2Pointer);
 
@@ -573,12 +628,13 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
              * Process Dc2Pointer if the current cube is in Dc2Pointer.
              *
              */
-            if((delCubePtr = ht_get(state->Dc2Pointer, currentCube->coordinate)) != HT_FAILURE) {
-                if(ht_del(state->Dc2Pointer, currentCube->coordinate) != HT_SUCCESS) {
-                    LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer.",
+            if((delCubePtr = ht_get(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+                if(ht_del(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
+                    LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
-                        currentCube->coordinate.z);
+                        currentCube->coordinate.z,
+                        state->loaderMagnification);
                     return FALSE;
                 }
 
@@ -596,8 +652,8 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
              * Process Oc2Pointer if the current cube is in Oc2Pointer.
              *
              */
-            if((delCubePtr = ht_get(state->Oc2Pointer, currentCube->coordinate)) != HT_FAILURE) {
-                if(ht_del(state->Oc2Pointer, currentCube->coordinate) != HT_SUCCESS) {
+            if((delCubePtr = ht_get(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+                if(ht_del(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                     LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
@@ -626,7 +682,7 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
              */
 
             if(ht_del(state->loaderState->Dcoi, currentCube->coordinate) != HT_SUCCESS) {
-                printf("Error deleting  Dc (%d, %d, %d) from DCOI.\n",
+                LOG("Error deleting  Dc (%d, %d, %d) from DCOI.\n",
                        currentCube->coordinate.x,
                        currentCube->coordinate.y,
                        currentCube->coordinate.z);
@@ -637,9 +693,9 @@ static uint32_t removeLoadedCubes(struct stateInfo *state) {
         currentCube = nextCube;
     }
 
-    if(ht_rmtable(mergeCube2Pointer) != LL_SUCCESS)
+    if(ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
         LOG("Error removing temporary cube to pointer table. This is a memory leak.");
-
+    }
     return TRUE;
 }
 
@@ -657,21 +713,23 @@ static uint32_t loadCubes(struct stateInfo *state) {
          *
          */
         if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == FALSE) {
-            LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d).",
+            LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag%d dataset.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
-                currentCube->coordinate.z);
+                currentCube->coordinate.z,
+                state->magnification);
             return FALSE;
         }
 
 
         loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL, state);
         if(!loadedDc) {
-            LOG("Error loading Dc (%d, %d, %d) into slot %p.",
+            LOG("Error loading Dc (%d, %d, %d) into slot %p, mag%d dataset.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
-                currentDcSlot->cube);
+                currentDcSlot->cube,
+                state->magnification);
         }
 
         /*
@@ -681,20 +739,22 @@ static uint32_t loadCubes(struct stateInfo *state) {
 
         if(state->overlay) {
             if((currentOcSlot = slotListGetElement(state->loaderState->freeOcSlots)) == FALSE) {
-                LOG("Error getting a slot for the next Oc, wanted to load (%d, %d, %d).",
+                LOG("Error getting a slot for the next Oc, wanted to load (%d, %d, %d), mag%d dataset.",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
-                    currentCube->coordinate.z);
+                    currentCube->coordinate.z,
+                    state->magnification);
                 return FALSE;
             }
 
             loadedOc = loadCube(currentCube->coordinate, NULL, currentOcSlot->cube, state);
             if(!loadedOc) {
-                LOG("Error loading Oc (%d, %d, %d) into slot %p.",
+                LOG("Error loading Oc (%d, %d, %d) into slot %p, mag%d dataset..",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
-                    currentOcSlot->cube);
+                    currentOcSlot->cube,
+                    state->magnification);
             }
         }
 
@@ -705,23 +765,31 @@ static uint32_t loadCubes(struct stateInfo *state) {
          */
         SDL_LockMutex(state->protectCube2Pointer);
         if(loadedDc) {
-            if(ht_put(state->Dc2Pointer, currentCube->coordinate, currentDcSlot->cube) != HT_SUCCESS) {
-                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer.",
+            if(ht_put(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate, currentDcSlot->cube) != HT_SUCCESS) {
+                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
-                    currentDcSlot->cube);
+                    currentDcSlot->cube,
+                    state->loaderMagnification);
                 return FALSE;
             }
+                LOG("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z,
+                    currentDcSlot->cube,
+                    state->loaderMagnification);
         }
 
         if(loadedOc) {
-            if(ht_put(state->Oc2Pointer, currentCube->coordinate, currentOcSlot->cube) != HT_SUCCESS) {
-                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer.",
+            if(ht_put(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate, currentOcSlot->cube) != HT_SUCCESS) {
+                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Oc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
-                    currentOcSlot->cube);
+                    currentOcSlot->cube,
+                    state->loaderMagnification);
                 return FALSE;
             }
         }
@@ -760,9 +828,16 @@ static uint32_t loadCubes(struct stateInfo *state) {
         }
 
         // We need to be able to cancel the loading when the
-        // user crosses the boundary while we are loading.
+        // user crosses the reload-boundary
+        // or when the dataset changed as a consequence of a mag switch
 
-        if(state->loadSignal == TRUE) {
+        // reading of state->loadSignal should be mutex protected as well,
+        // the c standard doesn't make sure that int reads / writes are atomic!
+        // nothing to fear probably on amd64 however..
+        SDL_LockMutex(state->protectDatasetChange);
+        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE)) {
+            SDL_UnlockMutex(state->protectDatasetChange);
+
             if(ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
                 LOG("Error removing Dcoi. This is a memory leak.");
             }
@@ -775,10 +850,14 @@ static uint32_t loadCubes(struct stateInfo *state) {
             }
 
             return FALSE;
+
+
         }
+        else SDL_UnlockMutex(state->protectDatasetChange);
 
         currentCube = nextCube;
     }
+
 
     return TRUE;
 }
