@@ -651,6 +651,38 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                 }
                             }
 
+                            /* Determine which viewport to highlight based on which movement component is biggest. */
+                            if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
+                                state->viewerState->highlightVp = VIEWPORT_YZ;
+                            }
+                            if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
+                                state->viewerState->highlightVp = VIEWPORT_XZ;
+                            }
+                            if((abs(movement.z) >= abs(movement.x)) && (abs(movement.z) >= abs(movement.y))) {
+                                state->viewerState->highlightVp = VIEWPORT_XY;
+                            }
+
+                            /* Determine the directions for the f and d keys based on the signs of the movement
+                               components along the three dimensions. */
+                            if(movement.x >= 0) {
+                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
+                            }
+                            else {
+                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = -1;
+                            }
+                            if(movement.y >= 0) {
+                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
+                            }
+                            else {
+                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = -1;
+                            }
+                            if(movement.z >= 0) {
+                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
+                            }
+                            else {
+                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = -1;
+                            }
+
                             //AutoTracingMode 1
                             if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT){
                                 if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
@@ -685,38 +717,6 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                             if (clickedCoordinate->x > state->boundary.x) clickedCoordinate->x = state->boundary.x;
                             if (clickedCoordinate->y > state->boundary.y) clickedCoordinate->y = state->boundary.y;
                             if (clickedCoordinate->z > state->boundary.z) clickedCoordinate->z = state->boundary.z;
-
-                            /* Determine which viewport to highlight based on which movement component is biggest. */
-                            if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_YZ;
-                            }
-                            if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_XZ;
-                            }
-                            if((abs(movement.z) >= abs(movement.x)) && (abs(movement.z) >= abs(movement.y))) {
-                                state->viewerState->highlightVp = VIEWPORT_XY;
-                            }
-
-                            /* Determine the directions for the f and d keys based on the signs of the movement
-                               components along the three dimensions. */
-                            if(movement.x >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = -1;
-                            }
-                            if(movement.y >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = -1;
-                            }
-                            if(movement.z >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = -1;
-                            }
 
                             /* Move to the new node position */
                             tempConfig->remoteState->type = REMOTE_RECENTERING;
