@@ -1337,7 +1337,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->comment1, 10240);
-                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1345,7 +1344,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->comment2, 10240);
-                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1353,7 +1351,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->comment3, 10240);
-                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1361,7 +1358,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->comment4, 10240);
-                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1369,7 +1365,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->comment5, 10240);
-                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
