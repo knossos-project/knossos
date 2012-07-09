@@ -433,5 +433,20 @@ void checkIdleTime(){
     if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 60000){
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
+    int hoursRunningTime = (int)SDL_GetTicks()*0.001/3660.0;
+    int minutesRunningTime = (int)SDL_GetTicks()*0.001/60.0 - hoursRunningTime * 60;
+    int secondsRunningTime = (int)SDL_GetTicks()*0.001 - hoursRunningTime * 3660 - minutesRunningTime * 60;
+    AG_LabelText(state->viewerState->ag->runningTime, "Running Time: %02i:%02i:%02i", hoursRunningTime, minutesRunningTime, secondsRunningTime);
+
+    int hoursIdleTime = (int)state->skeletonState->idleTime*0.001/3660.0;
+    int minutesIdleTime = (int)state->skeletonState->idleTime*0.001/60.0 - hoursIdleTime * 60;
+    int secondsIdleTime = (int)state->skeletonState->idleTime*0.001 - hoursIdleTime * 3660 - minutesIdleTime * 60;
+    AG_LabelText(state->viewerState->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
+
+    int hoursTracingTime = (int)(SDL_GetTicks() - state->skeletonState->idleTime)*0.001/3660.0;
+    int minutesTracingTime = (int)(SDL_GetTicks() - state->skeletonState->idleTime)*0.001/60.0 - hoursTracingTime * 60;
+    int secondsTracingTime = (int)(SDL_GetTicks() - state->skeletonState->idleTime)*0.001 - hoursTracingTime * 3660 - minutesTracingTime * 60;
+    AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
+
 
 }

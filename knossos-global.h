@@ -699,6 +699,8 @@ struct agConfig {
     AG_Window *dataSetStatsWin;
     AG_Window *viewPortPrefWin;
     AG_Window *zoomingWin;
+    AG_Window *tracingTimeWin;
+    AG_Window *commentsWin;
     AG_Window *setDynRangeWin;
 	AG_Window *coordBarWin;
     AG_Window *skeletonVpToolsWin;
@@ -742,6 +744,18 @@ struct agConfig {
     AG_Label *dataSizeLabelxy;
     AG_Label *dataSizeLabelxz;
     AG_Label *dataSizeLabelyz;
+
+    //Labels in tracingTimeWin
+    AG_Label *runningTime;
+    AG_Label *tracingTime;
+    AG_Label *idleTime;
+
+    //Chars for commentsWin
+    char *comment1;
+    char *comment2;
+    char *comment3;
+    char *comment4;
+    char *comment5;
 
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
@@ -1547,6 +1561,8 @@ void reloadDataSizeWin(struct stateInfo *state);
 
  void createDataSetStatsWin(struct stateInfo *state);
  void createZoomingWin(struct stateInfo *state);
+ void createTracingTimeWin();
+ void createCommentsWin();
  void createLoadDatasetImgJTableWin();
  void createLoadTreeImgJTableWin();
  void createSetDynRangeWin(struct stateInfo *state);

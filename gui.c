@@ -132,6 +132,21 @@ int32_t initGUI() {
     state->viewerState->ag->commentSearchBuffer = malloc(2048 * sizeof(char));
     memset(state->viewerState->ag->commentSearchBuffer, '\0', 2048 * sizeof(char));
 
+    state->viewerState->ag->comment1 = malloc(10240 * sizeof(char));
+    memset(state->viewerState->ag->comment1, '\0', 10240 * sizeof(char));
+
+    state->viewerState->ag->comment2 = malloc(10240 * sizeof(char));
+    memset(state->viewerState->ag->comment2, '\0', 10240 * sizeof(char));
+
+    state->viewerState->ag->comment3 = malloc(10240 * sizeof(char));
+    memset(state->viewerState->ag->comment3, '\0', 10240 * sizeof(char));
+
+    state->viewerState->ag->comment4 = malloc(10240 * sizeof(char));
+    memset(state->viewerState->ag->comment4, '\0', 10240 * sizeof(char));
+
+    state->viewerState->ag->comment5 = malloc(10240 * sizeof(char));
+    memset(state->viewerState->ag->comment5, '\0', 10240 * sizeof(char));
+
     createMenuBar(state);
     createCoordBarWin(state);
     createSkeletonVpToolsWin(state);
@@ -154,6 +169,8 @@ int32_t initGUI() {
     createDataSetStatsWin(state);
     createViewPortPrefWin();
     createZoomingWin(state);
+    createTracingTimeWin();
+    createCommentsWin();
     /*createSetDynRangeWin(state); */           /* Unused. */
 
     createVpXzWin(state);
@@ -271,6 +288,7 @@ void createMenuBar(struct stateInfo *state) {
             AG_MenuAction(subMenuItem, "Recenter on Click", NULL, UI_setViewModeRecenter, NULL);
 		//AG_MenuAction(menuItem, "Dataset Statistics", NULL,  UI_unimplemented, NULL, NULL);
         AG_MenuAction(menuItem, "Zoom and Multires...", NULL, viewZooming, NULL, NULL);
+        AG_MenuAction(menuItem, "Tracing Time", NULL, viewTracingTime, NULL, NULL);
 	}
 
     menuItem = AG_MenuNode(appMenu->root, "Preferences", NULL);
@@ -289,6 +307,7 @@ void createMenuBar(struct stateInfo *state) {
 		//AG_MenuAction(menuItem, "navigation", NULL, winShowNavigator, "%p", state);
 		AG_MenuAction(menuItem, "Tools", NULL, winShowTools, "%p", state);
 		AG_MenuAction(menuItem, "Log", NULL, winShowConsole, "%p", state);
+        AG_MenuAction(menuItem, "Comment Shortcuts", NULL, viewComments, NULL, NULL);
 	}
 
     menuItem = AG_MenuNode(appMenu->root, "Help", NULL);
@@ -1301,6 +1320,87 @@ void createSetDynRangeWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->setDynRangeWin);
 }
 
+void createCommentsWin() {
+    AG_Window *win;
+    AG_Label *label;
+    AG_Textbox *textbox;
+    AG_Box *box;
+	win = AG_WindowNew(0);
+    {
+        AG_WindowSetSideBorders(win, 3);
+        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetCaption(win, "Comment Shortcuts");
+        AG_WindowSetGeometry(win, 628, 530, 250, 150);
+        box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F1: ");
+            {
+                AG_ExpandHoriz(textbox);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment1, 10240);
+                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F2: ");
+            {
+                AG_ExpandHoriz(textbox);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment2, 10240);
+                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F3: ");
+            {
+                AG_ExpandHoriz(textbox);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment3, 10240);
+                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F4: ");
+            {
+                AG_ExpandHoriz(textbox);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment4, 10240);
+                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F5: ");
+            {
+                AG_ExpandHoriz(textbox);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment5, 10240);
+                AG_SetEvent(textbox, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+    }
+    state->viewerState->ag->commentsWin = win;
+    AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
+    AG_WindowShow(win);
+}
+
+
+void createTracingTimeWin() {
+    AG_Window *win;
+    AG_Label *label;
+	win = AG_WindowNew(0);
+    {
+        AG_WindowSetSideBorders(win, 3);
+        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetCaption(win, "Tracing Time");
+        AG_WindowSetGeometry(win, 879, 529, 160, 90);
+        label = AG_LabelNew(win, 0, "Running Time: 00:00:00");
+        state->viewerState->ag->runningTime = label;
+        label = AG_LabelNew(win, 0, "Tracing Time: 00:00:00");
+        state->viewerState->ag->tracingTime = label;
+        label = AG_LabelNew(win, 0, "Idle Time: 00:00:00");
+        state->viewerState->ag->idleTime = label;
+    }
+    state->viewerState->ag->tracingTimeWin = win;
+    AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
+    AG_WindowShow(win);
+}
 
 void createZoomingWin(struct stateInfo *state) {
     AG_Numerical *numerical;
@@ -1809,6 +1909,14 @@ void quitKnossos() {
 
 static void viewZooming(AG_Event *event) {
     AG_WindowShow(state->viewerState->ag->zoomingWin);
+}
+
+static void viewComments() {
+    AG_WindowShow(state->viewerState->ag->tracingTimeWin);
+}
+
+static void viewTracingTime() {
+    AG_WindowShow(state->viewerState->ag->tracingTimeWin);
 }
 
 /*static void viewLoadImgJTable(AG_Event *event) {
@@ -2973,7 +3081,7 @@ remote port
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"windows", NULL);
     {
-        for(i = 0; i <= 6; i++) {
+        for(i = 0; i <= 8; i++) {
             switch(i) {
                 case 0:
                     win = state->viewerState->ag->toolsWin;
@@ -3002,6 +3110,14 @@ remote port
                 case 6:
                     win = state->viewerState->ag->consoleWin;
                     strcpy(windowType, "console");
+                    break;
+                case 7:
+                    win = state->viewerState->ag->tracingTimeWin;
+                    strcpy(windowType, "tracingTime");
+                    break;
+                case 8:
+                    win = state->viewerState->ag->commentsWin;
+                    strcpy(windowType, "comments");
                     break;
             }
 
@@ -3042,6 +3158,29 @@ remote port
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->workMode);
         xmlNewProp(currentXMLNode, BAD_CAST"viewWorkMode", attrString);
+    }
+
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"comments", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment1);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment1", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment2);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment2", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment3);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment3", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment4);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment4", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment5);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment5", attrString);
     }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"datasetNavigation", NULL);
@@ -3338,6 +3477,13 @@ static void UI_loadSettings() {
                         if(strcmp(win, "zoom") == 0) {
                             win_ptr = state->viewerState->ag->zoomingWin;
                         }
+                        if(strcmp(win, "tracingTime") == 0) {
+                            win_ptr = state->viewerState->ag->tracingTimeWin;
+                        }
+                        if(strcmp(win, "comments") == 0) {
+                            win_ptr = state->viewerState->ag->commentsWin;
+                        }
+
                         if(strcmp(win, "nav-options") == 0) {
                             win_ptr = state->viewerState->ag->navOptWin;
                         }
@@ -3406,6 +3552,24 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"jumpFrames");
             if(attribute)
                 tempConfig->viewerState->dropFrames = atoi((char *)attribute);
+        }
+
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"comments")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment1");
+            if(attribute)
+                strcpy(state->viewerState->ag->comment1, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment2");
+            if(attribute)
+                strcpy(state->viewerState->ag->comment2, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment3");
+            if(attribute)
+                strcpy(state->viewerState->ag->comment3, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment4");
+            if(attribute)
+                strcpy(state->viewerState->ag->comment4, (char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment5");
+            if(attribute)
+                strcpy(state->viewerState->ag->comment5, (char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"dataSavingOptions")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoSaving");
@@ -3880,13 +4044,17 @@ void prefDefaultPrefs(){
     tempConfig->viewerState->screenSizeY = 740;
     AG_WindowShow(state->viewerState->ag->toolsWin);
     AG_WindowShow(state->viewerState->ag->zoomingWin);
+    AG_WindowShow(state->viewerState->ag->tracingTimeWin);
+    AG_WindowHide(state->viewerState->ag->commentsWin);
     AG_WindowShow(state->viewerState->ag->navOptWin);
     AG_WindowHide(state->viewerState->ag->syncOptWin);
     AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
     AG_WindowHide(state->viewerState->ag->saveOptWin);
     AG_WindowHide(state->viewerState->ag->consoleWin);
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
-    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 180);
+    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 190);
+    AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 539, 160, 90);
+    AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 539, 250, 150);
     AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);

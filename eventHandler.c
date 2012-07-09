@@ -1448,17 +1448,6 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
 
         break;
-    case SDLK_F4:
-        if(SDL_GetModState() & KMOD_ALT) {
-            if(state->skeletonState->unsavedChanges) {
-                yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
-            }
-            else {
-                quitKnossos();
-            }
-            break;
-        }
-        break;
     case SDLK_s:
         if(SDL_GetModState() & KMOD_CTRL) {
             saveSkelCallback(NULL);
@@ -1538,6 +1527,62 @@ static uint32_t handleKeyboard(SDL_Event event) {
 */
     case SDLK_DELETE:
         delActiveNode(state);
+        break;
+
+    case SDLK_F1:
+        if(!state->skeletonState->activeNode->comment){
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, state);
+        }
+        else{
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, state);
+        }
+        break;
+
+    case SDLK_F2:
+        if(!state->skeletonState->activeNode->comment){
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, state);
+        }
+        else{
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, state);
+        }
+        break;
+
+    case SDLK_F3:
+        if(!state->skeletonState->activeNode->comment){
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, state);
+        }
+        else{
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, state);
+        }
+        break;
+
+    case SDLK_F4:
+        if(SDL_GetModState() & KMOD_ALT) {
+            if(state->skeletonState->unsavedChanges) {
+                yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
+            }
+            else {
+                quitKnossos();
+            }
+            break;
+        }
+        else{
+            if(!state->skeletonState->activeNode->comment){
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0, state);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0, state);
+            }
+        }
+        break;
+
+     case SDLK_F5:
+        if(!state->skeletonState->activeNode->comment){
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, state);
+        }
+        else{
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, state);
+        }
         break;
     default:
         ;

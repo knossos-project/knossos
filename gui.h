@@ -55,6 +55,8 @@ static void fileSaveAsSkelFile(AG_Event *event);
 
 //static void viewDataSetStats(AG_Event *event);
 static void viewZooming(AG_Event *event);
+static void viewTracingTime();
+static void viewComments();
 //static void viewLoadImgJTable(AG_Event *event);
 
 static void prefNavOptions(AG_Event *event);
