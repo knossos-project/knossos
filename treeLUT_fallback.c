@@ -1,6 +1,9 @@
 #include "knossos-global.h"
 
-void loadTreeLUTFallback(struct stateInfo* state) {
+extern struct stateInfo *tempConfig;
+extern struct stateInfo *state;
+
+void loadTreeLUTFallback() {
     state->viewerState->defaultTreeTable[256] = 0.074510;
     state->viewerState->defaultTreeTable[512] = 0.301961;
     state->viewerState->defaultTreeTable[1] = 1.000000;
