@@ -949,24 +949,30 @@ static int32_t findAndRegisterAvailableDatasets() {
     char currKconfPath[1024];
     char datasetBaseDirName[1024];
     char datasetBaseExpName[1024];
+    int32_t isPathSepTerminated = FALSE;
 
     /* take base path and go one level up */
     uint32_t pathLen = strlen(state->path);
 
-    /* start at 1 and ignore last char, it is a path separator */
     for(i = 1; i < pathLen; i++) {
         if((state->path[pathLen-i] == '\\')
             || (state->path[pathLen-i] == '/')) {
+            if(i == 1) {
+                /* This is the trailing path separator, ignore. */
+                isPathSepTerminated = TRUE;
+                continue;
+            }
             /* this contains the path "one level up" */
-            strncpy(levelUpPath, state->path, pathLen-i+1);
+            strncpy(levelUpPath, state->path, pathLen - i + 1);
             /* this contains the dataset dir without "mag1"
              * K must be launched with state->path set to the
              * mag1 dataset for multires to work! This is by convention. */
-            strncpy(datasetBaseDirName, state->path+(pathLen-i), i-5);
-
-            /* terminate... */
-            //levelUpPath[pathLen-i+1] = '\0';
-            //datasetBaseDirName[i-4] = '\0';
+            if(isPathSepTerminated) {
+                strncpy(datasetBaseDirName, state->path + pathLen - i, i - 5);
+            }
+            else {
+                strncpy(datasetBaseDirName, state->path + pathLen - i, i - 4);
+            }
 
             // does not work that early?!
             LOG("multires extracted datasetBaseDirName: %s", datasetBaseDirName);
