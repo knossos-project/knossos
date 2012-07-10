@@ -1636,7 +1636,6 @@ static void createOpenFileDlgWin(struct stateInfo *state) {
     AG_Window *win;
     AG_FileDlg *dlg;
     AG_FileType *type;
-    agInputWdgtGainedFocus(NULL);
 
 	win = AG_WindowNew(0);
     {
