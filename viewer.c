@@ -84,7 +84,7 @@ int viewer() {
     SDL_SetCursor(customCursor);
     //agDefaultCursor = customCursor; //AGAR14
 
-    updateViewerState(state);
+    updateViewerState();
     recalcTextureOffsets();
     splashScreen();
     /* Display info about skeleton save path here TODO */
@@ -115,10 +115,10 @@ int viewer() {
                     // to load the texture for this viewport, which is what we
                     // do now. If we can't complete the texture because a Dc
                     // is missing, a backlog is generated.
-                    vpGenerateTexture(currentVp, viewerState, state);
+                    vpGenerateTexture(currentVp, viewerState);
                 } else {
                     // There is a backlog. We go through its elements
-                    vpHandleBacklog(currentVp, viewerState, state);
+                    vpHandleBacklog(currentVp, viewerState);
                 }
 
                 if(currentVp->backlog->elements == 0) {
@@ -144,13 +144,13 @@ int viewer() {
             if(drawCounter == 3) {
                 drawCounter = 0;
 
-                updateViewerState(state);
+                updateViewerState();
                 recalcTextureOffsets();
-                updateSkeletonState(state);
+                updateSkeletonState();
                 drawGUI();
 
                 while(SDL_PollEvent(&event)) {
-                    if(handleEvent(event, state) == FALSE) {
+                    if(handleEvent(event) == FALSE) {
                         state->viewerState->viewerReady = FALSE;
                         return TRUE;
                     }
@@ -174,7 +174,7 @@ int viewer() {
 
         if(viewerState->userMove == FALSE) {
             if(SDL_WaitEvent(&event)) {
-                if(handleEvent(event, state) != TRUE) {
+                if(handleEvent(event) != TRUE) {
                     state->viewerState->viewerReady = FALSE;
                     return TRUE;
                 }
@@ -186,8 +186,8 @@ int viewer() {
 
     return TRUE;
 }
-static int32_t initViewer(struct stateInfo *state) {
-    calcLeftUpperTexAbsPx(state);
+static int32_t initViewer() {
+    calcLeftUpperTexAbsPx();
 
     /* init the skeletonizer */
     if(initSkeletonizer(state) == FALSE) {
@@ -220,8 +220,7 @@ static int32_t initViewer(struct stateInfo *state) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
         if(loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
-                          GL_RGBA,
-                          state) == FALSE) {
+                          GL_RGBA) == FALSE) {
             LOG("Overlay color map stdOverlay.lut does not exist.");
             state->overlay = FALSE;
         }
@@ -307,7 +306,7 @@ static int32_t initViewer(struct stateInfo *state) {
 }
 
 /* TDitem */
-int32_t updateViewerState(struct stateInfo *state) {
+int32_t updateViewerState() {
     int32_t i;
 
     /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
@@ -339,7 +338,7 @@ int32_t updateViewerState(struct stateInfo *state) {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    updateZoomCube(state);
+    updateZoomCube();
 
     if(state->viewerState->workMode != tempConfig->viewerState->workMode)
         state->viewerState->workMode = tempConfig->viewerState->workMode;
@@ -403,7 +402,7 @@ uint32_t updateZoomCube() {
     return TRUE;
 }
 
-uint32_t createScreen(struct stateInfo *state) {
+uint32_t createScreen() {
     // initialize window
     //SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 5 );
     //SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
@@ -457,17 +456,16 @@ uint32_t cleanUpViewer(struct viewerState *viewerState) {
 static uint32_t dcSliceExtract(Byte *datacube,
                                Byte *slice,
                                size_t dcOffset,
-                               struct viewPort *viewPort,
-                               struct stateInfo *state) {
+                               struct viewPort *viewPort) {
     datacube += dcOffset;
 
     if(state->viewerState->datasetAdjustmentOn) {
         /* Texture type GL_RGB and we need to adjust coloring */
-        sliceExtract_adjust(datacube, slice, viewPort, state);
+        sliceExtract_adjust(datacube, slice, viewPort);
     }
     else {
         /* Texture type GL_RGB and we don't need to adjust anything*/
-        sliceExtract_standard(datacube, slice, viewPort, state);
+        sliceExtract_standard(datacube, slice, viewPort);
     }
 
     return TRUE;
@@ -476,8 +474,7 @@ static uint32_t dcSliceExtract(Byte *datacube,
 static uint32_t ocSliceExtract(Byte *datacube,
                                Byte *slice,
                                size_t dcOffset,
-                               struct viewPort *viewPort,
-                               struct stateInfo *state) {
+                               struct viewPort *viewPort) {
     int32_t i, j;
     int32_t objId,
             *objIdP;
@@ -543,8 +540,7 @@ static uint32_t ocSliceExtract(Byte *datacube,
 
 static uint32_t sliceExtract_standard(Byte *datacube,
                                       Byte *slice,
-                                      struct viewPort *viewPort,
-                                      struct stateInfo *state) {
+                                      struct viewPort *viewPort) {
 
     int32_t i, j;
 
@@ -597,8 +593,7 @@ static uint32_t sliceExtract_standard(Byte *datacube,
 
 static uint32_t sliceExtract_adjust(Byte *datacube,
                                     Byte *slice,
-                                    struct viewPort *viewPort,
-                                    struct stateInfo *state) {
+                                    struct viewPort *viewPort) {
 
     int32_t i, j;
 
@@ -841,8 +836,7 @@ static int32_t backlogDel(struct vpBacklog *backlog) {
 }
 
 static int32_t vpHandleBacklog(struct vpListElement *currentVp,
-                               struct viewerState *viewerState,
-                               struct stateInfo *state) {
+                               struct viewerState *viewerState) {
 
     struct vpBacklogElement *currentElement = NULL,
                             *nextElement = NULL;
@@ -879,8 +873,7 @@ static int32_t vpHandleBacklog(struct vpListElement *currentVp,
                 dcSliceExtract(cube,
                                currentElement->slice,
                                currentElement->dcOffset,
-                               currentVp->viewPort,
-                               state);
+                               currentVp->viewPort);
 
                 glBindTexture(GL_TEXTURE_2D, currentVp->viewPort->texture.texHandle);
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -908,8 +901,7 @@ static int32_t vpHandleBacklog(struct vpListElement *currentVp,
                 ocSliceExtract(cube,
                                currentElement->slice,
                                currentElement->dcOffset,
-                               currentVp->viewPort,
-                               state);
+                               currentVp->viewPort);
 
                 glBindTexture(GL_TEXTURE_2D, currentVp->viewPort->texture.overlayHandle);
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -936,8 +928,7 @@ static int32_t vpHandleBacklog(struct vpListElement *currentVp,
 }
 
 static uint32_t vpGenerateTexture(
-    struct vpListElement *currentVp, struct viewerState *viewerState,
-    struct stateInfo *state) {
+    struct vpListElement *currentVp, struct viewerState *viewerState) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
@@ -955,9 +946,9 @@ static uint32_t vpGenerateTexture(
     CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->viewPort->texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
-    currentPosition_dc = Px2DcCoord(currPosTrans, state);
+    currentPosition_dc = Px2DcCoord(currPosTrans);
 
-    upperLeftDc = Px2DcCoord(leftUpperPxInAbsPxTrans, state);
+    upperLeftDc = Px2DcCoord(leftUpperPxInAbsPxTrans);
 
 
 
@@ -1045,7 +1036,7 @@ static uint32_t vpGenerateTexture(
 
             // This is used to index into the texture. texData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            index = texIndex(x_dc, y_dc, 3, &(currentVp->viewPort->texture), state);
+            index = texIndex(x_dc, y_dc, 3, &(currentVp->viewPort->texture));
 
             if(datacube == HT_FAILURE) {
 
@@ -1071,8 +1062,7 @@ static uint32_t vpGenerateTexture(
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
                                dcOffset,
-                               currentVp->viewPort,
-                               state);
+                               currentVp->viewPort);
 
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
@@ -1097,7 +1087,7 @@ static uint32_t vpGenerateTexture(
 
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                index = texIndex(x_dc, y_dc, 4, &(currentVp->viewPort->texture), state);
+                index = texIndex(x_dc, y_dc, 4, &(currentVp->viewPort->texture));
 
                 if(overlayCube == HT_FAILURE) {
                     backlogAddElement(currentVp->backlog,
@@ -1122,8 +1112,7 @@ static uint32_t vpGenerateTexture(
                     ocSliceExtract(overlayCube,
                                    &(viewerState->overlayData[index]),
                                    dcOffset * OBJID_BYTES,
-                                   currentVp->viewPort,
-                                   state);
+                                   currentVp->viewPort);
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -1225,8 +1214,7 @@ uint32_t initializeTextures() {
 static int32_t texIndex(uint32_t x,
                         uint32_t y,
                         uint32_t colorMultiplicationFactor,
-                        struct viewPortTexture *texture,
-                        struct stateInfo *state) {
+                        struct viewPortTexture *texture) {
 
     uint32_t index = 0;
 
@@ -1240,7 +1228,7 @@ static int32_t texIndex(uint32_t x,
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
 
-static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
+static uint32_t calcLeftUpperTexAbsPx() {
     uint32_t i = 0;
     Coordinate currentPosition_dc, currPosTrans;
     struct viewerState *viewerState = state->viewerState;
@@ -1249,7 +1237,7 @@ static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
-    currentPosition_dc = Px2DcCoord(currPosTrans, state);
+    currentPosition_dc = Px2DcCoord(currPosTrans);
 
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
@@ -1345,7 +1333,7 @@ static uint32_t calcLeftUpperTexAbsPx(struct stateInfo *state) {
 /* relative movement depending on current position */
 uint32_t userMove(
     int32_t x, int32_t y, int32_t z,
-    int32_t serverMovement, struct stateInfo *state) {
+    int32_t serverMovement) {
 
     struct viewerState *viewerState = state->viewerState;
 
@@ -1360,7 +1348,7 @@ uint32_t userMove(
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
-    lastPosition_dc = Px2DcCoord(viewerState->currentPosition, state);
+    lastPosition_dc = Px2DcCoord(viewerState->currentPosition);
 
     viewerState->userMove = TRUE;
 
@@ -1381,15 +1369,14 @@ uint32_t userMove(
             viewerState->currentPosition.z + z + 1);
     }
 
-    calcLeftUpperTexAbsPx(state);
+    calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
-    newPosition_dc = Px2DcCoord(viewerState->currentPosition, state);
+    newPosition_dc = Px2DcCoord(viewerState->currentPosition);
 
     if(serverMovement == TELL_COORDINATE_CHANGE &&
        state->clientState->connected == TRUE &&
        state->clientState->synchronizePosition)
-        broadcastPosition(state,
-                          viewerState->currentPosition.x,
+        broadcastPosition(viewerState->currentPosition.x,
                           viewerState->currentPosition.y,
                           viewerState->currentPosition.z);
 
@@ -1421,20 +1408,20 @@ uint32_t userMove(
     return TRUE;
 }
 
-int32_t updatePosition(struct stateInfo *state, int32_t serverMovement) {
+int32_t updatePosition(int32_t serverMovement) {
     Coordinate jump;
 
     if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != TRUE) {
         jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
         jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
         jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
-        userMove(jump.x, jump.y, jump.z, serverMovement, state);
+        userMove(jump.x, jump.y, jump.z, serverMovement);
     }
 
     return TRUE;
 }
 
-int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen, struct stateInfo *state) {
+int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) {
     uint32_t tempNum;
 
     tempNum = -1;
@@ -1504,7 +1491,7 @@ uint32_t changeDatasetMag(uint32_t upOrDownFlag) {
         }
     }
     sendDatasetChangeSignal(upOrDownFlag);
-    //refreshViewports(state);
+    //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
     //state->skeletonState->skeletonChanged = TRUE;
 
@@ -1658,7 +1645,7 @@ uint32_t recalcTextureOffsets() {
                              * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
-                    calcLeftUpperTexAbsPx(state);
+                    calcLeftUpperTexAbsPx();
 
                     //Offsets for crosshair
                     state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.x)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
@@ -1711,7 +1698,7 @@ uint32_t recalcTextureOffsets() {
                            * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx; //scale to 0 - 1
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
-                    calcLeftUpperTexAbsPx(state);
+                    calcLeftUpperTexAbsPx();
 
                     //Offsets for crosshair
                     state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.x)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
@@ -1768,7 +1755,7 @@ uint32_t recalcTextureOffsets() {
                            * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
 
                     //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
-                    calcLeftUpperTexAbsPx(state);
+                    calcLeftUpperTexAbsPx();
 
                     //Offsets for crosshair
                     state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.z)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
@@ -1792,11 +1779,11 @@ uint32_t recalcTextureOffsets() {
         }
     }
     //Reload the height/width-windows in viewports
-    reloadDataSizeWin(state);
+    reloadDataSizeWin();
     return TRUE;
 }
 
-int32_t refreshViewports(struct stateInfo *state) {
+int32_t refreshViewports() {
     SDL_Event redrawEvent;
 
     redrawEvent.type = SDL_USEREVENT;
@@ -1807,7 +1794,7 @@ int32_t refreshViewports(struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state) {
+int32_t loadTreeColorTable(const char *path, float *table, int32_t type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGB_LUTSIZE];
     int32_t readBytes = 0, i = 0;
@@ -1854,7 +1841,7 @@ int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct 
     return TRUE;
 }
 
-int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state) {
+int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGBA_LUTSIZE];
     int32_t readBytes = 0, i = 0;

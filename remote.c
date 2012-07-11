@@ -80,16 +80,16 @@ int remote() {
         if(state->quitSignal == TRUE)
             break;
 
-        updateRemoteState(state);
+        updateRemoteState();
 
         switch(remoteState->type) {
             case REMOTE_TRAJECTORY:
-                remoteTrajectory(state, remoteState->activeTrajectory);
+                remoteTrajectory(remoteState->activeTrajectory);
                 break;
 
             case REMOTE_RECENTERING:
-                //remoteRecentering(state);
-                remoteWalkTo(state, state->remoteState->recenteringPosition.x, state->remoteState->recenteringPosition.y, state->remoteState->recenteringPosition.z);
+                //remoteRecentering();
+                remoteWalkTo(state->remoteState->recenteringPosition.x, state->remoteState->recenteringPosition.y, state->remoteState->recenteringPosition.z);
                 break;
 
             default:
@@ -100,12 +100,12 @@ int remote() {
             break;
     }
 
-    cleanUpRemote(state);
+    cleanUpRemote();
 
     return TRUE;
 }
 
-static int32_t updateRemoteState(struct stateInfo *state) {
+static int32_t updateRemoteState() {
     struct remoteState *remoteState = state->remoteState;
     int32_t i = 0;
 
@@ -120,7 +120,7 @@ static int32_t updateRemoteState(struct stateInfo *state) {
     if(tempConfig->trajectories != NULL) {
         state->maxTrajectories = tempConfig->maxTrajectories;
         for(i = 0; i < state->maxTrajectories; i++)
-            newTrajectory(state, tempConfig->trajectories[i].name, tempConfig->trajectories[i].source);
+            newTrajectory(tempConfig->trajectories[i].name, tempConfig->trajectories[i].source);
     }
 
     remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
@@ -128,7 +128,7 @@ static int32_t updateRemoteState(struct stateInfo *state) {
     return TRUE;
 }
 
-static int32_t cleanUpRemote(struct stateInfo *state) {
+static int32_t cleanUpRemote() {
     free(state->remoteState);
     state->remoteState = NULL;
 
@@ -151,7 +151,7 @@ int32_t remoteJump(int32_t x, int32_t y, int32_t z) {
     return TRUE;
 }
 
-int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
+int32_t remoteWalkTo(int32_t x, int32_t y, int32_t z) {
     /* This function is _not_ thread safe
      * Do not get confused!
      * remoteWalkTo walks us TO the coordinates (x, y, z) and remoteWalk
@@ -189,7 +189,7 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
         y_moves = y - state->viewerState->currentPosition.y;
         z_moves = z - state->viewerState->currentPosition.z;
 
-        retval = remoteWalk(state, x_moves, y_moves, z_moves);
+        retval = remoteWalk(x_moves, y_moves, z_moves);
 
         // This is a workaround to cover a bug in the workaround... ;)
 
@@ -201,11 +201,11 @@ int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     y_moves = y - state->viewerState->currentPosition.y;
     z_moves = z - state->viewerState->currentPosition.z;
 
-    retval = remoteWalk(state, x_moves, y_moves, z_moves);
+    retval = remoteWalk(x_moves, y_moves, z_moves);
     return retval;
 }
 
-int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
+int32_t remoteWalk(int32_t x, int32_t y, int32_t z) {
     /*
      * This function breaks the big walk distance into many small movements
      * where the maximum length of the movement along any single axis is 1.
@@ -247,15 +247,15 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
 
     if (tempConfig->viewerState->recenteringTime > 5000){
         tempConfig->viewerState->recenteringTime = 5000;
-        updateViewerState(state);
+        updateViewerState();
     }
     if (tempConfig->viewerState->recenteringTimeOrth < 10){
         tempConfig->viewerState->recenteringTimeOrth = 10;
-        updateViewerState(state);
+        updateViewerState();
     }
     if (tempConfig->viewerState->recenteringTimeOrth > 5000){
         tempConfig->viewerState->recenteringTimeOrth = 5000;
-        updateViewerState(state);
+        updateViewerState();
     }
 
     uint32_t recenteringTime;
@@ -374,7 +374,7 @@ int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z) {
     return TRUE;
 }
 
-int32_t newTrajectory(struct stateInfo *state, char *trajName, char *trajectory) {
+int32_t newTrajectory(char *trajName, char *trajectory) {
     int32_t i = 0;
 
     if(*trajName == '\0')
@@ -414,7 +414,7 @@ int32_t newTrajectory(struct stateInfo *state, char *trajName, char *trajectory)
     return TRUE;
 }
 
-static int32_t remoteTrajectory(struct stateInfo *state, int32_t trajNumber) {
+static int32_t remoteTrajectory(int32_t trajNumber) {
     YY_BUFFER_STATE trajBuffer;
 
     if(state->trajectories != NULL) {

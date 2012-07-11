@@ -38,7 +38,9 @@
 
 #include "knossos-global.h"
 
-Coordinate Px2DcCoord(Coordinate pxCoordinate, struct stateInfo *state) {
+extern struct stateInfo *state;
+
+Coordinate Px2DcCoord(Coordinate pxCoordinate) {
     Coordinate dcCoordinate;
 
     // Rounding should be explicit.
@@ -54,8 +56,7 @@ int32_t transCoordinate(Coordinate *outCoordinate,
                          int32_t y,
                          int32_t z,
                          floatCoordinate scale,
-                         Coordinate offset,
-                         struct stateInfo *state) {
+                         Coordinate offset) {
 
     /*
      *  Translate a pixel coordinate (x, y, z) relative to a dataset

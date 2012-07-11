@@ -42,7 +42,7 @@ void yyerror(const char *str) {
 
 int yywrap() {
         return 1;
-} 
+}
 
 extern struct stateInfo *tempConfig;
 
@@ -68,7 +68,7 @@ extern struct stateInfo *tempConfig;
 
 %%
 
-commands: 
+commands:
         |
         commands command ';'
         |
@@ -214,18 +214,18 @@ walk:
         WALK_TK '(' _INTEGER ',' _INTEGER ',' _INTEGER ')'
         {
                 printf("Trying to walk to (%d, %d, %d)\n", $3, $5, $7);
-                remoteWalkTo((struct stateInfo *)param, $3, $5, $7);
+                remoteWalkTo($3, $5, $7);
         }
         ;
 traj:
         TRAJECTORY_TK STRING BLOCK
         {
-                newTrajectory(tempConfig, $2, $3);
+                newTrajectory($2, $3);
         }
         ;
 runtraj:
         RUNTRAJECTORY_TK STRING
         {
-                // sendRemoteSignal((struct stateInfo *)param);
+                // sendRemoteSignal();
         }
         ;

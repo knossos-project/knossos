@@ -48,11 +48,11 @@
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
-uint32_t initSkeletonizer(struct stateInfo *state) {
+uint32_t initSkeletonizer() {
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
 
-    //updateSkeletonState(state);
+    //updateSkeletonState();
 
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = ht_new(state->skeletonState->skeletonDCnumber);
@@ -138,7 +138,7 @@ uint32_t initSkeletonizer(struct stateInfo *state) {
     return TRUE;
 }
 
-uint32_t updateSkeletonState(struct stateInfo *state) {
+uint32_t updateSkeletonState() {
     //Time to auto-save
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
@@ -153,7 +153,7 @@ uint32_t updateSkeletonState(struct stateInfo *state) {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
 
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode)
-        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode, state);
+        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
     return TRUE;
 }
 
@@ -185,12 +185,11 @@ void restoreDefaultTreeColor() {
 }
 
 uint32_t setSkeletonWorkMode(int32_t targetRevision,
-                             uint32_t workMode,
-                             struct stateInfo *state) {
+                             uint32_t workMode) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -200,13 +199,13 @@ uint32_t setSkeletonWorkMode(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_SETSKELETONMODE, workMode))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brd", KIKI_SETSKELETONMODE, workMode))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
@@ -216,8 +215,7 @@ static struct nodeListElement *addNodeListElement(
               float radius,
               struct nodeListElement **currentNode,
               Coordinate *position,
-              int32_t inMag,
-              struct stateInfo *state) {
+              int32_t inMag) {
 
     struct nodeListElement *newElement = NULL;
 
@@ -269,16 +267,15 @@ int32_t addNode(int32_t targetRevision,
                 Byte VPtype,
                 int32_t inMag,
                 int32_t time,
-                int32_t respectLocks,
-                struct stateInfo *state) {
+                int32_t respectLocks) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     struct nodeListElement *tempNode = NULL;
     struct treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
     int32_t lockDistance = 0;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -299,26 +296,26 @@ int32_t addNode(int32_t targetRevision,
             lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
                 LOG("Node is too far away from lock point (%d), not adding.", lockDistance);
-                unlockSkeleton(FALSE, state);
+                unlockSkeleton(FALSE);
                 return FALSE;
             }
         }
     }
 
     if(nodeID) {
-        tempNode = findNodeByNodeID(nodeID, state);
+        tempNode = findNodeByNodeID(nodeID);
     }
 
     if(tempNode) {
         LOG("Node with ID %d already exists, no node added.", nodeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
-    tempTree = findTreeByTreeID(treeID, state);
+    tempTree = findTreeByTreeID(treeID);
 
     if(!tempTree) {
         LOG("There exists no tree with the provided ID %d!", treeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -333,12 +330,12 @@ int32_t addNode(int32_t targetRevision,
     if(nodeID == 0) {
         nodeID = state->skeletonState->totalNodeElements;
         //Test if node ID over node counter is available. If not, find a valid one.
-        while(findNodeByNodeID(nodeID, state)) {
+        while(findNodeByNodeID(nodeID)) {
             nodeID++;
         }
     }
 
-    tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag, state);
+    tempNode = addNodeListElement(nodeID, radius, &(tempTree->firstNode), position, inMag);
     tempNode->correspondingTree = tempTree;
     tempNode->comment = NULL;
     tempNode->createdInVp = VPtype;
@@ -359,7 +356,7 @@ int32_t addNode(int32_t targetRevision,
     //        tempNode->correspondingTree);
 
     //Add a pointer to the node in the skeleton DC structure
-    addNodeToSkeletonStruct(tempNode, state);
+    addNodeToSkeletonStruct(tempNode);
     state->skeletonState->skeletonChanged = TRUE;
 
     if(nodeID > state->skeletonState->greatestNodeID)
@@ -369,7 +366,7 @@ int32_t addNode(int32_t targetRevision,
     state->skeletonState->unsavedChanges = TRUE;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brddfddddddd", KIKI_ADDNODE,
+        if(!syncMessage("brddfddddddd", KIKI_ADDNODE,
                                               state->clientState->myId,
                                               nodeID,
                                               radius,
@@ -380,14 +377,14 @@ int32_t addNode(int32_t targetRevision,
                                               position->x,
                                               position->y,
                                               position->z))
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
     }
 
     else {
-        refreshViewports(state);
+        refreshViewports();
     }
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return nodeID;
 }
@@ -400,32 +397,31 @@ int32_t editNode(int32_t targetRevision,
                  int32_t newXPos,
                  int32_t newYPos,
                  int32_t newZPos,
-                 int32_t inMag,
-                 struct stateInfo *state) {
+                 int32_t inMag) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct segmentListElement *currentSegment = NULL;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(!node)
-        node = findNodeByNodeID(nodeID, state);
+        node = findNodeByNodeID(nodeID);
     if(!node) {
         LOG("Cannot edit: node id %d invalid.", nodeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     nodeID = node->nodeID;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    delNodeFromSkeletonStruct(node, state);
+    delNodeFromSkeletonStruct(node);
     currentSegment = node->firstSegment;
     while(currentSegment) {
-        delSegmentFromSkeletonStruct(currentSegment, state);
+        delSegmentFromSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
     }
 
@@ -440,10 +436,10 @@ int32_t editNode(int32_t targetRevision,
     node->createdInMag = inMag;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    addNodeToSkeletonStruct(node, state);
+    addNodeToSkeletonStruct(node);
     currentSegment = node->firstSegment;
     while(currentSegment) {
-        addSegmentToSkeletonStruct(currentSegment, state);
+        addSegmentToSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
     }
 
@@ -452,7 +448,7 @@ int32_t editNode(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brddfdddd", KIKI_EDITNODE,
+        if(!syncMessage("brddfdddd", KIKI_EDITNODE,
                                             state->clientState->myId,
                                             nodeID,
                                             newRadius,
@@ -461,46 +457,46 @@ int32_t editNode(int32_t targetRevision,
                                             newYPos,
                                             newZPos))
 
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
-uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct stateInfo *state) {
+uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
     struct nodeListElement *targetNode, *sourceNode;
     struct segmentListElement *sourceSeg;
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
-    if(findSegmentByNodeIDs(sourceNodeID, targetNodeID, state)) {
+    if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
         LOG("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     //Check if source and target nodes are existant
-    sourceNode = findNodeByNodeID(sourceNodeID, state);
-    targetNode = findNodeByNodeID(targetNodeID, state);
+    sourceNode = findNodeByNodeID(sourceNodeID);
+    targetNode = findNodeByNodeID(targetNodeID);
 
     if(!(sourceNode) || !(targetNode)) {
         LOG("Could not link the nodes, because at least one is missing!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(sourceNode == targetNode) {
         LOG("Cannot link node with itself!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -511,8 +507,8 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
      * Add the segment to the tree structure
     */
 
-    sourceSeg = addSegmentListElement(&(sourceNode->firstSegment), sourceNode, targetNode, state);
-    sourceSeg->reverseSegment = addSegmentListElement(&(targetNode->firstSegment), sourceNode, targetNode, state);
+    sourceSeg = addSegmentListElement(&(sourceNode->firstSegment), sourceNode, targetNode);
+    sourceSeg->reverseSegment = addSegmentListElement(&(targetNode->firstSegment), sourceNode, targetNode);
 
     sourceSeg->reverseSegment->flag = SEGMENT_BACKWARD;
 
@@ -522,7 +518,7 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
      * Add the segment to the skeleton DC structure
     */
 
-    addSegmentToSkeletonStruct(sourceSeg, state);
+    addSegmentToSkeletonStruct(sourceSeg);
 
     // printf("added segment for nodeID %d: %d, %d, %d -> nodeID %d: %d, %d, %d\n", sourceNode->nodeID, sourceNode->position.x + 1, sourceNode->position.y + 1, sourceNode->position.z + 1, targetNode->nodeID, targetNode->position.x + 1, targetNode->position.y + 1, targetNode->position.z + 1);
 
@@ -531,32 +527,32 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brdd", KIKI_ADDSEGMENT, sourceNodeID, targetNodeID))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brdd", KIKI_ADDSEGMENT, sourceNodeID, targetNodeID))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
 
-uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel, struct stateInfo *state) {
+uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     /*
      * Delete the segment out of the segment list and out of the visualization structure!
      */
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(!segToDel)
-        segToDel = findSegmentByNodeIDs(sourceNodeID, targetNodeID, state);
+        segToDel = findSegmentByNodeIDs(sourceNodeID, targetNodeID);
     else {
         sourceNodeID = segToDel->source->nodeID;
         targetNodeID = segToDel->target->nodeID;
@@ -564,13 +560,13 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
 
     if(!segToDel) {
         LOG("Cannot delete segment, no segment with corresponding node IDs available!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
 
     //Out of skeleton structure
-    delSegmentFromSkeletonStruct(segToDel, state);
+    delSegmentFromSkeletonStruct(segToDel);
 
     if(segToDel == segToDel->source->firstSegment)
         segToDel->source->firstSegment = segToDel->next;
@@ -599,13 +595,13 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brdd", KIKI_DELSEGMENT, sourceNodeID, targetNodeID))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brdd", KIKI_DELSEGMENT, sourceNodeID, targetNodeID))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
@@ -621,25 +617,25 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     struct treeListElement *newElement = NULL;
 
     if(sync != FALSE) {
-        if(lockSkeleton(targetRevision, state) == FALSE) {
+        if(lockSkeleton(targetRevision) == FALSE) {
             LOG("addtreelistelement unable to lock.");
-            unlockSkeleton(FALSE, state);
+            unlockSkeleton(FALSE);
             return FALSE;
         }
     }
 
 
-    newElement = findTreeByTreeID(treeID, state);
+    newElement = findTreeByTreeID(treeID);
     if(newElement) {
         LOG("Tree with ID %d already exists!", treeID);
-        unlockSkeleton(TRUE, state);
+        unlockSkeleton(TRUE);
         return newElement;
     }
 
     newElement = malloc(sizeof(struct treeListElement));
     if(newElement == NULL) {
         LOG("Out of memory while trying to allocate memory for a new treeListElement.");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct treeListElement));
@@ -653,7 +649,7 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     else {
         newElement->treeID = state->skeletonState->treeElements;
         //Test if tree ID over tree counter is available. If not, find a valid one.
-        while(findTreeByTreeID(newElement->treeID, state)) {
+        while(findTreeByTreeID(newElement->treeID)) {
             newElement->treeID++;
         }
     }
@@ -693,15 +689,15 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
         state->skeletonState->skeletonRevision++;
 
         if(targetRevision == CHANGE_MANUAL) {
-            if(!syncMessage(state, "brdfff", KIKI_ADDTREE, newElement->treeID,
+            if(!syncMessage("brdfff", KIKI_ADDTREE, newElement->treeID,
                             newElement->color.r, newElement->color.g, newElement->color.b))
-                skeletonSyncBroken(state);
+                skeletonSyncBroken();
         }
 
-        unlockSkeleton(TRUE, state);
+        unlockSkeleton(TRUE);
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
     return newElement;
 }
@@ -709,8 +705,7 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
 static struct segmentListElement *addSegmentListElement(
                                  struct segmentListElement **currentSegment,
                                  struct nodeListElement *sourceNode,
-                                 struct nodeListElement *targetNode,
-                                 struct stateInfo *state) {
+                                 struct nodeListElement *targetNode) {
 
     struct segmentListElement *newElement = NULL;
 
@@ -749,7 +744,7 @@ static struct segmentListElement *addSegmentListElement(
     return newElement;
 }
 
-uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype, struct stateInfo *state) {
+uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     int32_t addedNodeID;
 
     color4F treeCol;
@@ -770,8 +765,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype, struct s
                           VPtype,
                           state->magnification,
                           -1,
-                          TRUE,
-                          state);
+                          TRUE);
     if(!addedNodeID) {
         LOG("Error: Could not add new node!");
         return FALSE;
@@ -783,8 +777,8 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype, struct s
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID, state);
-        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID, state);
+        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
     }
     checkIdleTime();
 
@@ -809,14 +803,13 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
                            VPtype,
                            state->magnification,
                            -1,
-                           TRUE,
-                           state);
+                           TRUE);
     if(!targetNodeID) {
         LOG("Could not add new node while trying to add node and link with active node!");
         return FALSE;
     }
 
-    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID, state);
+    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
 
     if(makeNodeActive)
         setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
@@ -825,8 +818,8 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID, state);
-        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, state);
+        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
         checkIdleTime();
     }
 
@@ -846,17 +839,17 @@ uint32_t setActiveNode(int32_t targetRevision,
      *
      */
     if(targetRevision != CHANGE_NOSYNC) {
-        if(lockSkeleton(targetRevision, state) == FALSE) {
-            unlockSkeleton(FALSE, state);
+        if(lockSkeleton(targetRevision) == FALSE) {
+            unlockSkeleton(FALSE);
             return FALSE;
         }
     }
 
     if(nodeID != 0) {
-        node = findNodeByNodeID(nodeID, state);
+        node = findNodeByNodeID(nodeID);
         if(!node) {
             LOG("No node with id %d available.", nodeID);
-            unlockSkeleton(FALSE, state);
+            unlockSkeleton(FALSE);
             return FALSE;
         }
     }
@@ -871,7 +864,7 @@ uint32_t setActiveNode(int32_t targetRevision,
     state->skeletonState->skeletonChanged = TRUE;
 
     if(node) {
-        setActiveTreeByID(node->correspondingTree->treeID, state);
+        setActiveTreeByID(node->correspondingTree->treeID);
     }
 
     else
@@ -896,13 +889,13 @@ uint32_t setActiveNode(int32_t targetRevision,
         state->skeletonState->skeletonRevision++;
 
         if(targetRevision == CHANGE_MANUAL) {
-            if(!syncMessage(state, "brd", KIKI_SETACTIVENODE, nodeID))
-                skeletonSyncBroken(state);
+            if(!syncMessage("brd", KIKI_SETACTIVENODE, nodeID))
+                skeletonSyncBroken();
         }
         else
-            refreshViewports(state);
+            refreshViewports();
 
-        unlockSkeleton(TRUE, state);
+        unlockSkeleton(TRUE);
     }
 
     if(node) {
@@ -915,15 +908,15 @@ uint32_t setActiveNode(int32_t targetRevision,
      * Why? TDItem
      *
      */
-    // drawGUI(state);
+    // drawGUI();
 
     return TRUE;
 }
 
-uint32_t setActiveTreeByID(int32_t treeID, struct stateInfo *state) {
+uint32_t setActiveTreeByID(int32_t treeID) {
     struct treeListElement *currentTree;
 
-    currentTree = findTreeByTreeID(treeID, state);
+    currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d!", treeID);
         return FALSE;
@@ -974,8 +967,8 @@ int32_t saveSkeleton() {
 
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
-        currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID, state);
-        pushBranchNode(CHANGE_MANUAL, FALSE, FALSE, currentNode, 0, state);
+        currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
+        pushBranchNode(CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
     }
 
     xmlDocument = xmlNewDoc(BAD_CAST"1.0");
@@ -1275,8 +1268,8 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -1341,13 +1334,13 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "blrds", KIKI_SKELETONFILENAME, increment, origFilename))
-            skeletonSyncBroken(state);
+        if(!syncMessage("blrds", KIKI_SKELETONFILENAME, increment, origFilename))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
@@ -1575,12 +1568,12 @@ uint32_t loadSkeleton() {
                         else
                             nodeID = atoi((char *)attribute) + greatestNodeIDbeforeLoading;
 
-                        currentNode = findNodeByNodeID(nodeID, state);
+                        currentNode = findNodeByNodeID(nodeID);
                     }
                     attribute = xmlGetProp(currentXMLNode,
                                            (const xmlChar *)"content");
                     if(attribute && currentNode) {
-                        addComment(CHANGE_MANUAL, (char *)attribute, currentNode, 0, state);
+                        addComment(CHANGE_MANUAL, (char *)attribute, currentNode, 0);
                     }
                 }
 
@@ -1605,9 +1598,9 @@ uint32_t loadSkeleton() {
                         else
                             nodeID = atoi((char *)attribute) + greatestNodeIDbeforeLoading;
 
-                        currentNode = findNodeByNodeID(nodeID, state);
+                        currentNode = findNodeByNodeID(nodeID);
                         if(currentNode)
-                            pushBranchNode(CHANGE_MANUAL, TRUE, FALSE, currentNode, 0, state);
+                            pushBranchNode(CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
                     }
                 }
 
@@ -1661,12 +1654,12 @@ uint32_t loadSkeleton() {
 
            if(!merge) {
                 addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
-                setActiveTreeByID(neuronID, state);
+                setActiveTreeByID(neuronID);
             }
             else {
                 neuronID += greatestTreeIDbeforeLoading;
                 currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
-                setActiveTreeByID(currentTree->treeID, state);
+                setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             }
 
@@ -1750,10 +1743,10 @@ uint32_t loadSkeleton() {
                                 time = skeletonTime; /* For legacy skeleton files */
 
                             if(!merge)
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE, state);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE,  state);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
                             }
                         }
 
@@ -1783,9 +1776,9 @@ uint32_t loadSkeleton() {
 
                             // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
                             if(!merge)
-                                addSegment(CHANGE_MANUAL, nodeID1, nodeID2, state);
+                                addSegment(CHANGE_MANUAL, nodeID1, nodeID2);
                             else
-                                addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading, state);
+                                addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
 
                         }
                         currentXMLNode = currentXMLNode->next;
@@ -1818,7 +1811,7 @@ uint32_t loadSkeleton() {
         tempConfig->viewerState->currentPosition.z =
             loadedPosition.z - 1;
 
-        updatePosition(state, TELL_COORDINATE_CHANGE);
+        updatePosition(TELL_COORDINATE_CHANGE);
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
@@ -1826,9 +1819,9 @@ uint32_t loadSkeleton() {
     return TRUE;
 }
 
-uint32_t delActiveNode(struct stateInfo *state) {
+uint32_t delActiveNode() {
     if(state->skeletonState->activeNode) {
-        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, state);
+        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode);
     }
     else {
         return FALSE;
@@ -1838,8 +1831,7 @@ uint32_t delActiveNode(struct stateInfo *state) {
 }
 
 struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
-                                       Coordinate searchPosition,
-                                       struct stateInfo *state) {
+                                       Coordinate searchPosition) {
 
     struct nodeListElement *currentNode = NULL;
     struct nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
@@ -1906,8 +1898,7 @@ struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree,
     return NULL;
 }
 
-struct nodeListElement *findNodeInRadius(Coordinate searchPosition,
-                                         struct stateInfo *state) {
+struct nodeListElement *findNodeInRadius(Coordinate searchPosition) {
     struct nodeListElement *currentNode = NULL;
     struct nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
     struct treeListElement *currentTree = NULL;
@@ -1940,9 +1931,9 @@ struct nodeListElement *findNodeInRadius(Coordinate searchPosition,
     return NULL;
 }
 
-uint32_t delActiveTree(struct stateInfo *state) {
+uint32_t delActiveTree() {
     if(state->skeletonState->activeTree)
-        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, state);
+        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
     else {
        LOG("No active tree available.");
        return FALSE;
@@ -1957,7 +1948,7 @@ uint32_t delActiveTree(struct stateInfo *state) {
  * We have to delete the node out of 2 structures: the skeleton nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
-uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel, struct stateInfo *state) {
+uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct segmentListElement *currentSegment;
@@ -1965,26 +1956,26 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     struct nodeListElement *newActiveNode = NULL;
     int32_t treeID;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(!nodeToDel)
-        nodeToDel = findNodeByNodeID(nodeID, state);
+        nodeToDel = findNodeByNodeID(nodeID);
 
     nodeID = nodeToDel->nodeID;
 
     if(!nodeToDel) {
         LOG("The given node %d doesn't exist. Unable to delete it.", nodeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     treeID = nodeToDel->correspondingTree->treeID;
 
     if(nodeToDel->comment) {
-        delComment(CHANGE_MANUAL, nodeToDel->comment, 0, state);
+        delComment(CHANGE_MANUAL, nodeToDel->comment, 0);
     }
 
     /*
@@ -1998,9 +1989,9 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
         tempNext = currentSegment->next;
 
         if(currentSegment->flag == SEGMENT_FORWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment, state);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment);
         else if(currentSegment->flag == SEGMENT_BACKWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment, state);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment);
 
         currentSegment = tempNext;
     }
@@ -2011,7 +2002,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
      * Delete the node out of the visualization structure
      */
 
-    delNodeFromSkeletonStruct(nodeToDel, state);
+    delNodeFromSkeletonStruct(nodeToDel);
 
     if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
@@ -2029,8 +2020,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
     if(state->skeletonState->activeNode == nodeToDel) {
         newActiveNode = findNearbyNode(nodeToDel->correspondingTree,
-                                       nodeToDel->position,
-                                       state);
+                                       nodeToDel->position);
 
         setActiveNode(CHANGE_NOSYNC, newActiveNode, 0);
     }
@@ -2049,33 +2039,33 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_DELNODE, nodeID)) {
-            skeletonSyncBroken(state);
+        if(!syncMessage("brd", KIKI_DELNODE, nodeID)) {
+            skeletonSyncBroken();
         }
     }
     else {
-        refreshViewports(state);
+        refreshViewports();
     }
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
     return TRUE;
 }
 
-uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state) {
+uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
-    currentTree = findTreeByTreeID(treeID, state);
+    currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d. Unable to delete it.", treeID);
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -2083,7 +2073,7 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state
     while(currentNode) {
         nodeToDel = currentNode;
         currentNode = nodeToDel->next;
-        delNode(CHANGE_MANUAL, 0, nodeToDel, state);
+        delNode(CHANGE_MANUAL, 0, nodeToDel);
     }
     currentTree->firstNode = NULL;
 
@@ -2105,18 +2095,18 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_DELTREE, treeID))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brd", KIKI_DELTREE, treeID))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
-struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, struct stateInfo *state) {
+struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *prevNode = NULL;
     unsigned int idDistance = state->skeletonState->totalNodeElements;
@@ -2138,7 +2128,7 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, s
     return prevNode;
 }
 
-struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, struct stateInfo *state) {
+struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *nextNode = NULL;
     unsigned int idDistance = state->skeletonState->totalNodeElements;
@@ -2161,7 +2151,7 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, s
     return nextNode;
 }
 
-struct nodeListElement *findNodeByNodeID(int32_t nodeID, struct stateInfo *state) {
+struct nodeListElement *findNodeByNodeID(int32_t nodeID) {
     struct nodeListElement *node;
 
     node = (struct nodeListElement *)getDynArray(state->skeletonState->nodesByNodeID, nodeID);
@@ -2169,7 +2159,7 @@ struct nodeListElement *findNodeByNodeID(int32_t nodeID, struct stateInfo *state
     return node;
 }
 
-struct nodeListElement *findNodeByCoordinate(Coordinate *position, struct stateInfo *state) {
+struct nodeListElement *findNodeByCoordinate(Coordinate *position) {
     struct nodeListElement *currentNode;
     struct treeListElement *currentTree;
 
@@ -2188,11 +2178,11 @@ struct nodeListElement *findNodeByCoordinate(Coordinate *position, struct stateI
     return NULL;
 }
 
-struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID, struct stateInfo *state) {
+struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID) {
     struct segmentListElement *currentSegment;
     struct nodeListElement *currentNode;
 
-    currentNode = findNodeByNodeID(sourceNodeID, state);
+    currentNode = findNodeByNodeID(sourceNodeID);
 
     if(!currentNode) return NULL;
 
@@ -2210,7 +2200,7 @@ struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t ta
     return NULL;
 }
 
-struct treeListElement *findTreeByTreeID(int32_t treeID, struct stateInfo *state) {
+struct treeListElement *findTreeByTreeID(int32_t treeID) {
     struct treeListElement *currentTree;
 
     currentTree = state->skeletonState->firstTree;
@@ -2229,8 +2219,8 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
 
     struct treeListElement *currentTree, *treeToDel;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -2238,7 +2228,7 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     while(currentTree) {
         treeToDel = currentTree;
         currentTree = treeToDel->next;
-        delTree(CHANGE_MANUAL, treeToDel->treeID, state);
+        delTree(CHANGE_MANUAL, treeToDel->treeID);
     }
 
     state->skeletonState->activeNode = NULL;
@@ -2256,7 +2246,7 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->skeletonDCs = ht_new(state->skeletonState->skeletonDCnumber);
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
         LOG("Unable to create skeleton hash-table.");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -2282,20 +2272,20 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->unsavedChanges = TRUE;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "br", KIKI_CLEARSKELETON))
-            skeletonSyncBroken(state);
+        if(!syncMessage("br", KIKI_CLEARSKELETON))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
     state->skeletonState->skeletonRevision = 0;
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
-uint32_t genTestNodes(uint32_t number, struct stateInfo *state) {
+uint32_t genTestNodes(uint32_t number) {
     uint32_t i;
     Coordinate pos;
     srand( time(NULL) );
@@ -2304,31 +2294,31 @@ uint32_t genTestNodes(uint32_t number, struct stateInfo *state) {
         pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
         pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
         pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, FALSE, state);
+        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, FALSE);
     }
 
     return TRUE;
 }
 
 
-uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, struct stateInfo *state) {
+uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct treeListElement *tree1, *tree2;
     struct nodeListElement *currentNode;
     struct nodeListElement *firstNode, *lastNode;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
-    tree1 = findTreeByTreeID(treeID1, state);
-    tree2 = findTreeByTreeID(treeID2, state);
+    tree1 = findTreeByTreeID(treeID1);
+    tree2 = findTreeByTreeID(treeID2);
 
     if(!(tree1) || !(tree2)) {
         LOG("Could not merge trees, provided IDs are not valid!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -2393,17 +2383,17 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, st
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brdd", KIKI_MERGETREE, treeID1, treeID2))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brdd", KIKI_MERGETREE, treeID1, treeID2))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
     return TRUE;
 }
 
-uint32_t addNodeToSkeletonStruct(struct nodeListElement *node, struct stateInfo *state) {
+uint32_t addNodeToSkeletonStruct(struct nodeListElement *node) {
     struct skeletonDC *currentSkeletonDC;
     struct skeletonDCnode *currentNewSkeletonDCnode;
     Coordinate currentMagPos;
@@ -2413,13 +2403,13 @@ uint32_t addNodeToSkeletonStruct(struct nodeListElement *node, struct stateInfo 
     currentMagPos.z = node->position.z / state->magnification;
 
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
-                                                    Px2DcCoord(currentMagPos, state));
+                                                    Px2DcCoord(currentMagPos));
 
     if(currentSkeletonDC == HT_FAILURE) {
         currentSkeletonDC = malloc(sizeof(struct skeletonDC));
         memset(currentSkeletonDC, '\0', sizeof(struct skeletonDC));
         ht_put(state->skeletonState->skeletonDCs,
-               Px2DcCoord(currentMagPos, state),
+               Px2DcCoord(currentMagPos),
                (Byte *)currentSkeletonDC);
     }
 
@@ -2437,7 +2427,7 @@ uint32_t addNodeToSkeletonStruct(struct nodeListElement *node, struct stateInfo 
     return TRUE;
 }
 
-uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment, struct stateInfo *state) {
+uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment) {
     uint32_t i;
     struct skeletonDC *currentSkeletonDC;
     struct skeletonDCsegment *currentNewSkeletonDCsegment;
@@ -2475,7 +2465,7 @@ uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment, struct s
     //Add the segment pointer to the first skeleton DC
     //Is there a skeleton DC for the first skeleton DC to which a pointer has to be added?
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
-                                                    Px2DcCoord(curMagSourcePos, state));
+                                                    Px2DcCoord(curMagSourcePos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
@@ -2498,13 +2488,13 @@ uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment, struct s
         currentSegVectorPoint.y = curMagSourcePos.y + roundFloat(((float)i) * segVector.y);
         currentSegVectorPoint.z = curMagSourcePos.z + roundFloat(((float)i) * segVector.z);
 
-        if(!COMPARE_COORDINATE(Px2DcCoord(lastSegVectorPoint, state), Px2DcCoord(currentSegVectorPoint, state))) {
+        if(!COMPARE_COORDINATE(Px2DcCoord(lastSegVectorPoint), Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to add a pointer to the segment inside the skeleton DC
-            currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs, Px2DcCoord(currentSegVectorPoint, state));
+            currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs, Px2DcCoord(currentSegVectorPoint));
             if(currentSkeletonDC == HT_FAILURE) {
                 currentSkeletonDC = malloc(sizeof(struct skeletonDC));
                 memset(currentSkeletonDC, '\0', sizeof(struct skeletonDC));
-                ht_put(state->skeletonState->skeletonDCs, Px2DcCoord(currentSegVectorPoint, state), (Byte *)currentSkeletonDC);
+                ht_put(state->skeletonState->skeletonDCs, Px2DcCoord(currentSegVectorPoint), (Byte *)currentSkeletonDC);
             }
             currentNewSkeletonDCsegment = malloc(sizeof (struct skeletonDCsegment));
             memset(currentNewSkeletonDCsegment, '\0', sizeof(struct skeletonDCsegment));
@@ -2526,7 +2516,7 @@ uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment, struct s
     return TRUE;
 }
 
-uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node, struct stateInfo *state) {
+uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node) {
     struct skeletonDC *currentSkeletonDC;
     struct skeletonDCnode *currentSkeletonDCnode, *lastSkeletonDCnode = NULL;
     Coordinate curMagPos;
@@ -2536,7 +2526,7 @@ uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node, struct stateInf
     curMagPos.z = node->position.z / state->magnification;
 
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
-                                                    Px2DcCoord(curMagPos, state));
+                                                    Px2DcCoord(curMagPos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
@@ -2565,7 +2555,7 @@ uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node, struct stateInf
     return TRUE;
 }
 
-uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment, struct stateInfo *state) {
+uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment) {
     uint32_t i;
     struct skeletonDC *currentSkeletonDC;
     struct skeletonDCsegment *lastSkeletonDCsegment, *currentSkeletonDCsegment;
@@ -2602,7 +2592,7 @@ uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment, struct
 
     //Is there a skeleton DC for the first skeleton DC from which the segment has to be removed?
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
-                                                    Px2DcCoord(curMagSourcePos, state));
+                                                    Px2DcCoord(curMagSourcePos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
@@ -2634,10 +2624,10 @@ uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment, struct
         currentSegVectorPoint.y = curMagSourcePos.y + roundFloat(((float)i) * segVector.y);
         currentSegVectorPoint.z = curMagSourcePos.z + roundFloat(((float)i) * segVector.z);
 
-        if(!COMPARE_COORDINATE(Px2DcCoord(lastSegVectorPoint, state), Px2DcCoord(currentSegVectorPoint, state))) {
+        if(!COMPARE_COORDINATE(Px2DcCoord(lastSegVectorPoint), Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to delete the pointer to the segment inside the skeleton DC
             currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
-                                                            Px2DcCoord(currentSegVectorPoint, state));
+                                                            Px2DcCoord(currentSegVectorPoint));
             if(currentSkeletonDC == HT_FAILURE) {
                 //A skeleton DC is missing
                 LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
@@ -2804,8 +2794,7 @@ int32_t delDynArray(struct dynArray *array) {
 }
 
 int32_t splitConnectedComponent(int32_t targetRevision,
-                                int32_t nodeID,
-                                struct stateInfo *state) {
+                                int32_t nodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct stack *remainingNodes = NULL;
@@ -2821,8 +2810,8 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     Byte *visitedRight = NULL, *visitedLeft = NULL, **visited = NULL;
     uint32_t visitedRightLen = 16384, visitedLeftLen = 16384, *visitedLen = NULL;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -2844,9 +2833,9 @@ int32_t splitConnectedComponent(int32_t targetRevision,
      *  our graphs are usually very sparse.
      */
 
-    node = findNodeByNodeID(nodeID, state);
+    node = findNodeByNodeID(nodeID);
     if(!node) {
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -3013,26 +3002,26 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_SPLIT_CC, nodeID)) {
+        if(!syncMessage("brd", KIKI_SPLIT_CC, nodeID)) {
             LOG("broken in splitcc.");
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
         }
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return nodeCount;
 }
 
-uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID, struct stateInfo *state) {
+uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct commentListElement *newComment;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -3043,7 +3032,7 @@ uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElemen
     memset(newComment->content, '\0', strlen(content) * sizeof(char) + 1);
 
     if(nodeID)
-        node = findNodeByNodeID(nodeID, state);
+        node = findNodeByNodeID(nodeID);
 
     if(node) {
         newComment->node = node;
@@ -3073,13 +3062,13 @@ uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElemen
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "blrds", KIKI_ADDCOMMENT, node->nodeID, content))
-            skeletonSyncBroken(state);
+        if(!syncMessage("blrds", KIKI_ADDCOMMENT, node->nodeID, content))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
@@ -3089,23 +3078,22 @@ uint32_t editComment(int32_t targetRevision,
                      int32_t nodeID,
                      char *newContent,
                      struct nodeListElement *newNode,
-                     int32_t newNodeID,
-                     struct stateInfo *state) {
+                     int32_t newNodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(nodeID)
-        currentComment = findNodeByNodeID(nodeID, state)->comment;
+        currentComment = findNodeByNodeID(nodeID)->comment;
 
     if(!currentComment) {
         LOG("Please provide a valid comment element to edit!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -3120,7 +3108,7 @@ uint32_t editComment(int32_t targetRevision,
     }
 
     if(newNodeID)
-        newNode = findNodeByNodeID(newNodeID, state);
+        newNode = findNodeByNodeID(newNodeID);
 
     if(newNode) {
         if(currentComment->node)
@@ -3134,41 +3122,41 @@ uint32_t editComment(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "blrdds",
+        if(!syncMessage("blrdds",
                     KIKI_EDITCOMMENT,
                     nodeID,
                     currentComment->node->nodeID,
                     newContent))
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
-uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID, struct stateInfo *state) {
+uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     int32_t nodeID = 0;
     struct nodeListElement *commentNode = NULL;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(commentNodeID) {
-        commentNode = findNodeByNodeID(commentNodeID, state);
+        commentNode = findNodeByNodeID(commentNodeID);
         if(commentNode)
             currentComment = commentNode->comment;
     }
 
     if(!currentComment) {
         LOG("Please provide a valid comment element to delete!");
-        unlockSkeleton(FALSE, state);
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -3201,19 +3189,19 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_DELCOMMENT, nodeID))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brd", KIKI_DELCOMMENT, nodeID))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
 
 //Changing the "active comment" will currently change the active node - this behaviour may change...
-struct commentListElement *nextComment(char *searchString, struct stateInfo *state) {
+struct commentListElement *nextComment(char *searchString) {
     struct commentListElement *firstComment, *currentComment;
 
     if(!strlen(searchString)) {
@@ -3224,7 +3212,7 @@ struct commentListElement *nextComment(char *searchString, struct stateInfo *sta
             setActiveNode(CHANGE_MANUAL,
                           state->skeletonState->currentComment->node,
                           0);
-            jumpToActiveNode(state);
+            jumpToActiveNode();
         }
     }
     else {
@@ -3237,7 +3225,7 @@ struct commentListElement *nextComment(char *searchString, struct stateInfo *sta
                     setActiveNode(CHANGE_MANUAL,
                                   state->skeletonState->currentComment->node,
                                   0);
-                    jumpToActiveNode(state);
+                    jumpToActiveNode();
                     break;
                 }
                 currentComment = currentComment->previous;
@@ -3255,9 +3243,9 @@ struct commentListElement *nextComment(char *searchString, struct stateInfo *sta
 
         if(state->skeletonState->lockPositions) {
             if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock))
-                lockPosition(state->skeletonState->currentComment->node->position, state);
+                lockPosition(state->skeletonState->currentComment->node->position);
             else
-                unlockPosition(state);
+                unlockPosition();
         }
 
     }
@@ -3280,12 +3268,12 @@ int32_t previousCommentlessNode() {
         setActiveNode(CHANGE_MANUAL,
                       currNode,
                       0);
-        jumpToActiveNode(state);
+        jumpToActiveNode();
     }
     return TRUE;
 }
 
-int32_t lockPosition(Coordinate lockCoordinate, struct stateInfo *state) {
+int32_t lockPosition(Coordinate lockCoordinate) {
     LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
     state->skeletonState->positionLocked = TRUE;
     SET_COORDINATE(state->skeletonState->lockedPosition,
@@ -3296,7 +3284,7 @@ int32_t lockPosition(Coordinate lockCoordinate, struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t unlockPosition(struct stateInfo *state) {
+int32_t unlockPosition() {
     if(state->skeletonState->positionLocked)
         LOG("Spatial locking disabled.");
 
@@ -3305,7 +3293,7 @@ int32_t unlockPosition(struct stateInfo *state) {
     return TRUE;
 }
 
-struct commentListElement *previousComment(char *searchString, struct stateInfo *state) {
+struct commentListElement *previousComment(char *searchString) {
     struct commentListElement *firstComment, *currentComment;
     // ->next here because it would be unintuitive for the user otherwise.
     // (we insert new comments always as first elements)
@@ -3316,7 +3304,7 @@ struct commentListElement *previousComment(char *searchString, struct stateInfo 
             setActiveNode(CHANGE_MANUAL,
                           state->skeletonState->currentComment->node,
                           0);
-            jumpToActiveNode(state);
+            jumpToActiveNode();
         }
     }
     else {
@@ -3329,7 +3317,7 @@ struct commentListElement *previousComment(char *searchString, struct stateInfo 
                     setActiveNode(CHANGE_MANUAL,
                                   state->skeletonState->currentComment->node,
                                   0);
-                    jumpToActiveNode(state);
+                    jumpToActiveNode();
                     break;
                 }
                 currentComment = currentComment->next;
@@ -3347,9 +3335,9 @@ struct commentListElement *previousComment(char *searchString, struct stateInfo 
 
         if(state->skeletonState->lockPositions) {
             if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock))
-                lockPosition(state->skeletonState->currentComment->node->position, state);
+                lockPosition(state->skeletonState->currentComment->node->position);
             else
-                unlockPosition(state);
+                unlockPosition();
         }
     }
 
@@ -3359,7 +3347,7 @@ struct commentListElement *previousComment(char *searchString, struct stateInfo 
     return state->skeletonState->currentComment;
 }
 
-uint32_t searchInComment(char *searchString, struct commentListElement *comment, struct stateInfo *state) {
+uint32_t searchInComment(char *searchString, struct commentListElement *comment) {
 
     return TRUE;
 }
@@ -3369,17 +3357,16 @@ int32_t pushBranchNode(int32_t targetRevision,
                        int32_t setBranchNodeFlag,
 		       int32_t checkDoubleBranchpoint,
                        struct nodeListElement *branchNode,
-                       int32_t branchNodeID,
-                       struct stateInfo *state) {
+                       int32_t branchNodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
     if(branchNodeID)
-        branchNode = findNodeByNodeID(branchNodeID, state);
+        branchNode = findNodeByNodeID(branchNodeID);
 
     if(branchNode) {
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
@@ -3391,13 +3378,13 @@ int32_t pushBranchNode(int32_t targetRevision,
         }
         else {
             LOG("Active node is already a branch point");
-            unlockSkeleton(TRUE, state);
+            unlockSkeleton(TRUE);
             return TRUE;
         }
     }
     else {
         LOG("Make a node active before adding branch points.");
-        unlockSkeleton(TRUE, state);
+        unlockSkeleton(TRUE);
         return TRUE;
     }
 
@@ -3405,13 +3392,13 @@ int32_t pushBranchNode(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "brd", KIKI_PUSHBRANCH, branchNode->nodeID))
-            skeletonSyncBroken(state);
+        if(!syncMessage("brd", KIKI_PUSHBRANCH, branchNode->nodeID))
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
 
     return TRUE;
 }
@@ -3439,7 +3426,7 @@ void UI_popBranchNode() {
 }
 
 static void WRAP_popBranchNode() {
-    popBranchNode(CHANGE_MANUAL, state);
+    popBranchNode(CHANGE_MANUAL);
     state->skeletonState->askingPopBranchConfirmation = FALSE;
 }
 
@@ -3447,7 +3434,7 @@ static void popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = FALSE;
 }
 
-int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state) {
+int32_t popBranchNode(int32_t targetRevision) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     /* SYNCHRO BUG:
        both instances will have to confirm branch point deletion if
@@ -3457,8 +3444,8 @@ int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state) {
     struct nodeListElement *branchNode = NULL;
     PTRSIZEINT branchNodeID;
 
-    if(lockSkeleton(targetRevision, state) == FALSE) {
-        unlockSkeleton(FALSE, state);
+    if(lockSkeleton(targetRevision) == FALSE) {
+        unlockSkeleton(FALSE);
         return FALSE;
     }
 
@@ -3475,7 +3462,7 @@ int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state) {
             goto exit_popbranchnode;
         }
 
-        branchNode = findNodeByNodeID(branchNodeID, state);
+        branchNode = findNodeByNodeID(branchNodeID);
     }
 
     if(branchNode && branchNode->isBranchNode) {
@@ -3498,7 +3485,7 @@ int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state) {
         branchNode->isBranchNode--;
         state->skeletonState->skeletonChanged = TRUE;
 
-        updatePosition(state, TELL_COORDINATE_CHANGE);
+        updatePosition(TELL_COORDINATE_CHANGE);
 
         state->skeletonState->branchpointUnresolved = TRUE;
     }
@@ -3509,14 +3496,14 @@ exit_popbranchnode:
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage(state, "br", KIKI_POPBRANCH))
-            skeletonSyncBroken(state);
+        if(!syncMessage("br", KIKI_POPBRANCH))
+            skeletonSyncBroken();
     }
     else {
-        refreshViewports(state);
+        refreshViewports();
     }
 
-    unlockSkeleton(TRUE, state);
+    unlockSkeleton(TRUE);
     return TRUE;
 }
 
@@ -3532,7 +3519,7 @@ int32_t jumpToActiveNode() {
             state->skeletonState->activeNode->position.z /
             state->magnification;
 
-        updatePosition(state, TELL_COORDINATE_CHANGE);
+        updatePosition(TELL_COORDINATE_CHANGE);
     }
 
     return TRUE;

@@ -22,6 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static int32_t updateRemoteState(struct stateInfo *state);
-static int32_t cleanUpRemote(struct stateInfo *state);
-static int32_t remoteTrajectory(struct stateInfo *state, int32_t trajNumber);
+static int32_t updateRemoteState();
+static int32_t cleanUpRemote();
+static int32_t remoteTrajectory(int32_t trajNumber);

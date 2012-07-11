@@ -61,7 +61,7 @@ uint32_t drawGUI() {
     /* right place? TDitem */
     updateAGconfig();
 
-    updateDisplayListsSkeleton(state);
+    updateDisplayListsSkeleton();
 
     /* Check for openGL errors TDitem: move to better place */
     /*while(TRUE) {
@@ -139,7 +139,7 @@ uint32_t drawGUI() {
 /*
  * The following function draws the passed orthogonal VP.
 */
-uint32_t renderOrthogonalVP(uint32_t currentVP, struct stateInfo *state)  {
+uint32_t renderOrthogonalVP(uint32_t currentVP)  {
     float dataPxX, dataPxY;
 
     if(!((state->viewerState->viewPorts[currentVP].type == VIEWPORT_XY)
@@ -559,7 +559,7 @@ static uint32_t renderViewportBorders(uint32_t currentVP)  {
     char *description;
     char *c;
 
-    setOGLforVP(currentVP, state);
+    setOGLforVP(currentVP);
 
 
     description = malloc(512);
@@ -719,7 +719,7 @@ static uint32_t renderViewportBorders(uint32_t currentVP)  {
  *
  *
 
-static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color, struct stateInfo *state)  {
+static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color)  {
     uint32_t i;
     Byte drawFlag;
     float xOffset, yOffset;
@@ -783,7 +783,7 @@ static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position
 
     if(drawFlag == TRUE) {
 
-        setOGLforVP(currentVP, state);
+        setOGLforVP(currentVP);
 
         //Additional OGL settings
         glDisable(GL_TEXTURE_2D);
@@ -806,7 +806,7 @@ static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position
 */
 
 /*
-static uint32_t setOGLforVP(uint32_t currentVP, struct stateInfo *state) {
+static uint32_t setOGLforVP(uint32_t currentVP) {
      * The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed view port.
     glViewport(state->viewerState->viewPorts[currentVP].lowerLeftCorner.x,
@@ -836,7 +836,7 @@ static uint32_t setOGLforVP(uint32_t currentVP, struct stateInfo *state) {
 */
 
 //Flag 0 if called for slice plane VP; Flag 1 if called for skeleton VP
-static GLuint renderActiveTreeSkeleton(struct stateInfo *state, Byte callFlag) {
+static GLuint renderActiveTreeSkeleton(Byte callFlag) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -910,7 +910,7 @@ static GLuint renderActiveTreeSkeleton(struct stateInfo *state, Byte callFlag) {
                     //Gets true, if called for slice plane VP
                     if(!callFlag) {
                         if(state->skeletonState->showIntersections)
-                            renderSegPlaneIntersection(currentSegment, state);
+                            renderSegPlaneIntersection(currentSegment);
                     }
 
                 currentSegment = currentSegment->next;
@@ -961,7 +961,7 @@ static GLuint renderActiveTreeSkeleton(struct stateInfo *state, Byte callFlag) {
 }
 
 //Flag 0 if called for slice plane VP; Flag 1 if called for skeleton VP
-static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag) {
+static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -975,7 +975,7 @@ static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag) {
     firstRenderedSkeletonDCsegment = malloc(sizeof(struct skeletonDCsegment));
     memset(firstRenderedSkeletonDCsegment, '\0', sizeof(struct skeletonDCsegment));
 
-    currentPosDC = Px2DcCoord(state->viewerState->currentPosition, state);
+    currentPosDC = Px2DcCoord(state->viewerState->currentPosition);
 
     char *textBuffer;
     textBuffer = malloc(32);
@@ -1040,7 +1040,7 @@ static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag) {
                                 //Gets true, if called for slice plane VP
                                 if(!callFlag) {
                                     if(state->skeletonState->showIntersections)
-                                        renderSegPlaneIntersection(currentSkeletonDCsegment->segment, state);
+                                        renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                 }
 
                                 //A bit hackish to use the same struct for it, I know...
@@ -1086,7 +1086,7 @@ static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag) {
                                     //Gets true, if called for slice plane VP
                                     if(!callFlag) {
                                         if(state->skeletonState->showIntersections)
-                                            renderSegPlaneIntersection(currentSkeletonDCsegment->segment, state);
+                                            renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                     }
 
                                     currentSkeletonDCsegmentSearch = malloc(sizeof(struct skeletonDCsegment));
@@ -1186,7 +1186,7 @@ static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag) {
     return tempList;
 }
 //set callFlag true, if called for slice plane VP
-static GLuint renderWholeSkeleton(struct stateInfo *state, Byte callFlag) {
+static GLuint renderWholeSkeleton(Byte callFlag) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -1265,7 +1265,7 @@ static GLuint renderWholeSkeleton(struct stateInfo *state, Byte callFlag) {
                 //Gets true, if called for slice plane VP
                 if(!callFlag) {
                     if(state->skeletonState->showIntersections)
-                        renderSegPlaneIntersection(currentSegment, state);
+                        renderSegPlaneIntersection(currentSegment);
                 }
 
                 currentSegment = currentSegment->next;
@@ -1324,7 +1324,7 @@ static GLuint renderWholeSkeleton(struct stateInfo *state, Byte callFlag) {
     return tempList;
 }
 
-uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
+uint32_t updateDisplayListsSkeleton() {
 
     if(state->skeletonState->skeletonChanged) {
         state->skeletonState->skeletonChanged = FALSE;
@@ -1344,30 +1344,30 @@ uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
         /* create new display lists that are up-to-date */
         if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderWholeSkeleton(state, FALSE);
+                renderWholeSkeleton(FALSE);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(state, 0);
-                    renderWholeSkeleton(state, FALSE);
+                    //renderSuperCubeSkeleton(0);
+                    renderWholeSkeleton(FALSE);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(state, FALSE);
-                    renderWholeSkeleton(state, FALSE);
+                    //renderSuperCubeSkeleton(FALSE);
+                    renderWholeSkeleton(FALSE);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(state, TRUE);
+                renderSuperCubeSkeleton(TRUE);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
                 if(state->skeletonState->showIntersections)
                     state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        //renderSuperCubeSkeleton(state, FALSE);
-                        renderWholeSkeleton(state, FALSE);
+                        //renderSuperCubeSkeleton(FALSE);
+                        renderWholeSkeleton(FALSE);
 
                 else state->skeletonState->displayListSkeletonSlicePlaneVP =
                     state->skeletonState->displayListSkeletonSkeletonizerVP;
@@ -1377,11 +1377,11 @@ uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
         if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
 
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderActiveTreeSkeleton(state, 1);
+                renderActiveTreeSkeleton(1);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
                 if(state->skeletonState->showIntersections)
                     state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        renderActiveTreeSkeleton(state, 0);
+                        renderActiveTreeSkeleton(0);
                 else state->skeletonState->displayListSkeletonSlicePlaneVP =
                     state->skeletonState->displayListSkeletonSkeletonizerVP;
             }
@@ -1396,14 +1396,14 @@ uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
             state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
 
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(state, 1);
+                renderSuperCubeSkeleton(1);
         }
 
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(state, 0);
-                    renderWholeSkeleton(state, FALSE);
+                    //renderSuperCubeSkeleton(0);
+                    renderWholeSkeleton(FALSE);
 
             }
         }
@@ -1417,12 +1417,12 @@ uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderActiveTreeSkeleton(state, 0);
+                    renderActiveTreeSkeleton(0);
             }
             else {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderWholeSkeleton(state, 0);
-                    //renderSuperCubeSkeleton(state, 0);
+                    renderWholeSkeleton(0);
+                    //renderSuperCubeSkeleton(0);
             }
         }
     }
@@ -1432,7 +1432,7 @@ uint32_t updateDisplayListsSkeleton(struct stateInfo *state) {
 
 
 
-uint32_t renderSkeletonVP(uint32_t currentVP, struct stateInfo *state) {
+uint32_t renderSkeletonVP(uint32_t currentVP) {
     char *textBuffer;
     char *c;
     uint32_t i;
@@ -2081,8 +2081,7 @@ int32_t sgn(float number) {
 
 /* We use the openGL selection buffer for picking. You have to pass openGL window coords... not window manager windows coords!! */
 uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP,
-    uint32_t x, uint32_t y, uint32_t width,
-    struct stateInfo *state) {
+    uint32_t x, uint32_t y, uint32_t width) {
     uint32_t i;
 
     /* 8192 is really arbitrary. It should be a value dependent on the
@@ -2146,7 +2145,7 @@ uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP,
             //glEnable(GL_DEPTH_TEST);
             //glCallList(state->viewerState->viewPorts[currentVP].displayList);
             glDisable(GL_DEPTH_TEST);
-            renderOrthogonalVP(currentVP, state);
+            renderOrthogonalVP(currentVP);
     }
 
 
@@ -2300,7 +2299,7 @@ static uint32_t renderText(Coordinate *pos,
     return TRUE;
 }
 
-static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment, struct stateInfo *state) {
+static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
 
     if(!state->skeletonState->showIntersections) return TRUE;
     if(state->skeletonState->displayMode & DSP_LINES_POINTS) return TRUE;

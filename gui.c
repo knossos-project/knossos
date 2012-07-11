@@ -147,36 +147,36 @@ int32_t initGUI() {
     state->viewerState->ag->comment5 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment5, '\0', 10240 * sizeof(char));
 
-    createMenuBar(state);
-    createCoordBarWin(state);
-    createSkeletonVpToolsWin(state);
-    createDataSizeWin(state);
-    createNavWin(state);
+    createMenuBar();
+    createCoordBarWin();
+    createSkeletonVpToolsWin();
+    createDataSizeWin();
+    createNavWin();
     createToolsWin();
-    createConsoleWin(state);
+    createConsoleWin();
 
-    createNavOptionsWin(state);
-    createSyncOptionsWin(state);
-    createSaveOptionsWin(state);
+    createNavOptionsWin();
+    createSyncOptionsWin();
+    createSaveOptionsWin();
 
     createAboutWin();
     /* all following 4 unused
-    createDisplayOptionsWin(state);
-    createRenderingOptionsWin(state);
-    createSpatialLockingOptionsWin(state);
-    createVolTracingOptionsWin(state);   */
+    createDisplayOptionsWin();
+    createRenderingOptionsWin();
+    createSpatialLockingOptionsWin();
+    createVolTracingOptionsWin();   */
 
-    createDataSetStatsWin(state);
+    createDataSetStatsWin();
     createViewPortPrefWin();
-    createZoomingWin(state);
+    createZoomingWin();
     createTracingTimeWin();
     createCommentsWin();
-    /*createSetDynRangeWin(state); */           /* Unused. */
+    /*createSetDynRangeWin(); */           /* Unused. */
 
-    createVpXzWin(state);
-    createVpXyWin(state);
-    createVpYzWin(state);
-    createVpSkelWin(state);
+    createVpXzWin();
+    createVpXyWin();
+    createVpYzWin();
+    createVpSkelWin();
 
     UI_loadSettings();
 
@@ -254,7 +254,7 @@ static void yesNoPromptHitNo(AG_Event *event) {
     AG_ObjectDetach(prompt);
 }
 
-void createMenuBar(struct stateInfo *state) {
+void createMenuBar() {
 	AG_Menu *appMenu;
 	AG_MenuItem *menuItem;
 	AG_MenuItem *subMenuItem;
@@ -264,10 +264,10 @@ void createMenuBar(struct stateInfo *state) {
 
 	menuItem = AG_MenuNode(appMenu->root, "File", NULL);
 	{
-		AG_MenuAction(menuItem, "Open...", NULL, fileOpenSkelFile, "%p", state);
+		AG_MenuAction(menuItem, "Open...", NULL, fileOpenSkelFile, "%p");
         AG_MenuNode(menuItem, "Recent Files", NULL);
 		AG_MenuAction(menuItem, "Save (CTRL+s)", NULL, saveSkelCallback, "%p", NULL);
-		AG_MenuAction(menuItem, "Save As...", NULL, fileSaveAsSkelFile, "%p", state);
+		AG_MenuAction(menuItem, "Save As...", NULL, fileSaveAsSkelFile, "%p");
         AG_MenuSeparator(menuItem);
 		AG_MenuAction(menuItem, "Quit", agIconClose.s, UI_checkQuitKnossos, NULL);
 	}
@@ -304,9 +304,9 @@ void createMenuBar(struct stateInfo *state) {
 
     menuItem = AG_MenuNode(appMenu->root, "Windows", NULL);
 	{
-		//AG_MenuAction(menuItem, "navigation", NULL, winShowNavigator, "%p", state);
-		AG_MenuAction(menuItem, "Tools", NULL, winShowTools, "%p", state);
-		AG_MenuAction(menuItem, "Log", NULL, winShowConsole, "%p", state);
+		//AG_MenuAction(menuItem, "navigation", NULL, winShowNavigator, "%p");
+		AG_MenuAction(menuItem, "Tools", NULL, winShowTools, "%p");
+		AG_MenuAction(menuItem, "Log", NULL, winShowConsole, "%p");
         AG_MenuAction(menuItem, "Comment Shortcuts", NULL, viewComments, NULL, NULL);
 	}
 
@@ -318,7 +318,7 @@ void createMenuBar(struct stateInfo *state) {
 
 }
 
-void createNavOptionsWin(struct stateInfo *state) {
+void createNavOptionsWin() {
     AG_Numerical *numerical;
     AG_Radio *radio;
     AG_Box *box;
@@ -376,7 +376,7 @@ void createNavOptionsWin(struct stateInfo *state) {
 	AG_WindowShow(state->viewerState->ag->navOptWin);
 }
 
-void createSpatialLockingOptionsWin(struct stateInfo *state) {
+void createSpatialLockingOptionsWin() {
 	state->viewerState->ag->spatLockOptWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->spatLockOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->spatLockOptWin, 3);
@@ -387,7 +387,7 @@ void createSpatialLockingOptionsWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->spatLockOptWin);
 }
 
-void createVolTracingOptionsWin(struct stateInfo *state) {
+void createVolTracingOptionsWin() {
 	state->viewerState->ag->volTraceOptWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->volTraceOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->volTraceOptWin, 3);
@@ -399,7 +399,7 @@ void createVolTracingOptionsWin(struct stateInfo *state) {
 }
 
 
-void createRenderingOptionsWin(struct stateInfo *state) {
+void createRenderingOptionsWin() {
 	state->viewerState->ag->renderingOptWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->renderingOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->renderingOptWin, 3);
@@ -412,7 +412,7 @@ void createRenderingOptionsWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->renderingOptWin);
 }
 
-void createDisplayOptionsWin(struct stateInfo *state) {
+void createDisplayOptionsWin() {
 
 	state->viewerState->ag->dispOptWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->dispOptWin, 3);
@@ -423,7 +423,7 @@ void createDisplayOptionsWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->dispOptWin);
 }
 
-void createSyncOptionsWin(struct stateInfo *state) {
+void createSyncOptionsWin() {
     AG_Button *button;
     AG_Textbox *textbox;
     AG_Box *box;
@@ -470,7 +470,7 @@ void createSyncOptionsWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->syncOptWin);
 }
 
-void createSaveOptionsWin(struct stateInfo *state) {
+void createSaveOptionsWin() {
     AG_Window *win;
     AG_Numerical *numerical;
 
@@ -498,7 +498,7 @@ void createSaveOptionsWin(struct stateInfo *state) {
     state->viewerState->ag->saveOptWin = win;
 }
 
-void createCoordBarWin(struct stateInfo *state) {
+void createCoordBarWin() {
 	state->viewerState->ag->coordBarWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
 	/* if you change that: set coord bar win stuff also for the resize event! should be a define */
     AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin, AG_WINDOW_TR, 500, 20);
@@ -507,7 +507,7 @@ void createCoordBarWin(struct stateInfo *state) {
 	AG_WindowShow(state->viewerState->ag->coordBarWin);
 }
 
-void createSkeletonVpToolsWin(struct stateInfo *state) {
+void createSkeletonVpToolsWin() {
     AG_Window *win;
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
@@ -523,7 +523,7 @@ void createSkeletonVpToolsWin(struct stateInfo *state) {
     state->viewerState->ag->skeletonVpToolsWin = win;
 }
 
-void reloadDataSizeWin(struct stateInfo *state) {
+void reloadDataSizeWin() {
     float heightxy = state->viewerState->viewPorts[0].displayedlengthInNmY*0.001;
     float widthxy = state->viewerState->viewPorts[0].displayedlengthInNmX*0.001;
     float heightxz = state->viewerState->viewPorts[1].displayedlengthInNmY*0.001;
@@ -552,7 +552,7 @@ void reloadDataSizeWin(struct stateInfo *state) {
     }
 }
 
-void createDataSizeWin(struct stateInfo *state) {
+void createDataSizeWin() {
     AG_Window *win;
     AG_Label *label;
 
@@ -605,7 +605,7 @@ void createDataSizeWin(struct stateInfo *state) {
     state->viewerState->ag->dataSizeWinyz = win;
 }
 
-void createNavWin(struct stateInfo *state) {
+void createNavWin() {
 	state->viewerState->ag->navWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->navWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->navWin, 3);
@@ -1005,7 +1005,7 @@ void createAboutWin() {
     AG_WindowHide(state->viewerState->ag->aboutWin);
 }
 
-void createConsoleWin(struct stateInfo *state) {
+void createConsoleWin() {
     AG_Font *monospace;
 
     /* The '_' character is not lower than other characters in this font, which works
@@ -1027,7 +1027,7 @@ void createConsoleWin(struct stateInfo *state) {
 	AG_WindowHide(state->viewerState->ag->consoleWin);
 }
 
-void createDataSetStatsWin(struct stateInfo *state) {
+void createDataSetStatsWin() {
 	state->viewerState->ag->dataSetStatsWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->dataSetStatsWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->dataSetStatsWin, 3);
@@ -1301,7 +1301,7 @@ void createViewPortPrefWin() {
 	AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
 }
 
-void createSetDynRangeWin(struct stateInfo *state) {
+void createSetDynRangeWin() {
     AG_Box *box;
 	state->viewerState->ag->setDynRangeWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->setDynRangeWin, 3);
@@ -1397,7 +1397,7 @@ void createTracingTimeWin() {
     AG_WindowShow(win);
 }
 
-void createZoomingWin(struct stateInfo *state) {
+void createZoomingWin() {
     AG_Numerical *numerical;
     AG_Button *button;
     AG_Box *box;
@@ -1552,7 +1552,7 @@ void createLoadDatasetImgJTableWin() {
     AG_WindowShow(win);
 }
 
-static void createVpXyWin(struct stateInfo *state) {
+static void createVpXyWin() {
 	state->viewerState->ag->vpXyWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
 
     AG_WindowSetCaption(state->viewerState->ag->vpXyWin, "XY");
@@ -1567,14 +1567,14 @@ static void createVpXyWin(struct stateInfo *state) {
     state->viewerState->ag->glViewXy = AG_GLViewNew(state->viewerState->ag->vpXyWin, 0);
     //AGWIDGET(state->viewerState->ag->glViewXy)->flags |= AG_WIDGET_UNFOCUSED_MOTION;
     AG_Expand(state->viewerState->ag->glViewXy);
-    AG_GLViewDrawFn(state->viewerState->ag->glViewXy, drawXyViewport, "%p", state);
+    AG_GLViewDrawFn(state->viewerState->ag->glViewXy, drawXyViewport, "%p");
     //AG_GLViewMotionFn(state->viewerState->ag->glViewXy, mouseVpXYmotion, NULL);
 
     AG_WindowSetCloseAction(state->viewerState->ag->vpXyWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->vpXyWin);
 }
 
-static void createVpXzWin(struct stateInfo *state) {
+static void createVpXzWin() {
 	state->viewerState->ag->vpXzWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
     AG_WindowSetCaption(state->viewerState->ag->vpXzWin, "XZ");
     AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
@@ -1588,14 +1588,14 @@ static void createVpXzWin(struct stateInfo *state) {
     //AGWIDGET(state->viewerState->ag->glViewXz)->flags |= AG_WIDGET_UNFOCUSED_MOTION;
     AG_Expand(state->viewerState->ag->glViewXz);
 
-    AG_GLViewDrawFn(state->viewerState->ag->glViewXz, drawXzViewport, "%p", state);
+    AG_GLViewDrawFn(state->viewerState->ag->glViewXz, drawXzViewport, "%p");
     //AG_GLViewMotionFn(state->viewerState->ag->glViewXz, mouseVpXZmotion, NULL);
 
     AG_WindowSetCloseAction(state->viewerState->ag->vpXzWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->vpXzWin);
 }
 
-static void createVpYzWin(struct stateInfo *state) {
+static void createVpYzWin() {
 	state->viewerState->ag->vpYzWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
     AG_WindowSetCaption(state->viewerState->ag->vpYzWin, "yz");
     AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
@@ -1608,14 +1608,14 @@ static void createVpYzWin(struct stateInfo *state) {
     state->viewerState->ag->glViewYz = AG_GLViewNew(state->viewerState->ag->vpYzWin, 0);
     //AGWIDGET(state->viewerState->ag->glViewYz)->flags |= AG_WIDGET_UNFOCUSED_MOTION;
     AG_Expand(state->viewerState->ag->glViewYz);
-    AG_GLViewDrawFn(state->viewerState->ag->glViewYz, drawYzViewport, "%p", state);
+    AG_GLViewDrawFn(state->viewerState->ag->glViewYz, drawYzViewport, "%p");
     //AG_GLViewMotionFn(state->viewerState->ag->glViewYz, mouseVpYZmotion, NULL);
 
     AG_WindowSetCloseAction(state->viewerState->ag->vpYzWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->vpYzWin);
 }
 
-static void createVpSkelWin(struct stateInfo *state) {
+static void createVpSkelWin() {
 	state->viewerState->ag->vpSkelWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
     AG_WindowSetCaption(state->viewerState->ag->vpSkelWin, "Skeleton View");
     AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
@@ -1627,12 +1627,12 @@ static void createVpSkelWin(struct stateInfo *state) {
     AG_WindowSetPadding(state->viewerState->ag->vpSkelWin, 0, 0, 0, 0);
     state->viewerState->ag->glViewSkel = AG_GLViewNew(state->viewerState->ag->vpSkelWin, 0);
     AG_Expand(state->viewerState->ag->glViewSkel);
-    AG_GLViewDrawFn(state->viewerState->ag->glViewSkel, drawSkelViewport, "%p", state);
+    AG_GLViewDrawFn(state->viewerState->ag->glViewSkel, drawSkelViewport, "%p");
     AG_WindowSetCloseAction(state->viewerState->ag->vpSkelWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->vpSkelWin);
 }
 
-static void createOpenFileDlgWin(struct stateInfo *state) {
+static void createOpenFileDlgWin() {
     AG_Window *win;
     AG_FileDlg *dlg;
     AG_FileType *type;
@@ -1864,7 +1864,7 @@ void createCurrPosWdgt(AG_Window *parent) {
 
 
 
-void createActNodeWdgt(struct stateInfo *state, AG_Widget *parent) {
+void createActNodeWdgt(AG_Widget *parent) {
 
     //AG_Editable *tb;
 
@@ -1981,7 +1981,7 @@ static void winShowConsole(AG_Event *event) {
 }
 
 static void fileOpenSkelFile(AG_Event *event) {
-    createOpenFileDlgWin(state);
+    createOpenFileDlgWin();
 }
 
 void saveSkelCallback(AG_Event *event) {
@@ -2085,7 +2085,7 @@ void UI_zoomOrthogonals(float step) {
     if(triggerMagChange) changeDatasetMag(triggerMagChange);
 
     recalcTextureOffsets();
-    //drawGUI(state);
+    //drawGUI();
 }
 
 void UI_saveSkeleton(int32_t increment) {
@@ -2147,7 +2147,7 @@ void OkfileDlgLoadTreeLUT(AG_Event *event) {
     strcpy(state->viewerState->ag->treeLUTFile, (char *)filename);
     cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, filename, 2048);
     state->viewerState->treeLutSet = TRUE;
-    if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), GL_RGB, state) != TRUE) {
+    if(loadTreeColorTable(filename, &(state->viewerState->treeColortable[0]), GL_RGB) != TRUE) {
         LOG("Error loading Tree LUT.\n");
         memcpy(&(state->viewerState->treeColortable[0]),
                &(state->viewerState->defaultTreeTable[0]),
@@ -2165,7 +2165,7 @@ void OkfileDlgLoadDatasetLUT(AG_Event *event) {
     strcpy(state->viewerState->ag->datasetLUTFile, (char *)filename);
     cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, filename, 2048);
 
-    if(loadDatasetColorTable(filename, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state) != TRUE) {
+    if(loadDatasetColorTable(filename, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != TRUE) {
         LOG("Error loading Dataset LUT.\n");
         memcpy(&(state->viewerState->datasetColortable[0][0]),
                &(state->viewerState->neutralDatasetTable[0][0]),
@@ -2308,19 +2308,19 @@ void actNodeWdgtChanged(AG_Event *event)
 }
 
 static void drawXyViewport(AG_Event *event) {
-    renderOrthogonalVP(0, state);
+    renderOrthogonalVP(0);
 }
 
 static void drawXzViewport(AG_Event *event) {
-    renderOrthogonalVP(1, state);
+    renderOrthogonalVP(1);
 }
 
 static void drawYzViewport(AG_Event *event) {
-    renderOrthogonalVP(2, state);
+    renderOrthogonalVP(2);
 }
 
 static void drawSkelViewport(AG_Event *event) {
-    renderSkeletonVP(3, state);
+    renderSkeletonVP(3);
 }
 
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
@@ -2421,7 +2421,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     state->skeletonState->datasetChanged = TRUE;
     state->skeletonState->skeletonSliceVPchanged = TRUE;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    //updateDisplayListsSkeleton(state);
+    //updateDisplayListsSkeleton();
 
     AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
                                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
@@ -2451,7 +2451,7 @@ static void currPosWdgtModified(AG_Event *event) {
     tempConfig->viewerState->currentPosition.z =
         state->viewerState->ag->oneShiftedCurrPos.z - 1;
 
-    updatePosition(state, TELL_COORDINATE_CHANGE);
+    updatePosition(TELL_COORDINATE_CHANGE);
 }
 
 static void actNodeIDWdgtModified(AG_Event *event) {
@@ -2465,7 +2465,7 @@ static void actTreeIDWdgtModified(AG_Event *event) {
     //set active tree and set its last node to active node
     struct nodeListElement *activeNode;
 
-    setActiveTreeByID(state->viewerState->ag->activeTreeID, state);
+    setActiveTreeByID(state->viewerState->ag->activeTreeID);
     if(state->skeletonState->activeTree) {
         //find last node of active tree
         activeNode = state->skeletonState->activeTree->firstNode;
@@ -2496,7 +2496,7 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
         10240);
 
     if(strlen(state->viewerState->ag->commentBuffer) == 0) {
-        delComment(CHANGE_MANUAL, state->skeletonState->currentComment, 0, state);
+        delComment(CHANGE_MANUAL, state->skeletonState->currentComment, 0);
         return;
     }
     if(state->skeletonState->activeNode) {
@@ -2504,26 +2504,24 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
             addComment(CHANGE_MANUAL,
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
-                        0,
-                        state);
+                        0);
         else
             editComment(CHANGE_MANUAL,
                         state->skeletonState->activeNode->comment,
                         0,
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
-                        0,
-                        state);
+                        0);
     }
     /*state->skeletonState->skeletonChanged = TRUE; needed? TDitem */
 }
 
 static void UI_findNextBtnPressed() {
-    nextComment(state->viewerState->ag->commentSearchBuffer, state);
+    nextComment(state->viewerState->ag->commentSearchBuffer);
 }
 
 static void UI_findPrevBtnPressed() {
-    previousComment(state->viewerState->ag->commentSearchBuffer, state);
+    previousComment(state->viewerState->ag->commentSearchBuffer);
 }
 
 static void agInputWdgtGainedFocus(AG_Event *event) {
@@ -2582,17 +2580,17 @@ static void UI_setDefaultZoom() {
     state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = VPZOOMMIN;
     state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = VPZOOMMIN;
     state->skeletonState->zoomLevel = SKELZOOMMIN;
-    refreshViewports(state);
+    refreshViewports();
 }
 
 static void UI_SyncConnect() {
     if(!state->clientState->connected)
-        sendClientSignal(state);
+        sendClientSignal();
 }
 
 static void UI_SyncDisconnect() {
     if(state->clientState->connected)
-        sendClientSignal(state);
+        sendClientSignal();
 }
 
 static void UI_lockActiveNodeBtnPressed() {
@@ -2605,18 +2603,18 @@ static void UI_lockActiveNodeBtnPressed() {
         activeNodePosition.y = state->skeletonState->activeNode->position.y;
         activeNodePosition.z = state->skeletonState->activeNode->position.z;
 
-        lockPosition(activeNodePosition, state);
+        lockPosition(activeNodePosition);
     }
     else
         LOG("There is no active node to lock.");
 }
 
 static void UI_disableLockingBtnPressed() {
-    unlockPosition(state);
+    unlockPosition();
 }
 
 static void UI_deleteNodeBtnPressed() {
-    delActiveNode(state);
+    delActiveNode();
 }
 
 static void UI_jumpToNodeBtnPressed() {
@@ -2631,19 +2629,18 @@ static void UI_jumpToNodeBtnPressed() {
             state->skeletonState->activeNode->position.z /
             state->magnification;
 
-        updatePosition(state, TELL_COORDINATE_CHANGE);
+        updatePosition(TELL_COORDINATE_CHANGE);
     }
 }
 
 
 static void UI_linkActiveNodeWithBtnPressed() {
     if((state->skeletonState->activeNode)
-        && findNodeByNodeID(state->viewerState->ag->linkActiveWithNode, state))
+        && findNodeByNodeID(state->viewerState->ag->linkActiveWithNode))
 
         addSegment(CHANGE_MANUAL,
                     state->skeletonState->activeNode->nodeID,
-                    state->viewerState->ag->linkActiveWithNode,
-                    state);
+                    state->viewerState->ag->linkActiveWithNode);
 }
 
 static void UI_actNodeRadiusWdgtModified() {
@@ -2655,8 +2652,7 @@ static void UI_actNodeRadiusWdgtModified() {
                  state->skeletonState->activeNode->position.x,
                  state->skeletonState->activeNode->position.y,
                  state->skeletonState->activeNode->position.z,
-                 state->magnification,
-                 state);
+                 state->magnification);
     }
 }
 
@@ -2665,7 +2661,7 @@ static void UI_deleteTreeBtnPressed() {
 }
 
 static void UI_helpDeleteTree(){
-    delActiveTree(state);
+    delActiveTree();
 }
 
 static void UI_newTreeBtnPressed() {
@@ -2682,14 +2678,13 @@ static void UI_newTreeBtnPressed() {
 static void UI_splitTreeBtnPressed() {
     if(state->skeletonState->activeNode)
         splitConnectedComponent(CHANGE_MANUAL,
-                                state->skeletonState->activeNode->nodeID,
-                                state);
+                                state->skeletonState->activeNode->nodeID);
 }
 
 static void UI_mergeTreesBtnPressed() {
     mergeTrees(CHANGE_MANUAL,
                 state->viewerState->ag->mergeTreesID1,
-                state->viewerState->ag->mergeTreesID2, state);
+                state->viewerState->ag->mergeTreesID2);
 }
 
 
@@ -2795,10 +2790,10 @@ static void UI_enableSliceVPOverlayModified(AG_Event *event) {
 }
 
 static void UI_pushBranchBtnPressed() {
-    pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
+    pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
 }
 static void UI_popBranchBtnPressed() {
-    UI_popBranchNode(CHANGE_MANUAL, state);
+    UI_popBranchNode(CHANGE_MANUAL);
 }
 
 static void UI_enableLinearFilteringModified(AG_Event *event) {
@@ -3696,7 +3691,7 @@ static void UI_loadSettings() {
                 if(strncmp(attribute, "", 2048) != 0){
                     strcpy(state->viewerState->ag->datasetLUTFile, (char *)attribute);
                     cpBaseDirectory(state->viewerState->ag->datasetLUTDirectory, state->viewerState->ag->datasetLUTFile, 2048);
-                    loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
+                    loadDatasetColorTable(state->viewerState->ag->datasetLUTFile, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
                     datasetColorAdjustmentsChanged();
                 }
             }
@@ -3706,7 +3701,7 @@ static void UI_loadSettings() {
                     strcpy(state->viewerState->ag->treeLUTFile, (char *)attribute);
                     cpBaseDirectory(state->viewerState->ag->treeLUTDirectory, state->viewerState->ag->treeLUTFile, 2048);
                     state->viewerState->treeLutSet = TRUE;
-                    loadTreeColorTable(state->viewerState->ag->treeLUTFile, &(state->viewerState->treeColortable[0]), GL_RGB, state);
+                    loadTreeColorTable(state->viewerState->ag->treeLUTFile, &(state->viewerState->treeColortable[0]), GL_RGB);
                     treeColorAdjustmentsChanged();
                 }
             }
@@ -3838,8 +3833,8 @@ void UI_pasteClipboardCoordinates() {
         tempConfig->viewerState->currentPosition.y = extractedCoords->y - 1;
         tempConfig->viewerState->currentPosition.z = extractedCoords->z - 1;
 
-        updatePosition(state, TELL_COORDINATE_CHANGE);
-        refreshViewports(state);
+        updatePosition(TELL_COORDINATE_CHANGE);
+        refreshViewports();
 
         free(extractedCoords);
     }
@@ -4105,8 +4100,8 @@ void prefDefaultPrefs(){
     state->viewerState->treeLutSet = FALSE;
     treeColorAdjustmentsChanged();
     datasetColorAdjustmentsChanged();
-    refreshViewports(state);
+    refreshViewports();
     state->skeletonState->skeletonChanged = TRUE;
-    updateSkeletonState(state);
+    updateSkeletonState();
     datasetColorAdjustmentsChanged();
 }

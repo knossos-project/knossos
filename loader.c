@@ -50,7 +50,7 @@ int loader() {
     SDL_LockMutex(state->protectLoadSignal);
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
-    initLoader(state);
+    initLoader();
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
     while(TRUE) {
@@ -79,7 +79,7 @@ int loader() {
         // the protectLoadSignal mutex.
         // DcoiFromPos fills the Dcoi hashtable with all datacubes that
         // we want to be in memory, given our current position.
-        if(DcoiFromPos(loaderState->Dcoi, state) != TRUE) {
+        if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
             LOG("Error computing DCOI from position.");
             continue;
         }
@@ -105,7 +105,7 @@ int loader() {
 
             /* calculate a new dcoi list; not sure whether this is necessary..
              * it might work with DcoiFromPos call a few lines above */
-            if(DcoiFromPos(loaderState->Dcoi, state) != TRUE) {
+            if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
                 LOG("Error computing DCOI from position.");
                 continue;
             }
@@ -137,13 +137,13 @@ int loader() {
     return TRUE;
 }
 
-static uint32_t DcoiFromPos(Hashtable *Dcoi, struct stateInfo *state) {
+static uint32_t DcoiFromPos(Hashtable *Dcoi) {
     Coordinate currentDc, origin;
     int32_t x = 0, y = 0, z = 0;
     int32_t halfSc;
 
     origin = state->currentPositionX;
-    origin = Px2DcCoord(origin, state);
+    origin = Px2DcCoord(origin);
 
     halfSc = (int32_t)floorf((float)state->M / 2.);
 
@@ -214,8 +214,7 @@ static int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_
 
 static uint32_t loadCube(Coordinate coordinate,
                          Byte *freeDcSlot,
-                         Byte *freeOcSlot,
-                         struct stateInfo *state) {
+                         Byte *freeOcSlot) {
 
     char *filename = NULL;
     char typeExtension[8] = "";
@@ -479,7 +478,7 @@ static uint32_t cleanUpLoader(struct loaderState *loaderState) {
     return returnValue;
 }
 
-static int32_t initLoader(struct stateInfo *state) {
+static int32_t initLoader() {
     struct loaderState *loaderState = state->loaderState;
     FILE *bogusDc;
     uint32_t i = 0;
@@ -699,7 +698,7 @@ static uint32_t removeLoadedCubes() {
     return TRUE;
 }
 
-static uint32_t loadCubes(struct stateInfo *state) {
+static uint32_t loadCubes() {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     CubeSlot *currentDcSlot = NULL, *currentOcSlot = NULL;
     uint32_t loadedDc = FALSE, loadedOc = FALSE;
@@ -722,7 +721,7 @@ static uint32_t loadCubes(struct stateInfo *state) {
         }
 
 
-        loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL, state);
+        loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL);
         if(!loadedDc) {
             LOG("Error loading Dc (%d, %d, %d) into slot %p, mag%d dataset.",
                 currentCube->coordinate.x,
@@ -747,7 +746,7 @@ static uint32_t loadCubes(struct stateInfo *state) {
                 return FALSE;
             }
 
-            loadedOc = loadCube(currentCube->coordinate, NULL, currentOcSlot->cube, state);
+            loadedOc = loadCube(currentCube->coordinate, NULL, currentOcSlot->cube);
             if(!loadedOc) {
                 LOG("Error loading Oc (%d, %d, %d) into slot %p, mag%d dataset..",
                     currentCube->coordinate.x,

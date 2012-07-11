@@ -1279,9 +1279,9 @@ struct inputmap {
  *	For coordinate.c
  */
 
-Coordinate Px2DcCoord(Coordinate pxCoordinate, struct stateInfo *state);
-int32_t transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset, struct stateInfo *state);
-Coordinate *transNetCoordinate(struct stateInfo *state, uint32_t id, uint32_t x, uint32_t y, uint32_t z);
+Coordinate Px2DcCoord(Coordinate pxCoordinate);
+int32_t transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
+Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
 
 /*
  *	For hash.c
@@ -1318,13 +1318,13 @@ uint32_t lastpow2(uint32_t a);
 /*
  *	For knossos.c
  */
-int32_t unlockSkeleton(int32_t increment, struct stateInfo *state);
-int32_t lockSkeleton(int32_t targetRevision, struct stateInfo *state);
+int32_t unlockSkeleton(int32_t increment);
+int32_t lockSkeleton(int32_t targetRevision);
 int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
-int32_t sendRemoteSignal(struct stateInfo *state);
-int32_t sendClientSignal(struct stateInfo *state);
+int32_t sendRemoteSignal();
+int32_t sendClientSignal();
 int32_t sendQuitSignal();
-int32_t sendServerSignal(struct stateInfo *state);
+int32_t sendServerSignal();
 int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag);
 uint32_t log2uint32(register uint32_t x);
 uint32_t ones32(register uint32_t x);
@@ -1344,18 +1344,18 @@ int remote();
 // For the sake of logical organization, we'd need another function
 // remoteJumpTo. It would even somewhat simplify related functions.
 int32_t remoteJump(int32_t x, int32_t y, int32_t z);
-int32_t remoteWalk(struct stateInfo *state, int32_t x, int32_t y, int32_t z);
-int32_t remoteWalkTo(struct stateInfo *state, int32_t x, int32_t y, int32_t z);
-int32_t newTrajectory(struct stateInfo *state, char *trajName, char *trajectory);
+int32_t remoteWalk(int32_t x, int32_t y, int32_t z);
+int32_t remoteWalkTo(int32_t x, int32_t y, int32_t z);
+int32_t newTrajectory(char *trajName, char *trajectory);
 
 /*
  *	For viewer.c
  */
 
-int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type, struct stateInfo *state);
-int32_t loadTreeColorTable(const char *path, float *table, int32_t type, struct stateInfo *state);
+int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
+int32_t loadTreeColorTable(const char *path, float *table, int32_t type);
 int32_t updateTreeColors();
-int32_t updatePosition(struct stateInfo *state, int32_t serverMovement);
+int32_t updatePosition(int32_t serverMovement);
 
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
 uint32_t changeDatasetMag(uint32_t upOrDownFlag);
@@ -1365,7 +1365,7 @@ uint32_t changeDatasetMag(uint32_t upOrDownFlag);
 int viewer();
 
 //Initializes the window with the parameter given in viewerState
-uint32_t createScreen(struct stateInfo *state);
+uint32_t createScreen();
 
 //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->viewPorts[i].texture.data) to video memory
 //Calling makes only sense after full initialization of the SDL / OGL screen
@@ -1374,19 +1374,19 @@ uint32_t initializeTextures();
 //Frees allocated memory
 uint32_t cleanUpViewer(struct viewerState *viewerState);
 
-int32_t updateViewerState(struct stateInfo *state);
+int32_t updateViewerState();
 uint32_t updateZoomCube();
-uint32_t userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement, struct stateInfo *state);
-int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen, struct stateInfo *state);
-uint32_t moveVPonTop(uint32_t currentVP, struct stateInfo *state);
+uint32_t userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
+int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
+uint32_t moveVPonTop(uint32_t currentVP);
 uint32_t recalcTextureOffsets();
-int32_t refreshViewports(struct stateInfo *state);
+int32_t refreshViewports();
 
 /*
  * For eventHandler.c
  */
 //Event handler function, which switches over the type of a given event and calls the appropriate downstream functions
-uint32_t handleEvent(SDL_Event event, struct stateInfo *state);
+uint32_t handleEvent(SDL_Event event);
 
 /*
  * For renderer.c
@@ -1394,10 +1394,10 @@ uint32_t handleEvent(SDL_Event event, struct stateInfo *state);
 //This function is called when screen update is neccessary.
 //It coordinates the drawing of the viewports in the appropriate order.
 uint32_t drawGUI();
-uint32_t renderOrthogonalVP(uint32_t currentVP, struct stateInfo *state);
-uint32_t renderSkeletonVP(uint32_t currentVP, struct stateInfo *state);
-uint32_t drawViewportProperties(uint32_t currentVP,  struct stateInfo *state);
-uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width, struct stateInfo *state);
+uint32_t renderOrthogonalVP(uint32_t currentVP);
+uint32_t renderSkeletonVP(uint32_t currentVP);
+uint32_t drawViewportProperties(uint32_t currentVP);
+uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
 //Some math helper functions
 float radToDeg(float rad);
 float degToRad(float deg);
@@ -1415,32 +1415,32 @@ uint32_t splashScreen();
  * For skeletonizer.c
  */
 
-uint32_t initSkeletonizer(struct stateInfo *state);
-uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype, struct stateInfo *state);
+uint32_t initSkeletonizer();
+uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
 uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
-uint32_t updateSkeletonState(struct stateInfo *state);
+uint32_t updateSkeletonState();
 int32_t nextCommentlessNode();
 int32_t previousCommentlessNode();
 
 uint32_t updateSkeletonFileName();
-//uint32_t saveNMLSkeleton(struct stateInfo *state);
+//uint32_t saveNMLSkeleton();
 int32_t saveSkeleton();
-//uint32_t loadNMLSkeleton(struct stateInfo *state);
+//uint32_t loadNMLSkeleton();
 uint32_t loadSkeleton();
 
 void setDefaultSkelFileName();
 
-uint32_t delActiveNode(struct stateInfo *state);
-uint32_t delActiveTree(struct stateInfo *state);
+uint32_t delActiveNode();
+uint32_t delActiveTree();
 
-uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel, struct stateInfo *state);
-uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel, struct stateInfo *state);
-uint32_t delTree(int32_t targetRevision, int32_t treeID, struct stateInfo *state);
+uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel);
+uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel);
+uint32_t delTree(int32_t targetRevision, int32_t treeID);
 
-struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree, Coordinate searchPosition, struct stateInfo *state);
-struct nodeListElement *findNodeInRadius(Coordinate searchPosition, struct stateInfo *state);
+struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree, Coordinate searchPosition);
+struct nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
-uint32_t setActiveTreeByID(int32_t treeID,  struct stateInfo *state);
+uint32_t setActiveTreeByID(int32_t treeID);
 uint32_t setActiveNode(int32_t targetRevision, struct nodeListElement *node, int32_t nodeID);
 int32_t addNode(int32_t targetRevision,
                 int32_t nodeID,
@@ -1450,21 +1450,20 @@ int32_t addNode(int32_t targetRevision,
                 Byte VPType,
                 int32_t inMag,
                 int32_t time,
-                int32_t respectLocks,
-                struct stateInfo *state);
-uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct stateInfo *state);
+                int32_t respectLocks);
+uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
 
 uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
-uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, struct stateInfo *state);
+uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
 
-struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode, struct stateInfo *state);
-struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode, struct stateInfo *state);
-struct nodeListElement *findNodeByNodeID(int32_t nodeID, struct stateInfo *state);
-struct nodeListElement *findNodeByCoordinate(Coordinate *position, struct stateInfo *state);
+struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode);
+struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
+struct nodeListElement *findNodeByNodeID(int32_t nodeID);
+struct nodeListElement *findNodeByCoordinate(Coordinate *position);
 struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
-struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID, struct stateInfo *state);
-uint32_t genTestNodes(uint32_t number, struct stateInfo *state);
+struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
+uint32_t genTestNodes(uint32_t number);
 int32_t editNode(int32_t targetRevision,
                  int32_t nodeID,
                  struct nodeListElement *node,
@@ -1472,8 +1471,7 @@ int32_t editNode(int32_t targetRevision,
                  int32_t newXPos,
                  int32_t newYPos,
                  int32_t newZPos,
-                 int32_t inMag,
-                 struct stateInfo *state);
+                 int32_t inMag);
 void *popStack(struct stack *stack);
 int32_t pushStack(struct stack *stack, void *element);
 struct stack *newStack(int32_t size);
@@ -1482,18 +1480,18 @@ int32_t delDynArray(struct dynArray *array);
 void *getDynArray(struct dynArray *array, int32_t pos);
 int32_t setDynArray(struct dynArray *array, int32_t pos, void *value);
 struct dynArray *newDynArray(int32_t size);
-int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID, struct stateInfo *state);
-uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID, struct stateInfo *state);
-uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID, struct stateInfo *state);
-uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID, struct stateInfo *state);
-struct commentListElement *nextComment(char *searchString, struct stateInfo *state);
-struct commentListElement *previousComment(char *searchString, struct stateInfo *state);
-uint32_t searchInComment(char *searchString, struct commentListElement *comment, struct stateInfo *state);
-int32_t unlockPosition(struct stateInfo *state);
-int32_t lockPosition(Coordinate lockCoordinate, struct stateInfo *state);
-int32_t popBranchNode(int32_t targetRevision, struct stateInfo *state);
-int32_t pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID, struct stateInfo *state);
-uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode, struct stateInfo *state);
+int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
+uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID);
+uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID);
+uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID);
+struct commentListElement *nextComment(char *searchString);
+struct commentListElement *previousComment(char *searchString);
+uint32_t searchInComment(char *searchString, struct commentListElement *comment);
+int32_t unlockPosition();
+int32_t lockPosition(Coordinate lockCoordinate);
+int32_t popBranchNode(int32_t targetRevision);
+int32_t pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID);
+uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
 int32_t loadDefaultTreeLUT();
@@ -1505,18 +1503,18 @@ void checkIdleTime();
  */
 
 int client();
-uint32_t broadcastPosition(struct stateInfo *state, uint32_t x, uint32_t y, uint32_t z);
-int32_t skeletonSyncBroken(struct stateInfo *state);
+uint32_t broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
+int32_t skeletonSyncBroken();
 int32_t bytesToInt(Byte *source);
 int32_t integerToBytes(Byte *dest, int32_t source);
 int32_t floatToBytes(Byte *dest, float source);
 int Wrapper_SDLNet_TCP_Open(void *params);
-uint32_t IOBufferAppend(struct stateInfo *state, struct IOBuffer *iobuffer, Byte *data, uint32_t length, SDL_mutex *mutex);
-uint32_t addPeer(struct stateInfo *state, uint32_t id, char *name, float xScale, float yScale, float zScale, int32_t xOffset, int32_t yOffset, int32_t zOffset);
-uint32_t delPeer(struct stateInfo *state, uint32_t id);
-uint32_t broadcastCoordinate(struct stateInfo *state, uint32_t x, uint32_t y, uint32_t z);
-int32_t syncMessage(struct stateInfo *state, char *fmt, ...);
-int32_t clientSyncBroken(struct stateInfo *state);
+uint32_t IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t length, SDL_mutex *mutex);
+uint32_t addPeer(uint32_t id, char *name, float xScale, float yScale, float zScale, int32_t xOffset, int32_t yOffset, int32_t zOffset);
+uint32_t delPeer(uint32_t id);
+uint32_t broadcastCoordinate(uint32_t x, uint32_t y, uint32_t z);
+int32_t syncMessage(char *fmt, ...);
+int32_t clientSyncBroken();
 int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
 
 /*
@@ -1541,30 +1539,30 @@ void UI_copyClipboardCoordinates();
 void UI_zoomOrthogonals(float step);
 void createToolsWin();
 void createViewPortPrefWin();
-void reloadDataSizeWin(struct stateInfo *state);
+void reloadDataSizeWin();
 
- void createMenuBar(struct stateInfo *state);
- void createCoordBarWin(struct stateInfo *state);
- void createSkeletonVpToolsWin(struct stateInfo *state);
- void createDataSizeWin(struct stateInfo *state);
- void createNavWin(struct stateInfo *state);
- void createConsoleWin(struct stateInfo *state);
+ void createMenuBar();
+ void createCoordBarWin();
+ void createSkeletonVpToolsWin();
+ void createDataSizeWin();
+ void createNavWin();
+ void createConsoleWin();
  void createAboutWin();
 
- void createNavOptionsWin(struct stateInfo *state);
- void createDisplayOptionsWin(struct stateInfo *state);
- void createSaveOptionsWin(struct stateInfo *state);
- void createSyncOptionsWin(struct stateInfo *state);
- void createRenderingOptionsWin(struct stateInfo *state);
- void createVolTracingOptionsWin(struct stateInfo *state);
- void createSpatialLockingOptionsWin(struct stateInfo *state);
+ void createNavOptionsWin();
+ void createDisplayOptionsWin();
+ void createSaveOptionsWin();
+ void createSyncOptionsWin();
+ void createRenderingOptionsWin();
+ void createVolTracingOptionsWin();
+ void createSpatialLockingOptionsWin();
 
- void createDataSetStatsWin(struct stateInfo *state);
- void createZoomingWin(struct stateInfo *state);
+ void createDataSetStatsWin();
+ void createZoomingWin();
  void createTracingTimeWin();
  void createCommentsWin();
  void createLoadDatasetImgJTableWin();
  void createLoadTreeImgJTableWin();
- void createSetDynRangeWin(struct stateInfo *state);
+ void createSetDynRangeWin();
 
  void treeColorAdjustmentsChanged();

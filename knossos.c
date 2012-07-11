@@ -118,17 +118,17 @@ int main(int argc, char *argv[]) {
     }
 
     if(argc >= 2)
-        configFromCli(state, argc, argv);
+        configFromCli(argc, argv);
 
     if(tempConfig->path[0] != '\0') {
         // Got a path from cli.
-        readDataConfAndLocalConf(state);
+        readDataConfAndLocalConf();
         // We need to read the specified config file again because it should
         // override all parameters from other config files.
-        configFromCli(state, argc, argv);
+        configFromCli(argc, argv);
     }
     else
-        readConfigFile("knossos.conf", state);
+        readConfigFile("knossos.conf");
 
 
     state->viewerState->voxelDimX = tempConfig->scale.x;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     state->viewerState->voxelDimZ = tempConfig->scale.z;
 
     if(argc >= 2) {
-        if(configFromCli(state, argc, argv) == FALSE) {
+        if(configFromCli(argc, argv) == FALSE) {
             LOG("Error reading configuration from command line.");
         }
     }
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
         _Exit(FALSE);
     }
 
-    printConfigValues(state);
+    printConfigValues();
 
     viewingThread = SDL_CreateThread(viewer, NULL);
     loadingThread = SDL_CreateThread(loader, NULL);
@@ -159,12 +159,12 @@ int main(int argc, char *argv[]) {
     SDL_WaitThread(clientThread, NULL);
     SDL_Quit();
 
-    cleanUpMain(state);
+    cleanUpMain();
 
     return 0;
 }
 
-static uint32_t cleanUpMain(struct stateInfo *state) {
+static uint32_t cleanUpMain() {
     //conditions?
     free(tempConfig->viewerState);
     free(tempConfig->remoteState);
@@ -320,7 +320,7 @@ static int32_t tempConfigDefaults() {
     return TRUE;
 }
 
-static int32_t configFromCli(struct stateInfo *state, int argCount, char *arguments[]) {
+static int32_t configFromCli(int argCount, char *arguments[]) {
     #define NUM_PARAMS 15
 
     char *lval = NULL, *rval = NULL;
@@ -412,10 +412,10 @@ static int32_t configFromCli(struct stateInfo *state, int argCount, char *argume
                         tempConfig->M = (int32_t)atoi(rval);
                         break;
                     case 10:
-                        loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB, state);
+                        loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
                         break;
                     case 11:
-                        readConfigFile(rval, state);
+                        readConfigFile(rval);
                         break;
                     case 12:
                         tempConfig->magnification = (int32_t)atoi(rval);
@@ -644,7 +644,7 @@ static int32_t initStates() {
     return TRUE;
 }
 
-int32_t printConfigValues(struct stateInfo *state) {
+int32_t printConfigValues() {
     printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
            state->path,
            state->name,
@@ -724,7 +724,7 @@ int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag) {
 }
 
 
-int32_t sendClientSignal(struct stateInfo *state) {
+int32_t sendClientSignal() {
     SDL_LockMutex(state->protectClientSignal);
     state->clientSignal = TRUE;
     SDL_UnlockMutex(state->protectClientSignal);
@@ -734,7 +734,7 @@ int32_t sendClientSignal(struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t sendRemoteSignal(struct stateInfo *state) {
+int32_t sendRemoteSignal() {
     SDL_LockMutex(state->protectRemoteSignal);
     state->remoteSignal = TRUE;
     SDL_UnlockMutex(state->protectRemoteSignal);
@@ -744,7 +744,7 @@ int32_t sendRemoteSignal(struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t unlockSkeleton(int32_t increment, struct stateInfo *state) {
+int32_t unlockSkeleton(int32_t increment) {
     /* We cannot increment the revision count if the skeleton change was
      * not successfully commited (i.e. the skeleton changing function encountered
      * an error). In that case, the connection has to be closed and the user
@@ -763,7 +763,7 @@ int32_t unlockSkeleton(int32_t increment, struct stateInfo *state) {
     return TRUE;
 }
 
-int32_t lockSkeleton(int32_t targetRevision, struct stateInfo *state) {
+int32_t lockSkeleton(int32_t targetRevision) {
     /*
      * If a skeleton modifying function is called on behalf of the network client,
      * targetRevision should be set to the appropriate remote value and lockSkeleton()
@@ -791,7 +791,7 @@ int32_t lockSkeleton(int32_t targetRevision, struct stateInfo *state) {
 
         if(targetRevision != state->skeletonState->skeletonRevision + 1) {
             // Local and remote skeletons have gone out of sync.
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
             return FALSE;
         }
      }
@@ -804,8 +804,8 @@ int32_t sendQuitSignal() {
 
     state->quitSignal = TRUE;
 
-    sendRemoteSignal(state);
-    sendClientSignal(state);
+    sendRemoteSignal();
+    sendClientSignal();
 
     SDL_LockMutex(state->protectLoadSignal);
     state->loadSignal = TRUE;
@@ -815,7 +815,7 @@ int32_t sendQuitSignal() {
     return TRUE;
 }
 
-static int32_t readDataConfAndLocalConf(struct stateInfo *state) {
+static int32_t readDataConfAndLocalConf() {
     int32_t length;
     char configFile[1024];
 
@@ -833,9 +833,9 @@ static int32_t readDataConfAndLocalConf(struct stateInfo *state) {
 
     LOG("Trying to read %s.", configFile);
 
-    readConfigFile(configFile, state);
+    readConfigFile(configFile);
 
-    readConfigFile("knossos.conf", state);
+    readConfigFile("knossos.conf");
 
     return TRUE;
 }
@@ -892,7 +892,7 @@ int32_t stripNewlines(char *string) {
         return TRUE;
 }
 
-int32_t readConfigFile(char *path, struct stateInfo *state) {
+int32_t readConfigFile(char *path) {
     FILE *configFile;
     size_t bytesRead;
     char fileBuffer[16384];
@@ -909,11 +909,9 @@ int32_t readConfigFile(char *path, struct stateInfo *state) {
             yyparse(state);
             yy_delete_buffer(confParseBuffer);
             fclose(configFile);
-
             return TRUE;
         }
     }
-
     return FALSE;
 
 }
@@ -931,7 +929,7 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
 }
 
 int32_t loadDefaultTreeLUT() {
-    if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB, state) == FALSE) {
+    if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
         loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
 	}

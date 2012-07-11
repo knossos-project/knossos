@@ -54,7 +54,7 @@ int client() {
         SDL_Delay(50);
 
     if(state->clientState->connectAsap)
-        sendClientSignal(state);
+        sendClientSignal();
 
     while(TRUE) {
         SDL_LockMutex(state->protectClientSignal);
@@ -82,26 +82,26 @@ int client() {
          *
          */
 
-        clientRun(state);
+        clientRun();
 
         if(state->quitSignal == TRUE)
             break;
     }
 
-    cleanUpClient(state);
+    cleanUpClient();
 
     return TRUE;
 
 }
 
-static int32_t cleanUpClient(struct stateInfo *state) {
+static int32_t cleanUpClient() {
     free(state->clientState);
     state->clientState = NULL;
 
     return TRUE;
 }
 
-static int32_t clientRun(struct stateInfo *state) {
+static int32_t clientRun() {
     struct clientState *clientState = state->clientState;
     Byte *message = NULL;
     uint32_t messageLen = 0, nameLen = 0, readLen = 0;
@@ -157,7 +157,7 @@ static int32_t clientRun(struct stateInfo *state) {
         integerToBytes(&message[5 + nameLen + 16], state->offset.y);
         integerToBytes(&message[5 + nameLen + 20], state->offset.z);
 
-        IOBufferAppend(state, clientState->outBuffer, message, messageLen, state->protectOutBuffer);
+        IOBufferAppend(clientState->outBuffer, message, messageLen, state->protectOutBuffer);
         memset(message, '\0', 8192 * sizeof(Byte));
 
         while(TRUE) {
@@ -170,7 +170,7 @@ static int32_t clientRun(struct stateInfo *state) {
             /*
              * Write all pending outgoing data to the socket
              */
-            flushOutBuffer(state);
+            flushOutBuffer();
 
             /*
              * Read all incoming data into the read buffer
@@ -196,14 +196,14 @@ static int32_t clientRun(struct stateInfo *state) {
                 printf("SDLNet_TCP_Recv() returned %d\n", readLen);
                 */
 
-                IOBufferAppend(state, clientState->inBuffer, message, readLen, NULL);
+                IOBufferAppend(clientState->inBuffer, message, readLen, NULL);
                 memset(message, '\0', 8192);
             }
 
             /*
              * Interpret what we have in the read buffer
              */
-            parseInBuffer(state);
+            parseInBuffer();
 
             SDL_LockMutex(state->protectClientSignal);
             if(state->clientSignal == TRUE) {
@@ -222,12 +222,12 @@ static int32_t clientRun(struct stateInfo *state) {
                    "will currently not autosave. Please turn autosave "
                    "on manually if it is required.");
 
-    closeConnection(state);
+    closeConnection();
 
     return TRUE;
 }
 
-static int32_t connectToServer(struct stateInfo *state) {
+static int32_t connectToServer() {
     struct clientState *clientState = state->clientState;
     int32_t i = 0;
     int32_t timeoutIn100ms = 0;
@@ -274,7 +274,7 @@ static int32_t connectToServer(struct stateInfo *state) {
     return TRUE;
 }
 
-static int32_t closeConnection(struct stateInfo *state) {
+static int32_t closeConnection() {
     if(state->clientState->remoteSocket != NULL) {
         SDLNet_TCP_Close(state->clientState->remoteSocket);
         state->clientState->remoteSocket = NULL;
@@ -293,7 +293,7 @@ static int32_t closeConnection(struct stateInfo *state) {
 
 #define FLOATS 16
 #define INTS 16
-static uint32_t parseInBuffer(struct stateInfo *state) {
+static uint32_t parseInBuffer() {
     int32_t messageLen = 0;
     struct clientState *clientState = state->clientState;
 
@@ -341,7 +341,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 //        d[1], d[2], d[3], d[0]);
 
                 pPosition =
-                    transNetCoordinate(state, d[0], d[1], d[2], d[3]);
+                    transNetCoordinate(d[0], d[1], d[2], d[3]);
 
                 if(pPosition == NULL) {
                     LOG("Unable to transform coordinate.");
@@ -383,7 +383,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                  *       d[3]);
                  */
 
-                addPeer(state, d[0], (char *)s, f[0], f[1], f[2], d[1], d[2], d[3]);
+                addPeer(d[0], (char *)s, f[0], f[1], f[2], d[1], d[2], d[3]);
 
                 break;
 
@@ -435,7 +435,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
 
                 LOG("Received KIKI_WITHDRAW message for id %d", d[0]);
 
-                delPeer(state, d[0]);
+                delPeer(d[0]);
 
                 break;
 
@@ -448,7 +448,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addComment(d[0], (char *)s, NULL, d[1], state);
+                addComment(d[0], (char *)s, NULL, d[1]);
 
                 break;
 
@@ -461,7 +461,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                editComment(d[0], NULL, d[1], (char *)s, NULL, d[2], state);
+                editComment(d[0], NULL, d[1], (char *)s, NULL, d[2]);
 
                 break;
 
@@ -472,7 +472,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delComment(d[0], NULL, d[1], state);
+                delComment(d[0], NULL, d[1]);
 
                 break;
 
@@ -504,7 +504,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 pPosition->y = d[8];
                 pPosition->z = d[9];
 
-                addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE, state);
+                addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE);
 
                 free(pPosition);
                 pPosition = NULL;
@@ -519,7 +519,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                editNode(d[0], d[2], NULL, f[0], d[4], d[5], d[6], d[3], state);
+                editNode(d[0], d[2], NULL, f[0], d[4], d[5], d[6], d[3]);
 
                 break;
 
@@ -533,7 +533,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
 
                 LOG("DELNODE: Received revision %d", d[0]);
 
-                delNode(d[0], d[1], NULL, state);
+                delNode(d[0], d[1], NULL);
 
                 break;
 
@@ -545,7 +545,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addSegment(d[0], d[1], d[2], state);
+                addSegment(d[0], d[1], d[2]);
 
                 break;
 
@@ -557,7 +557,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delSegment(d[0], d[1], d[2], NULL, state);
+                delSegment(d[0], d[1], d[2], NULL);
 
                 break;
 
@@ -584,7 +584,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delTree(d[0], d[1], state);
+                delTree(d[0], d[1]);
 
                 break;
 
@@ -595,7 +595,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                mergeTrees(d[0], d[1], d[2], state);
+                mergeTrees(d[0], d[1], d[2]);
 
                 break;
 
@@ -606,7 +606,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                splitConnectedComponent(d[0], d[1], state);
+                splitConnectedComponent(d[0], d[1]);
 
                 LOG("Called splitcc with %d %d", d[0], d[1]);
 
@@ -619,7 +619,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                pushBranchNode(d[0], TRUE, TRUE, NULL, d[1], state);
+                pushBranchNode(d[0], TRUE, TRUE, NULL, d[1]);
 
                 break;
 
@@ -630,7 +630,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                popBranchNode(d[0], state);
+                popBranchNode(d[0]);
 
                 break;
 
@@ -666,7 +666,7 @@ static uint32_t parseInBuffer(struct stateInfo *state) {
                     goto loopExit;
 
                 printf("SETSKELETONMODE: Received revision %d / mode %d\n", d[0], d[1]);
-                setSkeletonWorkMode(d[0], d[1], state);
+                setSkeletonWorkMode(d[0], d[1]);
 
                 break;
 
@@ -696,7 +696,7 @@ loopExit:
 
 critical:
     LOG("Error parsing remote input.");
-    skeletonSyncBroken(state);
+    skeletonSyncBroken();
     return FALSE;
 
 }
@@ -824,7 +824,7 @@ int Wrapper_SDLNet_TCP_Open(void *params) {
         return TRUE;
 }
 
-static uint32_t flushOutBuffer(struct stateInfo *state) {
+static uint32_t flushOutBuffer() {
     /*
      * Can this block at inconvenient times?
      */
@@ -847,7 +847,7 @@ static uint32_t flushOutBuffer(struct stateInfo *state) {
     return TRUE;
 }
 
-uint32_t IOBufferAppend(struct stateInfo *state,
+uint32_t IOBufferAppend(
                         struct IOBuffer *iobuffer,
                         Byte *data,
                         uint32_t length,
@@ -932,7 +932,7 @@ uint32_t IOBufferAppend(struct stateInfo *state,
     return TRUE;
 }
 
-uint32_t addPeer(struct stateInfo *state,
+uint32_t addPeer(
                  uint32_t id,
                  char *name,
                  float xScale, float yScale, float zScale,
@@ -970,13 +970,13 @@ uint32_t addPeer(struct stateInfo *state,
     return TRUE;
 }
 
-uint32_t delPeer(struct stateInfo *state, uint32_t id) {
+uint32_t delPeer(uint32_t id) {
     printf("delPeer() is not implemented.\n");
 
     return TRUE;
 }
 
-Coordinate *transNetCoordinate(struct stateInfo *state,
+Coordinate *transNetCoordinate(
                                uint32_t id,
                                uint32_t x,
                                uint32_t y,
@@ -1007,12 +1007,12 @@ Coordinate *transNetCoordinate(struct stateInfo *state,
         return outCoordinate;
     }
 
-    transCoordinate(outCoordinate, x, y, z, peer->scale, peer->offset, state);
+    transCoordinate(outCoordinate, x, y, z, peer->scale, peer->offset);
 
     return outCoordinate;
 }
 
-uint32_t broadcastPosition(struct stateInfo *state,
+uint32_t broadcastPosition(
                            uint32_t x,
                            uint32_t y,
                            uint32_t z) {
@@ -1038,14 +1038,14 @@ uint32_t broadcastPosition(struct stateInfo *state,
     integerToBytes(&data[14], y);
     integerToBytes(&data[18], z);
 
-    IOBufferAppend(state, clientState->outBuffer, data, messageLen, state->protectOutBuffer);
+    IOBufferAppend(clientState->outBuffer, data, messageLen, state->protectOutBuffer);
 
     free(data);
 
     return TRUE;
 }
 
-int32_t syncMessage(struct stateInfo *state, char *fmt, ...) {
+int32_t syncMessage(char *fmt, ...) {
     /* Many thanks to the va_start(3) manpage. */
 
     /*
@@ -1165,8 +1165,7 @@ int32_t syncMessage(struct stateInfo *state, char *fmt, ...) {
     if(peerLenField >= 0)
         integerToBytes(&packedBytes[peerLenField], len - 5);
 
-    if(!IOBufferAppend(state,
-                       state->clientState->outBuffer,
+    if(!IOBufferAppend(state->clientState->outBuffer,
                        packedBytes,
                        len,
                        state->protectOutBuffer))
@@ -1182,7 +1181,7 @@ lenoverflow:
 
 }
 
-int32_t skeletonSyncBroken(struct stateInfo *state) {
+int32_t skeletonSyncBroken() {
     LOG("Skeletons have gone out of sync, stopping synchronization.");
     state->clientState->synchronizeSkeleton = FALSE;
 

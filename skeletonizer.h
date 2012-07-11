@@ -22,11 +22,11 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static struct segmentListElement *addSegmentListElement(struct segmentListElement **firstSegment, struct nodeListElement *sourceNode, struct nodeListElement *targetNode, struct stateInfo *state);
-static struct treeListElement *findTreeByTreeID(int32_t treeID, struct stateInfo *state);
-static uint32_t addNodeToSkeletonStruct(struct nodeListElement *node, struct stateInfo *state);
-static uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment, struct stateInfo *state);
-static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node, struct stateInfo *state);
-static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment, struct stateInfo *state);
+static struct segmentListElement *addSegmentListElement(struct segmentListElement **firstSegment, struct nodeListElement *sourceNode, struct nodeListElement *targetNode);
+static struct treeListElement *findTreeByTreeID(int32_t treeID);
+static uint32_t addNodeToSkeletonStruct(struct nodeListElement *node);
+static uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment);
+static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node);
+static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment);
 static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();

@@ -2,20 +2,20 @@
 /* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-   
+
       Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
+
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
@@ -28,7 +28,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -88,7 +88,7 @@ void yyerror(const char *str) {
 
 int yywrap() {
         return 1;
-} 
+}
 
 extern struct stateInfo *tempConfig;
 
@@ -1669,7 +1669,7 @@ yyreduce:
 #line 215 "config.y"
     {
                 printf("Trying to walk to (%d, %d, %d)\n", (yyvsp[(3) - (8)].integer), (yyvsp[(5) - (8)].integer), (yyvsp[(7) - (8)].integer));
-                remoteWalkTo((struct stateInfo *)param, (yyvsp[(3) - (8)].integer), (yyvsp[(5) - (8)].integer), (yyvsp[(7) - (8)].integer));
+                remoteWalkTo((yyvsp[(3) - (8)].integer), (yyvsp[(5) - (8)].integer), (yyvsp[(7) - (8)].integer));
         }
     break;
 
@@ -1678,7 +1678,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 222 "config.y"
     {
-                newTrajectory(tempConfig, (yyvsp[(2) - (3)].string), (yyvsp[(3) - (3)].string));
+                newTrajectory((yyvsp[(2) - (3)].string), (yyvsp[(3) - (3)].string));
         }
     break;
 

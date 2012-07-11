@@ -50,7 +50,7 @@ extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
 
-uint32_t handleEvent(SDL_Event event, struct stateInfo *state) {
+uint32_t handleEvent(SDL_Event event) {
     AG_DriverEvent ag_dev;
 
     /* TDitem find right place for that */
@@ -97,7 +97,7 @@ uint32_t handleEvent(SDL_Event event, struct stateInfo *state) {
 
             break;
         case SDL_USEREVENT:
-            if (handleUserEvent(event, state) == FALSE) {
+            if (handleUserEvent(event) == FALSE) {
                 return FALSE;
             }
     }
@@ -209,22 +209,22 @@ static int32_t sdlToAgarEvent(void *obj, SDL_Event sdl_ev, AG_DriverEvent *ag_ev
 }
 
 /* TDitem */
-static uint32_t handleUserEvent(SDL_Event event, struct stateInfo *state) {
+static uint32_t handleUserEvent(SDL_Event event) {
     Coordinate *move = NULL;
 
     switch(event.user.code) {
         case USEREVENT_JUMP:
-            updatePosition(state, SILENT_COORDINATE_CHANGE);
+            updatePosition(SILENT_COORDINATE_CHANGE);
             break;
 
         case USEREVENT_MOVE:
             move = (Coordinate *)event.user.data1;
-            userMove(move->x, move->y, move->z, TELL_COORDINATE_CHANGE, state);
+            userMove(move->x, move->y, move->z, TELL_COORDINATE_CHANGE);
             free(move);
             break;
 
         case USEREVENT_REDRAW:
-            drawGUI(state);
+            drawGUI();
             break;
 
         case USEREVENT_NOAUTOSAVE:
@@ -233,7 +233,7 @@ static uint32_t handleUserEvent(SDL_Event event, struct stateInfo *state) {
 
         case USEREVENT_REALQUIT:
             LOG("Received USEREVENT_REALQUIT. Exiting.");
-            sendQuitSignal(state);
+            sendQuitSignal();
             return FALSE;
 
         default:
@@ -389,8 +389,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                 event.button.x,
                                                 (state->viewerState->screenSizeY - event.button.y),
-                                                10,
-                                                state);
+                                                10);
         if(clickedNode) {
             setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
             return TRUE;
@@ -405,7 +404,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                                 event,
                                 VPfound);
             if(clickedCoordinate) {
-                newActiveNode = findNodeInRadius(*clickedCoordinate, state);
+                newActiveNode = findNodeInRadius(*clickedCoordinate);
                 if(newActiveNode != NULL) {
                     setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                     return TRUE;
@@ -437,7 +436,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                                clickedCoordinate->x,
                                clickedCoordinate->y,
                                clickedCoordinate->z);
-                sendRemoteSignal(state);
+                sendRemoteSignal();
                 break;
 
             case ON_CLICK_DRAG:
@@ -454,14 +453,12 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
-                                                     1,
-                                                     state);
+                                                     1);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 addSegment(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
-                           clickedNode,
-                           state);
+                           clickedNode);
             }
         }
     }
@@ -474,8 +471,7 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
     clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
-                                                     1,
-                                                     state);
+                                                     1);
 
     if(clickedNode) {
         if(SDL_GetModState() & KMOD_SHIFT) {
@@ -488,22 +484,18 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
                 /* Delete segment between clicked and active node */
                 if(state->skeletonState->activeNode) {
                     if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
-                                            clickedNode,
-                                            state)) {
+                                            clickedNode)) {
                         delSegment(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
-                                   NULL,
-                                   state);
+                                   NULL);
                     }
                     if(findSegmentByNodeIDs(clickedNode,
-                                            state->skeletonState->activeNode->nodeID,
-                                            state)) {
+                                            state->skeletonState->activeNode->nodeID)) {
                         delSegment(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
-                                   NULL,
-                                   state);
+                                   NULL);
                     }
                 }
             }
@@ -513,14 +505,13 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
             if(state->skeletonState->activeNode) {
                 addSegment(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
-                           clickedNode,
-                           state);
+                           clickedNode);
             }
         }
         else {
             /* No modifier pressed */
             state->viewerState->viewPorts[VPfound].draggedNode =
-                findNodeByNodeID(clickedNode, state);
+                findNodeByNodeID(clickedNode);
             state->viewerState->viewPorts[VPfound].motionTracking = 1;
         }
     }
@@ -535,27 +526,22 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
     clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
-                                                     1,
-                                                     state);
+                                                     1);
     if(clickedNode) {
         if(state->skeletonState->activeNode) {
             if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
-                                    clickedNode,
-                                    state)) {
+                                    clickedNode)) {
                 delSegment(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
                            clickedNode,
-                           NULL,
-                           state);
+                           NULL);
                 }
                 if(findSegmentByNodeIDs(clickedNode,
-                                        state->skeletonState->activeNode->nodeID,
-                                        state)) {
+                                        state->skeletonState->activeNode->nodeID)) {
                     delSegment(CHANGE_MANUAL,
                                clickedNode,
                                state->skeletonState->activeNode->nodeID,
-                               NULL,
-                               state);
+                               NULL);
                 }
             }
         }
@@ -581,14 +567,12 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
             case SKELETONIZER_ON_CLICK_DROP_NODE:
                 /* function is inside skeletonizer.c */
                 UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type,
-                                   state);
+                                   state->viewerState->viewPorts[VPfound].type);
                 break;
             case SKELETONIZER_ON_CLICK_ADD_NODE:
                 /* function is inside skeletonizer.c */
                 UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type,
-                                   state);
+                                   state->viewerState->viewPorts[VPfound].type);
                 tempConfig->skeletonState->workMode =
                     SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
                 break;
@@ -604,8 +588,7 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                            TRUE,
                                            TRUE,
                                            NULL,
-                                           newNodeID,
-                                           state);
+                                           newNodeID);
                         }
                     }
                     else {
@@ -724,15 +707,14 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                                            clickedCoordinate->x,
                                            clickedCoordinate->y,
                                            clickedCoordinate->z);
-                            updateViewerState(state);
-                            sendRemoteSignal(state);
+                            updateViewerState();
+                            sendRemoteSignal();
                         }
                     }
                 }
                 else {
                     UI_addSkeletonNode(clickedCoordinate,
-                                       state->viewerState->viewPorts[VPfound].type,
-                                       state);
+                                       state->viewerState->viewPorts[VPfound].type);
                 }
 
                 break;
@@ -757,13 +739,12 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
                  state->skeletonState->activeNode->position.x,
                  state->skeletonState->activeNode->position.y,
                  state->skeletonState->activeNode->position.z,
-                 state->magnification,
-                 state);
+                 state->magnification);
 
         if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
             state->skeletonState->defaultNodeRadius = radius;
 
-        //drawGUI(state);
+        //drawGUI();
     }
     else {
         /* Skeleton VP */
@@ -786,17 +767,17 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
                     case VIEWPORT_XY:
                         userMove(0, 0, state->viewerState->dropFrames
                             * state->magnification,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
                         userMove(0, state->viewerState->dropFrames
                             * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
                         userMove(state->viewerState->dropFrames
                             * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                 }
             }
@@ -822,13 +803,12 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
                  state->skeletonState->activeNode->position.x,
                  state->skeletonState->activeNode->position.y,
                  state->skeletonState->activeNode->position.z,
-                 state->magnification,
-                 state);
+                 state->magnification);
 
         if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
             state->skeletonState->defaultNodeRadius = radius;
 
-        //drawGUI(state);
+        //drawGUI();
     }
     else {
         /* Skeleton VP */
@@ -852,17 +832,17 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
                     case VIEWPORT_XY:
                         userMove(0, 0, -state->viewerState->dropFrames
                             * state->magnification,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
                         userMove(0, -state->viewerState->dropFrames
                             * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
                         userMove(-state->viewerState->dropFrames
                             * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         break;
                 }
             }
@@ -934,7 +914,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
 
                         userMove((int)state->viewerState->viewPorts[i].userMouseSlideX,
                             (int)state->viewerState->viewPorts[i].userMouseSlideY, 0,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         state->viewerState->viewPorts[i].userMouseSlideX = 0.;
                         state->viewerState->viewPorts[i].userMouseSlideY = 0.;
                     }
@@ -950,7 +930,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
 
                         userMove((int)state->viewerState->viewPorts[i].userMouseSlideX, 0,
                             (int)state->viewerState->viewPorts[i].userMouseSlideY,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         state->viewerState->viewPorts[i].userMouseSlideX = 0.;
                         state->viewerState->viewPorts[i].userMouseSlideY = 0.;
                     }
@@ -966,7 +946,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
 
                         userMove(0, (int)state->viewerState->viewPorts[i].userMouseSlideY,
                             (int)state->viewerState->viewPorts[i].userMouseSlideX,
-                            TELL_COORDINATE_CHANGE, state);
+                            TELL_COORDINATE_CHANGE);
                         state->viewerState->viewPorts[i].userMouseSlideX = 0.;
                         state->viewerState->viewPorts[i].userMouseSlideY = 0.;
                     }
@@ -1032,8 +1012,7 @@ static uint32_t handleMouseMotionMiddleHold(SDL_Event event, int32_t VPfound) {
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
                              newDraggedNodePos.z,
-                             state->magnification,
-                             state);
+                             state->magnification);
                 }
                 break;
             case VIEWPORT_XZ:
@@ -1068,8 +1047,7 @@ static uint32_t handleMouseMotionMiddleHold(SDL_Event event, int32_t VPfound) {
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
                              newDraggedNodePos.z,
-                             state->magnification,
-                             state);
+                             state->magnification);
                 }
                 break;
             case VIEWPORT_YZ:
@@ -1104,8 +1082,7 @@ static uint32_t handleMouseMotionMiddleHold(SDL_Event event, int32_t VPfound) {
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
                              newDraggedNodePos.z,
-                             state->magnification,
-                             state);
+                             state->magnification);
                 }
                 break;
         }
@@ -1136,26 +1113,26 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1165,26 +1142,26 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1193,26 +1170,26 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1221,26 +1198,26 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1254,7 +1231,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z += 10  * state->magnification);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
@@ -1262,7 +1239,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y += 10 * state->magnification,
                                tempConfig->viewerState->currentPosition.z);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
@@ -1270,7 +1247,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x += 10 * state->magnification,
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
         }
         break;
@@ -1283,7 +1260,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z -= 10 * state->magnification);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
@@ -1291,7 +1268,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y -= 10 * state->magnification,
                                tempConfig->viewerState->currentPosition.z);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
@@ -1299,7 +1276,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                tempConfig->viewerState->currentPosition.x -= 10 * state->magnification,
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
-                               sendRemoteSignal(state);
+                               sendRemoteSignal();
             break;
         }
     break;
@@ -1307,26 +1284,26 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1335,40 +1312,40 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         else {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE, state);
+                    userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
         break;
     case SDLK_g:
         //For testing issues
-        //genTestNodes(500000, state);
+        //genTestNodes(500000);
         break;
     case SDLK_n:
         if(SDL_GetModState() & KMOD_SHIFT) {
             nextCommentlessNode();
         }
         else {
-            nextComment(state->viewerState->ag->commentSearchBuffer, state);
+            nextComment(state->viewerState->ag->commentSearchBuffer);
         }
         break;
     case SDLK_p:
@@ -1376,7 +1353,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
             previousCommentlessNode();
         }
         else {
-            previousComment(state->viewerState->ag->commentSearchBuffer, state);
+            previousComment(state->viewerState->ag->commentSearchBuffer);
         }
         break;
     case SDLK_3:
@@ -1391,7 +1368,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         UI_popBranchNode();
         break;
     case SDLK_b:
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, state);
+        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
         break;
     case SDLK_x:
         if(state->skeletonState->activeNode == NULL) {
@@ -1399,7 +1376,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         //Shift + x = previous node
         if(SDL_GetModState() & KMOD_SHIFT) {
-            prevNode = getNodeWithPrevID(state->skeletonState->activeNode, state);
+            prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
             if(prevNode != NULL) {
                 setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
@@ -1407,7 +1384,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                                prevNode->position.x/state->magnification,
                                prevNode->position.y/state->magnification,
                                prevNode->position.z/state->magnification);
-                sendRemoteSignal(state);
+                sendRemoteSignal();
             }
             else {
                 LOG("Reached first node.");
@@ -1415,14 +1392,14 @@ static uint32_t handleKeyboard(SDL_Event event) {
             break;
         }
         // x = next node
-        nextNode = getNodeWithNextID(state->skeletonState->activeNode, state);
+        nextNode = getNodeWithNextID(state->skeletonState->activeNode);
         if(nextNode != NULL) {
             setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
             SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                nextNode->position.x/state->magnification,
                                nextNode->position.y/state->magnification,
                                nextNode->position.z/state->magnification);
-            sendRemoteSignal(state);
+            sendRemoteSignal();
         }
         else {
             LOG("Reached last node.");
@@ -1460,7 +1437,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 state->skeletonState->activeNode->position.y;
             tempConfig->viewerState->currentPosition.z =
                 state->skeletonState->activeNode->position.z;
-            updatePosition(state, TELL_COORDINATE_CHANGE);
+            updatePosition(TELL_COORDINATE_CHANGE);
         }
         break;
     case SDLK_a:
@@ -1490,69 +1467,69 @@ static uint32_t handleKeyboard(SDL_Event event) {
             state->viewerState->ag->enableOrthoSkelOverlay = 0;
         }
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
 
 /*
     case SDLK_2:
         state->skeletonState->skeletonDisplayMode = 1;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
     case SDLK_3:
         state->skeletonState->skeletonDisplayMode = 2;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
     case SDLK_4:
         state->skeletonState->skeletonDisplayMode = 3;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
     case SDLK_5:
         state->skeletonState->skeletonDisplayMode = 4;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
     case SDLK_6:
         state->skeletonState->skeletonDisplayMode = 5;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
     case SDLK_7:
         state->skeletonState->skeletonDisplayMode = 6;
         state->skeletonState->skeletonChanged = TRUE;
-        drawGUI(state);
+        drawGUI();
         break;
 */
     case SDLK_DELETE:
-        delActiveNode(state);
+        delActiveNode();
         break;
 
     case SDLK_F1:
         if(!state->skeletonState->activeNode->comment){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, state);
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
         }
         else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, state);
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
         }
         break;
 
     case SDLK_F2:
         if(!state->skeletonState->activeNode->comment){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, state);
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
         }
         else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, state);
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
         }
         break;
 
     case SDLK_F3:
         if(!state->skeletonState->activeNode->comment){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, state);
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
         }
         else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, state);
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
         }
         break;
 
@@ -1568,20 +1545,20 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         else{
             if(!state->skeletonState->activeNode->comment){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0, state);
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0, state);
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
             }
         }
         break;
 
      case SDLK_F5:
         if(!state->skeletonState->activeNode->comment){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, state);
+            addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
         }
         else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, state);
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
         }
         break;
     default:

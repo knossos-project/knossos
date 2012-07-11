@@ -80,17 +80,17 @@ static void yesNoPromptHitNo();
 /* functions generating gui elements */
 
 
-static void createVpXyWin(struct stateInfo *state);
-static void createVpSkelWin(struct stateInfo *state);
-static void createVpYzWin(struct stateInfo *state);
-static void createVpXzWin(struct stateInfo *state);
+static void createVpXyWin();
+static void createVpSkelWin();
+static void createVpYzWin();
+static void createVpXzWin();
 
-static void createOpenFileDlgWin(struct stateInfo *state);
+static void createOpenFileDlgWin();
 static void createSaveAsFileDlgWin();
 
  void createCurrPosWdgt(AG_Window *parent);
  void createSkeletonVpToolsWdgt(AG_Window *parent);
- void createActNodeWdgt(struct stateInfo *state, AG_Widget *parent);
+ void createActNodeWdgt(AG_Widget *parent);
 static void datasetColorAdjustmentsChanged();
 
 static void createOpenCustomPrefsDlgWin();

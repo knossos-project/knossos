@@ -22,7 +22,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static uint32_t handleUserEvent(SDL_Event event, struct stateInfo *state);
+static uint32_t handleUserEvent(SDL_Event event);
 static int32_t sdlToAgarEvent(void *obj, SDL_Event sdl_ev, AG_DriverEvent *ag_ev);
 static uint32_t handleMouse(SDL_Event event);
 static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound);

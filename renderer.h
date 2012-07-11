@@ -22,14 +22,14 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-//static uint32_t setOGLforVP(uint32_t currentVP, struct stateInfo *state);
-//static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color, struct stateInfo *state);
-static GLuint renderWholeSkeleton(struct stateInfo *state, Byte callFlag);
-static GLuint renderSuperCubeSkeleton(struct stateInfo *state, Byte callFlag);
-static GLuint renderActiveTreeSkeleton(struct stateInfo *state, Byte callFlag);
+//static uint32_t setOGLforVP(uint32_t currentVP);
+//static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color);
+static GLuint renderWholeSkeleton(Byte callFlag);
+static GLuint renderSuperCubeSkeleton(Byte callFlag);
+static GLuint renderActiveTreeSkeleton(Byte callFlag);
 static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius);
 static uint32_t renderSphere(Coordinate *pos, float radius);
 static uint32_t renderText(Coordinate *pos, char *string);
-uint32_t updateDisplayListsSkeleton(struct stateInfo *state);
-static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment, struct stateInfo *state);
+uint32_t updateDisplayListsSkeleton();
+static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
 static uint32_t renderViewportBorders(uint32_t currentVP);

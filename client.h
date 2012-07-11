@@ -22,10 +22,10 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static int32_t clientRun(struct stateInfo *state);
-static int32_t connectToServer(struct stateInfo *state);
-static int32_t closeConnection(struct stateInfo *state);
+static int32_t clientRun();
+static int32_t connectToServer();
+static int32_t closeConnection();
 static float bytesToFloat(Byte *source);
-static uint32_t parseInBuffer(struct stateInfo *state);
-static uint32_t flushOutBuffer(struct stateInfo *state);
-static int32_t cleanUpClient(struct stateInfo *state);
+static uint32_t parseInBuffer();
+static uint32_t flushOutBuffer();
+static int32_t cleanUpClient();

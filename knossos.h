@@ -25,16 +25,16 @@
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 static int32_t initStates();
-static int32_t printConfigValues(struct stateInfo *state);
-static uint32_t cleanUpMain(struct stateInfo *state);
+static int32_t printConfigValues();
+static uint32_t cleanUpMain();
 static int32_t tempConfigDefaults();
 static struct stateInfo *emptyState();
-static int32_t readDataConfAndLocalConf(struct stateInfo *state);
+static int32_t readDataConfAndLocalConf();
 static int32_t stripNewlines(char *string);
-static int32_t configFromCli(struct stateInfo *state, int argCount, char *arguments[]);
+static int32_t configFromCli(int argCount, char *arguments[]);
 static int32_t loadNeutralDatasetLUT(GLuint *lut);
 
-int32_t readConfigFile(char *path, struct stateInfo *state);
+int32_t readConfigFile(char *path);
 static int32_t findAndRegisterAvailableDatasets();
 #ifdef LINUX
 static int32_t catchSegfault(int signum);
