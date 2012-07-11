@@ -439,6 +439,19 @@ static uint32_t parseInBuffer() {
 
                 break;
 
+            case KIKI_ADDTREECOMMENT:
+                /* Format: revision, tree id, comment string */
+
+                messageLen = parseInBufferByFmt(-1, "xlds", f, s, d, clientState->inBuffer);
+                if(messageLen < 0)
+                        goto critical;
+                else if(messageLen == 0)
+                        goto loopExit;
+
+                addTreeComment(d[0], d[1], (char *)s);
+
+                break;
+
             case KIKI_ADDCOMMENT:
                 /* Format: revision, node id, comment string */
 

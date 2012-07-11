@@ -48,6 +48,7 @@ static void actNodeIDWdgtModified(AG_Event *event);
 static void actTreeIDWdgtModified(AG_Event *event);
 static void actTreeColorWdgtModified(AG_Event *event);
 static void actNodeCommentWdgtModified(AG_Event *event);
+static void actTreeCommentWdgtModified(AG_Event *event);
 
 /* menu callbacks */
 static void fileOpenSkelFile(AG_Event *event);

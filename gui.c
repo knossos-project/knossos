@@ -132,6 +132,9 @@ int32_t initGUI() {
     state->viewerState->ag->commentSearchBuffer = malloc(2048 * sizeof(char));
     memset(state->viewerState->ag->commentSearchBuffer, '\0', 2048 * sizeof(char));
 
+    state->viewerState->ag->treeCommentBuffer = malloc(8192 * sizeof(char));
+    memset(state->viewerState->ag->treeCommentBuffer, '\0', 8192 * sizeof(char));
+
     state->viewerState->ag->comment1 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment1, '\0', 10240 * sizeof(char));
 
@@ -212,9 +215,10 @@ void updateAGconfig() {
     if(state->skeletonState->activeTree) {
         state->viewerState->ag->actTreeColor =
             state->skeletonState->activeTree->color;
+        strncpy(state->viewerState->ag->treeCommentBuffer,
+                state->skeletonState->activeTree->comment,
+                8192);
     }
-
-
 
     SET_COORDINATE(state->viewerState->ag->oneShiftedCurrPos,
         state->viewerState->currentPosition.x + 1,
@@ -770,6 +774,22 @@ void createToolsWin() {
                 AG_ExpandHoriz(button);
             }
         }
+        AG_SeparatorNewHoriz(treesTab);
+
+        box = AG_BoxNew(treesTab, AG_BOX_VERT, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            comment = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "Comment:  ");
+            {
+                AG_TextboxSizeHintLines(comment, 1);
+                AG_ExpandHoriz(comment);
+                AG_TextboxBindASCII(comment, state->viewerState->ag->treeCommentBuffer, 10240);
+                AG_SetEvent(comment, "textbox-postchg", actTreeCommentWdgtModified, NULL);
+                AG_SetEvent(comment, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(comment, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
         AG_SeparatorNewHoriz(treesTab);
         box = AG_BoxNew(treesTab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
@@ -2514,6 +2534,14 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
                         0);
     }
     /*state->skeletonState->skeletonChanged = TRUE; needed? TDitem */
+}
+
+static void actTreeCommentWdgtModified(AG_Event *event) {
+    if(state->skeletonState->activeTree) {
+        addTreeComment(CHANGE_MANUAL,
+                       state->skeletonState->activeTree->treeID,
+                       state->viewerState->ag->treeCommentBuffer);
+    }
 }
 
 static void UI_findNextBtnPressed() {

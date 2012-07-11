@@ -205,6 +205,7 @@
 #define KIKI_SETSKELETONMODE 25
 #define KIKI_SAVEMASTER 26
 #define KIKI_SKELETONFILENAME 27
+#define KIKI_ADDTREECOMMENT 28
 
 
 /*
@@ -641,7 +642,7 @@ struct agConfig {
     int32_t numBranchPoints;
     char *commentBuffer;
     char *commentSearchBuffer;
-
+    char *treeCommentBuffer;
 
 
     int32_t mergeTreesID1;
@@ -959,6 +960,8 @@ struct treeListElement {
     int32_t treeID;
     color4F color;
     int32_t colorSetManually;
+
+    char comment[8192];
 };
 
 struct nodeListElement {
@@ -1462,6 +1465,7 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID);
 struct nodeListElement *findNodeByCoordinate(Coordinate *position);
 struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
 struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
 uint32_t genTestNodes(uint32_t number);
 int32_t editNode(int32_t targetRevision,

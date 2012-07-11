@@ -667,6 +667,8 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     }
     newElement->colorSetManually = FALSE;
 
+    memset(newElement->comment, '\0', 8192);
+
     //Insert the new tree at the beginning of the tree list
     newElement->next = state->skeletonState->firstTree;
     newElement->previous = NULL;
@@ -700,6 +702,37 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
         refreshViewports();
 
     return newElement;
+}
+
+int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    struct treeListElement *tree = NULL;
+
+    if(lockSkeleton(targetRevision) == FALSE) {
+        LOG("addTreeComment unable to lock.");
+        unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    tree = findTreeByTreeID(treeID);
+    
+    if(comment && tree) {
+        strncpy(tree->comment, comment, 8192);
+    }
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment))
+            skeletonSyncBroken(state);
+    }
+    else
+        refreshViewports(state);
+
+    unlockSkeleton(TRUE);
+
+    return TRUE;
 }
 
 static struct segmentListElement *addSegmentListElement(
@@ -1127,6 +1160,8 @@ int32_t saveSkeleton() {
             xmlNewProp(currentXMLNode, BAD_CAST"color.a", attrString);
             memset(attrString, '\0', 128);
         }
+        memset(attrString, '\0', 128);
+        xmlNewProp(currentXMLNode, BAD_CAST"comment", currentTree->comment);
 
         nodesXMLNode = xmlNewTextChild(currentXMLNode, NULL, BAD_CAST"nodes", NULL);
         edgesXMLNode = xmlNewTextChild(currentXMLNode, NULL, BAD_CAST"edges", NULL);
@@ -1652,8 +1687,8 @@ uint32_t loadSkeleton() {
             else
                 neuronColor.a = 1.;
 
-           if(!merge) {
-                addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+            if(!merge) {
+                currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(neuronID);
             }
             else {
@@ -1661,6 +1696,12 @@ uint32_t loadSkeleton() {
                 currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
+            }
+
+            attribute = xmlGetProp(thingOrParamXMLNode, (const xmlChar *)"comment");
+            if(attribute) {
+                addTreeComment(CHANGE_MANUAL, currentTree->treeID, (char *)attribute);
+                free(attribute);
             }
 
             nodesEdgesXMLNode = thingOrParamXMLNode->children;
