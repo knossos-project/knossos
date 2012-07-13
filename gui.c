@@ -2115,9 +2115,7 @@ void UI_saveSkeleton(int32_t increment) {
     skelDir = opendir(state->viewerState->ag->skeletonDirectory);
     if(!skelDir) {
         #ifdef LINUX
-            mode_t processMask = umask(022);
-            mkdir(state->viewerState->ag->skeletonDirectory, S_IRUSR | S_IWUSR);
-            umask(processMask);
+            mkdir(state->viewerState->ag->skeletonDirectory, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
         #else
             mkdir(state->viewerState->ag->skeletonDirectory);
         #endif
