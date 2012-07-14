@@ -570,7 +570,7 @@ void createDataSizeWin() {
     }
     AG_WindowSetGeometryBounded(win,
                                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
                                 200,
                                 20);
     AG_WindowShow(win);
@@ -586,7 +586,7 @@ void createDataSizeWin() {
     }
     AG_WindowSetGeometryBounded(win,
                                 state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
                                 200,
                                 20);
     AG_WindowShow(win);
@@ -602,7 +602,7 @@ void createDataSizeWin() {
     }
     AG_WindowSetGeometryBounded(win,
                                 state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
                                 200,
                                 20);
     AG_WindowShow(win);
@@ -2443,17 +2443,17 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
 
     AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
                                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
                                 200,
                                 20);
     AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
                                 state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
                                 200,
                                 20);
     AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
                                 state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + 5,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
                                 200,
                                 20);
 
