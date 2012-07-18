@@ -2312,9 +2312,11 @@ static void  UI_lockCurrentMagModified(AG_Event *event) {
         if(state->highestAvailableMag > state->lowestAvailableMag) {
             state->viewerState->datasetMagLock = FALSE;
         }
+        else {
+            state->viewerState->datasetMagLock = TRUE;
+        }
     }
 }
-
 
 void actNodeWdgtChanged(AG_Event *event)
 {

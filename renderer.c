@@ -207,12 +207,12 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
                 glLoadIdentity();
             }
             /* left, right, bottom, top, near, far clipping planes */
-            glOrtho(-((float)state->boundary.x / 2.) + (float)state->viewerState->currentPosition.x - dataPxX,
-                -((float)state->boundary.x / 2.) + (float)state->viewerState->currentPosition.x + dataPxX,
-                -((float)state->boundary.y / 2.) + (float)state->viewerState->currentPosition.y - dataPxY,
-                -((float)state->boundary.y / 2.) + (float)state->viewerState->currentPosition.y + dataPxY,
-                ((float)state->boundary.z / 2.) - state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z,
-                ((float)state->boundary.z / 2.) + state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z);
+            glOrtho(-((float)(state->boundary.x)/ 2.) + (float)state->viewerState->currentPosition.x - dataPxX,
+                -((float)(state->boundary.x) / 2.) + (float)state->viewerState->currentPosition.x + dataPxX,
+                -((float)(state->boundary.y) / 2.) + (float)state->viewerState->currentPosition.y - dataPxY,
+                -((float)(state->boundary.y) / 2.) + (float)state->viewerState->currentPosition.y + dataPxY,
+                ((float)(state->boundary.z) / 2.) - state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z,
+                ((float)(state->boundary.z) / 2.) + state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z);
 
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();

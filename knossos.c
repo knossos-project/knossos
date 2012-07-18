@@ -948,94 +948,137 @@ static int32_t findAndRegisterAvailableDatasets() {
     char datasetBaseDirName[1024];
     char datasetBaseExpName[1024];
     int32_t isPathSepTerminated = FALSE;
+    uint32_t pathLen;
 
-    /* take base path and go one level up */
-    uint32_t pathLen = strlen(state->path);
+    /* Analyze state->name to find out whether we're dealing with
+     * a dataset that has its mag specified */
+    if(strstr(state->name, "mag") != NULL) {
 
-    for(i = 1; i < pathLen; i++) {
-        if((state->path[pathLen-i] == '\\')
-            || (state->path[pathLen-i] == '/')) {
-            if(i == 1) {
-                /* This is the trailing path separator, ignore. */
-                isPathSepTerminated = TRUE;
-                continue;
-            }
-            /* this contains the path "one level up" */
-            strncpy(levelUpPath, state->path, pathLen - i + 1);
-            /* this contains the dataset dir without "mag1"
-             * K must be launched with state->path set to the
-             * mag1 dataset for multires to work! This is by convention. */
-            if(isPathSepTerminated) {
-                strncpy(datasetBaseDirName, state->path + pathLen - i, i - 5);
-            }
-            else {
-                strncpy(datasetBaseDirName, state->path + pathLen - i, i - 4);
-            }
+        /* test state->magnification; if it is not 1, K was launched with
+         * a mag dataset different than 1 which means that a few variables need scaling
+         * since K assumes since multires that they are in mag1.
+         * This absolutely requires the dataset config files to be correct! */
+        if(state->magnification != 1) {
 
-            // does not work that early?!
-            LOG("multires extracted datasetBaseDirName: %s", datasetBaseDirName);
-            LOG("multires extracted levelUpPath: %s", levelUpPath);
-            break;
+            state->boundary.x *= state->magnification;
+            state->boundary.y *= state->magnification;
+            state->boundary.z *= state->magnification;
+
+            state->scale.x /= (float)state->magnification;
+            state->scale.y /= (float)state->magnification;
+            state->scale.z /= (float)state->magnification;
         }
+
+        /* take base path and go one level up */
+        pathLen = strlen(state->path);
+
+        for(i = 1; i < pathLen; i++) {
+            if((state->path[pathLen-i] == '\\')
+                || (state->path[pathLen-i] == '/')) {
+                if(i == 1) {
+                    /* This is the trailing path separator, ignore. */
+                    isPathSepTerminated = TRUE;
+                    continue;
+                }
+                /* this contains the path "one level up" */
+                strncpy(levelUpPath, state->path, pathLen - i + 1);
+                /* this contains the dataset dir without "mag1"
+                 * K must be launched with state->path set to the
+                 * mag1 dataset for multires to work! This is by convention. */
+                if(isPathSepTerminated) {
+                    strncpy(datasetBaseDirName, state->path + pathLen - i, i - 5);
+                }
+                else {
+                    strncpy(datasetBaseDirName, state->path + pathLen - i, i - 4);
+                }
+
+                break;
+            }
+        }
+
+        state->lowestAvailableMag = INT_MAX;
+        state->highestAvailableMag = 1;
+        currMag = 1;
+
+        /* iterate over all possible mags and test their availability */
+        for(i = 0; i < NUM_MAG_DATASETS; i++) {
+
+            /* compile the path to the currently tested directory */
+            if(i!=0) currMag *= 2;
+    #ifdef LINUX
+            sprintf(currPath,
+                "%s%smag%d/",
+                levelUpPath,
+                datasetBaseDirName,
+                currMag);
+    #else
+            sprintf(currPath,
+                "%s%smag%d\\",
+                levelUpPath,
+                datasetBaseDirName,
+                currMag);
+    #endif
+            FILE *testKconf;
+            sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+
+            /* try fopen() on knossos.conf of currently tested dataset */
+            if (testKconf = fopen(currKconfPath, "r")) {
+
+                if(state->lowestAvailableMag > currMag) {
+                    state->lowestAvailableMag = currMag;
+                }
+
+                state->highestAvailableMag = currMag;
+
+                fclose(testKconf);
+                /* add dataset path to magPaths; magPaths is used by the loader */
+                strcpy(state->magPaths[i], currPath);
+
+                /* the last 4 letters are "mag1" by convention; if not,
+                 * K multires won't work */
+                strncpy(datasetBaseExpName,
+                        state->name,
+                        strlen(state->name)-4);
+
+                strncpy(state->datasetBaseExpName,
+                        datasetBaseExpName,
+                        strlen(datasetBaseExpName)-1);
+
+                sprintf(state->magNames[i], "%smag%d", datasetBaseExpName, currMag);
+            } else break;
+        }
+
+        /* Enable multires by default if more than one dataset was found.
+         * The loaded gui config might lock K to the current mag later one, which is fine. */
+        if(state->highestAvailableMag > 1) {
+            state->viewerState->datasetMagLock = FALSE;
+        }
+        state->magnification = state->lowestAvailableMag;
+
     }
+    /* no magstring found, take mag read from .conf file of dataset */
+    else {
+        /* state->magnification already contains the right mag! */
 
-    /* mag 1 is always available: it is the "fallback" for datasets
-     * that specify no mags. */
-    state->lowestAvailableMag = 1;
-    state->highestAvailableMag = 1;
-    currMag = 1;
+        /* the loader uses only magNames and magPaths */
+        strcpy(state->magNames[log2uint32(state->magnification)], state->name);
+        strcpy(state->magPaths[log2uint32(state->magnification)], state->path);
 
-    /* iterate over all possible mags and test their availability */
-    for(i = 0; i < NUM_MAG_DATASETS; i++) {
+        state->lowestAvailableMag = state->magnification;
+        state->highestAvailableMag = state->magnification;
 
-        /* compile the path to the currently tested directory */
-        //currMag = (uint32_t)(pow(2., (double)i)+0.5);
-        if(i!=0) currMag *= 2;
-#ifdef LINUX
-        sprintf(currPath,
-            "%s%smag%d/",
-            levelUpPath,
-            datasetBaseDirName,
-            currMag);
-#else
-        sprintf(currPath,
-            "%s%smag%d\\",
-            levelUpPath,
-            datasetBaseDirName,
-            currMag);
-#endif
-        FILE *testKconf;
-        sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+        state->boundary.x *= state->magnification;
+        state->boundary.y *= state->magnification;
+        state->boundary.z *= state->magnification;
 
-        /* try fopen() on knossos.conf of currently tested dataset */
-        if (testKconf = fopen(currKconfPath, "r")) {
-            //if(i!=0) state->highestAvailableMag *= 2;
-            state->highestAvailableMag = currMag;
+        state->scale.x /= (float)state->magnification;
+        state->scale.y /= (float)state->magnification;
+        state->scale.z /= (float)state->magnification;
 
-            fclose(testKconf);
-            /* add dataset path to magPaths; magPaths is used by the loader */
-            strcpy(state->magPaths[i], currPath);
+        state->viewerState->datasetMagLock = TRUE;
 
-            /*add exp name to magNames; magNames is used by the loader */
+        strcpy(state->datasetBaseExpName, state->name);
 
-            /* the last 4 letters are "mag1" by convenvtion; if not,
-             * K multires won't work */
-            strncpy(datasetBaseExpName,
-                    state->name,
-                    strlen(state->name)-4);
-
-            strncpy(state->datasetBaseExpName,
-                    datasetBaseExpName,
-                    strlen(datasetBaseExpName)-1);
-
-            sprintf(state->magNames[i], "%smag%d", datasetBaseExpName, currMag);
-        } else break;
-    }
-
-    /* Enable multires by default if more than one dataset was found.
-     * The loaded gui config might lock K to the current mag later one, which is fine. */
-    if(state->highestAvailableMag > 1) {
-        state->viewerState->datasetMagLock = FALSE;
     }
     return TRUE;
 }

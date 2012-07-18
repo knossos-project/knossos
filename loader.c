@@ -336,7 +336,7 @@ static uint32_t loadCube(Coordinate coordinate,
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
     cubeFile = fopen(filename, "rb");
-    LOG("succesfully loaded: %s", filename);
+    //LOG("succesfully loaded: %s", filename);
     if(cubeFile == NULL) {
         LOG("failed to load %s", filename);
         goto loadcube_fail;
@@ -773,12 +773,13 @@ static uint32_t loadCubes() {
                     state->loaderMagnification);
                 return FALSE;
             }
-                LOG("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+            /*    LOG("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
                     currentDcSlot->cube,
                     state->loaderMagnification);
+                    */
         }
 
         if(loadedOc) {

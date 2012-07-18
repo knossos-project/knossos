@@ -697,9 +697,17 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
                             if (clickedCoordinate->x < 0) clickedCoordinate->x = 0;
                             if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
                             if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
-                            if (clickedCoordinate->x > state->boundary.x) clickedCoordinate->x = state->boundary.x;
-                            if (clickedCoordinate->y > state->boundary.y) clickedCoordinate->y = state->boundary.y;
-                            if (clickedCoordinate->z > state->boundary.z) clickedCoordinate->z = state->boundary.z;
+
+                            /* Do not allow clicks outside the dataset */
+                            if (clickedCoordinate->x
+                                > state->boundary.x)
+                                clickedCoordinate->x = state->boundary.x;
+                            if (clickedCoordinate->y
+                                > state->boundary.y)
+                                clickedCoordinate->y = state->boundary.y;
+                            if (clickedCoordinate->z
+                                > state->boundary.z)
+                                clickedCoordinate->z = state->boundary.z;
 
                             /* Move to the new node position */
                             tempConfig->remoteState->type = REMOTE_RECENTERING;
