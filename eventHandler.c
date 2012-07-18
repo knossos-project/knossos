@@ -1389,9 +1389,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               prevNode->position.x/state->magnification,
-                               prevNode->position.y/state->magnification,
-                               prevNode->position.z/state->magnification);
+                               prevNode->position.x,
+                               prevNode->position.y,
+                               prevNode->position.z);
                 sendRemoteSignal();
             }
             else {
@@ -1404,9 +1404,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
         if(nextNode != NULL) {
             setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
             SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               nextNode->position.x/state->magnification,
-                               nextNode->position.y/state->magnification,
-                               nextNode->position.z/state->magnification);
+                               nextNode->position.x,
+                               nextNode->position.y,
+                               nextNode->position.z);
             sendRemoteSignal();
         }
         else {
