@@ -715,7 +715,7 @@ int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
     }
 
     tree = findTreeByTreeID(treeID);
-    
+
     if(comment && tree) {
         strncpy(tree->comment, comment, 8192);
     }
@@ -3514,11 +3514,11 @@ int32_t popBranchNode(int32_t targetRevision) {
 #endif
 
         tempConfig->viewerState->currentPosition.x
-            = branchNode->position.x / state->magnification;
+            = branchNode->position.x;
         tempConfig->viewerState->currentPosition.y
-            = branchNode->position.y / state->magnification;
+            = branchNode->position.y;
         tempConfig->viewerState->currentPosition.z
-            = branchNode->position.z / state->magnification;
+            = branchNode->position.z;
 
 
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
@@ -3551,14 +3551,11 @@ exit_popbranchnode:
 int32_t jumpToActiveNode() {
     if(state->skeletonState->activeNode) {
         tempConfig->viewerState->currentPosition.x =
-            state->skeletonState->activeNode->position.x /
-            state->magnification;
+            state->skeletonState->activeNode->position.x;
         tempConfig->viewerState->currentPosition.y =
-            state->skeletonState->activeNode->position.y /
-            state->magnification;
+            state->skeletonState->activeNode->position.y;
         tempConfig->viewerState->currentPosition.z =
-            state->skeletonState->activeNode->position.z /
-            state->magnification;
+            state->skeletonState->activeNode->position.z;
 
         updatePosition(TELL_COORDINATE_CHANGE);
     }

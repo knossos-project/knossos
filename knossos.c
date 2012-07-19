@@ -519,7 +519,10 @@ static int32_t initStates() {
         state->viewerState->viewPorts[i].userMouseSlideX = tempConfig->viewerState->viewPorts[i].userMouseSlideX;
         state->viewerState->viewPorts[i].userMouseSlideY = tempConfig->viewerState->viewPorts[i].userMouseSlideY;
         state->viewerState->viewPorts[i].edgeLength = tempConfig->viewerState->viewPorts[i].edgeLength;
-        state->viewerState->viewPorts[i].texture.texUnitsPerDataPx = tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+        state->viewerState->viewPorts[i].texture.texUnitsPerDataPx =
+            tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+            / (float)state->magnification;
+
         state->viewerState->viewPorts[i].texture.edgeLengthPx = tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
         state->viewerState->viewPorts[i].texture.edgeLengthDc = tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc;
         state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
@@ -973,24 +976,14 @@ static int32_t findAndRegisterAvailableDatasets() {
     int32_t isPathSepTerminated = FALSE;
     uint32_t pathLen;
 
-    /* Analyze state->name to find out whether we're dealing with
-     * a dataset that has its mag specified */
-    if(strstr(state->name, "mag") != NULL) {
+    /* Analyze state->name to find out whether K was launched with
+     * a dataset that allows multires. */
 
-        /* test state->magnification; if it is not 1, K was launched with
-         * a mag dataset different than 1 which means that a few variables need scaling
-         * since K assumes since multires that they are in mag1.
-         * This absolutely requires the dataset config files to be correct! */
-        if(state->magnification != 1) {
-
-            state->boundary.x *= state->magnification;
-            state->boundary.y *= state->magnification;
-            state->boundary.z *= state->magnification;
-
-            state->scale.x /= (float)state->magnification;
-            state->scale.y /= (float)state->magnification;
-            state->scale.z /= (float)state->magnification;
-        }
+    /* Multires is only enabled if K is launched with mag1!
+    * Launching it with another dataset than mag1 leads to the old
+    * behavior, that only this mag is shown, this happens also
+    * when the path contains no mag string. */
+    if((strstr(state->name, "mag") != NULL) && (state->magnification == 1)) {
 
         /* take base path and go one level up */
         pathLen = strlen(state->path);
@@ -1077,6 +1070,14 @@ static int32_t findAndRegisterAvailableDatasets() {
             state->viewerState->datasetMagLock = FALSE;
         }
         state->magnification = state->lowestAvailableMag;
+
+        /*state->boundary.x *= state->magnification;
+        state->boundary.y *= state->magnification;
+        state->boundary.z *= state->magnification;
+
+        state->scale.x /= (float)state->magnification;
+        state->scale.y /= (float)state->magnification;
+        state->scale.z /= (float)state->magnification;*/
 
     }
     /* no magstring found, take mag read from .conf file of dataset */
