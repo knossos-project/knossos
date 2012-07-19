@@ -109,7 +109,7 @@ int loader() {
                 LOG("Error computing DCOI from position.");
                 continue;
             }
-            LOG("loader mag change triggered, now in mag %d", state->loaderMagnification);
+            //LOG("loader mag change triggered, now in mag %d", state->loaderMagnification);
             state->datasetChangeSignal = NO_MAG_CHANGE;
         }
 
@@ -338,7 +338,7 @@ static uint32_t loadCube(Coordinate coordinate,
     cubeFile = fopen(filename, "rb");
     //LOG("succesfully loaded: %s", filename);
     if(cubeFile == NULL) {
-        LOG("failed to load %s", filename);
+        //LOG("failed to load %s", filename);
         goto loadcube_fail;
     }
 

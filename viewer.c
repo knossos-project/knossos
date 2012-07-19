@@ -1484,12 +1484,12 @@ uint32_t changeDatasetMag(uint32_t upOrDownFlag) {
     state->viewerState->userMove = TRUE;
     recalcTextureOffsets();
 
-    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+  /*  for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
             LOG("left upper tex px of VP %d is: %d, %d, %d",i, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z);
 
         }
-    }
+    }*/
     sendDatasetChangeSignal(upOrDownFlag);
     //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
@@ -1536,6 +1536,7 @@ uint32_t recalcTextureOffsets() {
     /* Every time the texture offset coords change,
     the skeleton VP must be updated. */
     state->skeletonState->viewChanged = TRUE;
+    calcDisplayedEdgeLength();
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         /* Do this only for orthogonal VPs... */
@@ -1544,22 +1545,18 @@ uint32_t recalcTextureOffsets() {
                 || state->viewerState->viewPorts[i].type == VIEWPORT_YZ) {
             /*Don't remove /2 *2, integer division! */
 
-/* old code for smaller FOV
-            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-                state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-                    ((float)(((state->M / 2) * 2 - 1) * state->cubeEdgeLength))
-                    / ((float)state->viewerState->viewPorts[i].texture.edgeLengthPx);
+            /* old code for smaller FOV
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                            state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                                ((float)(((state->M / 2) * 2 - 1) * state->cubeEdgeLength))
+                                / ((float)state->viewerState->viewPorts[i].texture.edgeLengthPx);
 
-*/
+            */
 
-        /* new code for larger FOV */
-        /* displayedEdgeLength is in texture pixels, independent from the
-         * currently active mag! */
-        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-                    state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
-                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-                    * 2.;
+                    /* new code for larger FOV */
+                    /* displayedEdgeLength is in texture pixels, independent from the
+                     * currently active mag! */
+
 
 
             //Multiply the zoom factor. (only truncation possible! 1 stands for minimal zoom)
@@ -1937,3 +1934,18 @@ static SDL_Cursor *GenCursor(char *xpm[], int xHot, int yHot) {
     return SDL_CreateCursor(data, mask, w, h, xHot, yHot);
 }
 
+int32_t calcDisplayedEdgeLength() {
+    int32_t i;
+    float FOVinDCs;
+
+    FOVinDCs = ((float)state->M) - 1.f;
+
+    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+            FOVinDCs * (float)state->cubeEdgeLength
+            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+    }
+
+    return TRUE;
+}

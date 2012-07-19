@@ -453,7 +453,15 @@ static int32_t initStates() {
     state->offset.y = tempConfig->offset.y;
     state->offset.z = tempConfig->offset.z;
     state->cubeEdgeLength = tempConfig->cubeEdgeLength;
-    state->M = tempConfig->M;
+
+    if(tempConfig->M % 2 == 0) {
+        state->M = tempConfig->M - 1;
+        tempConfig->M = state->M;
+    }
+    else {
+        state->M = tempConfig->M;
+    }
+
     state->magnification = tempConfig->magnification;
     state->overlay = tempConfig->overlay;
 
@@ -517,24 +525,41 @@ static int32_t initStates() {
         state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
         state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
         state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
-/*
+/* old version, smaller buffer
         state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
                     (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
                     / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
                     * 2.;
 */
         /* make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering! */
-        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+/*        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
                     ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
                     / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
                     * 2.;
+*/
+/* latest version */
 
-        if(state->viewerState->viewPorts[i].texture.usedTexLengthPx
-                > state->viewerState->viewPorts[i].texture.edgeLengthPx) {
-            LOG("Please choose smaller values for M or N. Your choice exceeds the maximum texture size available!");
-            return FALSE;
-        }
+/*
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                    ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
+                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                    * (float) tempConfig->cubeEdgeLength);
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+
+            * (float) tempConfig->cubeEdgeLength)
+            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+
+*/
     }
+
+    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+        return FALSE;
+    }
+
+    calcDisplayedEdgeLength();
 
     /* For the GUI */
     strncpy(state->viewerState->ag->settingsFile,
@@ -940,9 +965,7 @@ allowing K to dynamically switch the mag when the user zooms out or in */
 static int32_t findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
     uint32_t currMag, i;
-    char pathBuffer[1024];
     char currPath[1024];
-    char currExpName[1024];
     char levelUpPath[1024];
     char currKconfPath[1024];
     char datasetBaseDirName[1024];

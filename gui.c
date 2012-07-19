@@ -1342,7 +1342,7 @@ void createSetDynRangeWin() {
 
 void createCommentsWin() {
     AG_Window *win;
-    AG_Label *label;
+//    AG_Label *label;
     AG_Textbox *textbox;
     AG_Box *box;
 	win = AG_WindowNew(0);

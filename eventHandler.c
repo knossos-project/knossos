@@ -183,7 +183,7 @@ static int32_t sdlToAgarEvent(void *obj, SDL_Event sdl_ev, AG_DriverEvent *ag_ev
         ag_ev->data.videoresize.y = 0;
         ag_ev->data.videoresize.w = (int)sdl_ev.resize.w;
         ag_ev->data.videoresize.h = (int)sdl_ev.resize.h;
-        LOG("resizeevent");
+//        LOG("resizeevent");
         break;
     case SDL_VIDEOEXPOSE:
         ag_ev->type = AG_DRIVER_EXPOSE;

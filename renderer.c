@@ -2280,7 +2280,7 @@ static uint32_t renderText(Coordinate *pos,
 
     char *c;
     //int32_t transFactor = 1;
-    Coordinate transPos;
+    //Coordinate transPos;
 
     //if(coordinateMag == ORIGINAL_MAG_COORDINATES)
     //    transFactor = state->magnification;
