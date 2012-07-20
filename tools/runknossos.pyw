@@ -63,9 +63,11 @@ class RunKnossos(RunKnossosUI):
     # Add button
     #
     def add_button_command(self, *args):
-        path = os.path.abspath(filedialog.askdirectory())
+        path = filedialog.askdirectory()
+        if not path:
+            return
 
-        self.addDataset(path)
+        self.addDataset(os.path.abspath(path))
 
     def del_button_command(self, *args):
         try:
