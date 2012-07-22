@@ -3098,6 +3098,11 @@ uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElemen
 
         state->skeletonState->currentComment = newComment;
     }
+    //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
+    memset(state->skeletonState->commentBuffer, '\0', 10240);
+    strncpy(state->skeletonState->commentBuffer,
+            state->skeletonState->currentComment->content,
+            strlen(state->skeletonState->currentComment->content));
 
     state->skeletonState->unsavedChanges = TRUE;
     state->skeletonState->skeletonRevision++;
@@ -3141,11 +3146,18 @@ uint32_t editComment(int32_t targetRevision,
     nodeID = currentComment->node->nodeID;
 
     if(newContent) {
-        if(currentComment->content)
+        if(currentComment->content) {
             free(currentComment->content);
+        }
         currentComment->content = malloc(strlen(newContent) * sizeof(char) + 1);
         memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);
         strncpy(currentComment->content, newContent, strlen(newContent));
+
+        //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
+        memset(state->skeletonState->commentBuffer, '\0', 10240);
+        strncpy(state->skeletonState->commentBuffer,
+                state->skeletonState->currentComment->content,
+                strlen(state->skeletonState->currentComment->content));
     }
 
     if(newNodeID)
