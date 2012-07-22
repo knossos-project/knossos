@@ -1521,6 +1521,13 @@ static uint32_t handleKeyboard(SDL_Event event) {
         else{
             editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
         }
+        if(state->skeletonState->activeNode->comment) {
+            state->skeletonState->currentComment = state->skeletonState->activeNode->comment;
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
+        }
         break;
 
     case SDLK_F2:
@@ -1530,6 +1537,13 @@ static uint32_t handleKeyboard(SDL_Event event) {
         else{
             editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
         }
+        if(state->skeletonState->activeNode->comment) {
+            state->skeletonState->currentComment = state->skeletonState->activeNode->comment;
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
+        }
         break;
 
     case SDLK_F3:
@@ -1538,6 +1552,13 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         else{
             editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+        }
+        if(state->skeletonState->activeNode->comment) {
+            state->skeletonState->currentComment = state->skeletonState->activeNode->comment;
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
         }
         break;
 
@@ -1551,13 +1572,19 @@ static uint32_t handleKeyboard(SDL_Event event) {
             }
             break;
         }
-        else{
-            if(!state->skeletonState->activeNode->comment){
+
+        if(!state->skeletonState->activeNode->comment){
             addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
-            }
-            else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
-            }
+        }
+        else{
+            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+        }
+        if(state->skeletonState->activeNode->comment) {
+            state->skeletonState->currentComment = state->skeletonState->activeNode->comment;
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
         }
         break;
 
@@ -1567,6 +1594,13 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         else{
             editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+        }
+        if(state->skeletonState->activeNode->comment) {
+            state->skeletonState->currentComment = state->skeletonState->activeNode->comment;
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
         }
         break;
     default:
