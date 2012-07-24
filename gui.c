@@ -2487,14 +2487,12 @@ static void actTreeIDWdgtModified(AG_Event *event) {
 
     setActiveTreeByID(state->viewerState->ag->activeTreeID);
     if(state->skeletonState->activeTree) {
-        //find last node of active tree
-        activeNode = state->skeletonState->activeTree->firstNode;
-        if(activeNode != NULL) {
-            while(activeNode->next) {
-                activeNode = activeNode->next;
-            }
-            setActiveNode(CHANGE_MANUAL, activeNode, 0);
-        }
+        setActiveNode(CHANGE_MANUAL, state->skeletonState->activeTree->firstNode, 0);
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               state->skeletonState->activeTree->firstNode->position.x,
+                               state->skeletonState->activeTree->firstNode->position.y,
+                               state->skeletonState->activeTree->firstNode->position.z);
+        sendRemoteSignal();
     }
 }
 

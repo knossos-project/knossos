@@ -2147,15 +2147,60 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     return TRUE;
 }
 
+struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree) {
+    struct treeListElement *tree = state->skeletonState->firstTree;
+    struct treeListElement *prevTree = NULL;
+    uint32_t idDistance = state->skeletonState->treeElements;
+    uint32_t tempDistance = idDistance;
+
+    while(tree) {
+        if(tree->treeID < currentTree->treeID) {
+            tempDistance = currentTree->treeID - tree->treeID;
+            if(tempDistance == 1) {//smallest distance possible
+                return tree;
+            }
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                prevTree = tree;
+            }
+        }
+        tree = tree->next;
+    }
+    return prevTree;
+}
+
+struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree) {
+    struct treeListElement *tree = state->skeletonState->firstTree;
+    struct treeListElement *nextTree = NULL;
+    uint32_t idDistance = state->skeletonState->treeElements;
+    uint32_t tempDistance = idDistance;
+
+    while(tree) {
+        if(tree->treeID > currentTree->treeID) {
+            tempDistance = tree->treeID - currentTree->treeID;
+
+            if(tempDistance == 1) { //smallest distance possible
+                return tree;
+            }
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                nextTree = tree;
+            }
+        }
+        tree = tree->next;
+    }
+    return nextTree;
+}
+
 struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *prevNode = NULL;
-    unsigned int idDistance = state->skeletonState->totalNodeElements;
-    unsigned int tempDistance = idDistance;
+    uint32_t idDistance = state->skeletonState->totalNodeElements;
+    uint32_t tempDistance = idDistance;
 
     while(node) {
         if(node->nodeID < currentNode->nodeID) {
-            tempDistance = state->skeletonState->activeNode->nodeID - node->nodeID;
+            tempDistance = currentNode->nodeID - node->nodeID;
             if(tempDistance == 1) { //smallest distance possible
                 return node;
             }
@@ -2172,8 +2217,8 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
 struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *nextNode = NULL;
-    unsigned int idDistance = state->skeletonState->totalNodeElements;
-    unsigned int tempDistance = idDistance;
+    uint32_t idDistance = state->skeletonState->totalNodeElements;
+    uint32_t tempDistance = idDistance;
 
     while(node) {
         if(node->nodeID > currentNode->nodeID) {

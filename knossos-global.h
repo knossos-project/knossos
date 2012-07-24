@@ -1465,6 +1465,8 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID);
 struct nodeListElement *findNodeByCoordinate(Coordinate *position);
 struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree);
+struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree);
 int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
 struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
 uint32_t genTestNodes(uint32_t number);
