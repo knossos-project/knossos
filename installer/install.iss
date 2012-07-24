@@ -2,11 +2,11 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Knossos"
-#define MyAppVersion "3.2"
+#define MyAppVersion "3.2Beta2"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
-#define pythonSetup "python-2.7.2.msi"
+#define pythonSetup "python-2.7.3.msi"
 #define KNOSSOS_SRC_PATH "../"
 #define License "../LICENSE"
 
@@ -60,12 +60,14 @@ Source: "{#KNOSSOS_SRC_PATH}splash"; DestDir: "{app}"; Flags: ignoreversion
 ;Source: "skeletonFiles\"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#KNOSSOS_SRC_PATH}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+[UninstallDelete]
+
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}" ; IconFilename: "{app}\logo.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\tools\runknossos.pyw" ; IconFilename: "{app}\logo.ico"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
-
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\tools\runknossos.pyw"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
+       
 
 [Run]
 
