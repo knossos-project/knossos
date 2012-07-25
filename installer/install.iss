@@ -61,7 +61,7 @@ Source: "{#KNOSSOS_SRC_PATH}splash"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 [UninstallDelete]
-
+Type: files; Name: "{app}"
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\tools\runknossos.pyw" ; IconFilename: "{app}\logo.ico"
@@ -71,6 +71,6 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\tools\runknossos.pyw"; Ta
 
 [Run]
 
-Filename: "{app}\tools\{#pythonSetup}"; Description: "Install Python(required)" ; Flags: shellexec postinstall skipifsilent
+Filename: "{app}\tools\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
 ;Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent
 
