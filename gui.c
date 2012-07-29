@@ -2482,9 +2482,7 @@ static void actNodeIDWdgtModified(AG_Event *event) {
 
 
 static void actTreeIDWdgtModified(AG_Event *event) {
-    //set active tree and set its last node to active node
-    struct nodeListElement *activeNode;
-
+    //set active tree and set its first node to active node
     setActiveTreeByID(state->viewerState->ag->activeTreeID);
     if(state->skeletonState->activeTree) {
         setActiveNode(CHANGE_MANUAL, state->skeletonState->activeTree->firstNode, 0);
@@ -3392,7 +3390,7 @@ static void UI_loadSettings() {
     xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, currentRecentFile, currentWindow;
     xmlChar *attribute, *path, *pos;
-    char *win;
+    char *win = NULL;
     int32_t reqScreenSizeX = 0, reqScreenSizeY = 0, x_win = 0, y_win = 0, w_win = 0, h_win = 0, visible_win = 0;
     AG_Window *win_ptr = NULL;
 
@@ -3965,7 +3963,7 @@ uint32_t addRecentFile(char *path, uint32_t pos) {
      */
 
     int32_t i = 0;
-    AG_MenuItem *currentNode;
+    AG_MenuItem *currentNode = NULL;
 
     if(pos > 0 && pos <= MAX_RECENT_FILES) {
         /* Add to a specific position, do not move other paths. */

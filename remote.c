@@ -258,11 +258,11 @@ int32_t remoteWalk(int32_t x, int32_t y, int32_t z) {
         updateViewerState();
     }
 
-    uint32_t recenteringTime;
+    uint32_t recenteringTime = 0;
     if (state->viewerState->walkOrth == FALSE){
         recenteringTime = state->viewerState->recenteringTime;
-        }
-    if (state->viewerState->walkOrth == TRUE){
+    }
+    else {
         recenteringTime = state->viewerState->recenteringTimeOrth;
         state->viewerState->walkOrth = FALSE;
     }
@@ -397,13 +397,13 @@ int32_t newTrajectory(char *trajName, char *trajectory) {
                 free(state->trajectories[i].source);
                 state->trajectories[i].source = NULL;
             }
-            state->trajectories[i].source = strdup(trajectory);
+            state->trajectories[i].source = (char*) strdup(trajectory);
             return TRUE;
         }
 
         if(state->trajectories[i].name[0] == '\0') {
             strncpy(state->trajectories[i].name, trajName, 63);
-            state->trajectories[i].source = strdup(trajectory);
+            state->trajectories[i].source = (char*) strdup(trajectory);
             return TRUE;
         }
     }

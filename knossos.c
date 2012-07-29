@@ -736,7 +736,7 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
 /* allows the on-the-fly change of the dataset name, making the simple uncached
 multi-res. implementation possible.
 this function should only be called from the viewer thread! */
-int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag) {
+void sendDatasetChangeSignal(uint32_t upOrDownFlag) {
     /* the loader is required to not block this mutex for too long,
     * the user might experience short KNOSSOS lock-ups while zooming
     * otherwise. */
@@ -1038,7 +1038,7 @@ static int32_t findAndRegisterAvailableDatasets() {
             sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
 
             /* try fopen() on knossos.conf of currently tested dataset */
-            if (testKconf = fopen(currKconfPath, "r")) {
+            if ((testKconf = fopen(currKconfPath, "r"))) {
 
                 if(state->lowestAvailableMag > currMag) {
                     state->lowestAvailableMag = currMag;

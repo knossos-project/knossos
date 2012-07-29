@@ -1328,7 +1328,7 @@ int32_t sendRemoteSignal();
 int32_t sendClientSignal();
 int32_t sendQuitSignal();
 int32_t sendServerSignal();
-int32_t sendDatasetChangeSignal(uint32_t upOrDownFlag);
+void sendDatasetChangeSignal(uint32_t upOrDownFlag);
 uint32_t log2uint32(register uint32_t x);
 uint32_t ones32(register uint32_t x);
 
@@ -1359,6 +1359,7 @@ int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
 int32_t loadTreeColorTable(const char *path, float *table, int32_t type);
 int32_t updateTreeColors();
 int32_t updatePosition(int32_t serverMovement);
+int32_t calcDisplayedEdgeLength();
 
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
 uint32_t changeDatasetMag(uint32_t upOrDownFlag);

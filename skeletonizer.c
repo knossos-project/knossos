@@ -1384,14 +1384,14 @@ uint32_t loadSkeleton() {
     xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
     int32_t neuronID = 0, nodeID = 0, merge = FALSE;
-    int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading, greatestTreeIDbeforeLoading;
+    int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
     Byte VPtype;
     int32_t inMag, magnification = 0;
     int32_t globalMagnificationSpecified = FALSE;
     xmlChar *attribute;
     struct treeListElement *currentTree;
-    struct nodeListElement *currentNode;
+    struct nodeListElement *currentNode = NULL;
     Coordinate *currentCoordinate, loadedPosition;
     Coordinate offset;
     floatCoordinate scale;
@@ -3540,7 +3540,7 @@ int32_t popBranchNode(int32_t targetRevision) {
     */
 
     struct nodeListElement *branchNode = NULL;
-    PTRSIZEINT branchNodeID;
+    PTRSIZEINT branchNodeID = 0;
 
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);

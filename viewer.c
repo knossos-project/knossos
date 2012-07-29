@@ -38,6 +38,7 @@
 #include <string.h>
 #include <math.h>
 #include <SDL/SDL.h>
+#include <SDL/SDL_Clipboard.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 
@@ -891,7 +892,7 @@ static int32_t vpHandleBacklog(struct vpListElement *currentVp,
         }
         else if(currentElement->cubeType == CUBE_OVERLAY) {
             SDL_LockMutex(state->protectCube2Pointer);
-            cube = ht_get(state->Oc2Pointer, currentElement->cube);
+            cube = ht_get((Hashtable*) state->Oc2Pointer, currentElement->cube);
             SDL_UnlockMutex(state->protectCube2Pointer);
 
             if(cube == HT_FAILURE) {
