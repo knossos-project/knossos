@@ -976,6 +976,13 @@ static int32_t findAndRegisterAvailableDatasets() {
     int32_t isPathSepTerminated = FALSE;
     uint32_t pathLen;
 
+    memset(currPath, '\0', 1024);
+    memset(levelUpPath, '\0', 1024);
+    memset(currKconfPath, '\0', 1024);
+    memset(datasetBaseDirName, '\0', 1024);
+    memset(datasetBaseExpName, '\0', 1024);
+
+
     /* Analyze state->name to find out whether K was launched with
      * a dataset that allows multires. */
 
@@ -998,14 +1005,17 @@ static int32_t findAndRegisterAvailableDatasets() {
                 }
                 /* this contains the path "one level up" */
                 strncpy(levelUpPath, state->path, pathLen - i + 1);
+                levelUpPath[pathLen - i + 1] = '\0';
                 /* this contains the dataset dir without "mag1"
                  * K must be launched with state->path set to the
                  * mag1 dataset for multires to work! This is by convention. */
                 if(isPathSepTerminated) {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i, i - 5);
+                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
+                    datasetBaseDirName[i - 6] = '\0';
                 }
                 else {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i, i - 4);
+                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
+                    datasetBaseDirName[i - 5] = '\0';
                 }
 
                 break;
@@ -1043,11 +1053,11 @@ static int32_t findAndRegisterAvailableDatasets() {
                 if(state->lowestAvailableMag > currMag) {
                     state->lowestAvailableMag = currMag;
                 }
-
                 state->highestAvailableMag = currMag;
 
                 fclose(testKconf);
                 /* add dataset path to magPaths; magPaths is used by the loader */
+
                 strcpy(state->magPaths[i], currPath);
 
                 /* the last 4 letters are "mag1" by convention; if not,
@@ -1055,10 +1065,12 @@ static int32_t findAndRegisterAvailableDatasets() {
                 strncpy(datasetBaseExpName,
                         state->name,
                         strlen(state->name)-4);
+                datasetBaseExpName[strlen(state->name)-4] = '\0';
 
                 strncpy(state->datasetBaseExpName,
                         datasetBaseExpName,
                         strlen(datasetBaseExpName)-1);
+                state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
 
                 sprintf(state->magNames[i], "%smag%d", datasetBaseExpName, currMag);
             } else break;
@@ -1084,6 +1096,25 @@ static int32_t findAndRegisterAvailableDatasets() {
     else {
         /* state->magnification already contains the right mag! */
 
+        pathLen = strlen(state->path);
+
+        if((state->path[pathLen-1] == '\\')
+           || (state->path[pathLen-1] == '/')) {
+        #ifdef LINUX
+            state->path[pathLen-1] = '/';
+        #else
+            state->path[pathLen-1] = '\\';
+        #endif
+        }
+        else {
+        #ifdef LINUX
+            state->path[pathLen] = '/';
+        #else
+            state->path[pathLen] = '\\';
+        #endif
+            state->path[pathLen + 1] = '\0';
+        }
+
         /* the loader uses only magNames and magPaths */
         strcpy(state->magNames[log2uint32(state->magnification)], state->name);
         strcpy(state->magPaths[log2uint32(state->magnification)], state->path);
@@ -1093,6 +1124,7 @@ static int32_t findAndRegisterAvailableDatasets() {
 
         state->boundary.x *= state->magnification;
         state->boundary.y *= state->magnification;
+        strcpy(state->datasetBaseExpName, state->name);
         state->boundary.z *= state->magnification;
 
         state->scale.x /= (float)state->magnification;
@@ -1101,7 +1133,6 @@ static int32_t findAndRegisterAvailableDatasets() {
 
         state->viewerState->datasetMagLock = TRUE;
 
-        strcpy(state->datasetBaseExpName, state->name);
 
     }
     return TRUE;
