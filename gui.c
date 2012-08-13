@@ -1342,7 +1342,7 @@ void createSetDynRangeWin() {
 
 void createCommentsWin() {
     AG_Window *win;
-//    AG_Label *label;
+    AG_Button *button;
     AG_Textbox *textbox;
     AG_Box *box;
 	win = AG_WindowNew(0);
@@ -1350,7 +1350,7 @@ void createCommentsWin() {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Comment Shortcuts");
-        AG_WindowSetGeometry(win, 628, 530, 250, 150);
+        AG_WindowSetGeometry(win, 628, 543, 250, 167);
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F1: ");
@@ -1388,11 +1388,25 @@ void createCommentsWin() {
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
+            button = AG_ButtonNewFn(win, 0, "Clear Comment Boxes", UI_deleteCommentBoxesBtnPressed, NULL);
+            AG_ExpandHoriz(button);
         }
     }
     state->viewerState->ag->commentsWin = win;
     AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
     AG_WindowShow(win);
+}
+
+void UI_deleteCommentBoxesBtnPressed() {
+    yesNoPrompt(NULL, "Do you really want to clear all comment boxes?", UI_deleteCommentBoxes, NULL);
+}
+
+UI_deleteCommentBoxes(){
+    strcpy(state->viewerState->ag->comment1, "");
+    strcpy(state->viewerState->ag->comment2, "");
+    strcpy(state->viewerState->ag->comment3, "");
+    strcpy(state->viewerState->ag->comment4, "");
+    strcpy(state->viewerState->ag->comment5, "");
 }
 
 
@@ -1404,7 +1418,7 @@ void createTracingTimeWin() {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Tracing Time");
-        AG_WindowSetGeometry(win, 879, 529, 160, 90);
+        AG_WindowSetGeometry(win, 879, 543, 160, 90);
         label = AG_LabelNew(win, 0, "Running Time: 00:00:00");
         state->viewerState->ag->runningTime = label;
         label = AG_LabelNew(win, 0, "Tracing Time: 00:00:00");
@@ -1430,7 +1444,7 @@ void createZoomingWin() {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Zoom and Multiresolution Settings");
-        AG_WindowSetGeometry(win, 739, 348, 300, 180);
+        AG_WindowSetGeometry(win, 739, 348, 300, 194);
 
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
@@ -4065,9 +4079,9 @@ void prefDefaultPrefs(){
     AG_WindowHide(state->viewerState->ag->saveOptWin);
     AG_WindowHide(state->viewerState->ag->consoleWin);
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
-    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 190);
-    AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 539, 160, 90);
-    AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 539, 250, 150);
+    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 194);
+    AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 543, 160, 90);
+    AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 543, 250, 167);
     AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);

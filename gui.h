@@ -144,6 +144,8 @@ static void UI_loadSettings();
 static void UI_setSkeletonPerspective(AG_Event *event);
 static void UI_orthoVPzoomSliderModified();
 static void UI_lockCurrentMagModified(AG_Event *event);
+static void UI_deleteCommentBoxesBtnPressed();
+static void UI_deleteCommentBoxes();
 
 static Coordinate *parseRawCoordinateString(char *string);
 static void prefDefaultPrefsWindow();
