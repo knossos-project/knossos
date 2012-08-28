@@ -1557,5 +1557,5 @@ void reloadDataSizeWin();
  void createLoadDatasetImgJTableWin();
  void createLoadTreeImgJTableWin();
  void createSetDynRangeWin();
-
+ void defaultWindowGeometry();
  void treeColorAdjustmentsChanged();

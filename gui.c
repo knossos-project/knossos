@@ -1401,7 +1401,7 @@ void UI_deleteCommentBoxesBtnPressed() {
     yesNoPrompt(NULL, "Do you really want to clear all comment boxes?", UI_deleteCommentBoxes, NULL);
 }
 
-UI_deleteCommentBoxes(){
+static void UI_deleteCommentBoxes(){
     strcpy(state->viewerState->ag->comment1, "");
     strcpy(state->viewerState->ag->comment2, "");
     strcpy(state->viewerState->ag->comment3, "");
@@ -4065,7 +4065,17 @@ uint32_t cpBaseDirectory(char *target, char *path, size_t len) {
 void prefDefaultPrefsWindow(){
     yesNoPrompt(NULL, "Do you really want to load the default preferences?", prefDefaultPrefs, NULL);
 }
-
+void defaultWindowGeometry() {
+    AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 543, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 543, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, -1, -1);
+    AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, -1, -1);
+}
 void prefDefaultPrefs(){
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
@@ -4078,6 +4088,8 @@ void prefDefaultPrefs(){
     AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
     AG_WindowHide(state->viewerState->ag->saveOptWin);
     AG_WindowHide(state->viewerState->ag->consoleWin);
+
+    //window sizes
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
     AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 194);
     AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 543, 160, 90);
@@ -4087,55 +4099,60 @@ void prefDefaultPrefs(){
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
     AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);
     AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
+
+    // viewerState
     tempConfig->viewerState->recenteringTime = 0;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->stepsPerSec = 40;
     tempConfig->viewerState->dropFrames = 1;
-    state->skeletonState->autoSaveBool = 1;
-    state->skeletonState->autoSaveInterval = 5;
-    state->skeletonState->autoFilenameIncrementBool = 1;
-    state->skeletonState->showXYplane = FALSE;
-    state->skeletonState->showXZplane = FALSE;
-    state->skeletonState->showYZplane = FALSE;
+    tempConfig->viewerState->workMode = 0;
+    tempConfig->viewerState->filterType = 9729;
+    state->viewerState->ag->useLastActNodeRadiusAsDefault = 0;
+    state->viewerState->lightOnOff = 0;
+    state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
+    state->viewerState->autoTracingDelay=50;
+    state->viewerState->autoTracingSteps=10;
+    state->viewerState->autoTracingMode=0;
+    state->viewerState->ag->radioRenderingModel = 1;
+    state->viewerState->ag->radioSkeletonDisplayMode = 0;
+    state->viewerState->datasetColortableOn = FALSE;
+    state->viewerState->treeColortableOn = FALSE;
+    state->viewerState->treeLutSet = FALSE;
     state->viewerState->drawVPCrosshairs = 1;
     state->viewerState->showVPLabels = 0;
     state->viewerState->ag->vpLabelBox->state = FALSE;
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
-    AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
-    state->skeletonState->showIntersections = 0;
     state->viewerState->depthCutOff = 5.0;
     state->viewerState->luminanceBias = 0;
     state->viewerState->luminanceRangeDelta = 255;
     state->viewerState->ag->highlightActiveTreeBox->state = TRUE;
-    state->skeletonState->highlightActiveTree = 1;
-    state->skeletonState->showNodeIDs = 0;
     state->viewerState->ag->showAllNodeIDsBox->state = FALSE;
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxy);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelxz);
+    AG_WidgetHide(state->viewerState->ag->dataSizeLabelyz);
+
+    //skeletonState
     state->skeletonState->overrideNodeRadiusBool = 0;
     state->skeletonState->overrideNodeRadiusVal = 1.0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
     state->skeletonState->rotateAroundActiveNode = 1;
     state->skeletonState->lockPositions = 0;
     state->skeletonState->lockRadius = 100;
-    state->viewerState->ag->useLastActNodeRadiusAsDefault = 0;
+    state->skeletonState->autoSaveBool = 1;
+    state->skeletonState->autoSaveInterval = 5;
+    state->skeletonState->highlightActiveTree = 1;
+    state->skeletonState->showNodeIDs = 0;
+    state->skeletonState->autoFilenameIncrementBool = 1;
+    state->skeletonState->showXYplane = FALSE;
+    state->skeletonState->showXZplane = FALSE;
+    state->skeletonState->showYZplane = FALSE;
+    state->skeletonState->showIntersections = 0;
     state->skeletonState->defaultNodeRadius = 1.5;
-    state->viewerState->lightOnOff = 0;
-    tempConfig->viewerState->filterType = 9729;
-    state->viewerState->ag->datasetLinearFilteringBox->state = TRUE;
-    tempConfig->viewerState->workMode = 0;
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-    state->viewerState->autoTracingDelay=50;
-    state->viewerState->autoTracingSteps=10;
-    state->viewerState->autoTracingMode=0;
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode &= ~DSP_LINES_POINTS;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-    state->viewerState->ag->radioRenderingModel = 1;
-    state->viewerState->ag->radioSkeletonDisplayMode = 0;
-    state->viewerState->datasetColortableOn = FALSE;
-    state->viewerState->treeColortableOn = FALSE;
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+
     loadTreeLUTFallback();
-    state->viewerState->treeLutSet = FALSE;
     treeColorAdjustmentsChanged();
     datasetColorAdjustmentsChanged();
     refreshViewports();
