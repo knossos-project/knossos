@@ -660,9 +660,10 @@ static int32_t initStates() {
 
     /* creating the hashtables is cheap, keeping the datacubes is
      * memory expensive..  */
-    for(i = 0; i < NUM_MAG_DATASETS; i++) {
+    for(i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
         state->Dc2Pointer[log2uint32(i)] = ht_new(state->cubeSetElements * 10);
         state->Oc2Pointer[log2uint32(i)] = ht_new(state->cubeSetElements * 10);
+        if(i == 0) i = 1;
     }
 
     /* searches for multiple mag datasets and enables multires if more
@@ -1024,13 +1025,13 @@ static int32_t findAndRegisterAvailableDatasets() {
 
         state->lowestAvailableMag = INT_MAX;
         state->highestAvailableMag = 1;
-        currMag = 1;
+        //currMag = 1;
 
         /* iterate over all possible mags and test their availability */
-        for(i = 0; i < NUM_MAG_DATASETS; i++) {
+        for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
 
             /* compile the path to the currently tested directory */
-            if(i!=0) currMag *= 2;
+            //if(i!=0) currMag *= 2;
     #ifdef LINUX
             sprintf(currPath,
                 "%s%smag%d/",
@@ -1058,7 +1059,7 @@ static int32_t findAndRegisterAvailableDatasets() {
                 fclose(testKconf);
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
-                strcpy(state->magPaths[i], currPath);
+                strcpy(state->magPaths[log2uint32(currMag)], currPath);
 
                 /* the last 4 letters are "mag1" by convention; if not,
                  * K multires won't work */
@@ -1072,15 +1073,22 @@ static int32_t findAndRegisterAvailableDatasets() {
                         strlen(datasetBaseExpName)-1);
                 state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
 
-                sprintf(state->magNames[i], "%smag%d", datasetBaseExpName, currMag);
+                sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
 
-        /* Enable multires by default if more than one dataset was found.
+        /* Do not enable multires by default, even if more than one dataset was found.
+         * Multires might be confusing to untrained tracers! Experts can easily enable it..
          * The loaded gui config might lock K to the current mag later one, which is fine. */
         if(state->highestAvailableMag > 1) {
-            state->viewerState->datasetMagLock = FALSE;
+            state->viewerState->datasetMagLock = TRUE;
         }
+
+        if(state->highestAvailableMag > NUM_MAG_DATASETS) {
+            state->highestAvailableMag = NUM_MAG_DATASETS;
+            LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS);
+        }
+
         state->magnification = state->lowestAvailableMag;
 
         /*state->boundary.x *= state->magnification;
@@ -1140,6 +1148,7 @@ static int32_t findAndRegisterAvailableDatasets() {
 
 /* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
 uint32_t log2uint32(register uint32_t x) {
+
     x |= (x >> 1);
     x |= (x >> 2);
     x |= (x >> 4);

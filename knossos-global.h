@@ -48,21 +48,7 @@
 
 #define TEXTURE_EDGE_LEN 1024
 
-/* unneeded? */
-#define MAG1 0
-#define MAG2 1
-#define MAG4 2
-#define MAG8 3
-#define MAG16 4
-#define MAG32 5
-#define MAG64 6
-#define MAG128 7
-#define MAG256 8
-#define MAG512 9
-#define MAG1024 10
-
-#define NUM_MAG_DATASETS 20
-
+#define NUM_MAG_DATASETS 65536
 
 #ifdef ARCH_64
 #define PTRSIZEINT int64_t

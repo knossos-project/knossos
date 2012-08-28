@@ -270,7 +270,14 @@ static uint32_t ht_hash(Hashtable *hashtable, Coordinate key) {
     // which is adapted from the original (public domain) implementation at
     // <http://www.burtleburtle.net/bob/c/lookup3.c>.
 
+
+    /* Coordinate is int32 not uint32 not sure whether this is safe here...
+     * JK August 2012 */
     uint32_t a, b, c;
+
+    if (a < 0) a = 0;
+    if (b < 0) b = 0;
+    if (c < 0) c = 0;
 
     a = b = c = 0xC00FFEEE;
 
