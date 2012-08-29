@@ -1940,7 +1940,7 @@ static void viewZooming(AG_Event *event) {
 }
 
 static void viewComments() {
-    AG_WindowShow(state->viewerState->ag->tracingTimeWin);
+    AG_WindowShow(state->viewerState->ag->commentsWin);
 }
 
 static void viewTracingTime() {
@@ -2472,6 +2472,8 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
                                 state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
                                 200,
                                 20);
+
+    resizeWindows(); //adjust window sizes, because AGAR sucks at it.
 
     drawGUI();
 
@@ -4065,16 +4067,31 @@ uint32_t cpBaseDirectory(char *target, char *path, size_t len) {
 void prefDefaultPrefsWindow(){
     yesNoPrompt(NULL, "Do you really want to load the default preferences?", prefDefaultPrefs, NULL);
 }
-void defaultWindowGeometry() {
-    AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 543, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 543, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, -1, -1);
-    AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, -1, -1);
+static void resizeWindows() {
+    AG_Window *win = state->viewerState->ag->toolsWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->zoomingWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->tracingTimeWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->commentsWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->navOptWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->syncOptWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->viewPortPrefWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->saveOptWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->navWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->consoleWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->dataSetStatsWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    win = state->viewerState->ag->setDynRangeWin;
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
 }
 void prefDefaultPrefs(){
     tempConfig->viewerState->screenSizeX = 1024;

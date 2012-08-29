@@ -183,7 +183,6 @@ static int32_t sdlToAgarEvent(void *obj, SDL_Event sdl_ev, AG_DriverEvent *ag_ev
         ag_ev->data.videoresize.y = 0;
         ag_ev->data.videoresize.w = (int)sdl_ev.resize.w;
         ag_ev->data.videoresize.h = (int)sdl_ev.resize.h;
-        defaultWindowGeometry(); // redefine window geometry as good as possible, because AGAR sucks at it.
 //      LOG("resizeevent")
         break;
     case SDL_VIDEOEXPOSE:

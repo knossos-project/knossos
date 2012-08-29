@@ -40,6 +40,7 @@ static void drawXzViewport(AG_Event *event);
 static void drawYzViewport(AG_Event *event);
 static void drawSkelViewport(AG_Event *event);
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY);
+static void resizeWindows();
 static void agInputWdgtGainedFocus(AG_Event *event);
 static void agInputWdgtLostFocus(AG_Event *event);
 
