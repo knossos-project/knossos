@@ -275,10 +275,6 @@ static uint32_t ht_hash(Hashtable *hashtable, Coordinate key) {
      * JK August 2012 */
     uint32_t a, b, c;
 
-    if (a < 0) a = 0;
-    if (b < 0) b = 0;
-    if (c < 0) c = 0;
-
     a = b = c = 0xC00FFEEE;
 
     c += key.z;
