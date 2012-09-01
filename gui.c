@@ -3817,24 +3817,16 @@ static void WRAP_loadSkeleton() {
 static void updateTitlebar(int32_t useFilename) {
     char *filename;
 
-#ifdef LINUX
-    filename = strrchr(state->skeletonState->skeletonFile, '/');
-#else
-    filename = strrchr(state->skeletonState->skeletonFile, '\\');
-#endif
-
-    if(filename) {
-        filename++;
-    }
-    else {
-        filename = state->viewerState->ag->titleString;
-    }
-
-    if(useFilename) {
-        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, filename);
-    }
-    else {
+    #ifdef LINUX
+        filename = strrchr(state->skeletonState->skeletonFile, '/');
+    #else
+        filename = strrchr(state->skeletonState->skeletonFile, '\\');
+    #endif
+    if(!useFilename ||!filename) {
         snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, "no skeleton file");
+    }
+    else {
+        snprintf(state->viewerState->ag->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, ++filename);
     }
 
     SDL_WM_SetCaption(state->viewerState->ag->titleString, NULL);
