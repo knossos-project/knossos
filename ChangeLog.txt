@@ -1,0 +1,66 @@
+==================================
+=  KNOSSOS V3.2 - Change Log     =
+==================================
+
+KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed for the rapid reconstruction of neural morphology and connectivity. 
+
+
+----------------------------------
+-  General Information           -
+----------------------------------
+
+Release Date: Date 01.09.2012 
+
+Homepage: http://www.knossostool.org/
+
+
+----------------------------------
+-  Bug fixes                     -
+----------------------------------
+
+- State of checkboxes show the correct value
+- Window sizes stable
+- Fixed tree color bug in synchronized mode
+- Fixed flickering OpenGL bug at multiples of 128 coordinates
+- Fixed jumping to last branch node
+- Fixed: New node connected to active tree after deleting tree
+
+
+----------------------------------
+-  Features                      -
+----------------------------------
+
+- Advanced tracing modes: The user has the possibility to use the tracing modes 
+	Additional viewport direction mode 
+	Additional tracing direction mode
+	Additional mirrored move
+- Tracing time window shows the KNOSSOS running time, the tracing time and the idle time
+- User can save comments and add them to a node by pressing [F1] - [F5]
+- Added shortcuts
+	Go to next/previous node via [x]/[Shift]+[x]
+	Go to next/previous tree via [y]/[Shift]+[y]
+	Move 10 layers in/against viewport direction via [e]/[r]
+	Quit KNOSSOS via [ALT]+[F4]
+	Save file via [CTRL]+[s]
+	Connect/disconnect nodes via [ALT] + [mouseleft]/[rightclick]
+	Change zoom in skeleton viewport via [i]/[o] when mouse is in skeleton viewport
+- Reset button in skeleton viewport resets to default view
+- Skeleton viewport settings are saved in skeleton file
+- User can load LUT-Files to use own color schemes
+- User can restore default preferences
+- Size of viewports can be displayed
+- inversed cube order (z first on hard drive)
+
+
+----------------------------------
+-  Changes                       -
+----------------------------------
+
+- Size of viewports adjusted
+- The usability of selecting nodes in skeleton viewport is improved
+- User has to confirm before he delets a tree 
+- Limiting recentering time to 5 seconds
+- Improvements in saving/autosaving/loading files and user settings
+- Coordinates can be read in with other seperators
+- Sliders for bias/range delta
+- Compatibility to Phyton 3
