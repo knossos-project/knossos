@@ -12,6 +12,7 @@ KNOSSOS is a software tool for the visualization and annotation of 3D image data
 Release Date: Date 01.09.2012 
 
 Homepage: http://www.knossostool.org/
+and http://code.google.com/p/knossos-skeletonizer/
 
 
 ----------------------------------
@@ -19,9 +20,9 @@ Homepage: http://www.knossostool.org/
 ----------------------------------
 
 - State of checkboxes show the correct value
-- Window sizes stable
+- Window sizes stable after main window resizes
 - Fixed tree color bug in synchronized mode
-- Fixed flickering OpenGL bug at multiples of 128 coordinates
+- Fixed flickering viewports at coordinates that are multiples of 128
 - Fixed jumping to last branch node
 - Fixed: New node connected to active tree after deleting tree
 
@@ -45,22 +46,23 @@ Homepage: http://www.knossostool.org/
 	Connect/disconnect nodes via [ALT] + [mouseleft]/[rightclick]
 	Change zoom in skeleton viewport via [i]/[o] when mouse is in skeleton viewport
 - Reset button in skeleton viewport resets to default view
-- Skeleton viewport settings are saved in skeleton file
-- User can load LUT-Files to use own color schemes
+- Skeleton viewport settings are now saved in skeleton file
+- User can load LUT-Files to use own color schemes for the microscopy data
 - User can restore default preferences
-- Size of viewports can be displayed
-- inversed cube order (z first on hard drive)
+- Physical size of the microscopy data displayed in a viewport can be shown
+- Microscopy data can be stored in inverse cube order (z first) on hard drive
 
 
 ----------------------------------
 -  Changes                       -
 ----------------------------------
 
+- Larger field of view of data viewports (displaying twice as much data for M==3 with the same cube loading times) at the expense of a bit less buffering
 - Size of viewports adjusted
 - The usability of selecting nodes in skeleton viewport is improved
-- User has to confirm before he delets a tree 
-- Limiting recentering time to 5 seconds
+- User has to confirm before he delets a tree
+- Limited recentering time to 5 seconds
 - Improvements in saving/autosaving/loading files and user settings
-- Coordinates can be read in with other seperators
+- Coordinates can be read in (pasted from other applications) with other seperators
 - Sliders for bias/range delta
-- Compatibility to Phyton 3
+- KNOSSOS launcher updated to be compatible with Phyton 3 (Python 2.x still supported)
