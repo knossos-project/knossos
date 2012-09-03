@@ -21,22 +21,24 @@ and http://code.google.com/p/knossos-skeletonizer/
 
 - State of checkboxes show the correct value
 - Window sizes stable after main window resizes
-- Fixed tree color bug in synchronized mode
 - Fixed flickering viewports at coordinates that are multiples of 128
 - Fixed jumping to last branch node
-- Fixed: New node connected to active tree after deleting tree
-
+- After deleting a tree, the next new node is added to the active tree
+- Newly created and saved skeleton files also appear in recent files
+- Skeleton file paths containing dots are handled correctly now.
+- If default skeleton files folder misses (path/to/knossos/skeletonFiles), it will automatically be created on a save event.
+- Titlebar updates correctly when skeleton is cleared.
 
 ----------------------------------
 -  Features                      -
 ----------------------------------
 
-- Advanced tracing modes: The user has the possibility to use the tracing modes 
-	Additional viewport direction mode 
-	Additional tracing direction mode
-	Additional mirrored move
-- Tracing time window shows the KNOSSOS running time, the tracing time and the idle time
-- User can save comments and add them to a node by pressing [F1] - [F5]
+- Advanced tracing modes: The user has the possibility to use three different tracing modes:
+	Additional viewport direction move mode 
+	Additional tracing direction move mode
+	Additional mirrored move mode
+- Tracing time window shows the KNOSSOS running time, tracing time and idle time
+- Users can put comments on [F1] - [F5] shortcuts to easily add them to nodes.
 - Added shortcuts
 	Go to next/previous node via [x]/[Shift]+[x]
 	Go to next/previous tree via [y]/[Shift]+[y]
@@ -47,9 +49,9 @@ and http://code.google.com/p/knossos-skeletonizer/
 	Change zoom in skeleton viewport via [i]/[o] when mouse is in skeleton viewport
 - Reset button in skeleton viewport resets to default view
 - Skeleton viewport settings are now saved in skeleton file
-- User can load LUT-Files to use own color schemes for the microscopy data
+- User can load LUT-Files to use own colors for the skeleton trees
 - User can restore default preferences
-- Physical size of the microscopy data displayed in a viewport can be shown
+- Physical size of the microscopy data can be shown in the viewports
 - Microscopy data can be stored in inverse cube order (z first) on hard drive
 
 
@@ -59,10 +61,17 @@ and http://code.google.com/p/knossos-skeletonizer/
 
 - Larger field of view of data viewports (displaying twice as much data for M==3 with the same cube loading times) at the expense of a bit less buffering
 - Size of viewports adjusted
-- The usability of selecting nodes in skeleton viewport is improved
+- Selecting nodes via [Shift]+[left click] is easier than before.
 - User has to confirm before he delets a tree
 - Limited recentering time to 5 seconds
-- Improvements in saving/autosaving/loading files and user settings
-- Coordinates can be read in (pasted from other applications) with other seperators
+- Improvements in saving/autosaving skeleton files:
+	saving a skeleton without ".nml" will automatically add the extension to the file name
+	empty skeleton cannot be saved.
+	trying to save an unchanged skeleton asks for confirmation.
+- More information is saved in user settings.
+- Coordinates delimited by various separators can be read in (pasted from other applications)
 - Sliders for bias/range delta
-- KNOSSOS launcher updated to be compatible with Phyton 3 (Python 2.x still supported)
+- KNOSSOS launcher and synchroniser updated to be compatible with Phyton 3 (Python 2.x still supported)
+- Changing the active tree causes recentering to first node of new active tree.
+- Python starter will give a warning when user tries to launch knossos without selecting a dataset.
+- Unsucessfully loading a skeleton does not clear the old skeleton, anymore
