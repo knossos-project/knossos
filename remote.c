@@ -442,7 +442,7 @@ void checkIdleTime(){
     int hoursIdleTime = (int)(state->skeletonState->idleTime*0.001/3600.0);
     int minutesIdleTime = (int)(state->skeletonState->idleTime*0.001/60.0 - hoursIdleTime * 60);
     int secondsIdleTime = (int)(state->skeletonState->idleTime*0.001 - hoursIdleTime * 3600 - minutesIdleTime * 60);
-    AG_LabelText(state->viewerSbtate->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
+    AG_LabelText(state->viewerState->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
 
     int hoursTracingTime = (int)((time - state->skeletonState->idleTime)*0.001/3600.0);
     int minutesTracingTime = (int)((time - state->skeletonState->idleTime)*0.001/60.0 - hoursTracingTime * 60);
