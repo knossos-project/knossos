@@ -1,0 +1,77 @@
+*** core.c	Sun Feb  6 03:16:39 2011
+--- win32only_core.c	Mon Jan 23 14:48:05 2012
+***************
+*** 10,16 ****
+   * 2. Redistributions in binary form must reproduce the above copyright
+   *    notice, this list of conditions and the following disclaimer in the
+   *    documentation and/or other materials provided with the distribution.
+!  * 
+   * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+--- 10,16 ----
+   * 2. Redistributions in binary form must reproduce the above copyright
+   *    notice, this list of conditions and the following disclaimer in the
+   *    documentation and/or other materials provided with the distribution.
+!  *
+   * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+***************
+*** 33,39 ****
+  #include <config/localedir.h>
+  #include <config/ag_network.h>
+  #include <config/ag_threads.h>
+! #include <config/have_gettimeofday.h>
+  #include <config/have_select.h>
+  #include <config/have_cygwin.h>
+  #include <config/have_clock_gettime.h>
+--- 33,39 ----
+  #include <config/localedir.h>
+  #include <config/ag_network.h>
+  #include <config/ag_threads.h>
+! //#include <config/have_gettimeofday.h>
+  #include <config/have_select.h>
+  #include <config/have_cygwin.h>
+  #include <config/have_clock_gettime.h>
+***************
+*** 107,125 ****
+  	AG_RegisterClass(&agDbObjectClass);
+  	AG_RegisterClass(&agDbClass);
+  
+! #if defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CYGWIN)
+! # if defined(AG_THREADS) && defined(HAVE_CLOCK_GETTIME)
+! 	AG_SetTimeOps(&agTimeOps_condwait);
+! # else
+! #  if defined(HAVE_SELECT)
+! 	AG_SetTimeOps(&agTimeOps_gettimeofday);
+! #  endif
+! # endif
+! #elif defined(_WIN32)
+! 	AG_SetTimeOps(&agTimeOps_win32);
+! #else
+  	AG_SetTimeOps(&agTimeOps_dummy);
+! #endif
+  
+  	AG_InitTimeouts();
+  	AG_DataSourceInitSubsystem();
+--- 107,125 ----
+  	AG_RegisterClass(&agDbObjectClass);
+  	AG_RegisterClass(&agDbClass);
+  
+! //#if defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CYGWIN)
+! //# if defined(AG_THREADS) && defined(HAVE_CLOCK_GETTIME)
+! //	AG_SetTimeOps(&agTimeOps_condwait);
+! //# else
+! //#  if defined(HAVE_SELECT)
+! //	AG_SetTimeOps(&agTimeOps_gettimeofday);
+! //#  endif
+! //# endif
+! //#elif defined(_WIN32)
+! //	AG_SetTimeOps(&agTimeOps_win32);
+! //#else
+  	AG_SetTimeOps(&agTimeOps_dummy);
+! //#endif
+  
+  	AG_InitTimeouts();
+  	AG_DataSourceInitSubsystem();
