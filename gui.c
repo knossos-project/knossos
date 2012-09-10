@@ -374,7 +374,15 @@ void createNavOptionsWin() {
             AG_RadioAddItem(radio, "Additional Mirrored Move");
     }
         numerical = AG_NumericalNewUint(box, 0, NULL, "Delay Time per Step [ms]: ", &state->viewerState->autoTracingDelay);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
         numerical = AG_NumericalNewUint(box, 0, NULL, "Number of Steps: ", &state->viewerState->autoTracingSteps);
+        {
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
     }
     AG_WindowSetCloseAction(state->viewerState->ag->navOptWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->navOptWin);
