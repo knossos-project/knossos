@@ -1043,6 +1043,8 @@ struct skeletonState {
     int32_t skeletonTime;
     int32_t skeletonTimeCorrection;
 
+    int32_t idleTimeTicksOffset;
+    int32_t idleTimeLoadOffset;
     int32_t idleTime;
     int32_t idleTimeNow;
     int32_t idleTimeLast;

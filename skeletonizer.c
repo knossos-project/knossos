@@ -1581,8 +1581,9 @@ uint32_t loadSkeleton() {
                     if(attribute)
                         state->skeletonState->idleTime = atof((char *)attribute);
                     state->skeletonState->idleTimeNow = SDL_GetTicks();
+                    state->skeletonState->idleTimeLoadOffset =atof((char *)attribute);
                 }
-
+                state->skeletonState->idleTimeTicksOffset = SDL_GetTicks();
                 currentXMLNode = currentXMLNode->next;
             }
         }
