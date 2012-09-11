@@ -63,7 +63,7 @@ struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
 int main(int argc, char *argv[]) {
-    SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL, *refreshTimeThread;
+    SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL, *refreshTimeThread = NULL;
     char consoleInput[1024];
 
     memset(consoleInput, '\0', 1024);
