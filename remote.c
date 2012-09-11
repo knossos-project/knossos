@@ -249,10 +249,12 @@ int32_t remoteWalk(int32_t x, int32_t y, int32_t z) {
         tempConfig->viewerState->recenteringTime = 5000;
         updateViewerState();
     }
+
     if (tempConfig->viewerState->recenteringTimeOrth < 10){
         tempConfig->viewerState->recenteringTimeOrth = 10;
         updateViewerState();
     }
+
     if (tempConfig->viewerState->recenteringTimeOrth > 5000){
         tempConfig->viewerState->recenteringTimeOrth = 5000;
         updateViewerState();
@@ -273,11 +275,9 @@ int32_t remoteWalk(int32_t x, int32_t y, int32_t z) {
 
     walkLength = euclidicNorm(&walkVector);
 
-    if(walkLength < 1.) walkLength = 10.;
+    if(walkLength < 10.) walkLength = 10.;
 
     timePerStep = recenteringTime / ((uint32_t)walkLength);
-
-    if(timePerStep < 10) timePerStep = 10;
 
     SET_COORDINATE(residuals, 0., 0., 0.);
 
@@ -425,7 +425,6 @@ static int32_t remoteTrajectory(int32_t trajNumber) {
 
     return TRUE;
 }
-
 
 void checkIdleTime(){
     int time =SDL_GetTicks()-state->skeletonState->idleTimeTicksOffset;
