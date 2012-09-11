@@ -4087,7 +4087,7 @@ static void resizeWindows() {
     win = state->viewerState->ag->navWin;
     if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
     win = state->viewerState->ag->consoleWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+//  if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1); WTF, console becomes extremely small after resize
     win = state->viewerState->ag->dataSetStatsWin;
     if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
     win = state->viewerState->ag->setDynRangeWin;
