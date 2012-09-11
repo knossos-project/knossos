@@ -63,7 +63,7 @@ struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
 int main(int argc, char *argv[]) {
-    SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL;
+    SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL, *refreshTimeThread;
     char consoleInput[1024];
 
     memset(consoleInput, '\0', 1024);
@@ -152,11 +152,13 @@ int main(int argc, char *argv[]) {
     loadingThread = SDL_CreateThread(loader, NULL);
     remoteThread = SDL_CreateThread(remote, NULL);
     clientThread = SDL_CreateThread(client, NULL);
+    refreshTimeThread = SDL_CreateThread(refreshTime, NULL);
 
     SDL_WaitThread(loadingThread, NULL);
     SDL_WaitThread(remoteThread, NULL);
     SDL_WaitThread(viewingThread, NULL);
     SDL_WaitThread(clientThread, NULL);
+    SDL_WaitThread(refreshTimeThread, NULL);
     SDL_Quit();
 
     cleanUpMain();
@@ -494,6 +496,7 @@ static int32_t initStates() {
     state->viewerState->autoTracingMode = 0;
     state->viewerState->autoTracingDelay = 50;
     state->viewerState->autoTracingSteps = 10;
+    state->skeletonState->idleTimeSession = 0;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;

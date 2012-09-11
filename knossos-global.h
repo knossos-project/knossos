@@ -1045,6 +1045,7 @@ struct skeletonState {
 
     int32_t idleTimeTicksOffset;
     int32_t idleTimeLoadOffset;
+    int32_t idleTimeSession;
     int32_t idleTime;
     int32_t idleTimeNow;
     int32_t idleTimeLast;
@@ -1319,6 +1320,12 @@ int32_t sendServerSignal();
 void sendDatasetChangeSignal(uint32_t upOrDownFlag);
 uint32_t log2uint32(register uint32_t x);
 uint32_t ones32(register uint32_t x);
+
+/*
+ *	For refreshTime.c
+ */
+
+int refreshTime();
 
 /*
  *	For loader.c

@@ -129,8 +129,7 @@ uint32_t drawGUI() {
     }
 
     AG_UnlockVFS(&agDrivers);
-
-
+    refreshTimeLabels();
 
     return TRUE;
 }
