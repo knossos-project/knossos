@@ -1,13 +1,16 @@
-CC=gcc
+CC=gcc-4.4
 CFLAGS = -DARCH_64 -ggdb `xml2-config --cflags` `agar-config --cflags`  -I/usr/include -DLINUX
 
 LOCALPATH=/usr/local
-LFLAGS = -lglut -lstdc++ -lSDL -lSDL_net -lSDL_Clipboard -lm -lGL -lGLU `xml2-config --libs` `agar-config --libs` -L${LOCALPATH}/lib -L${LOCALPATH}/lib64
+LFLAGS = -lglut  -lSDL -lSDL_net -lSDL_Clipboard -lm -lGL -lGLU `xml2-config --libs` `agar-config --libs` -L${LOCALPATH}/lib -L${LOCALPATH}/lib64
 
-knossos: y.tab.o lex.yy.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o renderer.o skeletonizer.o eventHandler.o client.o customStyle.o gui.o treeLUT_fallback.o
-	$(CC) $(LFLAGS) hash.o loader.o knossos.o coordinate.o viewer.o remote.o lex.yy.o y.tab.o renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o treeLUT_fallback.o -o $@
+knossos: y.tab.o lex.yy.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o renderer.o skeletonizer.o eventHandler.o client.o customStyle.o gui.o treeLUT_fallback.o refreshTime.o
+	$(CC) $(LFLAGS) refreshTime.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o lex.yy.o y.tab.o renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o treeLUT_fallback.o -o $@
 
 viewer.o: viewer.c
+	$(CC) $(CFLAGS) -Wall -c $< -o $@
+
+refreshTime.o: refreshTime.c
 	$(CC) $(CFLAGS) -Wall -c $< -o $@
 
 hash.o: hash.c
