@@ -25,27 +25,24 @@
 #include "knossos-global.h"
 extern struct stateInfo *state;
 
-int refreshTime()
-{
-    while(TRUE)
-    {
-            //ECHT JEDE SEKUDNE? rundung
+int refreshTime() {
+    while(TRUE) {
+        //ECHT JEDE SEKUDNE? rundung
         SDL_Delay(1000);
         refreshViewports();
         if(state->quitSignal == TRUE){
             break;
         }
     }
-
+    return TRUE;
 }
 
-void refreshTimeLabels()
-{
+void refreshTimeLabels() {
     int time = SDL_GetTicks();
     int hoursRunningTime = (int)(time*0.001/3600.0);
     int minutesRunningTime = (int)(time*0.001/60.0 - hoursRunningTime * 60);
     int secondsRunningTime = (int)(time*0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
-    AG_LabelText(state->viewerState->ag->runningTime, "Running Time: %02i:%02i:%02i", hoursRunningTime, minutesRunningTime, secondsRunningTime);
-
-
+    AG_LabelText(state->viewerState->ag->runningTime,
+                 "Running Time: %02i:%02i:%02i",
+                 hoursRunningTime, minutesRunningTime, secondsRunningTime);
 }
