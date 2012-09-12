@@ -1326,7 +1326,7 @@ uint32_t ones32(register uint32_t x);
  */
 
 int refreshTime();
-void refreshTimeLabels();
+void refreshTimeLabel();
 
 /*
  *	For loader.c

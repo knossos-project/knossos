@@ -27,8 +27,7 @@ extern struct stateInfo *state;
 
 int refreshTime() {
     while(TRUE) {
-        //ECHT JEDE SEKUDNE? rundung
-        SDL_Delay(1000);
+        SDL_Delay(200);
         refreshViewports();
         if(state->quitSignal == TRUE){
             break;
@@ -37,7 +36,7 @@ int refreshTime() {
     return TRUE;
 }
 
-void refreshTimeLabels() {
+void refreshTimeLabel() {
     int time = SDL_GetTicks();
     int hoursRunningTime = (int)(time*0.001/3600.0);
     int minutesRunningTime = (int)(time*0.001/60.0 - hoursRunningTime * 60);
