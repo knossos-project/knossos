@@ -2508,14 +2508,18 @@ static void actNodeIDWdgtModified(AG_Event *event) {
 static void actTreeIDWdgtModified(AG_Event *event) {
     //set active tree and set its first node to active node
     setActiveTreeByID(state->viewerState->ag->activeTreeID);
-    if(state->skeletonState->activeTree) {
-        setActiveNode(CHANGE_MANUAL, state->skeletonState->activeTree->firstNode, 0);
-        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               state->skeletonState->activeTree->firstNode->position.x,
-                               state->skeletonState->activeTree->firstNode->position.y,
-                               state->skeletonState->activeTree->firstNode->position.z);
-        sendRemoteSignal();
+    if(state->skeletonState->activeTree == NULL) {
+        return;
     }
+    else if(state->skeletonState->activeTree->firstNode == NULL) {
+        return;
+    }
+    setActiveNode(CHANGE_MANUAL, state->skeletonState->activeTree->firstNode, 0);
+    SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                            state->skeletonState->activeTree->firstNode->position.x,
+                            state->skeletonState->activeTree->firstNode->position.y,
+                            state->skeletonState->activeTree->firstNode->position.z);
+    sendRemoteSignal();
 }
 
 static void actTreeColorWdgtModified(AG_Event *event) {
