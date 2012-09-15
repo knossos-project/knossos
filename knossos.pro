@@ -12,30 +12,17 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    ../y.tab.c \
-    ../viewer.c \
-    ../treeLUT_fallback.c \
-    ../skeletonizer.c \
-    ../renderer.c \
-    ../remote.c \
-    ../loader.c \
-    ../lex.yy.c \
-    ../knossos.c \
-    ../hash.c \
-    ../gui.c \
-    ../eventHandler.c \
-    ../customStyle.c \
-    ../coordinate.c \
-    ../client.c
+    openglwidget.cpp
+
 
 HEADERS  += mainwindow.h \
-    ../customStyle.h \
+    ../config.lex \
+    ../client.h \
     ../eventHandler.h \
-    ../gui.h \
     ../hash.h \
-    ../knossos.h \
-    ../knossos_private.h \
     ../knossos-global.h \
+    ../knossos_private.h \
+    ../knossos.h \
     ../lex.yy.h \
     ../loader.h \
     ../remote.h \
@@ -44,8 +31,8 @@ HEADERS  += mainwindow.h \
     ../treeLUT_fallback.h \
     ../viewer.h \
     ../y.tab.h \
-    ../client.h \
-    ../config.lex
+    openglwidget.h
+
 
 FORMS    += mainwindow.ui
 
@@ -75,4 +62,6 @@ OTHER_FILES += \
     ../logo.ico \
     ../ChangeLog.txt \
     ../defaultSettings.xml \
-    ../customCursor.xpm
+    ../customCursor.xpm \
+    ../config.y \
+    blue.jpg
