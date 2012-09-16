@@ -8,6 +8,10 @@
 #include <QWaitCondition>
 #include "mainwindow.h"
 
+//IMPORTANT. SDL redefines main
+#ifdef main
+#undef main
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +27,7 @@ int main(int argc, char *argv[])
     MainWindow w;
 
     /* determining the display time for the splash */
-    QTimer::singleShot(2000, &splashScreen, SLOT(close));
+    QTimer::singleShot(2000, &splashScreen, SLOT(close()));
     QTimer::singleShot(2000, &w, SLOT(show()));
 
     /* QTimer is async, so it has to be waiten manually*/

@@ -37,7 +37,6 @@ private:
     QAction *quitAction;
 
     /* edit skeleton actions */
-    QAction *workModeEditAction;
     QAction *addNodeAction;
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
@@ -71,6 +70,7 @@ private:
     /* Qmenu-points */
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *workModeMenu;
     QMenu *viewMenu;
     QMenu *preferenceMenu;
     QMenu *windowMenu;

@@ -46,7 +46,7 @@ void MainWindow::createActions()
     /* file actions */
     openAction = new QAction(tr("&Open"), this);
     recentFileAction = new QAction(tr("&Recent Files"), this);
-    saveAction = new QAction(tr("&Save"), this);
+    saveAction = new QAction(tr("&Save (CTRL+s)"), this);
     saveAsAction = new QAction(tr("&Save as"), this);
     quitAction = new QAction(tr("&Quit"), this);
 
@@ -58,14 +58,12 @@ void MainWindow::createActions()
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quitSlot()));
 
     /* edit skeleton actions */
-    workModeEditAction = new QAction(tr("&Work Mode"), this);
     addNodeAction = new QAction(tr("&Add Node"), this);
     linkWithActiveNodeAction = new QAction(tr("&Link with Active Node"), this);
     dropNodesAction = new QAction(tr("&Drop Nodes"), this);
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
     clearSkeletonAction =  new QAction(tr("&Clear Skeleton"), this);
 
-    connect(workModeEditAction, SIGNAL(triggered()), this, SLOT(workModeEditSlot()));
     connect(addNodeAction, SIGNAL(triggered()), this, SLOT(addNodeSlot()));
     connect(linkWithActiveNodeAction, SIGNAL(triggered()), this, SLOT(linkWithActiveNodeSlot()));
     connect(dropNodesAction, SIGNAL(triggered()), this, SLOT(dropNodesSlot()));
@@ -123,13 +121,14 @@ void MainWindow::createMenus()
     fileMenu->addAction(recentFileAction);
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(quitAction);
 
-    editMenu = menuBar()->addMenu("&Edit");
-    editMenu->addAction(workModeEditAction);
-    editMenu->addAction(addNodeAction);
-    editMenu->addAction(linkWithActiveNodeAction);
-    editMenu->addAction(dropNodesAction);
+    editMenu = menuBar()->addMenu("&Edit Skeleton");
+    workModeMenu = editMenu->addMenu("&Work Mode");
+        workModeMenu->addAction(addNodeAction);
+        workModeMenu->addAction(linkWithActiveNodeAction);
+        workModeMenu->addAction(dropNodesAction);
     editMenu->addAction(skeletonStatisticsAction);
     editMenu->addAction(clearSkeletonAction);
 
@@ -148,7 +147,7 @@ void MainWindow::createMenus()
     preferenceMenu->addAction(dataSavingOptionsAction);
     preferenceMenu->addAction(viewPortSettingsAction);
 
-    windowMenu = menuBar()->addMenu("&Window");
+    windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(toolsAction);
     windowMenu->addAction(logAction);
     windowMenu->addAction(commentShortcutsAction);
