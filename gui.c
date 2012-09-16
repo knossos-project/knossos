@@ -3378,10 +3378,6 @@ remote port
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingSteps);
         xmlNewProp(currentXMLNode, BAD_CAST"autoTracingSteps", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->viewerState->autoTracingMode);
-        xmlNewProp(currentXMLNode, BAD_CAST"autoTracingMode", attrString);
     }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"FilePaths", NULL);
@@ -3766,11 +3762,8 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingSteps");
             if(attribute){
                 state->viewerState->autoTracingSteps = atoi((char *)attribute);
-        }
+            }
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoTracingMode");
-            if(attribute){
-                state->viewerState->autoTracingMode = atoi((char *)attribute);
-        }
         }
 
         currentXMLNode = currentXMLNode->next;
