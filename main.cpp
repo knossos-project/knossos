@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include "mainwindow.h"
+#include "../eventHandler.h"
 
 //IMPORTANT. SDL redefines main
 #ifdef main
@@ -24,11 +25,11 @@ int main(int argc, char *argv[])
     splashScreen.showMessage("Loading ..");
     splashScreen.show();
 
-    MainWindow w;
+    MainWindow window;
 
     /* determining the display time for the splash */
     QTimer::singleShot(2000, &splashScreen, SLOT(close()));
-    QTimer::singleShot(2000, &w, SLOT(show()));
+    QTimer::singleShot(2000, &window, SLOT(show()));
 
     /* QTimer is async, so it has to be waiten manually*/
     QMutex mutex;
@@ -36,7 +37,9 @@ int main(int argc, char *argv[])
 
     QWaitCondition waitCondition;
     waitCondition.wait(&mutex, 2000L);
-    splashScreen.finish(&w);
+    splashScreen.finish(&window);
+
+
 
     return a.exec();
 }

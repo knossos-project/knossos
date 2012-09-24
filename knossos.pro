@@ -12,7 +12,20 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    openglwidget.cpp
+    openglwidget.cpp \
+    ../client.c \
+    ../coordinate.c \
+    ../eventHandler.c \
+    ../gui.c \
+    ../hash.c \
+    ../knossos.c \
+    ../lex.yy.c \
+    ../loader.c \
+    ../remote.c \
+    ../renderer.c \
+    ../skeletonizer.c \
+    ../viewer.c \
+    ../y.tab.c
 
 
 HEADERS  += mainwindow.h \
@@ -78,4 +91,6 @@ OTHER_FILES += \
 LIBS += -lSDL -lxml2
 
 INCLUDEPATH += ../../MinGW/include/SDL \
-               ../../MinGW/include/libxml
+               ../../MinGW/include/libxml \
+               ../usr/include/
+

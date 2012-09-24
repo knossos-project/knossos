@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
+#include <QDebug>
+
 
 
 class OpenGLWidget : public QGLWidget
@@ -13,13 +15,8 @@ public:
     explicit OpenGLWidget(QWidget *parent = 0);
 
 protected:
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void paintGL();
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void keyPressEvent(QKeyEvent *event);
-    
+
+
 signals:
     
 public slots:

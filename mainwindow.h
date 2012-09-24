@@ -6,7 +6,11 @@
 #include <QAction>
 #include <QLayout>
 #include <QGridLayout>
+#include <QMessageBox>
+#include <QDebug>
+
 #include "openglwidget.h"
+
 
 
 namespace Ui {
@@ -20,9 +24,12 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
     
 private:
     Ui::MainWindow *ui;
+
+    QMessageBox *prompt;
 
     QWidget *mainWidget;
     QGridLayout *gridLayout;

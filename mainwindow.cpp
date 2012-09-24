@@ -1,9 +1,9 @@
 
-
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+extern struct stateInfo *state;
+extern struct stateInfo *tempConfig;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,9 +11,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("KnossosQT");
-
-
-
 
     createActions();
     createMenus();
@@ -154,6 +151,30 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(aboutAction);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+
+    if(state->skeletonState->unsavedChanges) {
+        event->ignore();
+        prompt = new QMessageBox(this);
+        prompt->setWindowTitle("Confirmation");
+        prompt->setText("There are unsaved changes. Really Quit?");
+
+        QPushButton *yesButton = prompt->addButton(tr("Yes"), QMessageBox::ActionRole);
+        QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
+        prompt->exec();
+
+        if((QPushButton *) prompt->clickedButton() == yesButton) {
+            event->accept();
+        }
+
+        if((QPushButton *) prompt->clickedButton() == noButton) {
+            prompt->close();
+        }
+    }
+
 }
 
 /* file menu functionality */
