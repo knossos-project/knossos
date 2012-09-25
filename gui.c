@@ -2514,12 +2514,6 @@ static void actTreeIDWdgtModified(AG_Event *event) {
     else if(state->skeletonState->activeTree->firstNode == NULL) {
         return;
     }
-    setActiveNode(CHANGE_MANUAL, state->skeletonState->activeTree->firstNode, 0);
-    SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                            state->skeletonState->activeTree->firstNode->position.x,
-                            state->skeletonState->activeTree->firstNode->position.y,
-                            state->skeletonState->activeTree->firstNode->position.z);
-    sendRemoteSignal();
 }
 
 static void actTreeColorWdgtModified(AG_Event *event) {
