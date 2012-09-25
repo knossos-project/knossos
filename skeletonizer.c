@@ -2903,21 +2903,17 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     }
 
     /*
-     *  This function takes a node and splits the connected component of the
-     *  corresponding tree containing that node into a new tree, unless the
-     *  connected component is equivalent to the entire tree.
+     *  This function takes a node and splits the connected component 
+     *  containing that node into a new tree, unless the connected component
+     *  is equivalent to exactly one entire tree.
      *
-     *  It used depth-first search. Breadth-first-search would be the same with
+     *
+     *  It uses depth-first search. Breadth-first-search would be the same with
      *  a queue instead of a stack for storing pending nodes. There is no
-     *  difference between the two algorithms for this task.
+     *  practical difference between the two algorithms for this task.
      *
      *  TODO trees might become empty when the connected component spans more
      *       than one tree.
-     */
-
-    /*
-     *  This stack can be rather small without ever having to be resized as
-     *  our graphs are usually very sparse.
      */
 
     node = findNodeByNodeID(nodeID);
@@ -2925,6 +2921,11 @@ int32_t splitConnectedComponent(int32_t targetRevision,
         unlockSkeleton(FALSE);
         return FALSE;
     }
+
+    /*
+     *  This stack can be rather small without ever having to be resized as
+     *  our graphs are usually very sparse.
+     */
 
     remainingNodes = newStack(512);
     componentNodes = newStack(4096);
@@ -2972,8 +2973,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
             visitedLen = &visitedLeftLen;
         }
 
-        // If the index is out bounds of the visited array, we resize the array,
-        // 4096 bytes at a time, until it is large enough.
+        // If the index is out bounds of the visited array, we resize the array
         while(index > *visitedLen) {
             *visited = realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
             if(*visited == NULL) {
@@ -3024,6 +3024,17 @@ int32_t splitConnectedComponent(int32_t targetRevision,
      *  should split it.
      */
 
+    /*
+     *  Since we're checking for treesCount > 1 below, this implementation is
+     *  now slightly redundant. We want this function to not do anything when
+     *  there are no disconnected components in the same tree, but create a new
+     *  tree when the connected component spans several trees. This is a useful
+     *  feature when performing skeleton consolidation and allows one to merge
+     *  many trees at once.
+     *  Just remove the treesCount > 1 below to get back to the original
+     *  behaviour of only splitting strict subgraphs. 
+     */
+
     for(i = 0; i < treesCount; i++) {
         currentTree = (struct treeListElement *)getDynArray(treesSeen, i);
         id = currentTree->treeID;
@@ -3031,7 +3042,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
                                                      id);
     }
 
-    if(nodeCount < nodeCountAllTrees) {
+    if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
         newTree = addTreeListElement(FALSE, CHANGE_MANUAL, 0, treeCol);
