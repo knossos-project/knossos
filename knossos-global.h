@@ -918,11 +918,8 @@ struct viewerState {
     int overlayVisible;
 
     /*
-    *
     * Advanced Tracing Modes Stuff
-    *
     */
-    int autoTracingEnabled;
     int autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;

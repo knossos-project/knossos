@@ -238,7 +238,6 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->depthCutOff = 5.;
     tempConfig->viewerState->luminanceBias = 0;
     tempConfig->viewerState->luminanceRangeDelta = 255;
-    tempConfig->viewerState->autoTracingEnabled = FALSE;
     tempConfig->viewerState->autoTracingDelay = 50;
     tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
