@@ -13,6 +13,7 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     openglwidget.cpp \
+    eventmodel.cpp \
     ../client.c \
     ../coordinate.c \
     ../eventHandler.c \
@@ -25,7 +26,8 @@ SOURCES += main.cpp\
     ../renderer.c \
     ../skeletonizer.c \
     ../viewer.c \
-    ../y.tab.c
+    ../y.tab.c \
+
 
 
 HEADERS  += mainwindow.h \
@@ -44,7 +46,8 @@ HEADERS  += mainwindow.h \
     ../treeLUT_fallback.h \
     ../viewer.h \
     ../y.tab.h \
-    openglwidget.h
+    openglwidget.h \
+    eventmodel.h
 
 
 FORMS    += mainwindow.ui

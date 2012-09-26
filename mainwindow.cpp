@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     glWidgets = new OpenGLWidget*[4];
     for(int i = 0; i < 4; i++) {
-        glWidgets[i] = new OpenGLWidget();
+        glWidgets[i] = new OpenGLWidget(this, i);
         glWidgets[i]->setStyleSheet("background:black");
     }
 

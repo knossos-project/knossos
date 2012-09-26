@@ -1,11 +1,12 @@
 #include "openglwidget.h"
 
-extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
-OpenGLWidget::OpenGLWidget(QWidget *parent) :
+OpenGLWidget::OpenGLWidget(QWidget *parent, int viewPort) :
     QGLWidget(parent)
 {
+    this->viewPort = viewPort;
+    this->controls = new bool[3];
+    //eventModel = new EventModel();
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
@@ -36,36 +37,56 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 void OpenGLWidget::mousePressEvent(QMouseEvent *event)
 {
     if(event->button() == Qt::LeftButton) {
-
+        //eventModel->handleMouseButtonLeft(event, viewPort, controls);
     } else if(event->button() == Qt::MiddleButton) {
-
+        //eventModel->handleMouseButtonMiddle(event, viewPort, controls);
     } else if(event->button() == Qt::RightButton) {
-
+        //eventMode->handleMouseButtonRight(event, viewPort, controls);
     }
 
 }
 
 void OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+    // TODO
 
-    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-        state->viewerState->viewPorts[i].draggedNode = NULL;
-        state->viewerState->viewPorts[i].motionTracking = FALSE;
-        state->viewerState->viewPorts[i].VPmoves = FALSE;
-        state->viewerState->viewPorts[i].VPresizes = FALSE;
-        state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-        state->viewerState->viewPorts[i].userMouseSlideY = 0.;
-    }
 
 }
 
 void OpenGLWidget::wheelEvent(QWheelEvent *event) {
-
+    if(event->delta() > 0) {
+        //eventModel->handleMouseWheelForward(event, viewPort, controls);
+    } else {
+        //eventModel->handleMouseWheelBackward(event, viewPort, controls);
+    }
 }
 
 void OpenGLWidget::keyPressEvent(QKeyEvent *event)
 {
+    if(event->key == Qt::Key_Control) {
+        controls[0] = true;
+    }
+    if(event->key() == Qt::Key_Shift) {
+        controls[1] = true;
+    }
+    if(event->key() == Qt::Key_Alt) {
+        controls[2] = true;
+    }
 
+    //eventModel->handleKeyboard(event);
 }
 
+void OpenGLWidget::keyReleaseEvent(QKeyEvent *event)
+{
+
+    if(event->key == Qt::Key_Control) {
+        controls[0] = false;
+    }
+    if(event->key() == Qt::Key_Shift) {
+        controls[1] = false;
+    }
+    if(event->key() == Qt::Key_Alt) {
+        controls[2] = false;
+    }
+}
 
