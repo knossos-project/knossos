@@ -2196,45 +2196,76 @@ struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree) {
 struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *prevNode = NULL;
-    uint32_t idDistance = state->skeletonState->totalNodeElements;
-    uint32_t tempDistance = idDistance;
+    struct nodeListElement *highestNode = NULL;
+    unsigned int minDistance = UINT_MAX;
+    unsigned int tempMinDistance = minDistance;
+    unsigned int maxID = 0;
 
     while(node) {
+    	if(node->nodeID > maxID) {
+            highestNode = node;
+            maxID = node->nodeID;            
+        }
+
         if(node->nodeID < currentNode->nodeID) {
-            tempDistance = currentNode->nodeID - node->nodeID;
-            if(tempDistance == 1) { //smallest distance possible
+            tempMinDistance = currentNode->nodeID - node->nodeID;
+
+            if(tempMinDistance == 1) { //smallest distance possible
                 return node;
             }
-            if(tempDistance < idDistance) {
-                idDistance = tempDistance;
+
+            if(tempMinDistance < minDistance) {
+                minDistance = tempMinDistance;
                 prevNode = node;
             }
+
+	
         }
+
         node = node->next;
     }
+
+    if(!prevNode) {
+        prevNode = highestNode;
+    }
+
     return prevNode;
 }
 
 struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
     struct nodeListElement *nextNode = NULL;
-    uint32_t idDistance = state->skeletonState->totalNodeElements;
-    uint32_t tempDistance = idDistance;
+    struct nodeListElement *lowestNode = NULL;
+    unsigned int minDistance = UINT_MAX;
+    unsigned int tempMinDistance = minDistance;
+    unsigned int minID = UINT_MAX;
 
     while(node) {
-        if(node->nodeID > currentNode->nodeID) {
-            tempDistance = node->nodeID - currentNode->nodeID;
+        if(node->nodeID < minID) {
+            lowestNode = node;
+            minID = node->nodeID;
+        }
 
-            if(tempDistance == 1) { //smallest distance possible
+        if(node->nodeID > currentNode->nodeID) {
+            tempMinDistance = node->nodeID - currentNode->nodeID;
+
+            if(tempMinDistance == 1) { //smallest distance possible
                 return node;
             }
-            if(tempDistance < idDistance) {
-                idDistance = tempDistance;
+
+            if(tempMinDistance < minDistance) {
+                minDistance = tempMinDistance;
                 nextNode = node;
             }
         }
+
         node = node->next;
     }
+
+    if(!nextNode) {
+        nextNode = lowestNode;
+    }
+
     return nextNode;
 }
 
