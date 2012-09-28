@@ -863,11 +863,19 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
         currentNode = currentTree->firstNode;
         while(currentNode) {
             //Set color
-            if(currentNode->isBranchNode)
-                glColor4f(0., 0., 1., 1.);
+            if(currentNode->isBranchNode) {
+               glColor4f(0., 0., 1., 1.);
+            }
+            if(currentNode->comment != NULL) {
+                glColor4f(1., 1., 0., 1.);
+            }
             else {
-                if(state->skeletonState->highlightActiveTree) glColor4f(1., 0., 0., 1.);
-                else glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
+                if(state->skeletonState->highlightActiveTree) {
+                    glColor4f(1., 0., 0., 1.);
+                }
+                else {
+                    glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
+                }
             }
 
             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
@@ -927,10 +935,15 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
         //Highlight active node
         if(state->skeletonState->activeNode) {
             if(state->skeletonState->activeNode->correspondingTree == currentTree) {
-                if(state->skeletonState->activeNode->isBranchNode)
+                if(state->skeletonState->activeNode->isBranchNode) {
                     glColor4f(0., 0., 1., 0.2);
-                else
+                }
+                else if(state->skeletonState->activeNode->comment != NULL) {
+                    glColor4f(1., 1., 0., 0.2);
+                }
+                else {
                     glColor4f(1.0, 0., 0., 0.2);
+                }
                 glEnable(GL_BLEND);
                 glLoadName(state->skeletonState->activeNode->nodeID + 50);
                 if(state->skeletonState->overrideNodeRadiusBool)
@@ -1116,9 +1129,12 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                           currentSkeletonDCnode->node->correspondingTree->color.b,
                                           currentSkeletonDCnode->node->correspondingTree->color.a);
 
-                            if(currentSkeletonDCnode->node->isBranchNode)
+                            if(currentSkeletonDCnode->node->isBranchNode) {
                                 glColor4f(0., 0., 1., 1.);
-
+                            }
+                            else if(currentSkeletonDCnode->node->comment != NULL) {
+                                glColor4f(1., 1., 0., 1.);
+                            }
                             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
                             glLoadName(currentSkeletonDCnode->node->nodeID + 50);
                             //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius);
@@ -1130,11 +1146,15 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                             //Check if this node is an active node and highlight if true
                             if(state->skeletonState->activeNode) {
                                 if(currentSkeletonDCnode->node->nodeID == state->skeletonState->activeNode->nodeID) {
-                                    if(currentSkeletonDCnode->node->isBranchNode)
+                                    if(currentSkeletonDCnode->node->isBranchNode) {
                                         glColor4f(0., 0., 1.0, 0.2);
-                                    else
-                                        glColor4f(1.0, 0., 0., 0.2);
-
+                                    }
+                                    else if(currentSkeletonDCnode->node->comment != NULL) {
+                                        glColor4f(1., 1., 0., 0.2);
+                                    }
+                                    else {
+                                        glColor4f(1., 0., 0., 0.2);
+                                    }
                                     glLoadName(currentSkeletonDCnode->node->nodeID + 50);
                                     glEnable(GL_BLEND);
                                     //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
@@ -1223,8 +1243,12 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
                           currentTree->color.b,
                           currentTree->color.a);
 
-            if(currentNode->isBranchNode)
+            if(currentNode->isBranchNode) {
                 glColor4f(0., 0., 1., 1.);
+            }
+            else if(currentNode->comment != NULL) {
+                glColor4f(1., 1., 0., 1.);
+            }
 
             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
             glLoadName(currentNode->nodeID + 50);
@@ -1286,10 +1310,15 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
 
     //Highlight active node
     if(state->skeletonState->activeNode) {
-        if(state->skeletonState->activeNode->isBranchNode)
+        if(state->skeletonState->activeNode->isBranchNode) {
             glColor4f(0., 0., 1., 0.2);
-        else
+        }
+        else if(state->skeletonState->activeNode->comment != NULL) {
+            glColor4f(1., 1., 0., 0.2);
+        }
+        else {
             glColor4f(1.0, 0., 0., 0.2);
+        }
 
         glLoadName(state->skeletonState->activeNode->nodeID + 50);
         glEnable(GL_BLEND);

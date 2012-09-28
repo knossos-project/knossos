@@ -3137,8 +3137,10 @@ uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElemen
         node->comment = newComment;
     }
 
-    if(content)
+    if(content) {
         strncpy(newComment->content, content, strlen(content));
+        state->skeletonState->skeletonChanged = TRUE;
+    }
 
     if(!state->skeletonState->currentComment) {
         state->skeletonState->currentComment = newComment;
@@ -3260,8 +3262,9 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
 
     if(commentNodeID) {
         commentNode = findNodeByNodeID(commentNodeID);
-        if(commentNode)
+        if(commentNode) {
             currentComment = commentNode->comment;
+        }
     }
 
     if(!currentComment) {
@@ -3270,11 +3273,13 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
         return FALSE;
     }
 
-    if(currentComment->content)
+    if(currentComment->content) {
         free(currentComment->content);
+    }
     if(currentComment->node) {
         nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
+        state->skeletonState->skeletonChanged = TRUE;
     }
 
     if(state->skeletonState->currentComment == currentComment) {
@@ -3299,12 +3304,13 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage("brd", KIKI_DELCOMMENT, nodeID))
+        if(!syncMessage("brd", KIKI_DELCOMMENT, nodeID)) {
             skeletonSyncBroken();
+        }
     }
-    else
+    else {
         refreshViewports();
-
+    }
     unlockSkeleton(TRUE);
 
     return TRUE;
@@ -3481,8 +3487,9 @@ int32_t pushBranchNode(int32_t targetRevision,
     if(branchNode) {
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
             pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
-            if(setBranchNodeFlag)
+            if(setBranchNodeFlag) {
                 branchNode->isBranchNode = TRUE;
+            }
             state->skeletonState->skeletonChanged = TRUE;
             LOG("Branch point (node ID %d) added.", branchNode->nodeID);
         }
