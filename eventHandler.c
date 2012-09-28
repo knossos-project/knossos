@@ -1405,6 +1405,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         nextNode = getNodeWithNextID(state->skeletonState->activeNode);
         if(nextNode) {
             setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+            tempConfig->remoteState->type = REMOTE_RECENTERING;
             SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                nextNode->position.x,
                                nextNode->position.y,
