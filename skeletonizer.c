@@ -1974,8 +1974,26 @@ struct nodeListElement *findNodeInRadius(Coordinate searchPosition) {
 }
 
 uint32_t delActiveTree() {
-    if(state->skeletonState->activeTree)
+    struct treeListElement *nextTree = NULL;
+
+
+    if(state->skeletonState->activeTree) {
+        if(state->skeletonState->activeTree->next) {
+            nextTree = state->skeletonState->activeTree->next;
+        }
+        else if(state->skeletonState->activeTree->previous) {
+            nextTree = state->skeletonState->activeTree->previous;
+        }
+        
         delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
+
+        if(nextTree) {
+            setActiveTreeByID(nextTree->treeID);
+        }
+        else {
+            state->skeletonState->activeTree = NULL;
+        }
+    }
     else {
        LOG("No active tree available.");
        return FALSE;
