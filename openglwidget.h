@@ -16,17 +16,6 @@ class OpenGLWidget : public QGLWidget
 public:
     explicit OpenGLWidget(QWidget *parent, int viewPort);
 
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void mouseMoveEvent(QMouseEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
-    void paintGL();
-
-
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
