@@ -16,7 +16,6 @@ SOURCES += main.cpp\
     eventmodel.cpp \
     ../client.c \
     ../coordinate.c \
-    ../gui.c \
     ../hash.c \
     ../knossos.c \
     ../lex.yy.c \

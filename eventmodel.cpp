@@ -1,5 +1,6 @@
 #include <math.h>
 #include "eventmodel.h"
+#include "../knossos-global.h"
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -1040,7 +1041,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_S) {
         if(SDL_GetModState() & KMOD_CTRL) {
-            saveSkelCallback(NULL);
+            //saveSkelCallback(NULL);
             return TRUE;
         }
         if(state->skeletonState->activeNode) {
@@ -1101,7 +1102,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_F4) {
         if(event->key() == Qt::Key_Alt) {
             if(state->skeletonState->unsavedChanges) {
-                yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
+                //yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
             }
             else {
                 quitKnossos();
@@ -1140,9 +1141,9 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
         || (state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON))
             return NULL;
 
-    xDistance = event.button.x
+    xDistance = event->x()
         - state->viewerState->viewPorts[VPfound].upperLeftCorner.x;
-    yDistance = event.button.y
+    yDistance = event->y()
         - state->viewerState->viewPorts[VPfound].upperLeftCorner.y;
 
     switch(state->viewerState->viewPorts[VPfound].type) {
@@ -1194,10 +1195,10 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
     return NULL;
 }
 
-int xrel(int x) {
-    return (x - this.mouseX);
+int EventModel::xrel(int x) {
+    return (x - this->mouseX);
 }
 
-int yrel(int y) {
-    return (y - this.mouseY);
+int EventModel::yrel(int y) {
+    return (y - this->mouseY);
 }
