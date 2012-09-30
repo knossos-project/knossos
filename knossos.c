@@ -408,6 +408,7 @@ static int32_t configFromCli(int argCount, char *arguments[]) {
                         break;
                     case 8:
                         strncpy(tempConfig->name, rval, 1023);
+                        LOG("temp name: %s", tempConfig->name);
                         break;
                     case 9:
                         tempConfig->M = (int32_t)atoi(rval);
@@ -971,6 +972,7 @@ allowing K to dynamically switch the mag when the user zooms out or in */
 static int32_t findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
     uint32_t currMag, i;
+    uint32_t isMultiresCompatible = FALSE;
     char currPath[1024];
     char levelUpPath[1024];
     char currKconfPath[1024];
@@ -990,11 +992,27 @@ static int32_t findAndRegisterAvailableDatasets() {
      * a dataset that allows multires. */
 
     /* Multires is only enabled if K is launched with mag1!
-    * Launching it with another dataset than mag1 leads to the old
-    * behavior, that only this mag is shown, this happens also
-    * when the path contains no mag string. */
-    if((strstr(state->name, "mag") != NULL) && (state->magnification == 1)) {
+     * Launching it with another dataset than mag1 leads to the old
+     * behavior, that only this mag is shown, this happens also
+     * when the path contains no mag string. */
 
+    if(state->path[strlen(state->path) - 1] == '/'
+       || state->path[strlen(state->path) - 1] == '\\') {
+        isPathSepTerminated = TRUE;
+    }
+
+    if(isPathSepTerminated) {
+        if(strncmp(&state->path[strlen(state->path) - 5], "mag1", 4) == 0) {
+            isMultiresCompatible = TRUE;
+        }
+    }
+    else {
+        if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
+            isMultiresCompatible = TRUE;
+        }        
+    }
+
+    if(isMultiresCompatible && (state->magnification == 1)) {
         /* take base path and go one level up */
         pathLen = strlen(state->path);
 
@@ -1079,6 +1097,15 @@ static int32_t findAndRegisterAvailableDatasets() {
             } else break;
         }
 
+        if(state->lowestAvailableMag == INT_MAX) {
+            /* This can happen if a bug in the string parsing above causes knossos to
+             * search the wrong directories. We exit here to prevent guaranteed
+             * subsequent crashes. */
+
+            LOG("Unsupported data path format.");
+            _Exit(FALSE);
+        }
+
         /* Do not enable multires by default, even if more than one dataset was found.
          * Multires might be confusing to untrained tracers! Experts can easily enable it..
          * The loaded gui config might lock K to the current mag later one, which is fine. */
@@ -1092,7 +1119,6 @@ static int32_t findAndRegisterAvailableDatasets() {
         }
 
         state->magnification = state->lowestAvailableMag;
-
         /*state->boundary.x *= state->magnification;
         state->boundary.y *= state->magnification;
         state->boundary.z *= state->magnification;
