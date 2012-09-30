@@ -30,6 +30,7 @@ void OpenGLWidget::paintGL()
 
 void OpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
+    qDebug("Fooo");
     //qDebug() << event->x() << " " << qDebug() << event->y();
 
 }
@@ -64,6 +65,8 @@ void OpenGLWidget::wheelEvent(QWheelEvent *event) {
 void OpenGLWidget::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Control) {
+    /*
+    if(event->key == Qt::Key_Control) {
         controls[0] = true;
     }
     if(event->key() == Qt::Key_Shift) {
@@ -72,13 +75,13 @@ void OpenGLWidget::keyPressEvent(QKeyEvent *event)
     if(event->key() == Qt::Key_Alt) {
         controls[2] = true;
     }
-
+*/
     //eventModel->handleKeyboard(event);
 }
 
 void OpenGLWidget::keyReleaseEvent(QKeyEvent *event)
 {
-
+/*
     if(event->key() == Qt::Key_Control) {
         controls[0] = false;
     }
@@ -88,5 +91,6 @@ void OpenGLWidget::keyReleaseEvent(QKeyEvent *event)
     if(event->key() == Qt::Key_Alt) {
         controls[2] = false;
     }
+    */
 }
 

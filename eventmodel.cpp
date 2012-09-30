@@ -161,9 +161,9 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
     // Delete Connection between Active Node and Clicked Node
     if(controls[ALT]) {
         int32_t clickedNode;
-        clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
-                                                     event.button.x,
-                                                     (state->viewerState->screenSizeY - event.button.y),
+        clickedNode = retrieveVisibleObjectBeneathSquare(VPfound, event->x()
+                                                     ,
+                                                         (state->viewerState->screenSizeY - event->y()),
                                                      1);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
@@ -378,11 +378,11 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
             switch(state->viewerState->viewPorts[i].type) {
                 /* the user wants to drag the skeleton inside the VP */
                 case VIEWPORT_SKELETON:
-                    state->skeletonState->translateX += -event->motion.xrel * 2.
+                state->skeletonState->translateX += -xrel(event->x()) * 2.
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->viewPorts[i].edgeLength);
-                    state->skeletonState->translateY += -event.motion.yrel * 2.
+                state->skeletonState->translateY += -yrel(event->y()) * 2.
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->viewPorts[i].edgeLength);
@@ -391,10 +391,10 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                 case VIEWPORT_XY:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
                     state->viewerState->viewPorts[i].userMouseSlideX -=
-                        ((float)event.motion.xrel
+                            ((float)xrel(event->x())
                         / state->viewerState->viewPorts[i].screenPxXPerDataPx);
                     state->viewerState->viewPorts[i].userMouseSlideY -=
-                        ((float)event.motion.yrel
+                            ((float)yrel(event->y())
                         / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                     if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
@@ -409,9 +409,9 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                 case VIEWPORT_XZ:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
                     state->viewerState->viewPorts[i].userMouseSlideX -=
-                        ((float)event.motion.xrel / state->viewerState->viewPorts[i].screenPxXPerDataPx);
+                            ((float)xrel(event->x()) / state->viewerState->viewPorts[i].screenPxXPerDataPx);
                     state->viewerState->viewPorts[i].userMouseSlideY -=
-                        ((float)event.motion.yrel / state->viewerState->viewPorts[i].screenPxYPerDataPx);
+                            ((float)yrel(event->y()) / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                     if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
 
@@ -425,9 +425,9 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                 case VIEWPORT_YZ:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
                     state->viewerState->viewPorts[i].userMouseSlideX -=
-                        ((float)event.motion.xrel / state->viewerState->viewPorts[i].screenPxXPerDataPx);
+                            ((float)xrel(event->x()) / state->viewerState->viewPorts[i].screenPxXPerDataPx);
                     state->viewerState->viewPorts[i].userMouseSlideY -=
-                        ((float)event.motion.yrel / state->viewerState->viewPorts[i].screenPxYPerDataPx);
+                            ((float)yrel(event->y()) / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                     if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
 
@@ -448,9 +448,9 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
     if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
-        if(fabs(event.motion.xrel)  >= fabs(event.motion.yrel))
-            state->skeletonState->rotateZ += event.motion.xrel;
-        else state->skeletonState->rotateX += event.motion.yrel;
+        if(fabs(xrel(event->x()))  >= fabs(yrel(event->y())))
+            state->skeletonState->rotateZ += xrel(event->x());
+        else state->skeletonState->rotateX += yrel(event->y());
             state->skeletonState->viewChanged = TRUE;
         checkIdleTime();
 
@@ -459,7 +459,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
     return TRUE;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
     int32_t i = 0;
     Coordinate newDraggedNodePos;
 
@@ -468,11 +468,11 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
             case VIEWPORT_XY:
                 if(!state->viewerState->viewPorts[i].draggedNode) break;
                 state->viewerState->viewPorts[i].userMouseSlideX -=
-                    ((float)event.motion.xrel
+                        ((float)xrel(event->x())
                     / state->viewerState->viewPorts[i].screenPxXPerDataPx);
 
                 state->viewerState->viewPorts[i].userMouseSlideY -=
-                    ((float)event.motion.yrel
+                        ((float)yrel(event->y())
                     / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                 if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
@@ -505,10 +505,10 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
             case VIEWPORT_XZ:
                 if(!state->viewerState->viewPorts[i].draggedNode) break;
                 state->viewerState->viewPorts[i].userMouseSlideX -=
-                    ((float)event.motion.xrel
+                        ((float)xrel(event->x())
                     / state->viewerState->viewPorts[i].screenPxXPerDataPx);
                 state->viewerState->viewPorts[i].userMouseSlideY -=
-                    ((float)event.motion.yrel
+                        ((float)yrel(event->y())
                     / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                 if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
@@ -540,10 +540,10 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
             case VIEWPORT_YZ:
                 if(!state->viewerState->viewPorts[i].draggedNode) break;
                 state->viewerState->viewPorts[i].userMouseSlideX -=
-                    ((float)event.motion.xrel
+                        ((float)xrel(event->x())
                     / state->viewerState->viewPorts[i].screenPxXPerDataPx);
                 state->viewerState->viewPorts[i].userMouseSlideY -=
-                    ((float)event.motion.yrel
+                        ((float)yrel(event->y())
                     / state->viewerState->viewPorts[i].screenPxYPerDataPx);
                 if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
                     || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
@@ -596,8 +596,9 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
-        if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
-            state->skeletonState->defaultNodeRadius = radius;
+        // !! AG
+        //if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
+        //    state->skeletonState->defaultNodeRadius = radius;
 
         //drawGUI();
     }
@@ -660,8 +661,11 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, b
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
+        /*
+          !! AG
         if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
             state->skeletonState->defaultNodeRadius = radius;
+         */
 
         //drawGUI();
     }
@@ -711,10 +715,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     /* This is a workaround for agars behavior of processing / labeling
     events. Without it, input into a textbox would still trigger global
     shortcut actions.*/
+    /*
+      !! AG
     if(state->viewerState->ag->agInputWdgtFocused) {
         return true;
     }
-
+    */
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
     struct nodeListElement *prevNode;
@@ -1186,4 +1192,12 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
     }
 
     return NULL;
+}
+
+int xrel(int x) {
+    return (x - this.mouseX);
+}
+
+int yrel(int y) {
+    return (y - this.mouseY);
 }

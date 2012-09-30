@@ -9,6 +9,8 @@
 #include "mainwindow.h"
 #include <SDL/SDL_events.h>
 
+
+
 //IMPORTANT. SDL redefines main
 #ifdef main
 #undef main
