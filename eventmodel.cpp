@@ -1,3 +1,4 @@
+#include <math.h>
 #include "eventmodel.h"
 
 extern struct stateInfo *state;
@@ -377,7 +378,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
             switch(state->viewerState->viewPorts[i].type) {
                 /* the user wants to drag the skeleton inside the VP */
                 case VIEWPORT_SKELETON:
-                    state->skeletonState->translateX += -event.motion.xrel * 2.
+                    state->skeletonState->translateX += -event->motion.xrel * 2.
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->viewPorts[i].edgeLength);
@@ -746,7 +747,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
-        } else if(event->key() == Qt::RightArrow) {
+        }
+    } else if(event->key() == Qt::RightArrow) {
             if(event->key() == Qt::Key_Shift) {
                 switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
@@ -772,7 +774,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                         break;
                     }
                 }
-            }
+
     } else if(event->key() == Qt::Key_Down) {
         if(event->key() == Qt::Key_Shift) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
@@ -974,11 +976,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             else {
                 LOG("Reached first node.");
             }
-            break; // ???
         }
     } else if(event->key() == Qt::Key_Z) {
         if(state->skeletonState->activeTree == NULL) {
-            break;
+            return TRUE;
         }
 
         //get tree with previous ID
@@ -1035,7 +1036,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_S) {
         if(SDL_GetModState() & KMOD_CTRL) {
             saveSkelCallback(NULL);
-            break;
+            return TRUE;
         }
         if(state->skeletonState->activeNode) {
             tempConfig->viewerState->currentPosition.x =
@@ -1120,9 +1121,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     return true;
 }
 
-static Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
+Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
     Coordinate *foundCoordinate;
-    foundCoordinate = malloc(sizeof(Coordinate));
+    foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
     uint32_t x, y, z;
     x = y = z = 0;
 
