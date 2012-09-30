@@ -718,7 +718,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
     struct nodeListElement *prevNode;
-    struct nodeListElement *nextNode;
     color4F treeCol;
 
     /* new qt version */
