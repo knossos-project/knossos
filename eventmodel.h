@@ -5,6 +5,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
+#include <stdint.h>
+#include <math.h>
 #include "../knossos-global.h"
 
 class EventModel : public QObject
@@ -23,6 +25,13 @@ public:
     bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls);
     bool handleKeyboard(QKeyEvent *event);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
+
+    int xrel(int x);
+    int yrel(int y);
+
+protected:
+    int mouseX;
+    int mouseY;
 
 signals:
     

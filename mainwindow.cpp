@@ -153,6 +153,7 @@ void MainWindow::createMenus()
     helpMenu->addAction(aboutAction);
 }
 
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 
