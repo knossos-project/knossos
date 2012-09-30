@@ -12,7 +12,7 @@ EventModel::EventModel(QObject *parent) :
 {
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPFound, bool *controls)
+bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls)
 {
 
     int32_t clickedNode;
@@ -101,7 +101,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPFound, bool
     return true;
 }
 
-bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPFound, bool *controls) {
+bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls) {
     int32_t clickedNode;
 
     clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
@@ -136,7 +136,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPFound, bo
                 }
             }
         }
-        else if(conntrols[CTRL]) {
+        else if(controls[CTRL]) {
             /* Pressed CTRL only. */
             if(state->skeletonState->activeNode) {
                 addSegment(CHANGE_MANUAL,
@@ -155,7 +155,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPFound, bo
     return true;
 }
 
-bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPFound, bool *controls) {
+bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, bool *controls) {
 
     // Delete Connection between Active Node and Clicked Node
     if(controls[ALT]) {
@@ -367,7 +367,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPFound, boo
     return true;
 }
 
-bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPFound) {
+bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
     int32_t i;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
@@ -445,7 +445,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPFound) 
     return true;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPFound) {
+bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
     if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
         if(fabs(event.motion.xrel)  >= fabs(event.motion.yrel))
             state->skeletonState->rotateZ += event.motion.xrel;
@@ -458,7 +458,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPFound
     return TRUE;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPFound) {
+bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
     int32_t i = 0;
     Coordinate newDraggedNodePos;
 
@@ -577,7 +577,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPFound
     return TRUE;
 }
 
-bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPFound, bool *controls) {
+bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bool *controls) {
     float radius;
 
     if(VPfound == -1)
@@ -641,7 +641,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPFound, bo
     return true;
 }
 
-bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPFound, bool *controls) {
+bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls) {
     float radius;
 
     if(VPfound == -1)

@@ -7,7 +7,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include "mainwindow.h"
-#include "../eventHandler.h"
+#include <SDL/SDL_events.h>
 
 //IMPORTANT. SDL redefines main
 #ifdef main

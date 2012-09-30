@@ -16,7 +16,6 @@ SOURCES += main.cpp\
     eventmodel.cpp \
     ../client.c \
     ../coordinate.c \
-    ../eventHandler.c \
     ../gui.c \
     ../hash.c \
     ../knossos.c \
@@ -33,7 +32,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     ../config.lex \
     ../client.h \
-    ../eventHandler.h \
     ../hash.h \
     ../knossos-global.h \
     ../knossos_private.h \

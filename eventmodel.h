@@ -12,15 +12,15 @@ class EventModel : public QObject
     Q_OBJECT
 public:
     explicit EventModel(QObject *parent = 0);
-    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPFound, bool *controls);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPFound, bool controls);
-    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPFound, bool *controls);
-    bool handleMouseMotion(QMouseEvent *event, int32_t VPFound);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPFound);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPFound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPFound);
-    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPFound, bool *controls);
-    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPFound, bool *controls);
+    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseMotion(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls);
     bool handleKeyboard(QKeyEvent *event);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
