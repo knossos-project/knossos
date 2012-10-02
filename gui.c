@@ -441,7 +441,7 @@ void createSyncOptionsWin() {
     AG_Box *box;
     AG_Numerical *numerical;
 
-	state->viewerState->ag->syncOptWin = AG_WindowNew(0);
+	state->viewerState->ag->syncOptWin = AG_WindowNew(AG_WINDOW_NORESIZE);
     AG_WindowSetSideBorders(state->viewerState->ag->syncOptWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->syncOptWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->syncOptWin, "Synchronization Settings");
@@ -486,7 +486,7 @@ void createSaveOptionsWin() {
     AG_Window *win;
     AG_Numerical *numerical;
 
-	win = AG_WindowNew(0);
+	win = AG_WindowNew(AG_WINDOW_NORESIZE);
     {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
@@ -1040,7 +1040,7 @@ void createConsoleWin() {
        around a bug in the AG_Console widget. See agar bug #172.  */
     monospace = AG_FetchFont("_agFontMinimal", 10, -1);
 
-	state->viewerState->ag->consoleWin = AG_WindowNew(0);
+	state->viewerState->ag->consoleWin = AG_WindowNew(AG_WINDOW_NORESIZE);
     AG_WindowSetSideBorders(state->viewerState->ag->consoleWin, 3);
     AG_WindowSetBottomBorder(state->viewerState->ag->consoleWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->consoleWin, "log");
@@ -1353,12 +1353,13 @@ void createCommentsWin() {
     AG_Button *button;
     AG_Textbox *textbox;
     AG_Box *box;
-	win = AG_WindowNew(0);
+	win = AG_WindowNew(AG_WINDOW_NORESIZE);
     {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Comment Shortcuts");
         AG_WindowSetGeometry(win, 628, 543, 250, 167);
+
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F1: ");
@@ -4059,30 +4060,33 @@ void prefDefaultPrefsWindow(){
     yesNoPrompt(NULL, "Do you really want to load the default preferences?", prefDefaultPrefs, NULL);
 }
 static void resizeWindows() {
+    /* AGAR bug: windows hidden on default (see prefDefaultPrefs()) become extremely small on resize.
+    * Workaround: make them unresizable.
+    */
     AG_Window *win = state->viewerState->ag->toolsWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->zoomingWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->tracingTimeWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->commentsWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, 250, 167); }
     win = state->viewerState->ag->navOptWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->syncOptWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, 200, 120); }
     win = state->viewerState->ag->viewPortPrefWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->saveOptWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, 200, 80); }
     win = state->viewerState->ag->navWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->consoleWin;
-//  if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1); WTF, console becomes extremely small after resize
+    if(win) AG_WindowSetGeometry(win, -1, -1, 421, 129);
     win = state->viewerState->ag->dataSetStatsWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->setDynRangeWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
+    if(win) {AG_WindowSetGeometry(win, -1, -1, -1, -1); }
 }
 void prefDefaultPrefs(){
     tempConfig->viewerState->screenSizeX = 1024;
