@@ -408,7 +408,6 @@ static int32_t configFromCli(int argCount, char *arguments[]) {
                         break;
                     case 8:
                         strncpy(tempConfig->name, rval, 1023);
-                        LOG("temp name: %s", tempConfig->name);
                         break;
                     case 9:
                         tempConfig->M = (int32_t)atoi(rval);
@@ -1133,6 +1132,10 @@ static int32_t findAndRegisterAvailableDatasets() {
         /* state->magnification already contains the right mag! */
 
         pathLen = strlen(state->path);
+        if(!pathLen) {
+            LOG("No valid dataset specified.\n");
+            _Exit(FALSE);
+        }
 
         if((state->path[pathLen-1] == '\\')
            || (state->path[pathLen-1] == '/')) {
