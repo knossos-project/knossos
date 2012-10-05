@@ -1985,7 +1985,7 @@ uint32_t delActiveTree() {
         else if(state->skeletonState->activeTree->previous) {
             nextTree = state->skeletonState->activeTree->previous;
         }
-        
+
         delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
 
         if(nextTree) {
@@ -2223,7 +2223,7 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
     while(node) {
     	if(node->nodeID > maxID) {
             highestNode = node;
-            maxID = node->nodeID;            
+            maxID = node->nodeID;
         }
 
         if(node->nodeID < currentNode->nodeID) {
@@ -2238,7 +2238,7 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
                 prevNode = node;
             }
 
-	
+
         }
 
         node = node->next;
@@ -2445,6 +2445,10 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
     struct nodeListElement *currentNode;
     struct nodeListElement *firstNode, *lastNode;
 
+    if(treeID1 == treeID2) {
+        LOG("Could not merge trees. Provided IDs are the same!");
+        return FALSE;
+    }
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);
         return FALSE;
@@ -2513,6 +2517,11 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
             tree2->next->previous = tree2->previous;
     }
     free(tree2);
+
+    if(state->skeletonState->activeTree->treeID == tree2->treeID) {
+       setActiveTreeByID(tree1->treeID);
+       state->viewerState->ag->activeTreeID = tree1->treeID;
+    }
 
     state->skeletonState->treeElements--;
     state->skeletonState->skeletonChanged = TRUE;
@@ -2953,7 +2962,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     }
 
     /*
-     *  This function takes a node and splits the connected component 
+     *  This function takes a node and splits the connected component
      *  containing that node into a new tree, unless the connected component
      *  is equivalent to exactly one entire tree.
      *
@@ -3082,7 +3091,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
      *  feature when performing skeleton consolidation and allows one to merge
      *  many trees at once.
      *  Just remove the treesCount > 1 below to get back to the original
-     *  behaviour of only splitting strict subgraphs. 
+     *  behaviour of only splitting strict subgraphs.
      */
 
     for(i = 0; i < treesCount; i++) {
@@ -3130,15 +3139,15 @@ int32_t splitConnectedComponent(int32_t targetRevision,
                 n->previous = NULL;
                 newTree->firstNode = n;
             }
-
             last = n;
-
             n->correspondingTree = newTree;
         }
+        state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
         state->skeletonState->skeletonChanged = TRUE;
     }
-    else
+    else {
         LOG("The connected component is equal to the entire tree, not splitting.");
+    }
 
     delStack(remainingNodes);
     delStack(componentNodes);
