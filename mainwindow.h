@@ -11,7 +11,7 @@
 #include "openglwidget.h"
 
 extern "C" {
-#include "../knossos-global.h"
+    #include "../knossos-global.h"
 }
 
 

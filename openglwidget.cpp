@@ -6,7 +6,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent, int viewPort) :
 {
     this->viewPort = viewPort;
     this->controls = new bool[3];
-    //eventModel = new EventModel();
+    eventModel = new EventModel();
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
@@ -38,11 +38,11 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 void OpenGLWidget::mousePressEvent(QMouseEvent *event)
 {
     if(event->button() == Qt::LeftButton) {
-        //eventModel->handleMouseButtonLeft(event, viewPort, controls);
+        eventModel->handleMouseButtonLeft(event, viewPort, controls);
     } else if(event->button() == Qt::MiddleButton) {
-        //eventModel->handleMouseButtonMiddle(event, viewPort, controls);
+        eventModel->handleMouseButtonMiddle(event, viewPort, controls);
     } else if(event->button() == Qt::RightButton) {
-        //eventMode->handleMouseButtonRight(event, viewPort, controls);
+        eventModel->handleMouseButtonRight(event, viewPort, controls);
     }
 
 }
@@ -56,9 +56,9 @@ void OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void OpenGLWidget::wheelEvent(QWheelEvent *event) {
     if(event->delta() > 0) {
-        //eventModel->handleMouseWheelForward(event, viewPort, controls);
+        eventModel->handleMouseWheelForward(event, viewPort, controls);
     } else {
-        //eventModel->handleMouseWheelBackward(event, viewPort, controls);
+        eventModel->handleMouseWheelBackward(event, viewPort, controls);
     }
 }
 
@@ -74,7 +74,7 @@ void OpenGLWidget::keyPressEvent(QKeyEvent *event)
         controls[2] = true;
     }
 
-    //eventModel->handleKeyboard(event);
+    eventModel->handleKeyboard(event);
 }
 
 void OpenGLWidget::keyReleaseEvent(QKeyEvent *event)
