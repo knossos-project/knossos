@@ -7,7 +7,10 @@
 #include <QWheelEvent>
 #include <stdint.h>
 #include <math.h>
+
+extern "C" {
 #include "../knossos-global.h"
+}
 
 class EventModel : public QObject
 {

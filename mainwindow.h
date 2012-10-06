@@ -8,9 +8,11 @@
 #include <QGridLayout>
 #include <QMessageBox>
 #include <QDebug>
-
 #include "openglwidget.h"
 
+extern "C" {
+#include "../knossos-global.h"
+}
 
 
 namespace Ui {
@@ -28,6 +30,7 @@ public:
     void closeEvent(QCloseEvent *event);
 private:
     Ui::MainWindow *ui;
+
 
     QMessageBox *prompt;
 

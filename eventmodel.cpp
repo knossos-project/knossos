@@ -1,6 +1,5 @@
-#include <math.h>
 #include "eventmodel.h"
-#include "../knossos-global.h"
+
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
