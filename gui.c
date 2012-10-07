@@ -191,6 +191,9 @@ void updateAGconfig() {
     state->viewerState->ag->totalTrees = state->skeletonState->treeElements;
     state->viewerState->ag->totalNodes = state->skeletonState->totalNodeElements;
     if(state->skeletonState->totalNodeElements == 0) {
+        if(!strcmp (state->skeletonState->skeletonCreatedInVersion, "pre-3.2")){
+            strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+        }
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt1, FALSE);
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt2, FALSE);
         state->viewerState->ag->activeNodeID = 0;
