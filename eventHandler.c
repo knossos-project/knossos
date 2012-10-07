@@ -447,7 +447,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
     }
 
 
-    //Set Connection between Active Node and Clicked Node
+    //Set or delete Connection between Active Node and Clicked Node
     if(SDL_GetModState() & KMOD_ALT) {
         int32_t clickedNode;
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
@@ -456,9 +456,15 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                                                      1);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
-                addSegment(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode);
+                if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
+                    delSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
+                }
+                else if(findSegmentByNodeIDs(clickedNode, state->skeletonState->activeNode->nodeID)) {
+                    delSegment(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+                }
+                else{
+                    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                }
             }
         }
     }
@@ -475,37 +481,27 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
 
     if(clickedNode) {
         if(SDL_GetModState() & KMOD_SHIFT) {
-            if(SDL_GetModState() & KMOD_CTRL) {
-                /* Pressed SHIFT and CTRL */
-            }
-            else {
-                /* Pressed SHIFT only. */
-
-                /* Delete segment between clicked and active node */
-                if(state->skeletonState->activeNode) {
-                    if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
-                                            clickedNode)) {
-                        delSegment(CHANGE_MANUAL,
-                                   state->skeletonState->activeNode->nodeID,
-                                   clickedNode,
-                                   NULL);
-                    }
-                    if(findSegmentByNodeIDs(clickedNode,
-                                            state->skeletonState->activeNode->nodeID)) {
-                        delSegment(CHANGE_MANUAL,
-                                   clickedNode,
-                                   state->skeletonState->activeNode->nodeID,
-                                   NULL);
-                    }
-                }
-            }
-        }
-        else if(SDL_GetModState() & KMOD_CTRL) {
-            /* Pressed CTRL only. */
+            /* Delete or add segment between clicked and active node */
             if(state->skeletonState->activeNode) {
-                addSegment(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode);
+                if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
+                                        clickedNode)) {
+                    delSegment(CHANGE_MANUAL,
+                               state->skeletonState->activeNode->nodeID,
+                               clickedNode,
+                               NULL);
+                }
+                else if(findSegmentByNodeIDs(clickedNode,
+                                             state->skeletonState->activeNode->nodeID)) {
+                    delSegment(CHANGE_MANUAL,
+                               clickedNode,
+                               state->skeletonState->activeNode->nodeID,
+                               NULL);
+                }
+                else{
+                    addSegment(CHANGE_MANUAL,
+                               state->skeletonState->activeNode->nodeID,
+                               clickedNode);
+                }
             }
         }
         else {
@@ -520,33 +516,6 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
 }
 
 static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
-    // Delete Connection between Active Node and Clicked Node
-    if(SDL_GetModState() & KMOD_ALT) {
-    int32_t clickedNode;
-    clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
-                                                     event.button.x,
-                                                     (state->viewerState->screenSizeY - event.button.y),
-                                                     1);
-    if(clickedNode) {
-        if(state->skeletonState->activeNode) {
-            if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
-                                    clickedNode)) {
-                delSegment(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode,
-                           NULL);
-                }
-                if(findSegmentByNodeIDs(clickedNode,
-                                        state->skeletonState->activeNode->nodeID)) {
-                    delSegment(CHANGE_MANUAL,
-                               clickedNode,
-                               state->skeletonState->activeNode->nodeID,
-                               NULL);
-                }
-            }
-        }
-        return FALSE;
-    }
     int32_t newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
