@@ -4094,7 +4094,7 @@ void prefDefaultPrefs(){
     AG_WindowShow(state->viewerState->ag->toolsWin);
     AG_WindowShow(state->viewerState->ag->zoomingWin);
     AG_WindowShow(state->viewerState->ag->tracingTimeWin);
-    AG_WindowHide(state->viewerState->ag->commentsWin);
+    AG_WindowShow(state->viewerState->ag->commentsWin);
     AG_WindowShow(state->viewerState->ag->navOptWin);
     AG_WindowHide(state->viewerState->ag->syncOptWin);
     AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
