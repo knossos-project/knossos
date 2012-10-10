@@ -40,12 +40,12 @@ and http://code.google.com/p/knossos-skeletonizer/
 - Tracing time window shows the KNOSSOS running time, tracing time and idle time
 - Users can put comments on [F1] - [F5] shortcuts to easily add them to nodes.
 - Added shortcuts
-	Go to next/previous node via [x]/[Shift]+[x]
-	Go to next/previous tree via [y]/[Shift]+[y]
+	Go to next/previous node via [x]/[SHIFT]+[x]
+	Go to next/previous tree via [y]/[SHIFT]+[y]
 	Move 10 layers in/against viewport direction via [e]/[r]
 	Quit KNOSSOS via [ALT]+[F4]
 	Save file via [CTRL]+[s]
-	Connect/disconnect nodes via [ALT] + [mouseleft]/[rightclick]
+	Connect/disconnect nodes via [ALT] + [mouseleftclick]
 	Change zoom in skeleton viewport via [i]/[o] when mouse is in skeleton viewport
 - Reset button in skeleton viewport resets to default view
 - Skeleton viewport settings are now saved in skeleton file
@@ -75,3 +75,5 @@ and http://code.google.com/p/knossos-skeletonizer/
 - Changing the active tree causes recentering to first node of new active tree.
 - Python starter will give a warning when user tries to launch knossos without selecting a dataset.
 - Unsucessfully loading a skeleton does not clear the old skeleton, anymore
+- Changed shortcuts
+	Connect/disconnect nodes via [SHIFT] + [mousewheelclick]
