@@ -1,5 +1,5 @@
 ==================================
-=  KNOSSOS V3.2 - Change Log     =
+=  KNOSSOS V3.2 - Release Notes  =
 ==================================
 
 KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed for the rapid reconstruction of 
