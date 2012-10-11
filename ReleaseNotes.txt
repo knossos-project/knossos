@@ -1,0 +1,83 @@
+==================================
+=  KNOSSOS V3.2 - Release Notes  =
+==================================
+
+KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed
+for the rapid reconstruction of neural morphology and connectivity. 
+
+
+----------------------------------
+-  General Information           -
+----------------------------------
+
+Release Date: October 11, 2012 
+
+Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skeletonizer/
+
+
+----------------------------------
+- Important new Features         -
+----------------------------------
+
+- Advanced Tracing Modes
+
+    KNOSSOS V3.2 provides three new tracing modes in which the user is automatically moved
+    futher along the current tracing direction when a new node is added.
+    The options for this new feature can be found in "Preferences" -> "Navigation Settings".
+    1) Additional viewport direction move mode
+       KNOSSOS moves a specified distance orthogonal to the clicked viewport
+    2) Additional mirrored move mode
+       KNOSSOS moves in the direction given by the vector between the previous node and the
+       active node, by the same amount as the previous move
+    3) Additional tracing direction move mode: same as 2), but with a user-specified
+       distance.
+
+- Shortcuts
+
+    1) The user can move to the next or previous node via [x] / [SHIFT] + [x] and to the next or
+       previous tree via [y] / [SHIFT] + [y].
+    2) The Skeleton Viewport zoom factor can be changed via the [i] and [o] keys when the
+       mouse pointer is inside the Skeleton Viewport.
+    3) Nodes can be connected or disconnected via [ALT] + [left-click]. The possibility of
+       connecting and disconnecting nodes with the mousewheel is now simplified to the key
+       combination [SHIFT] + [middle-click].
+    4) The [e] and [r] keys move by a distance of 10 orthogonally to the viewport that contains
+       the mouse pointer.
+       The speed can be set through "Recentering Time orthog. [ms]", which can be found under
+       "Navigation Settings".
+    5) The Skeleton File can be saved via [CTRL] + [s].
+    6) KNOSSOS can be quit via [ALT] + [F4].
+
+- Default Preferences
+
+    1) The user has the possibility to restore the default preferences of KNOSSOS by clicking on
+       "Preferences" -> "Default Preferences" in the menu bar.
+    2) The reset button in the skeleton viewport resets to the default view.
+
+- Comment Shortcuts
+
+    Up to 5 frequently used comments can be bound to the [F1] - [F5] keys.  The comment shortcuts
+    window can be opened by clicking "Windows" -> "Comment Shortcuts" in the menu bar.
+
+- Tracing Time
+
+    This feature allows a better time management of the tracing sessions.
+    1) Running time
+       This is a continuous counter which displays how long KNOSSOS has been running. It starts when
+       KNOSSOS starts.
+    2) Tracing time
+       This is the time which shows the working time of the user.
+    3) Idle time
+       This time shows how long the user has not been working while KNOSSOS was running.
+
+
+- Multiresolution
+
+    KNOSSOS now supports dynamic switching between datasets sampled at different resolutions. This
+    allows zooming out much further than before to get an overview of a complete large dataset.
+    This feature requires all datasets to reside in folders with identical names except for the
+    trailing magnification specifier _magX, where X is an integer denoting the factor by which the
+    data has been downsampled. KNOSSOS searches for datasets following this naming convention in the
+    same folder as the current dataset.
+    The feature is disabled by default and can be enabled by unchecking "Lock dataset to current mag"
+    in "View" -> "Zoom and Multires".
