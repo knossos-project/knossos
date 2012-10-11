@@ -14,7 +14,6 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     openglwidget.cpp \
     eventmodel.cpp \
-    ../client.c \
     ../coordinate.c \
     ../hash.c \
     ../knossos.c \
@@ -25,12 +24,13 @@ SOURCES += main.cpp\
     ../skeletonizer.c \
     ../viewer.c \
     ../y.tab.c \
+    ../client.c \
+    clientclass.cpp
 
 
 
 HEADERS  += mainwindow.h \
     ../config.lex \
-    ../client.h \
     ../hash.h \
     ../knossos-global.h \
     ../knossos_private.h \
@@ -44,7 +44,9 @@ HEADERS  += mainwindow.h \
     ../viewer.h \
     ../y.tab.h \
     openglwidget.h \
-    eventmodel.h
+    eventmodel.h \
+    ../client.h \
+    clientclass.h
 
 
 FORMS    += mainwindow.ui
