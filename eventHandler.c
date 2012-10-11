@@ -453,7 +453,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
-                                                     1);
+                                                     10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
@@ -477,7 +477,7 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
     clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event.button.x,
                                                      (state->viewerState->screenSizeY - event.button.y),
-                                                     1);
+                                                     10);
 
     if(clickedNode) {
         if(SDL_GetModState() & KMOD_SHIFT) {
