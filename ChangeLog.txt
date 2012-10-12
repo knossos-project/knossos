@@ -45,6 +45,8 @@ http://code.google.com/p/knossos-skeletonizer/
 - Tracing time window shows the KNOSSOS running time, tracing time and idle
   time
 - Users can bind comments to the [F1] - [F5] keys to easily add them to nodes
+- Nodes with comments now appear in yellow. But branch nodes with comments 
+  remain blue.
 - Added shortcuts: Go to next / previous node via [x] / [SHIFT] + [x]; Go to
   next/previous tree via [y] / [SHIFT] + [y]; Move 10 coordinate units via
   [e] / [r]; Quit KNOSSOS via [ALT] + [F4]; Save file via [CTRL] + [s];
