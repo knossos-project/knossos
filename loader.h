@@ -2,8 +2,9 @@
 #define LOADER_H
 
 #include <QObject>
+#include <QThread>
 
-class Loader : public QObject
+class Loader : public QThread
 {
     Q_OBJECT
 public:

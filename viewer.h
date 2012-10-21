@@ -2,8 +2,9 @@
 #define VIEWER_H
 
 #include <QObject>
+#include <QThread>
 
-class Viewer : public QObject
+class Viewer : public QThread
 {
     Q_OBJECT
 public:

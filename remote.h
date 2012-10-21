@@ -2,8 +2,9 @@
 #define REMOTE_H
 
 #include <QObject>
+#include <QThread>
 
-class Remote : public QObject
+class Remote : public QThread
 {
     Q_OBJECT
 public:
