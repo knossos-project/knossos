@@ -7,12 +7,13 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include "mainwindow.h"
-#include "../knossos-global.h"
-#include "../knossos.h"
+#include "knossos-global.h"
+
+/*#include "../knossos.h"
 #include "../treeLUT_fallback.h"
 #include "../y.tab.h"
 #include "../lex.yy.h"
-
+*/
 
 //IMPORTANT. SDL redefines main
 #ifdef main

@@ -10,7 +10,7 @@ TARGET = knossos
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
+SOURCES +=\
         mainwindow.cpp \
     openglwidget.cpp \
     eventmodel.cpp \
@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     remote.cpp \
     skeletonizer.cpp \
     renderer.cpp \
-    gui.cpp
+    gui.cpp \
+    knossos.cpp
 
 
 
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.h \
     remote.h \
     skeletonizer.h \
     renderer.h \
-    gui.h
+    gui.h \
+    knossos-global.h
 
 
 
