@@ -16,6 +16,7 @@ EventModel::EventModel(QObject *parent) :
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls)
 {
 
+    /*
     int32_t clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
@@ -50,15 +51,15 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
         return false;
     }
 
-    /* check in which type of VP the user clicked and perform appropriate operation */
+    // check in which type of VP the user clicked and perform appropriate operation
     if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
-        /* Activate motion tracking for this VP */
+        // Activate motion tracking for this VP
         state->viewerState->viewPorts[VPfound].motionTracking = 1;
 
         return true;
     }
     else {
-        /* Handle the orthogonal viewports */
+        // Handle the orthogonal viewports
 
         switch(state->viewerState->workMode) {
             case ON_CLICK_RECENTER:
@@ -77,7 +78,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
                 break;
 
             case ON_CLICK_DRAG:
-                /* Activate motion tracking for this VP */
+                // Activate motion tracking for this VP
                 state->viewerState->viewPorts[VPfound].motionTracking = 1;
                 break;
             }
@@ -99,10 +100,12 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
             }
         }
     }
+    */
     return true;
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls) {
+    /*
     int32_t clickedNode;
 
     clickedNode = retrieveVisibleObjectBeneathSquare(VPfound,
@@ -114,11 +117,11 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
     if(clickedNode) {
         if(controls[SHIFT]) {
             if(controls[CTRL]) {
-                /* Pressed SHIFT and CTRL */
+                // Pressed SHIFT and CTRL
             } else {
-                /* Pressed SHIFT only. */
+                // Pressed SHIFT only.
 
-                /* Delete segment between clicked and active node */
+                // Delete segment between clicked and active node
                 if(state->skeletonState->activeNode) {
                     if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
                                             clickedNode)) {
@@ -138,7 +141,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
             }
         }
         else if(controls[CTRL]) {
-            /* Pressed CTRL only. */
+            // Pressed CTRL only.
             if(state->skeletonState->activeNode) {
                 addSegment(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
@@ -146,19 +149,20 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
             }
         }
         else {
-            /* No modifier pressed */
+            // No modifier pressed
             state->viewerState->viewPorts[VPfound].draggedNode =
                 findNodeByNodeID(clickedNode);
             state->viewerState->viewPorts[VPfound].motionTracking = 1;
         }
     }
-
+    */
     return true;
 }
 
 bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, bool *controls) {
 
     // Delete Connection between Active Node and Clicked Node
+    /*
     if(controls[ALT]) {
         int32_t clickedNode;
         clickedNode = retrieveVisibleObjectBeneathSquare(VPfound, event->x()
@@ -187,38 +191,39 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
     }
     int32_t newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
-
-    /* We have to activate motion tracking only for the skeleton VP for a right click */
+    */
+    /*
+    // We have to activate motion tracking only for the skeleton VP for a right click
     if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON)
         state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
 
-    /* If not, we look up which skeletonizer work mode is
-    active and do the appropriate operation */
+    // If not, we look up which skeletonizer work mode is
+    // active and do the appropriate operation
         clickedCoordinate =
             getCoordinateFromOrthogonalClick(event, VPfound);
 
-        /* could not find any coordinate... */
+        // could not find any coordinate...
         if(clickedCoordinate == NULL)
             return TRUE;
 
         switch(state->skeletonState->workMode) {
             case SKELETONIZER_ON_CLICK_DROP_NODE:
-                /* function is inside skeletonizer.c */
+                // function is inside skeletonizer.c
                 UI_addSkeletonNode(clickedCoordinate,
                                    state->viewerState->viewPorts[VPfound].type);
                 break;
             case SKELETONIZER_ON_CLICK_ADD_NODE:
-                /* function is inside skeletonizer.c */
+                // function is inside skeletonizer.c
                 UI_addSkeletonNode(clickedCoordinate,
                                    state->viewerState->viewPorts[VPfound].type);
                 tempConfig->skeletonState->workMode =
                     SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
                 break;
             case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
-                /* function is inside skeletonizer.c */
+                // function is inside skeletonizer.c
                 if(state->skeletonState->activeNode) {
                     if(controls[CTRL]) {
-                        /* Add a "stump", a branch node to which we don't automatically move. */
+                        // Add a "stump", a branch node to which we don't automatically move.
                         if((newNodeID = UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                             state->viewerState->viewPorts[VPfound].type,
                                                                             FALSE))) {
@@ -239,8 +244,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                                                                TRUE)) {
 
 
-                            /* Highlight the viewport with the biggest movement component and set
-                               behavior of f / d keys accordingly. */
+                            // Highlight the viewport with the biggest movement component and set
+                            //  behavior of f / d keys accordingly.
                             movement.x = clickedCoordinate->x - lastPos.x;
                             movement.y = clickedCoordinate->y - lastPos.y;
                             movement.z = clickedCoordinate->z - lastPos.z;
@@ -272,7 +277,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                                 }
                             }
 
-                            /* Determine which viewport to highlight based on which movement component is biggest. */
+                            // Determine which viewport to highlight based on which movement component is biggest.
                             if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
                                 state->viewerState->highlightVp = VIEWPORT_YZ;
                             }
@@ -283,8 +288,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                                 state->viewerState->highlightVp = VIEWPORT_XY;
                             }
 
-                            /* Determine the directions for the f and d keys based on the signs of the movement
-                               components along the three dimensions. */
+                            // Determine the directions for the f and d keys based on the signs of the movement
+                            //   components along the three dimensions.
                             if(movement.x >= 0) {
                                 state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
                             }
@@ -336,7 +341,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                             if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
                             if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
 
-                            /* Do not allow clicks outside the dataset */
+                            // Do not allow clicks outside the dataset/
                             if (clickedCoordinate->x
                                 > state->boundary.x)
                                 clickedCoordinate->x = state->boundary.x;
@@ -347,7 +352,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                                 > state->boundary.z)
                                 clickedCoordinate->z = state->boundary.z;
 
-                            /* Move to the new node position */
+                            // Move to the new node position
                             tempConfig->remoteState->type = REMOTE_RECENTERING;
                             SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                            clickedCoordinate->x,
@@ -364,19 +369,20 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
                 }
 
         }
-
+    */
     return true;
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
+    /*
     int32_t i;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
 
-        /* motion tracking mode is active for viewPort i */
+        // motion tracking mode is active for viewPort i
         if(state->viewerState->viewPorts[i].motionTracking == TRUE) {
             switch(state->viewerState->viewPorts[i].type) {
-                /* the user wants to drag the skeleton inside the VP */
+                // the user wants to drag the skeleton inside the VP
                 case VIEWPORT_SKELETON:
                 state->skeletonState->translateX += -xrel(event->x()) * 2.
                         * ((float)state->skeletonState->volBoundary
@@ -442,11 +448,12 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
             return true;
         }
     }
-
+    */
     return true;
 }
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
+    /*
     if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
         if(fabs(xrel(event->x()))  >= fabs(yrel(event->y())))
             state->skeletonState->rotateZ += xrel(event->x());
@@ -455,11 +462,12 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
         checkIdleTime();
 
     }
-
+    */
     return TRUE;
 }
 
 bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
+    /*
     int32_t i = 0;
     Coordinate newDraggedNodePos;
 
@@ -574,11 +582,12 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                 break;
         }
     }
-
+*/
     return TRUE;
 }
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bool *controls) {
+    /*
     float radius;
 
     if(VPfound == -1)
@@ -603,7 +612,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
         //drawGUI();
     }
     else {
-        /* Skeleton VP */
+        // Skeleton VP
         if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
@@ -611,13 +620,13 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
                 state->skeletonState->viewChanged = TRUE;
             }
         }
-        /* Orthogonal VP or outside VP */
+        // Orthogonal VP or outside VP
         else {
-            /* Zoom when CTRL is pressed */
+            // Zoom when CTRL is pressed
             if(controls[CTRL]) {
                 UI_zoomOrthogonals(-0.1);
             }
-            /* Move otherwise */
+            // Move otherwise
             else {
                 switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
@@ -639,11 +648,12 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
             }
         }
     }
-
+*/
     return true;
 }
 
 bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls) {
+/*
     float radius;
 
     if(VPfound == -1)
@@ -661,16 +671,16 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, b
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
-        /*
-          !! AG
-        if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
-            state->skeletonState->defaultNodeRadius = radius;
-         */
+        //
+        //  !! AG
+        //if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
+       //     state->skeletonState->defaultNodeRadius = radius;
+
 
         //drawGUI();
     }
     else {
-        /* Skeleton VP */
+        // Skeleton VP
         if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
@@ -679,13 +689,13 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, b
                 state->skeletonState->viewChanged = TRUE;
             }
         }
-        /* Orthogonal VP or outside VP */
+        // Orthogonal VP or outside VP
         else {
-            /* Zoom when CTRL is pressed */
+            // Zoom when CTRL is pressed
             if(controls[CTRL]) {
                 UI_zoomOrthogonals(0.1);
             }
-            /* Move otherwise */
+            // Move otherwise
             else {
                 switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
@@ -707,26 +717,22 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, b
             }
         }
     }
-
+*/
     return true;
 }
 
 bool EventModel::handleKeyboard(QKeyEvent *event) {
-    /* This is a workaround for agars behavior of processing / labeling
-    events. Without it, input into a textbox would still trigger global
-    shortcut actions.*/
     /*
-      !! AG
-    if(state->viewerState->ag->agInputWdgtFocused) {
-        return true;
-    }
-    */
+    // This is a workaround for agars behavior of processing / labeling
+    events. Without it, input into a textbox would still trigger global
+    shortcut actions.
+
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
     struct nodeListElement *prevNode;
     color4F treeCol;
 
-    /* new qt version */
+    // new qt version
     if(event->key() == Qt::Key_Left) {
         if(event->key() == Qt::Key_Shift) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
@@ -1122,18 +1128,19 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
         }
     }
-
+    */
     return true;
 }
 
 Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
+    /*
     Coordinate *foundCoordinate;
     foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
     uint32_t x, y, z;
     x = y = z = 0;
 
-    /* These variables store the distance in screen pixels from the left and
-    upper border from the user mouse click to the VP boundaries. */
+    // These variables store the distance in screen pixels from the left and
+    // upper border from the user mouse click to the VP boundaries.
     uint32_t xDistance, yDistance;
 
     if((VPfound == -1)
@@ -1190,11 +1197,12 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
 
         return foundCoordinate;
     }
-
+*/
     return NULL;
 }
 
 int EventModel::xrel(int x) {
+
     return (x - this->mouseX);
 }
 
