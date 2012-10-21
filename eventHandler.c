@@ -1531,7 +1531,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+                if (strncmp(state->viewerState->ag->comment1, "", 1) != 0){
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+                }
             }
         }
         break;
@@ -1542,7 +1544,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+                if (strncmp(state->viewerState->ag->comment2, "", 1) != 0){
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+                }
             }
         }
         break;
@@ -1553,7 +1557,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+                if (strncmp(state->viewerState->ag->comment3, "", 1) != 0){
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+                }
             }
         }
         break;
@@ -1573,7 +1579,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                if (strncmp(state->viewerState->ag->comment4, "", 1) != 0){
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                }
             }
         }
         break;
@@ -1584,7 +1592,9 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
             }
             else{
-                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+                if (strncmp(state->viewerState->ag->comment5, "", 1) != 0){
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+                }
             }
         }
         break;
