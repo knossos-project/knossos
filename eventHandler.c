@@ -1526,29 +1526,35 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
 
     case SDLK_F1:
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment1, "", 1) != 0)){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
-        }
-        else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+        if(state->skeletonState->activeNode){
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment1, "", 1) != 0)){
+                addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+            }
         }
         break;
 
     case SDLK_F2:
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment2, "", 1) != 0)){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
-        }
-        else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+        if(state->skeletonState->activeNode){
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment2, "", 1) != 0)){
+                addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+            }
         }
         break;
 
     case SDLK_F3:
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment3, "", 1) != 0)){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
-        }
-        else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+        if(state->skeletonState->activeNode){
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment3, "", 1) != 0)){
+                addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+            }
         }
         break;
 
@@ -1562,21 +1568,24 @@ static uint32_t handleKeyboard(SDL_Event event) {
             }
             break;
         }
-
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment4, "", 1) != 0)){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
-        }
-        else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+        if(state->skeletonState->activeNode){
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment4, "", 1) != 0)){
+                addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+            }
         }
         break;
 
      case SDLK_F5:
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment5, "", 1) != 0)){
-            addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
-        }
-        else{
-            editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+        if(state->skeletonState->activeNode){
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment5, "", 1) != 0)){
+                addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+            }
+            else{
+                editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+            }
         }
         break;
     default:
