@@ -14,13 +14,27 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     openglwidget.cpp \
     eventmodel.cpp \
+    client.cpp \
+    loader.cpp \
+    viewer.cpp \
+    remote.cpp \
+    skeletonizer.cpp \
+    renderer.cpp \
+    gui.cpp
 
 
 
 
 HEADERS  += mainwindow.h \
     eventmodel.h \
-    openglwidget.h
+    openglwidget.h \
+    client.h \
+    loader.h \
+    viewer.h \
+    remote.h \
+    skeletonizer.h \
+    renderer.h \
+    gui.h
 
 
 
