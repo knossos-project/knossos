@@ -9,7 +9,7 @@
 #include <math.h>
 
 extern "C" {
-    #include "../knossos-global.h"
+    #include "knossos-global.h"
 }
 
 class EventModel : public QObject
