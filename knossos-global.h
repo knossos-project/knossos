@@ -260,10 +260,20 @@
 typedef uint8_t Byte;
 
 typedef struct {
-        int32_t x;
-        int32_t y;
-        int32_t z;
-} Coordinate;
+        float x;
+        float y;
+        float z;
+} floatCoordinate;
+
+struct Coordinate{
+    int32_t x;
+    int32_t y;
+    int32_t z;
+
+    static Coordinate Px2DcCoord(Coordinate pxCoordinate);
+    static bool transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
+    static Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
+};
 
 
 typedef struct {
@@ -272,12 +282,6 @@ typedef struct {
         float b;
         float a;
 } color4F;
-
-typedef struct {
-		float x;
-		float y;
-		float z;
-} floatCoordinate;
 
 struct _CubeSlot {
         Byte *cube;
@@ -1286,14 +1290,6 @@ struct inputmap {
  *      Function prototypes
  *
  */
-
-/*
- *	For coordinate.c
- */
-
-Coordinate Px2DcCoord(Coordinate pxCoordinate);
-int32_t transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
-Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
 
 /*
  *	For hash.c

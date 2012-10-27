@@ -22,6 +22,7 @@ SOURCES +=\
     renderer.cpp \
     gui.cpp \
     knossos.cpp
+    coordinate.cpp
 
 
 
