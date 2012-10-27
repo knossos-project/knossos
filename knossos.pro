@@ -21,9 +21,9 @@ SOURCES +=\
     skeletonizer.cpp \
     renderer.cpp \
     gui.cpp \
-    knossos.cpp
-    coordinate.cpp
-
+    knossos.cpp \
+    coordinate.cpp \
+    Hashtable.cpp
 
 
 
@@ -37,7 +37,9 @@ HEADERS  += mainwindow.h \
     skeletonizer.h \
     renderer.h \
     gui.h \
-    knossos-global.h
+    knossos-global.h \
+    knossos.h
+
 
 
 

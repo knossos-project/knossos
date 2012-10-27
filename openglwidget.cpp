@@ -30,7 +30,7 @@ void OpenGLWidget::paintGL()
 
 void OpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    qDebug("Fooo");
+
     //qDebug() << event->x() << " " << qDebug() << event->y();
 
 }
