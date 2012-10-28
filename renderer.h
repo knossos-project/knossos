@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include <QObject>
+#include "knossos-global.h"
 
 class Renderer : public QObject
 {
