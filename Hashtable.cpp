@@ -92,6 +92,7 @@ static uint32_t ht_ll_del(C2D_Element *delElement) {
 
 //new static functions
 Hashtable *Hashtable::ht_new(uint32_t tablesize) {
+    Hashtable *new_ht;
     // A Hashtable is defined by a struct of an array of pointers (Table,
     // the hashtable per se) and a pointer to an element (ListEntry, an
     // element in the linked list)
@@ -106,17 +107,17 @@ Hashtable *Hashtable::ht_new(uint32_t tablesize) {
 
     tablesize = nextpow2(tablesize - 1);
 
-    new_ht = malloc(sizeof(Hashtable));
+    new_ht = (Hashtable*) malloc(sizeof(Hashtable));
     if(new_ht == NULL) {
         printf("Out of memory\n");
         return HT_FAILURE;
     }
-    new_ht->table = malloc(tablesize * sizeof(C2D_Element *));
+    new_ht->table = (C2D_Element**) malloc(tablesize * sizeof(C2D_Element *));
     if(new_ht->table == NULL) {
         printf("Out of memory\n");
         return HT_FAILURE;
     }
-    new_ht->listEntry = malloc(sizeof(C2D_Element));
+    new_ht->listEntry = (C2D_Element*) malloc(sizeof(C2D_Element));
     if(new_ht->listEntry == NULL) {
         printf("Out of memory\n");
         return HT_FAILURE;
@@ -194,7 +195,7 @@ uint32_t Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
     uint32_t hashIndex;
     C2D_Element *curElement, *chainElement, *putElement;
 
-    putElement = malloc(sizeof(C2D_Element));
+    putElement = (C2D_Element*) malloc(sizeof(C2D_Element));
     if(putElement == NULL) {
         printf("Out of memory\n");
         return HT_FAILURE;
