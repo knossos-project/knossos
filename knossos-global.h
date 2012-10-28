@@ -340,39 +340,39 @@ typedef struct _C2D_Element C2D_Element;
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
 
-typedef struct Hashtable {
-        C2D_Element *listEntry;
-        uint32_t tablesize;
-        C2D_Element **table;
+struct Hashtable{
+    C2D_Element *listEntry;
+    uint32_t tablesize;
+    C2D_Element **table;
 
-        // Create a new hashtable.
-        // tablesize specifies the size of the hash-to-data-table and should be 1.25
-        // to 1.5 times the number of elements the table is expected to store.
-        // If successful, the function returns a pointer to a Hashtable structure.
-        static Hashtable *ht_new(uint32_t tablesize);
+    // Create a new hashtable.
+    // tablesize specifies the size of the hash-to-data-table and should be 1.25
+    // to 1.5 times the number of elements the table is expected to store.
+    // If successful, the function returns a pointer to a Hashtable structure.
+    static Hashtable *ht_new(uint32_t tablesize);
 
-        // Delete the whole hashtable and linked list and release all the memory.
-        // hashtable specifies which hashtable to delete.
-        // The return value is LL_SUCCESS or LL_FAILURE.
-        static uint32_t ht_rmtable(Hashtable *hashtable);
+    // Delete the whole hashtable and linked list and release all the memory
+    // hashtable specifies which hashtable to delete.
+    // The return value is LL_SUCCESS or LL_FAILURE
+    static uint32_t ht_rmtable(Hashtable *hashtable);
 
-        // Return the value associated with a key.
-        // key is the key to look for.
-        // hashtable is the hashtable to look in.
-        // On success, a pointer to Byte (a Datacube) is returned, HT_FAILURE else.
-        static Byte *ht_get(Hashtable *hashtable, Coordinate key);
+    // Return the value associated with a key.
+    // key is the key to look for.
+    // hashtable is the hashtable to look in.
+    // On success, a pointer to Byte (a Datacube) is returned, HT_FAILURE else.
+    static Byte *ht_get(Hashtable *hashtable, Coordinate key);
 
-        // Insert an element.
-        static uint32_t ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
+    // Insert an element.
+    static uint32_t ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
 
-        // Delete an element
-        static uint32_t ht_del(Hashtable *hashtable, Coordinate key);
-        // Compute the union of h1 and h2 and put it in target.
-        static uint32_t ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2);
+    // Delete an element
+    static uint32_t ht_del(Hashtable *hashtable, Coordinate key);
+    // Compute the union of h1 and h2 and put it in target.
+    static uint32_t ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2);
 
-        static uint32_t nextpow2(uint32_t a);
-        static uint32_t lastpow2(uint32_t a);
-} Hashtable;
+    static uint32_t nextpow2(uint32_t a);
+    static uint32_t lastpow2(uint32_t a);
+};
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
@@ -1322,6 +1322,7 @@ struct inputmap {
  *
  */
 
+/*
 
 
 /*
