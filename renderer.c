@@ -2455,15 +2455,6 @@ uint32_t initRenderer() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    int initRotStateMatrix;
-    for (initRotStateMatrix = 0; initRotStateMatrix < 16; initRotStateMatrix++){
-        if (initRotStateMatrix % 5 == 0){
-            state->skeletonState->rotationState[initRotStateMatrix] = 1;
-        }
-        else{
-            state->skeletonState->rotationState[initRotStateMatrix] = 0;
-        }
-    }
     glTranslatef((float)state->skeletonState->volBoundary / 2.,
         (float)state->skeletonState->volBoundary / 2.,
         -((float)state->skeletonState->volBoundary / 2.));
@@ -2565,7 +2556,10 @@ uint32_t splashScreen() {
 }
 
 uint32_t updateRotationStateMatrix(float M1[16], float M2[16]){
+    //multiply matrix m2 to matrix m1 and save result in rotationState matrix
+    int i;
     float M3[16];
+
     M3[0] = M1[0] * M2[0] + M1[4] * M2[1] + M1[8] * M2[2] + M1[12] * M2[3];
     M3[1] = M1[1] * M2[0] + M1[5] * M2[1] + M1[9] * M2[2] + M1[13] * M2[3];
     M3[2] = M1[2] * M2[0] + M1[6] * M2[1] + M1[10] * M2[2] + M1[14] * M2[3];
@@ -2582,8 +2576,6 @@ uint32_t updateRotationStateMatrix(float M1[16], float M2[16]){
     M3[13] = M1[1] * M2[12] + M1[5] * M2[13] + M1[9] * M2[14] + M1[13] * M2[15];
     M3[14] = M1[2] * M2[12] + M1[6] * M2[13] + M1[10] * M2[14] + M1[14] * M2[15];
     M3[15] = M1[3] * M2[12] + M1[7] * M2[13] + M1[11] * M2[14] + M1[15] * M2[15];
-
-    int i;
 
     for (i = 0; i < 16; i++){
         state->skeletonState->rotationState[i] = M3[i];
@@ -2661,6 +2653,7 @@ uint32_t rotateSkeletonViewport(){
 
 uint32_t setRotationState(int setTo){
     if (setTo == 0){
+        //Reset Viewport
         state->skeletonState->rotationState[0] = 0.866025;
         state->skeletonState->rotationState[1] = 0.286788;
         state->skeletonState->rotationState[2] = 0.409576;
@@ -2679,6 +2672,7 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[15] = 1.0;
     }
     if (setTo == 1){
+        //XY view
         state->skeletonState->rotationState[0] = 1.0;
         state->skeletonState->rotationState[1] = 0.0;
         state->skeletonState->rotationState[2] = 0.0;
@@ -2697,7 +2691,7 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[15] = 1.0;
     }
     if (setTo == 2){
-
+        //YZ view
         state->skeletonState->rotationState[0] = 1.0;
         state->skeletonState->rotationState[1] = 0.0;
         state->skeletonState->rotationState[2] = 0.0;
@@ -2716,6 +2710,7 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[15] = 1.0;
     }
     if (setTo == 3){
+        //XZ view
         state->skeletonState->rotationState[0] = 0.0;
         state->skeletonState->rotationState[1] = 0.0;
         state->skeletonState->rotationState[2] = -1.0;
@@ -2734,6 +2729,7 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[15] = 1.0;
     }
     if (setTo == 4){
+        //flip view
         float inverseMatrix[16];
         inverseMatrix[0] = -1.0;
         inverseMatrix[1] = 0.0;
@@ -2745,7 +2741,7 @@ uint32_t setRotationState(int setTo){
         inverseMatrix[7] = 0.0;
         inverseMatrix[8] = 0.0;
         inverseMatrix[9] = 0.0;
-        inverseMatrix[10] = -1.0;
+        inverseMatrix[10] = 1.0;
         inverseMatrix[11] = 0.0;
         inverseMatrix[12] = 0.0;
         inverseMatrix[13] = 0.0;

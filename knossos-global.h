@@ -1101,7 +1101,7 @@ struct skeletonState {
     /* Stores the model view matrix for user performed VP rotations.*/
     float skeletonVpModelView[16];
 
-
+    // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
     /* The next three flags cause recompilation of the above specified display lists. */
 

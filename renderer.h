@@ -35,4 +35,4 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
 static uint32_t renderViewportBorders(uint32_t currentVP);
 static uint32_t updateRotationStateMatrix(float M1[16], float M2[16]);
 static uint32_t rotateSkeletonViewport();
-static uint32_t setRotationState();
+static uint32_t setRotationState(int setTo);
