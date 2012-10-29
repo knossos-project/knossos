@@ -938,10 +938,9 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
 
 static uint32_t handleMouseMotionRightHold(SDL_Event event, int32_t VPfound) {
     if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
-        if(fabs(event.motion.xrel)  >= fabs(event.motion.yrel))
-            state->skeletonState->rotateZ += event.motion.xrel;
-        else state->skeletonState->rotateX += event.motion.yrel;
-            state->skeletonState->viewChanged = TRUE;
+        state->skeletonState->rotdx += event.motion.xrel;
+        state->skeletonState->rotdy += event.motion.yrel;
+        state->skeletonState->viewChanged = TRUE;
         checkIdleTime();
         return TRUE;
     }

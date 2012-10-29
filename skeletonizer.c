@@ -123,10 +123,6 @@ uint32_t initSkeletonizer() {
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
         state->skeletonState->volBoundary = state->boundary.x * 2;
 
-    state->skeletonState->rotateX = 0;
-    state->skeletonState->rotateY = 0;
-    state->skeletonState->rotateZ = 0;
-
     state->skeletonState->viewChanged = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->datasetChanged = TRUE;

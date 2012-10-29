@@ -1548,9 +1548,9 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
 
 
         /* perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem */
-        if((state->skeletonState->rotateX)
-            || (state->skeletonState->rotateY)
-            || (state->skeletonState->rotateZ)) {
+        if((state->skeletonState->rotdx)
+            || (state->skeletonState->rotdy)
+            ){
 
 
             if((state->skeletonState->rotateAroundActiveNode) && (state->skeletonState->activeNode)) {
@@ -1559,9 +1559,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                              (float)state->skeletonState->activeNode->position.y,
                              (float)state->skeletonState->activeNode->position.z);
                 glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
-                glRotatef((float)state->skeletonState->rotateX, 1., 0., 0.);
-                glRotatef((float)state->skeletonState->rotateY, 0., 1., 0.);
-                glRotatef((float)state->skeletonState->rotateZ, 0., 0., 1.);
+                rotateSkeletonViewport();
                 glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
                 glTranslatef(-(float)state->skeletonState->activeNode->position.x,
                              -(float)state->skeletonState->activeNode->position.y,
@@ -1571,9 +1569,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
             /* rotate around dataset center if no active node is selected */
             else {
                 glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
-                glRotatef((float)state->skeletonState->rotateX, 1., 0., 0.);
-                glRotatef((float)state->skeletonState->rotateY, 0., 1., 0.);
-                glRotatef((float)state->skeletonState->rotateZ, 0., 0., 1.);
+                rotateSkeletonViewport();
                 glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
             }
 
@@ -1582,9 +1578,6 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
             glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
             /* reset the relative rotation angles because rotation has been performed. */
-            state->skeletonState->rotateX = 0;
-            state->skeletonState->rotateY = 0;
-            state->skeletonState->rotateZ = 0;
         }
 
         switch(state->skeletonState->definedSkeletonVpView) {
@@ -1613,7 +1606,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                         -500,
                         10 * state->skeletonState->volBoundary);
-
+                setRotationState(ROTATIONSTATEXY);
                 break;
 
             case 2:
@@ -1642,7 +1635,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                         -500,
                         10 * state->skeletonState->volBoundary);
-
+                setRotationState(ROTATIONSTATEXZ);
                 break;
 
             case 3:
@@ -1669,7 +1662,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
                         -500,
                         10 * state->skeletonState->volBoundary);
-
+                setRotationState(ROTATIONSTATEYZ);
                 break;
 
             case 4:
@@ -1679,7 +1672,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                 /* */
                 /*LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);*/
                 glScalef(-1.,-1.,1.);
-
+                setRotationState(ROTATIONSTATEMIRROR);
                 glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
                 break;
@@ -1699,6 +1692,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                 glRotatef(210., 0., 0., 1.);
                 glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
                 state->skeletonState->zoomLevel = SKELZOOMMIN;
+                setRotationState(ROTATIONSTATERESET);
                 break;
         }
 
@@ -2461,6 +2455,15 @@ uint32_t initRenderer() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    int initRotStateMatrix;
+    for (initRotStateMatrix = 0; initRotStateMatrix < 16; initRotStateMatrix++){
+        if (initRotStateMatrix % 5 == 0){
+            state->skeletonState->rotationState[initRotStateMatrix] = 1;
+        }
+        else{
+            state->skeletonState->rotationState[initRotStateMatrix] = 0;
+        }
+    }
     glTranslatef((float)state->skeletonState->volBoundary / 2.,
         (float)state->skeletonState->volBoundary / 2.,
         -((float)state->skeletonState->volBoundary / 2.));
@@ -2470,6 +2473,7 @@ uint32_t initRenderer() {
     //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
     glRotatef(235., 1., 0., 0.);
     glRotatef(210., 0., 0., 1.);
+   setRotationState(ROTATIONSTATERESET);
  //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
     /* save the matrix for further use... */
     glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
@@ -2557,5 +2561,197 @@ uint32_t splashScreen() {
     }
     glEnable(GL_TEXTURE_2D);
     state->viewerState->splash = FALSE;
+    return TRUE;
+}
+
+uint32_t updateRotationStateMatrix(float M1[16], float M2[16]){
+    float M3[16];
+    M3[0] = M1[0] * M2[0] + M1[4] * M2[1] + M1[8] * M2[2] + M1[12] * M2[3];
+    M3[1] = M1[1] * M2[0] + M1[5] * M2[1] + M1[9] * M2[2] + M1[13] * M2[3];
+    M3[2] = M1[2] * M2[0] + M1[6] * M2[1] + M1[10] * M2[2] + M1[14] * M2[3];
+    M3[3] = M1[3] * M2[0] + M1[7] * M2[1] + M1[11] * M2[2] + M1[15] * M2[3];
+    M3[4] = M1[0] * M2[4] + M1[4] * M2[5] + M1[8] * M2[6] + M1[12] * M2[7];
+    M3[5] = M1[1] * M2[4] + M1[5] * M2[5] + M1[9] * M2[6] + M1[13] * M2[7];
+    M3[6] = M1[2] * M2[4] + M1[6] * M2[5] + M1[10] * M2[6] + M1[14] * M2[7];
+    M3[7] = M1[3] * M2[4] + M1[7] * M2[5] + M1[11] * M2[6] + M1[15] * M2[7];
+    M3[8] = M1[0] * M2[8] + M1[4] * M2[9] + M1[8] * M2[10] + M1[12] * M2[11];
+    M3[9] = M1[1] * M2[8] + M1[5] * M2[9] + M1[9] * M2[10] + M1[13] * M2[11];
+    M3[10] = M1[2] * M2[8] + M1[6] * M2[9] + M1[10] * M2[10] + M1[14] * M2[11];
+    M3[11] = M1[3] * M2[8] + M1[7] * M2[9] + M1[11] * M2[10] + M1[15] * M2[11];
+    M3[12] = M1[0] * M2[12] + M1[4] * M2[13] + M1[8] * M2[14] + M1[12] * M2[15];
+    M3[13] = M1[1] * M2[12] + M1[5] * M2[13] + M1[9] * M2[14] + M1[13] * M2[15];
+    M3[14] = M1[2] * M2[12] + M1[6] * M2[13] + M1[10] * M2[14] + M1[14] * M2[15];
+    M3[15] = M1[3] * M2[12] + M1[7] * M2[13] + M1[11] * M2[14] + M1[15] * M2[15];
+
+    int i;
+
+    for (i = 0; i < 16; i++){
+        state->skeletonState->rotationState[i] = M3[i];
+    }
+    return TRUE;
+}
+
+uint32_t rotateSkeletonViewport(){
+
+    // for general information look at http://de.wikipedia.org/wiki/Rolling-Ball-Rotation
+
+    // rotdx and rotdy save the small rotations the user creates with one single mouse action
+    // singleRotM[16] is the rotation matrix for this single mouse action (see )
+    // state->skeletonstate->rotationState is the product of all rotations during KNOSSOS session
+    // inverseRotationState is the inverse (here transposed) matrix of state->skeletonstate->rotationState
+
+    float singleRotM[16];
+    float inverseRotationState[16];
+    float rotR = 100.;
+    float rotdx = (float)state->skeletonState->rotdx;
+    float rotdy = (float)state->skeletonState->rotdy;
+    state->skeletonState->rotdx = 0;
+    state->skeletonState->rotdy = 0;
+    float rotdr = pow(rotdx * rotdx + rotdy * rotdy, 0.5);
+    float rotCosT = rotR / (pow(rotR * rotR + rotdr * rotdr, 0.5));
+    float rotSinT = rotdr / (pow(rotR * rotR + rotdr * rotdr, 0.5));
+
+    //calc inverse matrix of actual rotation state
+    inverseRotationState[0] = state->skeletonState->rotationState[0];
+    inverseRotationState[1] = state->skeletonState->rotationState[4];
+    inverseRotationState[2] = state->skeletonState->rotationState[8];
+    inverseRotationState[3] = state->skeletonState->rotationState[12];
+    inverseRotationState[4] = state->skeletonState->rotationState[1];
+    inverseRotationState[5] = state->skeletonState->rotationState[5];
+    inverseRotationState[6] = state->skeletonState->rotationState[9];
+    inverseRotationState[7] = state->skeletonState->rotationState[13];
+    inverseRotationState[8] = state->skeletonState->rotationState[2];
+    inverseRotationState[9] = state->skeletonState->rotationState[6];
+    inverseRotationState[10] = state->skeletonState->rotationState[10];
+    inverseRotationState[11] = state->skeletonState->rotationState[14];
+    inverseRotationState[12] = state->skeletonState->rotationState[3];
+    inverseRotationState[13] = state->skeletonState->rotationState[7];
+    inverseRotationState[14] = state->skeletonState->rotationState[11];
+    inverseRotationState[15] = state->skeletonState->rotationState[15];
+
+    // calc matrix of one single rotation
+    singleRotM[0] = rotCosT + pow(rotdy / rotdr, 2.) * (1. - rotCosT);
+    singleRotM[1] = rotdx * rotdy / rotdr / rotdr * (rotCosT - 1.);
+    singleRotM[2] = - rotdx / rotdr * rotSinT;
+    singleRotM[3] = 0.;
+    singleRotM[4] = singleRotM[1];
+    singleRotM[5] = rotCosT + pow(rotdx / rotdr, 2.) * (1. - rotCosT);
+    singleRotM[6] = - rotdy / rotdr * rotSinT;
+    singleRotM[7] = 0.;
+    singleRotM[8] = - singleRotM[2];
+    singleRotM[9] = - singleRotM[6];
+    singleRotM[10] = rotCosT;
+    singleRotM[11] = 0.;
+    singleRotM[12] = 0.;
+    singleRotM[13] = 0.;
+    singleRotM[14] = 0.;
+    singleRotM[15] = 1.;
+
+    // undo all previous rotations
+    glMultMatrixf(inverseRotationState);
+
+    // multiply all previous rotations to current rotation and overwrite state->skeletonState->rotationsState
+    updateRotationStateMatrix(singleRotM,state->skeletonState->rotationState);
+
+    //rotate to the new rotation state
+    glMultMatrixf(state->skeletonState->rotationState);
+
+    return TRUE;
+}
+
+uint32_t setRotationState(int setTo){
+    if (setTo == 0){
+        state->skeletonState->rotationState[0] = 0.866025;
+        state->skeletonState->rotationState[1] = 0.286788;
+        state->skeletonState->rotationState[2] = 0.409576;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = -0.5;
+        state->skeletonState->rotationState[5] = 0.496732;
+        state->skeletonState->rotationState[6] = 0.709407;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 0.819152;
+        state->skeletonState->rotationState[10] = -0.573576;
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;
+    }
+    if (setTo == 1){
+        state->skeletonState->rotationState[0] = 1.0;
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = 0.0;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = 1.0;
+        state->skeletonState->rotationState[6] = 0.0;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 0.0;
+        state->skeletonState->rotationState[10] = 1.0;
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;
+    }
+    if (setTo == 2){
+
+        state->skeletonState->rotationState[0] = 1.0;
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = 0.0;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = 0.0;
+        state->skeletonState->rotationState[6] = -1.0;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = 0.0;
+        state->skeletonState->rotationState[9] = 1.0;
+        state->skeletonState->rotationState[10] = 0.0;
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;
+    }
+    if (setTo == 3){
+        state->skeletonState->rotationState[0] = 0.0;
+        state->skeletonState->rotationState[1] = 0.0;
+        state->skeletonState->rotationState[2] = -1.0;
+        state->skeletonState->rotationState[3] = 0.0;
+        state->skeletonState->rotationState[4] = 0.0;
+        state->skeletonState->rotationState[5] = -1.0;
+        state->skeletonState->rotationState[6] = 0.0;
+        state->skeletonState->rotationState[7] = 0.0;
+        state->skeletonState->rotationState[8] = -1.0;
+        state->skeletonState->rotationState[9] = 0.0;
+        state->skeletonState->rotationState[10] = 0.0;
+        state->skeletonState->rotationState[11] = 0.0;
+        state->skeletonState->rotationState[12] = 0.0;
+        state->skeletonState->rotationState[13] = 0.0;
+        state->skeletonState->rotationState[14] = 0.0;
+        state->skeletonState->rotationState[15] = 1.0;
+    }
+    if (setTo == 4){
+        float inverseMatrix[16];
+        inverseMatrix[0] = -1.0;
+        inverseMatrix[1] = 0.0;
+        inverseMatrix[2] = 0.0;
+        inverseMatrix[3] = 0.0;
+        inverseMatrix[4] = 0.0;
+        inverseMatrix[5] = -1.0;
+        inverseMatrix[6] = 0.0;
+        inverseMatrix[7] = 0.0;
+        inverseMatrix[8] = 0.0;
+        inverseMatrix[9] = 0.0;
+        inverseMatrix[10] = -1.0;
+        inverseMatrix[11] = 0.0;
+        inverseMatrix[12] = 0.0;
+        inverseMatrix[13] = 0.0;
+        inverseMatrix[14] = 0.0;
+        inverseMatrix[15] = 1.0;
+        updateRotationStateMatrix(state->skeletonState->rotationState, inverseMatrix);
+    }
     return TRUE;
 }

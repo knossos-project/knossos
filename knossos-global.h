@@ -245,6 +245,13 @@
 #define AUTOTRACING_VIEWPORT    1
 #define AUTOTRACING_TRACING 2
 #define AUTOTRACING_MIRROR  3
+
+#define ROTATIONSTATERESET 0
+#define ROTATIONSTATEXY 1
+#define ROTATIONSTATEXZ 3
+#define ROTATIONSTATEYZ 2
+#define ROTATIONSTATEMIRROR 4
+
 /*
  *
  *      Structures and custom types
@@ -1073,9 +1080,8 @@ struct skeletonState {
 	Coordinate lockedPosition;
     long unsigned int lockRadius;
 
-    int32_t rotateX;
-    int32_t rotateY;
-    int32_t rotateZ;
+    int32_t rotdx;
+    int32_t rotdy;
 
     int32_t definedSkeletonVpView;
 
@@ -1095,6 +1101,8 @@ struct skeletonState {
     /* Stores the model view matrix for user performed VP rotations.*/
     float skeletonVpModelView[16];
 
+
+    float rotationState[16];
     /* The next three flags cause recompilation of the above specified display lists. */
 
     //TRUE, if all display lists must be updated
