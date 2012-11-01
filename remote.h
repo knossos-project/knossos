@@ -9,6 +9,7 @@ class Remote : public QThread
     Q_OBJECT
 public:
     explicit Remote(QObject *parent = 0);
+    static void checkIdleTime();
     
 signals:
     

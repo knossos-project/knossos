@@ -22,23 +22,22 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-//static uint32_t isPathString(char *string);
-//static uint32_t printUsage();
-static int32_t initStates();
-static int32_t printConfigValues();
-static uint32_t cleanUpMain();
-static int32_t tempConfigDefaults();
-static struct stateInfo *emptyState();
-static int32_t readDataConfAndLocalConf();
-static int32_t stripNewlines(char *string);
-static int32_t configFromCli(int argCount, char *arguments[]);
-static int32_t loadNeutralDatasetLUT(GLuint *lut);
+#include <QObject>
 
-int32_t readConfigFile(char *path);
-static int32_t findAndRegisterAvailableDatasets();
-#ifdef LINUX
-static int32_t catchSegfault(int signum);
-#endif
+class Knossos : public QObject {
+public:
+    bool unlockSkeleton(int32_t increment);
+    bool lockSkeleton(int32_t targetRevision);
+    bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
+    bool sendRemoteSignal();
+    bool sendClientSignal();
+    bool sendQuitSignal();
+    bool sendServerSignal();
+    void sendDatasetChangeSignal(uint32_t upOrDownFlag);
+    uint32_t log2uint32(register uint32_t x);
+    uint32_t ones32(register uint32_t x);
+
+};
 
 
 /*

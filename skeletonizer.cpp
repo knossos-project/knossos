@@ -1,7 +1,10 @@
 #include "skeletonizer.h"
 #include "knossos-global.h"
 #include "renderer.h"
+#include "remote.h"
+#include "gui.h"
 extern stateInfo *state;
+extern stateInfo *tempConfig;
 
 static segmentListElement* addSegmentListElement (segmentListElement **currentSegment,
     nodeListElement *sourceNode,
@@ -99,8 +102,6 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
     Coordinate currentSegVectorPoint, lastSegVectorPoint;
     Coordinate curMagTargetPos, curMagSourcePos;
 
-    Renderer *r = new Renderer();
-
     if(segment) {
         if(segment->flag == 2)
             return FALSE;
@@ -119,8 +120,8 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
     segVector.z = (float)(curMagTargetPos.z - curMagSourcePos.z);
 
-    segVectorLength = r->euclidicNorm(&segVector);
-    r->normalizeVector(&segVector);
+    segVectorLength = Renderer::euclidicNorm(&segVector);
+    Renderer::normalizeVector(&segVector);
 
     SET_COORDINATE(lastSegVectorPoint,
                    curMagSourcePos.x,
@@ -149,9 +150,9 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
 
     //We walk along the entire segment and add pointers to the segment in all skeleton DCs we are passing.
     for(i = 0; i <= ((int)segVectorLength); i++) {
-        currentSegVectorPoint.x = curMagSourcePos.x + r->roundFloat(((float)i) * segVector.x);
-        currentSegVectorPoint.y = curMagSourcePos.y + r->roundFloat(((float)i) * segVector.y);
-        currentSegVectorPoint.z = curMagSourcePos.z + r->roundFloat(((float)i) * segVector.z);
+        currentSegVectorPoint.x = curMagSourcePos.x + Renderer::roundFloat(((float)i) * segVector.x);
+        currentSegVectorPoint.y = curMagSourcePos.y + Renderer::roundFloat(((float)i) * segVector.y);
+        currentSegVectorPoint.z = curMagSourcePos.z + Renderer::roundFloat(((float)i) * segVector.z);
 
         if(!COMPARE_COORDINATE(Coordinate::Px2DcCoord(lastSegVectorPoint), Coordinate::Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to add a pointer to the segment inside the skeleton DC
@@ -249,8 +250,8 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
     segVector.z = (float)(curMagTargetPos.z - curMagSourcePos.z);
 
-    segVectorLength = r->euclidicNorm(&segVector);
-    r->normalizeVector(&segVector);
+    segVectorLength = Renderer::euclidicNorm(&segVector);
+    Renderer::normalizeVector(&segVector);
 
     SET_COORDINATE(lastSegVectorPoint,
                    curMagSourcePos.x,
@@ -288,9 +289,9 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
 
     //We walk along the entire segment and delete pointers to the segment in all skeleton DCs we are passing.
     for(i = 0; i <= ((int)segVectorLength); i++) {
-        currentSegVectorPoint.x = curMagSourcePos.x + r->roundFloat(((float)i) * segVector.x);
-        currentSegVectorPoint.y = curMagSourcePos.y + r->roundFloat(((float)i) * segVector.y);
-        currentSegVectorPoint.z = curMagSourcePos.z + r->roundFloat(((float)i) * segVector.z);
+        currentSegVectorPoint.x = curMagSourcePos.x + Renderer::roundFloat(((float)i) * segVector.x);
+        currentSegVectorPoint.y = curMagSourcePos.y + Renderer::roundFloat(((float)i) * segVector.y);
+        currentSegVectorPoint.z = curMagSourcePos.z + Renderer::roundFloat(((float)i) * segVector.z);
 
         if(!COMPARE_COORDINATE(Coordinate::Px2DcCoord(lastSegVectorPoint), Coordinate::Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to delete the pointer to the segment inside the skeleton DC
@@ -340,14 +341,200 @@ static void popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = FALSE;
 }
 
-bool Skeletonizer::initSkeletonizer() { }
-bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) { }
-uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive) { }
-bool Skeletonizer::updateSkeletonState() { }
+bool Skeletonizer::initSkeletonizer() {
+    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
+        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
+
+    //updateSkeletonState();
+
+    //Create a new hash-table that holds the skeleton datacubes
+    state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
+    if(state->skeletonState->skeletonDCs == HT_FAILURE) {
+        LOG("Unable to create skeleton hash-table.");
+        return FALSE;
+    }
+
+    state->skeletonState->skeletonRevision = 0;
+
+    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodesByNodeID = newDynArray(1048576);
+    state->skeletonState->branchStack = newStack(2048);
+
+    // Generate empty tree structures
+    state->skeletonState->firstTree = NULL;
+    state->skeletonState->treeElements = 0;
+    state->skeletonState->totalNodeElements = 0;
+    state->skeletonState->totalSegmentElements = 0;
+    state->skeletonState->activeTree = NULL;
+    state->skeletonState->activeNode = NULL;
+
+    state->skeletonState->mergeOnLoadFlag = 0;
+    state->skeletonState->segRadiusToNodeRadius = 0.5;
+    state->skeletonState->autoFilenameIncrementBool = TRUE;
+    state->skeletonState->greatestNodeID = 0;
+
+    state->skeletonState->showXYplane = FALSE;
+    state->skeletonState->showXZplane = FALSE;
+    state->skeletonState->showYZplane = FALSE;
+    state->skeletonState->showNodeIDs = FALSE;
+    state->skeletonState->highlightActiveTree = TRUE;
+    state->skeletonState->rotateAroundActiveNode = TRUE;
+    state->skeletonState->showIntersections = FALSE;
+
+    state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
+    state->skeletonState->displayListView = 0;
+    state->skeletonState->displayListDataset = 0;
+
+    state->skeletonState->defaultNodeRadius = 1.5;
+    state->skeletonState->overrideNodeRadiusBool = FALSE;
+    state->skeletonState->overrideNodeRadiusVal = 1.;
+
+    state->skeletonState->currentComment = NULL;
+
+    state->skeletonState->lastSaveTicks = 0;
+    state->skeletonState->autoSaveInterval = 5;
+
+    state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
+    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
+    setDefaultSkelFileName();
+
+    state->skeletonState->prevSkeletonFile = (char*) malloc(8192 * sizeof(char));
+    memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
+
+    state->skeletonState->commentBuffer = (char*) malloc(10240 * sizeof(char));
+    memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
+
+    state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
+    memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
+
+    state->skeletonState->saveCnt = 0;
+
+    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y))
+        state->skeletonState->volBoundary = state->boundary.y * 2;
+    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+
+    state->skeletonState->viewChanged = TRUE;
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->datasetChanged = TRUE;
+    state->skeletonState->skeletonSliceVPchanged = TRUE;
+    state->skeletonState->unsavedChanges = FALSE;
+
+    state->skeletonState->askingPopBranchConfirmation = FALSE;
+
+    return TRUE;
+}
+
+bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
+    int32_t addedNodeID;
+
+    color4F treeCol;
+    /* -1 causes new color assignment */
+    treeCol.r = -1.;
+    treeCol.g = -1.;
+    treeCol.b = -1.;
+    treeCol.a = 1.;
+
+    if(!state->skeletonState->activeTree)
+        addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+
+    addedNodeID = addNode(CHANGE_MANUAL,
+                          0,
+                          state->skeletonState->defaultNodeRadius,
+                          state->skeletonState->activeTree->treeID,
+                          clickedCoordinate,
+                          VPtype,
+                          state->magnification,
+                          -1,
+                          TRUE);
+    if(!addedNodeID) {
+        LOG("Error: Could not add new node!");
+        return FALSE;
+    }
+
+    setActiveNode(CHANGE_MANUAL, NULL, addedNodeID);
+
+    if((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                               state->skeletonState->activeTree->treeID) == 1) {
+        /* First node in this tree */
+
+        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
+    }
+
+    Remote::checkIdleTime();
+
+    return TRUE;
+}
+
+uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive) {
+    int32_t targetNodeID;
+
+    if(!state->skeletonState->activeNode) {
+        LOG("Please create a node before trying to link nodes.");
+        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+        return FALSE;
+    }
+
+    //Add a new node at the target position first.
+    targetNodeID = addNode(CHANGE_MANUAL,
+                           0,
+                           state->skeletonState->defaultNodeRadius,
+                           state->skeletonState->activeTree->treeID,
+                           clickedCoordinate,
+                           VPtype,
+                           state->magnification,
+                           -1,
+                           TRUE);
+    if(!targetNodeID) {
+        LOG("Could not add new node while trying to add node and link with active node!");
+        return FALSE;
+    }
+
+    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
+
+    if(makeNodeActive) {
+        setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
+    }
+    if((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                               state->skeletonState->activeTree->treeID) == 1) {
+        /* First node in this tree */
+
+        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
+
+        Remote::checkIdleTime();
+    }
+
+    return targetNodeID;
+}
+
+bool Skeletonizer::updateSkeletonState() {
+    //Time to auto-save
+    if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
+        if(state->skeletonState->autoSaveInterval) {
+            if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
+                state->skeletonState->lastSaveTicks = SDL_GetTicks();
+                GUI::UI_saveSkeleton(TRUE);
+            }
+        }
+    }
+
+    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber) {
+        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
+    }
+    if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
+        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
+    }
+    return TRUE;
+}
 bool Skeletonizer::nextCommentlessNode() { }
 bool Skeletonizer::previousCommentlessNode() { }
 
-bool Skeletonizer::updateSkeletonFileName() { }
+bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) { }
+
 //uint32_t saveNMLSkeleton() { }
 int32_t Skeletonizer::saveSkeleton() { }
 //uint32_t loadNMLSkeleton() { }

@@ -10,23 +10,23 @@ class Renderer : public QObject
 public:
     explicit Renderer(QObject *parent = 0);
 
-    bool drawGUI();
-    bool renderOrthogonalVP(uint32_t currentVP);
-    bool renderSkeletonVP(uint32_t currentVP);
-    uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
+    static bool drawGUI();
+    static bool renderOrthogonalVP(uint32_t currentVP);
+    static bool renderSkeletonVP(uint32_t currentVP);
+    static uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
     //Some math helper functions
-    float radToDeg(float rad);
-    float degToRad(float deg);
-    float scalarProduct(floatCoordinate *v1, floatCoordinate *v2);
-    floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
-    float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
-    float euclidicNorm(floatCoordinate *v);
-    bool normalizeVector(floatCoordinate *v);
-    int32_t roundFloat(float number);
-    int32_t sgn(float number);
+    static float radToDeg(float rad);
+    static float degToRad(float deg);
+    static float scalarProduct(floatCoordinate *v1, floatCoordinate *v2);
+    static floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
+    static float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
+    static float euclidicNorm(floatCoordinate *v);
+    static bool normalizeVector(floatCoordinate *v);
+    static int32_t roundFloat(float number);
+    static int32_t sgn(float number);
 
-    bool initRenderer();
-    bool splashScreen();
+    static bool initRenderer();
+    static bool splashScreen();
     
 signals:
     

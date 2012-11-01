@@ -16,6 +16,24 @@
 #include "../lex.yy.h"
 */
 
+//static uint32_t isPathString(char *string);
+//static uint32_t printUsage();
+static int32_t initStates();
+static int32_t printConfigValues();
+static uint32_t cleanUpMain();
+static int32_t tempConfigDefaults();
+static struct stateInfo *emptyState();
+static int32_t readDataConfAndLocalConf();
+static int32_t stripNewlines(char *string);
+static int32_t configFromCli(int argCount, char *arguments[]);
+static int32_t loadNeutralDatasetLUT(GLuint *lut);
+
+int32_t readConfigFile(char *path);
+static int32_t findAndRegisterAvailableDatasets();
+#ifdef LINUX
+static int32_t catchSegfault(int signum);
+#endif
+
 //IMPORTANT. SDL redefines main
 #ifdef main
 #undef main
@@ -82,3 +100,17 @@ uint32_t ones32(register uint32_t x) {
         x += (x >> 16);
         return(x & 0x0000003f);
 }
+
+bool Knossos::lockSkeleton(int32_t targetRevision) {}
+
+bool Knossos::unlockSkeleton(int32_t increment) {}
+
+bool Knossos::sendClientSignal() {}
+
+bool Knossos::sendRemoteSignal() {}
+
+void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {}
+
+bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {}
+
+bool Knossos::sendQuitSignal() {}

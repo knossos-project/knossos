@@ -141,34 +141,34 @@ public:
     //methods
     explicit Skeletonizer(QObject *parent = 0);
 
-    bool initSkeletonizer();
-    bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
-    uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
-    bool updateSkeletonState();
-    bool nextCommentlessNode();
-    bool previousCommentlessNode();
+    static bool initSkeletonizer();
+    static bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
+    static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
+    static bool updateSkeletonState();
+    static bool nextCommentlessNode();
+    static bool previousCommentlessNode();
 
-    bool updateSkeletonFileName();
+    static bool updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
     //uint32_t saveNMLSkeleton();
-    int32_t saveSkeleton();
+    static int32_t saveSkeleton();
     //uint32_t loadNMLSkeleton();
-    bool loadSkeleton();
+    static bool loadSkeleton();
 
-    void setDefaultSkelFileName();
+    static void setDefaultSkelFileName();
 
-    bool delActiveNode();
-    bool delActiveTree();
+    static bool delActiveNode();
+    static bool delActiveTree();
 
-    bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
-    bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
-    bool delTree(int32_t targetRevision, int32_t treeID);
+    static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
+    static bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
+    static bool delTree(int32_t targetRevision, int32_t treeID);
 
-    nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
-    nodeListElement *findNodeInRadius(Coordinate searchPosition);
+    static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
+    static nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
-    bool setActiveTreeByID(int32_t treeID);
-    bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
-    int32_t addNode(int32_t targetRevision,
+    static bool setActiveTreeByID(int32_t treeID);
+    static bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
+    static int32_t addNode(int32_t targetRevision,
                     int32_t nodeID,
                     float radius,
                     int32_t treeID,
@@ -177,23 +177,23 @@ public:
                     int32_t inMag,
                     int32_t time,
                     int32_t respectLocks);
-    bool addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
+    static bool addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
 
-    bool clearSkeleton(int32_t targetRevision, int loadingSkeleton);
+    static bool clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
-    bool mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
+    static bool mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
 
-    nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
-    nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
-    nodeListElement *findNodeByNodeID(int32_t nodeID);
-    nodeListElement *findNodeByCoordinate(Coordinate *position);
-    treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
-    treeListElement* getTreeWithPrevID(treeListElement *currentTree);
-    treeListElement* getTreeWithNextID(treeListElement *currentTree);
-    bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
-    segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
-    bool genTestNodes(uint32_t number);
-    bool editNode(int32_t targetRevision,
+    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
+    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
+    static nodeListElement *findNodeByNodeID(int32_t nodeID);
+    static nodeListElement *findNodeByCoordinate(Coordinate *position);
+    static treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+    static treeListElement* getTreeWithPrevID(treeListElement *currentTree);
+    static treeListElement* getTreeWithNextID(treeListElement *currentTree);
+    static bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
+    static segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
+    static bool genTestNodes(uint32_t number);
+    static bool editNode(int32_t targetRevision,
                      int32_t nodeID,
                      nodeListElement *node,
                      float newRadius,
@@ -201,29 +201,29 @@ public:
                      int32_t newYPos,
                      int32_t newZPos,
                      int32_t inMag);
-    void *popStack(stack *stack);
-    bool pushStack(stack *stack, void *element);
-    stack *newStack(int32_t size);
-    bool delStack(stack *stack);
-    bool delDynArray(dynArray *array);
-    void *getDynArray(dynArray *array, int32_t pos);
-    bool setDynArray(dynArray *array, int32_t pos, void *value);
-    dynArray *newDynArray(int32_t size);
-    int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
-    bool addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID);
-    bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
-    bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
-    commentListElement *nextComment(char *searchString);
-    commentListElement *previousComment(char *searchString);
-    bool searchInComment(char *searchString, commentListElement *comment);
-    bool unlockPosition();
-    bool lockPosition(Coordinate lockCoordinate);
-    bool popBranchNode(int32_t targetRevision);
-    bool pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID);
-    bool setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
-    bool jumpToActiveNode();
-    void UI_popBranchNode();
-    void restoreDefaultTreeColor();
+    static void *popStack(stack *stack);
+    static bool pushStack(stack *stack, void *element);
+    static stack *newStack(int32_t size);
+    static bool delStack(stack *stack);
+    static bool delDynArray(dynArray *array);
+    static void *getDynArray(dynArray *array, int32_t pos);
+    static bool setDynArray(dynArray *array, int32_t pos, void *value);
+    static dynArray *newDynArray(int32_t size);
+    static int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
+    static bool addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID);
+    static bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
+    static bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
+    static commentListElement *nextComment(char *searchString);
+    static commentListElement *previousComment(char *searchString);
+    static bool searchInComment(char *searchString, commentListElement *comment);
+    static bool unlockPosition();
+    static bool lockPosition(Coordinate lockCoordinate);
+    static bool popBranchNode(int32_t targetRevision);
+    static bool pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID);
+    static bool setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
+    static bool jumpToActiveNode();
+    static void UI_popBranchNode();
+    static void restoreDefaultTreeColor();
 
 signals:
 
