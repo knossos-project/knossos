@@ -1,17 +1,18 @@
 #include "viewer.h"
+#include "knossos.h"
 
-extern struct stateInfo *tempConfig;
-extern struct stateInfo *state;
+extern  stateInfo *tempConfig;
+extern  stateInfo *state;
 
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
 }
 
- struct vpList *Viewer::vpListNew() {
-     struct vpList *newVpList = NULL;
+static vpList* vpListNew() {
+      vpList *newVpList = NULL;
 
-     newVpList = (vpList *) malloc(sizeof(struct vpList));
+     newVpList = (vpList *) malloc(sizeof( vpList));
      if(newVpList == NULL) {
          qDebug("Out of memory.\n");
          return NULL;
@@ -22,10 +23,10 @@ Viewer::Viewer(QObject *parent) :
      return newVpList;
  }
 
- int32_t Viewer::vpListAddElement(vpList *vpList, viewPort *viewPort, vpBacklog *backlog) {
-    struct vpListElement *newElement;
+static int32_t vpListAddElement(vpList *vpList, viewPort *viewPort, vpBacklog *backlog) {
+     vpListElement *newElement;
 
-     newElement = (vpListElement *) malloc(sizeof(struct vpListElement));
+     newElement = (vpListElement *) malloc(sizeof( vpListElement));
      if(newElement == NULL) {
          qDebug("Out of memory\n");
          // Do not return FALSE here. That's a bug. FAIL is hackish... Is there a
@@ -52,7 +53,21 @@ Viewer::Viewer(QObject *parent) :
      return vpList->elements;
  }
 
- struct vpList *Viewer::vpListGenerate(viewerState *viewerState) {
+static vpBacklog *backlogNew() {
+     vpBacklog *newBacklog;
+
+     newBacklog = (vpBacklog *) malloc(sizeof( vpBacklog));
+     if(newBacklog == NULL) {
+         qDebug("Out of memory.\n");
+         return NULL;
+     }
+     newBacklog->entry = NULL;
+     newBacklog->elements = 0;
+
+     return newBacklog;
+ }
+
+static vpList *vpListGenerate(viewerState *viewerState) {
      vpList *newVpList = NULL;
      vpBacklog *currentBacklog = NULL;
      int i = 0;
@@ -77,7 +92,40 @@ Viewer::Viewer(QObject *parent) :
      return newVpList;
  }
 
-int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *element) {
+static int32_t backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
+     if(element->next == element) {
+         // This is the only element in the list
+         backlog->entry = NULL;
+     } else {
+         element->next->previous = element->previous;
+         element->previous->next = element->next;
+         backlog->entry = element->next;
+     }
+
+     free(element);
+
+     backlog->elements = backlog->elements - 1;
+
+     return backlog->elements;
+}
+
+static bool backlogDel(vpBacklog *backlog) {
+     while(backlog->elements > 0) {
+         if(backlogDelElement(backlog, backlog->entry) < 0) {
+             qDebug("Error deleting element at %p from the backlog. %d elements remain in the list.",
+                 backlog->entry, backlog->elements);
+             return false;
+         }
+     }
+
+     free(backlog);
+
+     return true;
+
+}
+
+
+static int32_t vpListDelElement( vpList *list,  vpListElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         list->entry = NULL;
@@ -101,7 +149,7 @@ int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *elem
 
 
 
- bool Viewer::vpListDel(vpList *list) {
+static bool vpListDel(vpList *list) {
      while(list->elements > 0) {
          if(vpListDelElement(list, list->entry) < 0) {
              qDebug("Error deleting element at %p from the slot list %d elements remain in the list.",
@@ -115,41 +163,10 @@ int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *elem
      return true;
  }
 
- vpBacklog *Viewer::backlogNew() {
-     vpBacklog *newBacklog;
-
-     newBacklog = (vpBacklog *) malloc(sizeof(struct vpBacklog));
-     if(newBacklog == NULL) {
-         qDebug("Out of memory.\n");
-         return NULL;
-     }
-     newBacklog->entry = NULL;
-     newBacklog->elements = 0;
-
-     return newBacklog;
- }
-
- int32_t Viewer::backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
-     if(element->next == element) {
-         // This is the only element in the list
-         backlog->entry = NULL;
-     } else {
-         element->next->previous = element->previous;
-         element->previous->next = element->next;
-         backlog->entry = element->next;
-     }
-
-     free(element);
-
-     backlog->elements = backlog->elements - 1;
-
-     return backlog->elements;
- }
-
- int32_t Viewer::backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32_t dcOffset, Byte *slice, uint32_t x_px, uint32_t y_px, uint32_t cubeType) {
+static int32_t backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32_t dcOffset, Byte *slice, uint32_t x_px, uint32_t y_px, uint32_t cubeType) {
      vpBacklogElement *newElement;
 
-     newElement = (vpBacklogElement *) malloc(sizeof(struct vpBacklogElement));
+     newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
      if(newElement == NULL) {
          qDebug("Out of memory.");
          /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
@@ -179,22 +196,196 @@ int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *elem
      return backlog->elements;
  }
 
- bool Viewer::backlogDel(vpBacklog *backlog) {
-     while(backlog->elements > 0) {
-         if(backlogDelElement(backlog, backlog->entry) < 0) {
-             qDebug("Error deleting element at %p from the backlog. %d elements remain in the list.",
-                 backlog->entry, backlog->elements);
-             return false;
-         }
-     }
+static bool sliceExtract_standard(Byte *datacube,
+                                       Byte *slice,
+                                       viewPort *viewPort) {
 
-     free(backlog);
+     int32_t i, j;
+
+     switch(viewPort->type) {
+         case SLICE_XY:
+             for(i = 0; i < state->cubeSliceArea; i++) {
+                 slice[0] = slice[1]
+                          = slice[2]
+                          = *datacube;
+
+                 datacube++;
+                 slice += 3;
+             }
+
+             break;
+
+         case SLICE_XZ:
+             for(j = 0; j < state->cubeEdgeLength; j++) {
+                 for(i = 0; i < state->cubeEdgeLength; i++) {
+                     slice[0] = slice[1]
+                              = slice[2]
+                              = *datacube;
+
+                     datacube++;
+                     slice += 3;
+                 }
+
+                 datacube = datacube
+                          + state->cubeSliceArea
+                          - state->cubeEdgeLength;
+             }
+
+             break;
+
+         case SLICE_YZ:
+
+             for(i = 0; i < state->cubeSliceArea; i++) {
+                 slice[0] = slice[1]
+                          = slice[2]
+                          = *datacube;
+                 datacube += state->cubeEdgeLength;
+                 slice += 3;
+             }
+
+             break;
+     }
 
      return true;
 
+ }
+
+
+static bool sliceExtract_adjust(Byte *datacube,
+                                     Byte *slice,
+                                     viewPort *viewPort) {
+     int32_t i, j;
+
+     switch(viewPort->type) {
+         case SLICE_XY:
+             for(i = 0; i < state->cubeSliceArea; i++) {
+                 slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                 slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                 slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
+
+                 datacube++;
+                 slice += 3;
+             }
+
+             break;
+
+         case SLICE_XZ:
+             for(j = 0; j < state->cubeEdgeLength; j++) {
+                 for(i = 0; i < state->cubeEdgeLength; i++) {
+                     slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                     slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                     slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
+
+                     datacube++;
+                     slice += 3;
+                 }
+
+                 datacube  = datacube
+                             + state->cubeSliceArea
+                             - state->cubeEdgeLength;
+             }
+
+             break;
+
+         case SLICE_YZ:
+             for(i = 0; i < state->cubeSliceArea; i++) {
+                 slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
+                 slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
+                 slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
+
+                 datacube += state->cubeEdgeLength;
+                 slice += 3;
+             }
+
+             break;
+     }
+
+     return true;
+ }
+
+
+static bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPort *viewPort) {
+     datacube += dcOffset;
+
+     if(state->viewerState->datasetAdjustmentOn) {
+         /* Texture type GL_RGB and we need to adjust coloring */
+         sliceExtract_adjust(datacube, slice, viewPort);
+     }
+     else {
+         /* Texture type GL_RGB and we don't need to adjust anything*/
+         sliceExtract_standard(datacube, slice, viewPort);
+     }
+
+     return true;
+ }
+
+static bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPort *viewPort) {
+
+    int32_t i, j;
+    int32_t objId,
+            *objIdP;
+
+    objIdP = &objId;
+
+    datacube += dcOffset;
+
+    switch(viewPort->type) {
+        case SLICE_XY:
+            for(i = 0; i < state->cubeSliceArea; i++) {
+                memcpy(objIdP, datacube, OBJID_BYTES);
+                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
+                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
+                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
+                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+
+                //printf("(%d, %d, %d, %d)", slice[0], slice[1], slice[2], slice[3]);
+
+                datacube += OBJID_BYTES;
+                slice += 4;
+            }
+
+            break;
+
+        case SLICE_XZ:
+            for(j = 0; j < state->cubeEdgeLength; j++) {
+                for(i = 0; i < state->cubeEdgeLength; i++) {
+                    memcpy(objIdP, datacube, OBJID_BYTES);
+                    slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
+                    slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
+                    slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
+                    slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+
+                    datacube += OBJID_BYTES;
+                    slice += 4;
+                }
+
+                datacube = datacube
+                         + state->cubeSliceArea * OBJID_BYTES
+                         - state->cubeEdgeLength * OBJID_BYTES;
+            }
+
+            break;
+
+        case SLICE_YZ:
+            for(i = 0; i < state->cubeSliceArea; i++) {
+                memcpy(objIdP, datacube, OBJID_BYTES);
+                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
+                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
+                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
+                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+
+                datacube += state->cubeEdgeLength * OBJID_BYTES;
+                slice += 4;
+            }
+
+            break;
+    }
+
+    return true;
+
 }
 
- bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) {
+static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) {
 
      vpBacklogElement *currentElement = NULL,
                              *nextElement = NULL;
@@ -216,7 +407,7 @@ int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *elem
          if(currentElement->cubeType == CUBE_DATA) {
              //SDL_LockMutex(state->protectCube2Pointer);
              state->protectCube2Pointer->lock();
-             cube = Hashtable::ht_get(state->Dc2Pointer[log2uint32(state->magnification)], currentElement->cube);
+             cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
              //SDL_UnlockMutex(state->protectCube2Pointer);
              state->protectCube2Pointer->unlock();
 
@@ -291,196 +482,21 @@ int32_t Viewer::vpListDelElement(struct vpList *list, struct vpListElement *elem
 
  }
 
+static int32_t texIndex(uint32_t x,
+                        uint32_t y,
+                        uint32_t colorMultiplicationFactor,
+                        viewPortTexture *texture) {
+    uint32_t index = 0;
 
-bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPort *viewPort) {
-     datacube += dcOffset;
+    index = x * state->cubeSliceArea + y
+            * (texture->edgeLengthDc * state->cubeSliceArea)
+            * colorMultiplicationFactor;
 
-     if(state->viewerState->datasetAdjustmentOn) {
-         /* Texture type GL_RGB and we need to adjust coloring */
-         sliceExtract_adjust(datacube, slice, viewPort);
-     }
-     else {
-         /* Texture type GL_RGB and we don't need to adjust anything*/
-         sliceExtract_standard(datacube, slice, viewPort);
-     }
-
-     return true;
- }
-
-bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPort *viewPort) {
-
-    int32_t i, j;
-    int32_t objId,
-            *objIdP;
-
-    objIdP = &objId;
-
-    datacube += dcOffset;
-
-    switch(viewPort->type) {
-        case SLICE_XY:
-            for(i = 0; i < state->cubeSliceArea; i++) {
-                memcpy(objIdP, datacube, OBJID_BYTES);
-                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
-
-                //printf("(%d, %d, %d, %d)", slice[0], slice[1], slice[2], slice[3]);
-
-                datacube += OBJID_BYTES;
-                slice += 4;
-            }
-
-            break;
-
-        case SLICE_XZ:
-            for(j = 0; j < state->cubeEdgeLength; j++) {
-                for(i = 0; i < state->cubeEdgeLength; i++) {
-                    memcpy(objIdP, datacube, OBJID_BYTES);
-                    slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-                    slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-                    slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-                    slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
-
-                    datacube += OBJID_BYTES;
-                    slice += 4;
-                }
-
-                datacube = datacube
-                         + state->cubeSliceArea * OBJID_BYTES
-                         - state->cubeEdgeLength * OBJID_BYTES;
-            }
-
-            break;
-
-        case SLICE_YZ:
-            for(i = 0; i < state->cubeSliceArea; i++) {
-                memcpy(objIdP, datacube, OBJID_BYTES);
-                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
-
-                datacube += state->cubeEdgeLength * OBJID_BYTES;
-                slice += 4;
-            }
-
-            break;
-    }
-
-    return true;
+    return index;
 
 }
 
- bool Viewer::sliceExtract_standard(Byte *datacube,
-                                       Byte *slice,
-                                       viewPort *viewPort) {
-
-     int32_t i, j;
-
-     switch(viewPort->type) {
-         case SLICE_XY:
-             for(i = 0; i < state->cubeSliceArea; i++) {
-                 slice[0] = slice[1]
-                          = slice[2]
-                          = *datacube;
-
-                 datacube++;
-                 slice += 3;
-             }
-
-             break;
-
-         case SLICE_XZ:
-             for(j = 0; j < state->cubeEdgeLength; j++) {
-                 for(i = 0; i < state->cubeEdgeLength; i++) {
-                     slice[0] = slice[1]
-                              = slice[2]
-                              = *datacube;
-
-                     datacube++;
-                     slice += 3;
-                 }
-
-                 datacube = datacube
-                          + state->cubeSliceArea
-                          - state->cubeEdgeLength;
-             }
-
-             break;
-
-         case SLICE_YZ:
-
-             for(i = 0; i < state->cubeSliceArea; i++) {
-                 slice[0] = slice[1]
-                          = slice[2]
-                          = *datacube;
-                 datacube += state->cubeEdgeLength;
-                 slice += 3;
-             }
-
-             break;
-     }
-
-     return true;
-
- }
-
-
- bool Viewer::sliceExtract_adjust(Byte *datacube,
-                                     Byte *slice,
-                                     viewPort *viewPort) {
-     int32_t i, j;
-
-     switch(viewPort->type) {
-         case SLICE_XY:
-             for(i = 0; i < state->cubeSliceArea; i++) {
-                 slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-                 slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-                 slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-                 datacube++;
-                 slice += 3;
-             }
-
-             break;
-
-         case SLICE_XZ:
-             for(j = 0; j < state->cubeEdgeLength; j++) {
-                 for(i = 0; i < state->cubeEdgeLength; i++) {
-                     slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-                     slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-                     slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-                     datacube++;
-                     slice += 3;
-                 }
-
-                 datacube  = datacube
-                             + state->cubeSliceArea
-                             - state->cubeEdgeLength;
-             }
-
-             break;
-
-         case SLICE_YZ:
-             for(i = 0; i < state->cubeSliceArea; i++) {
-                 slice[0] = state->viewerState->datasetAdjustmentTable[0][*datacube];
-                 slice[1] = state->viewerState->datasetAdjustmentTable[1][*datacube];
-                 slice[2] = state->viewerState->datasetAdjustmentTable[2][*datacube];
-
-                 datacube += state->cubeEdgeLength;
-                 slice += 3;
-             }
-
-             break;
-     }
-
-     return true;
- }
-
- bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState) {
+static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState) {
 
      // Load the texture for a viewport by going through all relevant datacubes and copying slices
      // from those cubes into the texture.
@@ -575,8 +591,8 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPo
 
              //SDL_LockMutex(state->protectCube2Pointer);
              state->protectCube2Pointer->lock();
-             datacube = Hashtable::ht_get(state->Dc2Pointer[log2uint32(state->magnification)], currentDc);
-             overlayCube = Hashtable::ht_get(state->Oc2Pointer[log2uint32(state->magnification)], currentDc);
+             datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
              //SDL_UnlockMutex(state->protectCube2Pointer);
              state->protectCube2Pointer->unlock();
 
@@ -695,7 +711,7 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, viewPo
   * performance penalty. We use a simple
   * box filter for the downsampling */
 
-bool Viewer::downsampleVPTexture(viewPort *viewPort) {
+static bool downsampleVPTexture(viewPort *viewPort) {
     /* allocate 2 texture buffers */
     //Byte *orig, *resampled;
 
@@ -709,13 +725,13 @@ bool Viewer::downsampleVPTexture(viewPort *viewPort) {
 }
 
 
-bool Viewer::upsampleVPTexture(viewPort *viewPort) {
+static bool upsampleVPTexture(viewPort *viewPort) {
    return true;
 }
 
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
-bool Viewer::calcLeftUpperTexAbsPx() {
+static bool calcLeftUpperTexAbsPx() {
     uint32_t i = 0;
     Coordinate currentPosition_dc, currPosTrans;
     viewerState *viewerState = state->viewerState;
@@ -819,7 +835,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
 
 
 //Initializes the viewer, is called only once after the viewing thread started
-int32_t Viewer::initViewer() {
+static int32_t initViewer() {
     /*
     calcLeftUpperTexAbsPx();
 
@@ -941,22 +957,38 @@ int32_t Viewer::initViewer() {
 }
 
 
-int32_t Viewer::texIndex(uint32_t x,
-                        uint32_t y,
-                        uint32_t colorMultiplicationFactor,
-                        viewPortTexture *texture) {
-    uint32_t index = 0;
-
-    index = x * state->cubeSliceArea + y
-            * (texture->edgeLengthDc * state->cubeSliceArea)
-            * colorMultiplicationFactor;
-
-    return index;
-
-}
-
 /* TODO maybe no implementation is needed anymore */
-QCursor *Viewer::GenCursor(char *xpm[], int xHot, int yHot) {
+static QCursor *GenCursor(char *xpm[], int xHot, int yHot) {
 
 }
 
+
+
+bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type) { return true;}
+bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) { return true;}
+bool Viewer::updatePosition(int32_t serverMovement) { return true;}
+bool Viewer::calcDisplayedEdgeLength() { return true;}
+
+/* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) { return true;}
+
+
+//Entry point for viewer thread, general viewer coordination, "main loop"
+bool Viewer::viewer() { return true;}
+
+//Initializes the window with the parameter given in viewerState
+bool Viewer::createScreen() { return true;}
+
+//Transfers all (orthogonal viewports) textures completly from ram (*viewerState->viewPorts[i].texture.data) to video memory
+//Calling makes only sense after full initialization of the SDL / OGL screen
+bool Viewer::initializeTextures() { return true;}
+
+//Frees allocated memory
+bool Viewer::cleanUpViewer( viewerState *viewerState) { return true;}
+
+bool Viewer::updateViewerState() { return true;}
+bool Viewer::updateZoomCube() { return true;}
+bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) { return true;}
+int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) { return 0;}
+bool Viewer::recalcTextureOffsets() { return true;}
+bool Viewer::refreshViewports() { return true;}

@@ -1,3 +1,5 @@
+#ifndef KNOSSOS_H
+#define KNOSSOS_H
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -26,16 +28,16 @@
 
 class Knossos : public QObject {
 public:
-    bool unlockSkeleton(int32_t increment);
-    bool lockSkeleton(int32_t targetRevision);
-    bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
-    bool sendRemoteSignal();
-    bool sendClientSignal();
-    bool sendQuitSignal();
-    bool sendServerSignal();
-    void sendDatasetChangeSignal(uint32_t upOrDownFlag);
-    uint32_t log2uint32(register uint32_t x);
-    uint32_t ones32(register uint32_t x);
+    static bool unlockSkeleton(int32_t increment);
+    static bool lockSkeleton(int32_t targetRevision);
+    static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
+    static bool sendRemoteSignal();
+    static bool sendClientSignal();
+    static bool sendQuitSignal();
+    static bool sendServerSignal();
+    static void sendDatasetChangeSignal(uint32_t upOrDownFlag);
+    static uint32_t log2uint32(register uint32_t x);
+    static uint32_t ones32(register uint32_t x);
 
 };
 
@@ -47,3 +49,4 @@ public:
 3. allg. cursor Fadenkreuz
 
 */
+#endif

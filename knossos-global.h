@@ -1100,6 +1100,9 @@ struct skeletonState {
     int32_t skeletonTime;
     int32_t skeletonTimeCorrection;
 
+    int32_t idleTimeTicksOffset;
+    int32_t idleTimeLoadOffset;
+    int32_t idleTimeSession;
     int32_t idleTime;
     int32_t idleTimeNow;
     int32_t idleTimeLast;
@@ -1324,21 +1327,6 @@ struct inputmap {
 
 /*
 
-
-/*
- *	For knossos.c
- */
-int32_t unlockSkeleton(int32_t increment);
-int32_t lockSkeleton(int32_t targetRevision);
-int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
-int32_t sendRemoteSignal();
-int32_t sendClientSignal();
-int32_t sendQuitSignal();
-int32_t sendServerSignal();
-void sendDatasetChangeSignal(uint32_t upOrDownFlag);
-uint32_t log2uint32(register uint32_t x);
-uint32_t ones32(register uint32_t x);
-
 /*
  *	For loader.c
  */
@@ -1346,78 +1334,10 @@ uint32_t ones32(register uint32_t x);
 int loader();
 
 /*
- * For remote.c
- */
-
-int32_t remoteDelay(int32_t s);
-int remote();
-// For the sake of logical organization, we'd need another function
-// remoteJumpTo. It would even somewhat simplify related functions.
-int32_t remoteJump(int32_t x, int32_t y, int32_t z);
-int32_t remoteWalk(int32_t x, int32_t y, int32_t z);
-int32_t remoteWalkTo(int32_t x, int32_t y, int32_t z);
-int32_t newTrajectory(char *trajName, char *trajectory);
-
-/*
- *	For viewer.c
- */
-
-int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
-int32_t loadTreeColorTable(const char *path, float *table, int32_t type);
-int32_t updateTreeColors();
-int32_t updatePosition(int32_t serverMovement);
-int32_t calcDisplayedEdgeLength();
-
-/* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-uint32_t changeDatasetMag(uint32_t upOrDownFlag);
-
-
-//Entry point for viewer thread, general viewer coordination, "main loop"
-int viewer();
-
-//Initializes the window with the parameter given in viewerState
-uint32_t createScreen();
-
-//Transfers all (orthogonal viewports) textures completly from ram (*viewerState->viewPorts[i].texture.data) to video memory
-//Calling makes only sense after full initialization of the SDL / OGL screen
-uint32_t initializeTextures();
-
-//Frees allocated memory
-uint32_t cleanUpViewer(struct viewerState *viewerState);
-
-int32_t updateViewerState();
-uint32_t updateZoomCube();
-uint32_t userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
-int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
-uint32_t moveVPonTop(uint32_t currentVP);
-uint32_t recalcTextureOffsets();
-int32_t refreshViewports();
-
-/*
  * For eventHandler.c
  */
 //Event handler function, which switches over the type of a given event and calls the appropriate downstream functions
 uint32_t handleEvent(SDL_Event event);
-
-
-/*
- * For client.c
- */
-
-int client();
-uint32_t broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
-int32_t skeletonSyncBroken();
-int32_t bytesToInt(Byte *source);
-int32_t integerToBytes(Byte *dest, int32_t source);
-int32_t floatToBytes(Byte *dest, float source);
-int Wrapper_SDLNet_TCP_Open(void *params);
-uint32_t IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t length, SDL_mutex *mutex);
-uint32_t addPeer(uint32_t id, char *name, float xScale, float yScale, float zScale, int32_t xOffset, int32_t yOffset, int32_t zOffset);
-uint32_t delPeer(uint32_t id);
-uint32_t broadcastCoordinate(uint32_t x, uint32_t y, uint32_t z);
-int32_t syncMessage(char *fmt, ...);
-int32_t clientSyncBroken();
-int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
 
 /*
  * For gui.c

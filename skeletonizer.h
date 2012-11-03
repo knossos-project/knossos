@@ -173,7 +173,7 @@ public:
                     float radius,
                     int32_t treeID,
                     Coordinate *position,
-                    Byte VPType,
+                    Byte VPtype,
                     int32_t inMag,
                     int32_t time,
                     int32_t respectLocks);
@@ -224,6 +224,7 @@ public:
     static bool jumpToActiveNode();
     static void UI_popBranchNode();
     static void restoreDefaultTreeColor();
+    static bool updateTreeColors();
 
 signals:
 
