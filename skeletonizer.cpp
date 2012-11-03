@@ -1,6 +1,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <GL/gl.h>
+#include <time.h>
 
 #include "skeletonizer.h"
 #include "knossos-global.h"
@@ -389,10 +390,10 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
     return TRUE;
 }
 
-/*static void WRAP_popBranchNode() {
-    popBranchNode(CHANGE_MANUAL);
+static void WRAP_popBranchNode() {
+    Skeletonizer::popBranchNode(CHANGE_MANUAL);
     state->skeletonState->askingPopBranchConfirmation = FALSE;
-}*/
+}
 
 static void popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = FALSE;
@@ -587,7 +588,9 @@ bool Skeletonizer::updateSkeletonState() {
     }
     return TRUE;
 }
+
 bool Skeletonizer::nextCommentlessNode() { }
+
 bool Skeletonizer::previousCommentlessNode() { }
 
 bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
@@ -2236,18 +2239,425 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     return TRUE;
 }
 
-bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) { }
+bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
-nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) { }
-nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode) { }
-nodeListElement* Skeletonizer::findNodeByNodeID(int32_t nodeID) { }
-nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) { }
-treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) { }
-treeListElement* Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) { }
-treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) { }
-bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) { }
-segmentListElement* Skeletonizer::findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID) { }
-bool Skeletonizer::genTestNodes(uint32_t number) { }
+    treeListElement *tree1, *tree2;
+    nodeListElement *currentNode;
+    nodeListElement *firstNode, *lastNode;
+
+    if(treeID1 == treeID2) {
+        LOG("Could not merge trees. Provided IDs are the same!");
+        return FALSE;
+    }
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    tree1 = findTreeByTreeID(treeID1);
+    tree2 = findTreeByTreeID(treeID2);
+
+    if(!(tree1) || !(tree2)) {
+        LOG("Could not merge trees, provided IDs are not valid!");
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    currentNode = tree2->firstNode;
+
+    while(currentNode) {
+        //Change the corresponding tree
+        currentNode->correspondingTree = tree1;
+
+        currentNode = currentNode->next;
+    }
+
+    //Now we insert the node list of tree2 before the node list of tree1
+    if(tree1->firstNode && tree2->firstNode) {
+        //First, we have to find the last node of tree2 (this node has to be connected
+        //to the first node inside of tree1)
+        firstNode = tree2->firstNode;
+        lastNode = firstNode;
+        while(lastNode->next) {
+            lastNode = lastNode->next;
+        }
+
+        tree1->firstNode->previous = lastNode;
+        lastNode->next = tree1->firstNode;
+        tree1->firstNode = firstNode;
+
+    }
+    else if(tree2->firstNode) {
+        tree1->firstNode = tree2->firstNode;
+    }
+
+    // The new node count for tree1 is the old node count of tree1 plus the node
+    // count of tree2
+    setDynArray(state->skeletonState->nodeCounter,
+                tree1->treeID,
+                (void *)
+                ((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                                        tree1->treeID) +
+                (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                                        tree2->treeID)));
+
+    // The old tree is gone and has 0 nodes.
+    setDynArray(state->skeletonState->nodeCounter,
+                tree2->treeID,
+                (void *)0);
+
+    //Delete the "empty" tree 2
+    if(tree2 == state->skeletonState->firstTree) {
+        state->skeletonState->firstTree = tree2->next;
+        tree2->next->previous = NULL;
+    }
+    else {
+        tree2->previous->next = tree2->next;
+        if(tree2->next)
+            tree2->next->previous = tree2->previous;
+    }
+    free(tree2);
+
+    if(state->skeletonState->activeTree->treeID == tree2->treeID) {
+       setActiveTreeByID(tree1->treeID);
+       state->viewerState->ag->activeTreeID = tree1->treeID;
+    }
+
+    state->skeletonState->treeElements--;
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brdd", KIKI_MERGETREE, treeID1, treeID2)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+    return TRUE;
+}
+
+nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
+    nodeListElement *node = currentNode->correspondingTree->firstNode;
+    nodeListElement *prevNode = NULL;
+    nodeListElement *highestNode = NULL;
+    unsigned int minDistance = UINT_MAX;
+    unsigned int tempMinDistance = minDistance;
+    unsigned int maxID = 0;
+
+    while(node) {
+        if(node->nodeID > maxID) {
+            highestNode = node;
+            maxID = node->nodeID;
+        }
+
+        if(node->nodeID < currentNode->nodeID) {
+            tempMinDistance = currentNode->nodeID - node->nodeID;
+
+            if(tempMinDistance == 1) { //smallest distance possible
+                return node;
+            }
+
+            if(tempMinDistance < minDistance) {
+                minDistance = tempMinDistance;
+                prevNode = node;
+            }
+
+
+        }
+
+        node = node->next;
+    }
+
+    if(!prevNode) {
+        prevNode = highestNode;
+    }
+
+    return prevNode;
+}
+
+nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode) {
+    nodeListElement *node = currentNode->correspondingTree->firstNode;
+    nodeListElement *nextNode = NULL;
+    nodeListElement *lowestNode = NULL;
+    unsigned int minDistance = UINT_MAX;
+    unsigned int tempMinDistance = minDistance;
+    unsigned int minID = UINT_MAX;
+
+    while(node) {
+        if(node->nodeID < minID) {
+            lowestNode = node;
+            minID = node->nodeID;
+        }
+
+        if(node->nodeID > currentNode->nodeID) {
+            tempMinDistance = node->nodeID - currentNode->nodeID;
+
+            if(tempMinDistance == 1) { //smallest distance possible
+                return node;
+            }
+
+            if(tempMinDistance < minDistance) {
+                minDistance = tempMinDistance;
+                nextNode = node;
+            }
+        }
+
+        node = node->next;
+    }
+
+    if(!nextNode) {
+        nextNode = lowestNode;
+    }
+
+    return nextNode;
+}
+
+nodeListElement* Skeletonizer::findNodeByNodeID(int32_t nodeID) {
+    nodeListElement *node;
+    node = (struct nodeListElement *)getDynArray(state->skeletonState->nodesByNodeID, nodeID);
+    return node;
+}
+
+nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) {
+    nodeListElement *currentNode;
+    treeListElement *currentTree;
+
+    currentTree = state->skeletonState->firstTree;
+
+    while(currentTree) {
+        currentNode = currentTree->firstNode;
+        while(currentNode) {
+            if(COMPARE_COORDINATE(currentNode->position, *position))
+                return currentNode;
+
+            currentNode = currentNode->next;
+        }
+        currentTree = currentTree->next;
+    }
+    return NULL;
+}
+
+treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+
+    /* The variable sync is a workaround for the problem that this function
+     *  will sometimes be called by other syncable functions that themselves hold
+     *  the lock and handle synchronization. If set to FALSE, all synchro
+     *  routines will be skipped. */
+
+    treeListElement *newElement = NULL;
+
+    if(sync != FALSE) {
+        if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+            LOG("addtreelistelement unable to lock.");
+            Knossos::unlockSkeleton(FALSE);
+            return FALSE;
+        }
+    }
+
+
+    newElement = findTreeByTreeID(treeID);
+    if(newElement) {
+        LOG("Tree with ID %d already exists!", treeID);
+        Knossos::unlockSkeleton(TRUE);
+        return newElement;
+    }
+
+    newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
+    if(newElement == NULL) {
+        LOG("Out of memory while trying to allocate memory for a new treeListElement.");
+        Knossos::unlockSkeleton(FALSE);
+        return NULL;
+    }
+    memset(newElement, '\0', sizeof(struct treeListElement));
+
+    state->skeletonState->treeElements++;
+
+    //Tree ID is unique in tree list
+    //Take the provided tree ID if there is one.
+    if(treeID != 0) {
+        newElement->treeID = treeID;
+    }
+    else {
+        newElement->treeID = state->skeletonState->treeElements;
+        //Test if tree ID over tree counter is available. If not, find a valid one.
+        while(findTreeByTreeID(newElement->treeID)) {
+            newElement->treeID++;
+        }
+    }
+
+    /* calling function sets values < 0 when no color was specified */
+    if(color.r < 0) {//Set a tree color
+        int index = (newElement->treeID - 1) % 256; //first index is 0
+        newElement->color.r = state->viewerState->treeAdjustmentTable[index];
+        newElement->color.g = state->viewerState->treeAdjustmentTable[index + 256];
+        newElement->color.b = state->viewerState->treeAdjustmentTable[index + 512];
+        newElement->color.a = 1.;
+    }
+    else {
+        newElement->color = color;
+    }
+    newElement->colorSetManually = FALSE;
+
+    memset(newElement->comment, '\0', 8192);
+
+    //Insert the new tree at the beginning of the tree list
+    newElement->next = state->skeletonState->firstTree;
+    newElement->previous = NULL;
+    //The old first element should have the new first element as previous element
+    if(state->skeletonState->firstTree) {
+        state->skeletonState->firstTree->previous = newElement;
+    }
+    //We change the old and new first elements
+    state->skeletonState->firstTree = newElement;
+
+    state->skeletonState->activeTree = newElement;
+    LOG("Added new tree with ID: %d.", newElement->treeID);
+
+    if(treeID > state->skeletonState->greatestTreeID) {
+        state->skeletonState->greatestTreeID = treeID;
+    }
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
+
+    if(sync != FALSE) {
+        state->skeletonState->skeletonRevision++;
+
+        if(targetRevision == CHANGE_MANUAL) {
+            if(!Client::syncMessage("brdfff", KIKI_ADDTREE, newElement->treeID,
+                            newElement->color.r, newElement->color.g, newElement->color.b)) {
+                Client::skeletonSyncBroken();
+            }
+        }
+
+        Knossos::unlockSkeleton(TRUE);
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    return newElement;
+}
+
+treeListElement* Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
+    treeListElement *tree = state->skeletonState->firstTree;
+    treeListElement *prevTree = NULL;
+    uint32_t idDistance = state->skeletonState->treeElements;
+    uint32_t tempDistance = idDistance;
+
+    while(tree) {
+        if(tree->treeID < currentTree->treeID) {
+            tempDistance = currentTree->treeID - tree->treeID;
+            if(tempDistance == 1) {//smallest distance possible
+                return tree;
+            }
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                prevTree = tree;
+            }
+        }
+        tree = tree->next;
+    }
+    return prevTree;
+}
+
+treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
+    treeListElement *tree = state->skeletonState->firstTree;
+    treeListElement *nextTree = NULL;
+    uint32_t idDistance = state->skeletonState->treeElements;
+    uint32_t tempDistance = idDistance;
+
+    while(tree) {
+        if(tree->treeID > currentTree->treeID) {
+            tempDistance = tree->treeID - currentTree->treeID;
+
+            if(tempDistance == 1) { //smallest distance possible
+                return tree;
+            }
+            if(tempDistance < idDistance) {
+                idDistance = tempDistance;
+                nextTree = tree;
+            }
+        }
+        tree = tree->next;
+    }
+    return nextTree;
+}
+
+bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    treeListElement *tree = NULL;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        LOG("addTreeComment unable to lock.");
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    tree = findTreeByTreeID(treeID);
+
+    if(comment && tree) {
+        strncpy(tree->comment, comment, 8192);
+    }
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+segmentListElement* Skeletonizer::findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID) {
+    segmentListElement *currentSegment;
+    nodeListElement *currentNode;
+
+    currentNode = findNodeByNodeID(sourceNodeID);
+
+    if(!currentNode) { return NULL;}
+
+    currentSegment = currentNode->firstSegment;
+    while(currentSegment) {
+        if(currentSegment->flag == SEGMENT_BACKWARD) {
+            currentSegment = currentSegment->next;
+            continue;
+        }
+        if(currentSegment->target->nodeID == targetNodeID) {
+            return currentSegment;
+        }
+        currentSegment = currentSegment->next;
+    }
+
+    return NULL;
+}
+
+bool Skeletonizer::genTestNodes(uint32_t number) {
+    uint32_t i;
+    Coordinate pos;
+    srand( time(NULL) );
+
+    for(i = 1; i < number; i++) {
+        pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
+        pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
+        pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
+        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, FALSE);
+    }
+
+    return TRUE;
+}
+
 bool Skeletonizer::editNode(int32_t targetRevision,
                  int32_t nodeID,
                  nodeListElement *node,
@@ -2255,28 +2665,980 @@ bool Skeletonizer::editNode(int32_t targetRevision,
                  int32_t newXPos,
                  int32_t newYPos,
                  int32_t newZPos,
-                 int32_t inMag) { }
-void* Skeletonizer::popStack(stack *stack) { }
-bool Skeletonizer::pushStack(stack *stack, void *element) { }
-stack* Skeletonizer::newStack(int32_t size) { }
-bool Skeletonizer::delStack(stack *stack) { }
-bool Skeletonizer::delDynArray(dynArray *array) { }
-void* Skeletonizer::getDynArray(dynArray *array, int32_t pos) { }
-bool Skeletonizer::setDynArray(dynArray *array, int32_t pos, void *value) { }
-dynArray* Skeletonizer::newDynArray(int32_t size) { }
-int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t nodeID) { }
-bool Skeletonizer::addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID) { }
-bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID) { }
-bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID) { }
-commentListElement* Skeletonizer::nextComment(char *searchString) { }
-commentListElement* Skeletonizer::previousComment(char *searchString) { }
-bool Skeletonizer::searchInComment(char *searchString, commentListElement *comment) { }
-bool Skeletonizer::unlockPosition() { }
-bool Skeletonizer::lockPosition(Coordinate lockCoordinate) { }
-bool Skeletonizer::popBranchNode(int32_t targetRevision) { }
-bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID) { }
-bool Skeletonizer::setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode) { }
-bool Skeletonizer::jumpToActiveNode() { }
-void Skeletonizer::UI_popBranchNode() { }
-void Skeletonizer::restoreDefaultTreeColor() { }
-bool Skeletonizer::updateTreeColors() {}
+                 int32_t inMag) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+
+    segmentListElement *currentSegment = NULL;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    if(!node) {
+        node = findNodeByNodeID(nodeID);
+    }
+    if(!node) {
+        LOG("Cannot edit: node id %d invalid.", nodeID);
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    nodeID = node->nodeID;
+
+    //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
+    delNodeFromSkeletonStruct(node);
+    currentSegment = node->firstSegment;
+    while(currentSegment) {
+        delSegmentFromSkeletonStruct(currentSegment);
+        currentSegment = currentSegment->next;
+    }
+
+    if(!((newXPos < 0) || (newXPos > state->boundary.x)
+       || (newYPos < 0) || (newYPos > state->boundary.y)
+       || (newZPos < 0) || (newZPos > state->boundary.z))) {
+        SET_COORDINATE(node->position, newXPos, newYPos, newZPos);
+    }
+
+    if(newRadius != 0.) {
+        node->radius = newRadius;
+    }
+    node->createdInMag = inMag;
+
+    //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
+    addNodeToSkeletonStruct(node);
+    currentSegment = node->firstSegment;
+    while(currentSegment) {
+        addSegmentToSkeletonStruct(currentSegment);
+        currentSegment = currentSegment->next;
+    }
+
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brddfdddd", KIKI_EDITNODE,
+                                            state->clientState->myId,
+                                            nodeID,
+                                            newRadius,
+                                            inMag,
+                                            newXPos,
+                                            newYPos,
+                                            newZPos)) {
+
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+void* Skeletonizer::popStack(stack *stack) {
+    //The stack should hold values != NULL only, NULL indicates an error.
+    void *element = NULL;
+
+    if(stack->stackpointer >= 0) {
+        element = stack->elements[stack->stackpointer];
+    }
+    else {
+        return NULL;
+    }
+    stack->stackpointer--;
+    stack->elementsOnStack--;
+
+    return element;
+}
+
+bool Skeletonizer::pushStack(stack *stack, void *element) {
+    if(element == NULL) {
+        LOG("Stack can't hold NULL.");
+        return FALSE;
+    }
+
+    if(stack->stackpointer + 1 == stack->size) {
+        stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
+        if(stack->elements == NULL) {
+            LOG("Out of memory.");
+            _Exit(FALSE);
+        }
+        stack->size = stack->size * 2;
+    }
+
+    stack->stackpointer++;
+    stack->elementsOnStack++;
+
+    stack->elements[stack->stackpointer] = element;
+
+    return TRUE;
+}
+
+stack* Skeletonizer::newStack(int32_t size) {
+    stack *newStack = NULL;
+
+    if(size <= 0) {
+        LOG("That doesn't really make any sense, right? Cannot create stack with size <= 0.");
+        return NULL;
+    }
+
+    newStack = (stack*) malloc(sizeof(struct stack));
+    if(newStack == NULL) {
+        LOG("Out of memory.");
+        _Exit(FALSE);
+    }
+    memset(newStack, '\0', sizeof(struct stack));
+
+    newStack->elements = (void**)malloc(sizeof(void *) * size);
+    if(newStack->elements == NULL) {
+        LOG("Out of memory.");
+        _Exit(FALSE);
+    }
+    memset(newStack->elements, '\0', sizeof(void *) * size);
+
+    newStack->size = size;
+    newStack->stackpointer = -1;
+    newStack->elementsOnStack = 0;
+
+    return newStack;
+}
+
+bool Skeletonizer::delStack(stack *stack) {
+    free(stack->elements);
+    free(stack);
+
+    return TRUE;
+}
+
+bool Skeletonizer::delDynArray(dynArray *array) {
+    free(array->elements);
+    free(array);
+
+    return TRUE;
+}
+
+void* Skeletonizer::getDynArray(dynArray *array, int32_t pos) {
+    if(pos > array->end) {
+        return FALSE;
+    }
+    return array->elements[pos];
+}
+
+bool Skeletonizer::setDynArray(dynArray *array, int32_t pos, void *value) {
+    while(pos > array->end) {
+        array->elements = (void**)realloc(array->elements, (array->end + 1 +
+                                  array->firstSize) * sizeof(void *));
+        if(array->elements == NULL) {
+            LOG("Out of memory.");
+            _Exit(FALSE);
+        }
+        memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
+        array->end = array->end + array->firstSize;
+    }
+
+    array->elements[pos] = value;
+
+    return TRUE;
+}
+
+dynArray* Skeletonizer::newDynArray(int32_t size) {
+    dynArray *newArray = NULL;
+
+    newArray = (dynArray*)malloc(sizeof(struct dynArray));
+    if(newArray == NULL) {
+        LOG("Out of memory.");
+        _Exit(FALSE);
+    }
+    memset(newArray, '\0', sizeof(struct dynArray));
+
+    newArray->elements = (void**)malloc(sizeof(void *) * size);
+    if(newArray->elements == NULL) {
+        LOG("Out of memory.");
+        _Exit(FALSE);
+    }
+    memset(newArray->elements, '\0', sizeof(void *) * size);
+
+    newArray->end = size - 1;
+    newArray->firstSize = size;
+
+    return newArray;
+}
+
+int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t nodeID) {
+    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+
+    stack *remainingNodes = NULL;
+    stack *componentNodes = NULL;
+    nodeListElement *n = NULL, *last = NULL, *node = NULL;
+    treeListElement *newTree = NULL, *currentTree = NULL;
+    segmentListElement *currentEdge = NULL;
+    dynArray *treesSeen = NULL;
+    int32_t treesCount = 0;
+    int32_t i = 0, id;
+    PTRSIZEINT nodeCountAllTrees = 0, nodeCount = 0;
+    uint32_t visitedBase, index;
+    Byte *visitedRight = NULL, *visitedLeft = NULL, **visited = NULL;
+    uint32_t visitedRightLen = 16384, visitedLeftLen = 16384, *visitedLen = NULL;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    /*
+     *  This function takes a node and splits the connected component
+     *  containing that node into a new tree, unless the connected component
+     *  is equivalent to exactly one entire tree.
+     *
+     *
+     *  It uses depth-first search. Breadth-first-search would be the same with
+     *  a queue instead of a stack for storing pending nodes. There is no
+     *  practical difference between the two algorithms for this task.
+     *
+     *  TODO trees might become empty when the connected component spans more
+     *       than one tree.
+     */
+
+    node = findNodeByNodeID(nodeID);
+    if(!node) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    /*
+     *  This stack can be rather small without ever having to be resized as
+     *  our graphs are usually very sparse.
+     */
+
+    remainingNodes = newStack(512);
+    componentNodes = newStack(4096);
+
+    /*
+     *  This is used to keep track of which trees we've seen. The connected
+     *  component for a specific node can be part of more than one tree. That
+     *  makes it slightly tedious to check whether the connected component is a
+     *  strict subgraph.
+     */
+
+    treesSeen = newDynArray(16);
+
+    /*
+     *  These are used to store which nodes have been visited.
+     *  Nodes with IDs smaller than the entry node will be stored in
+     *  visitedLeft, nodes with equal or larger ID will be stored in
+     *  visitedRight. This is done to save some memory. ;)
+     */
+
+    visitedRight = (Byte*)malloc(16384 * sizeof(Byte));
+    visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
+
+    if(visitedRight == NULL || visitedLeft == NULL) {
+        LOG("Out of memory.");
+        _Exit(FALSE);
+    }
+
+    memset(visitedLeft, NODE_PRISTINE, 16384);
+    memset(visitedRight, NODE_PRISTINE, 16384);
+
+    visitedBase = node->nodeID;
+    pushStack(remainingNodes, (void *)node);
+
+    // popStack() returns NULL when the stack is empty.
+    while((n = (struct nodeListElement *)popStack(remainingNodes))) {
+        if(n->nodeID >= visitedBase) {
+            index = n->nodeID - visitedBase;
+            visited = &visitedRight;
+            visitedLen = &visitedRightLen;
+        }
+        else {
+            index = visitedBase - n->nodeID - 1;
+            visited = &visitedLeft;
+            visitedLen = &visitedLeftLen;
+        }
+
+        // If the index is out bounds of the visited array, we resize the array
+        while(index > *visitedLen) {
+            *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
+            if(*visited == NULL) {
+                LOG("Out of memory.");
+                _Exit(FALSE);
+            }
+
+            memset(*visited + *visitedLen, NODE_PRISTINE, 16384 * sizeof(Byte));
+            *visitedLen = *visitedLen + 16384;
+        }
+
+        if((*visited)[index] == NODE_VISITED) {
+            continue;
+        }
+        (*visited)[index] = NODE_VISITED;
+
+        pushStack(componentNodes, (void *)n);
+
+        // Check if the node is in a tree we haven't yet seen.
+        // If it is, add that tree as seen.
+        for(i = 0; i < treesCount; i++) {
+            if(getDynArray(treesSeen, i) == (void *)n->correspondingTree) {
+                break;
+            }
+        }
+        if(i == treesCount) {
+            setDynArray(treesSeen, treesCount, (void *)n->correspondingTree);
+            treesCount++;
+        }
+
+        nodeCount = nodeCount + 1;
+
+        // And now we push all adjacent nodes on the stack.
+        currentEdge = n->firstSegment;
+        while(currentEdge) {
+            if(currentEdge->flag == SEGMENT_FORWARD) {
+                pushStack(remainingNodes, (void *)currentEdge->target);
+            }
+            else if(currentEdge->flag == SEGMENT_BACKWARD) {
+                pushStack(remainingNodes, (void *)currentEdge->source);
+            }
+            currentEdge = currentEdge->next;
+        }
+    }
+
+    /*
+     *  If the total number of nodes visited is smaller than the sum of the
+     *  number of nodes in all trees we've seen, the connected component is a
+     *  strict subgraph of the graph containing all trees we've seen and we
+     *  should split it.
+     */
+
+    /*
+     *  Since we're checking for treesCount > 1 below, this implementation is
+     *  now slightly redundant. We want this function to not do anything when
+     *  there are no disconnected components in the same tree, but create a new
+     *  tree when the connected component spans several trees. This is a useful
+     *  feature when performing skeleton consolidation and allows one to merge
+     *  many trees at once.
+     *  Just remove the treesCount > 1 below to get back to the original
+     *  behaviour of only splitting strict subgraphs.
+     */
+
+    for(i = 0; i < treesCount; i++) {
+        currentTree = (struct treeListElement *)getDynArray(treesSeen, i);
+        id = currentTree->treeID;
+        nodeCountAllTrees += (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                                                     id);
+    }
+
+    if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
+        color4F treeCol;
+        treeCol.r = -1.;
+        newTree = addTreeListElement(FALSE, CHANGE_MANUAL, 0, treeCol);
+        // Splitting the connected component.
+
+        while((n = (struct nodeListElement *)popStack(componentNodes))) {
+            // Removing node list element from its old position
+            setDynArray(state->skeletonState->nodeCounter,
+                        n->correspondingTree->treeID,
+                        (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                                                         n->correspondingTree->treeID) - 1));
+
+            if(n->previous != NULL) {
+                n->previous->next = n->next;
+            }
+            else {
+                n->correspondingTree->firstNode = n->next;
+            }
+            if(n->next != NULL) {
+                n->next->previous = n->previous;
+            }
+
+            // Inserting node list element into new list.
+            setDynArray(state->skeletonState->nodeCounter, newTree->treeID,
+                        (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
+                                                         newTree->treeID) + 1));
+
+            n->next = NULL;
+
+            if(last != NULL) {
+                n->previous = last;
+                last->next = n;
+            }
+            else {
+                n->previous = NULL;
+                newTree->firstNode = n;
+            }
+            last = n;
+            n->correspondingTree = newTree;
+        }
+        state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
+        state->skeletonState->skeletonChanged = TRUE;
+    }
+    else {
+        LOG("The connected component is equal to the entire tree, not splitting.");
+    }
+
+    delStack(remainingNodes);
+    delStack(componentNodes);
+
+    free(visitedLeft);
+    free(visitedRight);
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brd", KIKI_SPLIT_CC, nodeID)) {
+            LOG("broken in splitcc.");
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return nodeCount;
+}
+
+bool Skeletonizer::addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID) {
+    //This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+
+    commentListElement *newComment;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    newComment = (commentListElement*)malloc(sizeof(struct commentListElement));
+    memset(newComment, '\0', sizeof(struct commentListElement));
+
+    newComment->content = (char*)malloc(strlen(content) * sizeof(char) + 1);
+    memset(newComment->content, '\0', strlen(content) * sizeof(char) + 1);
+
+    if(nodeID) {
+        node = findNodeByNodeID(nodeID);
+    }
+    if(node) {
+        newComment->node = node;
+        node->comment = newComment;
+    }
+
+    if(content) {
+        strncpy(newComment->content, content, strlen(content));
+        state->skeletonState->skeletonChanged = TRUE;
+    }
+
+    if(!state->skeletonState->currentComment) {
+        state->skeletonState->currentComment = newComment;
+        //We build a circular linked list
+        newComment->next = newComment;
+        newComment->previous = newComment;
+    }
+    else {
+        //We insert into a circular linked list
+        state->skeletonState->currentComment->previous->next = newComment;
+        newComment->next = state->skeletonState->currentComment;
+        newComment->previous = state->skeletonState->currentComment->previous;
+        state->skeletonState->currentComment->previous = newComment;
+
+        state->skeletonState->currentComment = newComment;
+    }
+    //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
+    memset(state->skeletonState->commentBuffer, '\0', 10240);
+    strncpy(state->skeletonState->commentBuffer,
+            state->skeletonState->currentComment->content,
+            strlen(state->skeletonState->currentComment->content));
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("blrds", KIKI_ADDCOMMENT, node->nodeID, content)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID) {
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+
+    int32_t nodeID = 0;
+    nodeListElement *commentNode = NULL;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    if(commentNodeID) {
+        commentNode = findNodeByNodeID(commentNodeID);
+        if(commentNode) {
+            currentComment = commentNode->comment;
+        }
+    }
+
+    if(!currentComment) {
+        LOG("Please provide a valid comment element to delete!");
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    if(currentComment->content) {
+        free(currentComment->content);
+    }
+    if(currentComment->node) {
+        nodeID = currentComment->node->nodeID;
+        currentComment->node->comment = NULL;
+        state->skeletonState->skeletonChanged = TRUE;
+    }
+
+    if(state->skeletonState->currentComment == currentComment) {
+        memset(state->skeletonState->commentBuffer, '\0', 10240);
+    }
+
+    if(currentComment->next == currentComment) {
+        state->skeletonState->currentComment = NULL;
+    }
+    else {
+        currentComment->next->previous = currentComment->previous;
+        currentComment->previous->next = currentComment->next;
+
+        if(state->skeletonState->currentComment == currentComment) {
+            state->skeletonState->currentComment = currentComment->next;
+        }
+    }
+
+    free(currentComment);
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brd", KIKI_DELCOMMENT, nodeID)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID) {
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+    // this function also seems to be kind of useless as you could do just the same
+    // thing with addComment() with minimal changes ....?
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    if(nodeID) {
+        currentComment = findNodeByNodeID(nodeID)->comment;
+    }
+    if(!currentComment) {
+        LOG("Please provide a valid comment element to edit!");
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    nodeID = currentComment->node->nodeID;
+
+    if(newContent) {
+        if(currentComment->content) {
+            free(currentComment->content);
+        }
+        currentComment->content = (char*)malloc(strlen(newContent) * sizeof(char) + 1);
+        memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);
+        strncpy(currentComment->content, newContent, strlen(newContent));
+
+        //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
+        memset(state->skeletonState->commentBuffer, '\0', 10240);
+        strncpy(state->skeletonState->commentBuffer,
+                state->skeletonState->currentComment->content,
+                strlen(state->skeletonState->currentComment->content));
+    }
+
+    if(newNodeID) {
+        newNode = findNodeByNodeID(newNodeID);
+    }
+    if(newNode) {
+        if(currentComment->node) {
+            currentComment->node->comment = NULL;
+        }
+        currentComment->node = newNode;
+        newNode->comment = currentComment;
+    }
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("blrdds",
+                    KIKI_EDITCOMMENT,
+                    nodeID,
+                    currentComment->node->nodeID,
+                    newContent)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+commentListElement* Skeletonizer::nextComment(char *searchString) {
+    commentListElement *firstComment, *currentComment;
+
+    if(!strlen(searchString)) {
+        //->previous here because it would be unintuitive for the user otherwise.
+        //(we insert new comments always as first elements)
+        if(state->skeletonState->currentComment) {
+            state->skeletonState->currentComment = state->skeletonState->currentComment->previous;
+            setActiveNode(CHANGE_MANUAL,
+                          state->skeletonState->currentComment->node,
+                          0);
+            jumpToActiveNode();
+        }
+    }
+    else {
+        if(state->skeletonState->currentComment) {
+            firstComment = state->skeletonState->currentComment->previous;
+            currentComment = firstComment;
+            do {
+                if(strstr(currentComment->content, searchString) != NULL) {
+                    state->skeletonState->currentComment = currentComment;
+                    setActiveNode(CHANGE_MANUAL,
+                                  state->skeletonState->currentComment->node,
+                                  0);
+                    jumpToActiveNode();
+                    break;
+                }
+                currentComment = currentComment->previous;
+
+            } while (firstComment != currentComment);
+        }
+    }
+
+    memset(state->skeletonState->commentBuffer, '\0', 10240);
+
+    if(state->skeletonState->currentComment) {
+        strncpy(state->skeletonState->commentBuffer,
+                state->skeletonState->currentComment->content,
+                strlen(state->skeletonState->currentComment->content));
+
+        if(state->skeletonState->lockPositions) {
+            if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock)) {
+                lockPosition(state->skeletonState->currentComment->node->position);
+            }
+            else {
+                unlockPosition();
+            }
+        }
+
+    }
+
+    Renderer::drawGUI();
+
+    return state->skeletonState->currentComment;
+}
+
+commentListElement* Skeletonizer::previousComment(char *searchString) {
+    commentListElement *firstComment, *currentComment;
+    // ->next here because it would be unintuitive for the user otherwise.
+    // (we insert new comments always as first elements)
+
+    if(!strlen(searchString)) {
+        if(state->skeletonState->currentComment) {
+            state->skeletonState->currentComment = state->skeletonState->currentComment->next;
+            setActiveNode(CHANGE_MANUAL,
+                          state->skeletonState->currentComment->node,
+                          0);
+            jumpToActiveNode();
+        }
+    }
+    else {
+        if(state->skeletonState->currentComment) {
+            firstComment = state->skeletonState->currentComment->next;
+            currentComment = firstComment;
+            do {
+                if(strstr(currentComment->content, searchString) != NULL) {
+                    state->skeletonState->currentComment = currentComment;
+                    setActiveNode(CHANGE_MANUAL,
+                                  state->skeletonState->currentComment->node,
+                                  0);
+                    jumpToActiveNode();
+                    break;
+                }
+                currentComment = currentComment->next;
+
+            } while (firstComment != currentComment);
+
+        }
+    }
+    memset(state->skeletonState->commentBuffer, '\0', 10240);
+
+    if(state->skeletonState->currentComment) {
+        strncpy(state->skeletonState->commentBuffer,
+            state->skeletonState->currentComment->content,
+            strlen(state->skeletonState->currentComment->content));
+
+        if(state->skeletonState->lockPositions) {
+            if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock)) {
+                lockPosition(state->skeletonState->currentComment->node->position);
+            }
+            else {
+                unlockPosition();
+            }
+        }
+    }
+    Renderer::drawGUI();
+    return state->skeletonState->currentComment;
+}
+
+bool Skeletonizer::searchInComment(char *searchString, commentListElement *comment) {
+    return true;
+}
+
+bool Skeletonizer::unlockPosition() {
+    if(state->skeletonState->positionLocked) {
+        LOG("Spatial locking disabled.");
+    }
+    state->skeletonState->positionLocked = FALSE;
+
+    return TRUE;
+}
+
+bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
+    LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
+    state->skeletonState->positionLocked = TRUE;
+    SET_COORDINATE(state->skeletonState->lockedPosition,
+                   lockCoordinate.x,
+                   lockCoordinate.y,
+                   lockCoordinate.z);
+
+    return TRUE;
+}
+
+bool Skeletonizer::popBranchNode(int32_t targetRevision) {
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+    // SYNCHRO BUG:
+    // both instances will have to confirm branch point deletion if
+    // confirmation is asked.
+
+    nodeListElement *branchNode = NULL;
+    PTRSIZEINT branchNodeID = 0;
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    /* Nodes on the branch stack may not actually exist anymore */
+    while(TRUE){
+        if (branchNode != NULL)
+            if (branchNode->isBranchNode == TRUE) {
+                break;
+            }
+        branchNodeID = (PTRSIZEINT)popStack(state->skeletonState->branchStack);
+        if(branchNodeID == 0) {
+            // AGAR AG_TextMsg(AG_MSG_INFO, "No branch points remain.");
+            LOG("No branch points remain.");
+
+            goto exit_popbranchnode;
+        }
+
+        branchNode = findNodeByNodeID(branchNodeID);
+    }
+
+    if(branchNode && branchNode->isBranchNode) {
+#ifdef ARCH_64
+        LOG("Branch point (node ID %"PRId64") deleted.", branchNodeID);
+#else
+        LOG("Branch point (node ID %d) deleted.", branchNodeID);
+#endif
+
+        tempConfig->viewerState->currentPosition.x
+            = branchNode->position.x;
+        tempConfig->viewerState->currentPosition.y
+            = branchNode->position.y;
+        tempConfig->viewerState->currentPosition.z
+            = branchNode->position.z;
+
+        setActiveNode(CHANGE_NOSYNC, branchNode, 0);
+
+        branchNode->isBranchNode--;
+        state->skeletonState->skeletonChanged = TRUE;
+
+        Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+
+        state->skeletonState->branchpointUnresolved = TRUE;
+    }
+
+exit_popbranchnode:
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("br", KIKI_POPBRANCH)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+
+    Knossos::unlockSkeleton(TRUE);
+    return TRUE;
+}
+
+bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID) {
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    if(branchNodeID) {
+        branchNode = findNodeByNodeID(branchNodeID);
+    }
+    if(branchNode) {
+        if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
+            pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
+            if(setBranchNodeFlag) {
+                branchNode->isBranchNode = TRUE;
+            }
+            state->skeletonState->skeletonChanged = TRUE;
+            LOG("Branch point (node ID %d) added.", branchNode->nodeID);
+        }
+        else {
+            LOG("Active node is already a branch point");
+            Knossos::unlockSkeleton(TRUE);
+            return TRUE;
+        }
+    }
+    else {
+        LOG("Make a node active before adding branch points.");
+        Knossos::unlockSkeleton(TRUE);
+        return TRUE;
+    }
+
+    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brd", KIKI_PUSHBRANCH, branchNode->nodeID)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+bool Skeletonizer::setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode) {
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
+
+    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+        Knossos::unlockSkeleton(FALSE);
+        return FALSE;
+    }
+
+    state->skeletonState->workMode = workMode;
+    tempConfig->skeletonState->workMode = workMode;
+
+    state->skeletonState->skeletonRevision++;
+
+    if(targetRevision == CHANGE_MANUAL) {
+        if(!Client::syncMessage("brd", KIKI_SETSKELETONMODE, workMode)) {
+            Client::skeletonSyncBroken();
+        }
+    }
+    else {
+        Viewer::refreshViewports();
+    }
+    Knossos::unlockSkeleton(TRUE);
+
+    return TRUE;
+}
+
+bool Skeletonizer::jumpToActiveNode() {
+    if(state->skeletonState->activeNode) {
+        tempConfig->viewerState->currentPosition.x =
+            state->skeletonState->activeNode->position.x;
+        tempConfig->viewerState->currentPosition.y =
+            state->skeletonState->activeNode->position.y;
+        tempConfig->viewerState->currentPosition.z =
+            state->skeletonState->activeNode->position.z;
+
+        Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+    }
+
+    return TRUE;
+}
+
+void Skeletonizer::UI_popBranchNode() {
+    // Inconsistency:
+    // Confirmation will not be asked when no branch points remain, except if the remaining
+    //  branch point nodes don't exist anymore (nodes have been deleted).
+
+    // This is workaround around agar bug #171
+    if(state->skeletonState->askingPopBranchConfirmation == FALSE) {
+        state->skeletonState->askingPopBranchConfirmation = TRUE;
+
+        if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
+            GUI::yesNoPrompt(NULL,
+                        "No node was added after jumping to the last branch point. Do you really want to jump?",
+                        WRAP_popBranchNode,
+                        popBranchNodeCanceled);
+
+        }
+        else {
+            WRAP_popBranchNode();
+        }
+    }
+}
+
+void Skeletonizer::restoreDefaultTreeColor() {
+    int32_t index = (state->skeletonState->activeTree->treeID - 1) % 256;
+    state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
+    state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
+    state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
+    state->skeletonState->activeTree->color.a = 1.;
+
+    state->skeletonState->activeTree->colorSetManually = FALSE;
+    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->unsavedChanges = TRUE;
+}
+
+bool Skeletonizer::updateTreeColors() {
+    treeListElement *tree = state->skeletonState->firstTree;
+    while(tree) {
+        uint32_t index = (tree->treeID - 1) % 256;
+        tree->color.r = state->viewerState->treeAdjustmentTable[index];
+        tree->color.g = state->viewerState->treeAdjustmentTable[index +  256];
+        tree->color.b = state->viewerState->treeAdjustmentTable[index + 512];
+        tree->color.a = 1.;
+        tree = tree->next;
+    }
+    state->skeletonState->skeletonChanged = TRUE;
+    return TRUE;
+}
