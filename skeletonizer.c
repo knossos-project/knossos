@@ -721,10 +721,10 @@ int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment))
-            skeletonSyncBroken(state);
+            skeletonSyncBroken();
     }
     else
-        refreshViewports(state);
+        refreshViewports();
 
     unlockSkeleton(TRUE);
 
