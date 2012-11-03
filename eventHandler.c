@@ -41,7 +41,7 @@
 #include <SDL/SDL_Clipboard.h>
 
 #include <agar/core.h>
-//#include <agar/gui.h>
+#include <agar/gui.h>
 
 #include "knossos-global.h"
 #include "eventHandler.h"

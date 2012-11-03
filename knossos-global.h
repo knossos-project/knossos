@@ -1358,7 +1358,6 @@ int32_t newTrajectory(char *trajName, char *trajectory);
 
 int32_t loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
 int32_t loadTreeColorTable(const char *path, float *table, int32_t type);
-int32_t updateTreeColors();
 int32_t updatePosition(int32_t serverMovement);
 int32_t calcDisplayedEdgeLength();
 
@@ -1424,10 +1423,11 @@ uint32_t initSkeletonizer();
 uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
 uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
 uint32_t updateSkeletonState();
+int32_t updateTreeColors();
 int32_t nextCommentlessNode();
 int32_t previousCommentlessNode();
 
-uint32_t updateSkeletonFileName();
+uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
 //uint32_t saveNMLSkeleton();
 int32_t saveSkeleton();
 //uint32_t loadNMLSkeleton();
