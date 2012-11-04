@@ -1664,17 +1664,46 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                         10 * state->skeletonState->volBoundary);
                 setRotationState(ROTATIONSTATEYZ);
                 break;
-
+            //float minrotation[16];
+            //float da;
             case 4:
                 /* flip view */
-                state->skeletonState->definedSkeletonVpView = 0;
+               /* state->skeletonState->definedSkeletonVpView = 0;
 
-                /* */
-                /*LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);*/
                 glScalef(-1.,-1.,1.);
                 setRotationState(ROTATIONSTATEMIRROR);
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
+                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView); */
+ /*               da= 0.1;
+                minrotation[0] = 1.;
+                minrotation[1] = da;
+                minrotation[2] = 0.,
+                minrotation[3] = 0.,
+                minrotation[4] = -da;
+                minrotation[5] = 1.;
+                minrotation[6] = 0.;
+                minrotation[7] = 0.;
+                minrotation[8] = 0.;
+                minrotation[9] = 0.;
+                minrotation[10] = 1.;
+                minrotation[11] = 0.;
+                minrotation[12] = 0.;
+                minrotation[13] = 0.;
+                minrotation[14] = 0.;
+                minrotation[15] = 1.;
+                updateRotationStateMatrix(minrotation, state->skeletonState->rotationState);
+                glMatrixMode(GL_MODELVIEW);
+                //glLoadIdentity();
+                glMultMatrixf(state->skeletonState->rotationState);
+                //glRotatef(1. * (float)state->skeletonState->testing, 1., 0., 0.);*/
+                state->skeletonState->rotdx = 10;
+                //rotateSkeletonViewport();
+                //SDL_Delay(1);
+                state->skeletonState->testing++;
+                if (state->skeletonState->testing > 31) {
+                    state->skeletonState->rotdx = 5;
+                    state->skeletonState->definedSkeletonVpView = 0;
+                    state->skeletonState->testing = 0;
+                }
                 break;
 
             case 5:

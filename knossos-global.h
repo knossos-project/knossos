@@ -1103,6 +1103,7 @@ struct skeletonState {
 
     // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
+    int testing;
     /* The next three flags cause recompilation of the above specified display lists. */
 
     //TRUE, if all display lists must be updated
