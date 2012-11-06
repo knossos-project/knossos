@@ -570,7 +570,7 @@ uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCo
 }
 
 bool Skeletonizer::updateSkeletonState() {
-    //Time to auto-save
+ /*   //Time to auto-save
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
             if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
@@ -584,8 +584,8 @@ bool Skeletonizer::updateSkeletonState() {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
     }
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
-        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
-    }
+        //setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
+    }*/
     return TRUE;
 }
 
@@ -594,13 +594,13 @@ bool Skeletonizer::nextCommentlessNode() { }
 bool Skeletonizer::previousCommentlessNode() { }
 
 bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
-    int32_t extensionDelim = -1, countDelim = -1;
+   int32_t extensionDelim = -1, countDelim = -1;
     char betweenDots[8192];
     char count[8192];
     char origFilename[8192], skeletonFileBase[8192];
     int32_t i, j;
 
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(Knossos::lockSkeleton(targetRevision) == FALSE) {
         Knossos::unlockSkeleton(FALSE);
@@ -682,12 +682,12 @@ bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increm
 //uint32_t saveNMLSkeleton() { }
 
 int32_t Skeletonizer::saveSkeleton() {
-    struct treeListElement *currentTree = NULL;
-    struct nodeListElement *currentNode = NULL;
+  /*  treeListElement *currentTree = NULL; SDL TODO
+    nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
-    struct segmentListElement *currentSegment = NULL;
-    struct commentListElement *currentComment = NULL;
-    struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
+    segmentListElement *currentSegment = NULL;
+    commentListElement *currentComment = NULL;
+    stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     int32_t r;
     xmlChar attrString[128];
 
@@ -697,16 +697,12 @@ int32_t Skeletonizer::saveSkeleton() {
 
     memset(attrString, '\0', 128 * sizeof(xmlChar));
 
-    /*
-     *  This function should always be called through UI_saveSkeleton
-     *  for proper error and file name display to the user.
-     */
+     //  This function should always be called through UI_saveSkeleton
+     // for proper error and file name display to the user.
 
-    /*
-     *  We need to do this to be able to save the branch point stack to a file
-     *  and still have the branch points available to the user afterwards.
-     *
-     */
+
+     // We need to do this to be able to save the branch point stack to a file
+     //and still have the branch points available to the user afterwards.
 
     reverseBranchStack = newStack(2048);
     tempReverseStack = newStack(2048);
@@ -836,10 +832,8 @@ int32_t Skeletonizer::saveSkeleton() {
     }
 
     while(currentTree) {
-        /*
-         * Every "thing" has associated nodes and edges.
-         *
-         */
+        // Every "thing" has associated nodes and edges.
+
         currentXMLNode = xmlNewTextChild(thingsXMLNode, NULL, BAD_CAST"thing", NULL);
         xmlStrPrintf(attrString, 128, BAD_CAST"%d", currentTree->treeID);
         xmlNewProp(currentXMLNode, BAD_CAST"id", attrString);
@@ -977,12 +971,12 @@ int32_t Skeletonizer::saveSkeleton() {
 
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
     xmlFreeDoc(xmlDocument);
-    return r;
+    return r;*/
 }
 //uint32_t loadNMLSkeleton() { }
 
 bool Skeletonizer::loadSkeleton() {
-xmlDocPtr xmlDocument;
+  /*  xmlDocPtr xmlDocument; SDL TODO
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
     int32_t neuronID = 0, nodeID = 0, merge = FALSE;
     int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
@@ -1002,19 +996,17 @@ xmlDocPtr xmlDocument;
 
     LOG("Starting to load skeleton...");
 
-    /*
-     *  This function should always be called through UI_loadSkeleton for
-     *  proper error and file name display to the user.
-     */
+     //  This function should always be called through UI_loadSkeleton for
+     //  proper error and file name display to the user.
 
-    /*
-     *  There's no sanity check for values read from files, yet.
-     */
 
-    /*
-     *  These defaults should usually always be overridden by values
-     *  given in the file.
-     */
+     //  There's no sanity check for values read from files, yet.
+
+
+
+     // These defaults should usually always be overridden by values
+     // given in the file.
+
 
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
@@ -1058,8 +1050,8 @@ xmlDocPtr xmlDocument;
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
     }
 
-    /* If "createdin"-node does not exist, skeleton was created in a version
-     * before 3.2 */
+    // If "createdin"-node does not exist, skeleton was created in a version
+     // before 3.2
     strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
@@ -1075,13 +1067,12 @@ xmlDocPtr xmlDocument;
                 }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"magnification")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"factor");
-                    /*
-                     * This is for legacy skeleton files.
-                     * In the past, magnification was specified on a per-file basis
-                     * or not specified at all.
-                     * A magnification factor of 0 shall represent an unknown magnification.
-                     *
-                     */
+
+                     // This is for legacy skeleton files.
+                     // In the past, magnification was specified on a per-file basis
+                     // or not specified at all.
+                     // A magnification factor of 0 shall represent an unknown magnification.
+
                     if(attribute) {
                         magnification = atoi((char *)attribute);
                         globalMagnificationSpecified = TRUE;
@@ -1247,16 +1238,16 @@ xmlDocPtr xmlDocument;
         }
 
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"thing")) {
-            /* Add tree */
+            // Add tree
             attribute = xmlGetProp(thingOrParamXMLNode, (const xmlChar *) "id");
             if(attribute) {
                 neuronID = atoi((char *)attribute);
                 free(attribute);
             }
             else
-                neuronID = 0;   /* Whatever. */
+                neuronID = 0;   // Whatever.
 
-            /* -1. causes default color assignment based on ID*/
+            // -1. causes default color assignment based on ID
             attribute = xmlGetProp(thingOrParamXMLNode, (const xmlChar *) "color.r");
             if(attribute) {
                 neuronColor.r = (float)strtod((char *)attribute, (char **)NULL);
@@ -1313,7 +1304,7 @@ xmlDocPtr xmlDocument;
                     currentXMLNode = nodesEdgesXMLNode->children;
                     while(currentXMLNode) {
                         if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"node")) {
-                            /* Add node. */
+                            // Add node.
 
                             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
                             if(attribute) {
@@ -1376,7 +1367,7 @@ xmlDocPtr xmlDocument;
                                 free(attribute);
                             }
                             else
-                                inMag = magnification; /* For legacy skeleton files */
+                                inMag = magnification; // For legacy skeleton files
 
                             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"time");
                             if(attribute) {
@@ -1384,7 +1375,7 @@ xmlDocPtr xmlDocument;
                                 free(attribute);
                             }
                             else
-                                time = skeletonTime; /* For legacy skeleton files */
+                                time = skeletonTime; // For legacy skeleton files
 
                             if(!merge)
                                 addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
@@ -1401,7 +1392,7 @@ xmlDocPtr xmlDocument;
                     currentXMLNode = nodesEdgesXMLNode->children;
                     while(currentXMLNode) {
                         if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"edge")) {
-                            /* Add edge */
+                            // Add edge
                             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"source");
                             if(attribute) {
                                 nodeID1 = atoi((char *)attribute);
@@ -1459,12 +1450,12 @@ xmlDocPtr xmlDocument;
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
-    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
+    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();*/
     return TRUE;
 }
 
 void Skeletonizer::setDefaultSkelFileName() {
-    /* Generate a default file name based on date and time. */
+    // Generate a default file name based on date and time.
     time_t curtime;
     struct tm *localtimestruct;
 
@@ -1537,11 +1528,10 @@ bool Skeletonizer::delActiveTree() {
 }
 
 bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    /*
-     * Delete the segment out of the segment list and out of the visualization structure!
-     */
+    // Delete the segment out of the segment list and out of the visualization structure!
+
 
     if(Knossos::lockSkeleton(targetRevision) == FALSE) {
         Knossos::unlockSkeleton(FALSE);
@@ -1605,7 +1595,7 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 }
 
 bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     struct segmentListElement *currentSegment;
     struct segmentListElement *tempNext = NULL;
@@ -1634,9 +1624,8 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
         delComment(CHANGE_MANUAL, nodeToDel->comment, 0);
     }
 
-    /*
-     * First, delete all segments pointing towards and away of the nodeToDelhas
-     * been */
+     // First, delete all segments pointing towards and away of the nodeToDelhas
+     // been
 
     currentSegment = nodeToDel->firstSegment;
 
@@ -1654,9 +1643,9 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
 
     nodeToDel->firstSegment = NULL;
 
-    /*
-     * Delete the node out of the visualization structure
-     */
+
+     // Delete the node out of the visualization structure
+
 
     delNodeFromSkeletonStruct(nodeToDel);
 
@@ -1708,7 +1697,7 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
 }
 
 bool Skeletonizer::delTree(int32_t targetRevision, int32_t treeID) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
@@ -1770,9 +1759,9 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
     floatCoordinate distanceVector;
     float smallestDistance = 0;
 
-    /*
-     *  If available, search for a node within nearbyTree first.
-     */
+
+    //  If available, search for a node within nearbyTree first.
+
 
     if(nearbyTree) {
         currentNode = nearbyTree->firstNode;
@@ -1795,10 +1784,9 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
         }
     }
 
-    /*
-     * Ok, we didn't find any node in nearbyTree.
-     * Now we take the nearest node, independent of the tree it belongs to.
-     */
+     // Ok, we didn't find any node in nearbyTree.
+     // Now we take the nearest node, independent of the tree it belongs to.
+
 
     currentTree = state->skeletonState->firstTree;
     smallestDistance = 0;
@@ -1880,15 +1868,13 @@ bool Skeletonizer::setActiveTreeByID(int32_t treeID) {
 }
 
 bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID) {
-/* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    /*
-     * If both *node and nodeID are specified, nodeID wins.
-     * If neither *node nor nodeID are specified
-     * (node == NULL and nodeID == 0), the active node is
-     * set to NULL.
-     *
-     */
+     // If both *node and nodeID are specified, nodeID wins.
+     // If neither *node nor nodeID are specified
+     // (node == NULL and nodeID == 0), the active node is
+     // set to NULL.
+
     if(targetRevision != CHANGE_NOSYNC) {
         if(Knossos::lockSkeleton(targetRevision) == FALSE) {
             Knossos::unlockSkeleton(FALSE);
@@ -1955,11 +1941,9 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
     }
 
 
-    /*
-     * Calling drawGUI() here leads to a crash during synchronizationn.
-     * Why? TDItem
-     *
-     */
+     // Calling drawGUI() here leads to a crash during synchronizationn.
+     // Why? TDItem
+
     // drawGUI();
 
     return TRUE;
@@ -1974,7 +1958,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
                 int32_t inMag,
                 int32_t time,
                 int32_t respectLocks) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
@@ -1987,11 +1971,10 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
 
     state->skeletonState->branchpointUnresolved = FALSE;
 
-    /*
-     * respectLocks refers to locking the position to a specific coordinate such as to
-     * disallow tracing areas further than a certain distance away from a specific point in the
-     * dataset.
-     */
+     // respectLocks refers to locking the position to a specific coordinate such as to
+     // disallow tracing areas further than a certain distance away from a specific point in the
+     // dataset.
+
 
     if(respectLocks) {
         if(state->skeletonState->positionLocked) {
@@ -2051,7 +2034,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
     }
 
     if(time == -1) {
-        time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks();
+//        time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks(); SDL TODO
     }
 
     tempNode->timestamp = time;
@@ -2099,7 +2082,7 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
 
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(Knossos::lockSkeleton(targetRevision) == FALSE) {
         Knossos::unlockSkeleton(FALSE);
@@ -2131,9 +2114,7 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     //One segment more in all trees
     state->skeletonState->totalSegmentElements++;
 
-    /*
-     * Add the segment to the tree structure
-    */
+     // Add the segment to the tree structure
 
     sourceSeg = addSegmentListElement(&(sourceNode->firstSegment), sourceNode, targetNode);
     sourceSeg->reverseSegment = addSegmentListElement(&(targetNode->firstSegment), sourceNode, targetNode);
@@ -2142,9 +2123,9 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     sourceSeg->reverseSegment->reverseSegment = sourceSeg;
 
-    /*
-     * Add the segment to the skeleton DC structure
-    */
+
+     // Add the segment to the skeleton DC structure
+
 
     addSegmentToSkeletonStruct(sourceSeg);
 
@@ -2168,7 +2149,7 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 }
 
 bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     treeListElement *currentTree, *treeToDel;
 
@@ -2188,7 +2169,7 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->activeTree = NULL;
 
     state->skeletonState->skeletonTime = 0;
-    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
+    //state->skeletonState->skeletonTimeCorrection = SDL_GetTicks(); SDL TODO
 
     Hashtable::ht_rmtable(state->skeletonState->skeletonDCs);
     delDynArray(state->skeletonState->nodeCounter);
@@ -2240,7 +2221,7 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
 }
 
 bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     treeListElement *tree1, *tree2;
     nodeListElement *currentNode;
@@ -2443,12 +2424,12 @@ nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) {
 }
 
 treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    /* The variable sync is a workaround for the problem that this function
-     *  will sometimes be called by other syncable functions that themselves hold
-     *  the lock and handle synchronization. If set to FALSE, all synchro
-     *  routines will be skipped. */
+     //  The variable sync is a workaround for the problem that this function
+     // will sometimes be called by other syncable functions that themselves hold
+     // the lock and handle synchronization. If set to FALSE, all synchro
+     // routines will be skipped.
 
     treeListElement *newElement = NULL;
 
@@ -2491,7 +2472,7 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
         }
     }
 
-    /* calling function sets values < 0 when no color was specified */
+    // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
         newElement->color.r = state->viewerState->treeAdjustmentTable[index];
@@ -2589,7 +2570,7 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
 }
 
 bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     treeListElement *tree = NULL;
 
     if(Knossos::lockSkeleton(targetRevision) == FALSE) {
@@ -2666,7 +2647,7 @@ bool Skeletonizer::editNode(int32_t targetRevision,
                  int32_t newYPos,
                  int32_t newZPos,
                  int32_t inMag) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     segmentListElement *currentSegment = NULL;
 
@@ -2868,7 +2849,7 @@ dynArray* Skeletonizer::newDynArray(int32_t size) {
 }
 
 int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t nodeID) {
-    /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
+    // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     stack *remainingNodes = NULL;
     stack *componentNodes = NULL;
@@ -2888,19 +2869,17 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
         return FALSE;
     }
 
-    /*
-     *  This function takes a node and splits the connected component
-     *  containing that node into a new tree, unless the connected component
-     *  is equivalent to exactly one entire tree.
-     *
-     *
-     *  It uses depth-first search. Breadth-first-search would be the same with
-     *  a queue instead of a stack for storing pending nodes. There is no
-     *  practical difference between the two algorithms for this task.
-     *
-     *  TODO trees might become empty when the connected component spans more
-     *       than one tree.
-     */
+     //  This function takes a node and splits the connected component
+     //  containing that node into a new tree, unless the connected component
+     //  is equivalent to exactly one entire tree.
+
+     //  It uses depth-first search. Breadth-first-search would be the same with
+     //  a queue instead of a stack for storing pending nodes. There is no
+     //  practical difference between the two algorithms for this task.
+     //
+     //  TODO trees might become empty when the connected component spans more
+     //       than one tree.
+
 
     node = findNodeByNodeID(nodeID);
     if(!node) {
@@ -2908,29 +2887,29 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
         return FALSE;
     }
 
-    /*
-     *  This stack can be rather small without ever having to be resized as
-     *  our graphs are usually very sparse.
-     */
+
+     //  This stack can be rather small without ever having to be resized as
+     //  our graphs are usually very sparse.
+
 
     remainingNodes = newStack(512);
     componentNodes = newStack(4096);
 
-    /*
-     *  This is used to keep track of which trees we've seen. The connected
-     *  component for a specific node can be part of more than one tree. That
-     *  makes it slightly tedious to check whether the connected component is a
-     *  strict subgraph.
-     */
+
+     //  This is used to keep track of which trees we've seen. The connected
+     //  component for a specific node can be part of more than one tree. That
+     //  makes it slightly tedious to check whether the connected component is a
+     //  strict subgraph.
+
 
     treesSeen = newDynArray(16);
 
-    /*
-     *  These are used to store which nodes have been visited.
-     *  Nodes with IDs smaller than the entry node will be stored in
-     *  visitedLeft, nodes with equal or larger ID will be stored in
-     *  visitedRight. This is done to save some memory. ;)
-     */
+
+     //  These are used to store which nodes have been visited.
+     //  Nodes with IDs smaller than the entry node will be stored in
+     //  visitedLeft, nodes with equal or larger ID will be stored in
+     //  visitedRight. This is done to save some memory. ;)
+
 
     visitedRight = (Byte*)malloc(16384 * sizeof(Byte));
     visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
@@ -3005,23 +2984,19 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
         }
     }
 
-    /*
-     *  If the total number of nodes visited is smaller than the sum of the
-     *  number of nodes in all trees we've seen, the connected component is a
-     *  strict subgraph of the graph containing all trees we've seen and we
-     *  should split it.
-     */
+     //  If the total number of nodes visited is smaller than the sum of the
+     //  number of nodes in all trees we've seen, the connected component is a
+     //  strict subgraph of the graph containing all trees we've seen and we
+     //  should split it.
 
-    /*
-     *  Since we're checking for treesCount > 1 below, this implementation is
-     *  now slightly redundant. We want this function to not do anything when
-     *  there are no disconnected components in the same tree, but create a new
-     *  tree when the connected component spans several trees. This is a useful
-     *  feature when performing skeleton consolidation and allows one to merge
-     *  many trees at once.
-     *  Just remove the treesCount > 1 below to get back to the original
-     *  behaviour of only splitting strict subgraphs.
-     */
+     //  Since we're checking for treesCount > 1 below, this implementation is
+     //  now slightly redundant. We want this function to not do anything when
+     //  there are no disconnected components in the same tree, but create a new
+     //  tree when the connected component spans several trees. This is a useful
+     //  feature when performing skeleton consolidation and allows one to merge
+     //  many trees at once.
+     //  Just remove the treesCount > 1 below to get back to the original
+     //  behaviour of only splitting strict subgraphs.
 
     for(i = 0; i < treesCount; i++) {
         currentTree = (struct treeListElement *)getDynArray(treesSeen, i);
@@ -3447,7 +3422,7 @@ bool Skeletonizer::popBranchNode(int32_t targetRevision) {
         return FALSE;
     }
 
-    /* Nodes on the branch stack may not actually exist anymore */
+    // Nodes on the branch stack may not actually exist anymore
     while(TRUE){
         if (branchNode != NULL)
             if (branchNode->isBranchNode == TRUE) {
@@ -3642,3 +3617,4 @@ bool Skeletonizer::updateTreeColors() {
     state->skeletonState->skeletonChanged = TRUE;
     return TRUE;
 }
+

@@ -156,8 +156,8 @@ void MainWindow::createMenus()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-
-    if(state->skeletonState->unsavedChanges) {
+    qApp->quit();
+    /*if(state->skeletonState->unsavedChanges) {
         event->ignore();
         prompt = new QMessageBox(this);
         prompt->setWindowTitle("Confirmation");
@@ -174,7 +174,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         if((QPushButton *) prompt->clickedButton() == noButton) {
             prompt->close();
         }
-    }
+    }*/
 
 }
 
