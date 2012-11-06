@@ -937,7 +937,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
 }
 
 static uint32_t handleMouseMotionRightHold(SDL_Event event, int32_t VPfound) {
-    if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
+    if((state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) && (state->skeletonState->rotationcounter == 0)) {
         state->skeletonState->rotdx += event.motion.xrel;
         state->skeletonState->rotdy += event.motion.yrel;
         state->skeletonState->viewChanged = TRUE;

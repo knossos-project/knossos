@@ -1667,46 +1667,27 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
             //float minrotation[16];
             //float da;
             case 4:
-                /* flip view */
-               /* state->skeletonState->definedSkeletonVpView = 0;
-
-                glScalef(-1.,-1.,1.);
-                setRotationState(ROTATIONSTATEMIRROR);
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView); */
- /*               da= 0.1;
-                minrotation[0] = 1.;
-                minrotation[1] = da;
-                minrotation[2] = 0.,
-                minrotation[3] = 0.,
-                minrotation[4] = -da;
-                minrotation[5] = 1.;
-                minrotation[6] = 0.;
-                minrotation[7] = 0.;
-                minrotation[8] = 0.;
-                minrotation[9] = 0.;
-                minrotation[10] = 1.;
-                minrotation[11] = 0.;
-                minrotation[12] = 0.;
-                minrotation[13] = 0.;
-                minrotation[14] = 0.;
-                minrotation[15] = 1.;
-                updateRotationStateMatrix(minrotation, state->skeletonState->rotationState);
-                glMatrixMode(GL_MODELVIEW);
-                //glLoadIdentity();
-                glMultMatrixf(state->skeletonState->rotationState);
-                //glRotatef(1. * (float)state->skeletonState->testing, 1., 0., 0.);*/
+            //90deg
                 state->skeletonState->rotdx = 10;
-                //rotateSkeletonViewport();
-                //SDL_Delay(1);
-                state->skeletonState->testing++;
-                if (state->skeletonState->testing > 31) {
-                    state->skeletonState->rotdx = 5;
+                state->skeletonState->rotationcounter++;
+                if (state->skeletonState->rotationcounter > 15) {
+                    state->skeletonState->rotdx = 7.6;
                     state->skeletonState->definedSkeletonVpView = 0;
-                    state->skeletonState->testing = 0;
+                    state->skeletonState->rotationcounter = 0;
                 }
                 break;
 
             case 5:
+            //180deg
+                state->skeletonState->rotdx = 10;
+                state->skeletonState->rotationcounter++;
+                if (state->skeletonState->rotationcounter > 31) {
+                    state->skeletonState->rotdx = 5.2;
+                    state->skeletonState->definedSkeletonVpView = 0;
+                    state->skeletonState->rotationcounter = 0;
+                }
+                break;
+            case 6:
                 /* Resetting */
                 state->skeletonState->definedSkeletonVpView = 0;
                 state->skeletonState->translateX = 0;
@@ -2756,27 +2737,6 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[13] = 0.0;
         state->skeletonState->rotationState[14] = 0.0;
         state->skeletonState->rotationState[15] = 1.0;
-    }
-    if (setTo == 4){
-        //flip view
-        float inverseMatrix[16];
-        inverseMatrix[0] = -1.0;
-        inverseMatrix[1] = 0.0;
-        inverseMatrix[2] = 0.0;
-        inverseMatrix[3] = 0.0;
-        inverseMatrix[4] = 0.0;
-        inverseMatrix[5] = -1.0;
-        inverseMatrix[6] = 0.0;
-        inverseMatrix[7] = 0.0;
-        inverseMatrix[8] = 0.0;
-        inverseMatrix[9] = 0.0;
-        inverseMatrix[10] = 1.0;
-        inverseMatrix[11] = 0.0;
-        inverseMatrix[12] = 0.0;
-        inverseMatrix[13] = 0.0;
-        inverseMatrix[14] = 0.0;
-        inverseMatrix[15] = 1.0;
-        updateRotationStateMatrix(state->skeletonState->rotationState, inverseMatrix);
     }
     return TRUE;
 }

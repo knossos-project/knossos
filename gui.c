@@ -527,9 +527,9 @@ void createSkeletonVpToolsWin() {
 
     win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
     AG_WindowSetGeometryBounded(win,
-                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 160,
+                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-                                150,
+                                200,
                                 20);
     AG_WindowSetPadding(win, 0, 0, 3, 1);
     createSkeletonVpToolsWdgt(win);
@@ -1848,13 +1848,18 @@ void createSkeletonVpToolsWdgt(AG_Window *parent) {
         AG_ExpandHoriz(button);
     }
 
-    button = AG_ButtonNewFn(box, 0, "flip", UI_setSkeletonPerspective, "%i", 4);
+    button = AG_ButtonNewFn(box, 0, "r90", UI_setSkeletonPerspective, "%i", 4);
+    {
+        AG_ButtonSetPadding(button, 1, 1, 1, 1);
+        AG_ExpandHoriz(button);
+    }
+        button = AG_ButtonNewFn(box, 0, "r180", UI_setSkeletonPerspective, "%i", 5);
     {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
         AG_ExpandHoriz(button);
     }
 
-        button = AG_ButtonNewFn(box, 0, "reset", UI_setSkeletonPerspective, "%i", 5);
+        button = AG_ButtonNewFn(box, 0, "reset", UI_setSkeletonPerspective, "%i", 6);
     {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
         AG_ExpandHoriz(button);
@@ -2437,9 +2442,9 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         AG_WINDOW_TR, 500, 20);
 
     AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
-                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 160,
+                                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-                                150,
+                                200,
                                 20);
     /* reinit the rendering system - resizing the window leads to a new OGL context */
     initializeTextures();
@@ -3931,36 +3936,37 @@ fail:
 
 static void UI_setSkeletonPerspective(AG_Event *event) {
     int buttonPressed = AG_INT(1);
-
-    switch(buttonPressed) {
-        case 1:
-            /* Show XY surface */
-
-            state->skeletonState->definedSkeletonVpView = 1;
-            break;
-        case 2:
-            /* Show XZ surface */
-            state->skeletonState->definedSkeletonVpView = 3;
-
-            break;
-        case 3:
-            /* Show YZ surface */
-            state->skeletonState->definedSkeletonVpView = 2;
-            break;
-        case 4:
-            /* Flip */
-
-            state->skeletonState->definedSkeletonVpView = 4;
-            break;
-        case 5:
-            /* Reset */
-            state->skeletonState->definedSkeletonVpView = 5;
-            break;
-    }
-
+    if(state->skeletonState->rotationcounter == 0){
+        switch(buttonPressed) {
+            case 1:
+                /* Show XY surface */
+                state->skeletonState->definedSkeletonVpView = 1;
+                break;
+            case 2:
+                /* Show XZ surface */
+                state->skeletonState->definedSkeletonVpView = 3;
+                break;
+            case 3:
+                /* Show YZ surface */
+                state->skeletonState->definedSkeletonVpView = 2;
+                break;
+            case 4:
+                /* 90deg */
+                state->skeletonState->definedSkeletonVpView = 4;
+                break;
+            case 5:
+                /* 180deg */
+                state->skeletonState->definedSkeletonVpView = 5;
+                break;
+            case 6:
+                /* Reset */
+                state->skeletonState->definedSkeletonVpView = 6;
+                break;
+        }
     /* TODO WTF */
     drawGUI();
     drawGUI();
+    }
 }
 
 uint32_t addRecentFile(char *path, uint32_t pos) {

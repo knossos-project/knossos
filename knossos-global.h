@@ -250,7 +250,6 @@
 #define ROTATIONSTATEXY 1
 #define ROTATIONSTATEXZ 3
 #define ROTATIONSTATEYZ 2
-#define ROTATIONSTATEMIRROR 4
 
 /*
  *
@@ -1080,8 +1079,9 @@ struct skeletonState {
 	Coordinate lockedPosition;
     long unsigned int lockRadius;
 
-    int32_t rotdx;
-    int32_t rotdy;
+    float rotdx;
+    float rotdy;
+    int32_t rotationcounter;
 
     int32_t definedSkeletonVpView;
 
@@ -1103,7 +1103,6 @@ struct skeletonState {
 
     // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
-    int testing;
     /* The next three flags cause recompilation of the above specified display lists. */
 
     //TRUE, if all display lists must be updated
