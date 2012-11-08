@@ -961,16 +961,202 @@ static int32_t initViewer() {
 static QCursor *GenCursor(char *xpm[], int xHot, int yHot) {
 
 }
+// from knossos-global.h
 
 
+bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type) {
 
-bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type) { return true;}
-bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) { return true;}
+    FILE *lutFile = NULL;
+        uint8_t lutBuffer[RGBA_LUTSIZE];
+        int32_t readBytes = 0, i = 0;
+        uint32_t size = RGB_LUTSIZE;
+
+        // The b is for compatibility with non-UNIX systems and denotes a
+        // binary file.
+
+        LOG("Reading Dataset LUT at %s\n", path);
+
+        lutFile = fopen(path, "rb");
+        if(lutFile == NULL) {
+            LOG("Unable to open Dataset LUT at %s.", path);
+            return false;
+        }
+
+        if(type == GL_RGB)
+            size = RGB_LUTSIZE;
+        else if(type == GL_RGBA)
+            size = RGBA_LUTSIZE;
+        else {
+            LOG("Requested color type %x does not exist.", type);
+            return false;
+        }
+
+        readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
+        if(readBytes != size) {
+            LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
+            if(fclose(lutFile) != 0) {
+                LOG("Additionally, an error occured closing the file.");
+            }
+            return false;
+        }
+
+        if(fclose(lutFile) != 0) {
+            LOG("Error closing LUT file.");
+            return false;
+        }
+
+        if(type == GL_RGB) {
+            for(i = 0; i < 256; i++) {
+                table[0 * 256 + i] = (GLuint)lutBuffer[i];
+                table[1 * 256 + i] = (GLuint)lutBuffer[i + 256];
+                table[2 * 256 + i] = (GLuint)lutBuffer[i + 512];
+            }
+        }
+        else if(type == GL_RGBA) {
+            for(i = 0; i < 256; i++) {
+                table[0 * 256 + i] = (GLuint)lutBuffer[i];
+                table[1 * 256 + i] = (GLuint)lutBuffer[i + 256];
+                table[2 * 256 + i] = (GLuint)lutBuffer[i + 512];
+                table[3 * 256 + i] = (GLuint)lutBuffer[i + 768];
+            }
+        }
+
+
+    return true;
+
+}
+bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
+
+    FILE *lutFile = NULL;
+        uint8_t lutBuffer[RGB_LUTSIZE];
+        int32_t readBytes = 0, i = 0;
+        uint32_t size = RGB_LUTSIZE;
+
+        // The b is for compatibility with non-UNIX systems and denotes a
+        // binary file.
+        LOG("Reading Tree LUT at %s\n", path);
+
+        lutFile = fopen(path, "rb");
+        if(lutFile == NULL) {
+            LOG("Unable to open Tree LUT at %s.", path);
+            return false;
+        }
+
+        if(type != GL_RGB) {
+            /* AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type); */
+            LOG("Chosen color was of type %x, but expected GL_RGB", type);
+            return false;
+        }
+
+        readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
+        if(readBytes != size) {
+            LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
+            if(fclose(lutFile) != 0) {
+                LOG("Additionally, an error occured closing the file.");
+            }
+            return false;
+        }
+
+        if(fclose(lutFile) != 0) {
+            LOG("Error closing LUT file.");
+            return false;
+        }
+
+        //Get RGB-Values in percent
+        for(i = 0; i < 256; i++) {
+            table[i]   = lutBuffer[i]/MAX_COLORVAL;
+            table[i + 256] = lutBuffer[i+256]/MAX_COLORVAL;
+            table[i + 512] = lutBuffer[i + 512]/MAX_COLORVAL;
+        }
+
+        GUI::treeColorAdjustmentsChanged();
+
+    return true;
+}
+
 bool Viewer::updatePosition(int32_t serverMovement) { return true;}
-bool Viewer::calcDisplayedEdgeLength() { return true;}
 
+bool Viewer::calcDisplayedEdgeLength() {
+
+    int32_t i;
+       float FOVinDCs;
+
+       FOVinDCs = ((float)state->M) - 1.f;
+
+       for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+           state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+           state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+               FOVinDCs * (float)state->cubeEdgeLength
+               / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+       }
+
+       return true;
+
+}
+
+
+
+/* takes care of all necessary changes inside the viewer and signals
+the loader to change the dataset */
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) { return true;}
+bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
+    uint32_t i;
+
+        if(state->viewerState->datasetMagLock) {
+            return false;
+        }
+
+        switch(upOrDownFlag) {
+            case MAG_DOWN:
+                if(state->magnification > state->lowestAvailableMag) {
+                    state->magnification /= 2;
+                    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+                        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                            state->viewerState->viewPorts[i].texture.zoomLevel *= 2.0;
+                            upsampleVPTexture(&state->viewerState->viewPorts[i]);
+                            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                                *= 2.;
+                        }
+                    }
+                }
+                else return false;
+            break;
+
+            case MAG_UP:
+                if(state->magnification < state->highestAvailableMag) {
+                    state->magnification *= 2;
+                    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+                        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                            state->viewerState->viewPorts[i].texture.zoomLevel *= 0.5;
+                            downsampleVPTexture(&state->viewerState->viewPorts[i]);
+                            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                                /= 2.;
+                        }
+                    }
+                }
+                else return false;
+            break;
+        }
+
+        /* necessary? */
+        state->viewerState->userMove = TRUE;
+        recalcTextureOffsets();
+
+      /*  for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                LOG("left upper tex px of VP %d is: %d, %d, %d",i, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y, state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z);
+
+            }
+        }*/
+       Knossos::sendDatasetChangeSignal(upOrDownFlag);
+        //refreshViewports();
+        /* set flags to trigger the necessary renderer updates */
+        //state->skeletonState->skeletonChanged = TRUE;
+
+
+
+    return true;
+}
 
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
@@ -990,5 +1176,265 @@ bool Viewer::updateViewerState() { return true;}
 bool Viewer::updateZoomCube() { return true;}
 bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) { return true;}
 int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) { return 0;}
-bool Viewer::recalcTextureOffsets() { return true;}
-bool Viewer::refreshViewports() { return true;}
+
+bool Viewer::recalcTextureOffsets() {
+
+    uint32_t i;
+        float midX, midY;
+
+        midX = midY = 0.;
+
+        /* Every time the texture offset coords change,
+        the skeleton VP must be updated. */
+        state->skeletonState->viewChanged = TRUE;
+        calcDisplayedEdgeLength();
+
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            /* Do this only for orthogonal VPs... */
+            if (state->viewerState->viewPorts[i].type == VIEWPORT_XY
+                    || state->viewerState->viewPorts[i].type == VIEWPORT_XZ
+                    || state->viewerState->viewPorts[i].type == VIEWPORT_YZ) {
+                /*Don't remove /2 *2, integer division! */
+
+                /* old code for smaller FOV
+                            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                                state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                                    ((float)(((state->M / 2) * 2 - 1) * state->cubeEdgeLength))
+                                    / ((float)state->viewerState->viewPorts[i].texture.edgeLengthPx);
+
+                */
+
+                        /* new code for larger FOV */
+                        /* displayedEdgeLength is in texture pixels, independent from the
+                         * currently active mag! */
+
+
+
+                //Multiply the zoom factor. (only truncation possible! 1 stands for minimal zoom)
+                state->viewerState->viewPorts[i].texture.displayedEdgeLengthX *=
+                    state->viewerState->viewPorts[i].texture.zoomLevel;
+                state->viewerState->viewPorts[i].texture.displayedEdgeLengthY *=
+                    state->viewerState->viewPorts[i].texture.zoomLevel;
+
+                //... and for the right orthogonal VP
+                switch(state->viewerState->viewPorts[i].type) {
+                    case VIEWPORT_XY:
+                        //Aspect ratio correction..
+                        if(state->viewerState->voxelXYRatio < 1)
+                            state->viewerState->viewPorts[i].texture.displayedEdgeLengthY *=
+                                state->viewerState->voxelXYRatio;
+                        else
+                            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /=
+                                state->viewerState->voxelXYRatio;
+
+                        //Display only entire pixels (only truncation possible!) WHY??
+
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                            (float) (
+                                (int) (
+                                    state->viewerState->viewPorts[i].texture.displayedEdgeLengthX
+                                    / 2.
+                                    / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                                )
+                                * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                            )
+                            * 2.;
+
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                            (float)
+                            (((int)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                            2. /
+                            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)) *
+                            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx) *
+                            2.;
+
+                        // Update screen pixel to data pixel mapping values
+                        state->viewerState->viewPorts[i].screenPxXPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].screenPxYPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        // Pixels on the screen per 1 unit in the data coordinate system at the
+                        // original magnification. These guys appear to be unused!!! jk 14.5.12
+                        /*state->viewerState->viewPorts[i].screenPxXPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxXPerDataPx *
+                            state->magnification;
+
+                        state->viewerState->viewPorts[i].screenPxYPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxYPerDataPx *
+                            state->magnification;
+    */
+                        state->viewerState->viewPorts[i].displayedlengthInNmX =
+                            state->viewerState->voxelDimX *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].displayedlengthInNmY =
+                            state->viewerState->voxelDimY *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        /* scale to 0 - 1; midX is the current pos in tex coords */
+                        /* leftUpperPxInAbsPx is in always in mag1, independent of
+                         * the currently active mag */
+                        midX = (float)(state->viewerState->currentPosition.x -
+                                 state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x)
+                                 // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                                 * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+
+                        midY = (float)(state->viewerState->currentPosition.y -
+                                 state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y)
+                                 //(float)state->viewerState->viewPorts[i].texture.edgeLengthPx;
+                                 * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+
+                        //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
+                        calcLeftUpperTexAbsPx();
+
+                        //Offsets for crosshair
+                        state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.x)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
+                        state->viewerState->viewPorts[i].texture.yOffset = ((float)(state->viewerState->currentPosition.y - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.y)) * state->viewerState->viewPorts[i].screenPxYPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxYPerDataPx;
+
+                        break;
+                    case VIEWPORT_XZ:
+                        //Aspect ratio correction..
+                        if(state->viewerState->voxelXYtoZRatio < 1) state->viewerState->viewPorts[i].texture.displayedEdgeLengthY *= state->viewerState->voxelXYtoZRatio;
+                        else state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /= state->viewerState->voxelXYtoZRatio;
+
+                        //Display only entire pixels (only truncation possible!)
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = (float)(((int)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2. / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)) * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx) * 2.;
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthY = (float)(((int)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2. / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)) * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx) * 2.;
+
+                        //Update screen pixel to data pixel mapping values
+                        state->viewerState->viewPorts[i].screenPxXPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].screenPxYPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        // Pixels on the screen per 1 unit in the data coordinate system at the
+                        // original magnification.
+                        state->viewerState->viewPorts[i].screenPxXPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxXPerDataPx *
+                            state->magnification;
+
+                        state->viewerState->viewPorts[i].screenPxYPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxYPerDataPx *
+                            state->magnification;
+
+                        state->viewerState->viewPorts[i].displayedlengthInNmX =
+                            state->viewerState->voxelDimX *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].displayedlengthInNmY =
+                            state->viewerState->voxelDimZ *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        midX = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.x))
+                               * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx; //scale to 0 - 1
+                        midY = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z))
+                               * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx; //scale to 0 - 1
+
+                        //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
+                        calcLeftUpperTexAbsPx();
+
+                        //Offsets for crosshair
+                        state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.x - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.x)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
+                        state->viewerState->viewPorts[i].texture.yOffset = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.z)) * state->viewerState->viewPorts[i].screenPxYPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxYPerDataPx;
+
+                        break;
+                    case VIEWPORT_YZ:
+                        //Aspect ratio correction..
+                        if(state->viewerState->voxelXYtoZRatio < 1) state->viewerState->viewPorts[i].texture.displayedEdgeLengthY *= state->viewerState->voxelXYtoZRatio;
+                        else state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /= state->viewerState->voxelXYtoZRatio;
+
+                        //Display only entire pixels (only truncation possible!)
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = (float)(((int)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2. / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)) * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx) * 2.;
+                        state->viewerState->viewPorts[i].texture.displayedEdgeLengthY = (float)(((int)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2. / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)) * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx) * 2.;
+
+                        // Update screen pixel to data pixel mapping values
+                        // WARNING: YZ IS ROTATED AND MIRRORED! So screenPxXPerDataPx
+                        // corresponds to displayedEdgeLengthY and so on.
+                        state->viewerState->viewPorts[i].screenPxXPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].screenPxYPerDataPx =
+                            (float)state->viewerState->viewPorts[i].edgeLength /
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        // Pixels on the screen per 1 unit in the data coordinate system at the
+                        // original magnification.
+                        state->viewerState->viewPorts[i].screenPxXPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxXPerDataPx *
+                            state->magnification;
+
+                        state->viewerState->viewPorts[i].screenPxYPerOrigMagUnit =
+                            state->viewerState->viewPorts[i].screenPxYPerDataPx *
+                            state->magnification;
+
+                        state->viewerState->viewPorts[i].displayedlengthInNmX =
+                            state->viewerState->voxelDimZ *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        state->viewerState->viewPorts[i].displayedlengthInNmY =
+                            state->viewerState->voxelDimY *
+                            (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX /
+                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx);
+
+                        midX = ((float)(state->viewerState->currentPosition.y - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.y))
+                               // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                               * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+                        midY = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].texture.leftUpperPxInAbsPx.z))
+                               // / (float)state->viewerState->viewPorts[i].texture.edgeLengthPx; //scale to 0 - 1
+                               * state->viewerState->viewPorts[i].texture.texUnitsPerDataPx;
+
+                        //Update state->viewerState->viewPorts[i].leftUpperDataPxOnScreen with this call
+                        calcLeftUpperTexAbsPx();
+
+                        //Offsets for crosshair
+                        state->viewerState->viewPorts[i].texture.xOffset = ((float)(state->viewerState->currentPosition.z - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.z)) * state->viewerState->viewPorts[i].screenPxXPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxXPerDataPx;
+                        state->viewerState->viewPorts[i].texture.yOffset = ((float)(state->viewerState->currentPosition.y - state->viewerState->viewPorts[i].leftUpperDataPxOnScreen.y)) * state->viewerState->viewPorts[i].screenPxYPerDataPx + 0.5 * state->viewerState->viewPorts[i].screenPxYPerDataPx;
+
+                        break;
+                }
+
+                //Calculate the vertices in texture coordinates
+                /* mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0. */
+                state->viewerState->viewPorts[i].texture.texLUx = midX - (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.);
+                state->viewerState->viewPorts[i].texture.texLUy = midY - (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.);
+                state->viewerState->viewPorts[i].texture.texRUx = midX + (state->viewerState->viewPorts[i].texture.displayedEdgeLengthX / 2.);
+                state->viewerState->viewPorts[i].texture.texRUy = state->viewerState->viewPorts[i].texture.texLUy;
+                state->viewerState->viewPorts[i].texture.texRLx = state->viewerState->viewPorts[i].texture.texRUx;
+                state->viewerState->viewPorts[i].texture.texRLy = midY + (state->viewerState->viewPorts[i].texture.displayedEdgeLengthY / 2.);
+                state->viewerState->viewPorts[i].texture.texLLx = state->viewerState->viewPorts[i].texture.texLUx;
+                state->viewerState->viewPorts[i].texture.texLLy = state->viewerState->viewPorts[i].texture.texRLy;
+
+
+            }
+        }
+        //Reload the height/width-windows in viewports
+        GUI::reloadDataSizeWin();
+        return true;
+
+    return true;
+}
+
+bool Viewer::refreshViewports() {
+    // TODO reimplementation due to qt
+    return true;
+
+}

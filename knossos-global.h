@@ -1339,53 +1339,5 @@ int loader();
 //Event handler function, which switches over the type of a given event and calls the appropriate downstream functions
 uint32_t handleEvent(SDL_Event event);
 
-/*
- * For gui.c
- */
-
-void quitKnossos();
-int32_t initGUI();
-void updateAGconfig();
-uint32_t cpBaseDirectory(char *target, char *path, size_t len);
-//void yesNoPrompt(AG_Widget *par, char *promptString, void (*yesCb)(), void (*noCb)());
-uint32_t addRecentFile(char *path, uint32_t pos);
-void UI_workModeAdd();
-void UI_workModeLink();
-void UI_workModeDrop();
-//void saveSkelCallback(AG_Event *event);
-void UI_saveSkeleton(int32_t increment);
-void UI_saveSettings();
-//void UI_loadSkeleton(AG_Event *event);
-void UI_pasteClipboardCoordinates();
-void UI_copyClipboardCoordinates();
-void UI_zoomOrthogonals(float step);
-void createToolsWin();
-void createViewPortPrefWin();
-void reloadDataSizeWin();
-
- void createMenuBar();
- void createCoordBarWin();
- void createSkeletonVpToolsWin();
- void createDataSizeWin();
- void createNavWin();
- void createConsoleWin();
- void createAboutWin();
-
- void createNavOptionsWin();
- void createDisplayOptionsWin();
- void createSaveOptionsWin();
- void createSyncOptionsWin();
- void createRenderingOptionsWin();
- void createVolTracingOptionsWin();
- void createSpatialLockingOptionsWin();
-
- void createDataSetStatsWin();
- void createZoomingWin();
- void createTracingTimeWin();
- void createCommentsWin();
- void createLoadDatasetImgJTableWin();
- void createLoadTreeImgJTableWin();
- void createSetDynRangeWin();
- void treeColorAdjustmentsChanged();
 
 #endif

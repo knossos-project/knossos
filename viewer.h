@@ -9,6 +9,7 @@ extern "C" {
 #include "knossos-global.h"
 }
 #include "knossos.h"
+#include "gui.h"
 
 class Viewer : public QThread
 {
@@ -45,6 +46,8 @@ public:
     static int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
     static bool recalcTextureOffsets();
     static bool refreshViewports();
+
+
 
 signals:
     
