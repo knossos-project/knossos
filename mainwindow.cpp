@@ -151,14 +151,15 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(aboutAction);
+
+    QPushButton *button = new QPushButton("Copy", menuBar());
 }
 
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    qApp->quit();
-    /*if(state->skeletonState->unsavedChanges) {
-        event->ignore();
+    // TODO temporary condition
+    if(5 > 0) {
         prompt = new QMessageBox(this);
         prompt->setWindowTitle("Confirmation");
         prompt->setText("There are unsaved changes. Really Quit?");
@@ -167,14 +168,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
         QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
         prompt->exec();
 
+
         if((QPushButton *) prompt->clickedButton() == yesButton) {
             event->accept();
         }
 
         if((QPushButton *) prompt->clickedButton() == noButton) {
+            event->ignore();
             prompt->close();
         }
-    }*/
+
+    }
+
 
 }
 
