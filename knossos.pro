@@ -23,7 +23,8 @@ SOURCES +=\
     gui.cpp \
     knossos.cpp \
     coordinate.cpp \
-    Hashtable.cpp
+    Hashtable.cpp \
+
 
 
 
@@ -38,7 +39,8 @@ HEADERS  += mainwindow.h \
     renderer.h \
     gui.h \
     knossos-global.h \
-    knossos.h
+    knossos.h \
+
 
 
 

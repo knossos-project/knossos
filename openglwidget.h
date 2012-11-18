@@ -7,7 +7,9 @@
 #include <QDebug>
 #include "eventmodel.h"
 
-
+enum VIEW_PORT {
+    XY, XZ, YZ, SKELETON // 1 XY, 2 XZ, 3 YZ, 4 SKELETON
+};
 
 class OpenGLWidget : public QGLWidget
 {
@@ -28,6 +30,7 @@ protected:
     int viewPort;
     bool *controls; // [0] for CTRL, [1] for SHIT, [2] for ALT
     EventModel *eventModel;
+
 signals:
     
 public slots:

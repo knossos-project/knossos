@@ -7,10 +7,11 @@ extern  stateInfo *state;
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
+    viewer();
 }
 
 static vpList* vpListNew() {
-      vpList *newVpList = NULL;
+     vpList *newVpList = NULL;
 
      newVpList = (vpList *) malloc(sizeof( vpList));
      if(newVpList == NULL) {
@@ -835,7 +836,7 @@ static bool calcLeftUpperTexAbsPx() {
 
 
 //Initializes the viewer, is called only once after the viewing thread started
-static int32_t initViewer() {
+static bool initViewer() {
     /*
     calcLeftUpperTexAbsPx();
 
