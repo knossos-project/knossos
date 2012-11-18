@@ -117,7 +117,7 @@ static int32_t clientRun() {
     autoSaveOffEvent.type = SDL_USEREVENT;
     autoSaveOffEvent.user.code = USEREVENT_NOAUTOSAVE;
 
-    if(connectToServer(state) == TRUE) {
+    if(connectToServer() == TRUE) {
         /*
          * Autosave is turned off. Whether a knossos instance autosaves or
          * does not autosave during synchronization is determined by the "save
@@ -828,13 +828,10 @@ int32_t floatToBytes(Byte *dest, float source) {
 }
 
 int Wrapper_SDLNet_TCP_Open(void *params) {
-        struct clientState *clientState = params;
-
-        clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
-
-        clientState->connectionTried = TRUE;
-
-        return TRUE;
+    struct clientState *clientState = params;
+    clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
+    clientState->connectionTried = TRUE;
+    return TRUE;
 }
 
 static uint32_t flushOutBuffer() {
