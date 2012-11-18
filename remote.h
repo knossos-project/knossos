@@ -10,6 +10,7 @@ class Remote : public QThread
 public:
     explicit Remote(QObject *parent = 0);
     static void checkIdleTime();
+    static int32_t remoteJump(int32_t x, int32_t y, int32_t z);
     
 signals:
     
