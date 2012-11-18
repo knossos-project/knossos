@@ -253,6 +253,12 @@
 #define AUTOTRACING_VIEWPORT    1
 #define AUTOTRACING_TRACING 2
 #define AUTOTRACING_MIRROR  3
+
+#define ROTATIONSTATERESET 0
+#define ROTATIONSTATEXY 1
+#define ROTATIONSTATEXZ 3
+#define ROTATIONSTATEYZ 2
+
 /*
  *
  *      Structures and custom types
@@ -1127,15 +1133,15 @@ struct skeletonState {
 
     uint32_t numberComments;
 
-	int lockPositions;
-	uint32_t positionLocked;
-	char onCommentLock[1024];
-	Coordinate lockedPosition;
+    int lockPositions;
+    uint32_t positionLocked;
+    char onCommentLock[1024];
+    Coordinate lockedPosition;
     long unsigned int lockRadius;
 
-    int32_t rotateX;
-    int32_t rotateY;
-    int32_t rotateZ;
+    float rotdx;
+    float rotdy;
+    int32_t rotationcounter;
 
     int32_t definedSkeletonVpView;
 
@@ -1155,6 +1161,8 @@ struct skeletonState {
     /* Stores the model view matrix for user performed VP rotations.*/
     float skeletonVpModelView[16];
 
+    // Stores the angles of the cube in the SkeletonVP
+    float rotationState[16];
     /* The next three flags cause recompilation of the above specified display lists. */
 
     //TRUE, if all display lists must be updated
@@ -1203,8 +1211,8 @@ struct skeletonState {
 
     float defaultNodeRadius;
 
-	// Current zoom level. 0: no zoom; near 1: maximum zoom.
-	float zoomLevel;
+    // Current zoom level. 0: no zoom; near 1: maximum zoom.
+    float zoomLevel;
 
     int branchpointUnresolved;
 
