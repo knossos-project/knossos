@@ -1,7 +1,4 @@
-// 2x errors: "malloc"
-// 4x erorrs:  glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
 // refreshtimelabel should be replaced by better code now
-
 // #define GLUT_DISABLE_ATEXIT_HACK what is this?
 
 #include "renderer.h"
@@ -459,7 +456,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
         // Used for calculation of slice pane length inside the 3d view
         float dataPxX, dataPxY;
 
-        //textBuffer = malloc(32);
+        textBuffer = (char*)malloc(32);
         memset(textBuffer, '\0', 32);
 
         glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
@@ -987,26 +984,26 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
             sprintf(textBuffer, "1, 1, 1");
             for (c=textBuffer; *c != '\0'; c++) {
-                //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             memset(textBuffer, '\0', 32);
             glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
             sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-               // glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
 
             memset(textBuffer, '\0', 32);
             glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
             sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-                //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             memset(textBuffer, '\0', 32);
             glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
             sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-                //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_BLEND);
@@ -1143,7 +1140,7 @@ float Renderer::scalarProduct(floatCoordinate *v1, floatCoordinate *v2) {
 
 floatCoordinate* Renderer::crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
     floatCoordinate *result = NULL;
-    //result = malloc(sizeof(floatCoordinate));
+    result = (floatCoordinate*)malloc(sizeof(floatCoordinate));
     result->x = v1->y * v2->z - v1->z * v2->y;
     result->y = v1->z * v2->x - v1->x * v2->z;
     result->z = v1->x * v2->y - v1->y * v2->x;

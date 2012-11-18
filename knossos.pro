@@ -86,7 +86,7 @@ OTHER_FILES += \
     ../../knossos-skeletonizer/iconv.dll \
     ../../knossos-skeletonizer/glut32.dll
 
-LIBS += -lSDL -lSDL_net -lxml2
+LIBS += -lSDL -lSDL_net -lxml2 -lglut32
 
 INCLUDEPATH += ../../MinGW/include/SDL \
                ../../MinGW/include/libxml \
