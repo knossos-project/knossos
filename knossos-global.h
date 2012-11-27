@@ -74,9 +74,9 @@
 // Bytes for an object ID.
 #define OBJID_BYTES  3
 
-/*
- *	For the hashtable.
- */
+
+ //	For the hashtable.
+
 
 #define HT_SUCCESS  1
 #define HT_FAILURE  0
@@ -85,9 +85,9 @@
 #define LL_BEFORE   0
 #define LL_AFTER    2
 
-/*
- *	For the viewer.
- */
+
+ //	For the viewer.
+
 
 #define	SLICE_XY	0
 #define SLICE_XZ	1
@@ -107,9 +107,9 @@
 #define USER_NO 0
 #define USER_UNDEFINED 2
 
-/* MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
-* a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
-* pixel size instead of 20 nm */
+// MAG is a bit unintiutive here: a lower MAG means in KNOSSOS that a
+// a pixel of the lower MAG dataset has a higher resolution, i.e. 10 nm
+// pixel size instead of 20 nm
 #define MAG_DOWN 1
 #define MAG_UP 2
 #define NO_MAG_CHANGE 0
@@ -132,24 +132,24 @@
 #define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
-/*
- * For the Lookup tables
- */
+
+//  For the Lookup tables
+
  #define RGB_LUTSIZE  768
  #define RGBA_LUTSIZE 1024
  #define MAX_COLORVAL  255.
 
-/*
- *  For the GUI.
- */
+
+//  For the GUI.
+
 #define MAX_RECENT_FILES 10
-/*
- *	For the remote.
- */
+
+// 	For the remote.
+
 
 #define MAX_BUFFER_SIZE 52428800 // 50 MiB
 
-/* USEREVENTS  */
+// USEREVENTS
 #define USEREVENT_JUMP 5
 #define USEREVENT_MOVE 6
 #define USEREVENT_REDRAW 7
@@ -161,9 +161,9 @@
 #define REMOTE_SYNCHRONIZE 7
 #define REMOTE_RECENTERING 8
 
-/*
- * For the client / server protocol
- */
+
+//  For the client / server protocol
+
 
 // CHANGE_MANUAL is the revision count used to signal a skeleton change on behalf of the
 // user to lockSkeleton().
@@ -201,15 +201,15 @@
 #define KIKI_ADDTREECOMMENT 28
 
 
-/*
- * For custom key bindings
- */
+
+//  For custom key bindings
+
 
 #define ACTION_NONE 0
 
-/*
- * For the skeletonizer
- */
+
+//  For the skeletonizer
+
 
 #define SKELETONIZER_ON_CLICK_ADD_NODE 0
 #define SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE 1
@@ -218,15 +218,15 @@
 #define SEGMENT_FORWARD 1
 #define SEGMENT_BACKWARD 2
 
-/*
-#define DISPLAY_WHOLE_SKELETON 0
-#define DISPLAY_CURRENTCUBE_SKELETON 1
-#define DISPLAY_ACTIVETREE_SKELETON 2
-#define DISPLAY_NOTHING_SKELETON 3
-#define DISPLAY_ONLYSLICEPLANE_SKELETON 4
-#define DISPLAY_SEGS_AS_LINES 5
-#define DISPLAY_LINES_POINTS_ONLY 6
-*/
+
+//#define DISPLAY_WHOLE_SKELETON 0
+//#define DISPLAY_CURRENTCUBE_SKELETON 1
+//#define DISPLAY_ACTIVETREE_SKELETON 2
+//#define DISPLAY_NOTHING_SKELETON 3
+//#define DISPLAY_ONLYSLICEPLANE_SKELETON 4
+//#define DISPLAY_SEGS_AS_LINES 5
+//#define DISPLAY_LINES_POINTS_ONLY 6
+
 
 #define NODE_VISITED 1
 #define NODE_PRISTINE 0
@@ -240,9 +240,9 @@
 
 #define CATCH_RADIUS            10
 
-/*
- * For the renderer
- */
+
+//  For the renderer
+
 
 #define CURRENT_MAG_COORDINATES     0
 #define ORIGINAL_MAG_COORDINATES    1
@@ -258,11 +258,9 @@
 #define ROTATIONSTATEXZ 3
 #define ROTATIONSTATEYZ 2
 
-/*
- *
- *      Structures and custom types
- *
- */
+
+//Structures and custom types
+
 
 typedef uint8_t Byte;
 
@@ -436,23 +434,23 @@ struct assignment {
 // KNOSSOS.
 
 struct stateInfo {
-/*
- * Info about the data
- */
 
-        /* stores the currently active magnification;
-        * it is set by magnification = 2^MAGx
-        * state->magnification should only be used by the viewer,
-        * but its value is copied over to loaderMagnification.
-        * This is locked for thread safety. */
+//  Info about the data
+
+
+        // stores the currently active magnification;
+        // it is set by magnification = 2^MAGx
+        // state->magnification should only be used by the viewer,
+        // but its value is copied over to loaderMagnification.
+        // This is locked for thread safety.
         int32_t magnification;
 
         uint32_t highestAvailableMag;
         uint32_t lowestAvailableMag;
 
-        /* This variable is used only by the loader.
-        * It is filled by the viewer and contains
-        * log2uint32(state->magnification)  */
+        // This variable is used only by the loader.
+        // It is filled by the viewer and contains
+        // log2uint32(state->magnification)
         uint32_t loaderMagnification;
 
         // Path to the current cube files for the viewer and loader.
@@ -507,13 +505,13 @@ struct stateInfo {
         // Values: TRUE, FALSE.
         uint32_t overlay;
 
-		/*
-		 * Inter-thread communication structures / signals / mutexes, etc.
-		 */
 
-		 /*
-		 * Tells the loading thread, that state->path and or state->name changed
-		 */
+         // Inter-thread communication structures / signals / mutexes, etc.
+
+
+
+         // Tells the loading thread, that state->path and or state->name changed
+
 		 int32_t datasetChangeSignal;
 
 
@@ -567,29 +565,29 @@ struct stateInfo {
         //SDL_mutex *protectCube2Pointer;
         QMutex *protectCube2Pointer;
 
-        /*
-        * Protects a dataset change i.e. the change of state->path and or
-        * state->name; used for the current multi-res. implementation
-        */
+
+        // Protects a dataset change i.e. the change of state->path and or
+        // state->name; used for the current multi-res. implementation
+
         //SDL_mutex *protectDatasetChange;
         QMutex *protectDatasetChange;
 
-        /*
-         * Protect the network output buffer and the network peers list
-         */
+
+        //  Protect the network output buffer and the network peers list
+
         //SDL_mutex *protectOutBuffer;
         QMutex *protectOutBuffer;
         //SDL_mutex *protectPeerList;
         QMutex *protectPeerList;
-        /*
-         * Protect changes to the skeleton for network synchronization.
-         */
+
+        //  Protect changes to the skeleton for network synchronization.
+
         //SDL_mutex *protectSkeleton;
         QMutex *protectSkeleton;
 
-		/*
-		 * Info about the state of KNOSSOS in general.
-		 */
+
+        //  Info about the state of KNOSSOS in general.
+
 
         // This gives the current position ONLY when the reload
         // boundary has been crossed. Change it through
@@ -670,15 +668,15 @@ struct agConfig {
     char recentFiles[MAX_RECENT_FILES][4096];
     AG_MenuItem *appMenuRoot;
 
-    /* Current position of the user crosshair,
-    starting at 1 instead 0. This is shown to the user,
-    KNOSSOS works internally with 0 start indexing. */
+    // Current position of the user crosshair,
+    //starting at 1 instead 0. This is shown to the user,
+    //KNOSSOS works internally with 0 start indexing.
     Coordinate oneShiftedCurrPos;
     Coordinate activeNodeCoord;
 
     int32_t yesNoReturn;
 
-	/* tools win buffer variables */
+    // tools win buffer variables
     int32_t activeNodeID;
     int32_t activeTreeID;
     int32_t totalNodes;
@@ -698,7 +696,7 @@ struct agConfig {
 
     color4F actTreeColor;
 
-    /* File dialog widget variables and buffers */
+    // File dialog widget variables and buffers
     AG_FileType *fileTypeNml;
 
     char skeletonDirectory[2048];
@@ -710,24 +708,24 @@ struct agConfig {
     char treeLUTFile[2048];
     char datasetLUTFile[2048];
 
-    /* file saving settings win buffer variables */
-    uint32_t autoSaveInterval; /* in minutes */
+    // file saving settings win buffer variables
+    uint32_t autoSaveInterval; // in minutes
     int onSaveAutoIncrement;
 
-    /* viewport pref window */
+    // viewport pref window
     int enableLinearFiltering;
     int radioRenderingModel;
     int enableOrthoSkelOverlay;
     int radioSkeletonDisplayMode;
 
-    /* synchronization settings win buffer variables */
+    // synchronization settings win buffer variables
 
-    /* dataset navigation settings win buffer variables */
+    // dataset navigation settings win buffer variables
     uint32_t stepsPerSec;
     uint32_t recenteringTime;
     uint32_t dropFrames;
 
-    /* skeleton statistics win buffer variables */
+    // skeleton statistics win buffer variables
 
     int agInputWdgtFocused;
 
@@ -894,7 +892,7 @@ struct viewerState {
     //Unit: data cubes.
     int32_t zoomCube;
 
-    /* don't jump between mags on zooming */
+    // don't jump between mags on zooming
     int datasetMagLock;
 
     //Flag to indicate user repositioning
@@ -911,9 +909,9 @@ struct viewerState {
 
     uint32_t activeVP;
 
-	/* Current position of the user crosshair.
-       Given in pixel coordinates of the current local dataset (whatever magnification
-       is currently loaded.) */
+    // Current position of the user crosshair.
+    //   Given in pixel coordinates of the current local dataset (whatever magnification
+    //   is currently loaded.)
 	Coordinate currentPosition;
 
     uint32_t recenteringTime;
@@ -970,20 +968,17 @@ struct viewerState {
 
 
 
-    /*
-     * This array holds the table for overlay coloring.
-     * The colors should be "maximally different".
-     *
-     */
+
+     // This array holds the table for overlay coloring.
+     // The colors should be "maximally different".
+
     GLuint overlayColorMap[4][256];
 
     int overlayVisible;
 
-    /*
-    *
-    * Advanced Tracing Modes Stuff
-    *
-    */
+
+    // Advanced Tracing Modes Stuff
+
     int autoTracingEnabled;
     int autoTracingMode;
     int autoTracingDelay;
@@ -1092,14 +1087,13 @@ struct IOBuffer {
 struct skeletonState {
     uint32_t skeletonRevision;
 
-    /*
-     *  skeletonTime is the time spent on the current skeleton in all previous
-     *  instances of knossos that worked with the skeleton.
-     *  skeletonTimeCorrection is the time that has to be subtracted from
-     *  SDL_GetTicks() to yield the number of milliseconds the current skeleton
-     *  was loaded in the current knossos instance.
-     *
-     */
+
+    //    skeletonTime is the time spent on the current skeleton in all previous
+    //    instances of knossos that worked with the skeleton.
+    //    skeletonTimeCorrection is the time that has to be subtracted from
+    //    SDL_GetTicks() to yield the number of milliseconds the current skeleton
+    //    was loaded in the current knossos instance.
+
 
     int32_t unsavedChanges;
     int32_t skeletonTime;
@@ -1146,23 +1140,23 @@ struct skeletonState {
 
     float translateX, translateY;
 
-    /* Display list, which renders the skeleton defined in skeletonDisplayMode
-    (may be same as in displayListSkeletonSkeletonizerVPSlicePlaneVPs */
+    // Display list, which renders the skeleton defined in skeletonDisplayMode
+    //(may be same as in displayListSkeletonSkeletonizerVPSlicePlaneVPs
     GLuint displayListSkeletonSkeletonizerVP;
-    /* Display list, which renders the skeleton of the slice plane VPs */
+    // Display list, which renders the skeleton of the slice plane VPs
     GLuint displayListSkeletonSlicePlaneVP;
-    /* Display list, which applies the basic openGL operations before the skeleton is rendered.
-    (Light settings, view rotations, translations...) */
+    // Display list, which applies the basic openGL operations before the skeleton is rendered.
+    //(Light settings, view rotations, translations...)
     GLuint displayListView;
-    /* Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on */
+    // Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on
     GLuint displayListDataset;
 
-    /* Stores the model view matrix for user performed VP rotations.*/
+    // Stores the model view matrix for user performed VP rotations.
     float skeletonVpModelView[16];
 
     // Stores the angles of the cube in the SkeletonVP
     float rotationState[16];
-    /* The next three flags cause recompilation of the above specified display lists. */
+    // The next three flags cause recompilation of the above specified display lists.
 
     //TRUE, if all display lists must be updated
     int skeletonChanged;
@@ -1215,7 +1209,7 @@ struct skeletonState {
 
     int branchpointUnresolved;
 
-    /* This is for a workaround around agar bug #171*/
+    // This is for a workaround around agar bug #171
     int askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
 };
@@ -1260,11 +1254,9 @@ struct inputmap {
 };
 
 
-/*
- *
- *      Macros
- *
- */
+
+//      Macros
+
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
@@ -1326,20 +1318,12 @@ struct inputmap {
     //   AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \
 
 
-/*
- *
- *      Function prototypes
- *
- */
 
-/*
+//  For eventHandler.c
 
-
-/*
- * For eventHandler.c
- */
 //Event handler function, which switches over the type of a given event and calls the appropriate downstream functions
 uint32_t handleEvent(SDL_Event event);
 
 
 #endif
+
