@@ -121,7 +121,7 @@ int loader() {
         // our current position and that are not yet in memory. We go through
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
-        if(loadCubes(state) == FALSE) {
+        if(loadCubes() == FALSE) {
             //LOG("Loading of all DCOI did not complete.");
         }
 

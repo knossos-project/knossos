@@ -38,4 +38,4 @@ static int32_t slotListDel(CubeSlotList *delList);
 static int32_t initLoader();
 static uint32_t removeLoadedCubes();
 static uint32_t loadCubes();
-static int32_t addCubicDcSet(int32_t x, int32_t y, int32_t z, int32_t edgeLen, Hashtable *target);
+static int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target);
