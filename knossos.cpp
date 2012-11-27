@@ -530,16 +530,126 @@ uint32_t Knossos::log2uint32(register uint32_t x) {
     return(ones32(x >> 1));
 }
 
-bool Knossos::lockSkeleton(int32_t targetRevision) { return true;}
+bool Knossos::lockSkeleton(int32_t targetRevision) {
+    /*
+     * If a skeleton modifying function is called on behalf of the network client,
+     * targetRevision should be set to the appropriate remote value and lockSkeleton()
+     * will decide whether to commit the change or if the skeletons have gone out of sync.
+     * (This means that the return value of this function if very important and always
+     * has to be checked. If the function returns a failure, the skeleton change cannot
+     * proceed.)
+     * If the function is being called on behalf of the user, targetRevision should be
+     * set to CHANGE_MANUAL (== 0).
+     *
+     */
 
-bool Knossos::unlockSkeleton(int32_t increment) { return true;}
+    state->protectSkeleton->lock();
 
-bool Knossos::sendClientSignal() { return true;}
+     if(targetRevision != CHANGE_MANUAL) {
+         /* We can only commit a remote skeleton change if the remote revision count
+          * is exactly the local revision count plus 1.
+          * If the function changing the skeleton encounters an error, unlockSkeleton() has
+          * to be called without incrementing the local revision count and the skeleton
+          * synchronization has to be cancelled */
 
-bool Knossos::sendRemoteSignal() { return true;}
+        /* printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
+                targetRevision, state->skeletonState->skeletonRevision);
+         */
 
-void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {}
+        if(targetRevision != state->skeletonState->skeletonRevision + 1) {
+            // Local and remote skeletons have gone out of sync.
+            Client::skeletonSyncBroken();
+            return FALSE;
+        }
+     }
 
-bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) { return true;}
+     return TRUE;
+}
+bool Knossos::unlockSkeleton(int32_t increment) {
+    /* We cannot increment the revision count if the skeleton change was
+     * not successfully commited (i.e. the skeleton changing function encountered
+     * an error). In that case, the connection has to be closed and the user
+     * must be notified. */
 
-bool Knossos::sendQuitSignal() { return true;}
+     /*
+      * Increment signals either success or failure of the operation that made
+      * locking the skeleton necessary.
+      * It's here as a parameter for historical reasons and will be removed soon
+      * unless it turns out to be useful for something else...
+      *
+      */
+
+    state->protectSkeleton->unlock();
+
+    return TRUE;
+}
+
+bool Knossos::sendClientSignal() {
+    state->protectClientSignal->lock();
+    state->clientSignal = TRUE;
+    state->protectClientSignal->unlock();
+
+    state->conditionClientSignal->wakeOne();
+
+    return TRUE;
+}
+
+bool Knossos::sendRemoteSignal() {
+    state->protectRemoteSignal->lock();
+    state->remoteSignal = TRUE;
+    state->protectRemoteSignal->unlock();
+
+    state->conditionRemoteSignal->wakeOne();
+
+    return TRUE;
+}
+
+/* allows the on-the-fly change of the dataset name, making the simple uncached
+multi-res. implementation possible.
+this function should only be called from the viewer thread! */
+void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {
+    /* the loader is required to not block this mutex for too long,
+    * the user might experience short KNOSSOS lock-ups while zooming
+    * otherwise. */
+    state->protectDatasetChange->lock();
+    state->datasetChangeSignal = upOrDownFlag;
+    state->protectDatasetChange->unlock();
+
+    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z);
+}
+bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
+    state->protectLoadSignal->lock();
+
+    state->loadSignal = TRUE;
+
+    /* Convert the coordinate to the right mag. The loader
+    * is agnostic to the different dataset magnifications.
+    * The int division is hopefully not too much of an issue here */
+    SET_COORDINATE(state->currentPositionX,
+                   x / state->magnification,
+                   y / state->magnification,
+                   z / state->magnification);
+
+    state->protectLoadSignal->unlock();
+
+    state->conditionLoadSignal->wakeOne();
+
+    return TRUE;
+}
+bool Knossos::sendQuitSignal() {
+    GUI::UI_saveSettings();
+
+    state->quitSignal = TRUE;
+
+    Knossos::sendRemoteSignal();
+    Knossos::sendClientSignal();
+
+    state->protectLoadSignal->lock();
+    state->loadSignal = TRUE;
+    state->protectLoadSignal->unlock();
+
+    state->conditionLoadSignal->wakeOne();
+    return TRUE;
+}

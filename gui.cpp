@@ -15,6 +15,9 @@ void GUI::UI_saveSkeleton(int32_t increment) {
 
 }
 
+void GUI::UI_saveSettings() {
+
+}
 
 bool GUI::cpBaseDirectory(char *target, char *path, size_t len) {
 

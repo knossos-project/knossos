@@ -27,7 +27,7 @@ public:
     void UI_workModeDrop();
     //void saveSkelCallback(AG_Event *event);
 
-    void UI_saveSettings();
+    static void UI_saveSettings();
     //void UI_loadSkeleton(AG_Event *event);
     void UI_pasteClipboardCoordinates();
     void UI_copyClipboardCoordinates();
