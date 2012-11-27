@@ -42,7 +42,6 @@
 #include <QMutex>
 
 
-
 #define KVERSION "3.2"
 
 #define TRUE    1
@@ -1335,11 +1334,6 @@ struct inputmap {
 
 /*
 
-/*
- *	For loader.c
- */
-
-int loader();
 
 /*
  * For eventHandler.c

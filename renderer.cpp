@@ -984,26 +984,26 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
             sprintf(textBuffer, "1, 1, 1");
             for (c=textBuffer; *c != '\0'; c++) {
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             memset(textBuffer, '\0', 32);
             glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
             sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
 
             memset(textBuffer, '\0', 32);
             glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
             sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             memset(textBuffer, '\0', 32);
             glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
             sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
             for (c=textBuffer; *c != '\0'; c++) {
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
             }
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_BLEND);

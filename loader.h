@@ -9,6 +9,7 @@ class Loader : public QThread
     Q_OBJECT
 public:
     explicit Loader(QObject *parent = 0);
+    bool loader();
     
 signals:
     

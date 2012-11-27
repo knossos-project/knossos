@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl network
 
 TARGET = knossos
 TEMPLATE = app
@@ -90,4 +90,4 @@ LIBS += -lSDL -lSDL_net -lxml2 -lglut32
 
 INCLUDEPATH += ../../MinGW/include/SDL \
                ../../MinGW/include/libxml \
-
+               ../../MinGW/include/GL
