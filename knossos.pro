@@ -40,6 +40,8 @@ HEADERS  += mainwindow.h \
     gui.h \
     knossos-global.h \
     knossos.h \
+    ../treeLUT_fallback.h \
+    ../treeLUT_fallback.h
 
 
 

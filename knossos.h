@@ -28,6 +28,19 @@
 
 class Knossos : public QObject {
 public:
+    static bool stripNewlines(char *string);
+    static bool readConfigFile(char *path);
+    static bool printConfigValues();
+    static bool loadNeutralDatasetLUT(GLuint *datasetLut);
+    static bool readDataConfAndLocalConf();
+    static struct stateInfo *emptyState();
+    static bool findAndRegisterAvailableDatasets();
+    static bool cleanUpMain();
+    static bool tempConfigDefaults();
+    static bool configFromCli(int argCount, char *arguments[]);
+    static void catchSegfault(int signum);
+    static int32_t initStates();
+
     static bool unlockSkeleton(int32_t increment);
     static bool lockSkeleton(int32_t targetRevision);
     static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);

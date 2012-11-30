@@ -688,7 +688,7 @@ int Client::client() {
         state->clientSignal = FALSE;
         state->protectClientSignal->unlock();
 
-        if(state->quitSignal == TRUE) {
+        if(state->quitSignal == true) {
             break;
         }
         /*
@@ -708,7 +708,7 @@ int Client::client() {
 
         clientRun();
 
-        if(state->quitSignal == TRUE) {
+        if(state->quitSignal == true) {
             break;
         }
     }

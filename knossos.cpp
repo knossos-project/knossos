@@ -12,10 +12,9 @@
 #include "loader.h"
 #include "remote.h"
 #include "client.h"
-
 #include "knossos.h"
+#include "../treeLUT_fallback.h"
 
-//#include "../treeLUT_fallback.h"
 //#include "y.tab.h"
 //#include "lex.yy.h"
 
@@ -23,20 +22,526 @@
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
-static int32_t stripNewlines(char *string) {
-    int32_t i = 0;
 
-    for(i = 0; string[i] != '\0'; i++) {
-        if(string[i] == '\n')
-            string[i] = ' ';
+//static uint32_t isPathString(char *string);
+//static uint32_t printUsage();
+
+ int32_t Knossos::initStates() {
+    uint32_t i;
+
+        /* General stuff */
+        state->boergens = tempConfig->boergens;
+        strncpy(state->path, tempConfig->path, 1024);
+        strncpy(state->name, tempConfig->name, 1024);
+        state->boundary.x = tempConfig->boundary.x;
+        state->boundary.y = tempConfig->boundary.y;
+        state->boundary.z = tempConfig->boundary.z;
+        state->scale.x = tempConfig->scale.x;
+        state->scale.y = tempConfig->scale.y;
+        state->scale.z = tempConfig->scale.z;
+        state->offset.x = tempConfig->offset.x;
+        state->offset.y = tempConfig->offset.y;
+        state->offset.z = tempConfig->offset.z;
+        state->cubeEdgeLength = tempConfig->cubeEdgeLength;
+
+        if(tempConfig->M % 2 == 0) {
+            state->M = tempConfig->M - 1;
+            tempConfig->M = state->M;
+        }
+        else {
+            state->M = tempConfig->M;
         }
 
-    return TRUE;
+        state->magnification = tempConfig->magnification;
+        state->overlay = tempConfig->overlay;
+
+
+        /* For the viewer */
+        state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;
+        state->viewerState->vpKeyDirection[VIEWPORT_XY] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY];
+        state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
+        state->viewerState->vpKeyDirection[VIEWPORT_YZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ];
+        state->viewerState->overlayVisible = tempConfig->viewerState->overlayVisible;
+        state->viewerState->datasetColortableOn = tempConfig->viewerState->datasetColortableOn;
+        state->viewerState->datasetAdjustmentOn = tempConfig->viewerState->datasetAdjustmentOn;
+        state->viewerState->treeColortableOn = tempConfig->viewerState->treeColortableOn;
+        state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
+        state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
+        state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
+        state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
+        state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
+        state->viewerState->inputmap = tempConfig->viewerState->inputmap;
+        state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+        state->viewerState->userMove = tempConfig->viewerState->userMove;
+        state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
+        state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
+        state->viewerState->filterType = tempConfig->viewerState->filterType;
+        state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
+        state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
+        state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
+        state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
+        state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
+        state->viewerState->autoTracingMode = 0;
+        state->viewerState->autoTracingDelay = 50;
+        state->viewerState->autoTracingSteps = 10;
+        /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
+        state->viewerState->voxelDimX = state->scale.x;
+        state->viewerState->voxelDimY = state->scale.y;
+        state->viewerState->voxelDimZ = state->scale.z;
+        state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+        state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+        state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
+        state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
+        state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
+        Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
+
+        // TODO
+        //loadDefaultTreeLUT();
+
+        state->viewerState->treeLutSet = FALSE;
+
+        state->viewerState->viewPorts = (viewPort *)malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
+        if(state->viewerState->viewPorts == NULL)
+            return FALSE;
+        memset(state->viewerState->viewPorts, '\0', state->viewerState->numberViewPorts * sizeof(struct viewPort));
+
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            state->viewerState->viewPorts[i].upperLeftCorner = tempConfig->viewerState->viewPorts[i].upperLeftCorner;
+            state->viewerState->viewPorts[i].type = tempConfig->viewerState->viewPorts[i].type;
+            state->viewerState->viewPorts[i].draggedNode = tempConfig->viewerState->viewPorts[i].draggedNode;
+            state->viewerState->viewPorts[i].userMouseSlideX = tempConfig->viewerState->viewPorts[i].userMouseSlideX;
+            state->viewerState->viewPorts[i].userMouseSlideY = tempConfig->viewerState->viewPorts[i].userMouseSlideY;
+            state->viewerState->viewPorts[i].edgeLength = tempConfig->viewerState->viewPorts[i].edgeLength;
+            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx =
+                tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+                / (float)state->magnification;
+
+            state->viewerState->viewPorts[i].texture.edgeLengthPx = tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+            state->viewerState->viewPorts[i].texture.edgeLengthDc = tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc;
+            state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
+            state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
+            state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
+    /* old version, smaller buffer
+            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                        (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
+                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                        * 2.;
+    */
+            /* make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering! */
+    /*        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                        ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
+                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                        * 2.;
+    */
+    /* latest version */
+
+    /*
+            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+                        ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
+                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+                        * (float) tempConfig->cubeEdgeLength);
+            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+                tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+
+                * (float) tempConfig->cubeEdgeLength)
+                / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+
+    */
+        }
+
+        if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+            LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+            return FALSE;
+        }
+
+        // TODO
+        // calcDisplayedEdgeLength();
+
+        /* For the GUI */
+        strncpy(state->viewerState->ag->settingsFile,
+                tempConfig->viewerState->ag->settingsFile,
+                2048);
+
+        /* For the client */
+
+        state->clientState->connectAsap = tempConfig->clientState->connectAsap;
+        state->clientState->connectionTimeout = tempConfig->clientState->connectionTimeout;
+        state->clientState->remotePort = tempConfig->clientState->remotePort;
+        strncpy(state->clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+        state->clientState->connected = tempConfig->clientState->connected;
+
+        state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+        if(state->clientState->inBuffer == NULL) {
+            LOG("Out of memory.");
+            return FALSE;
+        }
+        memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
+
+        state->clientState->inBuffer->data = (Byte *)malloc(128);
+        if(state->clientState->inBuffer->data == NULL) {
+            LOG("Out of memory.");
+            return FALSE;
+        }
+        memset(state->clientState->inBuffer->data, '\0', 128);
+
+        state->clientState->inBuffer->size = 128;
+        state->clientState->inBuffer->length = 0;
+
+        state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+        if(state->clientState->outBuffer == NULL) {
+            LOG("Out of memory.");
+            return FALSE;
+        }
+        memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
+
+        state->clientState->outBuffer->data = (Byte *) malloc(128);
+        if(state->clientState->outBuffer->data == NULL) {
+            LOG("Out of memory.");
+            return FALSE;
+        }
+        memset(state->clientState->outBuffer->data, '\0', 128);
+
+        state->clientState->outBuffer->size = 128;
+        state->clientState->outBuffer->length = 0;
+        state->clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
+        state->clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
+        state->clientState->saveMaster = tempConfig->clientState->saveMaster;
+
+        /* For the skeletonizer */
+        state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
+        state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
+        state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
+        SET_COORDINATE(state->skeletonState->lockedPosition,
+                       tempConfig->skeletonState->lockedPosition.x,
+                       tempConfig->skeletonState->lockedPosition.y,
+                       tempConfig->skeletonState->lockedPosition.y);
+        strcpy(state->skeletonState->onCommentLock, tempConfig->skeletonState->onCommentLock);
+        state->skeletonState->branchpointUnresolved = tempConfig->skeletonState->branchpointUnresolved;
+        state->skeletonState->autoFilenameIncrementBool = tempConfig->skeletonState->autoFilenameIncrementBool;
+        state->skeletonState->autoSaveBool = tempConfig->skeletonState->autoSaveBool;
+        state->skeletonState->autoSaveInterval = tempConfig->skeletonState->autoSaveInterval;
+        state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
+        state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
+        state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
+        strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+        state->skeletonState->idleTime = 0;
+        state->skeletonState->idleTimeNow = 0;
+        state->skeletonState->idleTimeLast = 0;
+
+        /* For the remote */
+        state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
+        state->remoteState->maxTrajectories = tempConfig->remoteState->maxTrajectories;
+        state->remoteState->type = tempConfig->remoteState->type;
+
+        /* Those values can be calculated from given parameters */
+        state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
+        state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
+        state->cubeSetElements = state->M * state->M * state->M;
+        state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
+
+        SET_COORDINATE(state->currentPositionX, 0, 0, 0);
+
+        // We're not doing stuff in parallel, yet. So we skip the locking
+        // part.
+        // This *10 thing is completely arbitrary. The larger the table size,
+        // the lower the chance of getting collisions and the better the loading
+        // order will be respected. *10 doesn't seem to have much of an effect
+        // on performance but we should try to find the optimal value some day.
+        // Btw: A more clever implementation would be to use an array exactly the
+        // size of the supercube and index using the modulo operator.
+        // sadly, that realization came rather late. ;)
+
+        /* creating the hashtables is cheap, keeping the datacubes is
+         * memory expensive..  */
+        for(i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
+            state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+            state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+            if(i == 0) i = 1;
+        }
+
+        /* searches for multiple mag datasets and enables multires if more
+         * than one was found */
+        Knossos::findAndRegisterAvailableDatasets();
+
+        return TRUE;
 
 }
 
-int32_t readConfigFile(char *path) {
-    // TODO
+
+//IMPORTANT. SDL redefines main
+#ifdef main
+#undef main
+#endif
+
+
+
+int main(int argc, char *argv[])
+{
+
+    QApplication a(argc, argv);
+
+
+    // displaying the splash
+    MainWindow window;
+    window.showMaximized();
+
+    QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
+    splashScreen.show();
+
+    // legacy init code
+    // TODO SDL_INIT Alternative für QT/C++
+    Loader *loadingThread;
+    Viewer *viewingThread;
+    Remote *remoteThread;
+    Client *clientThread;
+
+
+    state = Knossos::emptyState();
+
+    state->loadSignal = false;
+    state->remoteSignal = FALSE;
+    state->quitSignal = FALSE;
+    state->clientSignal = FALSE;
+    state->conditionLoadSignal = new QWaitCondition();
+    state->conditionRemoteSignal = new QWaitCondition();
+    state->conditionClientSignal = new QWaitCondition();
+    state->protectSkeleton = new QMutex();
+    state->protectLoadSignal = new QMutex();
+    state->protectRemoteSignal = new QMutex();
+    state->protectClientSignal = new QMutex();
+    state->protectCube2Pointer = new QMutex();
+    state->protectPeerList = new QMutex();
+    state->protectOutBuffer = new QMutex();
+
+
+
+    if(Knossos::tempConfigDefaults() != TRUE) {
+        LOG("Error loading default parameters.");
+        _Exit(FALSE);
+    }
+        // TODO
+
+        if(argc >= 2)
+            Knossos::configFromCli(argc, argv);
+
+        if(tempConfig->path[0] != '\0') {
+            // Got a path from cli.
+            Knossos::readDataConfAndLocalConf();
+            // We need to read the specified config file again because it should
+            // override all parameters from other config files.
+            Knossos::configFromCli(argc, argv);
+        }
+        else
+            Knossos::readConfigFile("knossos.conf");
+
+
+        state->viewerState->voxelDimX = tempConfig->scale.x;
+        state->viewerState->voxelDimY = tempConfig->scale.y;
+        state->viewerState->voxelDimZ = tempConfig->scale.z;
+
+        if(argc >= 2) {
+            if(Knossos::configFromCli(argc, argv) == FALSE) {
+                LOG("Error reading configuration from command line.");
+            }
+        }
+
+        // TODO
+        //if(initStates(state) != TRUE) {
+        //    LOG("Error during initialization of the state struct.");
+        //    _Exit(FALSE);
+        //}
+
+
+        Knossos::printConfigValues();
+
+        viewingThread = new Viewer(); // viewer() is called in constructor
+        loadingThread = new Loader(); // TODO call loader() in constructor
+        remoteThread = new Remote(); // TODO call remote() in constructor
+        clientThread = new Client(); // TODO call client() in constructor
+
+        loadingThread->wait();
+        remoteThread->wait();
+        viewingThread->wait();
+        clientThread->wait();
+
+
+        //SDL_Quit(); // SQL_QUIT
+
+        Knossos::cleanUpMain();
+
+
+    return a.exec();
+}
+
+/* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
+uint32_t Knossos::ones32(register uint32_t x) {
+        /* 32-bit recursive reduction using SWAR...
+       but first step is mapping 2-bit values
+       into sum of 2 1-bit values in sneaky way
+    */
+        x -= ((x >> 1) & 0x55555555);
+        x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+        x = (((x >> 4) + x) & 0x0f0f0f0f);
+        x += (x >> 8);
+        x += (x >> 16);
+        return(x & 0x0000003f);
+}
+
+
+/* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
+uint32_t Knossos::log2uint32(register uint32_t x) {
+
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+
+    return(ones32(x >> 1));
+}
+
+bool Knossos::lockSkeleton(int32_t targetRevision) {
+    /*
+     * If a skeleton modifying function is called on behalf of the network client,
+     * targetRevision should be set to the appropriate remote value and lockSkeleton()
+     * will decide whether to commit the change or if the skeletons have gone out of sync.
+     * (This means that the return value of this function if very important and always
+     * has to be checked. If the function returns a failure, the skeleton change cannot
+     * proceed.)
+     * If the function is being called on behalf of the user, targetRevision should be
+     * set to CHANGE_MANUAL (== 0).
+     *
+     */
+
+    state->protectSkeleton->lock();
+
+     if(targetRevision != CHANGE_MANUAL) {
+         /* We can only commit a remote skeleton change if the remote revision count
+          * is exactly the local revision count plus 1.
+          * If the function changing the skeleton encounters an error, unlockSkeleton() has
+          * to be called without incrementing the local revision count and the skeleton
+          * synchronization has to be cancelled */
+
+        /* printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
+                targetRevision, state->skeletonState->skeletonRevision);
+         */
+
+        if(targetRevision != state->skeletonState->skeletonRevision + 1) {
+            // Local and remote skeletons have gone out of sync.
+            Client::skeletonSyncBroken();
+            return false;
+        }
+     }
+
+     return true;
+}
+bool Knossos::unlockSkeleton(int32_t increment) {
+    /* We cannot increment the revision count if the skeleton change was
+     * not successfully commited (i.e. the skeleton changing function encountered
+     * an error). In that case, the connection has to be closed and the user
+     * must be notified. */
+
+     /*
+      * Increment signals either success or failure of the operation that made
+      * locking the skeleton necessary.
+      * It's here as a parameter for historical reasons and will be removed soon
+      * unless it turns out to be useful for something else...
+      *
+      */
+
+    state->protectSkeleton->unlock();
+
+    return true;
+}
+
+bool Knossos::sendClientSignal() {
+    state->protectClientSignal->lock();
+    state->clientSignal = TRUE;
+    state->protectClientSignal->unlock();
+
+    state->conditionClientSignal->wakeOne();
+
+    return true;
+}
+
+bool Knossos::sendRemoteSignal() {
+    state->protectRemoteSignal->lock();
+    state->remoteSignal = TRUE;
+    state->protectRemoteSignal->unlock();
+
+    state->conditionRemoteSignal->wakeOne();
+
+    return true;
+}
+
+/* allows the on-the-fly change of the dataset name, making the simple uncached
+multi-res. implementation possible.
+this function should only be called from the viewer thread! */
+void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {
+    /* the loader is required to not block this mutex for too long,
+    * the user might experience short KNOSSOS lock-ups while zooming
+    * otherwise. */
+    state->protectDatasetChange->lock();
+    state->datasetChangeSignal = upOrDownFlag;
+    state->protectDatasetChange->unlock();
+
+    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z);
+}
+
+bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
+    state->protectLoadSignal->lock();
+
+    state->loadSignal = true;
+
+    /* Convert the coordinate to the right mag. The loader
+    * is agnostic to the different dataset magnifications.
+    * The int division is hopefully not too much of an issue here */
+    SET_COORDINATE(state->currentPositionX,
+                   x / state->magnification,
+                   y / state->magnification,
+                   z / state->magnification);
+
+    state->protectLoadSignal->unlock();
+
+    state->conditionLoadSignal->wakeOne();
+
+    return true;
+}
+
+bool Knossos::sendQuitSignal() {
+    GUI::UI_saveSettings();
+
+    state->quitSignal = true;
+
+    Knossos::sendRemoteSignal();
+    Knossos::sendClientSignal();
+
+    state->protectLoadSignal->lock();
+    state->loadSignal = true;
+    state->protectLoadSignal->unlock();
+
+    state->conditionLoadSignal->wakeOne();
+    return true;
+}
+
+/* Removes the new line symbols from a string */
+bool Knossos::stripNewlines(char *string) {
+    int32_t i = 0;
+
+    for(i = 0; string[i] != '\0'; i++) {
+        if(string[i] == '\n') // ? os specific ?
+            string[i] = ' ';
+        }
+
+    return true;
+
+}
+
+/* TODO function yyparse is not found  */
+bool Knossos::readConfigFile(char *path) {
     /*
     FILE *configFile;
         size_t bytesRead;
@@ -58,12 +563,57 @@ int32_t readConfigFile(char *path) {
             }
         }
         */
-        return FALSE;
+        return false;
 }
 
-static struct stateInfo *emptyState() {
+bool Knossos::printConfigValues() {
+    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
+               state->path,
+               state->name,
+               state->boundary.x,
+               state->boundary.y,
+               state->boundary.z,
+               state->scale.x,
+               state->scale.y,
+               state->scale.z,
+               state->cubeBytes,
+               state->cubeEdgeLength,
+               state->cubeSliceArea,
+               state->M,
+               state->cubeSetElements,
+               state->cubeSetBytes,
+               state->boergens);
+
+        return true;
+}
+
+bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
+
+    int32_t i;
+
+    for(i = 0; i < 256; i++) {
+        datasetLut[0 * 256 + i] = i;
+        datasetLut[1 * 256 + i] = i;
+        datasetLut[2 * 256 + i] = i;
+   }
+
+    return true;
+}
+
+struct stateInfo *Knossos::emptyState() {
 
     struct stateInfo *state = NULL;
+
+    /*
+      ALTERNATIVE
+    state = new stateInfo();
+    state->viewerState = new viewerState();
+    state->viewerState->ag = new agConfig();
+    state->remoteState = new remoteState();
+    state->clientState = new clientState();
+    state->loaderState = new loaderState();
+    state->skeletonState = new skeletonState();
+    */
 
     state = (stateInfo *) malloc(sizeof(struct stateInfo));
     if(state == NULL)
@@ -103,15 +653,195 @@ static struct stateInfo *emptyState() {
         return FALSE;
      memset(state->skeletonState, '\0', sizeof(struct skeletonState));
 
-        return state;
+
+
+     return state;
 
 
 }
-//static uint32_t isPathString(char *string);
-//static uint32_t printUsage();
-static int32_t initStates() { return 0;}
-static int32_t printConfigValues() { return 0;}
-static bool cleanUpMain() {
+
+bool Knossos::findAndRegisterAvailableDatasets() {
+    /* state->path stores the path to the dataset K was launched with */
+        uint32_t currMag, i;
+        char currPath[1024];
+        char levelUpPath[1024];
+        char currKconfPath[1024];
+        char datasetBaseDirName[1024];
+        char datasetBaseExpName[1024];
+        int32_t isPathSepTerminated = FALSE;
+        uint32_t pathLen;
+
+        memset(currPath, '\0', 1024);
+        memset(levelUpPath, '\0', 1024);
+        memset(currKconfPath, '\0', 1024);
+        memset(datasetBaseDirName, '\0', 1024);
+        memset(datasetBaseExpName, '\0', 1024);
+
+
+        /* Analyze state->name to find out whether K was launched with
+         * a dataset that allows multires. */
+
+        /* Multires is only enabled if K is launched with mag1!
+        * Launching it with another dataset than mag1 leads to the old
+        * behavior, that only this mag is shown, this happens also
+        * when the path contains no mag string. */
+        if((strstr(state->name, "mag") != NULL) && (state->magnification == 1)) {
+
+            /* take base path and go one level up */
+            pathLen = strlen(state->path);
+
+            for(i = 1; i < pathLen; i++) {
+                if((state->path[pathLen-i] == '\\')
+                    || (state->path[pathLen-i] == '/')) {
+                    if(i == 1) {
+                        /* This is the trailing path separator, ignore. */
+                        isPathSepTerminated = TRUE;
+                        continue;
+                    }
+                    /* this contains the path "one level up" */
+                    strncpy(levelUpPath, state->path, pathLen - i + 1);
+                    levelUpPath[pathLen - i + 1] = '\0';
+                    /* this contains the dataset dir without "mag1"
+                     * K must be launched with state->path set to the
+                     * mag1 dataset for multires to work! This is by convention. */
+                    if(isPathSepTerminated) {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
+                        datasetBaseDirName[i - 6] = '\0';
+                    }
+                    else {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
+                        datasetBaseDirName[i - 5] = '\0';
+                    }
+
+                    break;
+                }
+            }
+
+            state->lowestAvailableMag = INT_MAX;
+            state->highestAvailableMag = 1;
+            //currMag = 1;
+
+            /* iterate over all possible mags and test their availability */
+            for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+
+                /* compile the path to the currently tested directory */
+                //if(i!=0) currMag *= 2;
+        #ifdef LINUX
+                sprintf(currPath,
+                    "%s%smag%d/",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #else
+                sprintf(currPath,
+                    "%s%smag%d\\",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #endif
+                FILE *testKconf;
+                sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+
+                /* try fopen() on knossos.conf of currently tested dataset */
+                if ((testKconf = fopen(currKconfPath, "r"))) {
+
+                    if(state->lowestAvailableMag > currMag) {
+                        state->lowestAvailableMag = currMag;
+                    }
+                    state->highestAvailableMag = currMag;
+
+                    fclose(testKconf);
+                    /* add dataset path to magPaths; magPaths is used by the loader */
+
+                    strcpy(state->magPaths[log2uint32(currMag)], currPath);
+
+                    /* the last 4 letters are "mag1" by convention; if not,
+                     * K multires won't work */
+                    strncpy(datasetBaseExpName,
+                            state->name,
+                            strlen(state->name)-4);
+                    datasetBaseExpName[strlen(state->name)-4] = '\0';
+
+                    strncpy(state->datasetBaseExpName,
+                            datasetBaseExpName,
+                            strlen(datasetBaseExpName)-1);
+                    state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
+
+                    sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
+                } else break;
+            }
+
+            /* Do not enable multires by default, even if more than one dataset was found.
+             * Multires might be confusing to untrained tracers! Experts can easily enable it..
+             * The loaded gui config might lock K to the current mag later one, which is fine. */
+            if(state->highestAvailableMag > 1) {
+                state->viewerState->datasetMagLock = TRUE;
+            }
+
+            if(state->highestAvailableMag > NUM_MAG_DATASETS) {
+                state->highestAvailableMag = NUM_MAG_DATASETS;
+                LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS);
+            }
+
+            state->magnification = state->lowestAvailableMag;
+
+            /*state->boundary.x *= state->magnification;
+            state->boundary.y *= state->magnification;
+            state->boundary.z *= state->magnification;
+
+            state->scale.x /= (float)state->magnification;
+            state->scale.y /= (float)state->magnification;
+            state->scale.z /= (float)state->magnification;*/
+
+        }
+        /* no magstring found, take mag read from .conf file of dataset */
+        else {
+            /* state->magnification already contains the right mag! */
+
+            pathLen = strlen(state->path);
+
+            if((state->path[pathLen-1] == '\\')
+               || (state->path[pathLen-1] == '/')) {
+            #ifdef LINUX
+                state->path[pathLen-1] = '/';
+            #else
+                state->path[pathLen-1] = '\\';
+            #endif
+            }
+            else {
+            #ifdef LINUX
+                state->path[pathLen] = '/';
+            #else
+                state->path[pathLen] = '\\';
+            #endif
+                state->path[pathLen + 1] = '\0';
+            }
+
+            /* the loader uses only magNames and magPaths */
+            strcpy(state->magNames[log2uint32(state->magnification)], state->name);
+            strcpy(state->magPaths[log2uint32(state->magnification)], state->path);
+
+            state->lowestAvailableMag = state->magnification;
+            state->highestAvailableMag = state->magnification;
+
+            state->boundary.x *= state->magnification;
+            state->boundary.y *= state->magnification;
+            strcpy(state->datasetBaseExpName, state->name);
+            state->boundary.z *= state->magnification;
+
+            state->scale.x /= (float)state->magnification;
+            state->scale.y /= (float)state->magnification;
+            state->scale.z /= (float)state->magnification;
+
+            state->viewerState->datasetMagLock = TRUE;
+
+
+        }
+        return true;
+
+}
+
+bool Knossos::cleanUpMain() {
 
 
     free(tempConfig->viewerState);
@@ -127,12 +857,13 @@ static bool cleanUpMain() {
 
     return true;
 }
-static int32_t tempConfigDefaults() {
+
+bool Knossos::tempConfigDefaults() {
 
     uint32_t i = 0;
 
         if(tempConfig == NULL) {
-            tempConfig = emptyState();
+            tempConfig = Knossos::emptyState();
             if(tempConfig == NULL)
                 return FALSE;
         }
@@ -193,7 +924,7 @@ static int32_t tempConfigDefaults() {
         tempConfig->viewerState->viewPorts = (viewPort *) malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
         if(tempConfig->viewerState->viewPorts == NULL) {
             LOG("Out of memory.");
-            return FALSE;
+            return false;
         }
 
         memset(tempConfig->viewerState->viewPorts, '\0', tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
@@ -267,13 +998,38 @@ static int32_t tempConfigDefaults() {
         tempConfig->skeletonState->skeletonDCnumber = 8000;
         tempConfig->skeletonState->workMode = ON_CLICK_DRAG;
 
-        return TRUE;
+        return true;
 
 }
 
-static int32_t readDataConfAndLocalConf() { return 0;}
+bool Knossos::readDataConfAndLocalConf() {
 
-static int32_t configFromCli(int argCount, char *arguments[]) {
+    int32_t length;
+    char configFile[1024];
+
+    memset(configFile, '\0', 1024);
+    length = strlen(tempConfig->path);
+
+    if(length >= 1010) {
+        // We need to append "/knossos.conf"
+        LOG("Data path too long.");
+        _Exit(FALSE);
+    }
+
+    strcat(configFile, tempConfig->path);
+    strcat(configFile, "/knossos.conf");
+
+    LOG("Trying to read %s.", configFile);
+
+    readConfigFile(configFile);
+
+    readConfigFile("knossos.conf");
+
+    return true;
+
+}
+
+bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
 #define NUM_PARAMS 15
 
@@ -369,7 +1125,7 @@ static int32_t configFromCli(int argCount, char *arguments[]) {
                      Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
                      break;
                  case 11:
-                     readConfigFile(rval);
+                     Knossos::readConfigFile(rval);
                      break;
                  case 12:
                      tempConfig->magnification = (int32_t)atoi(rval);
@@ -387,269 +1143,26 @@ static int32_t configFromCli(int argCount, char *arguments[]) {
      }
  }
 
- return TRUE;
-
+ return true;
 }
-static int32_t loadNeutralDatasetLUT(GLuint *lut) { return 0;}
 
-
-static int32_t findAndRegisterAvailableDatasets() { return 0;}
 #ifdef LINUX
-static int32_t catchSegfault(int signum) { return 0;}
+void Knossos::catchSegfault(int signum) {
+    LOG("Oops, you found a bug. Tell the developers!");
+    fflush(stdout);
+    fflush(stderr);
+
+    _Exit(FALSE);
+
+}
 #endif
 
-//IMPORTANT. SDL redefines main
-#ifdef main
-#undef main
-#endif
-
-
-
-int main(int argc, char *argv[])
-{
-    qDebug("foo");
-    QApplication a(argc, argv);
-
-
-    // displaying the splash
-    MainWindow window;
-    window.showMaximized();
-
-    QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
-    splashScreen.show();
-
-    // legacy init code
-    // TODO SDL_INIT Alternative für QT/C++
-    Loader *loadingThread;
-    Viewer *viewingThread;
-    Remote *remoteThread;
-    Client *clientThread;
-
-
-    state = emptyState();
-
-    state->loadSignal = FALSE;
-    state->remoteSignal = FALSE;
-    state->quitSignal = FALSE;
-    state->clientSignal = FALSE;
-    state->conditionLoadSignal = new QWaitCondition();
-    state->conditionRemoteSignal = new QWaitCondition();
-    state->conditionClientSignal = new QWaitCondition();
-    state->protectSkeleton = new QMutex();
-    state->protectLoadSignal = new QMutex();
-    state->protectRemoteSignal = new QMutex();
-    state->protectClientSignal = new QMutex();
-    state->protectCube2Pointer = new QMutex();
-    state->protectPeerList = new QMutex();
-    state->protectOutBuffer = new QMutex();
-
-
-
-    if(tempConfigDefaults() != TRUE) {
-        LOG("Error loading default parameters.");
-        _Exit(FALSE);
-    }
-        // TODO
-
-        if(argc >= 2)
-            configFromCli(argc, argv);
-
-        if(tempConfig->path[0] != '\0') {
-            // Got a path from cli.
-            readDataConfAndLocalConf();
-            // We need to read the specified config file again because it should
-            // override all parameters from other config files.
-            configFromCli(argc, argv);
-        }
-        else
-            readConfigFile("knossos.conf");
-
-
-        state->viewerState->voxelDimX = tempConfig->scale.x;
-        state->viewerState->voxelDimY = tempConfig->scale.y;
-        state->viewerState->voxelDimZ = tempConfig->scale.z;
-
-        if(argc >= 2) {
-            if(configFromCli(argc, argv) == FALSE) {
-                LOG("Error reading configuration from command line.");
-            }
-        }
-
-        // TODO
-        //if(initStates(state) != TRUE) {
-        //    LOG("Error during initialization of the state struct.");
-        //    _Exit(FALSE);
-        //}
-
-
-        printConfigValues();
-
-        viewingThread = new Viewer(); // viewer() is called in constructor
-        loadingThread = new Loader(); // TODO call loader() in constructor
-        remoteThread = new Remote(); // TODO call remote() in constructor
-        clientThread = new Client(); // TODO call client() in constructor
-
-        loadingThread->wait();
-        remoteThread->wait();
-        viewingThread->wait();
-        clientThread->wait();
-
-
-        //SDL_Quit(); // SQL_QUIT
-
-        cleanUpMain();
-
-
-    return a.exec();
-}
-
-/* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
-uint32_t Knossos::ones32(register uint32_t x) {
-        /* 32-bit recursive reduction using SWAR...
-       but first step is mapping 2-bit values
-       into sum of 2 1-bit values in sneaky way
-    */
-        x -= ((x >> 1) & 0x55555555);
-        x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
-        x = (((x >> 4) + x) & 0x0f0f0f0f);
-        x += (x >> 8);
-        x += (x >> 16);
-        return(x & 0x0000003f);
-}
-
-
-/* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
-uint32_t Knossos::log2uint32(register uint32_t x) {
-
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-
-    return(ones32(x >> 1));
-}
-
-bool Knossos::lockSkeleton(int32_t targetRevision) {
+int32_t loadDefaultTreeLUT() {
     /*
-     * If a skeleton modifying function is called on behalf of the network client,
-     * targetRevision should be set to the appropriate remote value and lockSkeleton()
-     * will decide whether to commit the change or if the skeletons have gone out of sync.
-     * (This means that the return value of this function if very important and always
-     * has to be checked. If the function returns a failure, the skeleton change cannot
-     * proceed.)
-     * If the function is being called on behalf of the user, targetRevision should be
-     * set to CHANGE_MANUAL (== 0).
-     *
-     */
-
-    state->protectSkeleton->lock();
-
-     if(targetRevision != CHANGE_MANUAL) {
-         /* We can only commit a remote skeleton change if the remote revision count
-          * is exactly the local revision count plus 1.
-          * If the function changing the skeleton encounters an error, unlockSkeleton() has
-          * to be called without incrementing the local revision count and the skeleton
-          * synchronization has to be cancelled */
-
-        /* printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
-                targetRevision, state->skeletonState->skeletonRevision);
-         */
-
-        if(targetRevision != state->skeletonState->skeletonRevision + 1) {
-            // Local and remote skeletons have gone out of sync.
-            Client::skeletonSyncBroken();
-            return FALSE;
-        }
-     }
-
-     return TRUE;
-}
-bool Knossos::unlockSkeleton(int32_t increment) {
-    /* We cannot increment the revision count if the skeleton change was
-     * not successfully commited (i.e. the skeleton changing function encountered
-     * an error). In that case, the connection has to be closed and the user
-     * must be notified. */
-
-     /*
-      * Increment signals either success or failure of the operation that made
-      * locking the skeleton necessary.
-      * It's here as a parameter for historical reasons and will be removed soon
-      * unless it turns out to be useful for something else...
-      *
-      */
-
-    state->protectSkeleton->unlock();
-
-    return TRUE;
-}
-
-bool Knossos::sendClientSignal() {
-    state->protectClientSignal->lock();
-    state->clientSignal = TRUE;
-    state->protectClientSignal->unlock();
-
-    state->conditionClientSignal->wakeOne();
-
-    return TRUE;
-}
-
-bool Knossos::sendRemoteSignal() {
-    state->protectRemoteSignal->lock();
-    state->remoteSignal = TRUE;
-    state->protectRemoteSignal->unlock();
-
-    state->conditionRemoteSignal->wakeOne();
-
-    return TRUE;
-}
-
-/* allows the on-the-fly change of the dataset name, making the simple uncached
-multi-res. implementation possible.
-this function should only be called from the viewer thread! */
-void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {
-    /* the loader is required to not block this mutex for too long,
-    * the user might experience short KNOSSOS lock-ups while zooming
-    * otherwise. */
-    state->protectDatasetChange->lock();
-    state->datasetChangeSignal = upOrDownFlag;
-    state->protectDatasetChange->unlock();
-
-    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z);
-}
-bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
-    state->protectLoadSignal->lock();
-
-    state->loadSignal = TRUE;
-
-    /* Convert the coordinate to the right mag. The loader
-    * is agnostic to the different dataset magnifications.
-    * The int division is hopefully not too much of an issue here */
-    SET_COORDINATE(state->currentPositionX,
-                   x / state->magnification,
-                   y / state->magnification,
-                   z / state->magnification);
-
-    state->protectLoadSignal->unlock();
-
-    state->conditionLoadSignal->wakeOne();
-
-    return TRUE;
-}
-bool Knossos::sendQuitSignal() {
-    GUI::UI_saveSettings();
-
-    state->quitSignal = TRUE;
-
-    Knossos::sendRemoteSignal();
-    Knossos::sendClientSignal();
-
-    state->protectLoadSignal->lock();
-    state->loadSignal = TRUE;
-    state->protectLoadSignal->unlock();
-
-    state->conditionLoadSignal->wakeOne();
+    if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
+        loadTreeLUTFallback();
+        treeColorAdjustmentsChanged();
+    }
+    */
     return TRUE;
 }

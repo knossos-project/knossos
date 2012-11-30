@@ -517,13 +517,13 @@ struct stateInfo {
 
         // Tell the loading thread that it should interrupt its work /
         // its sleep and do something new.
-        int32_t loadSignal;
+        bool loadSignal;
 
         // If loadSignal is TRUE and quitSignal is TRUE, make the
         // loading thread quit. loadSignal == TRUE means the loader
         // has been signalled. If quitSignal != TRUE, it will go on
         // loading its stuff.
-        int32_t quitSignal;
+        bool quitSignal;
 
 		// These signals are used to communicate with the remote.
 		int32_t remoteSignal;

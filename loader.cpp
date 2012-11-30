@@ -722,7 +722,7 @@ static bool loadCubes() {
         // the c standard doesn't make sure that int reads / writes are atomic!
         // nothing to fear probably on amd64 however..
         state->protectDatasetChange->lock();
-        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE)) {
+        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == true)) {
             state->protectDatasetChange->unlock();
 
             if(Hashtable::ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
@@ -758,14 +758,14 @@ bool Loader::loader() {
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
     while(TRUE) {
-        while(state->loadSignal == FALSE) {
+        while(state->loadSignal == false) {
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             state->conditionLoadSignal->wait(state->protectLoadSignal);
         }
-        state->loadSignal = FALSE;
+        state->loadSignal = false;
 
-        if(state->quitSignal == TRUE) {
+        if(state->quitSignal == true) {
             LOG("Loader quitting.");
             break;
         }
