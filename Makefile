@@ -63,4 +63,4 @@ customStyle.o: customStyle.c
 
 .PHONY: clean
 clean:
-	rm -f knossos hash.o loader.o knossos.o coordinate.o viewer.o remote.o y.tab.o y.tab.c y.tab.h lex.yy.o lex.yy.c lex.yy.h renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o
+	rm -f knossos hash.o loader.o knossos.o coordinate.o viewer.o remote.o y.tab.o y.tab.c y.tab.h lex.yy.o lex.yy.c lex.yy.h renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o refreshTime.o
