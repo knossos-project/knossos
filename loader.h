@@ -36,6 +36,6 @@ static int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube);
 static CubeSlotList *slotListNew();
 static int32_t slotListDel(CubeSlotList *delList);
 static int32_t initLoader();
-static uint32_t removeLoadedCubes();
+static uint32_t removeLoadedCubes(int32_t magChanged);
 static uint32_t loadCubes();
 static int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target);

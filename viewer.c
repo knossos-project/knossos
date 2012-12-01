@@ -299,9 +299,8 @@ static int32_t initViewer() {
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z);
-
-
+                   state->viewerState->currentPosition.z,
+                   NO_MAG_CHANGE);
 
     return TRUE;
 }
@@ -1403,7 +1402,8 @@ uint32_t userMove(
 
         sendLoadSignal(viewerState->currentPosition.x,
                        viewerState->currentPosition.y,
-                       viewerState->currentPosition.z);
+                       viewerState->currentPosition.z,
+                       NO_MAG_CHANGE);
     }
     checkIdleTime();
     return TRUE;
@@ -1491,7 +1491,10 @@ uint32_t changeDatasetMag(uint32_t upOrDownFlag) {
 
         }
     }*/
-    sendDatasetChangeSignal(upOrDownFlag);
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z,
+                   upOrDownFlag);
     //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
     //state->skeletonState->skeletonChanged = TRUE;

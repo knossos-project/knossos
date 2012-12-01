@@ -46,6 +46,7 @@ extern struct stateInfo *state;
 
 int loader() {
     struct loaderState *loaderState = state->loaderState;
+    int32_t magChange = FALSE;
 
     SDL_LockMutex(state->protectLoadSignal);
 
@@ -60,19 +61,16 @@ int loader() {
             SDL_CondWait(state->conditionLoadSignal, state->protectLoadSignal);
         }
         state->loadSignal = FALSE;
+        magChange = FALSE;
+        if(state->datasetChangeSignal) {
+            state->datasetChangeSignal = NO_MAG_CHANGE;
+            magChange = TRUE;
+        }
 
         if(state->quitSignal == TRUE) {
             LOG("Loader quitting.");
             break;
         }
-
-        /* We protect all subsequent hash-table operations to avoid
-         * inconsistent Dcoi lists. However, the mutex will be unlocked
-         * for the time-consuming I/O operations in loadCubes().*/
-        SDL_LockMutex(state->protectDatasetChange);
-
-
-        //state->loaderBoundary = state->magBoundaries[state->loaderMagnification];
 
         // currentPositionX is updated only when the boundary is
         // crossed. Access to currentPositionX is synchronized through
@@ -89,10 +87,8 @@ int loader() {
         // DCOI now contains the coordinates of all cubes we want, based
         // on our current position. However, some of those might already be
         // in memory. We remove them.
-       /* if(state->datasetChangeSignal != NO_MAG_CHANGE) {
-            LOG("dataset change signal true, removing cubes");
-        }*/
-        if(removeLoadedCubes() != TRUE) {
+
+        if(removeLoadedCubes(magChange) != TRUE) {
             LOG("Error removing already loaded cubes from DCOI.");
             continue;
         }
@@ -100,22 +96,6 @@ int loader() {
         state->loaderMagnification = log2uint32(state->magnification);
         strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
         strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
-        /* multires mag change triggered by viewer! */
-        if(state->datasetChangeSignal != NO_MAG_CHANGE) {
-
-            /* calculate a new dcoi list; not sure whether this is necessary..
-             * it might work with DcoiFromPos call a few lines above */
-            if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
-                LOG("Error computing DCOI from position.");
-                continue;
-            }
-            //LOG("loader mag change triggered, now in mag %d", state->loaderMagnification);
-            state->datasetChangeSignal = NO_MAG_CHANGE;
-        }
-
-        //state->datasetChangeSignal = FALSE;
-        SDL_UnlockMutex(state->protectDatasetChange);
-
 
         // DCOI is now a list of all datacubes that we want in memory, given
         // our current position and that are not yet in memory. We go through
@@ -220,7 +200,6 @@ static uint32_t loadCube(Coordinate coordinate,
     char typeExtension[8] = "";
     FILE *cubeFile = NULL;
     int32_t readBytes = 0;
-    uint32_t cancelCubeLoading = FALSE;
 
     /*
      * Specify either freeDcSlot or freeOcSlot.
@@ -231,16 +210,6 @@ static uint32_t loadCube(Coordinate coordinate,
      * never occur.
      *
      */
-
-    /* check before we start to do time consuming I/O... */
-    SDL_LockMutex(state->protectDatasetChange);
-    if(state->datasetChangeSignal != NO_MAG_CHANGE) {
-        cancelCubeLoading = TRUE;
-    }
-    SDL_UnlockMutex(state->protectDatasetChange);
-    if(cancelCubeLoading == TRUE) {
-        goto loadcube_fail;
-    }
 
     if((freeDcSlot && freeOcSlot) ||
        (!freeDcSlot && !freeOcSlot)) {
@@ -569,7 +538,7 @@ static int32_t initLoader() {
     return TRUE;
 }
 
-static uint32_t removeLoadedCubes() {
+static uint32_t removeLoadedCubes(int32_t magChange) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     Byte *delCubePtr = NULL;
     Hashtable *mergeCube2Pointer = NULL;
@@ -594,19 +563,21 @@ static uint32_t removeLoadedCubes() {
         return FALSE;
     }
 
+    SDL_LockMutex(state->protectCube2Pointer);
     if(ht_union(mergeCube2Pointer,
                 state->Dc2Pointer[state->loaderMagnification],
                 state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
         LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
         return FALSE;
     }
+    SDL_UnlockMutex(state->protectCube2Pointer);
 
     currentCube = mergeCube2Pointer->listEntry->next;
     while(currentCube != mergeCube2Pointer->listEntry) {
         nextCube = currentCube->next;
 
         if((ht_get(state->loaderState->Dcoi, currentCube->coordinate) == HT_FAILURE)
-           || (state->datasetChangeSignal != NO_MAG_CHANGE)) {
+           || magChange) {
             /*
              * This element is not in Dcoi, which means we can reuse its
              * slots for new DCs / OCs.
@@ -617,9 +588,6 @@ static uint32_t removeLoadedCubes() {
              * add them back to the free slots lists.
              *
              */
-             //        if(state->datasetChangeSignal != NO_MAG_CHANGE) {
-            //LOG("dataset change signal true, removing cubes");
-        //}
 
             SDL_LockMutex(state->protectCube2Pointer);
 
@@ -711,8 +679,9 @@ static uint32_t loadCubes() {
          * Load the datacube for the current coordinate.
          *
          */
+
         if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == FALSE) {
-            LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag%d dataset.",
+            LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
@@ -723,7 +692,7 @@ static uint32_t loadCubes() {
 
         loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL);
         if(!loadedDc) {
-            LOG("Error loading Dc (%d, %d, %d) into slot %p, mag%d dataset.",
+            LOG("Error loading Dc (%d, %d, %d) into slot %p, mag %d dataset.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
@@ -831,12 +800,9 @@ static uint32_t loadCubes() {
         // user crosses the reload-boundary
         // or when the dataset changed as a consequence of a mag switch
 
-        // reading of state->loadSignal should be mutex protected as well,
-        // the c standard doesn't make sure that int reads / writes are atomic!
-        // nothing to fear probably on amd64 however..
-        SDL_LockMutex(state->protectDatasetChange);
+        SDL_LockMutex(state->protectLoadSignal);
         if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE)) {
-            SDL_UnlockMutex(state->protectDatasetChange);
+            SDL_UnlockMutex(state->protectLoadSignal);
 
             if(ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
                 LOG("Error removing Dcoi. This is a memory leak.");
@@ -850,10 +816,8 @@ static uint32_t loadCubes() {
             }
 
             return FALSE;
-
-
         }
-        else SDL_UnlockMutex(state->protectDatasetChange);
+        else SDL_UnlockMutex(state->protectLoadSignal);
 
         currentCube = nextCube;
     }

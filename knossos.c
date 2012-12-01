@@ -716,14 +716,17 @@ static uint32_t isPathString(char *string) {
 }
 */
 
-int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
+int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
     SDL_LockMutex(state->protectLoadSignal);
 
     state->loadSignal = TRUE;
+    state->datasetChangeSignal = magChanged;
 
     /* Convert the coordinate to the right mag. The loader
-    * is agnostic to the different dataset magnifications.
-    * The int division is hopefully not too much of an issue here */
+     * is agnostic to the different dataset magnifications.
+     * The int division is hopefully not too much of an issue
+     * here */
+
     SET_COORDINATE(state->currentPositionX,
                    x / state->magnification,
                    y / state->magnification,
@@ -735,25 +738,6 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
 
     return TRUE;
 }
-
-/* allows the on-the-fly change of the dataset name, making the simple uncached
-multi-res. implementation possible.
-this function should only be called from the viewer thread! */
-void sendDatasetChangeSignal(uint32_t upOrDownFlag) {
-    /* the loader is required to not block this mutex for too long,
-    * the user might experience short KNOSSOS lock-ups while zooming
-    * otherwise. */
-    SDL_LockMutex(state->protectDatasetChange);
-    state->datasetChangeSignal = upOrDownFlag;
-    SDL_UnlockMutex(state->protectDatasetChange);
-
-
-
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z);
-}
-
 
 int32_t sendClientSignal() {
     SDL_LockMutex(state->protectClientSignal);

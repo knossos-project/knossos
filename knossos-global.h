@@ -520,12 +520,6 @@ struct stateInfo {
         SDL_mutex *protectCube2Pointer;
 
         /*
-        * Protects a dataset change i.e. the change of state->path and or
-        * state->name; used for the current multi-res. implementation
-        */
-        SDL_mutex *protectDatasetChange;
-
-        /*
          * Protect the network output buffer and the network peers list
          */
         SDL_mutex *protectOutBuffer;
@@ -1317,12 +1311,11 @@ uint32_t lastpow2(uint32_t a);
  */
 int32_t unlockSkeleton(int32_t increment);
 int32_t lockSkeleton(int32_t targetRevision);
-int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
+int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
 int32_t sendRemoteSignal();
 int32_t sendClientSignal();
 int32_t sendQuitSignal();
 int32_t sendServerSignal();
-void sendDatasetChangeSignal(uint32_t upOrDownFlag);
 uint32_t log2uint32(register uint32_t x);
 uint32_t ones32(register uint32_t x);
 
