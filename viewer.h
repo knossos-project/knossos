@@ -47,7 +47,7 @@ public:
     static bool recalcTextureOffsets();
     static bool refreshViewports();
 
-
+    void run();
 
 signals:
     
