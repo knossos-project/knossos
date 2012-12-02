@@ -645,7 +645,7 @@ struct agConfig {
     char titleString[2048];
 
     char recentFiles[MAX_RECENT_FILES][4096];
-    AG_MenuItem *appMenuRoot;
+   // AG_MenuItem *appMenuRoot;
 
     // Current position of the user crosshair,
     //starting at 1 instead 0. This is shown to the user,
@@ -676,7 +676,7 @@ struct agConfig {
     color4F actTreeColor;
 
     // File dialog widget variables and buffers
-    AG_FileType *fileTypeNml;
+  //  AG_FileType *fileTypeNml;
 
     char skeletonDirectory[2048];
     char datasetLUTDirectory[2048];
@@ -708,70 +708,69 @@ struct agConfig {
 
     int agInputWdgtFocused;
 
-    AG_Window *agWin;
+   // AG_Window *agWin;
 
 
-    AG_Window *navOptWin;
-    AG_Window *dispOptWin;
-    AG_Window *syncOptWin;
-    AG_Label *syncOptLabel;
-    AG_Window *saveOptWin;
-    AG_Window *renderingOptWin;
-    AG_Window *spatLockOptWin;
-    AG_Window *volTraceOptWin;
-    AG_Window *dataSetStatsWin;
-    AG_Window *viewPortPrefWin;
-    AG_Window *zoomingWin;
-    AG_Window *tracingTimeWin;
-    AG_Window *commentsWin;
-    AG_Window *setDynRangeWin;
-	AG_Window *coordBarWin;
-    AG_Window *skeletonVpToolsWin;
-    AG_Window *dataSizeWinxy;
-    AG_Window *dataSizeWinxz;
-    AG_Window *dataSizeWinyz;
-	AG_Window *navWin;
-	AG_Window *toolsWin;
-	AG_Window *aboutWin;
+   // AG_Window *navOptWin;
+  //  AG_Window *dispOptWin;
+  //  AG_Window *syncOptWin;
+  //  AG_Label *syncOptLabel;
+  //  AG_Window *saveOptWin;
+  //  AG_Window *renderingOptWin;
+  //  AG_Window *spatLockOptWin;
+  //  AG_Window *volTraceOptWin;
+  //  AG_Window *dataSetStatsWin;
+  //  AG_Window *viewPortPrefWin;
+  //  AG_Window *zoomingWin;
+  //  AG_Window *tracingTimeWin;
+  //  AG_Window *commentsWin;
+ //   AG_Window *setDynRangeWin;
+//	AG_Window *coordBarWin;
+ //   AG_Window *skeletonVpToolsWin;
+   // AG_Window *dataSizeWinxy;
+//    AG_Window *dataSizeWinxz;
+ //	AG_Window *navWin;
+//	AG_Window *toolsWin;
+    //AG_Window *aboutWin;
 
-    AG_Window *openFileDlgWin;
-    AG_FileDlg *fileDlgOpenSkel;
+   // AG_Window *openFileDlgWin;
+   // AG_FileDlg *fileDlgOpenSkel;
 
-    AG_Window *saveAsFileDlgWin;
-    AG_FileDlg *fileDlgSaveAsSkel;
+    //AG_Window *saveAsFileDlgWin;
+   // AG_FileDlg *fileDlgSaveAsSkel;
 
-    AG_Window *loadImgJTableWin;
-    AG_FileDlg *fileDlgOpenImgJTable;
+   // AG_Window *loadImgJTableWin;
+   // AG_FileDlg *fileDlgOpenImgJTable;
 
-    AG_Window *consoleWin;
-    AG_Console *agConsole;
+    //AG_Window *consoleWin;
+   // AG_Console *agConsole;
 
-    AG_Window *vpXyWin;
-    AG_GLView *glViewXy;
+   // AG_Window *vpXyWin;
+   // AG_GLView *glViewXy;
 
-    AG_Window *vpXzWin;
-    AG_GLView *glViewXz;
+    //AG_Window *vpXzWin;
+   // AG_GLView *glViewXz;
 
-    AG_Window *vpYzWin;
-    AG_GLView *glViewYz;
+    //AG_Window *vpYzWin;
+   // AG_GLView *glViewYz;
 
-    AG_Window *vpSkelWin;
-    AG_GLView *glViewSkel;
+   // AG_Window *vpSkelWin;
+   // AG_GLView *glViewSkel;
 
-    AG_FileDlg *fileDlg;
+    //AG_FileDlg *fileDlg;
 
-    AG_Numerical *actNodeIDWdgt1;
-    AG_Numerical *actNodeIDWdgt2;
+    //AG_Numerical *actNodeIDWdgt1;
+   // AG_Numerical *actNodeIDWdgt2;
 
     //Labels in Viewports for DataSize
-    AG_Label *dataSizeLabelxy;
-    AG_Label *dataSizeLabelxz;
-    AG_Label *dataSizeLabelyz;
+    //AG_Label *dataSizeLabelxy;
+    //AG_Label *dataSizeLabelxz;
+    //AG_Label *dataSizeLabelyz;
 
     //Labels in tracingTimeWin
-    AG_Label *runningTime;
-    AG_Label *tracingTime;
-    AG_Label *idleTime;
+    //AG_Label *runningTime;
+    //AG_Label *tracingTime;
+    //AG_Label *idleTime;
 
     //Chars for commentsWin
 
@@ -786,11 +785,11 @@ struct agConfig {
     float zoomSkeletonViewport;
     float zoomOrthoVPs;
 
-	AG_Checkbox *vpLabelBox;
-	AG_Checkbox *highlightActiveTreeBox;
-    AG_Checkbox *showAllNodeIDsBox;
-    AG_Checkbox *datasetLinearFilteringBox;
-    AG_Checkbox *AutoTracingBox;
+    //AG_Checkbox *vpLabelBox;
+    //AG_Checkbox *highlightActiveTreeBox;
+    //AG_Checkbox *showAllNodeIDsBox;
+    //AG_Checkbox *datasetLinearFilteringBox;
+    //AG_Checkbox *AutoTracingBox;
 
 };
 

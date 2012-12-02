@@ -749,7 +749,7 @@ static bool loadCubes() {
     return TRUE;
 }
 bool Loader::loader() {
-    loaderState *loaderState = state->loaderState;
+   /* loaderState *loaderState = state->loaderState;
 
     state->protectLoadSignal->lock();
 
@@ -758,7 +758,7 @@ bool Loader::loader() {
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
     while(TRUE) {
-        while(state->loadSignal == false) {
+       while(state->loadSignal == false) {
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             state->conditionLoadSignal->wait(state->protectLoadSignal);
@@ -770,9 +770,9 @@ bool Loader::loader() {
             break;
         }
 
-        /* We protect all subsequent hash-table operations to avoid
-         * inconsistent Dcoi lists. However, the mutex will be unlocked
-         * for the time-consuming I/O operations in loadCubes().*/
+        // We protect all subsequent hash-table operations to avoid
+        //  inconsistent Dcoi lists. However, the mutex will be unlocked
+        //  for the time-consuming I/O operations in loadCubes().
         state->protectDatasetChange->lock();
 
 
@@ -793,9 +793,9 @@ bool Loader::loader() {
         // DCOI now contains the coordinates of all cubes we want, based
         // on our current position. However, some of those might already be
         // in memory. We remove them.
-       /* if(state->datasetChangeSignal != NO_MAG_CHANGE) {
-            LOG("dataset change signal true, removing cubes");
-        }*/
+        // if(state->datasetChangeSignal != NO_MAG_CHANGE) {
+        //     LOG("dataset change signal true, removing cubes");
+        // }
         if(removeLoadedCubes() != TRUE) {
             LOG("Error removing already loaded cubes from DCOI.");
             continue;
@@ -804,11 +804,11 @@ bool Loader::loader() {
         state->loaderMagnification = Knossos::log2uint32(state->magnification);
         strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
         strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
-        /* multires mag change triggered by viewer! */
+        // multires mag change triggered by viewer!
         if(state->datasetChangeSignal != NO_MAG_CHANGE) {
 
-            /* calculate a new dcoi list; not sure whether this is necessary..
-             * it might work with DcoiFromPos call a few lines above */
+            // calculate a new dcoi list; not sure whether this is necessary..
+            // it might work with DcoiFromPos call a few lines above
             if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
                 LOG("Error computing DCOI from position.");
                 continue;
@@ -837,7 +837,7 @@ bool Loader::loader() {
         LOG("Error cleaning up loading thread.");
         return FALSE;
     }
-
+*/
     return TRUE;
 }
 

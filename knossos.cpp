@@ -29,7 +29,7 @@ struct stateInfo *state = NULL;
  int32_t Knossos::initStates() {
     uint32_t i;
 
-        /* General stuff */
+        //General stuff
         state->boergens = tempConfig->boergens;
         strncpy(state->path, tempConfig->path, 1024);
         strncpy(state->name, tempConfig->name, 1024);
@@ -56,7 +56,7 @@ struct stateInfo *state = NULL;
         state->overlay = tempConfig->overlay;
 
 
-        /* For the viewer */
+        // For the viewer
         state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;
         state->viewerState->vpKeyDirection[VIEWPORT_XY] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY];
         state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
@@ -84,7 +84,7 @@ struct stateInfo *state = NULL;
         state->viewerState->autoTracingMode = 0;
         state->viewerState->autoTracingDelay = 50;
         state->viewerState->autoTracingSteps = 10;
-        /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
+        // the voxel dim stuff needs an cleanup. this is such a mess. fuck
         state->viewerState->voxelDimX = state->scale.x;
         state->viewerState->voxelDimY = state->scale.y;
         state->viewerState->voxelDimZ = state->scale.z;
@@ -121,33 +121,31 @@ struct stateInfo *state = NULL;
             state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
             state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
             state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
-    /* old version, smaller buffer
-            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-                        (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
-                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-                        * 2.;
-    */
-            /* make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering! */
-    /*        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-                        ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
-                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-                        * 2.;
-    */
-    /* latest version */
+    // old version, smaller buffer
+    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+    //                    (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
+    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+    //                    * 2.;
 
-    /*
-            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-                tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-                        ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
-                        / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-                        * (float) tempConfig->cubeEdgeLength);
-            state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-                tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+           //  make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering!
+    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+    //                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
+    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+    //                    * 2.;
 
-                * (float) tempConfig->cubeEdgeLength)
-                / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+    // latest version
 
-    */
+
+    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+    //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+    //                    ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
+    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+    //                    * (float) tempConfig->cubeEdgeLength);
+    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+    //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+
+    //            * (float) tempConfig->cubeEdgeLength)
+    //            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
         }
 
         if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
@@ -158,12 +156,12 @@ struct stateInfo *state = NULL;
         // TODO
         // calcDisplayedEdgeLength();
 
-        /* For the GUI */
+        // For the GUI
         strncpy(state->viewerState->ag->settingsFile,
                 tempConfig->viewerState->ag->settingsFile,
                 2048);
 
-        /* For the client */
+        // For the client
 
         state->clientState->connectAsap = tempConfig->clientState->connectAsap;
         state->clientState->connectionTimeout = tempConfig->clientState->connectionTimeout;
@@ -208,7 +206,7 @@ struct stateInfo *state = NULL;
         state->clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
         state->clientState->saveMaster = tempConfig->clientState->saveMaster;
 
-        /* For the skeletonizer */
+        // For the skeletonizer
         state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
         state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
         state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
@@ -229,12 +227,12 @@ struct stateInfo *state = NULL;
         state->skeletonState->idleTimeNow = 0;
         state->skeletonState->idleTimeLast = 0;
 
-        /* For the remote */
+        // For the remote
         state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
         state->remoteState->maxTrajectories = tempConfig->remoteState->maxTrajectories;
         state->remoteState->type = tempConfig->remoteState->type;
 
-        /* Those values can be calculated from given parameters */
+        // Those values can be calculated from given parameters
         state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
         state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
         state->cubeSetElements = state->M * state->M * state->M;
@@ -252,16 +250,16 @@ struct stateInfo *state = NULL;
         // size of the supercube and index using the modulo operator.
         // sadly, that realization came rather late. ;)
 
-        /* creating the hashtables is cheap, keeping the datacubes is
-         * memory expensive..  */
+        // creating the hashtables is cheap, keeping the datacubes is
+        // memory expensive..
         for(i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
             state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
             state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
             if(i == 0) i = 1;
         }
 
-        /* searches for multiple mag datasets and enables multires if more
-         * than one was found */
+        // searches for multiple mag datasets and enables multires if more
+        //  than one was found
         Knossos::findAndRegisterAvailableDatasets();
 
         return TRUE;
@@ -346,11 +344,11 @@ int main(int argc, char *argv[])
             }
         }
 
-        // TODO
-        //if(initStates(state) != TRUE) {
-        //    LOG("Error during initialization of the state struct.");
-        //    _Exit(FALSE);
-        //}
+
+        if(Knossos::initStates() != TRUE) {
+            LOG("Error during initialization of the state struct.");
+            _Exit(FALSE);
+        }
 
 
         Knossos::printConfigValues();
@@ -362,7 +360,6 @@ int main(int argc, char *argv[])
 
         loadingThread->start();
 
-        loadingThread->wait();
         remoteThread->wait();
         viewingThread->wait();
         clientThread->wait();
@@ -627,13 +624,13 @@ struct stateInfo *Knossos::emptyState() {
         return FALSE;
      memset(state->viewerState, '\0', sizeof(struct viewerState));
 
-     /*
-     // TODO Probleme mit agConfig
-     state->viewerState->ag = (agConfig *) malloc(sizeof(struct agConfig));
-     if(state->viewerState->ag == NULL)
-         return FALSE;
+
+     state->viewerState->ag = (struct agConfig *)malloc(sizeof(struct agConfig));
+     if(state->viewerState->ag == NULL) {
+        return FALSE;
+     }
      memset(state->viewerState->ag, '\0', sizeof(struct agConfig));
-    */
+
 
      state->remoteState = (remoteState *)malloc(sizeof(struct remoteState));
      if(state->remoteState == NULL)
@@ -965,8 +962,7 @@ bool Knossos::tempConfigDefaults() {
         }
 
         // For the GUI
-        // TODO instruction leads to crash since agConfig is not used, will be replaced
-        // snprintf(tempConfig->viewerState->ag->settingsFile, 2048, "defaultSettings.xml");
+        snprintf(tempConfig->viewerState->ag->settingsFile, 2048, "defaultSettings.xml");
 
         // For the client
         tempConfig->clientState->connectAsap = FALSE;
