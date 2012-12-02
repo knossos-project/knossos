@@ -1,5 +1,8 @@
 #include "viewer.h"
 #include "knossos.h"
+#include "skeletonizer.h"
+#include "renderer.h"
+#include "eventmodel.h"
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -1260,11 +1263,11 @@ bool Viewer::viewer() {
 
                     updateViewerState();
                     recalcTextureOffsets();
-                    updateSkeletonState();
-                    drawGUI();
+                    Skeletonizer::updateSkeletonState();
+                    Renderer::drawGUI();
 
                     while(SDL_PollEvent(&event)) {
-                        if(handleEvent(event) == FALSE) {
+                        if(EventModel::handleEvent(event) == FALSE) {
                             state->viewerState->viewerReady = FALSE;
                             return TRUE;
                         }
@@ -1288,7 +1291,7 @@ bool Viewer::viewer() {
 
             if(viewerState->userMove == FALSE) {
                 if(SDL_WaitEvent(&event)) {
-                    if(handleEvent(event) != TRUE) {
+                    if(EventModel::handleEvent(event) != TRUE) {
                         state->viewerState->viewerReady = FALSE;
                         return TRUE;
                     }

@@ -841,7 +841,7 @@ bool Loader::loader() {
     return TRUE;
 }
 
-bool Loader::run() {
+void Loader::run() {
     loader();
 }
 

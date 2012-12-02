@@ -360,6 +360,8 @@ int main(int argc, char *argv[])
         remoteThread = new Remote(); // TODO call remote() in constructor
         clientThread = new Client(); // TODO call client() in constructor
 
+        loadingThread->start();
+
         loadingThread->wait();
         remoteThread->wait();
         viewingThread->wait();

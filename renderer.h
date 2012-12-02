@@ -1,6 +1,19 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#define CURRENT_MAG_COORDINATES     0
+#define ORIGINAL_MAG_COORDINATES    1
+
+#define AUTOTRACING_NORMAL  0
+#define AUTOTRACING_VIEWPORT    1
+#define AUTOTRACING_TRACING 2
+#define AUTOTRACING_MIRROR  3
+
+#define ROTATIONSTATERESET 0
+#define ROTATIONSTATEXY 1
+#define ROTATIONSTATEXZ 3
+#define ROTATIONSTATEYZ 2
+
 #include <QObject>
 #include "knossos-global.h"
 

@@ -16,6 +16,7 @@ class EventModel : public QObject
 {
     Q_OBJECT
 public:
+    static bool handleEvent(SDL_Event event);
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls);
     bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls);

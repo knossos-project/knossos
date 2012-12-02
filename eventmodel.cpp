@@ -104,6 +104,8 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
     return true;
 }
 
+bool EventModel::handleEvent(SDL_Event event){return true;}
+
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls) {
     /*
     int32_t clickedNode;
