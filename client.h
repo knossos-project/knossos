@@ -9,25 +9,6 @@ class Client : public QThread
 {
     Q_OBJECT
 public:
-    int32_t connectAsap;
-    int32_t remotePort;
-    int32_t connected;
-    Byte synchronizePosition;
-    Byte synchronizeSkeleton;
-    int32_t connectionTimeout;
-    int32_t connectionTried;
-    char serverAddress[1024];
-    IPaddress remoteServer;
-    TCPsocket remoteSocket;
-    SDLNet_SocketSet socketSet;
-
-    uint32_t myId;
-    uint32_t saveMaster;
-
-    peerListElement *firstPeer;
-    IOBuffer *inBuffer;
-    IOBuffer *outBuffer;
-
     explicit Client(QObject *parent = 0);
     static int client();
     static bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
