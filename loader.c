@@ -230,11 +230,12 @@ static uint32_t loadCube(Coordinate coordinate,
         goto loadcube_fail;
     }
 
-    if(freeDcSlot)
+    if(freeDcSlot) {
         strncpy(typeExtension, "raw", 4);
-    else
+    }
+    else {
         strncpy(typeExtension, "overlay", 8);
-
+    }
     filename = malloc(strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
     if(filename == NULL) {
         LOG("Out of memory.");
@@ -318,9 +319,9 @@ static uint32_t loadCube(Coordinate coordinate,
                 readBytes,
                 state->cubeBytes,
                 filename);
-            if(fclose(cubeFile) != 0)
+            if(fclose(cubeFile) != 0) {
                 LOG("Additionally, an error occured closing the file");
-
+            }
             goto loadcube_fail;
         }
     }
@@ -331,9 +332,9 @@ static uint32_t loadCube(Coordinate coordinate,
                 readBytes,
                 state->cubeBytes * OBJID_BYTES,
                 filename);
-            if(fclose(cubeFile) != 0)
+            if(fclose(cubeFile) != 0) {
                 LOG("Additionally, an error occured closing the file");
-
+            }
             goto loadcube_fail;
         }
     }
@@ -491,9 +492,9 @@ static int32_t initLoader() {
         return FALSE;
     }
 
-    for(i = 0; i < state->cubeSetBytes; i += state->cubeBytes)
+    for(i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         slotListAddElement(loaderState->freeDcSlots, loaderState->DcSetChunk + i);
-
+    }
 
     if(state->overlay) {
         LOG("Allocating %d bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
@@ -503,9 +504,9 @@ static int32_t initLoader() {
             return FALSE;
         }
 
-        for(i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES)
+        for(i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
             slotListAddElement(loaderState->freeOcSlots, loaderState->OcSetChunk + i);
-
+        }
     }
 
     // Load the bogus dc (a placeholder when data is unavailable).
@@ -522,9 +523,9 @@ static int32_t initLoader() {
         }
         fclose(bogusDc);
     }
-    else
+    else {
         memset(state->loaderState->bogusDc, '\0', state->cubeBytes);
-
+    }
     if(state->overlay) {
         // bogus oc is white
         state->loaderState->bogusOc = malloc(state->cubeBytes * OBJID_BYTES);
@@ -817,8 +818,9 @@ static uint32_t loadCubes() {
 
             return FALSE;
         }
-        else SDL_UnlockMutex(state->protectLoadSignal);
-
+        else {
+            SDL_UnlockMutex(state->protectLoadSignal);
+        }
         currentCube = nextCube;
     }
 

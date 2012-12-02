@@ -157,17 +157,18 @@ int viewer() {
                     }
                 }
 
-                if(viewerState->userMove == TRUE)
+                if(viewerState->userMove == TRUE) {
                     break;
+                }
             }
 
             // An incoming user movement event makes the current backlog &
             // viewport lists obsolete and we regenerate them dependant on
             // the new position
 
-            // Leaves the loop that checks regularily for new available
+            // Leaves the loop that checks regularly for new available
             // texture parts because the whole texture has to be recreated
-            // if the users moves
+            // if the user moves
 
             currentVp = nextVp;
         }

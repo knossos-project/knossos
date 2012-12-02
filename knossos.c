@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if(initStates(state) != TRUE) {
+    if(initStates() != TRUE) {
         LOG("Error during initialization of the state struct.");
         _Exit(FALSE);
     }
@@ -992,7 +992,7 @@ static int32_t findAndRegisterAvailableDatasets() {
     else {
         if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
             isMultiresCompatible = TRUE;
-        }        
+        }
     }
 
     if(isMultiresCompatible && (state->magnification == 1)) {

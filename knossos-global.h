@@ -328,8 +328,6 @@ typedef struct _C2D_Element C2D_Element;
 //   list. Its Datacube-pointer is set to NULL and its Coordinates to (-1, -1,
 //   -1). As the coordinate system begins at (0, 0, 0), that's invalid.
 // * tablesize stores the size of the table and is always a power of two.
-// * lasthash stores the last value the hash function evaluated to and plays a
-//   role in computing the next hash value.
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
 

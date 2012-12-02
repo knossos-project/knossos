@@ -62,16 +62,11 @@ uint32_t handleEvent(SDL_Event event) {
 
     switch(event.type) {
         case SDL_MOUSEMOTION:
-            if (!handleMouse(event))
-                LOG("Error in handleMouse()");
-            break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!handleMouse(event))
-                LOG("Error in handleMouse()");
-            break;
         case SDL_MOUSEBUTTONUP:
-            if (!handleMouse(event))
+            if (!handleMouse(event)) {
                 LOG("Error in handleMouse()");
+            }
             break;
         case SDL_KEYDOWN:
             if(!handleKeyboard(event))
