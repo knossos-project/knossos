@@ -749,7 +749,7 @@ static bool loadCubes() {
     return TRUE;
 }
 bool Loader::loader() {
-   /* loaderState *loaderState = state->loaderState;
+    loaderState *loaderState = state->loaderState;
 
     state->protectLoadSignal->lock();
 
@@ -757,12 +757,23 @@ bool Loader::loader() {
     initLoader();
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
-    while(TRUE) {
+
+    while(true) {
+        qDebug("fof");
+
+    }
+
+    /*
+    while(true) {
+
        while(state->loadSignal == false) {
+
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             state->conditionLoadSignal->wait(state->protectLoadSignal);
+
         }
+
         state->loadSignal = false;
 
         if(state->quitSignal == true) {
@@ -826,18 +837,20 @@ bool Loader::loader() {
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
         if(loadCubes() == FALSE) {
-            //LOG("Loading of all DCOI did not complete.");
+            LOG("Loading of all DCOI did not complete.");
         }
 
         state->protectLoadSignal->lock();
-    }
+
+
+       }
 
     // Free the structures in loaderState and loaderState itself.
     if(cleanUpLoader(loaderState) == FALSE) {
         LOG("Error cleaning up loading thread.");
         return FALSE;
     }
-*/
+    */
     return TRUE;
 }
 

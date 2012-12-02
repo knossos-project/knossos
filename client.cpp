@@ -1,8 +1,6 @@
 //AGAR and SDL TODOS here
 
 #include <SDL/SDL.h>
-
-#include "knossos-global.h"
 #include "skeletonizer.h"
 #include "remote.h"
 #include "knossos.h"

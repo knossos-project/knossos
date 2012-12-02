@@ -1,8 +1,10 @@
 #include "viewer.h"
 #include "knossos.h"
+#include "client.h"
 #include "skeletonizer.h"
 #include "renderer.h"
 #include "eventmodel.h"
+#include "remote.h"
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -1082,7 +1084,19 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
     return true;
 }
 
-bool Viewer::updatePosition(int32_t serverMovement) { return true;}
+bool Viewer::updatePosition(int32_t serverMovement) {
+    Coordinate jump;
+
+        if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != TRUE) {
+            jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
+            jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
+            jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
+            userMove(jump.x, jump.y, jump.z, serverMovement);
+        }
+
+      return true;
+
+}
 
 bool Viewer::calcDisplayedEdgeLength() {
 
@@ -1306,19 +1320,347 @@ bool Viewer::viewer() {
 }
 
 //Initializes the window with the parameter given in viewerState
-bool Viewer::createScreen() { return true;}
+bool Viewer::createScreen() {
+    // TODO what about all that outcommented code ???
+    // initialize window
+        //SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 5 );
+        //SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
+        //SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+
+        //SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        if(state->viewerState->multisamplingOnOff) {
+            //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+            //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+        }
+        //else SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+
+        /*
+           At least on linux, the working directory is the directory from which
+           knossos was called. So 'icon' will or will not be found depending on the
+           directory from which knossos was started.
+        */
+
+
+
+        /*state->viewerState->screen = SDL_SetVideoMode(state->viewerState->screenSizeX,
+                                     state->viewerState->screenSizeY, 24,
+                                     SDL_OPENGL  | SDL_RESIZABLE);*/
+
+        /*if(state->viewerState->screen == NULL) {
+            printf("Unable to create screen: %s\n", SDL_GetError());
+            return FALSE;
+        }*/
+
+
+
+
+        //set clear color (background) and clear with it
+
+    return true;
+}
 
 //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->viewPorts[i].texture.data) to video memory
 //Calling makes only sense after full initialization of the SDL / OGL screen
-bool Viewer::initializeTextures() { return true;}
+bool Viewer::initializeTextures() {
+
+    uint32_t i = 0;
+
+        /*problem of deleting textures when calling again after resize?! TDitem */
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                //state->viewerState->viewPorts[i].displayList = glGenLists(1);
+                glGenTextures(1, &state->viewerState->viewPorts[i].texture.texHandle);
+                if(state->overlay)
+                    glGenTextures(1, &state->viewerState->viewPorts[i].texture.overlayHandle);
+            }
+        }
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            if(state->viewerState->viewPorts[i].type == VIEWPORT_SKELETON)
+                continue;
+
+            /*
+             *  Handle data textures.
+             *
+             */
+
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.texHandle);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+            // loads an empty texture into video memory - during user movement, this
+            // texture is updated via glTexSubImage2D in vpGenerateTexture & vpHandleBacklog
+            // We need GL_RGB as texture internal format to color the textures
+
+            glTexImage2D(GL_TEXTURE_2D,
+                         0,
+                         GL_RGB,
+                         state->viewerState->viewPorts[i].texture.edgeLengthPx,
+                         state->viewerState->viewPorts[i].texture.edgeLengthPx,
+                         0,
+                         GL_RGB,
+                         GL_UNSIGNED_BYTE,
+                         state->viewerState->defaultTexData);
+
+            /*
+             *  Handle overlay textures.
+             *
+             */
+
+            if(state->overlay) {
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.overlayHandle);
+
+                //Set the parameters for the texture.
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+                glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+                glTexImage2D(GL_TEXTURE_2D,
+                             0,
+                             GL_RGBA,
+                             state->viewerState->viewPorts[i].texture.edgeLengthPx,
+                             state->viewerState->viewPorts[i].texture.edgeLengthPx,
+                             0,
+                             GL_RGBA,
+                             GL_UNSIGNED_BYTE,
+                             state->viewerState->defaultOverlayData);
+            }
+        }
+
+        return true;
+
+}
 
 //Frees allocated memory
-bool Viewer::cleanUpViewer( viewerState *viewerState) { return true;}
+bool Viewer::cleanUpViewer( viewerState *viewerState) {
+    // TODO what about the outcommented code ?
+    /*
+        for(i = 0; i < viewerState->numberViewPorts; i++) {
+            free(viewerState->viewPorts[i].texture.data);
+            free(viewerState->viewPorts[i].texture.empty);
+        }
+        free(viewerState->viewPorts);
+    */
+        return true;
 
-bool Viewer::updateViewerState() { return true;}
-bool Viewer::updateZoomCube() { return true;}
-bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) { return true;}
-int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) { return 0;}
+}
+
+bool Viewer::updateViewerState() {
+
+    int32_t i;
+
+        /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
+            state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x - 1;
+        }
+        if(!(state->viewerState->currentPosition.y == (tempConfig->viewerState->currentPosition.y - 1))) {
+            state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y - 1;
+        }
+        if(!(state->viewerState->currentPosition.z == (tempConfig->viewerState->currentPosition.z - 1))) {
+            state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z - 1;
+        }*/
+
+       // int32_t i = 0;
+
+        if(state->viewerState->filterType != tempConfig->viewerState->filterType) {
+            state->viewerState->filterType = tempConfig->viewerState->filterType;
+
+            for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.texHandle);
+                // Set the parameters for the texture.
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.overlayHandle);
+                // Set the parameters for the texture.
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+            }
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        updateZoomCube();
+
+        if(state->viewerState->workMode != tempConfig->viewerState->workMode)
+            state->viewerState->workMode = tempConfig->viewerState->workMode;
+
+        if(state->viewerState->dropFrames != tempConfig->viewerState->dropFrames)
+            state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+
+        if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
+            state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
+
+            //if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) TODO Crashed
+            //    LOG("Error setting key repeat parameters.");
+        }
+
+        if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime)
+            state->viewerState->recenteringTime = tempConfig->viewerState->recenteringTime;
+
+        if(state->viewerState->recenteringTimeOrth != tempConfig->viewerState->recenteringTimeOrth)
+            state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
+
+        return true;
+}
+
+
+bool Viewer::updateZoomCube() {
+    int32_t i, residue, max, currentZoomCube, oldZoomCube;
+
+    /* Notice int division! */
+    max = ((state->M/2)*2-1);
+    oldZoomCube = state->viewerState->zoomCube;
+    state->viewerState->zoomCube = 0;
+
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                residue = ((max*state->cubeEdgeLength)
+                - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX
+                / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
+                / state->cubeEdgeLength;
+
+                if(residue%2) residue = residue / 2 + 1;
+                else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
+                currentZoomCube = (state->M/2)-residue;
+                if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
+
+                residue = ((max*state->cubeEdgeLength)
+                - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY
+                / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
+                / state->cubeEdgeLength;
+
+                if(residue%2) residue = residue / 2 + 1;
+                else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
+                currentZoomCube = (state->M/2)-residue;
+                if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
+            }
+        }
+        if(oldZoomCube != state->viewerState->zoomCube) {
+            state->skeletonState->skeletonChanged = true;
+        }
+
+        return true;
+}
+
+bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
+
+    struct viewerState *viewerState = state->viewerState;
+
+        Coordinate lastPosition_dc;
+        Coordinate newPosition_dc;
+
+        //The skeleton VP view has to be updated after a current pos change
+        state->skeletonState->viewChanged = TRUE;
+        if(state->skeletonState->showIntersections)
+            state->skeletonState->skeletonSliceVPchanged = TRUE;
+
+        // This determines whether the server will broadcast the coordinate change
+        // to its client or not.
+
+        lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+
+        viewerState->userMove = TRUE;
+
+        if ((viewerState->currentPosition.x + x) >= 0 &&
+            (viewerState->currentPosition.x + x) <= state->boundary.x &&
+            (viewerState->currentPosition.y + y) >= 0 &&
+            (viewerState->currentPosition.y + y) <= state->boundary.y &&
+            (viewerState->currentPosition.z + z) >= 0 &&
+            (viewerState->currentPosition.z + z) <= state->boundary.z) {
+                viewerState->currentPosition.x += x;
+                viewerState->currentPosition.y += y;
+                viewerState->currentPosition.z += z;
+        }
+        else {
+            LOG("Position (%d, %d, %d) out of bounds",
+                viewerState->currentPosition.x + x + 1,
+                viewerState->currentPosition.y + y + 1,
+                viewerState->currentPosition.z + z + 1);
+        }
+
+        calcLeftUpperTexAbsPx();
+        recalcTextureOffsets();
+        newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
+
+        if(serverMovement == TELL_COORDINATE_CHANGE &&
+           state->clientState->connected == TRUE &&
+           state->clientState->synchronizePosition)
+            Client::broadcastPosition(viewerState->currentPosition.x,
+                              viewerState->currentPosition.y,
+                              viewerState->currentPosition.z);
+
+        /* TDitem
+        printf("temp x: %d\n", tempConfig->viewerState->currentPosition.x);
+        printf("temp x: %d\n", state->viewerState->currentPosition.x);
+        */
+
+        /*
+        printf("temp y: %d\n", tempConfig->viewerState->currentPosition.y);
+        printf("temp y: %d\n", state->viewerState->currentPosition.y);
+
+        printf("temp z: %d\n", tempConfig->viewerState->currentPosition.z);
+        printf("temp z: %d\n", state->viewerState->currentPosition.z);
+        */
+
+        tempConfig->viewerState->currentPosition.x = viewerState->currentPosition.x;
+        tempConfig->viewerState->currentPosition.y = viewerState->currentPosition.y;
+        tempConfig->viewerState->currentPosition.z = viewerState->currentPosition.z;
+
+        if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
+            state->viewerState->superCubeChanged = TRUE;
+
+            Knossos::sendLoadSignal(viewerState->currentPosition.x,
+                           viewerState->currentPosition.y,
+                           viewerState->currentPosition.z);
+        }
+        Remote::checkIdleTime();
+        return TRUE;
+    }
+
+    int32_t updatePosition(int32_t serverMovement) {
+        Coordinate jump;
+
+        if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != TRUE) {
+            jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
+            jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
+            jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
+            Viewer::userMove(jump.x, jump.y, jump.z, serverMovement);
+        }
+
+        return TRUE;
+
+}
+
+int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) {
+
+    uint32_t tempNum;
+
+       tempNum = -1;
+       /* TDitem
+       for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+           if((xScreen >= state->viewerState->viewPorts[i].lowerLeftCorner.x) && (xScreen <= (state->viewerState->viewPorts[i].lowerLeftCorner.x + state->viewerState->viewPorts[i].edgeLength))) {
+               if((yScreen >= (((state->viewerState->viewPorts[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1) - state->viewerState->viewPorts[i].edgeLength)) && (yScreen <= ((state->viewerState->viewPorts[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1))) {
+                   //Window coordinate lies in that VP
+                   tempNum = i;
+               }
+           }
+       }
+       //The VP on top (if there are multiple VPs on this coordinate) or -1 is returned.
+       */
+       return tempNum;
+
+}
 
 bool Viewer::recalcTextureOffsets() {
 
@@ -1578,6 +1920,14 @@ bool Viewer::recalcTextureOffsets() {
 
 bool Viewer::refreshViewports() {
     // TODO reimplementation due to qt
+    /*
+    SDL_Event redrawEvent;
+
+        redrawEvent.type = SDL_USEREVENT;
+        redrawEvent.user.code = USEREVENT_REDRAW;
+
+        SDL_PushEvent(&redrawEvent);
+    */
     return true;
 
 }

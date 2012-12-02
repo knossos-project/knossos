@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 
 
 
-    if(Knossos::tempConfigDefaults() != TRUE) {
+    if(Knossos::tempConfigDefaults() != true) {
         LOG("Error loading default parameters.");
         _Exit(FALSE);
     }
@@ -339,13 +339,13 @@ int main(int argc, char *argv[])
         state->viewerState->voxelDimZ = tempConfig->scale.z;
 
         if(argc >= 2) {
-            if(Knossos::configFromCli(argc, argv) == FALSE) {
+            if(Knossos::configFromCli(argc, argv) == false) {
                 LOG("Error reading configuration from command line.");
             }
         }
 
 
-        if(Knossos::initStates() != TRUE) {
+        if(Knossos::initStates() != true) {
             LOG("Error during initialization of the state struct.");
             _Exit(FALSE);
         }
@@ -358,8 +358,11 @@ int main(int argc, char *argv[])
         remoteThread = new Remote(); // TODO call remote() in constructor
         clientThread = new Client(); // TODO call client() in constructor
 
+        viewingThread->start();
         loadingThread->start();
 
+
+        loadingThread->wait(5000);
         remoteThread->wait();
         viewingThread->wait();
         clientThread->wait();
