@@ -758,11 +758,6 @@ bool Loader::loader() {
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
 
-    while(true) {
-        qDebug("fof");
-
-    }
-
     /*
     while(true) {
 

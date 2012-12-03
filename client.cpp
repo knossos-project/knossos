@@ -9,6 +9,12 @@
 extern stateInfo *state;
 extern stateInfo *tempConfig;
 
+Client::Client(QObject *parent) :
+    QThread(parent)
+{
+}
+
+
 static int32_t connectToServer() {
     /*clientState *clientState = state->clientState;
     int32_t i = 0;
@@ -661,10 +667,6 @@ static int32_t clientRun() {
     return TRUE;
 }
 
-Client::Client(QObject *parent) :
-    QThread(parent)
-{
-}
 
 int Client::client() {
     clientState *clientState = state->clientState;
@@ -715,7 +717,8 @@ int Client::client() {
 
     return TRUE;
 }
-bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
+
+bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
     clientState *clientState = state->clientState;
     Byte *data = NULL;
     uint32_t messageLen;
