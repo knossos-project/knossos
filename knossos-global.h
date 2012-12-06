@@ -29,6 +29,8 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
+
+#include <SDL/SDL.h>
 #include <SDL/SDL_net.h>
 #include <GL/gl.h>
 

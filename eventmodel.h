@@ -12,6 +12,13 @@ extern "C" {
     #include "knossos-global.h"
 }
 
+#include "renderer.h"
+#include "skeletonizer.h"
+#include "knossos.h"
+#include "viewer.h"
+#include "remote.h"
+#include "eventmodel.h"
+
 class EventModel : public QObject
 {
     Q_OBJECT

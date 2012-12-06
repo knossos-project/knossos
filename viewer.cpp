@@ -1218,7 +1218,7 @@ void Viewer::start() {
     while(TRUE) {
         qDebug("viewer says hello %i", ++i);
         Sleeper::msleep(50);
-        /*// This creates a circular doubly linked list of
+        // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
         // completely loaded) from the viewport-array in the viewerState
         // structure.
@@ -1277,12 +1277,13 @@ void Viewer::start() {
                 Skeletonizer::updateSkeletonState();
                 Renderer::drawGUI();
 
+                /* TODO Crashed wegen SDL
                 while(SDL_PollEvent(&event)) {
                    if(EventModel::handleEvent(event) == FALSE) {
                        state->viewerState->viewerReady = FALSE;
-                       return TRUE;
+                       //return TRUE;
                    }
-                }
+                } */
 
                 if(viewerState->userMove == TRUE) {
                     break;
@@ -1300,15 +1301,16 @@ void Viewer::start() {
         }//end while(viewPorts->elements > 0)
         vpListDel(viewPorts);
 
+        /* TODO Crashed wegen SDL
         if(viewerState->userMove == FALSE) {
             if(SDL_WaitEvent(&event)) {
                 if(EventModel::handleEvent(event) != TRUE) {
                     state->viewerState->viewerReady = FALSE;
-                    return TRUE;
+                    //return TRUE;
                 }
             }
-        }
-        viewerState->userMove = FALSE;*/
+        } */
+        viewerState->userMove = FALSE;
     }//end while(TRUE)
 
     QThread::currentThread()->quit();

@@ -759,11 +759,11 @@ void Loader::start() {
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
 
-    int i = 0;
+    //int i = 0;
     while(TRUE) {
-        qDebug("loader says hello %i", ++i);
-        Sleeper::msleep(50);
-/*
+       // qDebug("loader says hello %i", ++i);
+        //Sleeper::msleep(50);
+
        while(state->loadSignal == false) {
 
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
@@ -842,12 +842,12 @@ void Loader::start() {
 
 
        }
-
+    /*
     // Free the structures in loaderState and loaderState itself.
     if(cleanUpLoader(loaderState) == FALSE) {
         LOG("Error cleaning up loading thread.");
-        return FALSE;*/
-    }
+        return FALSE;
+    */
 
     QThread::currentThread()->quit();
     emit finished();
