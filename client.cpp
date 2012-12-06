@@ -1,4 +1,5 @@
 //AGAR and SDL TODOS here
+//commented out thread loop
 
 #include <SDL/SDL.h>
 #include "skeletonizer.h"
@@ -669,20 +670,23 @@ static int32_t clientRun() {
 }
 
 
-int Client::client() {
+void Client::start() {
     clientState *clientState = state->clientState;
 
     // Workaround to make --connect-asap work (on windows?)
     // We need to wait for the viewer thread to become ready.
 
-    while(!state->viewerState->viewerReady || state->viewerState->splash) {
-        Sleeper::msleep(50);
-    }
-    if(state->clientState->connectAsap) {
-        Knossos::sendClientSignal();
-    }
+    //while(!state->viewerState->viewerReady || state->viewerState->splash) {
+    //    Sleeper::msleep(50);
+    //}
+    //if(state->clientState->connectAsap) {
+    //    Knossos::sendClientSignal();
+    //}
+    int i = 0;
     while(TRUE) {
-        state->protectClientSignal->lock();
+        qDebug("client says hello %i", ++i);
+        Sleeper::msleep(50);
+        /*state->protectClientSignal->lock();
         while(state->clientSignal == FALSE) {
         //    SDL_CondWait(state->conditionClientSignal, state->protectClientSignal);
         }
@@ -692,31 +696,27 @@ int Client::client() {
         if(state->quitSignal == true) {
             break;
         }
-        /*
-         * Update state.
-         */
+
+        //  Update state.
+
 
         clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
         clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
         clientState->remotePort = tempConfig->clientState->remotePort;
         strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
 
-        /*
-         *  Workaround because SDL_PushEvent in clientRun() will fail with no
-         *  error if the connection is established as fast as possible.
-         *
-         */
+
+         //  Workaround because SDL_PushEvent in clientRun() will fail with no
+         //  error if the connection is established as fast as possible.
 
         clientRun();
 
         if(state->quitSignal == true) {
             break;
-        }
+        }*/
     }
 
     cleanUpClient();
-
-    return TRUE;
 }
 
 bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {

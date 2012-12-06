@@ -26,10 +26,6 @@ public:
     /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
     static bool changeDatasetMag(uint32_t upOrDownFlag);
 
-
-    //Entry point for viewer thread, general viewer coordination, "main loop"
-    static bool viewer();
-
     //Initializes the window with the parameter given in viewerState
     static bool createScreen();
 
@@ -47,11 +43,16 @@ public:
     static bool recalcTextureOffsets();
     static bool refreshViewports();
 
-    void run();
-
 signals:
     
 public slots:
+
+public Q_SLOTS:
+    //Entry point for viewer thread, general viewer coordination, "main loop"
+    void start();
+
+Q_SIGNALS:
+    void finished();
     
 };
 

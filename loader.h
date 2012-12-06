@@ -9,8 +9,6 @@ class Loader : public QObject
     Q_OBJECT
 public:
     explicit Loader(QObject *parent = 0);
-    bool loader();
-    void run();
     
 signals:
     

@@ -171,7 +171,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         prompt->exec();
 
 
-        if((QPushButton *) prompt->clickedButton() == yesButton) {
+        if((QPushButton *) prompt->clickedButton() == yesButton) {            
             event->accept();
         }
 

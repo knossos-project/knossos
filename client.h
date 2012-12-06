@@ -10,7 +10,6 @@ class Client : public QObject
     Q_OBJECT
 public:
     explicit Client(QObject *parent = 0);
-    static int client();
     static bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
     static bool skeletonSyncBroken();
     static int32_t bytesToInt(Byte *source);
@@ -28,6 +27,12 @@ public:
 signals:
     
 public slots:
+
+public Q_SLOTS:
+    void start();
+
+Q_SIGNALS:
+    void finished();
     
 };
 

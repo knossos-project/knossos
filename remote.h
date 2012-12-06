@@ -15,6 +15,12 @@ public:
 signals:
     
 public slots:
+
+public Q_SLOTS:
+    void start();
+
+Q_SIGNALS:
+    void finished();
     
 };
 

@@ -1,3 +1,5 @@
+//commented out sdl_cursor and other sdl directives
+//commented out thread loop
 #include "viewer.h"
 #include "knossos.h"
 #include "client.h"
@@ -5,6 +7,7 @@
 #include "renderer.h"
 #include "eventmodel.h"
 #include "remote.h"
+#include "sleeper.h"
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -13,10 +16,6 @@ Viewer::Viewer(QObject *parent) :
     QObject(parent)
 {
 
-}
-
-void Viewer::run() {
-    viewer();
 }
 
 static vpList* vpListNew() {
@@ -846,11 +845,10 @@ static bool calcLeftUpperTexAbsPx() {
 
 //Initializes the viewer, is called only once after the viewing thread started
 static bool initViewer() {
-    /*
-    calcLeftUpperTexAbsPx();
+   /* calcLeftUpperTexAbsPx();
 
     // init the skeletonizer
-    if(initSkeletonizer(state) == FALSE) {
+    if(initSkeletonizer() == FALSE) {
         LOG("Error initializing the skeletonizer.");
         return FALSE;
     }
@@ -961,9 +959,8 @@ static bool initViewer() {
                    state->viewerState->currentPosition.z);
 
 
-
+*/
     return TRUE;
-    */
 }
 
 
@@ -1181,141 +1178,141 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
-bool Viewer::viewer() {
+void Viewer::start() {
 
     SDL_Event event;
 
-        struct viewerState *viewerState = state->viewerState;
-        struct vpList *viewPorts = NULL;
-        struct vpListElement *currentVp = NULL, *nextVp = NULL;
-        uint32_t drawCounter = 0;
-        SDL_Cursor *customCursor = NULL;
+    struct viewerState *viewerState = state->viewerState;
+    struct vpList *viewPorts = NULL;
+    struct vpListElement *currentVp = NULL, *nextVp = NULL;
+    uint32_t drawCounter = 0;
+    SDL_Cursor *customCursor = NULL;
 
-        /* init the viewer thread and all subsystems handled by it */
-        if(initViewer() == FALSE) {
-            LOG("Error initializing the viewer.");
-            return FALSE;
-        }
+    // init the viewer thread and all subsystems handled by it
+    if(initViewer() == FALSE) {
+       LOG("Error initializing the viewer.");
+       return;
+    }
 
-        /* Event and rendering loop.
-         * What happens is that we go through lists of pending texture parts and load
-         * them if they are available. If they aren't, they are added to a backlog
-         * which is processed at a later time.
-         * While we are loading the textures, we check for events. Some events
-         * might cancel the current loading process. When all textures / backlogs
-         * have been processed, we go into an idle state, in which we wait for events.
-         */
+    // Event and rendering loop.
+    // What happens is that we go through lists of pending texture parts and load
+    // them if they are available. If they aren't, they are added to a backlog
+    // which is processed at a later time.
+    // While we are loading the textures, we check for events. Some events
+    // might cancel the current loading process. When all textures / backlogs
+    // have been processed, we go into an idle state, in which we wait for events.
 
-        state->viewerState->viewerReady = TRUE;
+    state->viewerState->viewerReady = TRUE;
 
-        /* We're manually calling SDL_SetCursor so the cursor will be displayed before
-         * the agar event loop becomes active */
-        // customCursor = GenCursor(customCursorXPM, 16, 16); // TODO
-        SDL_SetCursor(customCursor);
-        //agDefaultCursor = customCursor; //AGAR14
+    // We're manually calling SDL_SetCursor so the cursor will be displayed before
+    // the agar event loop becomes active
+    // customCursor = GenCursor(customCursorXPM, 16, 16); // TODO
+    //SDL_SetCursor(customCursor);
+    //agDefaultCursor = customCursor; //AGAR14
 
-        updateViewerState();
-        recalcTextureOffsets();
-        //splashScreen(); // splashScreen is replaced
-        /* Display info about skeleton save path here TODO */
+    updateViewerState();
+    recalcTextureOffsets();
 
-        while(TRUE) {
-            // This creates a circular doubly linked list of
-            // pending viewports (viewports for which the texture has not yet been
-            // completely loaded) from the viewport-array in the viewerState
-            // structure.
-            // The idea is that we can easily remove the element representing a
-            // pending viewport once its texture is completely loaded.
-            viewPorts = vpListGenerate(viewerState);
-            drawCounter = 0;
+    // Display info about skeleton save path here TODO
+    int i = 0;
+    while(TRUE) {
+        qDebug("viewer says hello %i", ++i);
+        Sleeper::msleep(50);
+        /*// This creates a circular doubly linked list of
+        // pending viewports (viewports for which the texture has not yet been
+        // completely loaded) from the viewport-array in the viewerState
+        // structure.
+        // The idea is that we can easily remove the element representing a
+        // pending viewport once its texture is completely loaded.
+        viewPorts = vpListGenerate(viewerState);
+        drawCounter = 0;
 
-            currentVp = viewPorts->entry;
-            while(viewPorts->elements > 0) {
-                nextVp = currentVp->next;
-                // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
+        currentVp = viewPorts->entry;
+        while(viewPorts->elements > 0) {
+            nextVp = currentVp->next;
+            // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
 
-                // We iterate over the list and either handle the backlog (a list
-                // of datacubes and associated offsets, see headers) if there is
-                // one or start loading everything from scratch if there is none.
+            // We iterate over the list and either handle the backlog (a list
+            // of datacubes and associated offsets, see headers) if there is
+            // one or start loading everything from scratch if there is none.
 
-                if(currentVp->viewPort->type != VIEWPORT_SKELETON) {
-
-                    if(currentVp->backlog->elements == 0) {
-                        // There is no backlog. That means we haven't yet attempted
-                        // to load the texture for this viewport, which is what we
-                        // do now. If we can't complete the texture because a Dc
-                        // is missing, a backlog is generated.
-                        vpGenerateTexture(currentVp, viewerState);
-                    } else {
-                        // There is a backlog. We go through its elements
-                        vpHandleBacklog(currentVp, viewerState);
-                    }
-
-                    if(currentVp->backlog->elements == 0) {
-                        // There is no backlog after either handling the backlog
-                        // or loading the whole texture. That means the texture is
-                        // complete. We can remove the viewport/ from the list.
-
-                           /*  XXX TODO XXX
-                            The Dc2Pointer hashtable locking is currently done at pretty high
-                            frequency by vpHandleBacklog() and might slow down the
-                            loader.
-                            We might want to introduce a locked variable that says how many
-                            yet "unused" (by the viewer) cubes the loader has provided.
-                            Unfortunately, we can't non-busy wait on the loader _and_
-                            events, unless the loader generates events itself... So if this
-                            really is a bottleneck it might be worth to think about it
-                            again. */
-                        vpListDelElement(viewPorts, currentVp);
-                    }
+            if(currentVp->viewPort->type != VIEWPORT_SKELETON) {
+                if(currentVp->backlog->elements == 0) {
+                    // There is no backlog. That means we haven't yet attempted
+                    // to load the texture for this viewport, which is what we
+                    // do now. If we can't complete the texture because a Dc
+                    // is missing, a backlog is generated.
+                    vpGenerateTexture(currentVp, viewerState);
+                }
+                else {
+                    // There is a backlog. We go through its elements
+                    vpHandleBacklog(currentVp, viewerState);
                 }
 
-                drawCounter++;
-                if(drawCounter == 3) {
-                    drawCounter = 0;
+                if(currentVp->backlog->elements == 0) {
+                    // There is no backlog after either handling the backlog
+                    // or loading the whole texture. That means the texture is
+                    // complete. We can remove the viewport/ from the list.
 
-                    updateViewerState();
-                    recalcTextureOffsets();
-                    Skeletonizer::updateSkeletonState();
-                    Renderer::drawGUI();
-
-                    while(SDL_PollEvent(&event)) {
-                        if(EventModel::handleEvent(event) == FALSE) {
-                            state->viewerState->viewerReady = FALSE;
-                            return TRUE;
-                        }
-                    }
-
-                    if(viewerState->userMove == TRUE)
-                        break;
-                }
-
-                // An incoming user movement event makes the current backlog &
-                // viewport lists obsolete and we regenerate them dependant on
-                // the new position
-
-                // Leaves the loop that checks regularily for new available
-                // texture parts because the whole texture has to be recreated
-                // if the users moves
-
-                currentVp = nextVp;
-            }
-            vpListDel(viewPorts);
-
-            if(viewerState->userMove == FALSE) {
-                if(SDL_WaitEvent(&event)) {
-                    if(EventModel::handleEvent(event) != TRUE) {
-                        state->viewerState->viewerReady = FALSE;
-                        return TRUE;
-                    }
+                    //  XXX TODO XXX
+                    //  The Dc2Pointer hashtable locking is currently done at pretty high
+                    //  frequency by vpHandleBacklog() and might slow down the
+                    //  loader.
+                    //  We might want to introduce a locked variable that says how many
+                    //  yet "unused" (by the viewer) cubes the loader has provided.
+                    //  Unfortunately, we can't non-busy wait on the loader _and_
+                    //  events, unless the loader generates events itself... So if this
+                    //  really is a bottleneck it might be worth to think about it
+                    //  again.
+                    vpListDelElement(viewPorts, currentVp);
                 }
             }
 
-            viewerState->userMove = FALSE;
+            drawCounter++;
+            if(drawCounter == 3) {
+                drawCounter = 0;
+
+                updateViewerState();
+                recalcTextureOffsets();
+                Skeletonizer::updateSkeletonState();
+                Renderer::drawGUI();
+
+                while(SDL_PollEvent(&event)) {
+                   if(EventModel::handleEvent(event) == FALSE) {
+                       state->viewerState->viewerReady = FALSE;
+                       return TRUE;
+                   }
+                }
+
+                if(viewerState->userMove == TRUE) {
+                    break;
+                }
+            }
+            // An incoming user movement event makes the current backlog &
+            // viewport lists obsolete and we regenerate them dependant on
+            // the new position
+
+            // Leaves the loop that checks regularily for new available
+            // texture parts because the whole texture has to be recreated
+            // if the users moves
+
+            currentVp = nextVp;
+        }//end while(viewPorts->elements > 0)
+        vpListDel(viewPorts);
+
+        if(viewerState->userMove == FALSE) {
+            if(SDL_WaitEvent(&event)) {
+                if(EventModel::handleEvent(event) != TRUE) {
+                    state->viewerState->viewerReady = FALSE;
+                    return TRUE;
+                }
+            }
         }
+        viewerState->userMove = FALSE;*/
+    }//end while(TRUE)
 
-        return TRUE;
-
+    QThread::currentThread()->quit();
+    emit finished();
 }
 
 //Initializes the window with the parameter given in viewerState

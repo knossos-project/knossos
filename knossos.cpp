@@ -310,72 +310,88 @@ int main(int argc, char *argv[])
         LOG("Error loading default parameters.");
         _Exit(FALSE);
     }
-        // TODO
+    // TODO
 
-        if(argc >= 2)
-            Knossos::configFromCli(argc, argv);
+    if(argc >= 2) {
+        Knossos::configFromCli(argc, argv);
+    }
+    if(tempConfig->path[0] != '\0') {
+        // Got a path from cli.
+        Knossos::readDataConfAndLocalConf();
+        // We need to read the specified config file again because it should
+        // override all parameters from other config files.
+        Knossos::configFromCli(argc, argv);
+    }
+    else {
+        Knossos::readConfigFile("knossos.conf");
+    }
+    state->viewerState->voxelDimX = tempConfig->scale.x;
+    state->viewerState->voxelDimY = tempConfig->scale.y;
+    state->viewerState->voxelDimZ = tempConfig->scale.z;
 
-        if(tempConfig->path[0] != '\0') {
-            // Got a path from cli.
-            Knossos::readDataConfAndLocalConf();
-            // We need to read the specified config file again because it should
-            // override all parameters from other config files.
-            Knossos::configFromCli(argc, argv);
+    if(argc >= 2) {
+        if(Knossos::configFromCli(argc, argv) == false) {
+            LOG("Error reading configuration from command line.");
         }
-        else {
-            Knossos::readConfigFile("knossos.conf");
-        }
-        state->viewerState->voxelDimX = tempConfig->scale.x;
-        state->viewerState->voxelDimY = tempConfig->scale.y;
-        state->viewerState->voxelDimZ = tempConfig->scale.z;
+    }
 
-        if(argc >= 2) {
-            if(Knossos::configFromCli(argc, argv) == false) {
-                LOG("Error reading configuration from command line.");
-            }
-        }
-
-        if(Knossos::initStates() != true) {
-            LOG("Error during initialization of the state struct.");
-            _Exit(FALSE);
-        }
+    if(Knossos::initStates() != true) {
+       LOG("Error during initialization of the state struct.");
+        _Exit(FALSE);
+    }
 
 
-        Knossos::printConfigValues();
+    Knossos::printConfigValues();
 
-        // built up threads. Do not follow instructions of qt documentation on QThread
-        // as they are outdated since qt 4.4!
-        // Instead of subclassing a QThread, normal QObjects are to be moved onto threads.
-        Viewer *viewer = new Viewer();
-        Loader *loader = new Loader();
-        Remote *remote = new Remote();
-        Client *client = new Client();
-        QThread *viewerThread = new QThread();
-        QThread *loaderThread = new QThread();
-        QThread *remoteThread = new QThread();
-        QThread *clientThread = new QThread();
-        viewer->moveToThread(viewerThread);
-        loader->moveToThread(loaderThread);
-        remote->moveToThread(remoteThread);
-        client->moveToThread(clientThread);
+    // built up threads. Do not follow instructions of qt documentation on QThread
+    // as they are outdated since qt 4.4!
+    // Instead of subclassing a QThread, normal QObjects are to be moved onto threads.
+    Viewer *viewer = new Viewer();
+    Loader *loader = new Loader();
+    Remote *remote = new Remote();
+    Client *client = new Client();
+    QThread *viewerThread = new QThread();
+    QThread *loaderThread = new QThread();
+    QThread *remoteThread = new QThread();
+    QThread *clientThread = new QThread();
+    viewer->moveToThread(viewerThread);
+    loader->moveToThread(loaderThread);
+    remote->moveToThread(remoteThread);
+    client->moveToThread(clientThread);
+    //connect signals and slots for loader and loaderThread
+    QObject::connect(loaderThread, SIGNAL(started()), loader, SLOT(start()));
+    QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(quit()));
+    QObject::connect(loader, SIGNAL(finished()), loader, SLOT(deleteLater()));
+    QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(deleteLater()));
+    //connect signals and slots for viewer and viewerThread
+    QObject::connect(viewerThread, SIGNAL(started()), viewer, SLOT(start()));
+    QObject::connect(viewer, SIGNAL(finished()), viewerThread, SLOT(quit()));
+    QObject::connect(viewer, SIGNAL(finished()), viewer, SLOT(deleteLater()));
+    QObject::connect(viewer, SIGNAL(finished()), viewerThread, SLOT(deleteLater()));
+    //connect signals and slots for viewer and viewerThread
+    QObject::connect(remoteThread, SIGNAL(started()), remote, SLOT(start()));
+    QObject::connect(remote, SIGNAL(finished()), remoteThread, SLOT(quit()));
+    QObject::connect(remote, SIGNAL(finished()), remote, SLOT(deleteLater()));
+    QObject::connect(remote, SIGNAL(finished()), remoteThread, SLOT(deleteLater()));
+    //connect signals and slots for viewer and viewerThread
+    QObject::connect(clientThread, SIGNAL(started()), client, SLOT(start()));
+    QObject::connect(client, SIGNAL(finished()), clientThread, SLOT(quit()));
+    QObject::connect(client, SIGNAL(finished()), client, SLOT(deleteLater()));
+    QObject::connect(client, SIGNAL(finished()), clientThread, SLOT(deleteLater()));
+    loaderThread->start();
+    viewerThread->start();
+    remoteThread->start();
+    clientThread->start();
 
-        QObject::connect(loaderThread, SIGNAL(started()), loader, SLOT(start()));
-        QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(quit()));
-        QObject::connect(loader, SIGNAL(finished()), loader, SLOT(deleteLater()));
-        QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(deleteLater()));
-
-        loaderThread->start();
-
-        remoteThread->wait();
-        viewerThread->wait();
-        clientThread->wait();
-
-
-        //SDL_Quit(); // SQL_QUIT
-
+    //SDL_Quit(); // SDL_QUIT
+    //clean up main, when all threads have terminated
+    if( loaderThread->isFinished()
+        && viewerThread->isFinished()
+        && remoteThread->isFinished()
+        && clientThread->isFinished()
+      ) {
         Knossos::cleanUpMain();
-
-
+    }
     return a.exec();
 }
 

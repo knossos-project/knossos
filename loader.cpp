@@ -752,17 +752,17 @@ static bool loadCubes() {
 void Loader::start() {
     loaderState *loaderState = state->loaderState;
 
-    //state->protectLoadSignal->lock();
+    state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
-    // initLoader();
+    initLoader();
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
 
     int i = 0;
-    while(i < 100) {
-        qDebug("Hello %i", i++);
-        Sleeper::msleep(10);
+    while(TRUE) {
+        qDebug("loader says hello %i", ++i);
+        Sleeper::msleep(50);
 /*
        while(state->loadSignal == false) {
 
@@ -848,6 +848,7 @@ void Loader::start() {
         LOG("Error cleaning up loading thread.");
         return FALSE;*/
     }
+
     QThread::currentThread()->quit();
     emit finished();
 }
