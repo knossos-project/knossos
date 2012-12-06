@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QThread>
 
-class Loader : public QThread
+class Loader : public QObject
 {
     Q_OBJECT
 public:
@@ -14,7 +14,11 @@ public:
     
 signals:
     
-public slots:
+public Q_SLOTS:
+    void start();
+
+Q_SIGNALS:
+    void finished();
     
 };
 

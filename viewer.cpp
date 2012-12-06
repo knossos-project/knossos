@@ -10,7 +10,7 @@ extern  stateInfo *tempConfig;
 extern  stateInfo *state;
 
 Viewer::Viewer(QObject *parent) :
-    QThread(parent)
+    QObject(parent)
 {
 
 }

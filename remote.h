@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QThread>
 
-class Remote : public QThread
+class Remote : public QObject
 {
     Q_OBJECT
 public:

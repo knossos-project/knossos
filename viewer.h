@@ -11,7 +11,7 @@ extern "C" {
 #include "knossos.h"
 #include "gui.h"
 
-class Viewer : public QThread
+class Viewer : public QObject
 {
     Q_OBJECT
 public:

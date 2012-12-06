@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QThread>
 
-class Client : public QThread
+class Client : public QObject
 {
     Q_OBJECT
 public:

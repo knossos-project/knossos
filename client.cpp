@@ -5,12 +5,13 @@
 #include "remote.h"
 #include "knossos.h"
 #include "client.h"
+#include "sleeper.h"
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
 
 Client::Client(QObject *parent) :
-    QThread(parent)
+    QObject(parent)
 {
 }
 
@@ -675,7 +676,7 @@ int Client::client() {
     // We need to wait for the viewer thread to become ready.
 
     while(!state->viewerState->viewerReady || state->viewerState->splash) {
-        Client::msleep(50);
+        Sleeper::msleep(50);
     }
     if(state->clientState->connectAsap) {
         Knossos::sendClientSignal();

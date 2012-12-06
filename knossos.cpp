@@ -1,3 +1,5 @@
+//removed SDL_init, for the time being
+
 #include <QtGui/QApplication>
 #include <QSplashScreen>
 #include <QPixmap>
@@ -287,14 +289,6 @@ int main(int argc, char *argv[])
     QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
 
-    // legacy init code
-    // TODO SDL_INIT Alternative für QT/C++
-    Loader *loadingThread;
-    Viewer *viewingThread;
-    Remote *remoteThread;
-    Client *clientThread;
-
-
     state = Knossos::emptyState();
 
     state->loadSignal = false;
@@ -312,8 +306,6 @@ int main(int argc, char *argv[])
     state->protectPeerList = new QMutex();
     state->protectOutBuffer = new QMutex();
 
-
-
     if(Knossos::tempConfigDefaults() != true) {
         LOG("Error loading default parameters.");
         _Exit(FALSE);
@@ -330,10 +322,9 @@ int main(int argc, char *argv[])
             // override all parameters from other config files.
             Knossos::configFromCli(argc, argv);
         }
-        else
+        else {
             Knossos::readConfigFile("knossos.conf");
-
-
+        }
         state->viewerState->voxelDimX = tempConfig->scale.x;
         state->viewerState->voxelDimY = tempConfig->scale.y;
         state->viewerState->voxelDimZ = tempConfig->scale.z;
@@ -344,7 +335,6 @@ int main(int argc, char *argv[])
             }
         }
 
-
         if(Knossos::initStates() != true) {
             LOG("Error during initialization of the state struct.");
             _Exit(FALSE);
@@ -353,18 +343,31 @@ int main(int argc, char *argv[])
 
         Knossos::printConfigValues();
 
-        viewingThread = new Viewer(); // viewer() is called in constructor
-        loadingThread = new Loader(); // TODO call loader() in constructor
-        remoteThread = new Remote(); // TODO call remote() in constructor
-        clientThread = new Client(); // TODO call client() in constructor
+        // built up threads. Do not follow instructions of qt documentation on QThread
+        // as they are outdated since qt 4.4!
+        // Instead of subclassing a QThread, normal QObjects are to be moved onto threads.
+        Viewer *viewer = new Viewer();
+        Loader *loader = new Loader();
+        Remote *remote = new Remote();
+        Client *client = new Client();
+        QThread *viewerThread = new QThread();
+        QThread *loaderThread = new QThread();
+        QThread *remoteThread = new QThread();
+        QThread *clientThread = new QThread();
+        viewer->moveToThread(viewerThread);
+        loader->moveToThread(loaderThread);
+        remote->moveToThread(remoteThread);
+        client->moveToThread(clientThread);
 
-        viewingThread->start();
-        loadingThread->start();
+        QObject::connect(loaderThread, SIGNAL(started()), loader, SLOT(start()));
+        QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(quit()));
+        QObject::connect(loader, SIGNAL(finished()), loader, SLOT(deleteLater()));
+        QObject::connect(loader, SIGNAL(finished()), loaderThread, SLOT(deleteLater()));
 
+        loaderThread->start();
 
-        loadingThread->wait(5000);
         remoteThread->wait();
-        viewingThread->wait();
+        viewerThread->wait();
         clientThread->wait();
 
 

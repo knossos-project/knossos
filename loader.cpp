@@ -3,12 +3,13 @@
 #include "loader.h"
 #include "knossos-global.h"
 #include "knossos.h"
+#include "sleeper.h"
 
 
 extern stateInfo *state;
 
 Loader::Loader(QObject *parent) :
-    QThread(parent)
+    QObject(parent)
 {
 }
 
@@ -748,19 +749,21 @@ static bool loadCubes() {
 
     return TRUE;
 }
-bool Loader::loader() {
+void Loader::start() {
     loaderState *loaderState = state->loaderState;
 
-    state->protectLoadSignal->lock();
+    //state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
-    initLoader();
+    // initLoader();
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
 
-    /*
-    while(true) {
-
+    int i = 0;
+    while(i < 100) {
+        qDebug("Hello %i", i++);
+        Sleeper::msleep(10);
+/*
        while(state->loadSignal == false) {
 
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
@@ -843,13 +846,9 @@ bool Loader::loader() {
     // Free the structures in loaderState and loaderState itself.
     if(cleanUpLoader(loaderState) == FALSE) {
         LOG("Error cleaning up loading thread.");
-        return FALSE;
+        return FALSE;*/
     }
-    */
-    return TRUE;
-}
-
-void Loader::run() {
-    loader();
+    QThread::currentThread()->quit();
+    emit finished();
 }
 

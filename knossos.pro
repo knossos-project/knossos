@@ -24,6 +24,7 @@ SOURCES +=\
     knossos.cpp \
     coordinate.cpp \
     Hashtable.cpp \
+    sleeper.cpp
 
 
 
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     knossos-global.h \
     knossos.h \
     ../treeLUT_fallback.h \
-    ../treeLUT_fallback.h
+    ../treeLUT_fallback.h \
+    sleeper.h
 
 
 
