@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
     QThread *loaderThread = new QThread();
     QThread *remoteThread = new QThread();
     QThread *clientThread = new QThread();
-
+    //objects and corresponding threads must be at the same index
     QObject *threadObjs[NUMTHREADS] = {viewer, loader, remote, client};
     QThread *threads[NUMTHREADS] = {viewerThread, loaderThread, remoteThread, clientThread};
 
