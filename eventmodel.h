@@ -19,6 +19,13 @@ extern "C" {
 #include "remote.h"
 #include "eventmodel.h"
 
+/**
+  * @class EventModel
+  * @brief This is the eventHandler from Knossos 3.2 adjusted for the QT version
+  *
+  * The class adopts the core functionality from eventHandler with the exception that
+  * SDL Events are replaced through the corresponding QT-Events
+  */
 class EventModel : public QObject
 {
     Q_OBJECT

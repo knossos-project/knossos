@@ -5,6 +5,12 @@
 #include <QObject>
 #include <QThread>
 
+/**
+  * @class Client
+  * @brief The client class is dedicated to open more than one knossos instance at wish.
+  * This is based that users can work with datasets in different magnification at once!
+  */
+
 class Client : public QObject
 {
     Q_OBJECT

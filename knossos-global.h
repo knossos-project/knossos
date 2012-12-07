@@ -22,6 +22,12 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+/**
+  * @file knossos-global.h
+  * @brief This file contains global #includes, #defines, makros and struct definitions
+  * The elements are used in almost other files.
+  */
+
 /*
  *	Very general stuff.
  */
@@ -410,9 +416,12 @@ struct assignment {
     char *rval;
 };
 
-
-// This structure holds everything we need to know about the current instance of
-// KNOSSOS.
+/**
+  * @struct stateInfo
+  * @brief stateInfo holds everything we need to know about the current instance of Knossos
+  *
+  * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern struct stateInfo
+  */
 
 struct stateInfo {
 
@@ -517,48 +526,45 @@ struct stateInfo {
 
         // Tell the loading thread to wake up.
 
-       //SDL_cond *conditionLoadSignal;
         QWaitCondition *conditionLoadSignal;
 
 		// Tell the remote to wake up.
-        //SDL_cond *conditionRemoteSignal;
         QWaitCondition *conditionRemoteSignal;
 
-        //SDL_cond *conditionClientSignal;
         QWaitCondition *conditionClientSignal;
 
         // Any signalling to the loading thread needs to be protected
         // by this mutex. This is done by sendLoadSignal(), so always
         // use sendLoadSignal() to signal to the loading thread.
-        //SDL_mutex *protectLoadSignal;
+
         QMutex *protectLoadSignal;
 
 		// This should be accessed through sendRemoteSignal() only.
-        //SDL_mutex *protectRemoteSignal;
+
         QMutex *protectRemoteSignal;
 
         // Access through sendClientSignal()
-        //SDL_mutex *protectClientSignal;
+
         QMutex *protectClientSignal;
 
         // ANY access to the Dc2Pointer or Oc2Pointer tables has
         // to be locked by this mutex.
-        //SDL_mutex *protectCube2Pointer;
+
         QMutex *protectCube2Pointer;
 
 
         // Protects a dataset change i.e. the change of state->path and or
         // state->name; used for the current multi-res. implementation
 
-        //SDL_mutex *protectDatasetChange;
+
         QMutex *protectDatasetChange;
 
 
         //  Protect the network output buffer and the network peers list
 
-        //SDL_mutex *protectOutBuffer;
+
         QMutex *protectOutBuffer;
-        //SDL_mutex *protectPeerList;
+
         QMutex *protectPeerList;
 
         //  Protect changes to the skeleton for network synchronization.
@@ -598,9 +604,13 @@ struct trajectory {
 		char *source;
 };
 
+/**
+  * @struct loaderState
+  * @brief TODO
+  */
+
 struct loaderState {
 	Hashtable *Dcoi;
-
 	CubeSlotList *freeDcSlots;
     CubeSlotList *freeOcSlots;
 	Byte *DcSetChunk;
@@ -608,6 +618,11 @@ struct loaderState {
     Byte *bogusDc;
     Byte *bogusOc;
 };
+
+/**
+  * @struct viewPortTexture
+  * @brief TODO
+  */
 
 struct viewPortTexture {
     //Handles for OpenGl
@@ -641,7 +656,11 @@ struct viewPortTexture {
 	float zoomLevel;
 };
 
-
+/**
+  * @struct agConfig
+  * @brief TODO
+  *
+  */
 struct agConfig {
     char settingsFile[2048];
     char titleString[2048];
@@ -795,6 +814,10 @@ struct agConfig {
 
 };
 
+/**
+  * @struct viewPort
+  * @brief TODO
+  */
 struct viewPort {
     struct viewPortTexture texture;
 
@@ -853,6 +876,10 @@ struct viewPort {
 
 };
 
+/**
+  * @struct viewerState
+  * @brief TODO
+  */
 struct viewerState {
     struct viewPort *viewPorts;
     Byte *texData;
