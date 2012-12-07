@@ -30,245 +30,6 @@ struct stateInfo *state = NULL;
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 
- int32_t Knossos::initStates() {
-    uint32_t i;
-
-        //General stuff
-        state->boergens = tempConfig->boergens;
-        strncpy(state->path, tempConfig->path, 1024);
-        strncpy(state->name, tempConfig->name, 1024);
-        state->boundary.x = tempConfig->boundary.x;
-        state->boundary.y = tempConfig->boundary.y;
-        state->boundary.z = tempConfig->boundary.z;
-        state->scale.x = tempConfig->scale.x;
-        state->scale.y = tempConfig->scale.y;
-        state->scale.z = tempConfig->scale.z;
-        state->offset.x = tempConfig->offset.x;
-        state->offset.y = tempConfig->offset.y;
-        state->offset.z = tempConfig->offset.z;
-        state->cubeEdgeLength = tempConfig->cubeEdgeLength;
-
-        if(tempConfig->M % 2 == 0) {
-            state->M = tempConfig->M - 1;
-            tempConfig->M = state->M;
-        }
-        else {
-            state->M = tempConfig->M;
-        }
-
-        state->magnification = tempConfig->magnification;
-        state->overlay = tempConfig->overlay;
-
-
-        // For the viewer
-        state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;
-        state->viewerState->vpKeyDirection[VIEWPORT_XY] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY];
-        state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
-        state->viewerState->vpKeyDirection[VIEWPORT_YZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ];
-        state->viewerState->overlayVisible = tempConfig->viewerState->overlayVisible;
-        state->viewerState->datasetColortableOn = tempConfig->viewerState->datasetColortableOn;
-        state->viewerState->datasetAdjustmentOn = tempConfig->viewerState->datasetAdjustmentOn;
-        state->viewerState->treeColortableOn = tempConfig->viewerState->treeColortableOn;
-        state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
-        state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
-        state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
-        state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
-        state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
-        state->viewerState->inputmap = tempConfig->viewerState->inputmap;
-        state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
-        state->viewerState->userMove = tempConfig->viewerState->userMove;
-        state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
-        state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
-        state->viewerState->filterType = tempConfig->viewerState->filterType;
-        state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
-        state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
-        state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
-        state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
-        state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
-        state->viewerState->autoTracingMode = 0;
-        state->viewerState->autoTracingDelay = 50;
-        state->viewerState->autoTracingSteps = 10;
-        // the voxel dim stuff needs an cleanup. this is such a mess. fuck
-        state->viewerState->voxelDimX = state->scale.x;
-        state->viewerState->voxelDimY = state->scale.y;
-        state->viewerState->voxelDimZ = state->scale.z;
-        state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-        state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
-        state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
-        state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
-        state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
-        Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-
-        // TODO
-        //loadDefaultTreeLUT();
-
-        state->viewerState->treeLutSet = FALSE;
-
-        state->viewerState->viewPorts = (viewPort *)malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
-        if(state->viewerState->viewPorts == NULL)
-            return FALSE;
-        memset(state->viewerState->viewPorts, '\0', state->viewerState->numberViewPorts * sizeof(struct viewPort));
-
-        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-            state->viewerState->viewPorts[i].upperLeftCorner = tempConfig->viewerState->viewPorts[i].upperLeftCorner;
-            state->viewerState->viewPorts[i].type = tempConfig->viewerState->viewPorts[i].type;
-            state->viewerState->viewPorts[i].draggedNode = tempConfig->viewerState->viewPorts[i].draggedNode;
-            state->viewerState->viewPorts[i].userMouseSlideX = tempConfig->viewerState->viewPorts[i].userMouseSlideX;
-            state->viewerState->viewPorts[i].userMouseSlideY = tempConfig->viewerState->viewPorts[i].userMouseSlideY;
-            state->viewerState->viewPorts[i].edgeLength = tempConfig->viewerState->viewPorts[i].edgeLength;
-            state->viewerState->viewPorts[i].texture.texUnitsPerDataPx =
-                tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx
-                / (float)state->magnification;
-
-            state->viewerState->viewPorts[i].texture.edgeLengthPx = tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
-            state->viewerState->viewPorts[i].texture.edgeLengthDc = tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc;
-            state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
-            state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
-            state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
-    // old version, smaller buffer
-    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-    //                    (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
-    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-    //                    * 2.;
-
-           //  make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering!
-    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-    //                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
-    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-    //                    * 2.;
-
-    // latest version
-
-
-    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-    //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-    //                    ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
-    //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
-    //                    * (float) tempConfig->cubeEdgeLength);
-    //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-    //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-
-    //            * (float) tempConfig->cubeEdgeLength)
-    //            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
-        }
-
-        if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-            LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-            return FALSE;
-        }
-
-        // TODO
-        // calcDisplayedEdgeLength();
-
-        // For the GUI
-        strncpy(state->viewerState->ag->settingsFile,
-                tempConfig->viewerState->ag->settingsFile,
-                2048);
-
-        // For the client
-
-        state->clientState->connectAsap = tempConfig->clientState->connectAsap;
-        state->clientState->connectionTimeout = tempConfig->clientState->connectionTimeout;
-        state->clientState->remotePort = tempConfig->clientState->remotePort;
-        strncpy(state->clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
-        state->clientState->connected = tempConfig->clientState->connected;
-
-        state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-        if(state->clientState->inBuffer == NULL) {
-            LOG("Out of memory.");
-            return FALSE;
-        }
-        memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
-
-        state->clientState->inBuffer->data = (Byte *)malloc(128);
-        if(state->clientState->inBuffer->data == NULL) {
-            LOG("Out of memory.");
-            return FALSE;
-        }
-        memset(state->clientState->inBuffer->data, '\0', 128);
-
-        state->clientState->inBuffer->size = 128;
-        state->clientState->inBuffer->length = 0;
-
-        state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-        if(state->clientState->outBuffer == NULL) {
-            LOG("Out of memory.");
-            return FALSE;
-        }
-        memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
-
-        state->clientState->outBuffer->data = (Byte *) malloc(128);
-        if(state->clientState->outBuffer->data == NULL) {
-            LOG("Out of memory.");
-            return FALSE;
-        }
-        memset(state->clientState->outBuffer->data, '\0', 128);
-
-        state->clientState->outBuffer->size = 128;
-        state->clientState->outBuffer->length = 0;
-        state->clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
-        state->clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
-        state->clientState->saveMaster = tempConfig->clientState->saveMaster;
-
-        // For the skeletonizer
-        state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
-        state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
-        state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
-        SET_COORDINATE(state->skeletonState->lockedPosition,
-                       tempConfig->skeletonState->lockedPosition.x,
-                       tempConfig->skeletonState->lockedPosition.y,
-                       tempConfig->skeletonState->lockedPosition.y);
-        strcpy(state->skeletonState->onCommentLock, tempConfig->skeletonState->onCommentLock);
-        state->skeletonState->branchpointUnresolved = tempConfig->skeletonState->branchpointUnresolved;
-        state->skeletonState->autoFilenameIncrementBool = tempConfig->skeletonState->autoFilenameIncrementBool;
-        state->skeletonState->autoSaveBool = tempConfig->skeletonState->autoSaveBool;
-        state->skeletonState->autoSaveInterval = tempConfig->skeletonState->autoSaveInterval;
-        state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
-        state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
-        state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
-        strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
-        state->skeletonState->idleTime = 0;
-        state->skeletonState->idleTimeNow = 0;
-        state->skeletonState->idleTimeLast = 0;
-
-        // For the remote
-        state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
-        state->remoteState->maxTrajectories = tempConfig->remoteState->maxTrajectories;
-        state->remoteState->type = tempConfig->remoteState->type;
-
-        // Those values can be calculated from given parameters
-        state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-        state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-        state->cubeSetElements = state->M * state->M * state->M;
-        state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
-        SET_COORDINATE(state->currentPositionX, 0, 0, 0);
-
-        // We're not doing stuff in parallel, yet. So we skip the locking
-        // part.
-        // This *10 thing is completely arbitrary. The larger the table size,
-        // the lower the chance of getting collisions and the better the loading
-        // order will be respected. *10 doesn't seem to have much of an effect
-        // on performance but we should try to find the optimal value some day.
-        // Btw: A more clever implementation would be to use an array exactly the
-        // size of the supercube and index using the modulo operator.
-        // sadly, that realization came rather late. ;)
-
-        // creating the hashtables is cheap, keeping the datacubes is
-        // memory expensive..
-        for(i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-            state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-            state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-            if(i == 0) i = 1;
-        }
-
-        // searches for multiple mag datasets and enables multires if more
-        //  than one was found
-        Knossos::findAndRegisterAvailableDatasets();
-
-        return TRUE;
-
-}
 
 
 //IMPORTANT. SDL redefines main
@@ -384,6 +145,247 @@ int main(int argc, char *argv[])
     }
     return a.exec();
 }
+
+int32_t Knossos::initStates() {
+   uint32_t i;
+
+       //General stuff
+       state->boergens = tempConfig->boergens;
+       strncpy(state->path, tempConfig->path, 1024);
+       strncpy(state->name, tempConfig->name, 1024);
+       state->boundary.x = tempConfig->boundary.x;
+       state->boundary.y = tempConfig->boundary.y;
+       state->boundary.z = tempConfig->boundary.z;
+       state->scale.x = tempConfig->scale.x;
+       state->scale.y = tempConfig->scale.y;
+       state->scale.z = tempConfig->scale.z;
+       state->offset.x = tempConfig->offset.x;
+       state->offset.y = tempConfig->offset.y;
+       state->offset.z = tempConfig->offset.z;
+       state->cubeEdgeLength = tempConfig->cubeEdgeLength;
+
+       if(tempConfig->M % 2 == 0) {
+           state->M = tempConfig->M - 1;
+           tempConfig->M = state->M;
+       }
+       else {
+           state->M = tempConfig->M;
+       }
+
+       state->magnification = tempConfig->magnification;
+       state->overlay = tempConfig->overlay;
+
+
+       // For the viewer
+       state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;
+       state->viewerState->vpKeyDirection[VIEWPORT_XY] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY];
+       state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
+       state->viewerState->vpKeyDirection[VIEWPORT_YZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ];
+       state->viewerState->overlayVisible = tempConfig->viewerState->overlayVisible;
+       state->viewerState->datasetColortableOn = tempConfig->viewerState->datasetColortableOn;
+       state->viewerState->datasetAdjustmentOn = tempConfig->viewerState->datasetAdjustmentOn;
+       state->viewerState->treeColortableOn = tempConfig->viewerState->treeColortableOn;
+       state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
+       state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
+       state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
+       state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
+       state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
+       state->viewerState->inputmap = tempConfig->viewerState->inputmap;
+       state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+       state->viewerState->userMove = tempConfig->viewerState->userMove;
+       state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
+       state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
+       state->viewerState->filterType = tempConfig->viewerState->filterType;
+       state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
+       state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
+       state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
+       state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
+       state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
+       state->viewerState->autoTracingMode = 0;
+       state->viewerState->autoTracingDelay = 50;
+       state->viewerState->autoTracingSteps = 10;
+       // the voxel dim stuff needs an cleanup. this is such a mess. fuck
+       state->viewerState->voxelDimX = state->scale.x;
+       state->viewerState->voxelDimY = state->scale.y;
+       state->viewerState->voxelDimZ = state->scale.z;
+       state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+       state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+       state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
+       state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
+       state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
+       Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
+
+       // TODO
+       //loadDefaultTreeLUT();
+
+       state->viewerState->treeLutSet = FALSE;
+
+       state->viewerState->viewPorts = (viewPort *)malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
+       if(state->viewerState->viewPorts == NULL)
+           return FALSE;
+       memset(state->viewerState->viewPorts, '\0', state->viewerState->numberViewPorts * sizeof(struct viewPort));
+
+       for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+           state->viewerState->viewPorts[i].upperLeftCorner = tempConfig->viewerState->viewPorts[i].upperLeftCorner;
+           state->viewerState->viewPorts[i].type = tempConfig->viewerState->viewPorts[i].type;
+           state->viewerState->viewPorts[i].draggedNode = tempConfig->viewerState->viewPorts[i].draggedNode;
+           state->viewerState->viewPorts[i].userMouseSlideX = tempConfig->viewerState->viewPorts[i].userMouseSlideX;
+           state->viewerState->viewPorts[i].userMouseSlideY = tempConfig->viewerState->viewPorts[i].userMouseSlideY;
+           state->viewerState->viewPorts[i].edgeLength = tempConfig->viewerState->viewPorts[i].edgeLength;
+           state->viewerState->viewPorts[i].texture.texUnitsPerDataPx =
+               tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+               / (float)state->magnification;
+
+           state->viewerState->viewPorts[i].texture.edgeLengthPx = tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+           state->viewerState->viewPorts[i].texture.edgeLengthDc = tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc;
+           state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
+           state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
+           state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
+   // old version, smaller buffer
+   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //                    (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
+   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    * 2.;
+
+          //  make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering!
+   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
+   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    * 2.;
+
+   // latest version
+
+
+   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+   //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //                    ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
+   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    * (float) tempConfig->cubeEdgeLength);
+   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+   //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+
+   //            * (float) tempConfig->cubeEdgeLength)
+   //            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+       }
+
+       if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+           LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+           return FALSE;
+       }
+
+       // TODO
+       // calcDisplayedEdgeLength();
+
+       // For the GUI
+       strncpy(state->viewerState->ag->settingsFile,
+               tempConfig->viewerState->ag->settingsFile,
+               2048);
+
+       // For the client
+
+       state->clientState->connectAsap = tempConfig->clientState->connectAsap;
+       state->clientState->connectionTimeout = tempConfig->clientState->connectionTimeout;
+       state->clientState->remotePort = tempConfig->clientState->remotePort;
+       strncpy(state->clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+       state->clientState->connected = tempConfig->clientState->connected;
+
+       state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+       if(state->clientState->inBuffer == NULL) {
+           LOG("Out of memory.");
+           return FALSE;
+       }
+       memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
+
+       state->clientState->inBuffer->data = (Byte *)malloc(128);
+       if(state->clientState->inBuffer->data == NULL) {
+           LOG("Out of memory.");
+           return FALSE;
+       }
+       memset(state->clientState->inBuffer->data, '\0', 128);
+
+       state->clientState->inBuffer->size = 128;
+       state->clientState->inBuffer->length = 0;
+
+       state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+       if(state->clientState->outBuffer == NULL) {
+           LOG("Out of memory.");
+           return FALSE;
+       }
+       memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
+
+       state->clientState->outBuffer->data = (Byte *) malloc(128);
+       if(state->clientState->outBuffer->data == NULL) {
+           LOG("Out of memory.");
+           return FALSE;
+       }
+       memset(state->clientState->outBuffer->data, '\0', 128);
+
+       state->clientState->outBuffer->size = 128;
+       state->clientState->outBuffer->length = 0;
+       state->clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
+       state->clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
+       state->clientState->saveMaster = tempConfig->clientState->saveMaster;
+
+       // For the skeletonizer
+       state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
+       state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
+       state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
+       SET_COORDINATE(state->skeletonState->lockedPosition,
+                      tempConfig->skeletonState->lockedPosition.x,
+                      tempConfig->skeletonState->lockedPosition.y,
+                      tempConfig->skeletonState->lockedPosition.y);
+       strcpy(state->skeletonState->onCommentLock, tempConfig->skeletonState->onCommentLock);
+       state->skeletonState->branchpointUnresolved = tempConfig->skeletonState->branchpointUnresolved;
+       state->skeletonState->autoFilenameIncrementBool = tempConfig->skeletonState->autoFilenameIncrementBool;
+       state->skeletonState->autoSaveBool = tempConfig->skeletonState->autoSaveBool;
+       state->skeletonState->autoSaveInterval = tempConfig->skeletonState->autoSaveInterval;
+       state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
+       state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
+       state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
+       strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+       state->skeletonState->idleTime = 0;
+       state->skeletonState->idleTimeNow = 0;
+       state->skeletonState->idleTimeLast = 0;
+
+       // For the remote
+       state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
+       state->remoteState->maxTrajectories = tempConfig->remoteState->maxTrajectories;
+       state->remoteState->type = tempConfig->remoteState->type;
+
+       // Those values can be calculated from given parameters
+       state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
+       state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
+       state->cubeSetElements = state->M * state->M * state->M;
+       state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
+
+       SET_COORDINATE(state->currentPositionX, 0, 0, 0);
+
+       // We're not doing stuff in parallel, yet. So we skip the locking
+       // part.
+       // This *10 thing is completely arbitrary. The larger the table size,
+       // the lower the chance of getting collisions and the better the loading
+       // order will be respected. *10 doesn't seem to have much of an effect
+       // on performance but we should try to find the optimal value some day.
+       // Btw: A more clever implementation would be to use an array exactly the
+       // size of the supercube and index using the modulo operator.
+       // sadly, that realization came rather late. ;)
+
+       // creating the hashtables is cheap, keeping the datacubes is
+       // memory expensive..
+       for(i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
+           state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+           state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+           if(i == 0) i = 1;
+       }
+
+       // searches for multiple mag datasets and enables multires if more
+       //  than one was found
+       Knossos::findAndRegisterAvailableDatasets();
+
+       return TRUE;
+
+}
+
 
 /* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
 uint32_t Knossos::ones32(register uint32_t x) {

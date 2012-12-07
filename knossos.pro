@@ -79,18 +79,8 @@ OTHER_FILES += \
     ../defaultSettings.xml \
     ../customCursor.xpm \
     ../config.y \
-    blue.jpg \
-    ../../knossos-skeletonizer/zlib1.dll \
-    ../../knossos-skeletonizer/SDL_net.dll \
-    ../../knossos-skeletonizer/SDL.dll \
-    ../../knossos-skeletonizer/pthreadVC2.dll \
-    ../../knossos-skeletonizer/libxml2.dll \
-    ../../knossos-skeletonizer/libSDL_Clipboard.dll \
-    ../../knossos-skeletonizer/libfreetype-6.dll \
-    ../../knossos-skeletonizer/iconv.dll \
-    ../../knossos-skeletonizer/glut32.dll
 
-LIBS += -lSDL -lSDL_net -lxml2 -lglut32
+LIBS += -lSDL -lSDL_net -lxml2
 
 INCLUDEPATH += ../../MinGW/include/SDL \
                ../../MinGW/include/libxml \

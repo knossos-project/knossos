@@ -845,8 +845,8 @@ static bool calcLeftUpperTexAbsPx() {
 
 //Initializes the viewer, is called only once after the viewing thread started
 static bool initViewer() {
-   /* calcLeftUpperTexAbsPx();
-
+    calcLeftUpperTexAbsPx();
+    /*
     // init the skeletonizer
     if(initSkeletonizer() == FALSE) {
         LOG("Error initializing the skeletonizer.");

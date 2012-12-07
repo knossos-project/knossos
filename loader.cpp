@@ -368,7 +368,7 @@ static bool initLoader() {
     loaderState->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
     if(loaderState->Dcoi == HT_FAILURE) {
         LOG("Unable to create Dcoi.");
-        return FALSE;
+        return false;
     }
 
     // freeDcSlots / freeOcSlots are lists of pointers to locations that
@@ -379,13 +379,13 @@ static bool initLoader() {
     loaderState->freeDcSlots = slotListNew();
     if(loaderState->freeDcSlots == NULL) {
         LOG("Unable to create freeDcSlots.");
-        return FALSE;
+        return false;
     }
 
     loaderState->freeOcSlots = slotListNew();
     if(loaderState->freeOcSlots == NULL) {
         LOG("Unable to create freeOcSlots.");
-        return FALSE;
+        return false;
     }
 
     // These are potentially huge allocations.
@@ -397,7 +397,7 @@ static bool initLoader() {
     loaderState->DcSetChunk = (Byte*)malloc(state->cubeSetBytes);
     if(loaderState->DcSetChunk == NULL) {
         LOG("Unable to allocate memory for the DC memory slots.");
-        return FALSE;
+        return false;
     }
 
     for(i = 0; i < state->cubeSetBytes; i += state->cubeBytes)
@@ -409,7 +409,7 @@ static bool initLoader() {
         loaderState->OcSetChunk = (Byte*)malloc(state->cubeSetBytes * OBJID_BYTES);
         if(loaderState->OcSetChunk == NULL) {
             LOG("Unable to allocate memory for the OC memory slots.");
-            return FALSE;
+            return false;
         }
 
         for(i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES)
@@ -792,7 +792,7 @@ void Loader::start() {
         // the protectLoadSignal mutex.
         // DcoiFromPos fills the Dcoi hashtable with all datacubes that
         // we want to be in memory, given our current position.
-        if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
+        if(DcoiFromPos(loaderState->Dcoi) != true) {
             LOG("Error computing DCOI from position.");
             continue;
         }

@@ -128,7 +128,7 @@ static uint32_t renderText(Coordinate *pos, char *string) {
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
     for (c = string; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+        //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c); // TODO Removed due to glut32 problems
     }
     glEnable(GL_DEPTH_TEST);
 
