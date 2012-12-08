@@ -921,6 +921,8 @@ struct viewerState {
     int autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
+
+    int changeViewportPosition;
 };
 
 struct commentListElement {

@@ -1077,6 +1077,7 @@ void createViewPortPrefWin() {
     AG_Radio *radio;
     AG_Checkbox *checkbox;
     AG_Slider *slider;
+    AG_Button *button;
 
 	state->viewerState->ag->viewPortPrefWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
@@ -1328,10 +1329,41 @@ void createViewPortPrefWin() {
             }
         }
     }
+    tab = AG_NotebookAddTab(tabs, "Size & Position", AG_BOX_HOMOGENOUS);
+    {
+        box1 = AG_BoxNew(tab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        AG_ExpandHoriz(box1);
+        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Position", UI_changeViewportPositions, "%i", 1);
+        AG_ExpandHoriz(button);
+        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Position", UI_changeViewportPositions, "%i", 2);
+        AG_ExpandHoriz(button);
+        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Position", UI_changeViewportPositions, "%i", 3);
+        AG_ExpandHoriz(button);
+        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Position", UI_changeViewportPositions, "%i", 4);
+        AG_ExpandHoriz(button);
+    }
+
     AG_WindowSetCloseAction(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
 }
 
+ void UI_changeViewportPositions(AG_Event *event) {
+    state->viewerState->changeViewportPosition = AG_INT(1);
+        switch(state->viewerState->changeViewportPosition) {
+            case 1:
+                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0);
+                break;
+            case 2:
+                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0);
+                break;
+            case 3:
+                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0);
+                break;
+            case 4:
+                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0);
+                break;
+        }
+}
 void createSetDynRangeWin() {
     AG_Box *box;
 	state->viewerState->ag->setDynRangeWin = AG_WindowNew(0);
@@ -2390,6 +2422,9 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     }
 
 
+
+/*AWAAA   
+
     SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
         5, 30, 0);
 
@@ -2408,7 +2443,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength + 10,
         35 + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
         0);
-
+*/
     state->viewerState->screenSizeX = newWinLenX;
     state->viewerState->screenSizeY = newWinLenY;
 

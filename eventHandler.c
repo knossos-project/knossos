@@ -286,6 +286,9 @@ static uint32_t handleMouse(SDL_Event event) {
         case SDL_MOUSEBUTTONDOWN:
             switch(event.button.button) {
                 case SDL_BUTTON_LEFT:
+                    if (state->viewerState->changeViewportPosition != 0){
+                        state->viewerState->changeViewportPosition = 0;
+                    }
                     /* the user did not click inside any VP, so we return */
                     if(VPfound == -1) return TRUE;
                     handleMouseButtonLeft(event, VPfound);
@@ -837,7 +840,9 @@ static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound) {
     else if(event.motion.state & SDL_BUTTON(3)) {
         handleMouseMotionRightHold(event, VPfound);
     }
-
+    // change position of one the VPs
+    else if(state->viewerState->changeViewportPosition)
+        changeViewportPosition(event);
     return TRUE;
 }
 
@@ -1755,4 +1760,53 @@ uint32_t inputToAction (int32_t mouse,
     }
 
     return ACTION_NONE;
+}
+
+void changeViewportPosition(SDL_Event event){
+    if(state->viewerState->changeViewportPosition == 1){
+        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
+        event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, 0);
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosition == 2){
+        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
+        event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, 0);
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosition == 3){
+        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
+        event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, 0);
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosition == 4){
+        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
+        event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, 0);
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
+            200,
+            20);
+    }
 }
