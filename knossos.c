@@ -242,7 +242,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = FALSE;
-    tempConfig->viewerState->changeViewportPosSiz = 0;
+    tempConfig->viewerState->changeViewportPosSiz = 10;
 
     tempConfig->viewerState->viewPorts = malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(tempConfig->viewerState->viewPorts == NULL) {

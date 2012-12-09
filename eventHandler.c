@@ -1772,6 +1772,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 2){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
@@ -1782,6 +1788,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 3){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
@@ -1792,6 +1804,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 4){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
@@ -1821,6 +1839,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 6){
 
@@ -1834,6 +1858,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 7){
 
@@ -1847,6 +1877,12 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
+            200,
+            20);
     }
     else if(state->viewerState->changeViewportPosSiz == 8){
 
@@ -1860,5 +1896,11 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
             state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
+
+        AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
+            200,
+            20);
     }
 }
