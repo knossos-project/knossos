@@ -286,8 +286,8 @@ static uint32_t handleMouse(SDL_Event event) {
         case SDL_MOUSEBUTTONDOWN:
             switch(event.button.button) {
                 case SDL_BUTTON_LEFT:
-                    if (state->viewerState->changeViewportPosition != 0){
-                        state->viewerState->changeViewportPosition = 0;
+                    if (state->viewerState->changeViewportPosSiz != 0){
+                        state->viewerState->changeViewportPosSiz = 0;
                     }
                     /* the user did not click inside any VP, so we return */
                     if(VPfound == -1) return TRUE;
@@ -841,8 +841,8 @@ static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound) {
         handleMouseMotionRightHold(event, VPfound);
     }
     // change position of one the VPs
-    else if(state->viewerState->changeViewportPosition)
-        changeViewportPosition(event);
+    else if(state->viewerState->changeViewportPosSiz)
+        changeViewportPosSiz(event);
     return TRUE;
 }
 
@@ -1762,8 +1762,8 @@ uint32_t inputToAction (int32_t mouse,
     return ACTION_NONE;
 }
 
-void changeViewportPosition(SDL_Event event){
-    if(state->viewerState->changeViewportPosition == 1){
+void changeViewportPosSiz(SDL_Event event){
+    if(state->viewerState->changeViewportPosSiz == 1){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, 0);
 
@@ -1773,7 +1773,7 @@ void changeViewportPosition(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
     }
-    else if(state->viewerState->changeViewportPosition == 2){
+    else if(state->viewerState->changeViewportPosSiz == 2){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, 0);
 
@@ -1783,7 +1783,7 @@ void changeViewportPosition(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
     }
-    else if(state->viewerState->changeViewportPosition == 3){
+    else if(state->viewerState->changeViewportPosSiz == 3){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, 0);
 
@@ -1793,7 +1793,7 @@ void changeViewportPosition(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
     }
-    else if(state->viewerState->changeViewportPosition == 4){
+    else if(state->viewerState->changeViewportPosSiz == 4){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, 0);
 
@@ -1808,5 +1808,57 @@ void changeViewportPosition(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
             200,
             20);
+    }
+    else if(state->viewerState->changeViewportPosSiz == 5){
+
+        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y)
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x;
+        else
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y;
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosSiz == 6){
+
+        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y)
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x;
+        else
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y;
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosSiz == 7){
+
+        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y)
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x;
+        else
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y;
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+    }
+    else if(state->viewerState->changeViewportPosSiz == 8){
+
+        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y)
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x;
+        else
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y;
+
+        AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
     }
 }
