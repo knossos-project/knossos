@@ -243,6 +243,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = FALSE;
     tempConfig->viewerState->changeViewportPosSiz = 10;
+    tempConfig->viewerState->useStandardViewportPosSiz = 1;
 
     tempConfig->viewerState->viewPorts = malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(tempConfig->viewerState->viewPorts == NULL) {
@@ -498,6 +499,7 @@ static int32_t initStates() {
     state->viewerState->autoTracingSteps = 10;
     state->skeletonState->idleTimeSession = 0;
     state->viewerState->changeViewportPosSiz = tempConfig->viewerState->changeViewportPosSiz;
+    state->viewerState->useStandardViewportPosSiz = tempConfig->viewerState->useStandardViewportPosSiz;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;

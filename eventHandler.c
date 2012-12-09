@@ -1767,6 +1767,13 @@ void changeViewportPosSiz(SDL_Event event){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, 0);
 
+        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = 0;
+        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y = 23;
+        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength;
+        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength;
+
         AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
@@ -1782,6 +1789,13 @@ void changeViewportPosSiz(SDL_Event event){
     else if(state->viewerState->changeViewportPosSiz == 2){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, 0);
+
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x = 0;
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y = 23;
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength;
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength;
 
         AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
             state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
@@ -1799,6 +1813,13 @@ void changeViewportPosSiz(SDL_Event event){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, 0);
 
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x = 0;
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y = 23;
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength;
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength;
+
         AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
@@ -1814,6 +1835,13 @@ void changeViewportPosSiz(SDL_Event event){
     else if(state->viewerState->changeViewportPosSiz == 4){
         SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
         event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, 0);
+
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x = 0;
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y = 23;
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength;
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength)
+            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength;
 
         AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
             state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
@@ -1834,6 +1862,13 @@ void changeViewportPosSiz(SDL_Event event){
         else
             state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y;
 
+        if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x){
+           state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x;
+        }
+        if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y){
+           state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y;
+        }
+
         AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
             state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
@@ -1852,6 +1887,13 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x;
         else
             state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y;
+
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x){
+           state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x;
+        }
+        if(state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y){
+           state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y;
+        }
 
         AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
             state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
@@ -1872,6 +1914,13 @@ void changeViewportPosSiz(SDL_Event event){
         else
             state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y;
 
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x){
+           state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x;
+        }
+        if(state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y){
+           state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y;
+        }
+
         AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
@@ -1890,6 +1939,13 @@ void changeViewportPosSiz(SDL_Event event){
             state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x;
         else
             state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y;
+
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x){
+           state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x;
+        }
+        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y){
+           state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y;
+        }
 
         AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
             state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,

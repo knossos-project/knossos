@@ -148,7 +148,9 @@ static void UI_lockCurrentMagModified(AG_Event *event);
 static void UI_deleteCommentBoxesBtnPressed();
 static void UI_deleteCommentBoxes();
 static void UI_changeViewportPosSiz();
+static void UI_changeViewportPosSizCheckbox();
 
 static Coordinate *parseRawCoordinateString(char *string);
 static void prefDefaultPrefsWindow();
 static void prefDefaultPrefs();
+static void resetViewportPosSiz();

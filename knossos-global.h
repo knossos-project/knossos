@@ -751,6 +751,8 @@ struct agConfig {
     AG_Checkbox *showAllNodeIDsBox;
     AG_Checkbox *datasetLinearFilteringBox;
     AG_Checkbox *AutoTracingBox;
+
+    AG_Checkbox *viewportPosSizCheckbox;
 };
 
 struct viewPort {
@@ -923,6 +925,7 @@ struct viewerState {
     int autoTracingSteps;
 
     int changeViewportPosSiz;
+    int useStandardViewportPosSiz;
 };
 
 struct commentListElement {
