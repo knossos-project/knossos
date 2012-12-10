@@ -1362,11 +1362,13 @@ void createViewPortPrefWin() {
 
 void UI_changeViewportPosSizCheckbox(){
     if (state->viewerState->useStandardViewportPosSiz == 0){
-        state->viewerState->useStandardViewportPosSiz = 1;
         resetViewportPosSiz();
+        state->viewerState->useStandardViewportPosSiz = 1;
+        return;
     }
     if (state->viewerState->useStandardViewportPosSiz == 1){
         state->viewerState->useStandardViewportPosSiz = 0;
+        return;
     }
 }
 
@@ -2554,7 +2556,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         resetViewportPosSiz();
     }
 
-                //Dont allow wiewports to go outside of screen -> scale them down
+    //Dont allow wiewports to go outside of screen -> scale them down
     if(state->viewerState->useStandardViewportPosSiz == 0){
         if(state->viewerState->screenSizeX > state->viewerState->screenSizeY){
             if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeY){
@@ -3502,7 +3504,60 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->rotateAroundActiveNode);
         xmlNewProp(currentXMLNode, BAD_CAST"rotateAroundActNode", attrString);
     }
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsVPPosSiz", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->useStandardViewportPosSiz);
+        xmlNewProp(currentXMLNode, BAD_CAST"useStandardViewportPosSiz", attrString);
 
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XY_x", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XY_y", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XY_edge", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XZ_x", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XZ_y", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_XZ_edge", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_YZ_x", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_YZ_y", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_YZ_edge", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_SK_x", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_SK_y", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
+        xmlNewProp(currentXMLNode, BAD_CAST"VP_SK_edge", attrString);
+    }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"toolsNodesTab", NULL);
     {
         memset(attrString, '\0', 1024);
@@ -3857,6 +3912,51 @@ static void UI_loadSettings() {
             if(attribute)
                 state->skeletonState->rotateAroundActiveNode = atoi((char *)attribute);
         }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsVPPosSiz")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"useStandardViewportPosSiz");
+            if(attribute)
+                state->viewerState->useStandardViewportPosSiz = atoi((char *)attribute);
+            if(!state->viewerState->useStandardViewportPosSiz) state->viewerState->ag->viewportPosSizCheckbox->state = 0;
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_x");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_y");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_edge");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = atoi((char *)attribute);
+
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XZ_x");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XZ_y");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XZ_edge");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = atoi((char *)attribute);
+
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_YZ_x");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_YZ_y");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_YZ_edge");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = atoi((char *)attribute);
+
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_SK_x");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_SK_y");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_SK_edge");
+            if(attribute)
+                state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = atoi((char *)attribute);
+        }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"toolsNodesTab")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"useLastRadiusAsDefault");
             if(attribute)
@@ -3942,6 +4042,35 @@ static void UI_loadSettings() {
         state->viewerState->ag->radioRenderingModel = 0;
 
     LOG("loaded GUI settings from file %s.", state->viewerState->ag->settingsFile);
+
+    AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
+        200,
+        20);
+    refreshViewports();
+    drawGUI();
+
 }
 
 void UI_loadSkeleton(AG_Event *event) {
@@ -4337,67 +4466,66 @@ void prefDefaultPrefs(){
 
 void resetViewportPosSiz(){
     int i;
-                if(state->viewerState->screenSizeX <= state->viewerState->screenSizeY) {
-                for(i = 0; i < state->viewerState->numberViewPorts; i++)
-                    state->viewerState->viewPorts[i].edgeLength = state->viewerState->screenSizeX / 2 - 20;
-                }
-                else {
-                    for(i = 0; i < state->viewerState->numberViewPorts; i++)
-                    state->viewerState->viewPorts[i].edgeLength = state->viewerState->screenSizeY / 2 - 20;
-                }
-                SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner, 5, 30, 0);
-                SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
-                    5,
-                    state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y
-                    + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength + 5,
-                    0);
-                SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
-                    state->viewerState->viewPorts[VIEWPORT_XY].edgeLength + 10,
-                    30,
-                    0);
-                SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength + 10,
-                    35 + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
-                    0);
-                AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
-                    state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
-                    state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
-                    state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
-                    state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
-                AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
-                AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
-                AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
-                AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
-                    state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-                    200,
-                    20);
-                AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
-                    state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-                    state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
-                    200,
-                    20);
-                AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-                    state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
-                    200,
-                    20);
-                AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-                    state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
-                    200,
-                    20);
-
+    if(state->viewerState->screenSizeX <= state->viewerState->screenSizeY) {
+        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            state->viewerState->viewPorts[i].edgeLength = state->viewerState->screenSizeX / 2 - 20;
+    }
+    else {
+        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            state->viewerState->viewPorts[i].edgeLength = state->viewerState->screenSizeY / 2 - 20;
+    }
+    SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner, 5, 30, 0);
+    SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
+        5,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y
+        + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength + 5,
+        0);
+    SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
+        state->viewerState->viewPorts[VIEWPORT_XY].edgeLength + 10,
+        30,
+        0);
+    SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
+        state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength + 10,
+        35 + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
+        0);
+    AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
+    AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
+        state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
+        200,
+        20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+        state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
+        200,
+        20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+        state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
+        200,
+        20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+        state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
+        200,
+        20);
 }
