@@ -43,12 +43,11 @@ public:
 
     static bool unlockSkeleton(int32_t increment);
     static bool lockSkeleton(int32_t targetRevision);
-    static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z);
+    static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
     static bool sendRemoteSignal();
     static bool sendClientSignal();
     static bool sendQuitSignal();
     static bool sendServerSignal();
-    static void sendDatasetChangeSignal(uint32_t upOrDownFlag);
     static uint32_t log2uint32(register uint32_t x);
     static uint32_t ones32(register uint32_t x);
 

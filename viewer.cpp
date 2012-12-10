@@ -956,7 +956,8 @@ static bool initViewer() {
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z);
+                   state->viewerState->currentPosition.z,
+                   NO_MAG_CHANGE);
 
 
 */
@@ -1166,12 +1167,13 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 
             }
         }*/
-       Knossos::sendDatasetChangeSignal(upOrDownFlag);
+       Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
+                               state->viewerState->currentPosition.y,
+                               state->viewerState->currentPosition.z,
+                               upOrDownFlag);
         //refreshViewports();
         /* set flags to trigger the necessary renderer updates */
         //state->skeletonState->skeletonChanged = TRUE;
-
-
 
     return true;
 }
@@ -1620,7 +1622,8 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
 
             Knossos::sendLoadSignal(viewerState->currentPosition.x,
                            viewerState->currentPosition.y,
-                           viewerState->currentPosition.z);
+                           viewerState->currentPosition.z,
+                           NO_MAG_CHANGE);
         }
         Remote::checkIdleTime();
         return TRUE;

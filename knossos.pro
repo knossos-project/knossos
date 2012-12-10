@@ -11,7 +11,7 @@ TEMPLATE = app
 
 
 SOURCES +=\
-        mainwindow.cpp \
+    mainwindow.cpp \
     openglwidget.cpp \
     eventmodel.cpp \
     client.cpp \
@@ -25,9 +25,6 @@ SOURCES +=\
     coordinate.cpp \
     Hashtable.cpp \
     sleeper.cpp
-
-
-
 
 HEADERS  += mainwindow.h \
     eventmodel.h \
@@ -44,10 +41,6 @@ HEADERS  += mainwindow.h \
     ../treeLUT_fallback.h \
     ../treeLUT_fallback.h \
     sleeper.h
-
-
-
-
 
 FORMS    += mainwindow.ui
 

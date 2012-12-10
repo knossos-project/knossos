@@ -488,30 +488,15 @@ bool Knossos::sendRemoteSignal() {
     return true;
 }
 
-/* allows the on-the-fly change of the dataset name, making the simple uncached
-multi-res. implementation possible.
-this function should only be called from the viewer thread! */
-void Knossos::sendDatasetChangeSignal(uint32_t upOrDownFlag) {
-    /* the loader is required to not block this mutex for too long,
-    * the user might experience short KNOSSOS lock-ups while zooming
-    * otherwise. */
-    state->protectDatasetChange->lock();
-    state->datasetChangeSignal = upOrDownFlag;
-    state->protectDatasetChange->unlock();
-
-    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z);
-}
-
-bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z) {
+bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
     state->protectLoadSignal->lock();
 
     state->loadSignal = true;
+    state->datasetChangeSignal = magChanged;
 
-    /* Convert the coordinate to the right mag. The loader
-    * is agnostic to the different dataset magnifications.
-    * The int division is hopefully not too much of an issue here */
+    // Convert the coordinate to the right mag. The loader
+    // is agnostic to the different dataset magnifications.
+    // The int division is hopefully not too much of an issue here
     SET_COORDINATE(state->currentPositionX,
                    x / state->magnification,
                    y / state->magnification,

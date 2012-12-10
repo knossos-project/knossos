@@ -496,13 +496,13 @@ struct stateInfo {
         uint32_t overlay;
 
 
-         // Inter-thread communication structures / signals / mutexes, etc.
+        // Inter-thread communication structures / signals / mutexes, etc.
 
 
 
-         // Tells the loading thread, that state->path and or state->name changed
+        // Tells the loading thread, that state->path and or state->name changed
 
-		 int32_t datasetChangeSignal;
+        int32_t datasetChangeSignal;
 
 
         // Tell the loading thread that it should interrupt its work /
@@ -551,14 +551,6 @@ struct stateInfo {
         // to be locked by this mutex.
 
         QMutex *protectCube2Pointer;
-
-
-        // Protects a dataset change i.e. the change of state->path and or
-        // state->name; used for the current multi-res. implementation
-
-
-        QMutex *protectDatasetChange;
-
 
         //  Protect the network output buffer and the network peers list
 
@@ -1333,4 +1325,3 @@ uint32_t handleEvent(SDL_Event event);
 
 
 #endif
-
