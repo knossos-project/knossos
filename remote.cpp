@@ -29,7 +29,7 @@ void Remote::start() {
     // will follow the trajectory given in a file.
     int i = 0;
     while(TRUE) {
-        qDebug("remote says hello %i", ++i);
+        //qDebug("remote says hello %i", ++i);
         Sleeper::msleep(50);
         /*SDL_LockMutex(state->protectRemoteSignal);
         while(state->remoteSignal == FALSE) {

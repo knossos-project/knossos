@@ -28,7 +28,6 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     int viewPort;
-    bool *controls; // [0] for CTRL, [1] for SHIT, [2] for ALT
     EventModel *eventModel;
 
 signals:

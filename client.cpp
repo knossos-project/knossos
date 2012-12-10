@@ -684,7 +684,7 @@ void Client::start() {
     //}
     int i = 0;
     while(TRUE) {
-        qDebug("client says hello %i", ++i);
+        //qDebug("client says hello %i", ++i);
         Sleeper::msleep(50);
         /*state->protectClientSignal->lock();
         while(state->clientSignal == FALSE) {

@@ -13,7 +13,7 @@ EventModel::EventModel(QObject *parent) :
 {
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls)
+bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
 {
 
 
@@ -22,7 +22,8 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
     Coordinate *clickedCoordinate = NULL;
 
     //new active node selected
-    if(controls[SHIFT]) {
+    if(event->modifiers() == Qt::ControlModifier) {
+        qDebug("control and mouseleft");
         //first assume that user managed to hit the node
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
                                                 event->x(),
@@ -86,7 +87,8 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
 
 
     //Set Connection between Active Node and Clicked Node
-    if(controls[ALT]) {
+    if(event->modifiers() == Qt::AltModifier) {
+        qDebug("alt and mouseleft");
         int32_t clickedNode;
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
@@ -106,7 +108,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool
 
 bool EventModel::handleEvent(SDL_Event event){return true;}
 
-bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls) {
+bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
 
     int32_t clickedNode;
 
@@ -117,10 +119,12 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
 
 
     if(clickedNode) {
-        if(controls[SHIFT]) {
-            if(controls[CTRL]) {
+        if(event->modifiers() == Qt::ShiftModifier) {
+            if(event->modifiers() == Qt::ControlModifier) {
+                qDebug("shift and control and mouse middle");
                 // Pressed SHIFT and CTRL
             } else {
+                qDebug("shift and mouse middle");
                 // Pressed SHIFT only.
 
                 // Delete segment between clicked and active node
@@ -142,7 +146,8 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
                 }
             }
         }
-        else if(controls[CTRL]) {
+        else if(event->ModifiedChange == Qt::ControlModifier) {
+            qDebug("control and mouse middle");
             // Pressed CTRL only.
             if(state->skeletonState->activeNode) {
                 Skeletonizer::addSegment(CHANGE_MANUAL,
@@ -161,11 +166,12 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bo
     return true;
 }
 
-bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, bool *controls) {
+bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
     // Delete Connection between Active Node and Clicked Node
 
-    if(controls[ALT]) {
+    if(event->modifiers() == Qt::ControlModifier) {
+        qDebug("control and mouse right");
         int32_t clickedNode;
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound, event->x()
                                                      ,
@@ -224,7 +230,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, boo
             case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
                 // function is inside skeletonizer.c
                 if(state->skeletonState->activeNode) {
-                    if(controls[CTRL]) {
+                    if(event->modifiers() == Qt::ControlModifier) {
+                        qDebug("again control and mouse right");
                         // Add a "stump", a branch node to which we don't automatically move.
                         if((newNodeID = Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                             state->viewerState->viewPorts[VPfound].type,
@@ -588,14 +595,15 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
     return true;
 }
 
-bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bool *controls) {
+bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
 
     float radius;
 
     if(VPfound == -1)
         return true;
 
-    if((state->skeletonState->activeNode) && ((controls[SHIFT]))) {
+    if((state->skeletonState->activeNode) && ((event->modifiers() == Qt::ShiftModifier))) {
+        qDebug("shift and mouse wheel up");
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         Skeletonizer::editNode(CHANGE_MANUAL,
@@ -625,7 +633,8 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(controls[CTRL]) {
+            if(event->modifiers() == Qt::ControlModifier) {
+                qDebug("again control and mouse wheel up");
                 //GUI::UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
             }
             // Move otherwise
@@ -654,14 +663,15 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bo
     return true;
 }
 
-bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls) {
+bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 
     float radius;
 
     if(VPfound == -1)
         return true;
 
-    if((state->skeletonState->activeNode) && ((controls[SHIFT]))) {
+    if((state->skeletonState->activeNode) && ((event->modifiers() == Qt::ShiftModifier))) {
+        qDebug("shift and mouse wheel down");
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
         Skeletonizer::editNode(CHANGE_MANUAL,
@@ -694,7 +704,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, b
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(controls[CTRL]) {
+            if(event->modifiers() == Qt::ControlModifier) {
+                qDebug("control and mouse wheel down");
                 //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
             }
             // Move otherwise

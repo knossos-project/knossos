@@ -1218,7 +1218,7 @@ void Viewer::start() {
     // Display info about skeleton save path here TODO
     int i = 0;
     while(TRUE) {
-        qDebug("viewer says hello %i", ++i);
+        //qDebug("viewer says hello %i", ++i);
         Sleeper::msleep(50);
         // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been

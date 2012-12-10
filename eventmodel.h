@@ -32,15 +32,15 @@ class EventModel : public QObject
 public:
     static bool handleEvent(SDL_Event event);
     explicit EventModel(QObject *parent = 0);
-    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound, bool *controls);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound, bool *controls);
-    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound);
     bool handleMouseMotion(QMouseEvent *event, int32_t VPfound);
     bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound, bool *controls);
-    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound, bool *controls);
+    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound);
+    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound);
     bool handleKeyboard(QKeyEvent *event);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
