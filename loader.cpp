@@ -102,8 +102,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     char *filename = NULL;
     char typeExtension[8] = "";
     FILE *cubeFile = NULL;
-    int32_t readBytes = 0;
-    uint32_t cancelCubeLoading = FALSE;
+    uint32_t readBytes = 0;
 
     /*
      * Specify either freeDcSlot or freeOcSlot.
@@ -216,7 +215,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     }
 
     if(freeDcSlot) {
-        readBytes = (int32_t)fread(freeDcSlot, 1, state->cubeBytes, cubeFile);
+        readBytes = (uint32_t)fread(freeDcSlot, 1, state->cubeBytes, cubeFile);
         if(readBytes != state->cubeBytes) {
             LOG("Could read only %d / %d bytes from DC file %s.",
                 readBytes,
@@ -229,7 +228,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
         }
     }
     else {
-        readBytes = (int32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
+        readBytes = (uint32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
         if(readBytes != state->cubeBytes * OBJID_BYTES) {
             LOG("Could read only %d / %d bytes from OC file %s.",
                 readBytes,

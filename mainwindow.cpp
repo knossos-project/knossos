@@ -151,10 +151,6 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(aboutAction);
-
-
-
-    QPushButton *button = new QPushButton("Copy", menuBar());
 }
 
 

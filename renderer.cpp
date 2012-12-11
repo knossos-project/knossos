@@ -1431,94 +1431,97 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 }
 
 uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width) {
-        uint32_t i;
-        /* 8192 is really arbitrary. It should be a value dependent on the
-        number of nodes / segments */
-        GLuint selectionBuffer[8192] = {0};
-        GLint hits, openGLviewport[4];
-        GLuint names, *ptr, minZ, *ptrName;
-        ptrName = NULL;
+    int32_t i;
+    /* 8192 is really arbitrary. It should be a value dependent on the
+    number of nodes / segments */
+    GLuint selectionBuffer[8192] = {0};
+    GLint hits, openGLviewport[4];
+    GLuint names, *ptr, minZ, *ptrName;
+    ptrName = NULL;
 
-        glViewport(state->viewerState->viewPorts[currentVP].upperLeftCorner.x,
-            state->viewerState->screenSizeY
-            - state->viewerState->viewPorts[currentVP].upperLeftCorner.y
-            - state->viewerState->viewPorts[currentVP].edgeLength,
-            state->viewerState->viewPorts[currentVP].edgeLength,
-            state->viewerState->viewPorts[currentVP].edgeLength);
+    glViewport(state->viewerState->viewPorts[currentVP].upperLeftCorner.x,
+        state->viewerState->screenSizeY
+        - state->viewerState->viewPorts[currentVP].upperLeftCorner.y
+        - state->viewerState->viewPorts[currentVP].edgeLength,
+        state->viewerState->viewPorts[currentVP].edgeLength,
+        state->viewerState->viewPorts[currentVP].edgeLength);
 
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
-        glSelectBuffer(8192, selectionBuffer);
+    glSelectBuffer(8192, selectionBuffer);
 
-        state->viewerState->selectModeFlag = TRUE;
+    state->viewerState->selectModeFlag = TRUE;
 
-        glRenderMode(GL_SELECT);
+    glRenderMode(GL_SELECT);
 
-        glInitNames();
-        glPushName(0);
+    glInitNames();
+    glPushName(0);
 
-        glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_PROJECTION);
 
-        glLoadIdentity();
+    glLoadIdentity();
 
-        gluPickMatrix(x, y, (float)width, (float)width, openGLviewport);
+    gluPickMatrix(x, y, (float)width, (float)width, openGLviewport);
 
-        if(state->viewerState->viewPorts[currentVP].type == VIEWPORT_SKELETON) {
-                glOrtho(state->skeletonState->volBoundary
-                    * state->skeletonState->zoomLevel
-                    + state->skeletonState->translateX,
-                    state->skeletonState->volBoundary
-                    - (state->skeletonState->volBoundary
-                    * state->skeletonState->zoomLevel)
-                    + state->skeletonState->translateX,
-                    state->skeletonState->volBoundary
-                    - (state->skeletonState->volBoundary
-                    * state->skeletonState->zoomLevel)
-                    + state->skeletonState->translateY,
-                    state->skeletonState->volBoundary
-                    * state->skeletonState->zoomLevel
-                    + state->skeletonState->translateY,
-                    -10000, 10 * state->skeletonState->volBoundary);
-                glCallList(state->skeletonState->displayListView);
-                glCallList(state->skeletonState->displayListSkeletonSkeletonizerVP);
-                glCallList(state->skeletonState->displayListDataset); //TDitem fix that display list !!
+    if(state->viewerState->viewPorts[currentVP].type == VIEWPORT_SKELETON) {
+        glOrtho(state->skeletonState->volBoundary
+            * state->skeletonState->zoomLevel
+            + state->skeletonState->translateX,
+            state->skeletonState->volBoundary
+            - (state->skeletonState->volBoundary
+            * state->skeletonState->zoomLevel)
+            + state->skeletonState->translateX,
+            state->skeletonState->volBoundary
+            - (state->skeletonState->volBoundary
+            * state->skeletonState->zoomLevel)
+            + state->skeletonState->translateY,
+              state->skeletonState->volBoundary
+            * state->skeletonState->zoomLevel
+            + state->skeletonState->translateY,
+            -10000, 10 * state->skeletonState->volBoundary);
+        glCallList(state->skeletonState->displayListView);
+        glCallList(state->skeletonState->displayListSkeletonSkeletonizerVP);
+        glCallList(state->skeletonState->displayListDataset); //TDitem fix that display list !!
 
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glDisable(GL_BLEND);
-                glDisable(GL_LIGHTING);
-                glDisable(GL_DEPTH_TEST);
-                glDisable(GL_MULTISAMPLE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_BLEND);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_MULTISAMPLE);
+    }
+    else {
+        //glEnable(GL_DEPTH_TEST);
+        //glCallList(state->viewerState->viewPorts[currentVP].displayList);
+        glDisable(GL_DEPTH_TEST);
+        renderOrthogonalVP(currentVP);
+    }
+
+    hits = glRenderMode(GL_RENDER);
+    glLoadIdentity();
+
+    ptr = (GLuint *)selectionBuffer;
+
+    minZ = 0xffffffff;
+
+
+    for(i = 0; i < hits; i++) {
+        names = *ptr;
+
+        ptr++;
+        if((*ptr < minZ) && (*(ptr + 2) >= 50)) {
+            minZ = *ptr;
+            ptrName = ptr + 2;
         }
-        else {
-                //glEnable(GL_DEPTH_TEST);
-                //glCallList(state->viewerState->viewPorts[currentVP].displayList);
-                glDisable(GL_DEPTH_TEST);
-                renderOrthogonalVP(currentVP);
-        }
+        ptr += names + 2;
+    }
 
-
-        hits = glRenderMode(GL_RENDER);
-        glLoadIdentity();
-
-        ptr = (GLuint *)selectionBuffer;
-
-        minZ = 0xffffffff;
-
-
-        for(i = 0; i < hits; i++) {
-            names = *ptr;
-
-            ptr++;
-            if((*ptr < minZ) && (*(ptr + 2) >= 50)) {
-                minZ = *ptr;
-                ptrName = ptr + 2;
-            }
-            ptr += names + 2;
-        }
-
-        state->viewerState->selectModeFlag = FALSE;
-        if(ptrName) return *ptrName - 50;
-        else return FALSE;
+    state->viewerState->selectModeFlag = FALSE;
+    if(ptrName) {
+        return *ptrName - 50;
+    }
+    else {
+        return FALSE;
+    }
 }
 
 //Some math helper functions

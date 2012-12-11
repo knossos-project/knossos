@@ -194,20 +194,25 @@ static uint32_t parseInBuffer() {
                  */
 
                 messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
-                if(messageLen < 0)
+                if(messageLen < 0) {
                     goto critical;
-                else if(messageLen == 0)
+                }
+                else if(messageLen == 0) {
                     goto loopExit;
+                }
 
-                if(state->clientState->myId == d[0]) {
+                if(d[0] < 0) {//client Id should be positive
+                    break; //ignore this message if invalid
+                }
+                if(state->clientState->myId == (uint32_t)d[0]) {
                     state->clientState->saveMaster = TRUE;
                     LOG("Instance id %d (%s) now autosaving.",
                         state->clientState->myId,
                         state->name);
                 }
-                else
+                else {
                     state->clientState->saveMaster = FALSE;
-
+                }
                 break;
 
             case KIKI_SKELETONFILENAME:
@@ -521,13 +526,13 @@ static bool flushOutBuffer() {
 
     state->protectOutBuffer->lock();
 
-    if(state->clientState->outBuffer->length > 0) {
+    if(clientState->outBuffer->length > 0) {
         // check return value
         //SDLNet_TCP_Send(clientState->remoteSocket, SDL TODO
         //        state->clientState->outBuffer->data,
         //       state->clientState->outBuffer->length);
-        memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->size);
-        state->clientState->outBuffer->length = 0;
+        memset(clientState->outBuffer->data, '\0', clientState->outBuffer->size);
+        clientState->outBuffer->length = 0;
     }
 
     state->protectOutBuffer->lock();
@@ -685,7 +690,7 @@ void Client::start() {
     int i = 0;
     while(TRUE) {
         //qDebug("client says hello %i", ++i);
-        Sleeper::msleep(50);
+        Sleeper::msleep(100);
         /*state->protectClientSignal->lock();
         while(state->clientSignal == FALSE) {
         //    SDL_CondWait(state->conditionClientSignal, state->protectClientSignal);
@@ -1063,13 +1068,13 @@ int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
     if(len < 0) {
         len = bytesToInt(&buffer->data[1]);
     }
-    if(len == 0) {
+    else if(len == 0) {
         /* This should never happen but would lead to an infinite loop. */
         LOG("Invalid message length from peer.");
         return FAIL;
     }
 
-    if(buffer->length < len) {
+    else if(buffer->length < (uint32_t)len) {
         /*printf("In parseInBufferByFmt(): buffer->length = %d, len = %d. Shit.\n",
                 buffer->length, len);
 

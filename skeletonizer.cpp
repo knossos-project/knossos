@@ -152,7 +152,7 @@ static bool addNodeToSkeletonStruct(nodeListElement *node) {
 }
 
 static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
-    uint32_t i;
+    int32_t i;
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *currentNewSkeletonDCsegment;
     float segVectorLength = 0.;
@@ -280,14 +280,13 @@ static bool delNodeFromSkeletonStruct(nodeListElement *node) {
 }
 
 static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
-    uint32_t i;
+    int32_t i;
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *lastSkeletonDCsegment, *currentSkeletonDCsegment;
     float segVectorLength = 0.;
     floatCoordinate segVector;
     Coordinate currentSegVectorPoint, lastSegVectorPoint;
     Coordinate curMagTargetPos, curMagSourcePos;
-    Renderer *r = new Renderer();
 
     if(segment) {
         if(segment->flag == 2) {
@@ -589,9 +588,9 @@ bool Skeletonizer::updateSkeletonState() {
     return TRUE;
 }
 
-bool Skeletonizer::nextCommentlessNode() { }
+bool Skeletonizer::nextCommentlessNode() { return false;}
 
-bool Skeletonizer::previousCommentlessNode() { }
+bool Skeletonizer::previousCommentlessNode() { return false; }
 
 bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
    int32_t extensionDelim = -1, countDelim = -1;

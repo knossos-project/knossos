@@ -4,9 +4,9 @@
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 
-enum {
+enum ControlTypes{
     CTRL = 0, SHIFT = 1, ALT = 2
-} controlTypes;
+};
 
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
@@ -384,7 +384,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
 
-    int32_t i;
+    uint32_t i;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
 
@@ -477,7 +477,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
 
 bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
 
-    int32_t i = 0;
+    uint32_t i = 0;
     Coordinate newDraggedNodePos;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
@@ -1149,7 +1149,7 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
 
     Coordinate *foundCoordinate;
     foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
-    uint32_t x, y, z;
+    int32_t x, y, z;
     x = y = z = 0;
 
     // These variables store the distance in screen pixels from the left and
@@ -1194,23 +1194,13 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
             x = state->viewerState->currentPosition.x;
             break;
     }
-    if(!((x < 0)
-        || (x > state->boundary.x)
-        || (y < 0)
-        || (y > state->boundary.y)
-        || (z < 0)
-        || (z > state->boundary.z))) {
-
-
-        SET_COORDINATE((*foundCoordinate),
-                       x,
-                       y,
-                       z);
-
-
+    //check if coordinates are in range
+    if((x > 0) && (x <= state->boundary.x)
+        &&(y > 0) && (y <= state->boundary.y)
+        &&(z > 0) && (z <= state->boundary.z)) {
+        SET_COORDINATE((*foundCoordinate), x, y, z);
         return foundCoordinate;
     }
-
     return NULL;
 }
 

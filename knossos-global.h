@@ -428,167 +428,163 @@ struct stateInfo {
 //  Info about the data
 
 
-        // stores the currently active magnification;
-        // it is set by magnification = 2^MAGx
-        // state->magnification should only be used by the viewer,
-        // but its value is copied over to loaderMagnification.
-        // This is locked for thread safety.
-        int32_t magnification;
+    // stores the currently active magnification;
+    // it is set by magnification = 2^MAGx
+    // state->magnification should only be used by the viewer,
+    // but its value is copied over to loaderMagnification.
+    // This is locked for thread safety.
+    uint32_t magnification;
 
-        uint32_t highestAvailableMag;
-        uint32_t lowestAvailableMag;
+    uint32_t highestAvailableMag;
+    uint32_t lowestAvailableMag;
 
-        // This variable is used only by the loader.
-        // It is filled by the viewer and contains
-        // log2uint32(state->magnification)
-        uint32_t loaderMagnification;
+    // This variable is used only by the loader.
+    // It is filled by the viewer and contains
+    // log2uint32(state->magnification)
+    uint32_t loaderMagnification;
 
-        // Path to the current cube files for the viewer and loader.
-        char path[1024];
-        char loaderPath[1024];
-        // Paths to all available datasets of the 3-D image pyramid
-        char magPaths[NUM_MAG_DATASETS][1024];
+    // Path to the current cube files for the viewer and loader.
+    char path[1024];
+    char loaderPath[1024];
+    // Paths to all available datasets of the 3-D image pyramid
+    char magPaths[NUM_MAG_DATASETS][1024];
 
-        // Current dataset identifier string
-        char name[1024];
-        char loaderName[1024];
-        char magNames[NUM_MAG_DATASETS][1024];
+    // Current dataset identifier string
+    char name[1024];
+    char loaderName[1024];
+    char magNames[NUM_MAG_DATASETS][1024];
 
-        char datasetBaseExpName[1024];
+    char datasetBaseExpName[1024];
 
-        // Edge length of the current data set in data pixels.
-        Coordinate boundary;
-        //Coordinate loaderBoundary;
-        Coordinate *magBoundaries[NUM_MAG_DATASETS];
+    // Edge length of the current data set in data pixels.
+    Coordinate boundary;
+    //Coordinate loaderBoundary;
+    Coordinate *magBoundaries[NUM_MAG_DATASETS];
 
-		// pixel-to-nanometer scale
-		floatCoordinate scale;
+    // pixel-to-nanometer scale
+    floatCoordinate scale;
 
-		// offset for synchronization between datasets
-		Coordinate offset;
+    // offset for synchronization between datasets
+    Coordinate offset;
 
-        // With 2^N being the edge length of a datacube in pixels and
-        // M being the edge length of a supercube (the set of all
-        // simultaneously loaded datacubes) in datacubes:
+    // With 2^N being the edge length of a datacube in pixels and
+    // M being the edge length of a supercube (the set of all
+    // simultaneously loaded datacubes) in datacubes:
 
-        // Bytes in one datacube: 2^3N
-        uint32_t cubeBytes;
+    // Bytes in one datacube: 2^3N
+    uint32_t cubeBytes;
 
-        // Edge length of one cube in pixels: 2^N
-        int32_t cubeEdgeLength;
+    // Edge length of one cube in pixels: 2^N
+    int32_t cubeEdgeLength;
 
-		// Area of a cube slice in pixels;
-		int32_t cubeSliceArea;
+    // Area of a cube slice in pixels;
+    int32_t cubeSliceArea;
 
-        // Supercube edge length in datacubes.
-		int32_t M;
-		uint32_t cubeSetElements;
+    // Supercube edge length in datacubes.
+    int32_t M;
+    uint32_t cubeSetElements;
 
-        // Cube hierarchy mode
-        int32_t boergens;
+    // Cube hierarchy mode
+    int32_t boergens;
 
-        // Bytes in one supercube (This is pretty much the memory
-        // footprint of KNOSSOS): M^3 * 2^3M
-        uint32_t cubeSetBytes;
+    // Bytes in one supercube (This is pretty much the memory
+    // footprint of KNOSSOS): M^3 * 2^3M
+    uint32_t cubeSetBytes;
 
-        // Use overlay cubes to color the data.
-        // Values: TRUE, FALSE.
-        uint32_t overlay;
-
-
-        // Inter-thread communication structures / signals / mutexes, etc.
+    // Use overlay cubes to color the data.
+    // Values: TRUE, FALSE.
+    uint32_t overlay;
 
 
+// --- Inter-thread communication structures / signals / mutexes, etc. ---
 
-        // Tells the loading thread, that state->path and or state->name changed
+    // Tells the loading thread, that state->path and or state->name changed
 
-        int32_t datasetChangeSignal;
+    int32_t datasetChangeSignal;
 
+    // Tell the loading thread that it should interrupt its work /
+    // its sleep and do something new.
+    bool loadSignal;
 
-        // Tell the loading thread that it should interrupt its work /
-        // its sleep and do something new.
-        bool loadSignal;
+    // If loadSignal is TRUE and quitSignal is TRUE, make the
+    // loading thread quit. loadSignal == TRUE means the loader
+    // has been signalled. If quitSignal != TRUE, it will go on
+    // loading its stuff.
+    bool quitSignal;
 
-        // If loadSignal is TRUE and quitSignal is TRUE, make the
-        // loading thread quit. loadSignal == TRUE means the loader
-        // has been signalled. If quitSignal != TRUE, it will go on
-        // loading its stuff.
-        bool quitSignal;
+    // These signals are used to communicate with the remote.
+    int32_t remoteSignal;
 
-		// These signals are used to communicate with the remote.
-		int32_t remoteSignal;
+    // Same for the client. The client threading code is basically
+    // copy-pasted from the remote.
+    int32_t clientSignal;
 
-        // Same for the client. The client threading code is basically
-        // copy-pasted from the remote.
-        int32_t clientSignal;
+    int32_t maxTrajectories;
 
-		int32_t maxTrajectories;
+    // Tell the loading thread to wake up.
 
-        // Tell the loading thread to wake up.
+    QWaitCondition *conditionLoadSignal;
 
-        QWaitCondition *conditionLoadSignal;
+    // Tell the remote to wake up.
+    QWaitCondition *conditionRemoteSignal;
 
-		// Tell the remote to wake up.
-        QWaitCondition *conditionRemoteSignal;
+    QWaitCondition *conditionClientSignal;
 
-        QWaitCondition *conditionClientSignal;
+    // Any signalling to the loading thread needs to be protected
+    // by this mutex. This is done by sendLoadSignal(), so always
+    // use sendLoadSignal() to signal to the loading thread.
 
-        // Any signalling to the loading thread needs to be protected
-        // by this mutex. This is done by sendLoadSignal(), so always
-        // use sendLoadSignal() to signal to the loading thread.
+    QMutex *protectLoadSignal;
 
-        QMutex *protectLoadSignal;
+    // This should be accessed through sendRemoteSignal() only.
 
-		// This should be accessed through sendRemoteSignal() only.
+    QMutex *protectRemoteSignal;
 
-        QMutex *protectRemoteSignal;
+    // Access through sendClientSignal()
 
-        // Access through sendClientSignal()
+    QMutex *protectClientSignal;
 
-        QMutex *protectClientSignal;
+    // ANY access to the Dc2Pointer or Oc2Pointer tables has
+    // to be locked by this mutex.
 
-        // ANY access to the Dc2Pointer or Oc2Pointer tables has
-        // to be locked by this mutex.
+    QMutex *protectCube2Pointer;
 
-        QMutex *protectCube2Pointer;
-
-        //  Protect the network output buffer and the network peers list
-
-
-        QMutex *protectOutBuffer;
-
-        QMutex *protectPeerList;
-
-        //  Protect changes to the skeleton for network synchronization.
-
-        //SDL_mutex *protectSkeleton;
-        QMutex *protectSkeleton;
+    //  Protect the network output buffer and the network peers list
 
 
-        //  Info about the state of KNOSSOS in general.
+    QMutex *protectOutBuffer;
+
+    QMutex *protectPeerList;
+
+    //  Protect changes to the skeleton for network synchronization.
+
+    QMutex *protectSkeleton;
 
 
-        // This gives the current position ONLY when the reload
-        // boundary has been crossed. Change it through
-        // sendLoadSignal() exclusively. It has to be locked by
-        // protectLoadSignal.
-        Coordinate currentPositionX;
+ //---  Info about the state of KNOSSOS in general. --------
 
-        // Dc2Pointer and Oc2Pointer provide a mappings from cube
-        // coordinates to pointers to datacubes / overlay cubes loaded
-        // into memory.
-        // It is a set of key (cube coordinate) / value (pointer) pairs.
-        // Whenever we access a datacube in memory, we do so through
-        // this structure.
-        Hashtable *Dc2Pointer[NUM_MAG_DATASETS];
-        Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
 
-		struct viewerState *viewerState;
-		struct remoteState *remoteState;
-        struct clientState *clientState;
-		struct loaderState *loaderState;
-		struct skeletonState *skeletonState;
-		struct trajectory *trajectories;
+    // This gives the current position ONLY when the reload
+    // boundary has been crossed. Change it through
+    // sendLoadSignal() exclusively. It has to be locked by
+    // protectLoadSignal.
+    Coordinate currentPositionX;
+
+    // Dc2Pointer and Oc2Pointer provide a mappings from cube
+    // coordinates to pointers to datacubes / overlay cubes loaded
+    // into memory.
+    // It is a set of key (cube coordinate) / value (pointer) pairs.
+    // Whenever we access a datacube in memory, we do so through
+    // this structure.
+    Hashtable *Dc2Pointer[NUM_MAG_DATASETS];
+    Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
+
+    struct viewerState *viewerState;
+    struct remoteState *remoteState;
+    struct clientState *clientState;
+    struct loaderState *loaderState;
+    struct skeletonState *skeletonState;
+    struct trajectory *trajectories;
 };
 
 struct trajectory {
@@ -1023,7 +1019,7 @@ struct nodeListElement {
 
     struct commentListElement *comment;
 
-    int32_t nodeID;
+    uint32_t nodeID;
     Coordinate position;
     int32_t isBranchNode;
 };
@@ -1313,8 +1309,8 @@ struct inputmap {
     printf(__VA_ARGS__); \
     printf("\n"); \
     }
-    //if(state->viewerState->viewerReady) \
-    //   AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \
+    /*if(state->viewerState->viewerReady) \
+       AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \*/
 
 
 

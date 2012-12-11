@@ -103,7 +103,21 @@ int main(int argc, char *argv[])
         _Exit(FALSE);
     }
 
-
+    strncpy(state->path, "C:\\knossos-skeletonizer\\data\\f0073_stack_cubed_mag4\\", 1024);
+    strncpy(state->name, "f0073_mag4", 1024);
+    state->boundary.x = 10752;
+    state->boundary.y = 9728;
+    state->boundary.z = 4096;
+    state->scale.x = 10.1;
+    state->scale.y = 10.1;
+    state->scale.z = 25;
+    state->cubeBytes = 2097152;
+    state->cubeEdgeLength = 128;
+    state->cubeSliceArea = 16384;
+    state->M = 5;
+    state->cubeSetElements = 125;
+    state->cubeSetBytes = 262144000;
+    state->boergens = 0;
     Knossos::printConfigValues();
 
     // built up threads. Do not follow instructions of qt documentation on QThread
@@ -414,7 +428,7 @@ uint32_t Knossos::log2uint32(register uint32_t x) {
     return(ones32(x >> 1));
 }
 
-bool Knossos::lockSkeleton(int32_t targetRevision) {
+bool Knossos::lockSkeleton(uint32_t targetRevision) {
     /*
      * If a skeleton modifying function is called on behalf of the network client,
      * targetRevision should be set to the appropriate remote value and lockSkeleton()
@@ -429,25 +443,24 @@ bool Knossos::lockSkeleton(int32_t targetRevision) {
 
     state->protectSkeleton->lock();
 
-     if(targetRevision != CHANGE_MANUAL) {
-         /* We can only commit a remote skeleton change if the remote revision count
-          * is exactly the local revision count plus 1.
-          * If the function changing the skeleton encounters an error, unlockSkeleton() has
-          * to be called without incrementing the local revision count and the skeleton
-          * synchronization has to be cancelled */
+    if(targetRevision != CHANGE_MANUAL) {
+        // We can only commit a remote skeleton change if the remote revision count
+        // is exactly the local revision count plus 1.
+        // If the function changing the skeleton encounters an error, unlockSkeleton() has
+        // to be called without incrementing the local revision count and the skeleton
+        // synchronization has to be cancelled
 
-        /* printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
-                targetRevision, state->skeletonState->skeletonRevision);
-         */
+        // printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
+        //       targetRevision, state->skeletonState->skeletonRevision);
+        //
 
-        if(targetRevision != state->skeletonState->skeletonRevision + 1) {
-            // Local and remote skeletons have gone out of sync.
-            Client::skeletonSyncBroken();
-            return false;
-        }
-     }
-
-     return true;
+       if(targetRevision != state->skeletonState->skeletonRevision + 1) {
+           // Local and remote skeletons have gone out of sync.
+           Client::skeletonSyncBroken();
+           return false;
+       }
+    }
+    return true;
 }
 bool Knossos::unlockSkeleton(int32_t increment) {
     /* We cannot increment the revision count if the skeleton change was
@@ -462,9 +475,7 @@ bool Knossos::unlockSkeleton(int32_t increment) {
       * unless it turns out to be useful for something else...
       *
       */
-
     state->protectSkeleton->unlock();
-
     return true;
 }
 
@@ -565,7 +576,7 @@ bool Knossos::readConfigFile(char *path) {
 }
 
 bool Knossos::printConfigValues() {
-    printf("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
+    qDebug("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
                state->path,
                state->name,
                state->boundary.x,

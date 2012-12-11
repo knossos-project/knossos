@@ -79,7 +79,7 @@ static vpBacklog *backlogNew() {
 static vpList *vpListGenerate(viewerState *viewerState) {
      vpList *newVpList = NULL;
      vpBacklog *currentBacklog = NULL;
-     int i = 0;
+     uint32_t i = 0;
 
      newVpList = vpListNew();
      if(newVpList == NULL) {
@@ -88,8 +88,9 @@ static vpList *vpListGenerate(viewerState *viewerState) {
      }
 
      for(i = 0; i < viewerState->numberViewPorts; i++) {
-         if(viewerState->viewPorts[i].type == VIEWPORT_SKELETON)
+         if(viewerState->viewPorts[i].type == VIEWPORT_SKELETON) {
              continue;
+         }
          currentBacklog = backlogNew();
          if(currentBacklog == NULL) {
              qDebug("Error creating backlog.");
@@ -506,210 +507,202 @@ static int32_t texIndex(uint32_t x,
 }
 
 static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState) {
+    // Load the texture for a viewport by going through all relevant datacubes and copying slices
+    // from those cubes into the texture.
 
-     // Load the texture for a viewport by going through all relevant datacubes and copying slices
-     // from those cubes into the texture.
+    uint32_t x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
+    Coordinate upperLeftDc, currentDc, currentPosition_dc;
+    Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
 
-     int32_t x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
-     Coordinate upperLeftDc, currentDc, currentPosition_dc;
-     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
-
-     Byte *datacube = NULL, *overlayCube = NULL;
-     int32_t dcOffset = 0, index = 0;
-
-
-     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
-     DIV_COORDINATE(currPosTrans, state->magnification);
-
-     CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->viewPort->texture.leftUpperPxInAbsPx);
-     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
-
-     currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
-
-     upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans);
+    Byte *datacube = NULL, *overlayCube = NULL;
+    int32_t dcOffset = 0, index = 0;
 
 
+    CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
+    DIV_COORDINATE(currPosTrans, state->magnification);
 
-     // We calculate the coordinate of the DC that holds the slice that makes up the upper left
-     // corner of our texture.
-     // dcOffset is the offset by which we can index into a datacube to extract the first byte of
-     // slice relevant to the texture for this viewport.
-     //
-     // Rounding should be explicit!
-     switch(currentVp->viewPort->type) {
-         case SLICE_XY:
-             dcOffset = state->cubeSliceArea
-                        //* (viewerState->currentPosition.z - state->cubeEdgeLength
-                        * (currPosTrans.z - state->cubeEdgeLength
-                        * currentPosition_dc.z);
-             break;
+    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->viewPort->texture.leftUpperPxInAbsPx);
+    DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
-         case SLICE_XZ:
-             dcOffset = state->cubeEdgeLength
-                        * (currPosTrans.y  - state->cubeEdgeLength
-                        //     * (viewerState->currentPosition.y  - state->cubeEdgeLength
-                        * currentPosition_dc.y);
-             break;
+    currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
 
-         case SLICE_YZ:
-             dcOffset = //viewerState->currentPosition.x - state->cubeEdgeLength
-                     currPosTrans.x - state->cubeEdgeLength
-                        * currentPosition_dc.x;
-             break;
+    upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans);
 
-         default:
-             qDebug("No such slice view: %d.", currentVp->viewPort->type);
-             return false;
-     }
 
-     // We iterate over the texture with x and y being in a temporary coordinate
-     // system local to this texture.
-     for(x_dc = 0; x_dc < currentVp->viewPort->texture.usedTexLengthDc; x_dc++) {
-         for(y_dc = 0; y_dc < currentVp->viewPort->texture.usedTexLengthDc; y_dc++) {
-             x_px = x_dc * state->cubeEdgeLength;
-             y_px = y_dc * state->cubeEdgeLength;
 
-             switch(currentVp->viewPort->type) {
-                 // With an x/y-coordinate system in a viewport, we get the following
-                 // mapping from viewport (slice) coordinates to global (dc)
-                 // coordinates:
-                 // XY-slice: x local is x global, y local is y global
-                 // XZ-slice: x local is x global, y local is z global
-                 // YZ-slice: x local is y global, y local is z global.
-             case SLICE_XY:
-                 SET_COORDINATE(currentDc,
-                                upperLeftDc.x + x_dc,
-                                upperLeftDc.y + y_dc,
-                                upperLeftDc.z);
-                 break;
-             case SLICE_XZ:
-                 SET_COORDINATE(currentDc,
-                                upperLeftDc.x + x_dc,
-                                upperLeftDc.y,
-                                upperLeftDc.z + y_dc);
-                 break;
-             case SLICE_YZ:
-                 SET_COORDINATE(currentDc,
-                                upperLeftDc.x,
-                                upperLeftDc.y + x_dc,
-                                upperLeftDc.z + y_dc);
-                 break;
-             default:
-                 LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->viewPort->type);
-             }
+    // We calculate the coordinate of the DC that holds the slice that makes up the upper left
+    // corner of our texture.
+    // dcOffset is the offset by which we can index into a datacube to extract the first byte of
+    // slice relevant to the texture for this viewport.
+    //
+    // Rounding should be explicit!
+    switch(currentVp->viewPort->type) {
+        case SLICE_XY:
+            dcOffset = state->cubeSliceArea
+                       //* (viewerState->currentPosition.z - state->cubeEdgeLength
+                       * (currPosTrans.z - state->cubeEdgeLength
+                       * currentPosition_dc.z);
+            break;
 
-             //SDL_LockMutex(state->protectCube2Pointer);
-             state->protectCube2Pointer->lock();
-             datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
-             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
-             //SDL_UnlockMutex(state->protectCube2Pointer);
-             state->protectCube2Pointer->unlock();
+        case SLICE_XZ:
+            dcOffset = state->cubeEdgeLength
+                       * (currPosTrans.y  - state->cubeEdgeLength
+                       //     * (viewerState->currentPosition.y  - state->cubeEdgeLength
+                       * currentPosition_dc.y);
+            break;
 
-             /*
-              *  Take care of the data textures.
-              *
-              */
-             glBindTexture(GL_TEXTURE_2D,
-                           currentVp->viewPort->texture.texHandle);
+        case SLICE_YZ:
+            dcOffset = //viewerState->currentPosition.x - state->cubeEdgeLength
+                       currPosTrans.x - state->cubeEdgeLength
+                       * currentPosition_dc.x;
+            break;
 
-             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        default:
+            qDebug("No such slice view: %d.", currentVp->viewPort->type);
+            return false;
+    }
+    // We iterate over the texture with x and y being in a temporary coordinate
+    // system local to this texture.
+    for(x_dc = 0; x_dc < currentVp->viewPort->texture.usedTexLengthDc; x_dc++) {
+        for(y_dc = 0; y_dc < currentVp->viewPort->texture.usedTexLengthDc; y_dc++) {
+            x_px = x_dc * state->cubeEdgeLength;
+            y_px = y_dc * state->cubeEdgeLength;
 
-             // This is used to index into the texture. texData[index] is the first
-             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-             index = texIndex(x_dc, y_dc, 3, &(currentVp->viewPort->texture));
+            switch(currentVp->viewPort->type) {
+                // With an x/y-coordinate system in a viewport, we get the following
+                // mapping from viewport (slice) coordinates to global (dc)
+                // coordinates:
+                // XY-slice: x local is x global, y local is y global
+                // XZ-slice: x local is x global, y local is z global
+                // YZ-slice: x local is y global, y local is z global.
+            case SLICE_XY:
+                SET_COORDINATE(currentDc,
+                               upperLeftDc.x + x_dc,
+                               upperLeftDc.y + y_dc,
+                               upperLeftDc.z);
+                break;
+            case SLICE_XZ:
+                SET_COORDINATE(currentDc,
+                               upperLeftDc.x + x_dc,
+                               upperLeftDc.y,
+                               upperLeftDc.z + y_dc);
+                break;
+            case SLICE_YZ:
+                SET_COORDINATE(currentDc,
+                               upperLeftDc.x,
+                               upperLeftDc.y + x_dc,
+                               upperLeftDc.z + y_dc);
+                break;
+            default:
+                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->viewPort->type);
+            }
 
-             if(datacube == HT_FAILURE) {
+            state->protectCube2Pointer->lock();
+            datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+            overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+            state->protectCube2Pointer->unlock();
 
-                 backlogAddElement(currentVp->backlog,
-                                   currentDc,
-                                   dcOffset,
-                                   &(viewerState->texData[index]),
-                                   x_px,
-                                   y_px,
-                                   CUBE_DATA);
+            // Take care of the data textures.
 
-                 glTexSubImage2D(GL_TEXTURE_2D,
-                                 0,
-                                 x_px,
-                                 y_px,
-                                 state->cubeEdgeLength,
-                                 state->cubeEdgeLength,
-                                 GL_RGB,
-                                 GL_UNSIGNED_BYTE,
-                                 viewerState->defaultTexData);
-             }
-             else {
-                 dcSliceExtract(datacube,
-                                &(viewerState->texData[index]),
-                                dcOffset,
-                                currentVp->viewPort);
+            glBindTexture(GL_TEXTURE_2D,
+                          currentVp->viewPort->texture.texHandle);
 
-                 glTexSubImage2D(GL_TEXTURE_2D,
-                                 0,
-                                 x_px,
-                                 y_px,
-                                 state->cubeEdgeLength,
-                                 state->cubeEdgeLength,
-                                 GL_RGB,
-                                 GL_UNSIGNED_BYTE,
-                                 &(viewerState->texData[index]));
-             }
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-             /*
-              *  Take care of the overlay textures.
-              *
-              */
-             if(state->overlay) {
-                 glBindTexture(GL_TEXTURE_2D,
-                               currentVp->viewPort->texture.overlayHandle);
+            // This is used to index into the texture. texData[index] is the first
+            // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+            index = texIndex(x_dc, y_dc, 3, &(currentVp->viewPort->texture));
 
-                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            if(datacube == HT_FAILURE) {
 
-                 // This is used to index into the texture. texData[index] is the first
-                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                 index = texIndex(x_dc, y_dc, 4, &(currentVp->viewPort->texture));
+                backlogAddElement(currentVp->backlog,
+                                  currentDc,
+                                  dcOffset,
+                                  &(viewerState->texData[index]),
+                                  x_px,
+                                  y_px,
+                                  CUBE_DATA);
 
-                 if(overlayCube == HT_FAILURE) {
-                     backlogAddElement(currentVp->backlog,
-                                       currentDc,
-                                       dcOffset * OBJID_BYTES,
-                                       &(viewerState->overlayData[index]),
-                                       x_px,
-                                       y_px,
-                                       CUBE_OVERLAY);
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                x_px,
+                                y_px,
+                                state->cubeEdgeLength,
+                                state->cubeEdgeLength,
+                                GL_RGB,
+                                GL_UNSIGNED_BYTE,
+                                viewerState->defaultTexData);
+            }
+            else {
+                dcSliceExtract(datacube,
+                               &(viewerState->texData[index]),
+                               dcOffset,
+                               currentVp->viewPort);
 
-                     glTexSubImage2D(GL_TEXTURE_2D,
-                                     0,
-                                     x_px,
-                                     y_px,
-                                     state->cubeEdgeLength,
-                                     state->cubeEdgeLength,
-                                     GL_RGBA,
-                                     GL_UNSIGNED_BYTE,
-                                     viewerState->defaultOverlayData);
-                 }
-                 else {
-                     ocSliceExtract(overlayCube,
-                                    &(viewerState->overlayData[index]),
-                                    dcOffset * OBJID_BYTES,
-                                    currentVp->viewPort);
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                x_px,
+                                y_px,
+                                state->cubeEdgeLength,
+                                state->cubeEdgeLength,
+                                GL_RGB,
+                                GL_UNSIGNED_BYTE,
+                                &(viewerState->texData[index]));
+            }
 
-                     glTexSubImage2D(GL_TEXTURE_2D,
-                                     0,
-                                     x_px,
-                                     y_px,
-                                     state->cubeEdgeLength,
-                                     state->cubeEdgeLength,
-                                     GL_RGBA,
-                                     GL_UNSIGNED_BYTE,
-                                     &(viewerState->overlayData[index]));
-                 }
-             }
-         }
-     }
-     glBindTexture(GL_TEXTURE_2D, 0);
-     return true;
- }
+            //Take care of the overlay textures.
+
+            if(state->overlay) {
+                glBindTexture(GL_TEXTURE_2D,
+                              currentVp->viewPort->texture.overlayHandle);
+
+               glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+                // This is used to index into the texture. texData[index] is the first
+                // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+                index = texIndex(x_dc, y_dc, 4, &(currentVp->viewPort->texture));
+
+                if(overlayCube == HT_FAILURE) {
+                    backlogAddElement(currentVp->backlog,
+                                      currentDc,
+                                      dcOffset * OBJID_BYTES,
+                                      &(viewerState->overlayData[index]),
+                                      x_px,
+                                      y_px,
+                                      CUBE_OVERLAY);
+
+                    glTexSubImage2D(GL_TEXTURE_2D,
+                                    0,
+                                    x_px,
+                                    y_px,
+                                    state->cubeEdgeLength,
+                                    state->cubeEdgeLength,
+                                    GL_RGBA,
+                                    GL_UNSIGNED_BYTE,
+                                    viewerState->defaultOverlayData);
+                }
+                else {
+                    ocSliceExtract(overlayCube,
+                                   &(viewerState->overlayData[index]),
+                                   dcOffset * OBJID_BYTES,
+                                   currentVp->viewPort);
+
+                    glTexSubImage2D(GL_TEXTURE_2D,
+                                    0,
+                                    x_px,
+                                    y_px,
+                                    state->cubeEdgeLength,
+                                    state->cubeEdgeLength,
+                                    GL_RGBA,
+                                    GL_UNSIGNED_BYTE,
+                                    &(viewerState->overlayData[index]));
+                }
+            }
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return true;
+}
 
  /* For downsample & upsamleVPTexture:
   * we read the texture to a CPU side - buffer,
@@ -967,7 +960,7 @@ static bool initViewer() {
 
 /* TODO maybe no implementation is needed anymore */
 static QCursor *GenCursor(char *xpm[], int xHot, int yHot) {
-
+    return NULL;
 }
 // from knossos-global.h
 
@@ -976,7 +969,7 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type
 
     FILE *lutFile = NULL;
         uint8_t lutBuffer[RGBA_LUTSIZE];
-        int32_t readBytes = 0, i = 0;
+        uint32_t readBytes = 0, i = 0;
         uint32_t size = RGB_LUTSIZE;
 
         // The b is for compatibility with non-UNIX systems and denotes a
@@ -999,7 +992,7 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type
             return false;
         }
 
-        readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
+        readBytes = (uint32_t)fread(lutBuffer, 1, size, lutFile);
         if(readBytes != size) {
             LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
             if(fclose(lutFile) != 0) {
@@ -1037,7 +1030,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
 
     FILE *lutFile = NULL;
         uint8_t lutBuffer[RGB_LUTSIZE];
-        int32_t readBytes = 0, i = 0;
+        uint32_t readBytes = 0, i = 0;
         uint32_t size = RGB_LUTSIZE;
 
         // The b is for compatibility with non-UNIX systems and denotes a
@@ -1056,7 +1049,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
             return false;
         }
 
-        readBytes = (int32_t)fread(lutBuffer, 1, size, lutFile);
+        readBytes = (uint32_t)fread(lutBuffer, 1, size, lutFile);
         if(readBytes != size) {
             LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
             if(fclose(lutFile) != 0) {
@@ -1097,21 +1090,18 @@ bool Viewer::updatePosition(int32_t serverMovement) {
 }
 
 bool Viewer::calcDisplayedEdgeLength() {
+    uint32_t i;
+    float FOVinDCs;
 
-    int32_t i;
-       float FOVinDCs;
+    FOVinDCs = ((float)state->M) - 1.f;
 
-       FOVinDCs = ((float)state->M) - 1.f;
-
-       for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-           state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-           state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
-               FOVinDCs * (float)state->cubeEdgeLength
-               / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
-       }
-
-       return true;
-
+    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
+        state->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+            FOVinDCs * (float)state->cubeEdgeLength
+            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+    }
+    return true;
 }
 
 
@@ -1130,7 +1120,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                 if(state->magnification > state->lowestAvailableMag) {
                     state->magnification /= 2;
                     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-                        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                        if(state->viewerState->viewPorts[i].type != (uint32_t)VIEWPORT_SKELETON) {
                             state->viewerState->viewPorts[i].texture.zoomLevel *= 2.0;
                             upsampleVPTexture(&state->viewerState->viewPorts[i]);
                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
@@ -1145,7 +1135,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                 if(state->magnification < state->highestAvailableMag) {
                     state->magnification *= 2;
                     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-                        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
+                        if(state->viewerState->viewPorts[i].type != (uint32_t)VIEWPORT_SKELETON) {
                             state->viewerState->viewPorts[i].texture.zoomLevel *= 0.5;
                             downsampleVPTexture(&state->viewerState->viewPorts[i]);
                             state->viewerState->viewPorts[i].texture.texUnitsPerDataPx
@@ -1459,98 +1449,105 @@ bool Viewer::cleanUpViewer( viewerState *viewerState) {
 
 bool Viewer::updateViewerState() {
 
-    int32_t i;
+    uint32_t i;
 
-        /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
-            state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x - 1;
+    /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
+        state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x - 1;
+    }
+    if(!(state->viewerState->currentPosition.y == (tempConfig->viewerState->currentPosition.y - 1))) {
+        state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y - 1;
+    }
+    if(!(state->viewerState->currentPosition.z == (tempConfig->viewerState->currentPosition.z - 1))) {
+        state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z - 1;
+    }*/
+
+    if(state->viewerState->filterType != tempConfig->viewerState->filterType) {
+        state->viewerState->filterType = tempConfig->viewerState->filterType;
+        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.texHandle);
+            // Set the parameters for the texture.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.overlayHandle);
+            // Set the parameters for the texture.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
         }
-        if(!(state->viewerState->currentPosition.y == (tempConfig->viewerState->currentPosition.y - 1))) {
-            state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y - 1;
-        }
-        if(!(state->viewerState->currentPosition.z == (tempConfig->viewerState->currentPosition.z - 1))) {
-            state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z - 1;
-        }*/
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
-       // int32_t i = 0;
+    updateZoomCube();
 
-        if(state->viewerState->filterType != tempConfig->viewerState->filterType) {
-            state->viewerState->filterType = tempConfig->viewerState->filterType;
+    if(state->viewerState->workMode != tempConfig->viewerState->workMode) {
+        state->viewerState->workMode = tempConfig->viewerState->workMode;
+    }
+    if(state->viewerState->dropFrames != tempConfig->viewerState->dropFrames) {
+        state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+    }
+    if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
+        state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
 
-            for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-                glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.texHandle);
-                // Set the parameters for the texture.
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+        //if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) TODO Crashed
+        //    LOG("Error setting key repeat parameters.");
+    }
 
-                glBindTexture(GL_TEXTURE_2D, state->viewerState->viewPorts[i].texture.overlayHandle);
-                // Set the parameters for the texture.
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-            }
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-
-        updateZoomCube();
-
-        if(state->viewerState->workMode != tempConfig->viewerState->workMode)
-            state->viewerState->workMode = tempConfig->viewerState->workMode;
-
-        if(state->viewerState->dropFrames != tempConfig->viewerState->dropFrames)
-            state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
-
-        if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
-            state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
-
-            //if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) TODO Crashed
-            //    LOG("Error setting key repeat parameters.");
-        }
-
-        if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime)
-            state->viewerState->recenteringTime = tempConfig->viewerState->recenteringTime;
-
-        if(state->viewerState->recenteringTimeOrth != tempConfig->viewerState->recenteringTimeOrth)
-            state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
-
-        return true;
+    if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime) {
+        state->viewerState->recenteringTime = tempConfig->viewerState->recenteringTime;
+    }
+    if(state->viewerState->recenteringTimeOrth != tempConfig->viewerState->recenteringTimeOrth) {
+        state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
+    }
+    return true;
 }
 
 
 bool Viewer::updateZoomCube() {
-    int32_t i, residue, max, currentZoomCube, oldZoomCube;
+    uint32_t i;
+    int32_t residue, max, currentZoomCube, oldZoomCube;
 
     /* Notice int division! */
     max = ((state->M/2)*2-1);
     oldZoomCube = state->viewerState->zoomCube;
     state->viewerState->zoomCube = 0;
 
-        for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-            if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
-                residue = ((max*state->cubeEdgeLength)
-                - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX
-                / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
-                / state->cubeEdgeLength;
+    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+        if(state->viewerState->viewPorts[i].type != (uint32_t)VIEWPORT_SKELETON) {
+            residue = ((max*state->cubeEdgeLength)
+            - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX
+            / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
+            / state->cubeEdgeLength;
 
-                if(residue%2) residue = residue / 2 + 1;
-                else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
-                currentZoomCube = (state->M/2)-residue;
-                if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
+            if(residue%2) {
+                residue = residue / 2 + 1;
+            }
+            else if((residue%2 == 0) && (residue != 0)) {
+                residue = (residue - 1) / 2 + 1;
+            }
+            currentZoomCube = (state->M/2)-residue;
+            if(state->viewerState->zoomCube < currentZoomCube) {
+                state->viewerState->zoomCube = currentZoomCube;
+            }
+            residue = ((max*state->cubeEdgeLength)
+            - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY
+            / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
+            / state->cubeEdgeLength;
 
-                residue = ((max*state->cubeEdgeLength)
-                - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY
-                / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
-                / state->cubeEdgeLength;
-
-                if(residue%2) residue = residue / 2 + 1;
-                else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
-                currentZoomCube = (state->M/2)-residue;
-                if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
+            if(residue%2) {
+                residue = residue / 2 + 1;
+            }
+            else if((residue%2 == 0) && (residue != 0)) {
+                residue = (residue - 1) / 2 + 1;
+            }
+            currentZoomCube = (state->M/2)-residue;
+            if(state->viewerState->zoomCube < currentZoomCube) {
+                state->viewerState->zoomCube = currentZoomCube;
             }
         }
-        if(oldZoomCube != state->viewerState->zoomCube) {
-            state->skeletonState->skeletonChanged = true;
-        }
-
-        return true;
+    }
+    if(oldZoomCube != state->viewerState->zoomCube) {
+        state->skeletonState->skeletonChanged = true;
+    }
+    return true;
 }
 
 bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
