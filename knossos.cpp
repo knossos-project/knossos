@@ -1,4 +1,5 @@
 //removed SDL_init, for the time being
+//2012.12.11 contains hardcoded location of a dataset right now (in main)
 
 #include <QtGui/QApplication>
 #include <QSplashScreen>
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
        LOG("Error during initialization of the state struct.");
         _Exit(FALSE);
     }
-
+    //2012.12.11 HARDCODED FOR TESTING LOADER
     strncpy(state->path, "C:\\knossos-skeletonizer\\data\\f0073_stack_cubed_mag4\\", 1024);
     strncpy(state->name, "f0073_mag4", 1024);
     state->boundary.x = 10752;
@@ -501,7 +502,7 @@ bool Knossos::sendRemoteSignal() {
 
 bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
     state->protectLoadSignal->lock();
-
+    qDebug("I send a load signal to %i, %i, %i", x, y, z);
     state->loadSignal = true;
     state->datasetChangeSignal = magChanged;
 

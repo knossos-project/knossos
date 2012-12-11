@@ -687,10 +687,11 @@ void Client::start() {
     //if(state->clientState->connectAsap) {
     //    Knossos::sendClientSignal();
     //}
-    int i = 0;
-    while(TRUE) {
-        //qDebug("client says hello %i", ++i);
-        Sleeper::msleep(100);
+    int i = 1;
+    while(i < 5) {
+        Knossos::sendLoadSignal(i*100, i*100, i*100, NO_MAG_CHANGE);
+        i++;
+        Sleeper::msleep(500);
         /*state->protectClientSignal->lock();
         while(state->clientSignal == FALSE) {
         //    SDL_CondWait(state->conditionClientSignal, state->protectClientSignal);

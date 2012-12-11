@@ -1216,7 +1216,7 @@ void Viewer::start() {
         // structure.
         // The idea is that we can easily remove the element representing a
         // pending viewport once its texture is completely loaded.
-        viewPorts = vpListGenerate(viewerState);
+      /*  viewPorts = vpListGenerate(viewerState);
         drawCounter = 0;
 
         currentVp = viewPorts->entry;
@@ -1269,13 +1269,13 @@ void Viewer::start() {
                 Skeletonizer::updateSkeletonState();
                 Renderer::drawGUI();
 
-                /* TODO Crashed wegen SDL
-                while(SDL_PollEvent(&event)) {
-                   if(EventModel::handleEvent(event) == FALSE) {
-                       state->viewerState->viewerReady = FALSE;
-                       //return TRUE;
-                   }
-                } */
+                // TODO Crashed wegen SDL
+                //while(SDL_PollEvent(&event)) {
+                //   if(EventModel::handleEvent(event) == FALSE) {
+                //       state->viewerState->viewerReady = FALSE;
+                //       //return TRUE;
+                //   }
+                //}
 
                 if(viewerState->userMove == TRUE) {
                     break;
@@ -1293,16 +1293,16 @@ void Viewer::start() {
         }//end while(viewPorts->elements > 0)
         vpListDel(viewPorts);
 
-        /* TODO Crashed wegen SDL
-        if(viewerState->userMove == FALSE) {
-            if(SDL_WaitEvent(&event)) {
-                if(EventModel::handleEvent(event) != TRUE) {
-                    state->viewerState->viewerReady = FALSE;
-                    //return TRUE;
-                }
-            }
-        } */
-        viewerState->userMove = FALSE;
+        //TODO Crashed wegen SDL
+        //if(viewerState->userMove == FALSE) {
+        //    if(SDL_WaitEvent(&event)) {
+        //        if(EventModel::handleEvent(event) != TRUE) {
+        //            state->viewerState->viewerReady = FALSE;
+        //            //return TRUE;
+        //        }
+        //    }
+        }
+        viewerState->userMove = FALSE;*/
     }//end while(TRUE)
 
     QThread::currentThread()->quit();

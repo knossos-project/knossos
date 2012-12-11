@@ -1,3 +1,4 @@
+//2012.12.11 contains hardcoded loaderName for testing loader (in start())
 #include <math.h>
 
 #include "loader.h"
@@ -133,11 +134,12 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
         goto loadcube_fail;
     }
 
-    if(freeDcSlot)
+    if(freeDcSlot) {
         strncpy(typeExtension, "raw", 4);
-    else
+    }
+    else {
         strncpy(typeExtension, "overlay", 8);
-
+    }
     filename = (char*)malloc(strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
     if(filename == NULL) {
         LOG("Out of memory.");
@@ -186,7 +188,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
-                 //LOG("filename: %s", filename);
+                 qDebug("filename: %s", filename);
     }
     else {
         snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
@@ -200,17 +202,16 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
                  coordinate.y,
                  coordinate.z,
                  typeExtension);
-                 //LOG("filename: %s", filename);
+                 qDebug("filename: %s", filename);
     }
 #endif
-
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
     cubeFile = fopen(filename, "rb");
-    //LOG("succesfully loaded: %s", filename);
+
     if(cubeFile == NULL) {
-        //LOG("failed to load %s", filename);
+        perror(filename);
         goto loadcube_fail;
     }
 
@@ -221,11 +222,12 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
                 readBytes,
                 state->cubeBytes,
                 filename);
-            if(fclose(cubeFile) != 0)
+            if(fclose(cubeFile) != 0) {
                 LOG("Additionally, an error occured closing the file");
-
+            }
             goto loadcube_fail;
         }
+        qDebug("read cubeFile successfully");
     }
     else {
         readBytes = (uint32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
@@ -249,7 +251,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     return TRUE;
 
 loadcube_fail:
-
+    qDebug("loadCubeFail");
     if(freeDcSlot) {
         memcpy(freeDcSlot, state->loaderState->bogusDc, state->cubeBytes);
     }
@@ -578,10 +580,8 @@ static bool loadCubes() {
     while(nextCube != state->loaderState->Dcoi->listEntry) {
         nextCube = currentCube->next;
 
-        /*
-         * Load the datacube for the current coordinate.
-         *
-         */
+        // Load the datacube for the current coordinate.
+
         if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == FALSE) {
             LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
                 currentCube->coordinate.x,
@@ -590,7 +590,6 @@ static bool loadCubes() {
                 state->magnification);
             return FALSE;
         }
-
 
         loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL);
         if(!loadedDc) {
@@ -602,10 +601,7 @@ static bool loadCubes() {
                 state->magnification);
         }
 
-        /*
-         * Load the overlay cube if overlay is activated.
-         *
-         */
+        // Load the overlay cube if overlay is activated.
 
         if(state->overlay) {
             if((currentOcSlot = slotListGetElement(state->loaderState->freeOcSlots)) == FALSE) {
@@ -628,11 +624,9 @@ static bool loadCubes() {
             }
         }
 
-        /*
-         * Add pointers for the dc and oc (if at least one of them could be loaded)
-         * to the Cube2Pointer table.
-         *
-         */
+        // Add pointers for the dc and oc (if at least one of them could be loaded)
+        // to the Cube2Pointer table.
+
         state->protectCube2Pointer->lock();
         if(loadedDc) {
             if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification],
@@ -646,13 +640,12 @@ static bool loadCubes() {
                     state->loaderMagnification);
                 return FALSE;
             }
-            /*    LOG("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    currentDcSlot->cube,
-                    state->loaderMagnification);
-                    */
+            //qDebug("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+            //    currentCube->coordinate.x,
+            //    currentCube->coordinate.y,
+            //    currentCube->coordinate.z,
+            //    currentDcSlot->cube,
+            //    state->loaderMagnification);
         }
 
         if(loadedOc) {
@@ -670,10 +663,8 @@ static bool loadCubes() {
         }
         state->protectCube2Pointer->unlock();
 
-        /*
-         * Remove the slots
-         *
-         */
+        //Remove the slots
+
         if(loadedDc) {
             if(slotListDelElement(state->loaderState->freeDcSlots, currentDcSlot) < 0) {
                 LOG("Error deleting the current Dc slot %p from the list.",
@@ -689,10 +680,7 @@ static bool loadCubes() {
             }
         }
 
-        /*
-         * Remove the current cube from Dcoi
-         *
-         */
+        //Remove the current cube from Dcoi
 
         if(Hashtable::ht_del(state->loaderState->Dcoi, currentCube->coordinate) != HT_SUCCESS) {
             LOG("Error deleting cube coordinates (%d, %d, %d) from DCOI.",
@@ -711,28 +699,25 @@ static bool loadCubes() {
             state->protectLoadSignal->unlock();
 
             if(Hashtable::ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
-                LOG("Error removing Dcoi. This is a memory leak.");
+                qDebug("Error removing Dcoi. This is a memory leak.");
             }
 
             // See the comment about the ht_new() call in knossos.c
             state->loaderState->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
             if(state->loaderState->Dcoi == HT_FAILURE) {
-                LOG("Error creating new empty Dcoi. Fatal.");
+                qDebug("Error creating new empty Dcoi. Fatal.");
                 _Exit(FALSE);
             }
-
             return FALSE;
-
-
         }
         else {
             state->protectLoadSignal->unlock();
         }
         currentCube = nextCube;
     }
-
     return TRUE;
 }
+
 void Loader::start() {
     loaderState *loaderState = state->loaderState;
     int32_t magChange = false;
@@ -746,15 +731,13 @@ void Loader::start() {
 
     //int i = 0;
     while(TRUE) {
-       // qDebug("loader says hello %i", ++i);
-        //Sleeper::msleep(50);
+      // qDebug("loader says hello %i", ++i);
+      // Sleeper::msleep(50);
 
        while(state->loadSignal == false) {
-
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             state->conditionLoadSignal->wait(state->protectLoadSignal);
-
         }
 
         state->loadSignal = false;
@@ -792,27 +775,25 @@ void Loader::start() {
         state->loaderMagnification = Knossos::log2uint32(state->magnification);
         strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
         strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
-
+            //2012.12.11 HARDCODED for testing loader
+        strncpy(state->loaderName, "f0073_mag4", 1024);
         // DCOI is now a list of all datacubes that we want in memory, given
         // our current position and that are not yet in memory. We go through
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
         if(loadCubes() == FALSE) {
-            LOG("Loading of all DCOI did not complete.");
+            qDebug("Loading of all DCOI did not complete.");
         }
 
         state->protectLoadSignal->lock();
+       }//end while(TRUE)
 
-
-       }
-    /*
     // Free the structures in loaderState and loaderState itself.
     if(cleanUpLoader(loaderState) == FALSE) {
         LOG("Error cleaning up loading thread.");
-        return FALSE;
-    */
+        return;
+    }
 
     QThread::currentThread()->quit();
     emit finished();
 }
-
