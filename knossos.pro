@@ -12,7 +12,6 @@ TEMPLATE = app
 
 SOURCES +=\
     mainwindow.cpp \
-    openglwidget.cpp \
     eventmodel.cpp \
     client.cpp \
     loader.cpp \
@@ -20,27 +19,26 @@ SOURCES +=\
     remote.cpp \
     skeletonizer.cpp \
     renderer.cpp \
-    gui.cpp \
     knossos.cpp \
     coordinate.cpp \
     Hashtable.cpp \
-    sleeper.cpp
+    sleeper.cpp \
+    viewport.cpp
 
 HEADERS  += mainwindow.h \
     eventmodel.h \
-    openglwidget.h \
     client.h \
     loader.h \
     viewer.h \
     remote.h \
     skeletonizer.h \
     renderer.h \
-    gui.h \
     knossos-global.h \
     knossos.h \
     ../treeLUT_fallback.h \
     ../treeLUT_fallback.h \
-    sleeper.h
+    sleeper.h \
+    viewport.h
 
 FORMS    += mainwindow.ui
 

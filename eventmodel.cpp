@@ -53,9 +53,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
     }
 
     // check in which type of VP the user clicked and perform appropriate operation
-    if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
+    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
         // Activate motion tracking for this VP
-        state->viewerState->viewPorts[VPfound].motionTracking = 1;
+        state->viewerState->vpConfigs[VPfound].motionTracking = 1;
 
         return true;
     }
@@ -80,7 +80,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
 
             case ON_CLICK_DRAG:
                 // Activate motion tracking for this VP
-                state->viewerState->viewPorts[VPfound].motionTracking = 1;
+                state->viewerState->vpConfigs[VPfound].motionTracking = 1;
                 break;
             }
     }
@@ -157,9 +157,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
         }
         else {
             // No modifier pressed
-            state->viewerState->viewPorts[VPfound].draggedNode =
+            state->viewerState->vpConfigs[VPfound].draggedNode =
                 Skeletonizer::findNodeByNodeID(clickedNode);
-            state->viewerState->viewPorts[VPfound].motionTracking = 1;
+            state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
 
@@ -202,8 +202,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
 
     // We have to activate motion tracking only for the skeleton VP for a right click
-    if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON)
-        state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
+    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)
+        state->viewerState->vpConfigs[VPfound].motionTracking = TRUE;
 
     // If not, we look up which skeletonizer work mode is
     // active and do the appropriate operation
@@ -218,12 +218,12 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
             case SKELETONIZER_ON_CLICK_DROP_NODE:
                 // function is inside skeletonizer.c
                 Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type);
+                                   state->viewerState->vpConfigs[VPfound].type);
                 break;
             case SKELETONIZER_ON_CLICK_ADD_NODE:
                 // function is inside skeletonizer.c
                 Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type);
+                                   state->viewerState->vpConfigs[VPfound].type);
                 tempConfig->skeletonState->workMode =
                     SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
                 break;
@@ -234,7 +234,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                         qDebug("again control and mouse right");
                         // Add a "stump", a branch node to which we don't automatically move.
                         if((newNodeID = Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                                            state->viewerState->viewPorts[VPfound].type,
+                                                                            state->viewerState->vpConfigs[VPfound].type,
                                                                             FALSE))) {
                             Skeletonizer::pushBranchNode(CHANGE_MANUAL,
                                            TRUE,
@@ -249,7 +249,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                         lastPos.z = state->skeletonState->activeNode->position.z;
 
                         if(Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                               state->viewerState->viewPorts[VPfound].type,
+                                                               state->viewerState->vpConfigs[VPfound].type,
                                                                TRUE)) {
 
 
@@ -320,7 +320,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
                             //AutoTracingMode 1
                             if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT){
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
+                                if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_XY){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
                                         clickedCoordinate->z += state->viewerState->autoTracingSteps;
                                     }
@@ -328,7 +328,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                                         clickedCoordinate->z -= state->viewerState->autoTracingSteps;
                                     }
                                 }
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
+                                if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_XZ){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
                                         clickedCoordinate->y += state->viewerState->autoTracingSteps;
                                     }
@@ -336,7 +336,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                                         clickedCoordinate->y -= state->viewerState->autoTracingSteps;
                                     }
                                 }
-                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
+                                else if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_YZ){
                                     if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
                                         clickedCoordinate->x += state->viewerState->autoTracingSteps;
                                     }
@@ -374,7 +374,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                 }
                 else {
                     Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                       state->viewerState->viewPorts[VPfound].type);
+                                       state->viewerState->vpConfigs[VPfound].type);
                 }
 
         }
@@ -386,71 +386,71 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
 
     uint32_t i;
 
-    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
+    for(i = 0; i < state->viewerState->numberViewports; i++) {
 
-        // motion tracking mode is active for viewPort i
-        if(state->viewerState->viewPorts[i].motionTracking == TRUE) {
-            switch(state->viewerState->viewPorts[i].type) {
+        // motion tracking mode is active for viewport i
+        if(state->viewerState->vpConfigs[i].motionTracking == TRUE) {
+            switch(state->viewerState->vpConfigs[i].type) {
                 // the user wants to drag the skeleton inside the VP
                 case VIEWPORT_SKELETON:
                 state->skeletonState->translateX += -xrel(event->x()) * 2.
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
-                        / ((float)state->viewerState->viewPorts[i].edgeLength);
+                        / ((float)state->viewerState->vpConfigs[i].edgeLength);
                 state->skeletonState->translateY += -yrel(event->y()) * 2.
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
-                        / ((float)state->viewerState->viewPorts[i].edgeLength);
+                        / ((float)state->viewerState->vpConfigs[i].edgeLength);
                         Remote::checkIdleTime();
                     break;
                 case VIEWPORT_XY:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
-                    state->viewerState->viewPorts[i].userMouseSlideX -=
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x())
-                        / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                    state->viewerState->viewPorts[i].userMouseSlideY -=
+                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
                             ((float)yrel(event->y())
-                        / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove((int)state->viewerState->viewPorts[i].userMouseSlideX,
-                            (int)state->viewerState->viewPorts[i].userMouseSlideY, 0,
+                        Viewer::userMove((int)state->viewerState->vpConfigs[i].userMouseSlideX,
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
                             TELL_COORDINATE_CHANGE);
-                        state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                        state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
                     break;
                 case VIEWPORT_XZ:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
-                    state->viewerState->viewPorts[i].userMouseSlideX -=
-                            ((float)xrel(event->x()) / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                    state->viewerState->viewPorts[i].userMouseSlideY -=
-                            ((float)yrel(event->y()) / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove((int)state->viewerState->viewPorts[i].userMouseSlideX, 0,
-                            (int)state->viewerState->viewPorts[i].userMouseSlideY,
+                        Viewer::userMove((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideY,
                             TELL_COORDINATE_CHANGE);
-                        state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                        state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
                     break;
                 case VIEWPORT_YZ:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
-                    state->viewerState->viewPorts[i].userMouseSlideX -=
-                            ((float)xrel(event->x()) / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                    state->viewerState->viewPorts[i].userMouseSlideY -=
-                            ((float)yrel(event->y()) / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove(0, (int)state->viewerState->viewPorts[i].userMouseSlideY,
-                            (int)state->viewerState->viewPorts[i].userMouseSlideX,
+                        Viewer::userMove(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
+                            (int)state->viewerState->vpConfigs[i].userMouseSlideX,
                             TELL_COORDINATE_CHANGE);
-                        state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                        state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
                     break;
             }
@@ -463,7 +463,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
     /* TODO skeletonState rotateZ rotateX ???
-    if(state->viewerState->viewPorts[VIEWPORT_SKELETON].motionTracking == TRUE) {
+    if(state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == TRUE) {
         if(fabs(xrel(event->x()))  >= fabs(yrel(event->y())))
             state->skeletonState->rotateZ += xrel(event->x());
         else state->skeletonState->rotateX += yrel(event->y());
@@ -480,38 +480,38 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
     uint32_t i = 0;
     Coordinate newDraggedNodePos;
 
-    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-        switch(state->viewerState->viewPorts[i].type) {
+    for(i = 0; i < state->viewerState->numberViewports; i++) {
+        switch(state->viewerState->vpConfigs[i].type) {
             case VIEWPORT_XY:
-                if(!state->viewerState->viewPorts[i].draggedNode) break;
-                state->viewerState->viewPorts[i].userMouseSlideX -=
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
                         ((float)xrel(event->x())
-                    / state->viewerState->viewPorts[i].screenPxXPerDataPx);
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
 
-                state->viewerState->viewPorts[i].userMouseSlideY -=
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
                         ((float)yrel(event->y())
-                    / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
                     SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->viewPorts[i].userMouseSlideX,
-                        state->viewerState->viewPorts[i].userMouseSlideY, 0);
-                    state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                    state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX,
+                        state->viewerState->vpConfigs[i].userMouseSlideY, 0);
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     newDraggedNodePos.x =
-                        state->viewerState->viewPorts[i].draggedNode->position.x
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
                         - newDraggedNodePos.x;
                     newDraggedNodePos.y =
-                        state->viewerState->viewPorts[i].draggedNode->position.y
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
                         - newDraggedNodePos.y;
                     newDraggedNodePos.z =
-                        state->viewerState->viewPorts[i].draggedNode->position.z
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
                             - newDraggedNodePos.z;
 
                     Skeletonizer::editNode(CHANGE_MANUAL,
                              0,
-                             state->viewerState->viewPorts[i].draggedNode,
+                             state->viewerState->vpConfigs[i].draggedNode,
                              0.,
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
@@ -520,33 +520,33 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                 }
                 break;
             case VIEWPORT_XZ:
-                if(!state->viewerState->viewPorts[i].draggedNode) break;
-                state->viewerState->viewPorts[i].userMouseSlideX -=
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
                         ((float)xrel(event->x())
-                    / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                state->viewerState->viewPorts[i].userMouseSlideY -=
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
                         ((float)yrel(event->y())
-                    / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
                     SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->viewPorts[i].userMouseSlideX, 0,
-                        state->viewerState->viewPorts[i].userMouseSlideY);
-                    state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                    state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                        state->viewerState->vpConfigs[i].userMouseSlideY);
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     newDraggedNodePos.x =
-                        state->viewerState->viewPorts[i].draggedNode->position.x
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
                         - newDraggedNodePos.x;
                     newDraggedNodePos.y =
-                        state->viewerState->viewPorts[i].draggedNode->position.y
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
                         - newDraggedNodePos.y;
                     newDraggedNodePos.z =
-                        state->viewerState->viewPorts[i].draggedNode->position.z
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
                     Skeletonizer::editNode(CHANGE_MANUAL,
                              0,
-                             state->viewerState->viewPorts[i].draggedNode,
+                             state->viewerState->vpConfigs[i].draggedNode,
                              0.,
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
@@ -555,33 +555,33 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                 }
                 break;
             case VIEWPORT_YZ:
-                if(!state->viewerState->viewPorts[i].draggedNode) break;
-                state->viewerState->viewPorts[i].userMouseSlideX -=
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
                         ((float)xrel(event->x())
-                    / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                state->viewerState->viewPorts[i].userMouseSlideY -=
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
                         ((float)yrel(event->y())
-                    / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
                     SET_COORDINATE(newDraggedNodePos,
-                        0, state->viewerState->viewPorts[i].userMouseSlideY,
-                        state->viewerState->viewPorts[i].userMouseSlideX);
+                        0, state->viewerState->vpConfigs[i].userMouseSlideY,
+                        state->viewerState->vpConfigs[i].userMouseSlideX);
 
-                    state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                    state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     newDraggedNodePos.x =
-                        state->viewerState->viewPorts[i].draggedNode->position.x
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
                         - newDraggedNodePos.x;
                     newDraggedNodePos.y =
-                        state->viewerState->viewPorts[i].draggedNode->position.y
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
                         - newDraggedNodePos.y;
                     newDraggedNodePos.z =
-                        state->viewerState->viewPorts[i].draggedNode->position.z
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
                     Skeletonizer::editNode(CHANGE_MANUAL,
                              0,
-                             state->viewerState->viewPorts[i].draggedNode,
+                             state->viewerState->vpConfigs[i].draggedNode,
                              0.,
                              newDraggedNodePos.x,
                              newDraggedNodePos.y,
@@ -616,14 +616,14 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
                  state->magnification);
 
         // !! AG
-        //if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
+        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
         //    state->skeletonState->defaultNodeRadius = radius;
 
         //drawGUI();
     }
     else {
         // Skeleton VP
-        if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
+        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
                 state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
@@ -635,11 +635,11 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
             // Zoom when CTRL is pressed
             if(event->modifiers() == Qt::ControlModifier) {
                 qDebug("again control and mouse wheel up");
-                //GUI::UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
+                //MainWindow::UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
             }
             // Move otherwise
             else {
-                switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(0, 0, state->viewerState->dropFrames
                             * state->magnification,
@@ -685,7 +685,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 
         //
         //  !! AG
-        //if(state->viewerState->ag->useLastActNodeRadiusAsDefault)
+        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
        //     state->skeletonState->defaultNodeRadius = radius;
 
 
@@ -693,7 +693,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
     }
     else {
         // Skeleton VP
-        if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
+        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
                 state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
@@ -710,7 +710,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
             }
             // Move otherwise
             else {
-                switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(0, 0, -state->viewerState->dropFrames
                             * state->magnification,
@@ -748,7 +748,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     // new qt version
     if(event->key() == Qt::Key_Left) {
         if(event->key() == Qt::Key_Shift) {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -760,7 +760,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -774,7 +774,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::RightArrow) {
             if(event->key() == Qt::Key_Shift) {
-                switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
@@ -786,7 +786,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                         break;
                 }
             } else {
-                switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
@@ -801,7 +801,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
 
     } else if(event->key() == Qt::Key_Down) {
         if(event->key() == Qt::Key_Shift) {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -813,7 +813,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -827,7 +827,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Up) {
         if(event->key() == Qt::Key_Shift) {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -839,7 +839,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -853,7 +853,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_R) {
         state->viewerState->walkOrth = 1;
-        switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+        switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             case VIEWPORT_XY:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
@@ -881,7 +881,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_E) {
         state->viewerState->walkOrth = 1;
-        switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+        switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             case VIEWPORT_XY:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
@@ -909,7 +909,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_F) {
         if(event->key() == Qt::Key_Shift) {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
@@ -921,7 +921,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
@@ -936,7 +936,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_D) {
         if(event->key() == Qt::Key_Shift) {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
@@ -948,7 +948,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
+            switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
@@ -966,13 +966,13 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         if(event->key() == Qt::Key_Shift) {
             Skeletonizer::nextCommentlessNode();
         } else {
-            Skeletonizer::nextComment(state->viewerState->ag->commentSearchBuffer);
+            Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_P) {
         if(event->key() == Qt::Key_Shift) {
             Skeletonizer::previousCommentlessNode();
         } else {
-            Skeletonizer::previousComment(state->viewerState->ag->commentSearchBuffer);
+            Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
@@ -1041,7 +1041,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
 
     } else if(event->key() == Qt::Key_I) {
-        if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
+        if (state->viewerState->gui->zoomSkeletonViewport == FALSE){
            // UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
@@ -1049,7 +1049,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             state->skeletonState->viewChanged = TRUE;
         }
     } else if(event->key() == Qt::Key_O) {
-        if (state->viewerState->ag->zoomSkeletonViewport == FALSE){
+        if (state->viewerState->gui->zoomSkeletonViewport == FALSE){
             //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
@@ -1086,36 +1086,36 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_1) {
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
             state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
-            state->viewerState->ag->enableOrthoSkelOverlay = 1;
+            state->viewerState->gui->enableOrthoSkelOverlay = 1;
         }
         else {
             state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
-            state->viewerState->ag->enableOrthoSkelOverlay = 0;
+            state->viewerState->gui->enableOrthoSkelOverlay = 0;
         }
         state->skeletonState->skeletonChanged = TRUE;
         Renderer::drawGUI();
     } else if(event->key() == Qt::Key_Delete) {
         Skeletonizer::delActiveNode();
     } else if(event->key() == Qt::Key_F1) {
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment1, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
+            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F2) {
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment2, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
+            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F3) {
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment3, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
+            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F4) {
         if(event->key() == Qt::Key_Alt) {
@@ -1126,19 +1126,19 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 //Knossos::quitKnossos(); TODO quitKnossos
             }
         } else {
-            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment4, "", 1) != 0)){
-                Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
+                Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
             else{
-                Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
         }
     } else if(event->key() == Qt::Key_F5) {
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment5, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
+            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
     }
 
@@ -1157,40 +1157,40 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
     uint32_t xDistance, yDistance;
 
     if((VPfound == -1)
-        || (state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON))
+        || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))
             return NULL;
 
     xDistance = event->x()
-        - state->viewerState->viewPorts[VPfound].upperLeftCorner.x;
+        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.x;
     yDistance = event->y()
-        - state->viewerState->viewPorts[VPfound].upperLeftCorner.y;
+        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.y;
 
-    switch(state->viewerState->viewPorts[VPfound].type) {
+    switch(state->viewerState->vpConfigs[VPfound].type) {
         case VIEWPORT_XY:
-            x = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.x
+            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
                 + ((int)(((float)xDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.y
+                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
+            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
                 + ((int)(((float)yDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxYPerDataPx));
+                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             z = state->viewerState->currentPosition.z;
             break;
         case VIEWPORT_XZ:
-            x = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.x
+            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
                 + ((int)(((float)xDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxXPerDataPx));
-            z = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.z
+                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
+            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
                 + ((int)(((float)yDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxYPerDataPx));
+                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             y = state->viewerState->currentPosition.y;
             break;
         case VIEWPORT_YZ:
-            z = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.z
+            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
                 + ((int)(((float)xDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->viewPorts[VPfound].leftUpperDataPxOnScreen.y
+                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
+            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
                 + ((int)(((float)yDistance)
-                / state->viewerState->viewPorts[VPfound].screenPxYPerDataPx));
+                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
             x = state->viewerState->currentPosition.x;
             break;
     }

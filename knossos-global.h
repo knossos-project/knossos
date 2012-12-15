@@ -1,3 +1,8 @@
+//agConfig is guiConfig now. and viewerState->ag is viewerState->gui now
+//AG_ stuff is commented out at the moment and will be replaced in time
+//IMPORTANT: struct viewPort is vpConfig now to avoid confusion, because we now have a Viewport class.
+//members of vpConfig should be placed into Viewport, eventually
+
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -25,7 +30,7 @@
 /**
   * @file knossos-global.h
   * @brief This file contains global #includes, #defines, makros and struct definitions
-  * The elements are used in almost other files.
+  * The elements are used in almost all other files.
   */
 
 /*
@@ -48,6 +53,7 @@
 
 #include <QWaitCondition>
 #include <QMutex>
+#include <QtNetwork>
 
 
 #define KVERSION "3.2"
@@ -384,10 +390,10 @@ struct vpBacklog {
     uint32_t elements;
 };
 
-// This is used for a (counting) linked list of viewports that have to be handled
+// This is used for a (counting) linked list of vpConfigs that have to be handled
 // (their textures put together from datacube slices)
 struct vpListElement {
-    struct viewPort *viewPort;
+    struct vpConfig *vpConfig;
     struct vpBacklog *backlog;
     struct vpListElement *next;
     struct vpListElement *previous;
@@ -608,11 +614,11 @@ struct loaderState {
 };
 
 /**
-  * @struct viewPortTexture
+  * @struct viewportTexture
   * @brief TODO
   */
 
-struct viewPortTexture {
+struct viewportTexture {
     //Handles for OpenGl
     uint32_t texHandle;
     uint32_t overlayHandle;
@@ -645,11 +651,11 @@ struct viewPortTexture {
 };
 
 /**
-  * @struct agConfig
+  * @struct guiConfig
   * @brief TODO
   *
   */
-struct agConfig {
+struct guiConfig {
     char settingsFile[2048];
     char titleString[2048];
 
@@ -729,7 +735,7 @@ struct agConfig {
   //  AG_Window *spatLockOptWin;
   //  AG_Window *volTraceOptWin;
   //  AG_Window *dataSetStatsWin;
-  //  AG_Window *viewPortPrefWin;
+  //  AG_Window *viewportPrefWin;
   //  AG_Window *zoomingWin;
   //  AG_Window *tracingTimeWin;
   //  AG_Window *commentsWin;
@@ -803,11 +809,12 @@ struct agConfig {
 };
 
 /**
-  * @struct viewPort
-  * @brief TODO
+  * @struct vpConfig
+  * @brief Contains attributes for widget size, screen pixels per data pixels,
+  *        as well as flags about user interaction with the widget
   */
-struct viewPort {
-    struct viewPortTexture texture;
+struct vpConfig {
+    struct viewportTexture texture;
 
     //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
     Coordinate leftUpperDataPxOnScreen;
@@ -815,12 +822,12 @@ struct viewPort {
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed
     //data pixels can have a different axis. Keep this in mind.
-    //These values depend on texUnitsPerDataPx (in struct viewPortTexture),
+    //These values depend on texUnitsPerDataPx (in struct viewportTexture),
     //the current zoom value and the data pixel voxel dimensions.
     float screenPxXPerDataPx;
     float screenPxYPerDataPx;
 
-    // These are computed from screenPx?PerDataPx and are used to convert
+    // These are computed from screenPxPerDataPx and are used to convert
     // screen coordinates into coordinates in the system of the data at the
     // original magnification. Node coordinates are stored that way to make
     // knossos instances working with different magnifications of the same data
@@ -861,7 +868,6 @@ struct viewPort {
     //would result in a data pixel movement
     float userMouseSlideX;
     float userMouseSlideY;
-
 };
 
 /**
@@ -869,12 +875,12 @@ struct viewPort {
   * @brief TODO
   */
 struct viewerState {
-    struct viewPort *viewPorts;
+    struct vpConfig *vpConfigs;
     Byte *texData;
     Byte *overlayData;
     Byte *defaultTexData;
     Byte *defaultOverlayData;
-    uint32_t numberViewPorts;
+    uint32_t numberViewports;
     uint32_t splash;
     uint32_t viewerReady;
     GLuint splashTexture;
@@ -942,7 +948,7 @@ struct viewerState {
     uint32_t workMode;
     int superCubeChanged;
 
-    struct agConfig *ag;
+    struct guiConfig *gui;
     struct inputmap *inputmap;
 
     int32_t luminanceBias;
@@ -1310,7 +1316,7 @@ struct inputmap {
     printf("\n"); \
     }
     /*if(state->viewerState->viewerReady) \
-       AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \*/
+       AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/
 
 
 

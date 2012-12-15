@@ -1,3 +1,7 @@
+//the functions formerly placed in gui.h/gui.c are now in mainwindow
+//yesNoPrompt should be replaced, saveSkeletonCallback is replaced by QAction saveAction
+//ui_loadskeleton receives a QEvent instead of AG_Event now
+//updateAGconfig is now updateGuiConfig()
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -8,11 +12,10 @@
 #include <QGridLayout>
 #include <QMessageBox>
 #include <QDebug>
-#include "openglwidget.h"
+#include "viewport.h"
 
-extern "C" {
-    #include "knossos-global.h"
-}
+#include "knossos-global.h"
+
 
 
 namespace Ui {
@@ -28,17 +31,32 @@ public:
     ~MainWindow();
 
     void closeEvent(QCloseEvent *event);
+
+    static void quitKnossos(); //not needed in qt
+    static bool initGUI();
+    static uint32_t cpBaseDirectory(char *target, char *path, size_t len);
+    static void yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)());
+    static uint32_t addRecentFile(char *path, uint32_t pos);
+    static void UI_workModeAdd();
+    static void UI_workModeLink();
+    static void UI_workModeDrop();
+    //static void saveSkelCallback(AG_Event *event);
+    static void UI_saveSkeleton(int32_t increment);
+    static void UI_saveSettings();
+    static void UI_loadSkeleton(QEvent *event);
+    static void UI_pasteClipboardCoordinates();
+    static void UI_zoomOrthogonals(float step);
+    static void reloadDataSizeWin();
+    static void treeColorAdjustmentsChanged();
+
 private:
     Ui::MainWindow *ui;
-
 
     QMessageBox *prompt;
 
     QWidget *mainWidget;
     QGridLayout *gridLayout;
-
-    OpenGLWidget **glWidgets;
-
+    Viewport **viewports;
     /* file actions */
     QAction *openAction;
     QAction *recentFileAction;
@@ -67,7 +85,7 @@ private:
     QAction *datasetNavigationAction;
     QAction *synchronizationAction;
     QAction *dataSavingOptionsAction;
-    QAction *viewPortSettingsAction;
+    QAction *viewportSettingsAction;
 
     /* window actions */
     QAction *toolsAction;
@@ -119,7 +137,7 @@ private slots:
     void datatasetNavigationSlot();
     void synchronizationSlot();
     void dataSavingOptionsSlot();
-    void viewPortSettingsSlot();
+    void viewportSettingsSlot();
 
     /* window menu */
     void toolsSlot();

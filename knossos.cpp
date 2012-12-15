@@ -204,7 +204,7 @@ int32_t Knossos::initStates() {
        state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
        state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
        state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
-       state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
+       state->viewerState->numberViewports = tempConfig->viewerState->numberViewports;
        state->viewerState->inputmap = tempConfig->viewerState->inputmap;
        state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
        state->viewerState->userMove = tempConfig->viewerState->userMove;
@@ -235,52 +235,52 @@ int32_t Knossos::initStates() {
 
        state->viewerState->treeLutSet = FALSE;
 
-       state->viewerState->viewPorts = (viewPort *)malloc(state->viewerState->numberViewPorts * sizeof(struct viewPort));
-       if(state->viewerState->viewPorts == NULL)
+       state->viewerState->vpConfigs = (vpConfig *)malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
+       if(state->viewerState->vpConfigs == NULL)
            return FALSE;
-       memset(state->viewerState->viewPorts, '\0', state->viewerState->numberViewPorts * sizeof(struct viewPort));
+       memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
-       for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-           state->viewerState->viewPorts[i].upperLeftCorner = tempConfig->viewerState->viewPorts[i].upperLeftCorner;
-           state->viewerState->viewPorts[i].type = tempConfig->viewerState->viewPorts[i].type;
-           state->viewerState->viewPorts[i].draggedNode = tempConfig->viewerState->viewPorts[i].draggedNode;
-           state->viewerState->viewPorts[i].userMouseSlideX = tempConfig->viewerState->viewPorts[i].userMouseSlideX;
-           state->viewerState->viewPorts[i].userMouseSlideY = tempConfig->viewerState->viewPorts[i].userMouseSlideY;
-           state->viewerState->viewPorts[i].edgeLength = tempConfig->viewerState->viewPorts[i].edgeLength;
-           state->viewerState->viewPorts[i].texture.texUnitsPerDataPx =
-               tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx
+       for(i = 0; i < state->viewerState->numberViewports; i++) {
+           state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
+           state->viewerState->vpConfigs[i].type = tempConfig->viewerState->vpConfigs[i].type;
+           state->viewerState->vpConfigs[i].draggedNode = tempConfig->viewerState->vpConfigs[i].draggedNode;
+           state->viewerState->vpConfigs[i].userMouseSlideX = tempConfig->viewerState->vpConfigs[i].userMouseSlideX;
+           state->viewerState->vpConfigs[i].userMouseSlideY = tempConfig->viewerState->vpConfigs[i].userMouseSlideY;
+           state->viewerState->vpConfigs[i].edgeLength = tempConfig->viewerState->vpConfigs[i].edgeLength;
+           state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
+               tempConfig->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
                / (float)state->magnification;
 
-           state->viewerState->viewPorts[i].texture.edgeLengthPx = tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
-           state->viewerState->viewPorts[i].texture.edgeLengthDc = tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc;
-           state->viewerState->viewPorts[i].texture.zoomLevel = tempConfig->viewerState->viewPorts[i].texture.zoomLevel;
-           state->viewerState->viewPorts[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
-           state->viewerState->viewPorts[i].texture.usedTexLengthDc = tempConfig->M;
+           state->viewerState->vpConfigs[i].texture.edgeLengthPx = tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx;
+           state->viewerState->vpConfigs[i].texture.edgeLengthDc = tempConfig->viewerState->vpConfigs[i].texture.edgeLengthDc;
+           state->viewerState->vpConfigs[i].texture.zoomLevel = tempConfig->viewerState->vpConfigs[i].texture.zoomLevel;
+           state->viewerState->vpConfigs[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
+           state->viewerState->vpConfigs[i].texture.usedTexLengthDc = tempConfig->M;
    // old version, smaller buffer
-   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX = tempConfig->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
    //                    (((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength)
-   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    / (float) tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx
    //                    * 2.;
 
           //  make the buffer a bit smaller to increase the FOV.. this might make M=3 actually useful for the small price of less buffering!
-   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX = tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX = tempConfig->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
    //                    ((((float)(tempConfig->M / 2) - 0.5) * (float)tempConfig->cubeEdgeLength) * 1.5)
-   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    / (float) tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx
    //                    * 2.;
 
    // latest version
 
 
-   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-   //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
+   //            tempConfig->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
    //                    ((((float)(tempConfig->M / 2) - 0.5)  * 1.5) * 2.
-   //                    / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx
+   //                    / (float) tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx
    //                    * (float) tempConfig->cubeEdgeLength);
-   //        state->viewerState->viewPorts[i].texture.displayedEdgeLengthX =
-   //            tempConfig->viewerState->viewPorts[i].texture.displayedEdgeLengthY =
+   //        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
+   //            tempConfig->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
 
    //            * (float) tempConfig->cubeEdgeLength)
-   //            / (float) tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx;
+   //            / (float) tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx;
        }
 
        if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
@@ -292,8 +292,8 @@ int32_t Knossos::initStates() {
        // calcDisplayedEdgeLength();
 
        // For the GUI
-       strncpy(state->viewerState->ag->settingsFile,
-               tempConfig->viewerState->ag->settingsFile,
+       strncpy(state->viewerState->gui->settingsFile,
+               tempConfig->viewerState->gui->settingsFile,
                2048);
 
        // For the client
@@ -522,7 +522,7 @@ bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChan
 }
 
 bool Knossos::sendQuitSignal() {
-    GUI::UI_saveSettings();
+    MainWindow::UI_saveSettings();
 
     state->quitSignal = true;
 
@@ -618,7 +618,7 @@ struct stateInfo *Knossos::emptyState() {
       ALTERNATIVE
     state = new stateInfo();
     state->viewerState = new viewerState();
-    state->viewerState->ag = new agConfig();
+    state->viewerState->gui = new guiConfig();
     state->remoteState = new remoteState();
     state->clientState = new clientState();
     state->loaderState = new loaderState();
@@ -636,11 +636,11 @@ struct stateInfo *Knossos::emptyState() {
      memset(state->viewerState, '\0', sizeof(struct viewerState));
 
 
-     state->viewerState->ag = (struct agConfig *)malloc(sizeof(struct agConfig));
-     if(state->viewerState->ag == NULL) {
+     state->viewerState->gui = (struct guiConfig *)malloc(sizeof(struct guiConfig));
+     if(state->viewerState->gui == NULL) {
         return FALSE;
      }
-     memset(state->viewerState->ag, '\0', sizeof(struct agConfig));
+     memset(state->viewerState->gui, '\0', sizeof(struct guiConfig));
 
 
      state->remoteState = (remoteState *)malloc(sizeof(struct remoteState));
@@ -907,7 +907,7 @@ bool Knossos::tempConfigDefaults() {
         tempConfig->viewerState->drawVPCrosshairs = TRUE;
         tempConfig->viewerState->showVPLabels = FALSE;
         tempConfig->viewerState->stepsPerSec = 40;
-        tempConfig->viewerState->numberViewPorts = 4;
+        tempConfig->viewerState->numberViewports = 4;
         tempConfig->viewerState->inputmap = NULL;
         tempConfig->viewerState->dropFrames = 1;
         tempConfig->viewerState->userMove = FALSE;
@@ -931,49 +931,49 @@ bool Knossos::tempConfigDefaults() {
         tempConfig->viewerState->recenteringTimeOrth = 500;
         tempConfig->viewerState->walkOrth = FALSE;
 
-        tempConfig->viewerState->viewPorts = (viewPort *) malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
-        if(tempConfig->viewerState->viewPorts == NULL) {
+        tempConfig->viewerState->vpConfigs = (vpConfig *) malloc(tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
+        if(tempConfig->viewerState->vpConfigs == NULL) {
             LOG("Out of memory.");
             return false;
         }
 
-        memset(tempConfig->viewerState->viewPorts, '\0', tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
+        memset(tempConfig->viewerState->vpConfigs, '\0', tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
 
-        for(i = 0; i < tempConfig->viewerState->numberViewPorts; i++) {
+        for(i = 0; i < tempConfig->viewerState->numberViewports; i++) {
             switch(i) {
             case VIEWPORT_XY:
-                SET_COORDINATE(tempConfig->viewerState->viewPorts[i].upperLeftCorner, 5, 30, 0);
-                tempConfig->viewerState->viewPorts[i].type = VIEWPORT_XY;
+                SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+                tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XY;
                 break;
             case VIEWPORT_XZ:
-                SET_COORDINATE(tempConfig->viewerState->viewPorts[i].upperLeftCorner, 5, 385, 0);
-                tempConfig->viewerState->viewPorts[i].type = VIEWPORT_XZ;
+                SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+                tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
                 break;
             case VIEWPORT_YZ:
-                SET_COORDINATE(tempConfig->viewerState->viewPorts[i].upperLeftCorner, 360, 30, 0);
-                tempConfig->viewerState->viewPorts[i].type = VIEWPORT_YZ;
+                SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+                tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
                 break;
             case VIEWPORT_SKELETON:
-                SET_COORDINATE(tempConfig->viewerState->viewPorts[i].upperLeftCorner, 360, 385, 0);
-                tempConfig->viewerState->viewPorts[i].type = VIEWPORT_SKELETON;
+                SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+                tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
                 break;
             }
 
-            tempConfig->viewerState->viewPorts[i].draggedNode = NULL;
-            tempConfig->viewerState->viewPorts[i].userMouseSlideX = 0.;
-            tempConfig->viewerState->viewPorts[i].userMouseSlideY = 0.;
-            tempConfig->viewerState->viewPorts[i].edgeLength = 350;
-            tempConfig->viewerState->viewPorts[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-            tempConfig->viewerState->viewPorts[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-            tempConfig->viewerState->viewPorts[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / tempConfig->cubeEdgeLength;
+            tempConfig->viewerState->vpConfigs[i].draggedNode = NULL;
+            tempConfig->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+            tempConfig->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+            tempConfig->viewerState->vpConfigs[i].edgeLength = 350;
+            tempConfig->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+            tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+            tempConfig->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / tempConfig->cubeEdgeLength;
 
             //This variable indicates the current zoom value for a viewport.
             //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-            tempConfig->viewerState->viewPorts[i].texture.zoomLevel = VPZOOMMIN;
+            tempConfig->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
         }
 
         // For the GUI
-        snprintf(tempConfig->viewerState->ag->settingsFile, 2048, "defaultSettings.xml");
+        snprintf(tempConfig->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
 
         // For the client
         tempConfig->clientState->connectAsap = FALSE;
@@ -1144,8 +1144,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      tempConfig->viewerState->overlayVisible = TRUE;
                      break;
                  case 14:
-                     strncpy(tempConfig->viewerState->ag->settingsFile, rval, 2000);
-                     strcpy(tempConfig->viewerState->ag->settingsFile + strlen(rval), ".xml");
+                     strncpy(tempConfig->viewerState->gui->settingsFile, rval, 2000);
+                     strcpy(tempConfig->viewerState->gui->settingsFile + strlen(rval), ".xml");
                      break;
              }
          }

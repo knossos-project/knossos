@@ -8,10 +8,7 @@
 #include <stdint.h>
 #include <math.h>
 
-extern "C" {
-    #include "knossos-global.h"
-}
-
+#include "knossos-global.h"
 #include "renderer.h"
 #include "skeletonizer.h"
 #include "knossos.h"

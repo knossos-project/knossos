@@ -7,10 +7,10 @@
 #include "knossos-global.h"
 #include "renderer.h"
 #include "remote.h"
-#include "gui.h"
 #include "knossos.h"
 #include "client.h"
 #include "viewer.h"
+#include "mainwindow.h"
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -574,7 +574,7 @@ bool Skeletonizer::updateSkeletonState() {
         if(state->skeletonState->autoSaveInterval) {
             if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = SDL_GetTicks();
-                GUI::UI_saveSkeleton(TRUE);
+                MainWindow::UI_saveSkeleton(TRUE);
             }
         }
     }
@@ -807,13 +807,13 @@ int32_t Skeletonizer::saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"vpSettingsZoom", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
     xmlNewProp(currentXMLNode, BAD_CAST"XYPlane", attrString);
     memset(attrString, '\0', 128);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel);
     xmlNewProp(currentXMLNode, BAD_CAST"XZPlane", attrString);
     memset(attrString, '\0', 128);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel);
     xmlNewProp(currentXMLNode, BAD_CAST"YZPlane", attrString);
     memset(attrString, '\0', 128);
     xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->skeletonState->zoomLevel);
@@ -1155,13 +1155,13 @@ bool Skeletonizer::loadSkeleton() {
 
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"XYPlane");
                     if(attribute)
-                        state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = atof((char *)attribute);
+                        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = atof((char *)attribute);
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"XZPlane");
                     if(attribute)
-                        state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = atof((char *)attribute);
+                        state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = atof((char *)attribute);
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"YZPlane");
                     if(attribute)
-                        state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = atof((char *)attribute);
+                        state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = atof((char *)attribute);
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"SkelVP");
                     if(attribute)
                         state->skeletonState->zoomLevel = atof((char *)attribute);
@@ -1429,7 +1429,7 @@ bool Skeletonizer::loadSkeleton() {
     free(currentCoordinate);
     xmlFreeDoc(xmlDocument);
 
-    GUI::addRecentFile(state->skeletonState->skeletonFile, FALSE);
+    MainWindow::addRecentFile(state->skeletonState->skeletonFile, FALSE);
 
     if(activeNodeID) {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
@@ -1482,7 +1482,7 @@ void Skeletonizer::setDefaultSkelFileName() {
             localtimestruct->tm_hour,
             localtimestruct->tm_min);
 #endif
-    GUI::cpBaseDirectory(state->viewerState->ag->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
+    MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
 }
 
 bool Skeletonizer::delActiveNode() {
@@ -1672,7 +1672,7 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
-    state->viewerState->ag->totalNodes--;
+    state->viewerState->gui->totalNodes--;
 
     setDynArray(state->skeletonState->nodeCounter,
             treeID,
@@ -1862,7 +1862,7 @@ bool Skeletonizer::setActiveTreeByID(int32_t treeID) {
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
 
-    state->viewerState->ag->activeTreeID = currentTree->treeID;
+    state->viewerState->gui->activeTreeID = currentTree->treeID;
     return TRUE;
 }
 
@@ -1936,7 +1936,7 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
     }
 
     if(node) {
-        state->viewerState->ag->activeNodeID = node->nodeID;
+        state->viewerState->gui->activeNodeID = node->nodeID;
     }
 
 
@@ -2301,7 +2301,7 @@ bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t t
 
     if(state->skeletonState->activeTree->treeID == tree2->treeID) {
        setActiveTreeByID(tree1->treeID);
-       state->viewerState->ag->activeTreeID = tree1->treeID;
+       state->viewerState->gui->activeTreeID = tree1->treeID;
     }
 
     state->skeletonState->treeElements--;
@@ -3045,7 +3045,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
             last = n;
             n->correspondingTree = newTree;
         }
-        state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
+        state->viewerState->gui->activeTreeID = state->skeletonState->activeTree->treeID;
         state->skeletonState->skeletonChanged = TRUE;
     }
     else {
@@ -3579,7 +3579,7 @@ void Skeletonizer::UI_popBranchNode() {
         state->skeletonState->askingPopBranchConfirmation = TRUE;
 
         if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
-            GUI::yesNoPrompt(NULL,
+            MainWindow::yesNoPrompt(NULL,
                         "No node was added after jumping to the last branch point. Do you really want to jump?",
                         WRAP_popBranchNode,
                         popBranchNodeCanceled);

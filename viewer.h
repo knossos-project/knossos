@@ -5,11 +5,9 @@
 #include <QThread>
 #include <QDebug>
 #include <QCursor>
-extern "C" {
 #include "knossos-global.h"
-}
 #include "knossos.h"
-#include "gui.h"
+
 
 class Viewer : public QObject
 {
@@ -29,7 +27,7 @@ public:
     //Initializes the window with the parameter given in viewerState
     static bool createScreen();
 
-    //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->viewPorts[i].texture.data) to video memory
+    //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
     //Calling makes only sense after full initialization of the SDL / OGL screen
     static bool initializeTextures();
 
