@@ -1,4 +1,4 @@
-//commented out sdl_cursor and other sdl directives
+//commented out sdl directives
 //commented out thread loop
 #include "viewer.h"
 #include "knossos.h"
@@ -1168,8 +1168,6 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::start() {
 
-    SDL_Event event;
-
     struct viewerState *viewerState = state->viewerState;
     struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
@@ -1631,6 +1629,7 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
         return TRUE;
 
 }
+
 
 int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) {
 

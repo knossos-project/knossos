@@ -60,9 +60,6 @@ static void prefSaveOptions(){}
 static void winShowTools(QEvent *event){}
 static void winShowConsole(QEvent *event){}
 
-static void yesNoPromptHitYes(){}
-static void yesNoPromptHitNo(){}
-
 // functions generating gui elements
 
 static void createToolsWin() {}
@@ -477,9 +474,10 @@ void MainWindow::openSlot()
 
     }
 
-    QString fileName = fileList.at(0);
-    loadedFile = new QFile(fileName);
-
+    if(fileList.size() > 0) {
+        QString fileName = fileList.at(0);
+        loadedFile = new QFile(fileName);
+    }
 
 }
 

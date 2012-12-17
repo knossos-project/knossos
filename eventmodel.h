@@ -22,12 +22,14 @@
   *
   * The class adopts the core functionality from EventHandler with the exception that
   * SDL Events are replaced through the corresponding QT-Events
+  *
+  * @todo The calculation in which viewport the event occured can be removed, since Viewport events know their corresponding Viewport.
   */
 class EventModel : public QObject
 {
     Q_OBJECT
 public:
-    static bool handleEvent(SDL_Event event);
+
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound);

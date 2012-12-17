@@ -8,9 +8,6 @@
 
 #include "eventmodel.h"
 
-enum VIEWPORT {
-    XY, XZ, YZ, SKELETON // 1 XY, 2 XZ, 3 YZ, 4 SKELETON
-};
 
 class Viewport : public QGLWidget
 {

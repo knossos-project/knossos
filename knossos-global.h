@@ -1223,6 +1223,7 @@ struct remoteState {
         Coordinate recenteringPosition;
 };
 
+
 struct clientState {
     int32_t connectAsap;
     int32_t remotePort;
@@ -1244,6 +1245,10 @@ struct clientState {
     struct IOBuffer *outBuffer;
 };
 
+/**
+  * @struct inputmap
+  * Maybe obsolet in QT
+  */
 struct inputmap {
     int32_t mouse;
     int32_t modkey;
@@ -1318,12 +1323,6 @@ struct inputmap {
     /*if(state->viewerState->viewerReady) \
        AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/
 
-
-
-//  For eventHandler.c
-
-//Event handler function, which switches over the type of a given event and calls the appropriate downstream functions
-uint32_t handleEvent(SDL_Event event);
 
 
 #endif
