@@ -160,7 +160,21 @@ static void prefDefaultPrefsWindow(){}
 static void prefDefaultPrefs(){}
 static void resetViewportPosSiz(){}
 
-static void UI_copyClipboardCoordinates() {}
+
+static void UI_copyClipboardCoordinates() {
+   char copyString[8192];
+
+   memset(copyString, '\0', 8192);
+
+   snprintf(copyString,
+                 8192,
+                 "%d, %d, %d",
+                 state->viewerState->currentPosition.x + 1,
+                 state->viewerState->currentPosition.y + 1,
+                 state->viewerState->currentPosition.z + 1);
+   QString coords(copyString);
+   QApplication::clipboard()->setText(coords);
+}
 
 // -- Constructor and destroyer -- //
 MainWindow::MainWindow(QWidget *parent) :
@@ -313,7 +327,30 @@ void MainWindow::UI_workModeDrop(){}
 void MainWindow::UI_saveSkeleton(int32_t increment){}
 void MainWindow::UI_saveSettings(){}
 void MainWindow::UI_loadSkeleton(QEvent *event){}
-void MainWindow::UI_pasteClipboardCoordinates(){}
+
+
+void MainWindow::UI_pasteClipboardCoordinates(){
+    QString text = QApplication::clipboard()->text();
+    if(text.size() > 0) {
+      char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
+      Coordinate *extractedCoords = NULL;
+
+      if((extractedCoords = parseRawCoordinateString(pasteBuffer))) {
+            tempConfig->viewerState->currentPosition.x = extractedCoords->x - 1;
+            tempConfig->viewerState->currentPosition.y = extractedCoords->y - 1;
+            tempConfig->viewerState->currentPosition.z = extractedCoords->z - 1;
+
+            Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+            Viewer::refreshViewports();
+
+            free(extractedCoords);
+            QApplication::clipboard()->clear();
+      }
+
+    } else {
+       LOG("Unable to fetch text from clipboard");
+    }
+}
 void MainWindow::UI_zoomOrthogonals(float step){}
 void MainWindow::reloadDataSizeWin(){}
 void MainWindow::treeColorAdjustmentsChanged(){}
@@ -433,6 +470,8 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(aboutAction);
+
+
 }
 
 

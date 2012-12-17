@@ -1106,8 +1106,10 @@ bool Viewer::calcDisplayedEdgeLength() {
 }
 
 
-/* takes care of all necessary changes inside the viewer and signals
-the loader to change the dataset */
+/**
+* takes care of all necessary changes inside the viewer and signals
+* the loader to change the dataset
+*/
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
 bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
     uint32_t i;

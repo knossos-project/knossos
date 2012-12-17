@@ -1,4 +1,5 @@
 #include "eventmodel.h"
+#include "mainwindow.h"
 
 
 extern struct stateInfo *state;
@@ -1075,7 +1076,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(event->key() == Qt::Key_Shift) {
-            // UI_pasteClipboardCoordinates(); TODO UI_pasteClipboardCoords
+            MainWindow::UI_pasteClipboardCoordinates();
        }
     } else if(event->key() == Qt::Key_1) {
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {

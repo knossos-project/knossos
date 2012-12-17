@@ -36,7 +36,6 @@ HEADERS  += mainwindow.h \
     knossos-global.h \
     knossos.h \
     ../treeLUT_fallback.h \
-    ../treeLUT_fallback.h \
     sleeper.h \
     viewport.h
 
@@ -47,7 +46,6 @@ OTHER_FILES += \
     ../glut32.dll \
     ../iconv.dll \
     ../libfreetype-6.dll \
-    ../libSDL_Clipboard.dll \
     ../libxml2.dll \
     ../pthreadVC2.dll \
     ../SDL.dll \
