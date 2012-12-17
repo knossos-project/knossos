@@ -45,11 +45,10 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-
-    // displaying the splash
     MainWindow window;
     window.showMaximized();
 
+    // displaying the splash
     //QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     //splashScreen.show();
 

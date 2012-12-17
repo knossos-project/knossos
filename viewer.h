@@ -8,6 +8,17 @@
 #include "knossos-global.h"
 #include "knossos.h"
 
+/**
+ *
+ *  This file contains functions that are called by the thread (entry point: start()) managing the GUI,
+ *  all openGL rendering operations and
+ *  all skeletonization operations commanded directly by the user over the GUI. The files gui.c, renderer.c and
+ *  skeletonizer.c contain functions mainly used by the corresponding "subsystems". viewer.c contains the main
+ *  event loop and routines that handle (extract slices, pack into openGL textures,...) the data coming
+ *  from the loader thread.
+ */
+
+
 
 class Viewer : public QObject
 {

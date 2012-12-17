@@ -16,7 +16,6 @@ Client::Client(QObject *parent) :
 {
 }
 
-
 static int32_t connectToServer() {
     /*clientState *clientState = state->clientState;
     int32_t i = 0;

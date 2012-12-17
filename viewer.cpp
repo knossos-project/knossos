@@ -836,33 +836,38 @@ static bool calcLeftUpperTexAbsPx() {
     return false;
 }
 
-
-//Initializes the viewer, is called only once after the viewing thread started
+/**
+  * Initializes the viewer, is called only once after the viewing thread started
+  * @TODO SDLNet_Init() and SDLScrap_Init()
+  */
 static bool initViewer() {
     calcLeftUpperTexAbsPx();
-    /*
+
     // init the skeletonizer
-    if(initSkeletonizer() == FALSE) {
+    if(Skeletonizer::initSkeletonizer() == FALSE) {
         LOG("Error initializing the skeletonizer.");
         return FALSE;
     }
 
+    /* TODO
     if(SDLNet_Init() == FAIL) {
         LOG("Error initializing SDLNet: %s.", SDLNet_GetError());
         return FALSE;
-    }
+    } */
 
-    // init the agar gui system
-    if(initGUI() == FALSE) {
+    // init the gui
+    if(MainWindow::initGUI() == FALSE) {
         LOG("Error initializing the agar system / gui.");
         return FALSE;
     }
 
+    /* TODO get probably replaced throuh QClipboard
     // Set up the clipboard
     if(SDLScrap_Init() < 0) {
         LOG("Couldn't init clipboard: %s\n", SDL_GetError());
         _Exit(FALSE);
     }
+    */
 
     // TDitem
 
@@ -870,7 +875,7 @@ static bool initViewer() {
 
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
-        if(loadDatasetColorTable("stdOverlay.lut",
+        if(Viewer::loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
                           GL_RGBA) == FALSE) {
             LOG("Overlay color map stdOverlay.lut does not exist.");
@@ -943,18 +948,18 @@ static bool initViewer() {
     }
 
     // init the rendering system
-    if(initRenderer() == FALSE) {
+    if(Renderer::initRenderer() == FALSE) {
         qDebug("Error initializing the rendering system.");
         return FALSE;
     }
 
-    sendLoadSignal(state->viewerState->currentPosition.x,
+    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
 
-*/
+
     return TRUE;
 }
 
@@ -1164,7 +1169,21 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
     return true;
 }
 
-
+/**
+  * @brief This method is used for the Viewer-Thread declared in main(knossos.cpp)
+  * This is the old viewer() function from KNOSSOS 3.2
+  * It works as follows:
+  * - The viewer get initialized
+  * - The rendering loop starts:
+  *   - lists of pending texture parts are iterated and loaded if they are available
+  *   - If not they are added to a backlog which is processed at a later time.
+  *   - TODO: The Eventhandling in QT works asnyc, new concept are currently in progress
+  * - the loadSignal occurs in three different locations:
+  *   - initViewer
+  *   - changeDatasetMag
+  *   - userMove
+  *
+  */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::start() {
 
@@ -1175,7 +1194,7 @@ void Viewer::start() {
 
 
     // init the viewer thread and all subsystems handled by it
-    if(initViewer() == FALSE) {
+    if(!initViewer()) {
        LOG("Error initializing the viewer.");
        return;
     }
@@ -1190,17 +1209,14 @@ void Viewer::start() {
 
     state->viewerState->viewerReady = TRUE;
 
-
-
     updateViewerState();
     recalcTextureOffsets();
 
     // Display info about skeleton save path here TODO
-    int i = 0;
+
     while(TRUE) {
-        //qDebug("viewer says hello %i", ++i);
-        Sleeper::msleep(50);
-        /*// This creates a circular doubly linked list of
+
+        // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
         // completely loaded) from the viewport-array in the viewerState
         // structure.
@@ -1218,7 +1234,7 @@ void Viewer::start() {
             // of datacubes and associated offsets, see headers) if there is
             // one or start loading everything from scratch if there is none.
 
-            if(currentVp->viewport->type != VIEWPORT_SKELETON) {
+            if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
                 if(currentVp->backlog->elements == 0) {
                     // There is no backlog. That means we haven't yet attempted
                     // to load the texture for this viewport, which is what we
@@ -1291,8 +1307,8 @@ void Viewer::start() {
         //            //return TRUE;
         //        }
         //    }
-        }
-        viewerState->userMove = FALSE;*/
+        //}
+        viewerState->userMove = FALSE;
     }//end while(TRUE)
 
     QThread::currentThread()->quit();
@@ -1339,8 +1355,11 @@ bool Viewer::createScreen() {
     return true;
 }
 
-//Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
-//Calling makes only sense after full initialization of the SDL / OGL screen
+/**
+*
+* Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
+* @attention Calling makes only sense after full initialization of the SDL / OGL screen
+*/
 bool Viewer::initializeTextures() {
 
     uint32_t i = 0;

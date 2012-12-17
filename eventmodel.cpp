@@ -4,10 +4,6 @@
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 
-enum ControlTypes{
-    CTRL = 0, SHIFT = 1, ALT = 2
-};
-
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
 {

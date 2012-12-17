@@ -9,7 +9,7 @@ class Loader : public QObject
     Q_OBJECT
 public:
     explicit Loader(QObject *parent = 0);
-    
+
 signals:
     
 public Q_SLOTS:

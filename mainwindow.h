@@ -113,6 +113,8 @@ private:
     QFileDialog *saveFileDialog;
     QFile *loadedFile;
 
+
+
     void createActions();
     void createMenus();
 

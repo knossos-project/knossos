@@ -718,6 +718,20 @@ static bool loadCubes() {
     return TRUE;
 }
 
+/**
+  * @brief This method is used for the QThread declared in main knossos.cpp
+  * This is the old loader function from KNOSSOS 3.2
+  * It works as follows:
+  * - before entering the while(true) loop the loader gets initialized(init loader)
+  * - the inner loop waits for the loadSignal attribute become true
+  *   This happens through three events in the viewer class. See Viewer::start for more information
+  * - If the loadSignal gets true, different conditions are checked and the DCOI are calculated
+  *   See for more information
+  * - If some DCOIs are already in memory, they have to be removed, before the new DCOIs are loaded
+  * - the dataCube will be loaded
+  *
+  */
+
 void Loader::start() {
     loaderState *loaderState = state->loaderState;
     int32_t magChange = false;
@@ -729,11 +743,9 @@ void Loader::start() {
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
 
-    //int i = 0;
-    while(TRUE) {
-      // qDebug("loader says hello %i", ++i);
-      // Sleeper::msleep(50);
 
+    while(TRUE) {
+       // as long the loadSignal is false, the loops waits
        while(state->loadSignal == false) {
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
@@ -797,3 +809,5 @@ void Loader::start() {
     QThread::currentThread()->quit();
     emit finished();
 }
+
+

@@ -723,6 +723,7 @@ struct guiConfig {
 
     int agInputWdgtFocused;
 
+
    // AG_Window *agWin;
 
 
