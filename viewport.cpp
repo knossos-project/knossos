@@ -10,6 +10,8 @@ Viewport::Viewport(QWidget *parent, int plane) :
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
     setStyleSheet("background:black");
+    this->setCursor(Qt::CrossCursor);
+
 }
 
 void Viewport::initializeGL()

@@ -959,13 +959,8 @@ static bool initViewer() {
 }
 
 
-/* TODO maybe no implementation is needed anymore */
-static QCursor *GenCursor(char *xpm[], int xHot, int yHot) {
-    return NULL;
-}
+
 // from knossos-global.h
-
-
 bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type) {
 
     FILE *lutFile = NULL;
@@ -1179,7 +1174,7 @@ void Viewer::start() {
     struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
     uint32_t drawCounter = 0;
-    SDL_Cursor *customCursor = NULL;
+
 
     // init the viewer thread and all subsystems handled by it
     if(initViewer() == FALSE) {
@@ -1197,11 +1192,7 @@ void Viewer::start() {
 
     state->viewerState->viewerReady = TRUE;
 
-    // We're manually calling SDL_SetCursor so the cursor will be displayed before
-    // the agar event loop becomes active
-    // customCursor = GenCursor(customCursorXPM, 16, 16); // TODO
-    //SDL_SetCursor(customCursor);
-    //agDefaultCursor = customCursor; //AGAR14
+
 
     updateViewerState();
     recalcTextureOffsets();

@@ -12,6 +12,11 @@
 #include <QGridLayout>
 #include <QMessageBox>
 #include <QDebug>
+#include <QFileDialog>
+#include <QFile>
+#include <QDir>
+#include <QDebug>
+#include <QStringList>
 #include "viewport.h"
 
 #include "knossos-global.h"
@@ -103,6 +108,10 @@ private:
     QMenu *preferenceMenu;
     QMenu *windowMenu;
     QMenu *helpMenu;
+
+    QFileDialog *loadFileDialog;
+    QFileDialog *saveFileDialog;
+    QFile *loadedFile;
 
     void createActions();
     void createMenus();

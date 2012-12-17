@@ -17,8 +17,6 @@ static void OkfileDlgLoadDatasetLUT(QEvent *event){}
 static void OkfileDlgLoadTreeLUT(QEvent *event){}
 static void OkfileDlgOpenPrefs(QEvent *event){}
 static void OkfileDlgSavePrefsAs(QEvent *event){}
-static void CancelFileDlg(QEvent *event){}
-
 
 static void UI_checkQuitKnossos(){}
 static void drawXyViewport(QEvent *event){}
@@ -183,9 +181,6 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
-
-
-
     viewports = new Viewport*[4];
     for(int i = 0; i < 4; i++) {
         viewports[i] = new Viewport(this, i);
@@ -197,6 +192,16 @@ MainWindow::MainWindow(QWidget *parent) :
     gridLayout->addWidget(viewports[2], 1, 1);
     gridLayout->addWidget(viewports[3], 1, 2);
 
+    this->loadFileDialog = new QFileDialog(this);
+    loadFileDialog->setWindowTitle(tr("Open Skeleton File"));
+    loadFileDialog->setDirectory(QDir::home());
+    loadFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
+
+    this->saveFileDialog = new QFileDialog(this);
+    saveFileDialog->setWindowTitle(tr("Save Skeleton File"));
+    saveFileDialog->setDirectory(QDir::home());
+    saveFileDialog->setFileMode(QFileDialog::AnyFile);
+    saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
 }
 
 MainWindow::~MainWindow()
@@ -465,27 +470,44 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::openSlot()
 {
+    QStringList fileList;
+    if(loadFileDialog->exec()) {
+
+        fileList = loadFileDialog->selectedFiles();
+
+    }
+
+    QString fileName = fileList.at(0);
+    loadedFile = new QFile(fileName);
+
 
 }
 
 void MainWindow::recentFilesSlot()
 {
+    QStringList fileList = loadFileDialog->history();
 
 }
 
 void MainWindow::saveSlot()
 {
 
+
+
 }
 
 void MainWindow::saveAsSlot()
 {
-
+    QStringList fileList;
+    if(saveFileDialog->exec()) {
+        fileList = saveFileDialog->selectedFiles();
+    }
+    qDebug() << fileList.at(0);
 }
 
 void MainWindow::quitSlot()
 {
-
+   QApplication::closeAllWindows();
 }
 
 /* edit skeleton functionality */
