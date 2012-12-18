@@ -23,7 +23,8 @@ SOURCES +=\
     coordinate.cpp \
     Hashtable.cpp \
     sleeper.cpp \
-    viewport.cpp
+    viewport.cpp \
+    treeLUT_fallback.c
 
 HEADERS  += mainwindow.h \
     eventmodel.h \
@@ -35,39 +36,39 @@ HEADERS  += mainwindow.h \
     renderer.h \
     knossos-global.h \
     knossos.h \
-    ../treeLUT_fallback.h \
+    treeLUT_fallback.h \
     sleeper.h \
     viewport.h
 
 FORMS    += mainwindow.ui
 
 OTHER_FILES += \
-    ../knossos.layout \
-    ../glut32.dll \
-    ../iconv.dll \
-    ../libfreetype-6.dll \
-    ../libxml2.dll \
-    ../pthreadVC2.dll \
-    ../SDL.dll \
-    ../SDL_net.dll \
-    ../zlib1.dll \
-    ../icon \
-    ../LICENSE \
-    ../Makefile \
-    ../splash \
-    ../knossos.depend \
-    ../knossos.dev \
-    ../default.lut \
-    ../gmon.out \
-    ../knossos.res \
-    ../knossos_private.res \
-    ../knossos.rc \
-    ../knossos_private.rc \
-    ../logo.ico \
-    ../ChangeLog.txt \
-    ../defaultSettings.xml \
-    ../customCursor.xpm \
-    ../config.y \
+    knossos.layout \
+    glut32.dll \
+    iconv.dll \
+    libfreetype-6.dll \
+    libxml2.dll \
+    pthreadVC2.dll \
+    SDL.dll \
+    SDL_net.dll \
+    zlib1.dll \
+    icon \
+    LICENSE \
+    Makefile \
+    splash \
+    knossos.depend \
+    knossos.dev \
+    default.lut \
+    gmon.out \
+    knossos.res \
+    knossos_private.res \
+    knossos.rc \
+    knossos_private.rc \
+    logo.ico \
+    ChangeLog.txt \
+    defaultSettings.xml \
+    customCursor.xpm \
+    config.y \
 
 LIBS += -lSDL -lSDL_net -lxml2
 

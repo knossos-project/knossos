@@ -9,7 +9,7 @@ extern struct stateInfo *tempConfig;
 
 //-- static functions --//
 
-static void setGUIcolors(){}
+/*static void setGUIcolors(){}
 // general callbacks
 static void OkfileDlgOpenSkel(QEvent *event){}
 static void OkfileDlgSaveAsSkel(QEvent *event){}
@@ -58,7 +58,7 @@ static void prefSaveOptions(){}
 
 //static void winShowNavigator(QEvent *event){}
 static void winShowTools(QEvent *event){}
-static void winShowConsole(QEvent *event){}
+static void winShowConsole(QEvent *event){}*/
 
 // functions generating gui elements
 
@@ -74,20 +74,20 @@ static void createConsoleWin() {}
 static void createAboutWin() {}
 
 static void createNavOptionsWin() {}
-static void createDisplayOptionsWin() {}
+//static void createDisplayOptionsWin() {}
 static void createSaveOptionsWin() {}
 static void createSyncOptionsWin() {}
-static void createRenderingOptionsWin() {}
-static void createVolTracingOptionsWin() {}
-static void createSpatialLockingOptionsWin() {}
+//static void createRenderingOptionsWin() {}
+//static void createVolTracingOptionsWin() {}
+//static void createSpatialLockingOptionsWin() {}
 
 static void createDataSetStatsWin() {}
 static void createZoomingWin() {}
 static void createTracingTimeWin() {}
 static void createCommentsWin() {}
-static void createLoadDatasetImgJTableWin() {}
-static void createLoadTreeImgJTableWin() {}
-static void createSetDynRangeWin() {}
+//static void createLoadDatasetImgJTableWin() {}
+//static void createLoadTreeImgJTableWin() {}
+//static void createSetDynRangeWin() {}
 
 static void createVpXyWin(){}
 static void createVpSkelWin(){}
@@ -109,10 +109,10 @@ static void createSaveCustomPrefsAsDlgWin(){}
 //  Wrapper functions around KNOSSOS internals for use by the UI
 // (GUI / Keyboard / (Mouse))
 
-
-static void WRAP_loadSkeleton(){}
-static void WRAP_saveSkeleton(){}
+static void UI_loadSettings(){}
 static void updateTitlebar(int32_t useFilename){}
+/*static void WRAP_loadSkeleton(){}
+static void WRAP_saveSkeleton(){}
 static void UI_clearSkeleton(){}
 static void WRAP_clearSkeleton(){}
 static void UI_setViewModeDrag() {}
@@ -146,7 +146,6 @@ static void UI_pushBranchBtnPressed(){}
 static void UI_popBranchBtnPressed(){}
 static void UI_enableLinearFilteringModified(){}
 static void UI_helpShowAbout(){}
-static void UI_loadSettings(){}
 static void UI_setSkeletonPerspective(QEvent *event){}
 static void UI_orthoVPzoomSliderModified(){}
 static void UI_lockCurrentMagModified(QEvent *event){}
@@ -155,10 +154,10 @@ static void UI_deleteCommentBoxes(){}
 static void UI_changeViewportPosSiz(){}
 static void UI_changeViewportPosSizCheckbox(){}
 
-static Coordinate *parseRawCoordinateString(char *string){return NULL;}
 static void prefDefaultPrefsWindow(){}
 static void prefDefaultPrefs(){}
-static void resetViewportPosSiz(){}
+static void resetViewportPosSiz(){}*/
+static Coordinate *parseRawCoordinateString(char *string){return NULL;}
 
 
 static void UI_copyClipboardCoordinates() {
@@ -223,14 +222,14 @@ MainWindow::~MainWindow()
 // -- static methods -- //
 
 bool MainWindow::initGUI() {
-    /* set the window caption */
+    // set the window caption
     updateTitlebar(FALSE);
 
-    /* display some basic openGL driver statistics */
+    // display some basic openGL driver statistics
     printf("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
         glGetString(GL_RENDERER), glGetString(GL_VENDOR));
 
-    /* printf("%s\n", glGetString(GL_EXTENSIONS)); */
+    // printf("%s\n", glGetString(GL_EXTENSIONS));
 
     state->viewerState->gui->oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
@@ -250,7 +249,7 @@ bool MainWindow::initGUI() {
 
     state->viewerState->gui->radioSkeletonDisplayMode = 0;
 
-    /* init here instead of initSkeletonizer to fix some init order issue */
+    // init here instead of initSkeletonizer to fix some init order issue
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
 
@@ -293,18 +292,18 @@ bool MainWindow::initGUI() {
     createSaveOptionsWin();
 
     createAboutWin();
-    /* all following 4 unused
-    createDisplayOptionsWin();
-    createRenderingOptionsWin();
-    createSpatialLockingOptionsWin();
-    createVolTracingOptionsWin();   */
+    // all following 4 unused
+    //createDisplayOptionsWin();
+    //createRenderingOptionsWin();
+    //createSpatialLockingOptionsWin();
+    //createVolTracingOptionsWin();
 
     createDataSetStatsWin();
     createViewportPrefWin();
     createZoomingWin();
     createTracingTimeWin();
     createCommentsWin();
-    /*createSetDynRangeWin(); */           /* Unused. */
+    //createSetDynRangeWin();  Unused.
 
     createVpXzWin();
     createVpXyWin();

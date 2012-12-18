@@ -906,7 +906,7 @@ bool Client::delPeer(uint32_t id) {
     return TRUE;
 }
 
-bool Client::syncMessage(char *fmt, ...) {
+bool Client::syncMessage(const char *fmt, ...) {
     /* Many thanks to the va_start(3) manpage. */
 
     /*

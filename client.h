@@ -27,7 +27,7 @@ public:
     static bool addPeer(uint32_t id, char *name, float xScale, float yScale, float zScale, int32_t xOffset, int32_t yOffset, int32_t zOffset);
     static bool delPeer(uint32_t id);
     static bool broadcastCoordinate(uint32_t x, uint32_t y, uint32_t z);
-    static bool syncMessage(char *fmt, ...);
+    static bool syncMessage(const char *fmt, ...);
     static int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
     

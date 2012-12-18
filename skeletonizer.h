@@ -82,7 +82,7 @@ public:
     static bool setDynArray(dynArray *array, int32_t pos, void *value);
     static dynArray *newDynArray(int32_t size);
     static int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
-    static bool addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID);
+    static bool addComment(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
     static bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
     static bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
     static commentListElement *nextComment(char *searchString);

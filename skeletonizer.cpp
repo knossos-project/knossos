@@ -577,14 +577,14 @@ bool Skeletonizer::updateSkeletonState() {
                 MainWindow::UI_saveSkeleton(TRUE);
             }
         }
-    }
+    }*/
 
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber) {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
     }
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
         //setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
-    }*/
+    }
     return TRUE;
 }
 
@@ -3075,7 +3075,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
     return nodeCount;
 }
 
-bool Skeletonizer::addComment(int32_t targetRevision, char *content, nodeListElement *node, int32_t nodeID) {
+bool Skeletonizer::addComment(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID) {
     //This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     commentListElement *newComment;

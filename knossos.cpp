@@ -550,7 +550,7 @@ bool Knossos::stripNewlines(char *string) {
 }
 
 /* TODO function yyparse is not found  */
-bool Knossos::readConfigFile(char *path) {
+bool Knossos::readConfigFile(const char *path) {
     /*
     FILE *configFile;
         size_t bytesRead;
@@ -1044,7 +1044,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
  char *lval = NULL, *rval = NULL;
  char *equals = NULL;
  int32_t i = 0, j = 0, llen = 0;
- char *lvals[NUM_PARAMS] = {
+ const char *lvals[NUM_PARAMS] = {
                              "--data-path",       // 0  Do not forget
                              "--connect-asap",    // 1  to also modify
                              "--scale-x",         // 2  NUM_PARAMS
