@@ -75,3 +75,9 @@ void Viewport::keyReleaseEvent(QKeyEvent *event)
 
 }
 
+void Viewport::customEvent(QEvent *event) {
+    if(event->type() == QEvent::User) {
+
+    }
+}
+

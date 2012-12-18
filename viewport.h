@@ -25,7 +25,7 @@ protected:
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
-
+    void customEvent(QEvent *event);
     int plane;
     EventModel *eventModel;
 
