@@ -16,7 +16,6 @@
 #include "remote.h"
 #include "client.h"
 #include "knossos.h"
-#include "../treeLUT_fallback.h"
 
 //#include "y.tab.h"
 //#include "lex.yy.h"

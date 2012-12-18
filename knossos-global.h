@@ -650,6 +650,8 @@ struct viewportTexture {
 	float zoomLevel;
 };
 
+//forward declaration needed until every struct moves into its own .h-file
+class Viewport;
 /**
   * @struct guiConfig
   * @brief TODO
@@ -761,17 +763,10 @@ struct guiConfig {
     //AG_Window *consoleWin;
    // AG_Console *agConsole;
 
-   // AG_Window *vpXyWin;
-   // AG_GLView *glViewXy;
-
-    //AG_Window *vpXzWin;
-   // AG_GLView *glViewXz;
-
-    //AG_Window *vpYzWin;
-   // AG_GLView *glViewYz;
-
-   // AG_Window *vpSkelWin;
-   // AG_GLView *glViewSkel;
+    Viewport *vpXyWin;
+    Viewport *vpXzWin;
+    Viewport *vpYzWin;
+    Viewport *vpSkelWin;
 
     //AG_FileDlg *fileDlg;
 
@@ -870,6 +865,7 @@ struct vpConfig {
     float userMouseSlideX;
     float userMouseSlideY;
 };
+
 
 /**
   * @struct viewerState

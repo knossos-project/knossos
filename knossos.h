@@ -50,7 +50,7 @@ public:
     static bool sendServerSignal();
     static uint32_t log2uint32(register uint32_t x);
     static uint32_t ones32(register uint32_t x);
-
+    static void loadTreeLUTFallback();
 };
 
 

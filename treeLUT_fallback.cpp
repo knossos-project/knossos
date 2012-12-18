@@ -1,9 +1,9 @@
 #include "knossos-global.h"
+#include "knossos.h"
 
-extern stateInfo *tempConfig;
 extern stateInfo *state;
 
-void loadTreeLUTFallback() {
+void Knossos::loadTreeLUTFallback() {
     state->viewerState->defaultTreeTable[256] = 0.074510;
     state->viewerState->defaultTreeTable[512] = 0.301961;
     state->viewerState->defaultTreeTable[1] = 1.000000;
