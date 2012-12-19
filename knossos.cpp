@@ -1164,12 +1164,18 @@ void Knossos::catchSegfault(int signum) {
 }
 #endif
 
+
+/**
+  * This function shows how wired the code is at some places.
+  * A structural update might be advantegous for the future.
+  */
+
 int32_t loadDefaultTreeLUT() {
-    /*
-    if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
-        loadTreeLUTFallback();
-        treeColorAdjustmentsChanged();
+
+    if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
+        Knossos::loadTreeLUTFallback();
+        MainWindow::treeColorAdjustmentsChanged();
     }
-    */
+
     return TRUE;
 }

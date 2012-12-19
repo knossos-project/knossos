@@ -1,5 +1,5 @@
 //commented out sdl directives
-//commented out thread loop
+
 #include "viewer.h"
 #include "knossos.h"
 #include "client.h"
@@ -788,7 +788,7 @@ static bool calcLeftUpperTexAbsPx() {
 
 /**
   * Initializes the viewer, is called only once after the viewing thread started
-  * @TODO SDLNet_Init() and SDLScrap_Init()
+  * @TODO SDLNet_Init()
   */
 static bool initViewer() {
     calcLeftUpperTexAbsPx();
@@ -806,17 +806,9 @@ static bool initViewer() {
 
     // init the gui
     if(MainWindow::initGUI() == FALSE) {
-        LOG("Error initializing the agar system / gui.");
+        LOG("Error initializing the gui system");
         return FALSE;
     }
-
-    /* TODO get probably replaced throuh QClipboard
-    // Set up the clipboard
-    //if(SDLScrap_Init() < 0) {
-    //    LOG("Couldn't init clipboard: %s\n", SDL_GetError());
-    //    _Exit(FALSE);
-    //}
-    */
 
     // TDitem
 

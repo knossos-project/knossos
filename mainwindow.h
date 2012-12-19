@@ -20,8 +20,7 @@
 #include "viewport.h"
 
 #include "knossos-global.h"
-
-
+#include <dirent.h>
 
 namespace Ui {
 class MainWindow;
@@ -39,7 +38,7 @@ public:
 
     static void quitKnossos(); //not needed in qt
     static bool initGUI();
-    static uint32_t cpBaseDirectory(char *target, char *path, size_t len);
+    static bool cpBaseDirectory(char *target, char *path, size_t len);
     static void yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)());
     static uint32_t addRecentFile(char *path, uint32_t pos);
     static void UI_workModeAdd();

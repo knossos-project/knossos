@@ -4,6 +4,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 
@@ -155,6 +156,56 @@ static void UI_deleteCommentBoxes(){}
 static void UI_changeViewportPosSiz(){}
 static void UI_changeViewportPosSizCheckbox(){}
 
+/**
+  * This function is a replacement for the updateAgConfig() function in KNOSSOS 3.2
+  * @todo Replacements for AG_Numerical
+  */
+static void updateGuiconfig() {
+    state->viewerState->gui->totalTrees = state->skeletonState->treeElements;
+    state->viewerState->gui->totalNodes = state->skeletonState->totalNodeElements;
+    if(state->skeletonState->totalNodeElements == 0) {
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, FALSE);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, FALSE);
+        state->viewerState->gui->activeNodeID = 0;
+        state->viewerState->gui->activeNodeCoord.x = 0;
+        state->viewerState->gui->activeNodeCoord.y = 0;
+        state->viewerState->gui->activeNodeCoord.z = 0;
+    }
+    else {
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, TRUE);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, TRUE);
+    }
+
+    if(state->skeletonState->activeNode) {
+        SET_COORDINATE(state->viewerState->gui->activeNodeCoord,
+            state->skeletonState->activeNode->position.x + 1,
+            state->skeletonState->activeNode->position.y + 1,
+            state->skeletonState->activeNode->position.z + 1)
+        state->viewerState->gui->actNodeRadius =
+            state->skeletonState->activeNode->radius;
+    }
+
+    if(state->skeletonState->activeTree) {
+        state->viewerState->gui->actTreeColor =
+            state->skeletonState->activeTree->color;
+        strncpy(state->viewerState->gui->treeCommentBuffer,
+                state->skeletonState->activeTree->comment,
+                8192);
+    }
+
+    SET_COORDINATE(state->viewerState->gui->oneShiftedCurrPos,
+        state->viewerState->currentPosition.x + 1,
+        state->viewerState->currentPosition.y + 1,
+        state->viewerState->currentPosition.z + 1)
+
+    state->viewerState->gui->numBranchPoints =
+        state->skeletonState->branchStack->elementsOnStack;
+
+    strncpy(state->viewerState->gui->commentBuffer,
+        state->skeletonState->commentBuffer,
+        10240);
+}
+
 static Coordinate *parseRawCoordinateString(char *string){
     Coordinate *extractedCoords = NULL;
     char coordStr[strlen(string)];
@@ -202,6 +253,7 @@ fail:
     return NULL;
 
 }
+
 static void prefDefaultPrefsWindow(){}
 static void prefDefaultPrefs(){}
 static void resetViewportPosSiz(){}
@@ -271,12 +323,6 @@ MainWindow::~MainWindow()
 bool MainWindow::initGUI() {
     /* set the window caption */
     updateTitlebar(FALSE);
-
-    /* display some basic openGL driver statistics */
-    printf("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
-        glGetString(GL_RENDERER), glGetString(GL_VENDOR));
-
-    /* printf("%s\n", glGetString(GL_EXTENSIONS)); */
 
     state->viewerState->gui->oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
@@ -359,20 +405,110 @@ bool MainWindow::initGUI() {
 
     UI_loadSettings();
 
-    return TRUE;
+    return true;
 }
 
 void MainWindow::quitKnossos(){} //not needed in qt
-uint32_t MainWindow::cpBaseDirectory(char *target, char *path, size_t len){return FALSE;}
+
+
+bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
+
+    char *hit;
+        int32_t baseLen;
+
+    #ifdef LINUX
+        hit = strrchr(path, '/');
+    #else
+        hit = strrchr(path, '\\');
+    #endif
+
+        if(hit == NULL) {
+            LOG("Cannot find a path separator char in %s\n", path);
+            return FALSE;
+        }
+
+        baseLen = (int32_t)(hit - path);
+        if(baseLen > 2047) {
+            LOG("Path too long\n");
+            return FALSE;
+        }
+
+        strncpy(target, path, baseLen);
+        target[baseLen] = '\0';
+
+        return true;
+
+}
+
 void MainWindow::yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)()){}
 uint32_t MainWindow::addRecentFile(char *path, uint32_t pos){return FALSE;}
-void MainWindow::UI_workModeAdd(){}
-void MainWindow::UI_workModeLink(){}
-void MainWindow::UI_workModeDrop(){}
+void MainWindow::UI_workModeAdd(){
+   tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+}
+void MainWindow::UI_workModeLink(){
+   tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+}
+void MainWindow::UI_workModeDrop(){
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
+}
 //void MainWindow::saveSkelCallback(QEvent *event){}
-void MainWindow::UI_saveSkeleton(int32_t increment){}
-void MainWindow::UI_saveSettings(){}
-void MainWindow::UI_loadSkeleton(QEvent *event){}
+void MainWindow::UI_saveSkeleton(int32_t increment){
+
+    //create directory if it does not exist
+    DIR *skelDir;
+    cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
+    skelDir = opendir(state->viewerState->gui->skeletonDirectory);
+    if(!skelDir) {
+        #ifdef LINUX
+            mkdir(state->viewerState->gui->skeletonDirectory, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
+        #else
+            mkdir(state->viewerState->gui->skeletonDirectory);
+        #endif
+    }
+
+    FILE *saveFile;
+    if(increment) {
+        increment = state->skeletonState->autoFilenameIncrementBool;
+    }
+
+    Skeletonizer::updateSkeletonFileName(CHANGE_MANUAL,
+                           increment,
+                           state->skeletonState->skeletonFile);
+
+    saveFile = fopen(state->skeletonState->skeletonFile, "r");
+    if(saveFile) {
+        yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
+        fclose(saveFile);
+        return;
+    }
+
+    WRAP_saveSkeleton();
+
+}
+
+void MainWindow::UI_saveSettings(){
+
+}
+
+/**
+  * @todo Replacement for AG_String(X)
+  * No QEvents
+  */
+void MainWindow::UI_loadSkeleton(QEvent *event){
+    char *path; // = AG_STRING(1);
+    char *msg; // = AG_STRING(2);
+
+
+    strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
+    strncpy(state->skeletonState->skeletonFile, path, 8192);
+
+    if(state->skeletonState->totalNodeElements != 0) {
+        yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
+    }
+    else {
+        WRAP_loadSkeleton();
+    }
+}
 
 
 void MainWindow::UI_pasteClipboardCoordinates(){
@@ -397,9 +533,114 @@ void MainWindow::UI_pasteClipboardCoordinates(){
        LOG("Unable to fetch text from clipboard");
     }
 }
-void MainWindow::UI_zoomOrthogonals(float step){}
-void MainWindow::reloadDataSizeWin(){}
-void MainWindow::treeColorAdjustmentsChanged(){}
+void MainWindow::UI_zoomOrthogonals(float step){
+    int32_t i = 0;
+        int32_t triggerMagChange = FALSE;
+
+        for(i = 0; i < state->viewerState->numberViewports; i++) {
+            if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+
+                /* check if mag is locked */
+                if(state->viewerState->datasetMagLock) {
+                    if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
+                       !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                    }
+                }
+                else {
+                    /* trigger a mag change when possible */
+                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
+                        && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
+                        && (state->magnification != state->lowestAvailableMag)) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                        triggerMagChange = MAG_DOWN;
+                    }
+                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
+                        && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
+                        && (state->magnification != state->highestAvailableMag)) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                        triggerMagChange = MAG_UP;
+                    }
+                    /* performe normal zooming otherwise. This case also covers
+                    * the special case of zooming in further than 0.5 on mag1 */
+                    if(!triggerMagChange) {
+                        if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.09999) &&
+                           !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0000)) {
+                            state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                        }
+                    }
+
+                }
+            }
+        }
+
+        /* keep the agar slider / numerical widget informed */
+        state->viewerState->gui->zoomOrthoVPs =
+            state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
+
+        if(triggerMagChange) Viewer::changeDatasetMag(triggerMagChange);
+
+        Viewer::recalcTextureOffsets();
+}
+
+/**
+  * @todo Replacements for the Labels
+  * Maybe functionality of Viewport
+  */
+void MainWindow::reloadDataSizeWin(){
+    float heightxy = state->viewerState->vpConfigs[0].displayedlengthInNmY*0.001;
+    float widthxy = state->viewerState->vpConfigs[0].displayedlengthInNmX*0.001;
+    float heightxz = state->viewerState->vpConfigs[1].displayedlengthInNmY*0.001;
+    float widthxz = state->viewerState->vpConfigs[1].displayedlengthInNmX*0.001;
+    float heightyz = state->viewerState->vpConfigs[2].displayedlengthInNmY*0.001;
+    float widthyz = state->viewerState->vpConfigs[2].displayedlengthInNmX*0.001;
+
+    if ((heightxy > 1.0) && (widthxy > 1.0)){
+        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
+    }
+    else{
+        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.0f nm, Width %.0f nm", heightxy*1000, widthxy*1000);
+    }
+    if ((heightxz > 1.0) && (widthxz > 1.0)){
+        //AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxz, widthxz);
+    }
+    else{
+       // AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.0f nm, Width %.0f nm", heightxz*1000, widthxz*1000);
+    }
+
+    if ((heightyz > 1.0) && (widthyz > 1.0)){
+        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightyz, widthyz);
+    }
+    else{
+        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.0f nm, Width %.0f nm", heightyz*1000, widthyz*1000);
+    }
+}
+
+void MainWindow::treeColorAdjustmentsChanged(){
+
+    //user lut activated
+        if(state->viewerState->treeColortableOn) {
+            //user lut selected
+            if(state->viewerState->treeLutSet) {
+                memcpy(state->viewerState->treeAdjustmentTable,
+                state->viewerState->treeColortable,
+                RGB_LUTSIZE * sizeof(float));
+                Skeletonizer::updateTreeColors();
+            }
+            else {
+                memcpy(state->viewerState->treeAdjustmentTable,
+                state->viewerState->defaultTreeTable,
+                RGB_LUTSIZE * sizeof(float));
+            }
+        }
+        //use of default lut
+        else {
+                memcpy(state->viewerState->treeAdjustmentTable,
+            state->viewerState->defaultTreeTable,
+            RGB_LUTSIZE * sizeof(float));
+                    Skeletonizer::updateTreeColors();
+            }
+}
 
 //-- private methods --//
 

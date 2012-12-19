@@ -17,6 +17,10 @@ Viewport::Viewport(QWidget *parent, int plane) :
 void Viewport::initializeGL()
 {
     glClearColor(0, 0, 0, 1);
+    /* display some basic openGL driver statistics */
+    qDebug("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
+    glGetString(GL_RENDERER), glGetString(GL_VENDOR));
+
 }
 
 void Viewport::resizeGL(int w, int h)
