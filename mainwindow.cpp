@@ -66,9 +66,38 @@ static void winShowConsole(QEvent *event){}
 static void createToolsWin() {}
 static void createViewportPrefWin() {}
 
-static void createMenuBar() {}
-static void createCoordBarWin() {}
-static void createSkeletonVpToolsWin() {}
+
+
+void MainWindow:: createCoordBarWin() {
+    copyButton = new QPushButton("Copy");
+    pasteButton = new QPushButton("Paste");
+
+    this->toolBar = new QToolBar();
+    this->addToolBar(toolBar);
+    this->toolBar->addWidget(copyButton);
+    this->toolBar->addWidget(pasteButton);
+
+    xField = new QSpinBox();
+    yField = new QSpinBox();
+    zField = new QSpinBox();
+
+    xLabel = new QLabel("x");
+    yLabel = new QLabel("y");
+    zLabel = new QLabel("z");
+
+    this->toolBar->addWidget(xLabel);
+    this->toolBar->addWidget(xField);
+    this->toolBar->addWidget(yLabel);
+    this->toolBar->addWidget(yField);
+    this->toolBar->addWidget(zLabel);
+    this->toolBar->addWidget(zField);
+}
+
+
+static void createSkeletonVpToolsWin() {
+
+}
+
 static void createDataSizeWin() {}
 static void createNavWin() {}
 static void createConsoleWin() {}
@@ -147,7 +176,11 @@ static void UI_pushBranchBtnPressed(){}
 static void UI_popBranchBtnPressed(){}
 static void UI_enableLinearFilteringModified(){}
 static void UI_helpShowAbout(){}
-static void UI_loadSettings(){}
+
+static void UI_loadSettings(){
+
+}
+
 static void UI_setSkeletonPerspective(QEvent *event){}
 static void UI_orthoVPzoomSliderModified(){}
 static void UI_lockCurrentMagModified(QEvent *event){}
@@ -284,6 +317,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     createActions();
     createMenus();
+    createCoordBarWin();
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
@@ -316,6 +350,13 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::showSplashScreen() {
+
+    QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
+    splashScreen.show();
+
 }
 
 // -- static methods -- //
@@ -372,8 +413,8 @@ bool MainWindow::initGUI() {
     state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
 
-    createMenuBar();
-    createCoordBarWin();
+    //createMenuBar();
+    //createCoordBarWin();
     createSkeletonVpToolsWin();
     createDataSizeWin();
     createNavWin();
@@ -952,6 +993,6 @@ void MainWindow::commentShortcutsSlots()
 
 void MainWindow::aboutSlot()
 {
-
+    showSplashScreen();
 }
 

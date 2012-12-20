@@ -1287,7 +1287,7 @@ bool Viewer::createScreen() {
 /**
 *
 * Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
-* @attention Calling makes only sense after full initialization of the SDL / OGL screen
+* @attention Calling makes only sense after full initialization of the OGL screen
 */
 bool Viewer::initializeTextures() {
     uint32_t i = 0;

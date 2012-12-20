@@ -17,6 +17,9 @@
 #include <QDir>
 #include <QDebug>
 #include <QStringList>
+#include <QToolBar>
+#include <QSpinbox>
+#include <QLabel>
 #include "viewport.h"
 
 #include "knossos-global.h"
@@ -53,8 +56,16 @@ public:
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
 
+    void showSplashScreen();
+
 private:
     Ui::MainWindow *ui;
+
+    QToolBar *toolBar;
+    QPushButton *copyButton;
+    QPushButton *pasteButton;
+    QLabel *xLabel, *yLabel, *zLabel;
+    QSpinBox *xField, *yField, *zField;
 
     QMessageBox *prompt;
 
@@ -116,6 +127,7 @@ private:
 
     void createActions();
     void createMenus();
+    void createCoordBarWin();
 
 private slots:
     /* file menu */

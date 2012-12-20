@@ -54,7 +54,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <QtNetwork>
-
+#include "console.h"
 
 #define KVERSION "3.2"
 
@@ -760,8 +760,8 @@ struct guiConfig {
    // AG_Window *loadImgJTableWin;
    // AG_FileDlg *fileDlgOpenImgJTable;
 
-    //AG_Window *consoleWin;
-   // AG_Console *agConsole;
+
+    Console *console;
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;

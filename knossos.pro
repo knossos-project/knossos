@@ -24,7 +24,8 @@ SOURCES +=\
     Hashtable.cpp \
     sleeper.cpp \
     viewport.cpp \
-    treeLUT_fallback.cpp
+    treeLUT_fallback.cpp \
+    console.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -38,7 +39,8 @@ HEADERS  += mainwindow.h \
     knossos-global.h \
     knossos.h\
     sleeper.h \
-    viewport.h
+    viewport.h \
+    console.h
 
 FORMS    += mainwindow.ui
 
