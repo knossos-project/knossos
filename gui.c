@@ -1333,26 +1333,29 @@ void createViewPortPrefWin() {
     {
         box1 = AG_BoxNew(tab, AG_BOX_VERT, AG_BOX_HOMOGENOUS);
         {
-        state->viewerState->ag->viewportPosSizCheckbox = AG_CheckboxNewFn(box1, 0, "Use Standard Positions and Sizes", UI_changeViewportPosSizCheckbox, NULL, NULL);
-        state->viewerState->ag->viewportPosSizCheckbox->state = 1;
+        state->viewerState->ag->vpPosSizeCheckbox = AG_CheckboxNewFn(box1,
+                                                                     0,
+                                                                     "Use Standard Positions and Sizes",
+                                                                     UI_moveOrResizeVPCheckbox, NULL, NULL);
+        state->viewerState->ag->vpPosSizeCheckbox->state = TRUE;
         AG_SeparatorNewHoriz(box1);
         AG_ExpandHoriz(box1);
-        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Position", UI_changeViewportPosSiz, "%i", 1);
+        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Position", UI_moveVP, "%i", VIEWPORT_XY);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Position", UI_changeViewportPosSiz, "%i", 2);
+        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Position", UI_moveVP, "%i", VIEWPORT_XZ);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Position", UI_changeViewportPosSiz, "%i", 3);
+        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Position", UI_moveVP, "%i", VIEWPORT_YZ);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Position", UI_changeViewportPosSiz, "%i", 4);
+        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Position", UI_moveVP, "%i", VIEWPORT_SKELETON);
         AG_ExpandHoriz(button);
         AG_SeparatorNewHoriz(box1);
-        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Size", UI_changeViewportPosSiz, "%i", 5);
+        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Size", UI_resizeVP, "%i", VIEWPORT_XY);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Size", UI_changeViewportPosSiz, "%i", 6);
+        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Size", UI_resizeVP, "%i", VIEWPORT_XZ);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Size", UI_changeViewportPosSiz, "%i", 7);
+        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Size", UI_resizeVP, "%i", VIEWPORT_YZ);
         AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Size", UI_changeViewportPosSiz, "%i", 8);
+        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Size", UI_resizeVP, "%i", VIEWPORT_SKELETON);
         AG_ExpandHoriz(button);
         }
     }
@@ -1360,48 +1363,53 @@ void createViewPortPrefWin() {
 	AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
 }
 
-void UI_changeViewportPosSizCheckbox(){
-    if (state->viewerState->useStandardViewportPosSiz == 0){
-        resetViewportPosSiz();
-        state->viewerState->useStandardViewportPosSiz = 1;
+void UI_moveOrResizeVPCheckbox(){
+    if (state->viewerState->standardVpPosSize == FALSE){
+        resetVpPosSize();
+        state->viewerState->standardVpPosSize = TRUE;
         return;
     }
-    if (state->viewerState->useStandardViewportPosSiz == 1){
-        state->viewerState->useStandardViewportPosSiz = 0;
+    if (state->viewerState->standardVpPosSize == TRUE){
+        state->viewerState->standardVpPosSize = FALSE;
         return;
     }
 }
 
- void UI_changeViewportPosSiz(AG_Event *event) {
-    state->viewerState->useStandardViewportPosSiz = 0;
-    state->viewerState->ag->viewportPosSizCheckbox->state = 0;
-    state->viewerState->changeViewportPosSiz = AG_INT(1);
-        switch(state->viewerState->changeViewportPosSiz) {
-            case 1:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0);
-                break;
-            case 2:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0);
-                break;
-            case 3:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0);
-                break;
-            case 4:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0);
-                break;
-            case 5:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength, state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
-                break;
-            case 6:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength, state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
-                break;
-            case 7:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength, state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
-                break;
-            case 8:
-                SDL_WarpMouse(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength, state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
-                break;
-        }
+static void UI_moveVP(AG_Event *event) {
+    state->viewerState->standardVpPosSize = FALSE;
+    state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
+    int foundVP = state->viewerState->moveVP = AG_INT(1);
+
+    if(foundVP != VIEWPORT_XY
+       && foundVP != VIEWPORT_XZ
+       && foundVP != VIEWPORT_YZ
+       && foundVP != VIEWPORT_SKELETON) {
+        LOG("Unable to reposition. Invalid event parameter");
+        return;
+    }
+    //position mouse at center of specified viewport
+    SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+                  + state->viewerState->viewPorts[foundVP].edgeLength/2.0
+                  , state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+                  + state->viewerState->viewPorts[foundVP].edgeLength/2.0);
+}
+
+static void UI_resizeVP(AG_Event *event) {
+    state->viewerState->standardVpPosSize = FALSE;
+    state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
+    int foundVP = state->viewerState->resizeVP = AG_INT(1);
+
+    if(foundVP != VIEWPORT_XY
+       && foundVP != VIEWPORT_XZ
+       && foundVP != VIEWPORT_YZ
+       && foundVP != VIEWPORT_SKELETON) {
+        return;
+    }
+    //position mouse at corner of specified viewport
+    SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+                      + state->viewerState->viewPorts[foundVP].edgeLength
+                      , state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+                      + state->viewerState->viewPorts[foundVP].edgeLength);
 }
 
 void createSetDynRangeWin() {
@@ -2431,26 +2439,26 @@ void actNodeWdgtChanged(AG_Event *event)
 }
 
 static void drawXyViewport(AG_Event *event) {
-    renderOrthogonalVP(0);
+    renderOrthogonalVP(VIEWPORT_XY);
 }
 
 static void drawXzViewport(AG_Event *event) {
-    renderOrthogonalVP(1);
+    renderOrthogonalVP(VIEWPORT_XZ);
 }
 
 static void drawYzViewport(AG_Event *event) {
-    renderOrthogonalVP(2);
+    renderOrthogonalVP(VIEWPORT_YZ);
 }
 
 static void drawSkelViewport(AG_Event *event) {
-    renderSkeletonVP(3);
+    renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     uint32_t i = 0;
 
     //following block only one time at knossos start or at standard size&position
-    if(state->viewerState->changeViewportPosSiz == 10){
+    if(state->viewerState->moveVP == 10 && state->viewerState->resizeVP == 10){
         if(newWinLenX <= newWinLenY) {
             for(i = 0; i < state->viewerState->numberViewPorts; i++)
                 state->viewerState->viewPorts[i].edgeLength = newWinLenX / 2 - 20;
@@ -2514,7 +2522,8 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
             200,
             20);
-        state->viewerState->changeViewportPosSiz = 0;
+        state->viewerState->moveVP = -1;
+        state->viewerState->resizeVP = -1;
     }
 
     state->viewerState->screenSizeX = newWinLenX;
@@ -2552,12 +2561,12 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //updateDisplayListsSkeleton();
 
-    if(state->viewerState->useStandardViewportPosSiz == 1){
-        resetViewportPosSiz();
+    if(state->viewerState->standardVpPosSize == TRUE){
+        resetVpPosSize();
     }
 
-    //Dont allow wiewports to go outside of screen -> scale them down
-    if(state->viewerState->useStandardViewportPosSiz == 0){
+    //Dont allow viewports to go outside of screen -> scale them down
+    else {
         if(state->viewerState->screenSizeX > state->viewerState->screenSizeY){
             if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeY){
                 state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeY;
@@ -2601,7 +2610,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
                     20);
             }
         }
-        if(state->viewerState->screenSizeX <= state->viewerState->screenSizeY){
+        else if(state->viewerState->screenSizeX <= state->viewerState->screenSizeY){
             if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeX){
                 state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeX;
                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = 0;
@@ -2648,7 +2657,6 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     resizeWindows(); //adjust window sizes, because AGAR sucks at it.
 
     drawGUI();
-
 }
 
 static void currPosWdgtModified(AG_Event *event) {
@@ -3507,8 +3515,8 @@ remote port
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsVPPosSiz", NULL);
     {
         memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->useStandardViewportPosSiz);
-        xmlNewProp(currentXMLNode, BAD_CAST"useStandardViewportPosSiz", attrString);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->standardVpPosSize);
+        xmlNewProp(currentXMLNode, BAD_CAST"standardVpPosSize", attrString);
 
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x);
@@ -3913,10 +3921,10 @@ static void UI_loadSettings() {
                 state->skeletonState->rotateAroundActiveNode = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsVPPosSiz")) {
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"useStandardViewportPosSiz");
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"standardVpPosSize");
             if(attribute)
-                state->viewerState->useStandardViewportPosSiz = atoi((char *)attribute);
-            if(!state->viewerState->useStandardViewportPosSiz) state->viewerState->ag->viewportPosSizCheckbox->state = 0;
+                state->viewerState->standardVpPosSize = atoi((char *)attribute);
+            if(!state->viewerState->standardVpPosSize) state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_x");
             if(attribute)
                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = atoi((char *)attribute);
@@ -4464,7 +4472,7 @@ void prefDefaultPrefs(){
     datasetColorAdjustmentsChanged();
 }
 
-void resetViewportPosSiz(){
+void resetVpPosSize(){
     int i;
     if(state->viewerState->screenSizeX <= state->viewerState->screenSizeY) {
         for(i = 0; i < state->viewerState->numberViewPorts; i++)

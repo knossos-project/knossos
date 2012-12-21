@@ -80,7 +80,6 @@ int main(int argc, char *argv[]) {
    // stdout = temporaryStorage;
 
 
-
     SDL_Init(SDL_INIT_TIMER);
 
     // The idea behind all this is that we have four sources of
@@ -242,8 +241,9 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = FALSE;
-    tempConfig->viewerState->changeViewportPosSiz = 10;
-    tempConfig->viewerState->useStandardViewportPosSiz = 1;
+    tempConfig->viewerState->moveVP = 10;
+    tempConfig->viewerState->resizeVP = 10;
+    tempConfig->viewerState->standardVpPosSize = TRUE;
 
     tempConfig->viewerState->viewPorts = malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(tempConfig->viewerState->viewPorts == NULL) {
@@ -498,8 +498,9 @@ static int32_t initStates() {
     state->viewerState->autoTracingDelay = 50;
     state->viewerState->autoTracingSteps = 10;
     state->skeletonState->idleTimeSession = 0;
-    state->viewerState->changeViewportPosSiz = tempConfig->viewerState->changeViewportPosSiz;
-    state->viewerState->useStandardViewportPosSiz = tempConfig->viewerState->useStandardViewportPosSiz;
+    state->viewerState->moveVP = tempConfig->viewerState->moveVP;
+    state->viewerState->resizeVP = tempConfig->viewerState->resizeVP;
+    state->viewerState->standardVpPosSize = tempConfig->viewerState->standardVpPosSize;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;

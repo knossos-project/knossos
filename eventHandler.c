@@ -286,8 +286,11 @@ static uint32_t handleMouse(SDL_Event event) {
         case SDL_MOUSEBUTTONDOWN:
             switch(event.button.button) {
                 case SDL_BUTTON_LEFT:
-                    if (state->viewerState->changeViewportPosSiz != 0){
-                        state->viewerState->changeViewportPosSiz = 0;
+                    if (state->viewerState->moveVP != -1){
+                        state->viewerState->moveVP = -1;
+                    }
+                    if (state->viewerState->resizeVP != -1){
+                        state->viewerState->resizeVP = -1;
                     }
                     /* the user did not click inside any VP, so we return */
                     if(VPfound == -1) return TRUE;
@@ -414,7 +417,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
     /* check in which type of VP the user clicked and perform appropriate operation */
     if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
         /* Activate motion tracking for this VP */
-        state->viewerState->viewPorts[VPfound].motionTracking = 1;
+        state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
 
         return TRUE;
     }
@@ -439,7 +442,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
 
             case ON_CLICK_DRAG:
                 /* Activate motion tracking for this VP */
-                state->viewerState->viewPorts[VPfound].motionTracking = 1;
+                state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
                 break;
             }
     }
@@ -506,7 +509,7 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
             /* No modifier pressed */
             state->viewerState->viewPorts[VPfound].draggedNode =
                 findNodeByNodeID(clickedNode);
-            state->viewerState->viewPorts[VPfound].motionTracking = 1;
+            state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
         }
     }
 
@@ -840,9 +843,11 @@ static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound) {
     else if(event.motion.state & SDL_BUTTON(3)) {
         handleMouseMotionRightHold(event, VPfound);
     }
-    // change position of one the VPs
-    else if(state->viewerState->changeViewportPosSiz)
-        changeViewportPosSiz(event);
+
+    else if(state->viewerState->moveVP != -1
+            || state->viewerState->resizeVP != -1) {
+        moveOrResizeVP(event);
+    }
     return TRUE;
 }
 
@@ -1652,23 +1657,13 @@ static Coordinate *getCoordinateFromOrthogonalClick(SDL_Event event, int32_t VPf
             x = state->viewerState->currentPosition.x;
             break;
     }
-    if(!((x < 0)
-        || (x > state->boundary.x)
-        || (y < 0)
-        || (y > state->boundary.y)
-        || (z < 0)
-        || (z > state->boundary.z))) {
-
-
-        SET_COORDINATE((*foundCoordinate),
-                       x,
-                       y,
-                       z);
-
-
+    //check if coordinates are in range
+    if((x >= 0) && (x <= state->boundary.x)
+        &&(y >= 0) && (y <= state->boundary.y)
+        &&(z >= 0) && (z <= state->boundary.z)) {
+        SET_COORDINATE((*foundCoordinate), x, y, z);
         return foundCoordinate;
     }
-
     return NULL;
 }
 
@@ -1762,201 +1757,125 @@ uint32_t inputToAction (int32_t mouse,
     return ACTION_NONE;
 }
 
-void changeViewportPosSiz(SDL_Event event){
-    if(state->viewerState->changeViewportPosSiz == 1){
-        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner,
-        event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength/2.0, 0);
-
-        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = 0;
-        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y = 23;
-        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength;
-        if(state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].edgeLength;
-
-        AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
-
-        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
-            200,
-            20);
+void moveOrResizeVP(SDL_Event event) {
+    int foundVP;
+    if(state->viewerState->moveVP != -1) {
+        foundVP = state->viewerState->moveVP;
+        LOG("moveVP: %i", foundVP);
     }
-    else if(state->viewerState->changeViewportPosSiz == 2){
-        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner,
-        event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength/2.0, 0);
+    else {
+        foundVP = state->viewerState->resizeVP;
+        LOG("resizeVP: %i", foundVP);
+    }
 
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x = 0;
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y = 23;
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength;
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength;
+    if(foundVP != VIEWPORT_XY
+       && foundVP != VIEWPORT_XZ
+       && foundVP != VIEWPORT_YZ
+       && foundVP != VIEWPORT_SKELETON) {
+        return;
+    }
 
+    if(state->viewerState->moveVP != -1) {
+        SET_COORDINATE(state->viewerState->viewPorts[foundVP].upperLeftCorner,
+                       event.motion.x - state->viewerState->viewPorts[foundVP].edgeLength/2.0,
+                       event.motion.y - state->viewerState->viewPorts[foundVP].edgeLength/2.0, 0);
+
+        if(state->viewerState->viewPorts[foundVP].upperLeftCorner.x < 0) {
+            state->viewerState->viewPorts[foundVP].upperLeftCorner.x = 0;
+        }
+        if(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+                > state->viewerState->screenSizeX - state->viewerState->viewPorts[foundVP].edgeLength) {
+            state->viewerState->viewPorts[foundVP].upperLeftCorner.x =
+            state->viewerState->screenSizeX - state->viewerState->viewPorts[foundVP].edgeLength;
+        }
+
+        if(state->viewerState->viewPorts[foundVP].upperLeftCorner.y < 23) {
+            state->viewerState->viewPorts[foundVP].upperLeftCorner.y = 23;
+        }
+
+        if(state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+            > state->viewerState->screenSizeY - state->viewerState->viewPorts[foundVP].edgeLength) {
+            state->viewerState->viewPorts[foundVP].upperLeftCorner.y =
+            state->viewerState->screenSizeY - state->viewerState->viewPorts[foundVP].edgeLength;
+        }
+    }
+
+    else { //resize viewport
+        if(event.motion.x - state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+           > event.motion.y - state->viewerState->viewPorts[foundVP].upperLeftCorner.y) {
+            state->viewerState->viewPorts[foundVP].edgeLength =
+                    event.motion.x - state->viewerState->viewPorts[foundVP].upperLeftCorner.x;
+           }
+
+        else {
+            state->viewerState->viewPorts[foundVP].edgeLength =
+                    event.motion.y - state->viewerState->viewPorts[foundVP].upperLeftCorner.y;
+        }
+        if(state->viewerState->viewPorts[foundVP].edgeLength
+           > state->viewerState->screenSizeX - state->viewerState->viewPorts[foundVP].upperLeftCorner.x) {
+            state->viewerState->viewPorts[foundVP].edgeLength =
+                    state->viewerState->screenSizeX - state->viewerState->viewPorts[foundVP].upperLeftCorner.x;
+        }
+        if(state->viewerState->viewPorts[foundVP].edgeLength
+           > state->viewerState->screenSizeY - state->viewerState->viewPorts[foundVP].upperLeftCorner.y) {
+            state->viewerState->viewPorts[foundVP].edgeLength =
+                    state->viewerState->screenSizeY - state->viewerState->viewPorts[foundVP].upperLeftCorner.y;
+        }
+    }
+
+    switch(foundVP) {
+    case VIEWPORT_XY:
+        AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.x,
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.y,
+                         state->viewerState->viewPorts[foundVP].edgeLength,
+                         state->viewerState->viewPorts[foundVP].edgeLength);
+        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+                                + state->viewerState->viewPorts[foundVP].edgeLength - 25,
+                                200,
+                                20);
+    break;
+    case VIEWPORT_XZ:
         AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.x,
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.y,
+                         state->viewerState->viewPorts[foundVP].edgeLength,
+                         state->viewerState->viewPorts[foundVP].edgeLength);
 
         AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 3){
-        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner,
-        event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength/2.0, 0);
-
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x = 0;
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y = 23;
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength;
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength;
-
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+                                + state->viewerState->viewPorts[foundVP].edgeLength - 25,
+                                200,
+                                20);
+        break;
+    case VIEWPORT_YZ:
         AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
-
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.x,
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.y,
+                         state->viewerState->viewPorts[foundVP].edgeLength,
+                         state->viewerState->viewPorts[foundVP].edgeLength);
         AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 4){
-        SET_COORDINATE(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner,
-        event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength/2.0, 0);
-
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x < 0) state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x = 0;
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y < 23) state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y = 23;
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength;
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength)
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength;
-
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.y
+                                + state->viewerState->viewPorts[foundVP].edgeLength - 25,
+                                200,
+                                20);
+        break;
+    case VIEWPORT_SKELETON:
         AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
-
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.x,
+                         state->viewerState->viewPorts[foundVP].upperLeftCorner.y,
+                         state->viewerState->viewPorts[foundVP].edgeLength,
+                         state->viewerState->viewPorts[foundVP].edgeLength);
         AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 5){
-
-        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y)
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x;
-        else
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y;
-
-        if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x){
-           state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x;
-        }
-        if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y){
-           state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y;
-        }
-
-        AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_XY].edgeLength);
-
-        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 6){
-
-        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y)
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x;
-        else
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y;
-
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x){
-           state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x;
-        }
-        if(state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y){
-           state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y;
-        }
-
-        AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength);
-
-        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 7){
-
-        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y)
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x;
-        else
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y;
-
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x){
-           state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x;
-        }
-        if(state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y){
-           state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y;
-        }
-
-        AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength);
-
-        AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-            state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
-            200,
-            20);
-    }
-    else if(state->viewerState->changeViewportPosSiz == 8){
-
-        if(event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x > event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y)
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.x - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x;
-        else
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = event.motion.y - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y;
-
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength > state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x){
-           state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = state->viewerState->screenSizeX - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x;
-        }
-        if(state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength > state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y){
-           state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = state->viewerState->screenSizeY - state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y;
-        }
-
-        AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
-
-        AG_WindowSetGeometryBounded(state->viewerState->ag->skeletonVpToolsWin,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
-            state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
-            200,
-            20);
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+                                + state->viewerState->viewPorts[foundVP].edgeLength - 210,
+                                state->viewerState->viewPorts[foundVP].upperLeftCorner.y + 5,
+                                200,
+                                20);
+        break;
     }
 }

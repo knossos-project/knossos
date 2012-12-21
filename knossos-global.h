@@ -752,7 +752,7 @@ struct agConfig {
     AG_Checkbox *datasetLinearFilteringBox;
     AG_Checkbox *AutoTracingBox;
 
-    AG_Checkbox *viewportPosSizCheckbox;
+    AG_Checkbox *vpPosSizeCheckbox;
 };
 
 struct viewPort {
@@ -924,8 +924,14 @@ struct viewerState {
     int autoTracingDelay;
     int autoTracingSteps;
 
-    int changeViewportPosSiz;
-    int useStandardViewportPosSiz;
+    // flags for changing vp position or size. Can be
+    // VIEWPORT_XY, ...,
+    // -1 for default position and size,
+    // 10 for knossos start
+    int moveVP;
+    int resizeVP;
+
+    int standardVpPosSize;
 };
 
 struct commentListElement {
@@ -1394,6 +1400,7 @@ uint32_t handleEvent(SDL_Event event);
 //This function is called when screen update is neccessary.
 //It coordinates the drawing of the viewports in the appropriate order.
 uint32_t drawGUI();
+void updateAGconfig();
 uint32_t renderOrthogonalVP(uint32_t currentVP);
 uint32_t renderSkeletonVP(uint32_t currentVP);
 uint32_t drawViewportProperties(uint32_t currentVP);
@@ -1527,7 +1534,6 @@ int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int3
 
 void quitKnossos();
 int32_t initGUI();
-void updateAGconfig();
 uint32_t cpBaseDirectory(char *target, char *path, size_t len);
 void yesNoPrompt(AG_Widget *par, char *promptString, void (*yesCb)(), void (*noCb)());
 uint32_t addRecentFile(char *path, uint32_t pos);
