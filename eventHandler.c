@@ -833,14 +833,14 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
 static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound) {
 
     /* mouse is moving with left button hold clicked */
-    if(event.motion.state & SDL_BUTTON(1)) {
+    if(event.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
         handleMouseMotionLeftHold(event, VPfound);
     }
-    else if(event.motion.state & SDL_BUTTON(2)) {
+    else if(event.motion.state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
         handleMouseMotionMiddleHold(event, VPfound);
     }
     /* mouse is moving with right button hold clicked */
-    else if(event.motion.state & SDL_BUTTON(3)) {
+    else if(event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
         handleMouseMotionRightHold(event, VPfound);
     }
 
