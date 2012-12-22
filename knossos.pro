@@ -28,6 +28,7 @@ SOURCES +=\
     console.cpp
 
 
+
 HEADERS  += mainwindow.h \
     eventmodel.h \
     client.h \
@@ -41,6 +42,7 @@ HEADERS  += mainwindow.h \
     sleeper.h \
     viewport.h \
     console.h
+
 
 FORMS    += mainwindow.ui
 

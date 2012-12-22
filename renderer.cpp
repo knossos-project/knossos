@@ -1601,10 +1601,7 @@ bool Renderer::initRenderer() {
     return true;
 }
 
-bool Renderer::splashScreen() {
-    // Do we need this function? SplashScreen already implemented...
-    return true;
-}
+
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
     //multiply matrix m2 to matrix m1 and save result in rotationState matrix

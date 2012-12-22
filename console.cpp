@@ -1,10 +1,14 @@
 #include "console.h"
 
 Console::Console(QWidget *parent) :
-    QWidget(parent)
+    QDialog(parent)
 {
+    this->setWindowTitle("Console");
     this->editor = new QPlainTextEdit(this);
-    this->editor->setStyleSheet("background : black");
-    this->editor->setStyleSheet("color : white");
+
+    QPalette palette = this->palette();
+    palette.setColor(QPalette::Base, Qt::black);
+    palette.setColor(QPalette::Text, Qt::white);
+    this->setPalette(palette);
 
 }

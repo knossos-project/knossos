@@ -39,7 +39,7 @@ public:
     static int32_t sgn(float number);
 
     static bool initRenderer();
-    static bool splashScreen();
+
     static bool setRotationState(uint32_t setTo);
     static bool rotateSkeletonViewport();
     static bool updateRotationStateMatrix(float M1[16], float M2[16]);

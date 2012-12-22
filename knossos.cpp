@@ -17,6 +17,7 @@
 #include "client.h"
 #include "knossos.h"
 
+
 //#include "y.tab.h"
 //#include "lex.yy.h"
 
@@ -37,8 +38,6 @@ struct stateInfo *state = NULL;
 #undef main
 #endif
 
-
-
 int main(int argc, char *argv[])
 {
 
@@ -46,7 +45,6 @@ int main(int argc, char *argv[])
 
     MainWindow window;
     window.showMaximized();
-
 
     state = Knossos::emptyState();
 

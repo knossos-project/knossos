@@ -28,10 +28,17 @@ void Viewport::resizeGL(int w, int h)
 
 }
 
+/**
+  * @Todo the case decision in paintGL is crap I know, it is just an adhoc test for rendering.
+  */
+
 void Viewport::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if(this->plane < 3) {
+        drawViewport(this->plane);
+    } else
+        drawSkeletonViewport();
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event)
@@ -83,5 +90,13 @@ void Viewport::customEvent(QEvent *event) {
     if(event->type() == QEvent::User) {
 
     }
+}
+
+void Viewport::drawViewport(int plane) {
+    Renderer::renderOrthogonalVP(plane);
+}
+
+void Viewport::drawSkeletonViewport() {
+    Renderer::renderSkeletonVP(3);
 }
 

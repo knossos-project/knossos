@@ -15,6 +15,9 @@ class Viewport : public QGLWidget
 public:
     explicit Viewport(QWidget *parent, int plane);
 
+    void drawViewport(int plane);
+    void drawSkeletonViewport();
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);

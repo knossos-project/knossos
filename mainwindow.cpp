@@ -20,10 +20,6 @@ static void OkfileDlgOpenPrefs(QEvent *event){}
 static void OkfileDlgSavePrefsAs(QEvent *event){}
 
 static void UI_checkQuitKnossos(){}
-static void drawXyViewport(QEvent *event){}
-static void drawXzViewport(QEvent *event){}
-static void drawYzViewport(QEvent *event){}
-static void drawSkelViewport(QEvent *event){}
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY){}
 static void resizeWindows(){}
 static void agInputWdgtGainedFocus(QEvent *event){}
@@ -100,7 +96,12 @@ static void createSkeletonVpToolsWin() {
 
 static void createDataSizeWin() {}
 static void createNavWin() {}
-static void createConsoleWin() {}
+void MainWindow::createConsoleWidget() {
+
+    console = new Console(this);
+    console->show();
+
+}
 static void createAboutWin() {}
 
 static void createNavOptionsWin() {}
@@ -118,11 +119,6 @@ static void createCommentsWin() {}
 static void createLoadDatasetImgJTableWin() {}
 static void createLoadTreeImgJTableWin() {}
 static void createSetDynRangeWin() {}
-
-static void createVpXyWin(){}
-static void createVpSkelWin(){}
-static void createVpYzWin(){}
-static void createVpXzWin(){}
 
 static void createOpenFileDlgWin(){}
 static void createSaveAsFileDlgWin(){}
@@ -419,7 +415,7 @@ bool MainWindow::initGUI() {
     createDataSizeWin();
     createNavWin();
     createToolsWin();
-    createConsoleWin();
+    //createConsoleWin();
 
     createNavOptionsWin();
     createSyncOptionsWin();
@@ -439,10 +435,10 @@ bool MainWindow::initGUI() {
     createCommentsWin();
     /*createSetDynRangeWin(); */           /* Unused. */
 
-    createVpXzWin();
-    createVpXyWin();
-    createVpYzWin();
-    createVpSkelWin();
+    //createVpXzWin();
+    //createVpXyWin();
+    //createVpYzWin();
+    //createVpSkelWin();
 
     UI_loadSettings();
 
@@ -483,6 +479,7 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
 void MainWindow::yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)()){}
 uint32_t MainWindow::addRecentFile(char *path, uint32_t pos){return FALSE;}
+
 void MainWindow::UI_workModeAdd(){
    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
@@ -492,6 +489,7 @@ void MainWindow::UI_workModeLink(){
 void MainWindow::UI_workModeDrop(){
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
 }
+
 //void MainWindow::saveSkelCallback(QEvent *event){}
 void MainWindow::UI_saveSkeleton(int32_t increment){
 
@@ -683,6 +681,22 @@ void MainWindow::treeColorAdjustmentsChanged(){
             }
 }
 
+void MainWindow::createXYViewport() {
+
+}
+
+void MainWindow::createXZViewport() {
+
+}
+
+void MainWindow::createYZViewport() {
+
+}
+
+void MainWindow::createSkeletonViewport() {
+
+}
+
 //-- private methods --//
 
 void MainWindow::createActions()
@@ -828,7 +842,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
-// -- signals -- //
+
 
 //file menu functionality
 

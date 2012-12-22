@@ -57,6 +57,11 @@ public:
     static void treeColorAdjustmentsChanged();
 
     void showSplashScreen();
+    void createConsoleWidget();
+    void createXYViewport();
+    void createXZViewport();
+    void createYZViewport();
+    void createSkeletonViewport();
 
 private:
     Ui::MainWindow *ui;
@@ -72,6 +77,9 @@ private:
     QWidget *mainWidget;
     QGridLayout *gridLayout;
     Viewport **viewports;
+
+    Console *console;
+
     /* file actions */
     QAction *openAction;
     QAction *recentFileAction;
@@ -122,8 +130,6 @@ private:
     QFileDialog *loadFileDialog;
     QFileDialog *saveFileDialog;
     QFile *loadedFile;
-
-
 
     void createActions();
     void createMenus();
