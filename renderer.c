@@ -1591,7 +1591,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                 glTranslatef((float)state->skeletonState->volBoundary / 2.,
                              (float)state->skeletonState->volBoundary / 2.,
                              (float)state->skeletonState->volBoundary / -2.);
-//glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+                //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
                 glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
                 glMatrixMode(GL_PROJECTION);
@@ -1664,9 +1664,8 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                         10 * state->skeletonState->volBoundary);
                 setRotationState(ROTATIONSTATEYZ);
                 break;
-            //float minrotation[16];
-            //float da;
             case 4:
+            //Rotate 15 times by 10 pixels and one time by 7.6 pixels
             //90deg
                 state->skeletonState->rotdx = 10;
                 state->skeletonState->rotationcounter++;
@@ -1675,9 +1674,11 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                     state->skeletonState->definedSkeletonVpView = 0;
                     state->skeletonState->rotationcounter = 0;
                 }
+                refreshViewports();
                 break;
 
             case 5:
+            //Rotate 31 times by 10 pixels and one time by 5.2 pixels
             //180deg
                 state->skeletonState->rotdx = 10;
                 state->skeletonState->rotationcounter++;
@@ -1686,6 +1687,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                     state->skeletonState->definedSkeletonVpView = 0;
                     state->skeletonState->rotationcounter = 0;
                 }
+                refreshViewports();
                 break;
             case 6:
                 /* Resetting */

@@ -27,7 +27,7 @@ extern struct stateInfo *state;
 
 int refreshTime() {
     while(TRUE) {
-        SDL_Delay(200);
+        SDL_Delay(1000);
         refreshViewports();
         if(state->quitSignal == TRUE){
             break;
