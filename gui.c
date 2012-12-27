@@ -153,6 +153,7 @@ int32_t initGUI() {
     createMenuBar();
     createCoordBarWin();
     createSkeletonVpToolsWin();
+    createVpPosSizWin();
     createDataSizeWin();
     createNavWin();
     createToolsWin();
@@ -579,11 +580,6 @@ void createDataSizeWin() {
         AG_ExpandHoriz(label);
         state->viewerState->ag->dataSizeLabelxy = label;
     }
-    AG_WindowSetGeometryBounded(win,
-                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
-                                200,
-                                20);
     AG_WindowShow(win);
     state->viewerState->ag->dataSizeWinxy = win;
 
@@ -595,11 +591,6 @@ void createDataSizeWin() {
         AG_ExpandHoriz(label);
         state->viewerState->ag->dataSizeLabelxz = label;
     }
-    AG_WindowSetGeometryBounded(win,
-                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
-                                200,
-                                20);
     AG_WindowShow(win);
     state->viewerState->ag->dataSizeWinxz = win;
 
@@ -611,13 +602,10 @@ void createDataSizeWin() {
         AG_ExpandHoriz(label);
         state->viewerState->ag->dataSizeLabelyz = label;
     }
-    AG_WindowSetGeometryBounded(win,
-                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
-                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
-                                200,
-                                20);
     AG_WindowShow(win);
     state->viewerState->ag->dataSizeWinyz = win;
+
+    setDataSizeWinPositions();
 }
 
 void createNavWin() {
@@ -1152,6 +1140,19 @@ void createViewPortPrefWin() {
             AG_RadioAddItem(radio, "Lines and Points (fast)");
             AG_RadioAddItem(radio, "3D Skeleton");
         }
+        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(tab), 0);
+        box3 = AG_BoxNew(tab, AG_BOX_VERT, 0);
+        state->viewerState->ag->vpPosSizeCheckbox = AG_CheckboxNewFn(box3,
+                                                                     0,
+                                                                     "Use Standard Positions and Sizes",
+                                                                     UI_moveOrResizeVPCheckbox, NULL, NULL);
+        state->viewerState->ag->vpPosSizeCheckbox->state = TRUE;
+
+        state->viewerState->ag->showPosSizButtonsCheckbox = AG_CheckboxNewFn(box3,
+                                                                     0,
+                                                                     "Show Position and Resize Buttons",
+                                                                     UI_showPosSizButtons, NULL, NULL);
+        state->viewerState->ag->showPosSizButtonsCheckbox->state = TRUE;
 
     }
     tab = AG_NotebookAddTab(tabs, "Slice Plane Viewports", AG_BOX_HOMOGENOUS);
@@ -1329,38 +1330,24 @@ void createViewPortPrefWin() {
             }
         }
     }
-    tab = AG_NotebookAddTab(tabs, "Size & Position", AG_BOX_HOMOGENOUS);
-    {
-        box1 = AG_BoxNew(tab, AG_BOX_VERT, AG_BOX_HOMOGENOUS);
-        {
-        state->viewerState->ag->vpPosSizeCheckbox = AG_CheckboxNewFn(box1,
-                                                                     0,
-                                                                     "Use Standard Positions and Sizes",
-                                                                     UI_moveOrResizeVPCheckbox, NULL, NULL);
-        state->viewerState->ag->vpPosSizeCheckbox->state = TRUE;
-        AG_SeparatorNewHoriz(box1);
-        AG_ExpandHoriz(box1);
-        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Position", UI_moveVP, "%i", VIEWPORT_XY);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Position", UI_moveVP, "%i", VIEWPORT_XZ);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Position", UI_moveVP, "%i", VIEWPORT_YZ);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Position", UI_moveVP, "%i", VIEWPORT_SKELETON);
-        AG_ExpandHoriz(button);
-        AG_SeparatorNewHoriz(box1);
-        button = AG_ButtonNewFn(box1, 0, "XY-Viewport Size", UI_resizeVP, "%i", VIEWPORT_XY);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "XZ-Viewport Size", UI_resizeVP, "%i", VIEWPORT_XZ);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "YZ-Viewport Size", UI_resizeVP, "%i", VIEWPORT_YZ);
-        AG_ExpandHoriz(button);
-        button = AG_ButtonNewFn(box1, 0, "SK-Viewport Size", UI_resizeVP, "%i", VIEWPORT_SKELETON);
-        AG_ExpandHoriz(button);
-        }
-    }
     AG_WindowSetCloseAction(state->viewerState->ag->viewPortPrefWin, AG_WINDOW_HIDE);
 	AG_WindowShow(state->viewerState->ag->viewPortPrefWin);
+}
+
+void UI_showPosSizButtons(){
+    int i;
+    if (state->viewerState->showPosSizButtons == FALSE){
+        state->viewerState->showPosSizButtons = TRUE;
+        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            state->viewerState->ag->VpPosAndSizWin[i]->visible = TRUE;
+        return;
+        }
+    if (state->viewerState->showPosSizButtons == TRUE){
+        state->viewerState->showPosSizButtons = FALSE;
+        for(i = 0; i < state->viewerState->numberViewPorts; i++)
+            state->viewerState->ag->VpPosAndSizWin[i]->visible = FALSE;
+        return;
+    }
 }
 
 void UI_moveOrResizeVPCheckbox(){
@@ -2522,6 +2509,8 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
             state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
             200,
             20);
+
+        setVPPosSizWinPositions();
         state->viewerState->moveVP = -1;
         state->viewerState->resizeVP = -1;
     }
@@ -3453,6 +3442,11 @@ remote port
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->displayMode);
         xmlNewProp(currentXMLNode, BAD_CAST"displayModeBitFlags", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->showPosSizButtons);
+        xmlNewProp(currentXMLNode, BAD_CAST"showPosSizButtons", attrString);
+
     }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsSliceVPs", NULL);
@@ -3630,6 +3624,7 @@ remote port
 
 
 static void UI_loadSettings() {
+    int i;
     xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, currentRecentFile, currentWindow;
     xmlChar *attribute, *path, *pos;
@@ -3866,6 +3861,18 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"displayModeBitFlags");
             if(attribute)
                 state->skeletonState->displayMode = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showPosSizButtons");
+            if(attribute){
+                state->viewerState->showPosSizButtons = atoi((char *)attribute);
+                if(state->viewerState->showPosSizButtons){
+                    for(i = 0; i < state->viewerState->numberViewPorts; i++)
+                        state->viewerState->ag->VpPosAndSizWin[i]->visible = TRUE;
+                }
+                if(!state->viewerState->showPosSizButtons){
+                    for(i = 0; i < state->viewerState->numberViewPorts; i++)
+                        state->viewerState->ag->VpPosAndSizWin[i]->visible = FALSE;
+                }
+            }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsSliceVPs")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"vpLabels");
@@ -4076,6 +4083,8 @@ static void UI_loadSettings() {
         state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
         200,
         20);
+    setDataSizeWinPositions();
+    setVPPosSizWinPositions();
     refreshViewports();
     drawGUI();
 
@@ -4536,4 +4545,53 @@ void resetVpPosSize(){
         state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
         200,
         20);
+    setVPPosSizWinPositions();
+    setDataSizeWinPositions();
+}
+
+void createVpPosSizWin(){
+    int i;
+    AG_Button *button;
+    AG_Window *win;
+    AG_Box *box;
+    for (i = 0; i < state->viewerState->numberViewPorts; i++){
+        win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+        state->viewerState->ag->VpPosAndSizWin[i] = win;
+        AG_WindowSetPadding(win, 0, 0, 3, 1);
+        box = AG_BoxNew(win, AG_BOX_VERT, AG_BOX_HOMOGENOUS);
+        AG_ExpandHoriz(box);
+        button = AG_ButtonNewFn(box, 0, "Position", UI_moveVP, "%i", i);
+        button = AG_ButtonNewFn(box, 0, "Size", UI_resizeVP, "%i", i);
+        AG_WindowShow(win);
+    }
+    setVPPosSizWinPositions();
+}
+
+void setVPPosSizWinPositions(){
+    int i;
+    for (i = 0; i < state->viewerState->numberViewPorts; i++){
+    AG_WindowSetGeometryBounded(state->viewerState->ag->VpPosAndSizWin[i],
+                                state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 85,
+                                state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 55,
+                                80,
+                                50);
+    }
+}
+
+void setDataSizeWinPositions(){
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxy,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XY].edgeLength - 25,
+                                200,
+                                20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinxz,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_XZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_XZ].edgeLength - 25,
+                                200,
+                                20);
+    AG_WindowSetGeometryBounded(state->viewerState->ag->dataSizeWinyz,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.x + 5,
+                                state->viewerState->viewPorts[VIEWPORT_YZ].upperLeftCorner.y + state->viewerState->viewPorts[VIEWPORT_YZ].edgeLength - 25,
+                                200,
+                                20);
 }

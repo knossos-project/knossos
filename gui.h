@@ -150,8 +150,12 @@ static void UI_deleteCommentBoxes();
 static void UI_moveVP(AG_Event *event);
 static void UI_resizeVP(AG_Event *event);
 static void UI_moveOrResizeVPCheckbox();
+static void UI_showPosSizButtons();
 
 static Coordinate *parseRawCoordinateString(char *string);
 static void prefDefaultPrefsWindow();
 static void prefDefaultPrefs();
 static void resetVpPosSize();
+static void createVpPosSizWin();
+static void setVPPosSizWinPositions();
+static void setDataSizeWinPositions();

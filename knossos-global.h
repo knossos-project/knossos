@@ -730,6 +730,8 @@ struct agConfig {
     AG_Label *dataSizeLabelxz;
     AG_Label *dataSizeLabelyz;
 
+    AG_Window *VpPosAndSizWin[4];
+
     //Labels in tracingTimeWin
     AG_Label *runningTime;
     AG_Label *tracingTime;
@@ -753,6 +755,7 @@ struct agConfig {
     AG_Checkbox *AutoTracingBox;
 
     AG_Checkbox *vpPosSizeCheckbox;
+    AG_Checkbox *showPosSizButtonsCheckbox;
 };
 
 struct viewPort {
@@ -932,6 +935,7 @@ struct viewerState {
     int resizeVP;
 
     int standardVpPosSize;
+    int showPosSizButtons;
 };
 
 struct commentListElement {

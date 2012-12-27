@@ -1878,4 +1878,12 @@ void moveOrResizeVP(SDL_Event event) {
                                 20);
         break;
     }
+    int i;
+    for (i = 0; i < state->viewerState->numberViewPorts; i++){
+    AG_WindowSetGeometryBounded(state->viewerState->ag->VpPosAndSizWin[i],
+                                state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 85,
+                                state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 55,
+                                80,
+                                50);
+    }
 }
