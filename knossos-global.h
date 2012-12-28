@@ -55,6 +55,8 @@
 #include <QMutex>
 #include <QtNetwork>
 #include "console.h"
+#include "tracingtimewidget.h"
+#include "commentswidget.h"
 
 #define KVERSION "3.2"
 
@@ -762,6 +764,7 @@ struct guiConfig {
 
 
     Console *console;
+    TracingTimeWidget *tracingTimeWidget;
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;

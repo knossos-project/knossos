@@ -25,7 +25,9 @@ SOURCES +=\
     sleeper.cpp \
     viewport.cpp \
     treeLUT_fallback.cpp \
-    console.cpp
+    console.cpp \
+    tracingtimewidget.cpp \
+    commentswidget.cpp
 
 
 
@@ -41,7 +43,9 @@ HEADERS  += mainwindow.h \
     knossos.h\
     sleeper.h \
     viewport.h \
-    console.h
+    console.h \
+    tracingtimewidget.h \
+    commentswidget.h
 
 
 FORMS    += mainwindow.ui

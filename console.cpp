@@ -5,6 +5,8 @@ Console::Console(QWidget *parent) :
 {
     this->setWindowTitle("Console");
     this->editor = new QPlainTextEdit(this);
+    this->editor->setReadOnly(true);
+    this->editor->appendPlainText("Knossos QT");
 
     QPalette palette = this->palette();
     palette.setColor(QPalette::Base, Qt::black);

@@ -1076,7 +1076,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(event->key() == Qt::Key_Shift) {
-            MainWindow::UI_pasteClipboardCoordinates();
+            //MainWindow::pasteClipboardCoordinates();
        }
     } else if(event->key() == Qt::Key_1) {
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {

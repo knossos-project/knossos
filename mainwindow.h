@@ -56,8 +56,14 @@ public:
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
 
+    void copyClipboardCoordinates();
+    void pasteClipboardCoordinates();
+
     void showSplashScreen();
     void createConsoleWidget();
+    void createTracingTimeWidget();
+    void createCommentsWidget();
+
     void createXYViewport();
     void createXZViewport();
     void createYZViewport();
@@ -78,7 +84,10 @@ private:
     QGridLayout *gridLayout;
     Viewport **viewports;
 
+    /* Dialogs */
     Console *console;
+    TracingTimeWidget *tracingTimeWidget;
+    CommentsWidget *commentsWidget;
 
     /* file actions */
     QAction *openAction;

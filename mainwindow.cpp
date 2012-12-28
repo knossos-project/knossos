@@ -96,13 +96,26 @@ static void createSkeletonVpToolsWin() {
 
 static void createDataSizeWin() {}
 static void createNavWin() {}
+
 void MainWindow::createConsoleWidget() {
 
     console = new Console(this);
+    console->setGeometry(800, 500, 200, 120);
     console->show();
 
 }
-static void createAboutWin() {}
+
+void MainWindow::createTracingTimeWidget() {
+    tracingTimeWidget = new TracingTimeWidget(this);
+    tracingTimeWidget->setGeometry(800, 380, 200, 100);
+    tracingTimeWidget->show();
+}
+
+void MainWindow::createCommentsWidget() {
+    commentsWidget = new CommentsWidget(this);
+    commentsWidget->setGeometry(800, 100, 200, 150);
+    commentsWidget->show();
+}
 
 static void createNavOptionsWin() {}
 static void createDisplayOptionsWin() {}
@@ -114,8 +127,8 @@ static void createSpatialLockingOptionsWin() {}
 
 static void createDataSetStatsWin() {}
 static void createZoomingWin() {}
-static void createTracingTimeWin() {}
-static void createCommentsWin() {}
+
+
 static void createLoadDatasetImgJTableWin() {}
 static void createLoadTreeImgJTableWin() {}
 static void createSetDynRangeWin() {}
@@ -288,21 +301,6 @@ static void prefDefaultPrefs(){}
 static void resetViewportPosSiz(){}
 
 
-static void UI_copyClipboardCoordinates() {
-   char copyString[8192];
-
-   memset(copyString, '\0', 8192);
-
-   snprintf(copyString,
-                 8192,
-                 "%d, %d, %d",
-                 state->viewerState->currentPosition.x + 1,
-                 state->viewerState->currentPosition.y + 1,
-                 state->viewerState->currentPosition.z + 1);
-   QString coords(copyString);
-   QApplication::clipboard()->setText(coords);
-}
-
 // -- Constructor and destroyer -- //
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -314,6 +312,9 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
     createCoordBarWin();
+    createConsoleWidget();
+    createTracingTimeWidget();
+    createCommentsWidget();
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
@@ -421,7 +422,7 @@ bool MainWindow::initGUI() {
     createSyncOptionsWin();
     createSaveOptionsWin();
 
-    createAboutWin();
+    //createAboutWin();
     /* all following 4 unused
     createDisplayOptionsWin();
     createRenderingOptionsWin();
@@ -431,8 +432,8 @@ bool MainWindow::initGUI() {
     createDataSetStatsWin();
     createViewportPrefWin();
     createZoomingWin();
-    createTracingTimeWin();
-    createCommentsWin();
+    //createTracingTimeWin();
+    //createCommentsWin();
     /*createSetDynRangeWin(); */           /* Unused. */
 
     //createVpXzWin();
@@ -549,8 +550,22 @@ void MainWindow::UI_loadSkeleton(QEvent *event){
     }
 }
 
+void MainWindow::copyClipboardCoordinates() {
+   char copyString[8192];
 
-void MainWindow::UI_pasteClipboardCoordinates(){
+   memset(copyString, '\0', 8192);
+
+   snprintf(copyString,
+                 8192,
+                 "%d, %d, %d",
+                 state->viewerState->currentPosition.x + 1,
+                 state->viewerState->currentPosition.y + 1,
+                 state->viewerState->currentPosition.z + 1);
+   QString coords(copyString);
+   QApplication::clipboard()->setText(coords);
+}
+
+void MainWindow::pasteClipboardCoordinates(){
     QString text = QApplication::clipboard()->text();
     if(text.size() > 0) {
       char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
