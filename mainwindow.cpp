@@ -107,7 +107,7 @@ void MainWindow::createConsoleWidget() {
 
 void MainWindow::createTracingTimeWidget() {
     tracingTimeWidget = new TracingTimeWidget(this);
-    tracingTimeWidget->setGeometry(800, 380, 200, 100);
+    tracingTimeWidget->setGeometry(800, 350, 200, 100);
     tracingTimeWidget->show();
 }
 
