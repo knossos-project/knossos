@@ -63,6 +63,10 @@ public:
     void createConsoleWidget();
     void createTracingTimeWidget();
     void createCommentsWidget();
+    void createZoomAndMultiresWidget();
+    void createNavigationWidget();
+    void createViewportSettingsWidget();
+    void createToolWidget();
 
     void createXYViewport();
     void createXZViewport();
@@ -88,6 +92,7 @@ private:
     Console *console;
     TracingTimeWidget *tracingTimeWidget;
     CommentsWidget *commentsWidget;
+    ZoomAndMultiresWidget *zoomAndMultiresWidget;
 
     /* file actions */
     QAction *openAction;

@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QGridLayout>
+#include <QFormLayout>
 
 class CommentsWidget : public QDialog
 {

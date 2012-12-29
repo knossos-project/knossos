@@ -27,7 +27,8 @@ SOURCES +=\
     treeLUT_fallback.cpp \
     console.cpp \
     tracingtimewidget.cpp \
-    commentswidget.cpp
+    commentswidget.cpp \
+    zoomandmultireswidget.cpp
 
 
 
@@ -45,7 +46,8 @@ HEADERS  += mainwindow.h \
     viewport.h \
     console.h \
     tracingtimewidget.h \
-    commentswidget.h
+    commentswidget.h \
+    zoomandmultireswidget.h
 
 
 FORMS    += mainwindow.ui

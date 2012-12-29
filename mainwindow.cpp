@@ -59,7 +59,7 @@ static void winShowConsole(QEvent *event){}
 
 // functions generating gui elements
 
-static void createToolsWin() {}
+
 static void createViewportPrefWin() {}
 
 
@@ -90,12 +90,10 @@ void MainWindow:: createCoordBarWin() {
 }
 
 
-static void createSkeletonVpToolsWin() {
 
-}
 
 static void createDataSizeWin() {}
-static void createNavWin() {}
+
 
 void MainWindow::createConsoleWidget() {
 
@@ -117,7 +115,25 @@ void MainWindow::createCommentsWidget() {
     commentsWidget->show();
 }
 
-static void createNavOptionsWin() {}
+void MainWindow::createZoomAndMultiresWidget() {
+    zoomAndMultiresWidget = new ZoomAndMultiresWidget(this);
+    zoomAndMultiresWidget->setGeometry(1024, 100, 200, 200);
+    zoomAndMultiresWidget->show();
+}
+
+void MainWindow::createNavigationWidget() {
+
+}
+
+void MainWindow::createToolWidget() {
+
+}
+
+void MainWindow::createViewportSettingsWidget() {
+
+}
+
+
 static void createDisplayOptionsWin() {}
 static void createSaveOptionsWin() {}
 static void createSyncOptionsWin() {}
@@ -126,7 +142,7 @@ static void createVolTracingOptionsWin() {}
 static void createSpatialLockingOptionsWin() {}
 
 static void createDataSetStatsWin() {}
-static void createZoomingWin() {}
+
 
 
 static void createLoadDatasetImgJTableWin() {}
@@ -315,6 +331,10 @@ MainWindow::MainWindow(QWidget *parent) :
     createConsoleWidget();
     createTracingTimeWidget();
     createCommentsWidget();
+    createViewportSettingsWidget();
+    createTracingTimeWidget();
+    createZoomAndMultiresWidget();
+    createNavigationWidget();
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
@@ -412,13 +432,13 @@ bool MainWindow::initGUI() {
 
     //createMenuBar();
     //createCoordBarWin();
-    createSkeletonVpToolsWin();
+    //createSkeletonVpToolsWin();
     createDataSizeWin();
-    createNavWin();
-    createToolsWin();
+    //createNavWin();
+    //createToolsWin();
     //createConsoleWin();
 
-    createNavOptionsWin();
+    //createNavOptionsWin();
     createSyncOptionsWin();
     createSaveOptionsWin();
 
@@ -431,7 +451,7 @@ bool MainWindow::initGUI() {
 
     createDataSetStatsWin();
     createViewportPrefWin();
-    createZoomingWin();
+    //createZoomingWin();
     //createTracingTimeWin();
     //createCommentsWin();
     /*createSetDynRangeWin(); */           /* Unused. */

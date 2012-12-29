@@ -6,7 +6,7 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
     QDialog(parent)
 {
     setWindowTitle("Comments Shortcuts");
-    QGridLayout *layout = new QGridLayout();
+    QFormLayout *layout = new QFormLayout();
 
     labels = new QLabel*[NUM];
     textFields = new QLineEdit*[NUM];
@@ -16,11 +16,11 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
         labels[i] = new QLabel(tmp);
 
         textFields[i] = new QLineEdit();
-        layout->addWidget(labels[i], i, 1);
-        layout->addWidget(textFields[i], i, 2);
+        layout->addRow(labels[i], textFields[i]);
+
     }
     button = new QPushButton("Clear Comments Boxes");
-    layout->addWidget(button, 5, 1 );
+    layout->addWidget(button);
     this->setLayout(layout);
 
     connect(button, SIGNAL(clicked()), this, SLOT(deleteComments()));

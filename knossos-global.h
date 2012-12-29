@@ -57,6 +57,7 @@
 #include "console.h"
 #include "tracingtimewidget.h"
 #include "commentswidget.h"
+#include "zoomandmultireswidget.h"
 
 #define KVERSION "3.2"
 
