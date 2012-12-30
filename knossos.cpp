@@ -43,9 +43,6 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    MainWindow window;
-    window.showMaximized();
-
     state = Knossos::emptyState();
 
     state->loadSignal = false;
@@ -113,6 +110,9 @@ int main(int argc, char *argv[])
     state->cubeSetBytes = 262144000;
     state->boergens = 0;
     Knossos::printConfigValues();
+
+    MainWindow window;
+    window.showMaximized();
 
     // built up threads. Do not follow instructions of qt documentation on QThread
     // as they are outdated since qt 4.4!

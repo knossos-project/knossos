@@ -29,11 +29,27 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void customEvent(QEvent *event);
-    int plane;
-    EventModel *eventModel;
+    int xrel(int x);
+    int yrel(int y);
+    int plane; //XY_VIEWPORT, ...
+    int lastX; //last x position
+    int lastY; //last y position
+
+private:
+    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotion(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound);
+    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound);
+    bool handleKeyboard(QKeyEvent *event);
+    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
 signals:
-    
+    void mouseDrag(QEvent *event, int plane);
 public slots:
     
 };

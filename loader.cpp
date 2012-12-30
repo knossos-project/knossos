@@ -251,7 +251,6 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     return TRUE;
 
 loadcube_fail:
-    qDebug("loadCubeFail");
     if(freeDcSlot) {
         memcpy(freeDcSlot, state->loaderState->bogusDc, state->cubeBytes);
     }

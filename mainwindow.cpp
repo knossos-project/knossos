@@ -89,9 +89,6 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(zField);
 }
 
-
-
-
 static void createDataSizeWin() {}
 
 
@@ -332,7 +329,6 @@ MainWindow::MainWindow(QWidget *parent) :
     createTracingTimeWidget();
     createCommentsWidget();
     createViewportSettingsWidget();
-    createTracingTimeWidget();
     createZoomAndMultiresWidget();
     createNavigationWidget();
 
@@ -341,16 +337,23 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
-    viewports = new Viewport*[4];
-    for(int i = 0; i < 4; i++) {
+    viewports = new Viewport*[NUM_VP];
+    for(int i = 0; i < NUM_VP; i++) {
         viewports[i] = new Viewport(this, i);
-        viewports[i]->setStyleSheet("background:black");
     }
 
     gridLayout->addWidget(viewports[0], 0, 1);
     gridLayout->addWidget(viewports[1], 0, 2);
     gridLayout->addWidget(viewports[2], 1, 1);
     gridLayout->addWidget(viewports[3], 1, 2);
+
+    for(int i = 0; i < NUM_VP; i++) {
+        SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,
+                       viewports[i]->geometry().topLeft().x(),
+                       viewports[i]->geometry().topLeft().y(),
+                       0);
+        state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
+    }
 
     this->loadFileDialog = new QFileDialog(this);
     loadFileDialog->setWindowTitle(tr("Open Skeleton File"));

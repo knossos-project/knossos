@@ -108,6 +108,7 @@
 #define SLICE_XZ	1
 #define	SLICE_YZ	2
 
+#define NUM_VP 4 //number of viewports
 #define VIEWPORT_XY	0
 #define VIEWPORT_XZ	1
 #define VIEWPORT_YZ	2
