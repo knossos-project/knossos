@@ -28,7 +28,14 @@ SOURCES +=\
     console.cpp \
     tracingtimewidget.cpp \
     commentswidget.cpp \
-    zoomandmultireswidget.cpp
+    zoomandmultireswidget.cpp \
+    datasavingwidget.cpp \
+    navigationwidget.cpp \
+    viewportsettingswidget.cpp \
+    toolswidget.cpp \
+    toolsquicktabwidget.cpp \
+    toolstreestabwidget.cpp \
+    toolsnodestabwidget.cpp
 
 
 
@@ -47,7 +54,14 @@ HEADERS  += mainwindow.h \
     console.h \
     tracingtimewidget.h \
     commentswidget.h \
-    zoomandmultireswidget.h
+    zoomandmultireswidget.h \
+    datasavingwidget.h \
+    navigationwidget.h \
+    viewportsettingswidget.h \
+    toolswidget.h \
+    toolsquicktabwidget.h \
+    toolstreestabwidget.h \
+    toolsnodestabwidget.h
 
 
 FORMS    += mainwindow.ui

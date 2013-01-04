@@ -73,6 +73,9 @@ public:
     void createYZViewport();
     void createSkeletonViewport();
 
+protected:
+
+
 private:
     Ui::MainWindow *ui;
 
@@ -93,6 +96,8 @@ private:
     TracingTimeWidget *tracingTimeWidget;
     CommentsWidget *commentsWidget;
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
+    NavigationWidget *navigationWidget;
+    ToolsWidget *toolsWidget;
 
     /* file actions */
     QAction *openAction;

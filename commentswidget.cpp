@@ -31,3 +31,7 @@ void CommentsWidget::deleteComments() {
         textFields[i]->clear();
     }
 }
+
+void CommentsWidget::closeEvent(QCloseEvent *event) {
+    this->hide();
+}

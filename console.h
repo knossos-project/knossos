@@ -17,6 +17,8 @@ public slots:
 protected:
     QPlainTextEdit *editor;
 
+    void closeEvent(QCloseEvent *event);
+
 };
 
 #endif // CONSOLE_H

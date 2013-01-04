@@ -698,13 +698,13 @@ static bool loadCubes() {
             state->protectLoadSignal->unlock();
 
             if(Hashtable::ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
-                qDebug("Error removing Dcoi. This is a memory leak.");
+                LOG("Error removing Dcoi. This is a memory leak.");
             }
 
             // See the comment about the ht_new() call in knossos.c
             state->loaderState->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
             if(state->loaderState->Dcoi == HT_FAILURE) {
-                qDebug("Error creating new empty Dcoi. Fatal.");
+                LOG("Error creating new empty Dcoi. Fatal.");
                 _Exit(FALSE);
             }
             return FALSE;
@@ -793,7 +793,7 @@ void Loader::start() {
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
         if(loadCubes() == FALSE) {
-            qDebug("Loading of all DCOI did not complete.");
+            LOG("Loading of all DCOI did not complete.");
         }
 
         state->protectLoadSignal->lock();

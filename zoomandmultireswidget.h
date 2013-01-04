@@ -27,6 +27,8 @@ public slots:
     void skeletonSliderSlot(int value);
     void orthogonalSpinBoxSlot(double value);
     void skeletonSpinBoxSlot(double value);
+protected:
+    void closeEvent(QCloseEvent *event);
 private:
     // top layout
     QLabel *orthogonalDataViewportLabel;

@@ -100,3 +100,7 @@ void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
 
 }
+
+void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
+    this->hide();
+}

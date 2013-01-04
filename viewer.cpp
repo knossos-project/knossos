@@ -1885,15 +1885,9 @@ bool Viewer::recalcTextureOffsets() {
 }
 
 bool Viewer::refreshViewports() {
-    // TODO reimplementation due to qt
-    /*
-    SDL_Event redrawEvent;
-
-        redrawEvent.type = SDL_USEREVENT;
-        redrawEvent.user.code = USEREVENT_REDRAW;
-
-        SDL_PushEvent(&redrawEvent);
-    */
-    return true;
+    state->viewerState->gui->vpXyWin->updateGL();
+    state->viewerState->gui->vpXzWin->updateGL();
+    state->viewerState->gui->vpYzWin->updateGL();
+    state->viewerState->gui->vpSkelWin->updateGL();
 
 }

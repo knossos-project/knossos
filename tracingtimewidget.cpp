@@ -16,3 +16,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
 
 
 }
+
+void TracingTimeWidget::closeEvent(QCloseEvent *event) {
+    this->hide();
+}

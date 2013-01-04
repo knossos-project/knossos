@@ -17,6 +17,8 @@ signals:
     
 public slots:
     void deleteComments();
+protected:
+    void closeEvent(QCloseEvent *event);
 private:
     static const int NUM = 5;
     QLabel **labels;

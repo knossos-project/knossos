@@ -58,6 +58,8 @@
 #include "tracingtimewidget.h"
 #include "commentswidget.h"
 #include "zoomandmultireswidget.h"
+#include "navigationwidget.h"
+#include "toolswidget.h"
 
 #define KVERSION "3.2"
 
@@ -767,6 +769,9 @@ struct guiConfig {
 
     Console *console;
     TracingTimeWidget *tracingTimeWidget;
+    ZoomAndMultiresWidget *zoomAndMultiresWidget;
+    NavigationWidget *navigationWidget;
+    ToolsWidget *toolWidget;
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;

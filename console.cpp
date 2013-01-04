@@ -14,3 +14,7 @@ Console::Console(QWidget *parent) :
     this->setPalette(palette);
 
 }
+
+void Console::closeEvent(QCloseEvent *event) {
+    this->hide();
+}

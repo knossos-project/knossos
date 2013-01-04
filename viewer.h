@@ -53,7 +53,7 @@ public:
     static bool refreshViewports();
 
 signals:
-    
+
 public slots:
 
 public Q_SLOTS:

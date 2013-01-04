@@ -32,15 +32,6 @@ static void actTreeColorWdgtModified(QEvent *event){}
 static void actNodeCommentWdgtModified(QEvent *event){}
 static void actTreeCommentWdgtModified(QEvent *event){}
 
-// menu callbacks
-static void fileOpenSkelFile(QEvent *event){}
-static void fileSaveAsSkelFile(QEvent *event){}
-
-//static void viewDataSetStats(QEvent *event){}
-static void viewZooming(QEvent *event){}
-static void viewTracingTime(){}
-static void viewComments(){}
-//static void viewLoadImgJTable(QEvent *event){}
 
 static void prefNavOptions(QEvent *event){}
 static void prefLoadCustomPrefs(QEvent *event){}
@@ -52,12 +43,6 @@ static void prefSyncOptions(QEvent *event){}
 //static void prefAGoptions(QEvent *event){}
 static void prefViewportPrefs(){}
 static void prefSaveOptions(){}
-
-//static void winShowNavigator(QEvent *event){}
-static void winShowTools(QEvent *event){}
-static void winShowConsole(QEvent *event){}
-
-// functions generating gui elements
 
 
 static void createViewportPrefWin() {}
@@ -87,6 +72,8 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(yField);
     this->toolBar->addWidget(zLabel);
     this->toolBar->addWidget(zField);
+
+
 }
 
 static void createDataSizeWin() {}
@@ -119,11 +106,15 @@ void MainWindow::createZoomAndMultiresWidget() {
 }
 
 void MainWindow::createNavigationWidget() {
-
+    navigationWidget = new NavigationWidget(this);
+    navigationWidget->setGeometry(1024, 350, 200, 200);
+    navigationWidget->show();
 }
 
 void MainWindow::createToolWidget() {
-
+    toolsWidget = new ToolsWidget(this);
+    toolsWidget->setGeometry(500, 100, 200, 200);
+    toolsWidget->show();
 }
 
 void MainWindow::createViewportSettingsWidget() {
@@ -331,6 +322,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createViewportSettingsWidget();
     createZoomAndMultiresWidget();
     createNavigationWidget();
+    createToolWidget();
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
@@ -979,12 +971,12 @@ void MainWindow::recenterOnClickSlot()
 
 void MainWindow::zoomAndMultiresSlot()
 {
-
+    this->zoomAndMultiresWidget->show();
 }
 
 void MainWindow::tracingTimeSlot()
 {
-
+    this->tracingTimeWidget->show();
 }
 
 /* preference menu functionality */
@@ -1006,7 +998,7 @@ void MainWindow::defaultPreferencesSlot()
 
 void MainWindow::datatasetNavigationSlot()
 {
-
+    this->navigationWidget->show();
 }
 
 void MainWindow::synchronizationSlot()
@@ -1028,17 +1020,17 @@ void MainWindow::viewportSettingsSlot()
 
 void MainWindow::toolsSlot()
 {
-
+    this->toolsWidget->show();
 }
 
 void MainWindow::logSlot()
 {
-
+    this->console->show();
 }
 
 void MainWindow::commentShortcutsSlots()
 {
-
+    this->commentsWidget->show();
 }
 
 /* help menu functionality */

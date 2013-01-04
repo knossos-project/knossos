@@ -19,6 +19,8 @@ protected:
     QLabel *runningTimeLabel;
     QLabel *tracingTimeLabel;
     QLabel *idleTimeLabel;
+
+    void closeEvent(QCloseEvent *event);
 };
 
 #endif // TRACINGTIMEWIDGET_H
