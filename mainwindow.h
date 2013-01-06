@@ -99,6 +99,7 @@ private:
     NavigationWidget *navigationWidget;
     ToolsWidget *toolsWidget;
 
+
     /* file actions */
     QAction *openAction;
     QAction *recentFileAction;

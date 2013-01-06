@@ -4,9 +4,9 @@
 #include <QDialog>
 #include <QTabWidget>
 
-#include "toolsquicktabwidget.h"
-#include "toolstreestabwidget.h"
-#include "toolsnodestabwidget.h"
+#include "tools/toolsquicktabwidget.h"
+#include "tools/toolstreestabwidget.h"
+#include "tools/toolsnodestabwidget.h"
 
 class ToolsWidget : public QDialog
 {

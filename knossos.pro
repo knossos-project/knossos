@@ -25,17 +25,17 @@ SOURCES +=\
     sleeper.cpp \
     viewport.cpp \
     treeLUT_fallback.cpp \
-    console.cpp \
-    tracingtimewidget.cpp \
-    commentswidget.cpp \
-    zoomandmultireswidget.cpp \
-    datasavingwidget.cpp \
-    navigationwidget.cpp \
-    viewportsettingswidget.cpp \
-    toolswidget.cpp \
-    toolsquicktabwidget.cpp \
-    toolstreestabwidget.cpp \
-    toolsnodestabwidget.cpp
+    widgets/console.cpp \
+    widgets/tracingtimewidget.cpp \
+    widgets/commentswidget.cpp \
+    widgets/zoomandmultireswidget.cpp \
+    widgets/datasavingwidget.cpp \
+    widgets/navigationwidget.cpp \
+    widgets/viewportsettingswidget.cpp \
+    widgets/toolswidget.cpp \
+    widgets/tools/toolsquicktabwidget.cpp \
+    widgets/tools/toolstreestabwidget.cpp \
+    widgets/tools/toolsnodestabwidget.cpp
 
 
 
@@ -51,17 +51,17 @@ HEADERS  += mainwindow.h \
     knossos.h\
     sleeper.h \
     viewport.h \
-    console.h \
-    tracingtimewidget.h \
-    commentswidget.h \
-    zoomandmultireswidget.h \
-    datasavingwidget.h \
-    navigationwidget.h \
-    viewportsettingswidget.h \
-    toolswidget.h \
-    toolsquicktabwidget.h \
-    toolstreestabwidget.h \
-    toolsnodestabwidget.h
+    widgets/console.h \
+    widgets/tracingtimewidget.h \
+    widgets/commentswidget.h \
+    widgets/zoomandmultireswidget.h \
+    widgets/datasavingwidget.h \
+    widgets/navigationwidget.h \
+    widgets/viewportsettingswidget.h \
+    widgets/toolswidget.h \
+    widgets/tools/toolsquicktabwidget.h \
+    widgets/tools/toolstreestabwidget.h \
+    widgets/tools/toolsnodestabwidget.h
 
 
 FORMS    += mainwindow.ui

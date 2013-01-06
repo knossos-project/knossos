@@ -113,7 +113,7 @@ void MainWindow::createNavigationWidget() {
 
 void MainWindow::createToolWidget() {
     toolsWidget = new ToolsWidget(this);
-    toolsWidget->setGeometry(500, 100, 200, 200);
+    toolsWidget->setGeometry(500, 100, 250, 300);
     toolsWidget->show();
 }
 

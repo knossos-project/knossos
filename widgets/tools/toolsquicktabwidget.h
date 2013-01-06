@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QFrame>
 #include <QSpinBox>
+#include <QLineEdit>
+#include <QPushButton>
 
 class ToolsQuickTabWidget : public QWidget
 {
@@ -24,6 +26,12 @@ protected:
     QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *activeTreeSpinBox, *activeNodeSpinBox;
 
+    QLabel *commentLabel, *searchForLabel;
+    QLineEdit *commentField, *searchForField;
+    QPushButton *findNextButton, *findPreviousButton;
+
+    QLabel *branchPointLabel, *onStackLabel;
+    QPushButton *pushBranchNodeButton, *popBranchNodeButton;
 };
 
 #endif // TOOLSQUICKTABWIDGET_H

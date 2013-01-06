@@ -54,12 +54,12 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <QtNetwork>
-#include "console.h"
-#include "tracingtimewidget.h"
-#include "commentswidget.h"
-#include "zoomandmultireswidget.h"
-#include "navigationwidget.h"
-#include "toolswidget.h"
+#include "widgets/console.h"
+#include "widgets/tracingtimewidget.h"
+#include "widgets/commentswidget.h"
+#include "widgets/zoomandmultireswidget.h"
+#include "widgets/navigationwidget.h"
+#include "widgets/toolswidget.h"
 
 #define KVERSION "3.2"
 

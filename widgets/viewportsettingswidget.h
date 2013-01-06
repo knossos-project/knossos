@@ -1,9 +1,10 @@
 #ifndef VIEWPORTSETTINGSWIDGET_H
 #define VIEWPORTSETTINGSWIDGET_H
 
-#include <QWidget>
+#include <QDialog>
+#include <QTabWidget>
 
-class ViewportSettingsWidget : public QWidget
+class ViewportSettingsWidget : public QDialog
 {
     Q_OBJECT
 public:
@@ -12,6 +13,11 @@ public:
 signals:
     
 public slots:
+
+protected:
+    void closeEvent(QCloseEvent *event);
+
+    QTabWidget *tabs;
     
 };
 
