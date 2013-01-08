@@ -251,6 +251,26 @@
 #define ROTATIONSTATEXZ 3
 #define ROTATIONSTATEYZ 2
 
+
+/* command types */
+#define CMD_DELTREE 1 //delete tree
+#define CMD_ADDTREE 2 //add tree
+#define CMD_SPLITTREE 3 //split tree
+#define CMD_CHGTREECOL 4 //change tree color
+#define CMD_CHGACTIVETREE 5 //change active tree
+
+#define CMD_DELNODE 6 //delete node
+#define CMD_ADDNODE 7 //add node
+#define CMD_LINKNODE 8 //add segment
+#define CMD_UNLINKNODE 9 //delete segment
+#define CMD_PUSHBRANCH 10 //add branchpoint
+#define CMD_POPBRANCH 11 //pop branchpoint
+#define CMD_CHGACTIVENODE 12 //change active node
+
+#define CMD_ADDCOMMENT 13 //add comment
+#define CMD_CHGCOMMENT 14 //change comment
+#define CMD_DELCOMMENT 15 //delete comment
+
 /*
  *
  *      Structures and custom types
@@ -1207,6 +1227,37 @@ struct inputmap {
     struct inputmap *next;
 };
 
+
+/*
+ *
+ * Commands for undo and redo
+ *
+ */
+
+struct cmdList {
+    int cmdCount;
+    struct cmdListElement *firstCmd;
+    struct cmdListElement *lastCmd;
+}
+
+struct cmdListElement {
+    void *cmd;
+    int cmdType;
+    struct cmdListElement *prev;
+    struct cmdListElement *next;
+}
+
+struct cmdDelNode {
+    struct NodeListElement *deletedNode;
+};
+
+struct cmdAddNode {
+    int prevActiveNodeID;
+    struct nodeListElement *newNode;
+    int oldWorkMode;
+    int newWorkMode;
+};
+
 struct cmdLinkNode{
     int NodeID1;
     int NodeID2;
@@ -1218,10 +1269,11 @@ struct cmdUnlinkNode{
 };
 
 struct cmdChangeTreeColor{
+    int treeID;
     color4F oldColor;
 };
 
-struct cmdCreateTree{
+struct cmdAddTree{
     int treeID;
 };
 
@@ -1255,7 +1307,7 @@ struct cmdDeleteComment{
 	char* comment;
 };
 
-struct cmdCreateComment{
+struct cmdAddComment{
 	int nodeID;
 	char* comment;
 };
