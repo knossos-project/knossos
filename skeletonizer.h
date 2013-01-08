@@ -28,6 +28,5 @@ static uint32_t addNodeToSkeletonStruct(struct nodeListElement *node);
 static uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment);
 static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node);
 static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment);
-static void refreshUndoBuffer(int undotype, int arg1, int arg2, int arg3, int arg4, int arg5);
 static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();

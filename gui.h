@@ -151,8 +151,6 @@ static void UI_moveVP(AG_Event *event);
 static void UI_resizeVP(AG_Event *event);
 static void UI_moveOrResizeVPCheckbox();
 static void UI_showPosSizButtons();
-static void UI_undo();
-static void UI_redo();
 
 static Coordinate *parseRawCoordinateString(char *string);
 static void prefDefaultPrefsWindow();
