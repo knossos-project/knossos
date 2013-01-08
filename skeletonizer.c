@@ -178,6 +178,8 @@ void restoreDefaultTreeColor() {
     state->skeletonState->activeTree->colorSetManually = FALSE;
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
+
+    refreshUndoBuffer(UNDO_TREECOLOR, 0, 0, 0,0,0);
 }
 
 uint32_t setSkeletonWorkMode(int32_t targetRevision,
@@ -522,6 +524,8 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     state->skeletonState->unsavedChanges = TRUE;
     state->skeletonState->skeletonRevision++;
 
+    refreshUndoBuffer(UNDO_LINKNODE, 0, 0, 0,0,0);
+
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("brdd", KIKI_ADDSEGMENT, sourceNodeID, targetNodeID))
             skeletonSyncBroken();
@@ -677,6 +681,8 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     state->skeletonState->activeTree = newElement;
     LOG("Added new tree with ID: %d.", newElement->treeID);
 
+    refreshUndoBuffer(UNDO_CREATETREE, 0, 0, 0,0,0);
+
     if(treeID > state->skeletonState->greatestTreeID)
         state->skeletonState->greatestTreeID = treeID;
 
@@ -799,6 +805,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
         LOG("Error: Could not add new node!");
         return FALSE;
     }
+    refreshUndoBuffer(UNDO_CREATENODE,0,0,0,0,0);
 
     setActiveNode(CHANGE_MANUAL, NULL, addedNodeID);
 
@@ -839,6 +846,8 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
     }
 
     addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
+
+    refreshUndoBuffer(UNDO_CREATENODE,0,0,0,0,0);
 
     if(makeNodeActive)
         setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
@@ -1860,6 +1869,7 @@ uint32_t loadSkeleton() {
 
 uint32_t delActiveNode() {
     if(state->skeletonState->activeNode) {
+        refreshUndoBuffer(UNDO_DELETENODE,0,0,0,0,0);
         delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode);
     }
     else {
@@ -1981,7 +1991,7 @@ uint32_t delActiveTree() {
         else if(state->skeletonState->activeTree->previous) {
             nextTree = state->skeletonState->activeTree->previous;
         }
-
+        refreshUndoBuffer(UNDO_DELETETREE,0,0,0,0,0);
         delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
 
         if(nextTree) {
@@ -2518,6 +2528,8 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
        setActiveTreeByID(tree1->treeID);
        state->viewerState->ag->activeTreeID = tree1->treeID;
     }
+
+    refreshUndoBuffer(UNDO_MERGETREES, 0, 0, 0,0,0);
 
     state->skeletonState->treeElements--;
     state->skeletonState->skeletonChanged = TRUE;
@@ -3140,6 +3152,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
         }
         state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
         state->skeletonState->skeletonChanged = TRUE;
+        refreshUndoBuffer(UNDO_SPLITTREES, 0, 0, 0,0,0);
     }
     else {
         LOG("The connected component is equal to the entire tree, not splitting.");
@@ -3544,6 +3557,7 @@ int32_t pushBranchNode(int32_t targetRevision,
             pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = TRUE;
+                refreshUndoBuffer(UNDO_PUSHBRANCH, 0, 0, 0,0,0);
             }
             state->skeletonState->skeletonChanged = TRUE;
             LOG("Branch point (node ID %d) added.", branchNode->nodeID);
@@ -3657,6 +3671,8 @@ int32_t popBranchNode(int32_t targetRevision) {
         branchNode->isBranchNode--;
         state->skeletonState->skeletonChanged = TRUE;
 
+        refreshUndoBuffer(UNDO_POPANDJUMP,0,0,0,0,0);
+
         updatePosition(TELL_COORDINATE_CHANGE);
 
         state->skeletonState->branchpointUnresolved = TRUE;
@@ -3692,4 +3708,47 @@ int32_t jumpToActiveNode() {
     }
 
     return TRUE;
+}
+
+void refreshUndoBuffer(int undotype, int arg1, int arg2, int arg3, int arg4, int arg5){
+    // After every relevant change of the skeleton we save all relevant parameters or even
+    // the whole skeleton in the undoBuffer (dependent on the following cases)
+    switch(undotype){
+        case UNDO_DELETETREE:
+            LOG("DETELETREE")
+        break;
+        case UNDO_CREATETREE:
+            LOG("DELETENODE");
+            ;
+        break;
+        case UNDO_MERGETREES:
+            LOG("MERGETREES");
+            ;
+        break;
+        case UNDO_SPLITTREES:
+            LOG("SPLITTREES");
+            ;
+        case UNDO_TREECOLOR:
+            LOG("TREECOLOR");
+        break;
+        case UNDO_DELETENODE:
+            LOG("DELETENODE");
+            ;
+        break;
+        case UNDO_CREATENODE:
+            LOG("CREATENODE");
+        case UNDO_LINKNODE:
+            LOG("LINKNODE");
+        break;
+        case UNDO_PUSHBRANCH:
+            LOG("PUCHBRANCH");
+            ;
+        break;
+        case UNDO_POPANDJUMP:
+            LOG("POPANDJUMP");
+            ;
+        break;
+        default:
+            ;
+    }
 }

@@ -251,6 +251,22 @@
 #define ROTATIONSTATEXZ 3
 #define ROTATIONSTATEYZ 2
 
+//
+// for undo
+//
+
+#define UNDO_MAXSTEPS   10
+#define UNDO_DELETETREE 1
+#define UNDO_CREATETREE 2
+#define UNDO_MERGETREES 3
+#define UNDO_SPLITTREES 4
+#define UNDO_TREECOLOR  5
+#define UNDO_DELETENODE 6
+#define UNDO_CREATENODE 7
+#define UNDO_LINKNODE   8
+#define UNDO_PUSHBRANCH 9
+#define UNDO_POPANDJUMP 10
+
 /*
  *
  *      Structures and custom types
@@ -1207,6 +1223,12 @@ struct inputmap {
     struct inputmap *next;
 };
 
+struct undoBuffer {
+    // circular buffer
+    // be careful with pops cause of redo
+    // add pointers here to a "standard struct" for simple undo commands
+    // add possibility to save the whole skeleton for complicated undo commands
+};
 
 /*
  *

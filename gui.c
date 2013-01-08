@@ -517,7 +517,7 @@ void createSaveOptionsWin() {
 void createCoordBarWin() {
 	state->viewerState->ag->coordBarWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
 	/* if you change that: set coord bar win stuff also for the resize event! should be a define */
-    AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin, AG_WINDOW_TR, 500, 20);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin, AG_WINDOW_TR, 650, 20);
     AG_WindowSetPadding(state->viewerState->ag->coordBarWin, 0, 0, 3, 1);
     createCurrPosWdgt(state->viewerState->ag->coordBarWin);
 	AG_WindowShow(state->viewerState->ag->coordBarWin);
@@ -1943,6 +1943,17 @@ void createCurrPosWdgt(AG_Window *parent) {
     AG_BoxSetPadding(box, 0);
     AG_BoxSetSpacing(box, 0);
 
+    button = AG_ButtonNewFn(box, 0, "undo", UI_undo, NULL);
+    {
+        AG_ButtonSetPadding(button, 1, 1, 1, 1);
+        AG_ExpandHoriz(button);
+    }
+    button = AG_ButtonNewFn(box, 0, "redo", UI_redo, NULL);
+    {
+        AG_ButtonSetPadding(button, 1, 1, 1, 1);
+        AG_ExpandHoriz(button);
+    }
+
     button = AG_ButtonNewFn(box, 0, "copy", UI_copyClipboardCoordinates, NULL);
     {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
@@ -2520,7 +2531,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
 
     /* reposition & resize current pos window (in title bar!) */
     AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin,
-        AG_WINDOW_TR, 500, 20);
+        AG_WINDOW_TR, 650, 20);
 
     /* reinit the rendering system - resizing the window leads to a new OGL context */
     initializeTextures();
@@ -2685,6 +2696,8 @@ static void actTreeColorWdgtModified(AG_Event *event) {
     state->skeletonState->activeTree->colorSetManually = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
+//    checkthis
+//    refreshUndoBuffer(UNDO_TREECOLOR, 0, 0, 0,0,0);
 }
 
 
@@ -4138,6 +4151,11 @@ static void updateTitlebar(int32_t useFilename) {
 
     SDL_WM_SetCaption(state->viewerState->ag->titleString, NULL);
 }
+
+void UI_undo(){}
+
+void UI_redo(){}
+
 
 void UI_copyClipboardCoordinates() {
     char copyString[8192];
