@@ -1207,6 +1207,59 @@ struct inputmap {
     struct inputmap *next;
 };
 
+struct cmdLinkNode{
+    int NodeID1;
+    int NodeID2;
+};
+
+struct cmdUnlinkNode{
+    int NodeID1;
+    int NodeID2;
+};
+
+struct cmdChangeTreeColor{
+    color4F oldColor;
+};
+
+struct cmdCreateTree{
+    int treeID;
+};
+
+struct cmdPopBranch{
+    int popNodeID;
+    int oldActiveNodeID;
+};
+
+struct cmdPushBranchNode{
+    int NodeID;
+};
+
+struct cmdChangeActiveNode{
+    int oldActiveNodeID;
+    int newActiveNodeID;
+};
+
+struct cmdChangeActiveTree{
+    int oldActiveTreeID;
+    int newActiveTreeID;
+};
+
+struct cmdChangeComment{
+    int nodeID;
+	char* oldComment;
+	char* newComment;
+};
+
+struct cmdDeleteComment{
+	int nodeID;
+	char* comment;
+};
+
+struct cmdCreateComment{
+	int nodeID;
+	char* comment;
+};
+
 
 /*
  *
