@@ -1,9 +1,14 @@
 #ifndef DATASAVINGWIDGET_H
 #define DATASAVINGWIDGET_H
 
-#include <QWidget>
+#include <QDialog>
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QSpinBox>
+#include <QLabel>
 
-class DataSavingWidget : public QWidget
+class DataSavingWidget : public QDialog
 {
     Q_OBJECT
 public:
@@ -12,6 +17,14 @@ public:
 signals:
     
 public slots:
+
+protected:
+    void closeEvent(QCloseEvent *event);
+    QRadioButton *autosaveButton;
+    QLabel *autosaveIntervalLabel;
+    QSpinBox *autosaveIntervalSpinBox;
+    QLabel *autoincrementFileNameLabel;
+    QRadioButton *autoincrementFileNameButton;
     
 };
 

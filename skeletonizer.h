@@ -1,7 +1,8 @@
 #ifndef SKELETONIZER_H
 #define SKELETONIZER_H
 
-#include<GL/glut.h>
+#include <QtOpenGL>
+//#include<GL/glut.h>
 #include <QObject>
 #include"knossos-global.h"
 

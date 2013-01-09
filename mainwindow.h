@@ -67,6 +67,8 @@ public:
     void createNavigationWidget();
     void createViewportSettingsWidget();
     void createToolWidget();
+    void createDataSavingWidget();
+    void createSychronizationWidget();
 
     void createXYViewport();
     void createXZViewport();
@@ -98,7 +100,10 @@ private:
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
     NavigationWidget *navigationWidget;
     ToolsWidget *toolsWidget;
+    ViewportSettingsWidget *viewportSettingsWidget;
 
+    DataSavingWidget *dataSavingWidget;
+    SynchronizationWidget *synchronizationWidget;
 
     /* file actions */
     QAction *openAction;

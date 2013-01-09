@@ -5,10 +5,12 @@
 #include "viewer.h"
 #include <math.h>
 
+#include <QtOpenGL>
+
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glu.h>
-#include <GL/glut.h>
+//#include <GL/glut.h>
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;

@@ -3,6 +3,9 @@
 
 #include <QDialog>
 #include <QTabWidget>
+#include "viewportsettings/vpgeneraltabwidget.h"
+#include "viewportsettings/vpsliceplaneviewportwidget.h"
+#include "viewportsettings/vpskeletonviewportwidget.h"
 
 class ViewportSettingsWidget : public QDialog
 {

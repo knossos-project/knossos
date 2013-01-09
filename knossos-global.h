@@ -60,6 +60,9 @@
 #include "widgets/zoomandmultireswidget.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/toolswidget.h"
+#include "widgets/viewportsettingswidget.h"
+#include "widgets/datasavingwidget.h"
+#include "widgets/synchronizationwidget.h"
 
 #define KVERSION "3.2"
 
@@ -772,6 +775,11 @@ struct guiConfig {
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
     NavigationWidget *navigationWidget;
     ToolsWidget *toolWidget;
+    ViewportSettingsWidget *viewportSettingsWidget;
+
+    DataSavingWidget *dataSavingWidget;
+    SynchronizationWidget *synchronizationWidget;
+
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;

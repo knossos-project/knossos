@@ -35,7 +35,11 @@ SOURCES +=\
     widgets/toolswidget.cpp \
     widgets/tools/toolsquicktabwidget.cpp \
     widgets/tools/toolstreestabwidget.cpp \
-    widgets/tools/toolsnodestabwidget.cpp
+    widgets/tools/toolsnodestabwidget.cpp \
+    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
+    widgets/viewportsettings/vpskeletonviewportwidget.cpp \
+    widgets/viewportsettings/vpgeneraltabwidget.cpp \
+    widgets/synchronizationwidget.cpp
 
 
 
@@ -61,8 +65,11 @@ HEADERS  += mainwindow.h \
     widgets/toolswidget.h \
     widgets/tools/toolsquicktabwidget.h \
     widgets/tools/toolstreestabwidget.h \
-    widgets/tools/toolsnodestabwidget.h
-
+    widgets/tools/toolsnodestabwidget.h \
+    widgets/viewportsettings/vpsliceplaneviewportwidget.h \
+    widgets/viewportsettings/vpskeletonviewportwidget.h \
+    widgets/viewportsettings/vpgeneraltabwidget.h \
+    widgets/synchronizationwidget.h
 
 FORMS    += mainwindow.ui
 

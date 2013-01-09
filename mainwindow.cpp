@@ -12,13 +12,6 @@ extern struct stateInfo *tempConfig;
 
 static void setGUIcolors(){}
 // general callbacks
-static void OkfileDlgOpenSkel(QEvent *event){}
-static void OkfileDlgSaveAsSkel(QEvent *event){}
-static void OkfileDlgLoadDatasetLUT(QEvent *event){}
-static void OkfileDlgLoadTreeLUT(QEvent *event){}
-static void OkfileDlgOpenPrefs(QEvent *event){}
-static void OkfileDlgSavePrefsAs(QEvent *event){}
-
 static void UI_checkQuitKnossos(){}
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY){}
 static void resizeWindows(){}
@@ -43,8 +36,6 @@ static void prefSyncOptions(QEvent *event){}
 //static void prefAGoptions(QEvent *event){}
 static void prefViewportPrefs(){}
 static void prefSaveOptions(){}
-
-
 static void createViewportPrefWin() {}
 
 
@@ -118,17 +109,29 @@ void MainWindow::createToolWidget() {
 }
 
 void MainWindow::createViewportSettingsWidget() {
+    viewportSettingsWidget = new ViewportSettingsWidget(this);
+    viewportSettingsWidget->setGeometry(500, 500, 300, 300);
+    viewportSettingsWidget->show();
+}
 
+void MainWindow::createDataSavingWidget() {
+    dataSavingWidget = new DataSavingWidget(this);
+    dataSavingWidget->setGeometry(100, 100, 100, 200);
+    dataSavingWidget->show();
+}
+
+void MainWindow::createSychronizationWidget() {
+    synchronizationWidget = new SynchronizationWidget(this);
+    synchronizationWidget->setGeometry(100, 350, 100, 100);
+    synchronizationWidget->show();
 }
 
 
 static void createDisplayOptionsWin() {}
 static void createSaveOptionsWin() {}
-static void createSyncOptionsWin() {}
 static void createRenderingOptionsWin() {}
 static void createVolTracingOptionsWin() {}
 static void createSpatialLockingOptionsWin() {}
-
 static void createDataSetStatsWin() {}
 
 
@@ -136,9 +139,6 @@ static void createDataSetStatsWin() {}
 static void createLoadDatasetImgJTableWin() {}
 static void createLoadTreeImgJTableWin() {}
 static void createSetDynRangeWin() {}
-
-static void createOpenFileDlgWin(){}
-static void createSaveAsFileDlgWin(){}
 
 static void createCurrPosWdgt(AG_Window *parent){}
 static void createSkeletonVpToolsWdgt(AG_Window *parent){}
@@ -324,6 +324,10 @@ MainWindow::MainWindow(QWidget *parent) :
     createNavigationWidget();
     createToolWidget();
 
+    createDataSavingWidget();
+    createSychronizationWidget();
+
+
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
     mainWidget->setLayout(gridLayout);
@@ -434,7 +438,7 @@ bool MainWindow::initGUI() {
     //createConsoleWin();
 
     //createNavOptionsWin();
-    createSyncOptionsWin();
+    //createSyncOptionsWin();
     createSaveOptionsWin();
 
     //createAboutWin();
@@ -445,7 +449,7 @@ bool MainWindow::initGUI() {
     createVolTracingOptionsWin();   */
 
     createDataSetStatsWin();
-    createViewportPrefWin();
+    //createViewportPrefWin();
     //createZoomingWin();
     //createTracingTimeWin();
     //createCommentsWin();
@@ -991,8 +995,29 @@ void MainWindow::saveCustomPreferencesSlot()
 
 }
 
+/**
+  * @todo the implementation for defaultPreferences
+  */
 void MainWindow::defaultPreferencesSlot()
 {
+    QMessageBox *prompt = new QMessageBox(this);
+    prompt->setWindowTitle("Warning");
+    prompt->setText("Do you want load the load the default preferences?");
+
+    QPushButton *yesButton = prompt->addButton(tr("Yes"), QMessageBox::ActionRole);
+    QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
+    prompt->exec();
+
+
+    if((QPushButton *) prompt->clickedButton() == yesButton) {
+
+        prompt->close();
+    }
+
+    if((QPushButton *) prompt->clickedButton() == noButton) {
+
+        prompt->close();
+    }
 
 }
 
@@ -1003,17 +1028,17 @@ void MainWindow::datatasetNavigationSlot()
 
 void MainWindow::synchronizationSlot()
 {
-
+    this->synchronizationWidget->show();
 }
 
 void MainWindow::dataSavingOptionsSlot()
 {
-
+    this->viewportSettingsWidget->show();
 }
 
 void MainWindow::viewportSettingsSlot()
 {
-
+    this->viewportSettingsWidget->show();
 }
 
 /* window menu functionality */
