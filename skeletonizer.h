@@ -30,3 +30,4 @@ static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node);
 static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment);
 static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();
+static void refreshUndoRedoBuffers();

@@ -114,6 +114,18 @@ uint32_t initSkeletonizer() {
     state->skeletonState->searchStrBuffer = malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
 
+    state->skeletonState->undoList = malloc(CMD_MAXSTEPS * sizeof(state->skeletonState->undoList));
+    memset(state->skeletonState->undoList, '\0', CMD_MAXSTEPS * sizeof(state->skeletonState->undoList));
+    state->skeletonState->undoList->cmdCount = 0;
+    state->skeletonState->undoList->firstCmd = NULL;
+    state->skeletonState->undoList->lastCmd = NULL;
+
+    state->skeletonState->redoList = malloc(CMD_MAXSTEPS * sizeof(state->skeletonState->redoList));
+    memset(state->skeletonState->redoList, '\0', CMD_MAXSTEPS * sizeof(state->skeletonState->redoList));
+    state->skeletonState->redoList->cmdCount = 0;
+    state->skeletonState->redoList->firstCmd = NULL;
+    state->skeletonState->redoList->lastCmd = NULL;
+
     state->skeletonState->saveCnt = 0;
 
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
@@ -3692,4 +3704,11 @@ int32_t jumpToActiveNode() {
     }
 
     return TRUE;
+}
+
+void refreshUndoRedoBuffers(){
+    struct treeListElement *testingTree;
+    struct treeListElement *copy = state->skeletonState->activeTree;
+    state->skeletonState->undoList->lastCmd->cmd = testingTree;
+    state->skeletonState->undoList->lastCmd->next;
 }

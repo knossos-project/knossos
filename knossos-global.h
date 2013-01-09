@@ -253,6 +253,10 @@
 
 
 /* command types */
+
+//next line should be changeable for user later...
+#define CMD_MAXSTEPS 10
+
 #define CMD_DELTREE 1 //delete tree
 #define CMD_ADDTREE 2 //add tree
 #define CMD_SPLITTREE 3 //split tree
@@ -1186,6 +1190,9 @@ struct skeletonState {
     /* This is for a workaround around agar bug #171*/
     int askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
+
+    struct cmdList *undoList;
+    struct cmdList *redoList;
 };
 
 struct remoteState {
@@ -1238,14 +1245,14 @@ struct cmdList {
     int cmdCount;
     struct cmdListElement *firstCmd;
     struct cmdListElement *lastCmd;
-}
+};
 
 struct cmdListElement {
     void *cmd;
     int cmdType;
     struct cmdListElement *prev;
     struct cmdListElement *next;
-}
+};
 
 struct cmdDelNode {
     struct NodeListElement *deletedNode;
