@@ -1,9 +1,8 @@
 //the functions formerly placed in gui.h/gui.c are now in mainwindow
-//yesNoPrompt should be replaced, saveSkeletonCallback is replaced by QAction saveAction
+// saveSkeletonCallback is replaced by QAction saveAction
 //AG_Events are replaced by QEvent
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -11,8 +10,6 @@ extern struct stateInfo *tempConfig;
 //-- static functions --//
 
 static void setGUIcolors(){}
-// general callbacks
-static void UI_checkQuitKnossos(){}
 static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY){}
 static void resizeWindows(){}
 static void agInputWdgtGainedFocus(QEvent *event){}
@@ -24,7 +21,6 @@ static void actTreeIDWdgtModified(QEvent *event){}
 static void actTreeColorWdgtModified(QEvent *event){}
 static void actNodeCommentWdgtModified(QEvent *event){}
 static void actTreeCommentWdgtModified(QEvent *event){}
-
 
 static void prefNavOptions(QEvent *event){}
 static void prefLoadCustomPrefs(QEvent *event){}
@@ -38,7 +34,66 @@ static void prefViewportPrefs(){}
 static void prefSaveOptions(){}
 static void createViewportPrefWin() {}
 
+static void createDisplayOptionsWin() {}
+static void createSaveOptionsWin() {}
+static void createRenderingOptionsWin() {}
+static void createVolTracingOptionsWin() {}
+static void createSpatialLockingOptionsWin() {}
+static void createDataSetStatsWin() {}
 
+static void createLoadDatasetImgJTableWin() {}
+static void createLoadTreeImgJTableWin() {}
+static void createSetDynRangeWin() {}
+
+static void createCurrPosWdgt(){}
+static void createSkeletonVpToolsWdgt(){}
+static void createActNodeWdgt(){}
+static void datasetColorAdjustmentsChanged(){}
+
+static void createOpenCustomPrefsDlgWin(){}
+static void createSaveCustomPrefsAsDlgWin(){}
+
+//  Wrapper functions around KNOSSOS internals for use by the UI
+// (GUI / Keyboard / (Mouse))
+
+static void WRAP_loadSkeleton(){}
+static void WRAP_saveSkeleton(){}
+static void UI_lockActiveNodeBtnPressed(){}
+static void UI_disableLockingBtnPressed(){}
+static void UI_commentLockWdgtModified(QEvent *event){}
+static void UI_setDefaultZoom(){}
+static void UI_SyncConnect(){}
+static void UI_SyncDisconnect(){}
+static void UI_findNextBtnPressed(){}
+static void UI_findPrevBtnPressed(){}
+static void UI_deleteNodeBtnPressed(){}
+static void UI_jumpToNodeBtnPressed(){}
+static void UI_linkActiveNodeWithBtnPressed(){}
+static void UI_actNodeRadiusWdgtModified(){}
+static void UI_deleteTreeBtnPressed(){}
+static void UI_newTreeBtnPressed(){}
+static void UI_splitTreeBtnPressed(){}
+static void UI_mergeTreesBtnPressed(){}
+static void UI_helpDeleteTree(){}
+static void UI_renderModelRadioModified(){}
+static void UI_displayModeRadioModified(){}
+static void UI_setHighlightActiveTree(){}
+static void UI_setShowVPLabels(){}
+static void UI_setShowNodeIDs(){}
+static void UI_skeletonChanged(){}
+static void UI_enableSliceVPOverlayModified(){}
+static void UI_pushBranchBtnPressed(){}
+static void UI_popBranchBtnPressed(){}
+static void UI_enableLinearFilteringModified(){}
+static void UI_loadSettings(){}
+static void UI_setSkeletonPerspective(QEvent *event){}
+static void UI_orthoVPzoomSliderModified(){}
+static void UI_lockCurrentMagModified(QEvent *event){}
+static void UI_changeViewportPosSiz(){}
+static void UI_changeViewportPosSizCheckbox(){}
+static void createDataSizeWin() {}
+static void prefDefaultPrefs(){}
+static void resetViewportPosSiz(){}
 
 void MainWindow:: createCoordBarWin() {
     copyButton = new QPushButton("Copy");
@@ -63,19 +118,14 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(yField);
     this->toolBar->addWidget(zLabel);
     this->toolBar->addWidget(zField);
-
-
 }
 
-static void createDataSizeWin() {}
-
-
+// Dialogs
 void MainWindow::createConsoleWidget() {
 
     console = new Console(this);
     console->setGeometry(800, 500, 200, 120);
     console->show();
-
 }
 
 void MainWindow::createTracingTimeWidget() {
@@ -127,80 +177,6 @@ void MainWindow::createSychronizationWidget() {
 }
 
 
-static void createDisplayOptionsWin() {}
-static void createSaveOptionsWin() {}
-static void createRenderingOptionsWin() {}
-static void createVolTracingOptionsWin() {}
-static void createSpatialLockingOptionsWin() {}
-static void createDataSetStatsWin() {}
-
-
-
-static void createLoadDatasetImgJTableWin() {}
-static void createLoadTreeImgJTableWin() {}
-static void createSetDynRangeWin() {}
-
-static void createCurrPosWdgt(AG_Window *parent){}
-static void createSkeletonVpToolsWdgt(AG_Window *parent){}
-static void createActNodeWdgt(AG_Widget *parent){}
-static void datasetColorAdjustmentsChanged(){}
-
-static void createOpenCustomPrefsDlgWin(){}
-static void createSaveCustomPrefsAsDlgWin(){}
-
-
-//  Wrapper functions around KNOSSOS internals for use by the UI
-// (GUI / Keyboard / (Mouse))
-
-
-static void WRAP_loadSkeleton(){}
-static void WRAP_saveSkeleton(){}
-static void updateTitlebar(int32_t useFilename){}
-static void UI_clearSkeleton(){}
-static void WRAP_clearSkeleton(){}
-static void UI_setViewModeDrag() {}
-static void UI_setViewModeRecenter(){}
-static void UI_unimplemented(){}
-static void UI_lockActiveNodeBtnPressed(){}
-static void UI_disableLockingBtnPressed(){}
-static void UI_commentLockWdgtModified(QEvent *event){}
-static void UI_setDefaultZoom(){}
-static void UI_SyncConnect(){}
-static void UI_SyncDisconnect(){}
-static void UI_findNextBtnPressed(){}
-static void UI_findPrevBtnPressed(){}
-static void UI_deleteNodeBtnPressed(){}
-static void UI_jumpToNodeBtnPressed(){}
-static void UI_linkActiveNodeWithBtnPressed(){}
-static void UI_actNodeRadiusWdgtModified(){}
-static void UI_deleteTreeBtnPressed(){}
-static void UI_newTreeBtnPressed(){}
-static void UI_splitTreeBtnPressed(){}
-static void UI_mergeTreesBtnPressed(){}
-static void UI_helpDeleteTree(){}
-static void UI_renderModelRadioModified(){}
-static void UI_displayModeRadioModified(){}
-static void UI_setHighlightActiveTree(){}
-static void UI_setShowVPLabels(){}
-static void UI_setShowNodeIDs(){}
-static void UI_skeletonChanged(){}
-static void UI_enableSliceVPOverlayModified(){}
-static void UI_pushBranchBtnPressed(){}
-static void UI_popBranchBtnPressed(){}
-static void UI_enableLinearFilteringModified(){}
-static void UI_helpShowAbout(){}
-
-static void UI_loadSettings(){
-
-}
-
-static void UI_setSkeletonPerspective(QEvent *event){}
-static void UI_orthoVPzoomSliderModified(){}
-static void UI_lockCurrentMagModified(QEvent *event){}
-static void UI_deleteCommentBoxesBtnPressed(){}
-static void UI_deleteCommentBoxes(){}
-static void UI_changeViewportPosSiz(){}
-static void UI_changeViewportPosSizCheckbox(){}
 
 /**
   * This function is a replacement for the updateAgConfig() function in KNOSSOS 3.2
@@ -300,9 +276,7 @@ fail:
 
 }
 
-static void prefDefaultPrefsWindow(){}
-static void prefDefaultPrefs(){}
-static void resetViewportPosSiz(){}
+
 
 
 // -- Constructor and destroyer -- //
@@ -361,11 +335,32 @@ MainWindow::MainWindow(QWidget *parent) :
     saveFileDialog->setDirectory(QDir::home());
     saveFileDialog->setFileMode(QFileDialog::AnyFile);
     saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
+
+    updateTitlebar(false);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::updateTitlebar(bool useFilename) {
+    char *filename;
+
+    #ifdef LINUX
+        filename = strrchr(state->skeletonState->skeletonFile, '/');
+    #else
+        filename = strrchr(state->skeletonState->skeletonFile, '\\');
+    #endif
+
+    if(!useFilename ||!filename) {
+        snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, "no skeleton file");
+    } else {
+        snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, ++filename);
+    }
+
+    QString title(state->viewerState->gui->titleString);
+    setWindowTitle(title);
 }
 
 void MainWindow::showSplashScreen() {
@@ -379,7 +374,7 @@ void MainWindow::showSplashScreen() {
 
 bool MainWindow::initGUI() {
     /* set the window caption */
-    updateTitlebar(FALSE);
+    //updateTitlebar(FALSE);
 
     state->viewerState->gui->oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
@@ -465,7 +460,7 @@ bool MainWindow::initGUI() {
     return true;
 }
 
-void MainWindow::quitKnossos(){} //not needed in qt
+
 
 
 bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
@@ -497,20 +492,10 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
 }
 
-void MainWindow::yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)()){}
+
 uint32_t MainWindow::addRecentFile(char *path, uint32_t pos){return FALSE;}
 
-void MainWindow::UI_workModeAdd(){
-   tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-}
-void MainWindow::UI_workModeLink(){
-   tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-}
-void MainWindow::UI_workModeDrop(){
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
-}
 
-//void MainWindow::saveSkelCallback(QEvent *event){}
 void MainWindow::UI_saveSkeleton(int32_t increment){
 
     //create directory if it does not exist
@@ -932,17 +917,17 @@ void MainWindow::workModeEditSlot()
 
 void MainWindow::addNodeSlot()
 {
-
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
 void MainWindow::linkWithActiveNodeSlot()
 {
-
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
 }
 
 void MainWindow::dropNodesSlot()
 {
-
+    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
 }
 
 
@@ -953,7 +938,11 @@ void MainWindow::skeletonStatisticsSlot()
 
 void MainWindow::clearSkeletonSlot()
 {
+    QMessageBox *prompt = new QMessageBox(this);
 
+
+    Skeletonizer::clearSkeleton(CHANGE_MANUAL, FALSE);
+    updateTitlebar(FALSE);
 }
 
 /* view menu functionality */
@@ -965,12 +954,12 @@ void MainWindow::workModeViewSlot()
 
 void MainWindow::dragDatasetSlot()
 {
-
+   tempConfig->viewerState->workMode = ON_CLICK_DRAG;
 }
 
 void MainWindow::recenterOnClickSlot()
 {
-
+   tempConfig->viewerState->workMode = ON_CLICK_RECENTER;
 }
 
 void MainWindow::zoomAndMultiresSlot()

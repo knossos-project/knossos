@@ -39,14 +39,12 @@ public:
 
     void closeEvent(QCloseEvent *event);
 
-    static void quitKnossos(); //not needed in qt
+    void updateTitlebar(bool useFilename);
+
     static bool initGUI();
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    static void yesNoPrompt(QWidget *par, char *promptString, void (*yesCb)(), void (*noCb)());
     static uint32_t addRecentFile(char *path, uint32_t pos);
-    static void UI_workModeAdd();
-    static void UI_workModeLink();
-    static void UI_workModeDrop();
+
     //static void saveSkelCallback(AG_Event *event);
     static void UI_saveSkeleton(int32_t increment);
     static void UI_saveSettings();
