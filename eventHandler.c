@@ -1455,11 +1455,15 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         if(state->skeletonState->activeNode) {
             tempConfig->viewerState->currentPosition.x =
-                state->skeletonState->activeNode->position.x;
+                state->skeletonState->activeNode->position.x/
+                state->magnification;
             tempConfig->viewerState->currentPosition.y =
-                state->skeletonState->activeNode->position.y;
+                state->skeletonState->activeNode->position.y/
+                state->magnification;
             tempConfig->viewerState->currentPosition.z =
-                state->skeletonState->activeNode->position.z;
+                state->skeletonState->activeNode->position.z/
+                state->magnification;
+
             updatePosition(TELL_COORDINATE_CHANGE);
         }
         break;
