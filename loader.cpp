@@ -718,89 +718,34 @@ static bool loadCubes() {
 }
 
 /**
-  * @brief This method is used for the QThread declared in main knossos.cpp
+  * @brief This method is used for the QThread loader declared in main knossos.cpp
   * This is the old loader function from KNOSSOS 3.2
   * It works as follows:
-  * - before entering the while(true) loop the loader gets initialized(init loader)
-  * - the inner loop waits for the loadSignal attribute become true
-  *   This happens through three events in the viewer class. See Viewer::start for more information
-  * - If the loadSignal gets true, different conditions are checked and the DCOI are calculated
-  *   See for more information
-  * - If some DCOIs are already in memory, they have to be removed, before the new DCOIs are loaded
-  * - the dataCube will be loaded
-  *
+  * - before entering the while(true) loop the loader gets initialized(initLoader)
+  * - the inner loop waits for the loadSignal attribute to become true
+  *   This happens when a loadSignal is sent via Viewer::sendLoadSignal(), which also emits a loadSignal
+  * - The loadSignal is connected to slot Loader:load(), which handles datacube loading
+  * - in short: this thread does nothing but waiting for the loadSignal and processing it
   */
 
 void Loader::start() {
-    loaderState *loaderState = state->loaderState;
-    int32_t magChange = false;
-
     state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
     initLoader();
 
-    // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
-
-
-    while(TRUE) {
+    // Start "signal wait" loop.
+    while(TRUE)  {
        // as long the loadSignal is false, the loops waits
        while(state->loadSignal == false) {
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
             //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
             state->conditionLoadSignal->wait(state->protectLoadSignal);
-        }
-
-        state->loadSignal = false;
-        magChange = false;
-        if(state->datasetChangeSignal) {
-            state->datasetChangeSignal = NO_MAG_CHANGE;
-            magChange = true;
-        }
-
-        if(state->quitSignal == true) {
-            LOG("Loader quitting.");
-            break;
-        }
-
-        // currentPositionX is updated only when the boundary is
-        // crossed. Access to currentPositionX is synchronized through
-        // the protectLoadSignal mutex.
-        // DcoiFromPos fills the Dcoi hashtable with all datacubes that
-        // we want to be in memory, given our current position.
-        if(DcoiFromPos(loaderState->Dcoi) != true) {
-            LOG("Error computing DCOI from position.");
-            continue;
-        }
-
-        state->protectLoadSignal->unlock();
-
-        // DCOI now contains the coordinates of all cubes we want, based
-        // on our current position. However, some of those might already be
-        // in memory. We remove them.
-        if(removeLoadedCubes(magChange) != TRUE) {
-            LOG("Error removing already loaded cubes from DCOI.");
-            continue;
-        }
-
-        state->loaderMagnification = Knossos::log2uint32(state->magnification);
-        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
-        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
-            //2012.12.11 HARDCODED for testing loader
-        strncpy(state->loaderName, "f0073_mag4", 1024);
-        // DCOI is now a list of all datacubes that we want in memory, given
-        // our current position and that are not yet in memory. We go through
-        // that list and load all those datacubes into free memory slots as
-        // stored in the list freeDcSlots.
-        if(loadCubes() == FALSE) {
-            LOG("Loading of all DCOI did not complete.");
-        }
-
-        state->protectLoadSignal->lock();
-       }//end while(TRUE)
+       }
+    }
 
     // Free the structures in loaderState and loaderState itself.
-    if(cleanUpLoader(loaderState) == FALSE) {
+    if(cleanUpLoader(state->loaderState) == FALSE) {
         LOG("Error cleaning up loading thread.");
         return;
     }
@@ -809,4 +754,61 @@ void Loader::start() {
     emit finished();
 }
 
+/**
+  * @brief: slot connected to loadSignal(), calculates dcoi, then loads dcs
+  * This slot handles the loading of datacubes.
+  * It calculates dcois, then discards those already loaded.
+  * Finally, remaining dcois are loaded via loadCubes().
+  * Will be interrupted when a quit signal is sent.
+  *
+  */
+void Loader::load() {
+    loaderState *loaderState = state->loaderState;
+    int32_t magChange = false;
 
+    state->loadSignal = false;
+    magChange = false;
+    if(state->datasetChangeSignal) {
+        state->datasetChangeSignal = NO_MAG_CHANGE;
+        magChange = true;
+    }
+
+    if(state->quitSignal == true) {
+        LOG("Loader quitting.");
+        return;
+    }
+
+    // currentPositionX is updated only when the boundary is
+    // crossed. Access to currentPositionX is synchronized through
+    // the protectLoadSignal mutex.
+    // DcoiFromPos fills the Dcoi hashtable with all datacubes that
+    // we want to be in memory, given our current position.
+    if(DcoiFromPos(loaderState->Dcoi) != true) {
+        LOG("Error computing DCOI from position.");
+        return;
+    }
+
+    state->protectLoadSignal->unlock();
+
+    // DCOI now contains the coordinates of all cubes we want, based
+    // on our current position. However, some of those might already be
+    // in memory. We remove them.
+    if(removeLoadedCubes(magChange) != TRUE) {
+        LOG("Error removing already loaded cubes from DCOI.");
+        return;
+    }
+
+    state->loaderMagnification = Knossos::log2uint32(state->magnification);
+    strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
+    strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
+        //2012.12.11 HARDCODED for testing loader
+    strncpy(state->loaderName, "e1088_mag1_large", 1024);
+    // DCOI is now a list of all datacubes that we want in memory, given
+    // our current position and that are not yet in memory. We go through
+    // that list and load all those datacubes into free memory slots as
+    // stored in the list freeDcSlots.
+    if(loadCubes() == FALSE) {
+        LOG("Loading of all DCOI did not complete.");
+    }
+    state->protectLoadSignal->lock();
+}

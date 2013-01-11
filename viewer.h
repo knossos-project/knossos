@@ -52,7 +52,10 @@ public:
     static bool recalcTextureOffsets();
     static bool refreshViewports();
 
+    bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
+
 signals:
+    void loadSignal();
 
 public slots:
 

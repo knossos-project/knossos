@@ -12,6 +12,7 @@
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
+extern Viewer *viewerEventObj;
 
 Viewer::Viewer(QObject *parent) :
     QObject(parent)
@@ -894,7 +895,7 @@ static bool initViewer() {
         return FALSE;
     }
 
-    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
+    viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
@@ -1091,7 +1092,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
         }
     }*/
-    Knossos::sendLoadSignal(state->viewerState->currentPosition.x,
+    viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
                             state->viewerState->currentPosition.y,
                             state->viewerState->currentPosition.z,
                             upOrDownFlag);
@@ -1144,7 +1145,6 @@ void Viewer::start() {
 
     updateViewerState();
     recalcTextureOffsets();
-
     // Display info about skeleton save path here TODO
 
     while(TRUE) {
@@ -1546,7 +1546,7 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = TRUE;
 
-        Knossos::sendLoadSignal(viewerState->currentPosition.x,
+        viewerEventObj->sendLoadSignal(viewerState->currentPosition.x,
                                 viewerState->currentPosition.y,
                                 viewerState->currentPosition.z,
                                 NO_MAG_CHANGE);
@@ -1890,4 +1890,26 @@ bool Viewer::refreshViewports() {
     state->viewerState->gui->vpYzWin->updateGL();
     state->viewerState->gui->vpSkelWin->updateGL();
 
+}
+
+bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
+    state->protectLoadSignal->lock();
+    state->loadSignal = true;
+    emit loadSignal();
+    qDebug("I send a load signal to %i, %i, %i", x, y, z);
+    state->datasetChangeSignal = magChanged;
+
+    // Convert the coordinate to the right mag. The loader
+    // is agnostic to the different dataset magnifications.
+    // The int division is hopefully not too much of an issue here
+    SET_COORDINATE(state->currentPositionX,
+                   x / state->magnification,
+                   y / state->magnification,
+                   z / state->magnification);
+
+    state->protectLoadSignal->unlock();
+
+    state->conditionLoadSignal->wakeOne();
+
+    return true;
 }

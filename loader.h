@@ -12,6 +12,9 @@ public:
 
 signals:
     
+public slots:
+    void load();
+
 public Q_SLOTS:
     void start();
 

@@ -3579,10 +3579,10 @@ void Skeletonizer::UI_popBranchNode() {
         state->skeletonState->askingPopBranchConfirmation = TRUE;
 
         if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
-            MainWindow::yesNoPrompt(NULL,
-                        "No node was added after jumping to the last branch point. Do you really want to jump?",
-                        WRAP_popBranchNode,
-                        popBranchNodeCanceled);
+            //yesNoPrompt(NULL,
+            //            "No node was added after jumping to the last branch point. Do you really want to jump?",
+            //            WRAP_popBranchNode,
+            //            popBranchNodeCanceled);
 
         }
         else {

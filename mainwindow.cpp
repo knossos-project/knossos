@@ -346,16 +346,18 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateTitlebar(bool useFilename) {
     char *filename;
-
-    #ifdef LINUX
-        filename = strrchr(state->skeletonState->skeletonFile, '/');
-    #else
-        filename = strrchr(state->skeletonState->skeletonFile, '\\');
-    #endif
+    if(state->skeletonState->skeletonFile) {
+#ifdef LINUX
+    filename = strrchr(state->skeletonState->skeletonFile, '/');
+#else
+    filename = strrchr(state->skeletonState->skeletonFile, '\\');
+#endif*/
+    }
 
     if(!useFilename ||!filename) {
         snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, "no skeleton file");
-    } else {
+    }
+    else {
         snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, ++filename);
     }
 
@@ -364,7 +366,6 @@ void MainWindow::updateTitlebar(bool useFilename) {
 }
 
 void MainWindow::showSplashScreen() {
-
     QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
 
@@ -521,7 +522,7 @@ void MainWindow::UI_saveSkeleton(int32_t increment){
 
     saveFile = fopen(state->skeletonState->skeletonFile, "r");
     if(saveFile) {
-        yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
+        //yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
         fclose(saveFile);
         return;
     }
@@ -547,7 +548,7 @@ void MainWindow::UI_loadSkeleton(QEvent *event){
     strncpy(state->skeletonState->skeletonFile, path, 8192);
 
     if(state->skeletonState->totalNodeElements != 0) {
-        yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
+        //yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
     }
     else {
         WRAP_loadSkeleton();

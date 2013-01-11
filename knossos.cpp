@@ -1,5 +1,6 @@
 //removed SDL_init, for the time being
 //2012.12.11 contains hardcoded location of a dataset right now (in main)
+//sendLoadSignal() has been moved to viewer class
 
 #include <QtGui/QApplication>
 #include <QSplashScreen>
@@ -26,7 +27,8 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-
+Viewer *viewerEventObj;
+Loader *loaderEventObj;
 
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
@@ -94,18 +96,18 @@ int main(int argc, char *argv[])
         _Exit(FALSE);
     }
     //2012.12.11 HARDCODED FOR TESTING LOADER
-    strncpy(state->path, "C:\\knossos-skeletonizer\\data\\f0073_stack_cubed_mag4\\", 1024);
-    strncpy(state->name, "f0073_mag4", 1024);
-    state->boundary.x = 10752;
-    state->boundary.y = 9728;
-    state->boundary.z = 4096;
-    state->scale.x = 10.1;
-    state->scale.y = 10.1;
-    state->scale.z = 25;
+    strncpy(state->path, "C:\\path\\e1088_mag1_large\\", 1024);
+    strncpy(state->name, "e1088_mag1_large", 1024);
+    state->boundary.x = 2048;
+    state->boundary.y = 1792;
+    state->boundary.z = 2048;
+    state->scale.x = 22.0;
+    state->scale.y = 22.0;
+    state->scale.z = 33.0;
     state->cubeBytes = 2097152;
     state->cubeEdgeLength = 128;
     state->cubeSliceArea = 16384;
-    state->M = 5;
+    state->M = 1;
     state->cubeSetElements = 125;
     state->cubeSetBytes = 262144000;
     state->boergens = 0;
@@ -121,6 +123,10 @@ int main(int argc, char *argv[])
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
+    //viewer and loder instance, because signals and slots need objects, from which they are emitted/called
+    viewerEventObj = new Viewer();
+    loaderEventObj = new Loader();
+    QObject::connect(viewerEventObj, SIGNAL(loadSignal()), loaderEventObj, SLOT(load()));
 
     QThread *viewerThread = new QThread();
     QThread *loaderThread = new QThread();
@@ -489,27 +495,6 @@ bool Knossos::sendRemoteSignal() {
     state->protectRemoteSignal->unlock();
 
     state->conditionRemoteSignal->wakeOne();
-
-    return true;
-}
-
-bool Knossos::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
-    state->protectLoadSignal->lock();
-    qDebug("I send a load signal to %i, %i, %i", x, y, z);
-    state->loadSignal = true;
-    state->datasetChangeSignal = magChanged;
-
-    // Convert the coordinate to the right mag. The loader
-    // is agnostic to the different dataset magnifications.
-    // The int division is hopefully not too much of an issue here
-    SET_COORDINATE(state->currentPositionX,
-                   x / state->magnification,
-                   y / state->magnification,
-                   z / state->magnification);
-
-    state->protectLoadSignal->unlock();
-
-    state->conditionLoadSignal->wakeOne();
 
     return true;
 }

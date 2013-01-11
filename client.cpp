@@ -2,15 +2,18 @@
 //commented out thread loop
 
 #include <SDL/SDL.h>
+
 #include "skeletonizer.h"
 #include "remote.h"
 #include "knossos.h"
+#include "viewer.h"
 #include "client.h"
 #include "sleeper.h"
 
+
 extern stateInfo *state;
 extern stateInfo *tempConfig;
-
+extern Viewer *viewerEventObj;
 Client::Client(QObject *parent) :
     QObject(parent)
 {
@@ -688,7 +691,7 @@ void Client::start() {
     //}
     int i = 1;
     while(i < 5) {
-        Knossos::sendLoadSignal(i*100, i*100, i*100, NO_MAG_CHANGE);
+        viewerEventObj->sendLoadSignal(i*100, i*100, i*100, NO_MAG_CHANGE);
         i++;
         Sleeper::msleep(500);
         /*state->protectClientSignal->lock();
