@@ -232,6 +232,7 @@
 #define DSP_LINES_POINTS        32
 
 #define CATCH_RADIUS            10
+#define JMP_THRESHOLD           500 //for moving to next/prev node
 
 /*
  * For the renderer
@@ -1578,6 +1579,8 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
 uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
 
+int32_t moveToPrevNode();
+int32_t moveToNextNode();
 struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode);
 struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID);

@@ -59,6 +59,7 @@ extern struct stateInfo *state;
 
 int remote() {
     struct remoteState *remoteState = state->remoteState;
+    floatCoordinate currToNext; //distance vector
 
     // remoteSignal is != FALSE as long as the remote is active.
     // Checking for remoteSignal is therefore a way of seeing if the remote
@@ -88,7 +89,17 @@ int remote() {
                 break;
 
             case REMOTE_RECENTERING:
-                //remoteRecentering();
+                //jump if distance is too high
+                SET_COORDINATE (currToNext,
+                                state->viewerState->currentPosition.x - state->remoteState->recenteringPosition.x,
+                                state->viewerState->currentPosition.y - state->remoteState->recenteringPosition.y,
+                                state->viewerState->currentPosition.z - state->remoteState->recenteringPosition.z);
+                if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
+                    remoteJump(state->remoteState->recenteringPosition.x,
+                               state->remoteState->recenteringPosition.y,
+                               state->remoteState->recenteringPosition.z);
+                    break;
+                }
                 remoteWalkTo(state->remoteState->recenteringPosition.x, state->remoteState->recenteringPosition.y, state->remoteState->recenteringPosition.z);
                 break;
 

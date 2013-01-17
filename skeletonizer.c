@@ -2221,6 +2221,41 @@ struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree) {
     }
     return nextTree;
 }
+int32_t moveToPrevNode() {
+    struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
+
+    if(state->skeletonState->activeNode == NULL) {
+        return FALSE;
+    }
+    if(prevNode) {
+        setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                       prevNode->position.x,
+                       prevNode->position.y,
+                       prevNode->position.z);
+        sendRemoteSignal();
+        return TRUE;
+    }
+    return FALSE;
+}
+
+int32_t moveToNextNode() {
+    struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode);
+
+    if(state->skeletonState->activeNode == NULL) {
+        return FALSE;
+    }
+    if(nextNode) {
+        setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                       nextNode->position.x,
+                       nextNode->position.y,
+                       nextNode->position.z);
+        sendRemoteSignal();
+        return TRUE;
+    }
+    return FALSE;
+}
 
 struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
     struct nodeListElement *node = currentNode->correspondingTree->firstNode;
@@ -2247,17 +2282,12 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode) {
                 minDistance = tempMinDistance;
                 prevNode = node;
             }
-
-
         }
-
         node = node->next;
     }
-
     if(!prevNode) {
         prevNode = highestNode;
     }
-
     return prevNode;
 }
 
@@ -2287,14 +2317,11 @@ struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode) {
                 nextNode = node;
             }
         }
-
         node = node->next;
     }
-
     if(!nextNode) {
         nextNode = lowestNode;
     }
-
     return nextNode;
 }
 

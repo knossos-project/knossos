@@ -813,7 +813,7 @@ void createToolsWin() {
             }
         }
         AG_SeparatorNewHoriz(treesTab);
-        button = AG_ButtonNewFn(treesTab, 0, "Split Tree By Connected Components", UI_splitTreeBtnPressed, NULL, NULL);
+        button = AG_ButtonNewFn(treesTab, 0, "Split Last Component From Tree", UI_splitTreeBtnPressed, NULL, NULL);
         {
             AG_ExpandHoriz(button);
         }

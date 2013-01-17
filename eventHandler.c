@@ -1354,40 +1354,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
         break;
     case SDLK_x:
-        if(state->skeletonState->activeNode == NULL) {
-                break;
-        }
-        //Shift + x = previous node by ID
         if(SDL_GetModState() & KMOD_SHIFT) {
-            prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
-            if(prevNode) {
-                setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
-                tempConfig->remoteState->type = REMOTE_RECENTERING;
-                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               prevNode->position.x,
-                               prevNode->position.y,
-                               prevNode->position.z);
-                sendRemoteSignal();
-            }
-            else {
-                LOG("Reached first node.");
-            }
+            moveToPrevNode();
             break;
         }
-        // x = next node by ID
-        nextNode = getNodeWithNextID(state->skeletonState->activeNode);
-        if(nextNode) {
-            setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
-            tempConfig->remoteState->type = REMOTE_RECENTERING;
-            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               nextNode->position.x,
-                               nextNode->position.y,
-                               nextNode->position.z);
-            sendRemoteSignal();
-        }
-        else {
-            LOG("Reached last node.");
-        }
+        moveToNextNode();
         break;
     case SDLK_z: //change active tree
         if(state->skeletonState->activeTree == NULL) {
