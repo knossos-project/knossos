@@ -152,7 +152,9 @@ uint32_t updateSkeletonState() {
         if(state->skeletonState->autoSaveInterval) {
             if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = SDL_GetTicks();
-                UI_saveSkeleton(TRUE);
+                if(state->skeletonState->unsavedChanges) {
+                    UI_saveSkeleton(TRUE);
+                }
             }
         }
     }
@@ -687,10 +689,10 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     state->skeletonState->firstTree = newElement;
 
     state->skeletonState->activeTree = newElement;
-    LOG("Added new tree with ID: %d.", newElement->treeID);
 
-    if(treeID > state->skeletonState->greatestTreeID)
-        state->skeletonState->greatestTreeID = treeID;
+    if(newElement->treeID > state->skeletonState->greatestTreeID) {
+        state->skeletonState->greatestTreeID = newElement->treeID;
+    }
 
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;

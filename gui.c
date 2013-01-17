@@ -2667,13 +2667,48 @@ static void actNodeIDWdgtModified(AG_Event *event) {
 
 
 static void actTreeIDWdgtModified(AG_Event *event) {
-    //set active tree and set its first node to active node
-    setActiveTreeByID(state->viewerState->ag->activeTreeID);
+    int32_t treeID = state->viewerState->ag->activeTreeID;
+    struct treeListElement *tree;
+    struct nodeListElement *node;
+
     if(state->skeletonState->activeTree == NULL) {
+        state->viewerState->ag->activeTreeID = 1;
         return;
     }
-    else if(state->skeletonState->activeTree->firstNode == NULL) {
+    //check if tree exists. First find out, if user incremented or decremented ID  in widget
+    if(treeID > state->skeletonState->activeTree->treeID) { //case incremented
+        while((tree = findTreeByTreeID(treeID)) == NULL && treeID <= state->skeletonState->greatestTreeID) {
+            treeID++;
+        }
+        if(tree == NULL) { //there exists no tree with higher treeID. Do nothing.
+            state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
+            return;
+        }
+    }
+    else { //case decremented
+        while((tree = findTreeByTreeID(treeID)) == NULL && treeID > 0) {
+            treeID--;
+        }
+        if(tree == NULL) { //there exists no tree with lower treeID. Do nothing.
+            state->viewerState->ag->activeTreeID = state->skeletonState->activeTree->treeID;
+            return;
+        }
+    }
+
+    //found tree with higher/lower id. Make it the active tree and set its first node to active node
+    state->viewerState->ag->activeTreeID = treeID;
+    setActiveTreeByID(treeID);
+    node = state->skeletonState->activeTree->firstNode;
+    if(node == NULL) {
         return;
+    }
+    else {
+        setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                               node->position.x,
+                               node->position.y,
+                               node->position.z);
+        sendRemoteSignal();
     }
 }
 

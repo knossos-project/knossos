@@ -933,8 +933,6 @@ struct viewerState {
     float defaultTreeTable[RGB_LUTSIZE];
 
 
-
-
     /*
      * This array holds the table for overlay coloring.
      * The colors should be "maximally different".
@@ -1249,7 +1247,7 @@ struct cmdList {
 
 struct cmdListElement {
     void *cmd;
-    int cmdType;
+    int cmdType; //see command type constants
     struct cmdListElement *prev;
     struct cmdListElement *next;
 };
@@ -1265,60 +1263,59 @@ struct cmdAddNode {
     int newWorkMode;
 };
 
-struct cmdLinkNode{
+struct cmdLinkNode {
     int NodeID1;
     int NodeID2;
 };
 
-struct cmdUnlinkNode{
+struct cmdUnlinkNode {
     int NodeID1;
     int NodeID2;
 };
 
-struct cmdChangeTreeColor{
+struct cmdChangeTreeColor {
     int treeID;
     color4F oldColor;
 };
 
-struct cmdAddTree{
+struct cmdAddTree {
     int treeID;
 };
 
-struct cmdPopBranch{
+struct cmdPopBranch {
     int popNodeID;
     int oldActiveNodeID;
 };
 
-struct cmdPushBranchNode{
+struct cmdPushBranchNode {
     int NodeID;
 };
 
-struct cmdChangeActiveNode{
+struct cmdChangeActiveNode {
     int oldActiveNodeID;
     int newActiveNodeID;
 };
 
-struct cmdChangeActiveTree{
+struct cmdChangeActiveTree {
     int oldActiveTreeID;
     int newActiveTreeID;
 };
 
-struct cmdChangeComment{
+struct cmdChangeComment {
     int nodeID;
 	char* oldComment;
 	char* newComment;
 };
 
-struct cmdDeleteComment{
+struct cmdDeleteComment {
 	int nodeID;
 	char* comment;
 };
 
-struct cmdAddComment{
+struct cmdAddComment {
 	int nodeID;
 	char* comment;
 };
-
 
 /*
  *
@@ -1588,6 +1585,7 @@ struct nodeListElement *findNodeByCoordinate(Coordinate *position);
 struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
 struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree);
 struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree);
+struct treeListElement *findTreeByTreeID(int32_t treeID);
 int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
 struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
 uint32_t genTestNodes(uint32_t number);

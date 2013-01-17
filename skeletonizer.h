@@ -23,7 +23,6 @@
  */
 
 static struct segmentListElement *addSegmentListElement(struct segmentListElement **firstSegment, struct nodeListElement *sourceNode, struct nodeListElement *targetNode);
-static struct treeListElement *findTreeByTreeID(int32_t treeID);
 static uint32_t addNodeToSkeletonStruct(struct nodeListElement *node);
 static uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment);
 static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node);
