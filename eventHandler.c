@@ -1081,10 +1081,6 @@ static uint32_t handleKeyboard(SDL_Event event) {
         return TRUE;
     }
 
-    struct treeListElement *prevTree;
-    struct treeListElement *nextTree;
-    struct nodeListElement *prevNode;
-    struct nodeListElement *nextNode;
     color4F treeCol;
 
     switch(event.key.keysym.sym) {
@@ -1361,42 +1357,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         moveToNextNode();
         break;
     case SDLK_z: //change active tree
-        if(state->skeletonState->activeTree == NULL) {
-            break;
-        }
-        //get tree with previous ID
         if(SDL_GetModState() & KMOD_SHIFT) {
-            prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
-            if(prevTree) {
-                if(setActiveTreeByID(prevTree->treeID)) {
-                    setActiveNode(CHANGE_MANUAL, prevTree->firstNode, prevTree->firstNode->nodeID);
-                    SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               prevTree->firstNode->position.x,
-                               prevTree->firstNode->position.y,
-                               prevTree->firstNode->position.z);
-                    sendRemoteSignal();
-                }
-            }
-            else {
-                LOG("Reached first tree.");
-            }
+            moveToPrevTree();
             break;
         }
-        //get tree with next ID
-        nextTree = getTreeWithNextID(state->skeletonState->activeTree);
-        if(nextTree) {
-            if(setActiveTreeByID(nextTree->treeID)) {
-                setActiveNode(CHANGE_MANUAL, nextTree->firstNode, nextTree->firstNode->nodeID);
-                SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               nextTree->firstNode->position.x,
-                               nextTree->firstNode->position.y,
-                               nextTree->firstNode->position.z);
-                sendRemoteSignal();
-            }
-        }
-        else {
-            LOG("Reached last tree.");
-        }
+        moveToNextTree();
         break;
 
     case SDLK_i:

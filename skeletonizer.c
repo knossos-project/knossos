@@ -2177,6 +2177,61 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     return TRUE;
 }
 
+int32_t moveToPrevTree() {
+    struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
+    struct nodeListElement *node;
+    if(state->skeletonState->activeTree == NULL) {
+        return FALSE;
+    }
+    if(prevTree) {
+        setActiveTreeByID(prevTree->treeID);
+        //set tree's first node to active node if existent
+        node = state->skeletonState->activeTree->firstNode;
+        if(node == NULL) {
+            return TRUE;
+        }
+        else {
+            setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                           node->position.x,
+                           node->position.y,
+                           node->position.z);
+            sendRemoteSignal();
+        }
+        return TRUE;
+    }
+    LOG("Reached first tree.");
+    return FALSE;
+}
+
+int32_t moveToNextTree() {
+    struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
+    struct nodeListElement *node;
+
+    if(state->skeletonState->activeTree == NULL) {
+        return FALSE;
+    }
+    if(nextTree) {
+        setActiveTreeByID(nextTree->treeID);
+        //set tree's first node to active node if existent
+        node = state->skeletonState->activeTree->firstNode;
+        if(node == NULL) {
+            return TRUE;
+        }
+        else {
+            setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                           node->position.x,
+                           node->position.y,
+                           node->position.z);
+            sendRemoteSignal();
+        }
+        return TRUE;
+    }
+    LOG("Reached last tree.");
+    return FALSE;
+}
+
 struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree) {
     struct treeListElement *tree = state->skeletonState->firstTree;
     struct treeListElement *prevTree = NULL;
