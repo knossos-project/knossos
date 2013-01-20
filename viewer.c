@@ -371,6 +371,7 @@ uint32_t updateZoomCube() {
     /* Notice int division! */
     max = ((state->M/2)*2-1);
     oldZoomCube = state->viewerState->zoomCube;
+
     state->viewerState->zoomCube = 0;
 
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
@@ -396,6 +397,7 @@ uint32_t updateZoomCube() {
             if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
         }
     }
+    state->viewerState->zoomCube *= state->magnification;
     if(oldZoomCube != state->viewerState->zoomCube) {
         state->skeletonState->skeletonChanged = TRUE;
     }

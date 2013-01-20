@@ -2636,9 +2636,9 @@ uint32_t addNodeToSkeletonStruct(struct nodeListElement *node) {
     struct skeletonDCnode *currentNewSkeletonDCnode;
     Coordinate currentMagPos;
 
-    currentMagPos.x = node->position.x / state->magnification;
-    currentMagPos.y = node->position.y / state->magnification;
-    currentMagPos.z = node->position.z / state->magnification;
+    currentMagPos.x = node->position.x;
+    currentMagPos.y = node->position.y;
+    currentMagPos.z = node->position.z;
 
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
                                                     Px2DcCoord(currentMagPos));
@@ -2681,12 +2681,12 @@ uint32_t addSegmentToSkeletonStruct(struct segmentListElement *segment) {
     else
         return FALSE;
 
-    curMagTargetPos.x = segment->target->position.x / state->magnification;
-    curMagTargetPos.y = segment->target->position.y / state->magnification;
-    curMagTargetPos.z = segment->target->position.z / state->magnification;
-    curMagSourcePos.x = segment->source->position.x / state->magnification;
-    curMagSourcePos.y = segment->source->position.y / state->magnification;
-    curMagSourcePos.z = segment->source->position.z / state->magnification;
+    curMagTargetPos.x = segment->target->position.x;
+    curMagTargetPos.y = segment->target->position.y;
+    curMagTargetPos.z = segment->target->position.z;
+    curMagSourcePos.x = segment->source->position.x;
+    curMagSourcePos.y = segment->source->position.y;
+    curMagSourcePos.z = segment->source->position.z;
 
     segVector.x = (float)(curMagTargetPos.x - curMagSourcePos.x);
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
@@ -2759,9 +2759,9 @@ uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node) {
     struct skeletonDCnode *currentSkeletonDCnode, *lastSkeletonDCnode = NULL;
     Coordinate curMagPos;
 
-    curMagPos.x = node->position.x / state->magnification;
-    curMagPos.y = node->position.y / state->magnification;
-    curMagPos.z = node->position.z / state->magnification;
+    curMagPos.x = node->position.x;
+    curMagPos.y = node->position.y;
+    curMagPos.z = node->position.z;
 
     currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs,
                                                     Px2DcCoord(curMagPos));
@@ -2809,12 +2809,12 @@ uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment) {
     else
         return FALSE;
 
-    curMagTargetPos.x = segment->target->position.x / state->magnification;
-    curMagTargetPos.y = segment->target->position.y / state->magnification;
-    curMagTargetPos.z = segment->target->position.z / state->magnification;
-    curMagSourcePos.x = segment->source->position.x / state->magnification;
-    curMagSourcePos.y = segment->source->position.y / state->magnification;
-    curMagSourcePos.z = segment->source->position.z / state->magnification;
+    curMagTargetPos.x = segment->target->position.x;
+    curMagTargetPos.y = segment->target->position.y;
+    curMagTargetPos.z = segment->target->position.z;
+    curMagSourcePos.x = segment->source->position.x;
+    curMagSourcePos.y = segment->source->position.y;
+    curMagSourcePos.z = segment->source->position.z;
 
     segVector.x = (float)(curMagTargetPos.x - curMagSourcePos.x);
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);

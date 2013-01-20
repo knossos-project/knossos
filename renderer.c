@@ -973,7 +973,21 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
 }
 
 //Flag 0 if called for slice plane VP; Flag 1 if called for skeleton VP
+
+/* This became dangerous with the introduction of multires... the HT
+could be queried too often for highly downsampled data sets -- O(N^3) comlexity
+here. It should be ok until mag 8 data sets, then we switch to a different
+rendering mode (knossos then uses the whole skeleton display list for the ortho VPs). */
 static GLuint renderSuperCubeSkeleton(Byte callFlag) {
+    GLuint tempList;
+    /* This prevents the O(n^3) time complexity problem - it is just heuristic
+    however, could cause problems when Knossos is used with very high data cube
+    edge lengths */
+    if(state->magnification > 8) {
+        tempList = renderWholeSkeleton(callFlag);
+        return tempList;
+    }
+
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -993,7 +1007,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     textBuffer = malloc(32);
     memset(textBuffer, '\0', 32);
 
-    GLuint tempList;
+
     tempList = glGenLists(1);
     glNewList(tempList, GL_COMPILE);
 
@@ -1028,7 +1042,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                 //Set color
                                 if((currentSkeletonDCsegment->segment->source->correspondingTree == state->skeletonState->activeTree)
                                     && (state->skeletonState->highlightActiveTree)) {
-                                        glColor4f(1., 0., 0., 1.);
+                                        glColor4f(1.f, 0.f, 0.f, 1.f);
                                 }
                                 else
                                     glColor4f(currentSkeletonDCsegment->segment->source->correspondingTree->color.r,
@@ -1077,7 +1091,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                     //Set color
                                     if((currentSkeletonDCsegment->segment->source->correspondingTree == state->skeletonState->activeTree)
                                         && (state->skeletonState->highlightActiveTree))
-                                        glColor4f(1., 0., 0., 1.);
+                                        glColor4f(1.f, 0.f, 0.f, 1.f);
                                     else
                                         glColor4f(currentSkeletonDCsegment->segment->source->correspondingTree->color.r,
                                                   currentSkeletonDCsegment->segment->source->correspondingTree->color.g,
@@ -1121,7 +1135,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                             //Set color
                             if((currentSkeletonDCnode->node->correspondingTree == state->skeletonState->activeTree)
                                 && (state->skeletonState->highlightActiveTree)) {
-                                    glColor4f(1., 0., 0., 1.);
+                                    glColor4f(1.f, 0.f, 0.f, 1.f);
                             }
                             else
                                 glColor4f(currentSkeletonDCnode->node->correspondingTree->color.r,
@@ -1130,10 +1144,10 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                           currentSkeletonDCnode->node->correspondingTree->color.a);
 
                             if(currentSkeletonDCnode->node->isBranchNode) {
-                                glColor4f(0., 0., 1., 1.);
+                                glColor4f(0.f, 0.f, 1.f, 1.f);
                             }
                             else if(currentSkeletonDCnode->node->comment != NULL) {
-                                glColor4f(1., 1., 0., 1.);
+                                glColor4f(1.f, 1.f, 0.f, 1.f);
                             }
                             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
                             glLoadName(currentSkeletonDCnode->node->nodeID + 50);
@@ -1147,13 +1161,13 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                             if(state->skeletonState->activeNode) {
                                 if(currentSkeletonDCnode->node->nodeID == state->skeletonState->activeNode->nodeID) {
                                     if(currentSkeletonDCnode->node->isBranchNode) {
-                                        glColor4f(0., 0., 1.0, 0.2);
+                                        glColor4f(0.f, 0.f, 1.0f, 0.2f);
                                     }
                                     else if(currentSkeletonDCnode->node->comment != NULL) {
-                                        glColor4f(1., 1., 0., 0.2);
+                                        glColor4f(1.f, 1.f, 0.f, 0.2f);
                                     }
                                     else {
-                                        glColor4f(1., 0., 0., 0.2);
+                                        glColor4f(1.f, 0.f, 0.f, 0.2f);
                                     }
                                     glLoadName(currentSkeletonDCnode->node->nodeID + 50);
                                     glEnable(GL_BLEND);
@@ -1164,7 +1178,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                         renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
                                     glDisable(GL_BLEND);
                                     //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
-                                    glColor4f(0., 0., 0., 1.);
+                                    glColor4f(0.f, 0.f, 0.f, 1.f);
                                     memset(textBuffer, '\0', 32);
                                     sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
                                     renderText(&(currentSkeletonDCnode->node->position), textBuffer);
@@ -1375,16 +1389,16 @@ uint32_t updateDisplayListsSkeleton() {
                 renderWholeSkeleton(FALSE);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(0);
-                    renderWholeSkeleton(FALSE);
+                    renderSuperCubeSkeleton(0);
+                    //renderWholeSkeleton(FALSE);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(FALSE);
-                    renderWholeSkeleton(FALSE);
+                    renderSuperCubeSkeleton(FALSE);
+                    //renderWholeSkeleton(FALSE);
 
         }
 
@@ -1394,8 +1408,8 @@ uint32_t updateDisplayListsSkeleton() {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
                 if(state->skeletonState->showIntersections)
                     state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        //renderSuperCubeSkeleton(FALSE);
-                        renderWholeSkeleton(FALSE);
+                        renderSuperCubeSkeleton(FALSE);
+                        //renderWholeSkeleton(FALSE);
 
                 else state->skeletonState->displayListSkeletonSlicePlaneVP =
                     state->skeletonState->displayListSkeletonSkeletonizerVP;
@@ -1430,8 +1444,8 @@ uint32_t updateDisplayListsSkeleton() {
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(0);
-                    renderWholeSkeleton(FALSE);
+                    renderSuperCubeSkeleton(0);
+                    //renderWholeSkeleton(FALSE);
 
             }
         }
@@ -1449,8 +1463,8 @@ uint32_t updateDisplayListsSkeleton() {
             }
             else {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderWholeSkeleton(0);
-                    //renderSuperCubeSkeleton(0);
+                    //renderWholeSkeleton(0);
+                    renderSuperCubeSkeleton(0);
             }
         }
     }
@@ -2256,7 +2270,16 @@ static uint32_t renderCylinder(Coordinate *base,
 
         free(tempVec2);
 
-        gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 4, 1);
+        if((baseRadius > 100.f) || topRadius > 100.f) {
+            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
+        }
+        else if((baseRadius > 15.f) || topRadius > 15.f) {
+            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+        }
+        else {
+            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
+        }
+
         gluDeleteQuadric(gluCylObj);
         glPopMatrix();
     }
@@ -2293,7 +2316,16 @@ static uint32_t renderSphere(Coordinate *pos, float radius) {
         gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
         gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
-        gluSphere(gluSphereObj, radius, 5, 5);
+        if(radius > 100.) {
+            gluSphere(gluSphereObj, radius, 10, 10);
+        }
+        else if(radius > 15.) {
+            gluSphere(gluSphereObj, radius, 6, 6);
+        }
+        else {
+            gluSphere(gluSphereObj, radius, 4, 4);
+        }
+
 
         gluDeleteQuadric(gluSphereObj);
         glPopMatrix();
@@ -2359,7 +2391,8 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    distToCurrPos = state->viewerState->zoomCube + 1 * state->cubeEdgeLength;
+    distToCurrPos = state->viewerState->zoomCube
+        + 1 * state->cubeEdgeLength;
 
     //Check if there is an intersection between the given segment and one
     //of the slice planes.
@@ -2440,12 +2473,12 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
                     gluCylinder(gluCylObj,
                         state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
                         state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        1.5, 4, 1);
+                        1.5, 3, 1);
 
                 else gluCylinder(gluCylObj,
                         radius * state->skeletonState->segRadiusToNodeRadius*1.2,
                         radius * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        1.5, 4, 1);
+                        1.5, 3, 1);
 
                 gluDeleteQuadric(gluCylObj);
                 glPopMatrix();
