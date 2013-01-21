@@ -1391,14 +1391,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         if(state->skeletonState->activeNode) {
             tempConfig->viewerState->currentPosition.x =
-                state->skeletonState->activeNode->position.x/
-                state->magnification;
+                state->skeletonState->activeNode->position.x;
             tempConfig->viewerState->currentPosition.y =
-                state->skeletonState->activeNode->position.y/
-                state->magnification;
+                state->skeletonState->activeNode->position.y;
             tempConfig->viewerState->currentPosition.z =
-                state->skeletonState->activeNode->position.z/
-                state->magnification;
+                state->skeletonState->activeNode->position.z;
 
             updatePosition(TELL_COORDINATE_CHANGE);
         }
