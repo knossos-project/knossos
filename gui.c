@@ -1065,7 +1065,6 @@ void createViewPortPrefWin() {
     AG_Radio *radio;
     AG_Checkbox *checkbox;
     AG_Slider *slider;
-    AG_Button *button;
 
 	state->viewerState->ag->viewPortPrefWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
@@ -2860,19 +2859,7 @@ static void UI_deleteNodeBtnPressed() {
 }
 
 static void UI_jumpToNodeBtnPressed() {
-    if(state->skeletonState->activeNode) {
-        tempConfig->viewerState->currentPosition.x =
-            state->skeletonState->activeNode->position.x /
-            state->magnification;
-        tempConfig->viewerState->currentPosition.y =
-            state->skeletonState->activeNode->position.y /
-            state->magnification;
-        tempConfig->viewerState->currentPosition.z =
-            state->skeletonState->activeNode->position.z /
-            state->magnification;
-
-        updatePosition(TELL_COORDINATE_CHANGE);
-    }
+    jumpToActiveNode();
 }
 
 

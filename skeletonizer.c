@@ -2284,6 +2284,7 @@ int32_t moveToPrevNode() {
     }
     if(prevNode) {
         setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+        tempConfig->remoteState->type = REMOTE_RECENTERING;
         SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                        prevNode->position.x,
                        prevNode->position.y,
@@ -2302,6 +2303,7 @@ int32_t moveToNextNode() {
     }
     if(nextNode) {
         setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+        tempConfig->remoteState->type = REMOTE_RECENTERING;
         SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                        nextNode->position.x,
                        nextNode->position.y,
