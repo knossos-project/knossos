@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
     state->boergens = 0;
     Knossos::printConfigValues();
 
-    MainWindow window;
-    window.showMaximized();
+
 
     // built up threads. Do not follow instructions of qt documentation on QThread
     // as they are outdated since qt 4.4!
@@ -157,6 +156,10 @@ int main(int argc, char *argv[])
       ) {
         Knossos::cleanUpMain();
     }
+
+    MainWindow window;
+    window.showMaximized();
+
     return a.exec();
 }
 

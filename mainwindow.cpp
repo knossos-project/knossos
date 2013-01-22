@@ -105,8 +105,11 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(pasteButton);
 
     xField = new QSpinBox();
+    xField->setValue(state->viewerState->currentPosition.x);
     yField = new QSpinBox();
+    yField->setValue(state->viewerState->currentPosition.y);
     zField = new QSpinBox();
+    zField->setValue(state->viewerState->currentPosition.z);
 
     xLabel = new QLabel("x");
     yLabel = new QLabel("y");
@@ -118,6 +121,14 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(yField);
     this->toolBar->addWidget(zLabel);
     this->toolBar->addWidget(zField);
+
+
+    connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
+    connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
+
+    connect(xField, SIGNAL(valueChanged(int)), this, SLOT(xCoordinateChanged(int)));
+    connect(yField, SIGNAL(valueChanged(int)), this, SLOT(yCoordinateChanged(int)));
+    connect(zField, SIGNAL(valueChanged(int)), this, SLOT(zCoordinateChanged(int)));
 }
 
 // Dialogs
@@ -229,6 +240,7 @@ static void updateGuiconfig() {
 }
 
 static Coordinate *parseRawCoordinateString(char *string){
+
     Coordinate *extractedCoords = NULL;
     char coordStr[strlen(string)];
     strcpy(coordStr, string);
@@ -555,43 +567,7 @@ void MainWindow::UI_loadSkeleton(QEvent *event){
     }
 }
 
-void MainWindow::copyClipboardCoordinates() {
-   char copyString[8192];
 
-   memset(copyString, '\0', 8192);
-
-   snprintf(copyString,
-                 8192,
-                 "%d, %d, %d",
-                 state->viewerState->currentPosition.x + 1,
-                 state->viewerState->currentPosition.y + 1,
-                 state->viewerState->currentPosition.z + 1);
-   QString coords(copyString);
-   QApplication::clipboard()->setText(coords);
-}
-
-void MainWindow::pasteClipboardCoordinates(){
-    QString text = QApplication::clipboard()->text();
-    if(text.size() > 0) {
-      char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
-      Coordinate *extractedCoords = NULL;
-
-      if((extractedCoords = parseRawCoordinateString(pasteBuffer))) {
-            tempConfig->viewerState->currentPosition.x = extractedCoords->x - 1;
-            tempConfig->viewerState->currentPosition.y = extractedCoords->y - 1;
-            tempConfig->viewerState->currentPosition.z = extractedCoords->z - 1;
-
-            Viewer::updatePosition(TELL_COORDINATE_CHANGE);
-            Viewer::refreshViewports();
-
-            free(extractedCoords);
-            QApplication::clipboard()->clear();
-      }
-
-    } else {
-       LOG("Unable to fetch text from clipboard");
-    }
-}
 void MainWindow::UI_zoomOrthogonals(float step){
     int32_t i = 0;
         int32_t triggerMagChange = FALSE;
@@ -1054,4 +1030,70 @@ void MainWindow::aboutSlot()
 {
     showSplashScreen();
 }
+
+/* toolbar slots */
+
+void MainWindow::copyClipboardCoordinates() {
+   char copyString[8192];
+
+   memset(copyString, '\0', 8192);
+
+   snprintf(copyString,
+                 8192,
+                 "%d, %d, %d",
+                 this->xField->value(),
+                 this->yField->value(),
+                 this->zField->value());
+   QString coords(copyString);
+   QApplication::clipboard()->setText(coords);
+}
+
+/**
+  * @todo uncommented method call refreshViewports can first be used when the viewports instances are saved in viewer-state
+  * @bug updatePosition leads to application will be terminated
+  * Why are the values saved in tempConfig and not state ?
+  */
+void MainWindow::pasteClipboardCoordinates(){
+    QString text = QApplication::clipboard()->text();
+
+    if(text.size() > 0) {
+      char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
+
+      Coordinate *extractedCoords = NULL;
+
+      if((extractedCoords = parseRawCoordinateString(pasteBuffer))) {
+
+            tempConfig->viewerState->currentPosition.x = extractedCoords->x;
+            tempConfig->viewerState->currentPosition.y = extractedCoords->y;
+            tempConfig->viewerState->currentPosition.z = extractedCoords->z;
+
+            this->xField->setValue(extractedCoords->x);
+            this->yField->setValue(extractedCoords->y);
+            this->zField->setValue(extractedCoords->z);
+
+            //Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+            //Viewer::refreshViewports();
+
+            free(extractedCoords);
+
+      }
+
+    } else {
+       LOG("Unable to fetch text from clipboard");
+    }
+
+}
+
+void MainWindow::xCoordinateChanged(int value) {
+    state->viewerState->currentPosition.x = value;
+}
+
+void MainWindow::yCoordinateChanged(int value) {
+    state->viewerState->currentPosition.y = value;
+}
+
+void MainWindow::zCoordinateChanged(int value) {
+    state->viewerState->currentPosition.z = value;
+}
+
 

@@ -54,9 +54,6 @@ public:
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
 
-    void copyClipboardCoordinates();
-    void pasteClipboardCoordinates();
-
     void showSplashScreen();
     void createConsoleWidget();
     void createTracingTimeWidget();
@@ -197,6 +194,13 @@ private slots:
 
     /* help menu */
     void aboutSlot();
+
+    /* toolbar slots */
+    void copyClipboardCoordinates();
+    void pasteClipboardCoordinates();
+    void xCoordinateChanged(int value);
+    void yCoordinateChanged(int value);
+    void zCoordinateChanged(int value);
 
 };
 
