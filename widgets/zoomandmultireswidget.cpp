@@ -1,5 +1,16 @@
 #include "zoomandmultireswidget.h"
 
+extern struct stateInfo *state;
+
+/**
+  * In GUI.c some labels are changed:
+  * highest Available Mag = lowest Avaible Mag and otherwise. Why ??
+  *
+  * In zoomDefaults the vpConfigs are reset to ZOOM_MIN and ZOOM_MAX
+  * but if the spinboxes are changed it is state->viewerState->zoomOrthoVps, why ??
+  */
+
+
 ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent)
 {
@@ -13,8 +24,8 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->skeletonViewSlider = new QSlider(Qt::Horizontal);
 
     this->orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    this->orthogonalDataViewportSpinBox->setMaximum(1.00);
-    this->orthogonalDataViewportSpinBox->setMinimum(0.02);
+    this->orthogonalDataViewportSpinBox->setMaximum(VPZOOMMAX);
+    this->orthogonalDataViewportSpinBox->setMinimum(VPZOOMMIN);
     this->orthogonalDataViewportSpinBox->setSingleStep(0.01);
 
     this->skeletonViewSpinBox = new QDoubleSpinBox();
@@ -46,9 +57,14 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 
     this->lockDatasetLabel = new QLabel("Lock dataset to current mag");
     this->lockDatasetCheckBox = new QCheckBox();
-    this->currentActiveMagDatasetLabel = new QLabel("Currently active mag dataset:");
-    this->highestActiveMagDatasetLabel = new QLabel("Highest active mag dataset:");
-    this->lowestActiveMagDatasetLabel = new QLabel("Lowest active mag dataset:");
+
+    QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
+    QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
+    QString lowestActiveMag = QString("Lowest active mag dataset: %1").arg(state->lowestAvailableMag);
+
+    this->currentActiveMagDatasetLabel = new QLabel(currentActiveMag);
+    this->highestActiveMagDatasetLabel = new QLabel(highestActiveMag);
+    this->lowestActiveMagDatasetLabel = new QLabel(lowestActiveMag);
 
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(lockDatasetLabel, 0, 1);
@@ -85,6 +101,7 @@ void ZoomAndMultiresWidget::orthogonalSpinBoxSlot(double value) {
 void ZoomAndMultiresWidget::skeletonSliderSlot(int value) {
     float result = value / 100.0;
     this->skeletonViewSpinBox->setValue(result);
+
 }
 
 void ZoomAndMultiresWidget::skeletonSpinBoxSlot(double value) {
@@ -93,11 +110,22 @@ void ZoomAndMultiresWidget::skeletonSpinBoxSlot(double value) {
 
 void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
     if(on) {
-
+        state->viewerState->datasetMagLock = true;
+    } else {
+        state->viewerState->datasetMagLock = false;
     }
 }
 
+/**
+  * @todo updateViewports
+  */
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
+
+    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = VPZOOMMIN;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = VPZOOMMIN;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = VPZOOMMIN;
+    state->skeletonState->zoomLevel = SKELZOOMMIN;
+    //Viewer::refreshViewports();
 
 }
 

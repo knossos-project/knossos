@@ -8,7 +8,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     setWindowTitle("Data Saving Options");
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    autosaveButton = new QRadioButton("Auto-Saving");
+    autosaveButton = new QCheckBox("Auto-Saving");
     autosaveButton->setChecked(state->skeletonState->autoSaveBool);
     autosaveIntervalLabel = new QLabel("Autosave Interval");
     autosaveIntervalSpinBox = new QSpinBox();
@@ -17,7 +17,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
 
-    autoincrementFileNameButton = new QRadioButton("Autoincrement File Name");
+    autoincrementFileNameButton = new QCheckBox("Autoincrement File Name");
     autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
 
     mainLayout->addWidget(autosaveButton);

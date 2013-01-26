@@ -775,11 +775,9 @@ struct guiConfig {
     Console *console;
     CommentsWidget *commentsWidget;
     TracingTimeWidget *tracingTimeWidget;
-    ZoomAndMultiresWidget *zoomAndMultiresWidget;
+
     NavigationWidget *navigationWidget;
     ToolsWidget *toolWidget;
-    ViewportSettingsWidget *viewportSettingsWidget;
-
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;

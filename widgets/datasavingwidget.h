@@ -5,7 +5,7 @@
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QFormLayout>
-#include <QSpinBox>
+#include <QCheckBox>
 #include <QLabel>
 #include "knossos-global.h"
 
@@ -22,11 +22,11 @@ public slots:
     void autonincrementFileNameButtonPushed(bool on);
 protected:
     void closeEvent(QCloseEvent *event);
-    QRadioButton *autosaveButton;
+    QCheckBox *autosaveButton;
     QLabel *autosaveIntervalLabel;
     QSpinBox *autosaveIntervalSpinBox;
     QLabel *autoincrementFileNameLabel;
-    QRadioButton *autoincrementFileNameButton;
+    QCheckBox *autoincrementFileNameButton;
     
 };
 

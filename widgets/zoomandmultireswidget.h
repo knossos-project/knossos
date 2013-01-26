@@ -11,6 +11,8 @@
 #include <QFrame>
 #include <QCheckBox>
 #include <QDebug>
+#include "knossos-global.h"
+#include "viewer.h"
 
 class ZoomAndMultiresWidget : public QDialog
 {

@@ -61,9 +61,6 @@ static void WRAP_saveSkeleton(){}
 static void UI_lockActiveNodeBtnPressed(){}
 static void UI_disableLockingBtnPressed(){}
 static void UI_commentLockWdgtModified(QEvent *event){}
-static void UI_setDefaultZoom(){}
-static void UI_SyncConnect(){}
-static void UI_SyncDisconnect(){}
 static void UI_findNextBtnPressed(){}
 static void UI_findPrevBtnPressed(){}
 static void UI_deleteNodeBtnPressed(){}
@@ -171,7 +168,7 @@ void MainWindow::createToolWidget() {
 
 void MainWindow::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget(this);
-    viewportSettingsWidget->setGeometry(500, 500, 300, 300);
+    viewportSettingsWidget->setGeometry(500, 500, 350, 300);
     viewportSettingsWidget->show();
 }
 
