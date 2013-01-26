@@ -39,7 +39,8 @@ SOURCES +=\
     widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
-    widgets/synchronizationwidget.cpp
+    widgets/synchronizationwidget.cpp \
+    widgets/splashscreenwidget.cpp
 
 
 
@@ -69,7 +70,8 @@ HEADERS  += mainwindow.h \
     widgets/viewportsettings/vpsliceplaneviewportwidget.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
-    widgets/synchronizationwidget.h
+    widgets/synchronizationwidget.h \
+    widgets/splashscreenwidget.h
 
 FORMS    += mainwindow.ui
 

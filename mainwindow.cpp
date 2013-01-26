@@ -177,13 +177,13 @@ void MainWindow::createViewportSettingsWidget() {
 
 void MainWindow::createDataSavingWidget() {
     dataSavingWidget = new DataSavingWidget(this);
-    dataSavingWidget->setGeometry(100, 100, 100, 200);
+    dataSavingWidget->setGeometry(100, 100, 100, 90);
     dataSavingWidget->show();
 }
 
 void MainWindow::createSychronizationWidget() {
     synchronizationWidget = new SynchronizationWidget(this);
-    synchronizationWidget->setGeometry(100, 350, 100, 100);
+    synchronizationWidget->setGeometry(100, 350, 150, 100);
     synchronizationWidget->show();
 }
 
@@ -239,58 +239,6 @@ static void updateGuiconfig() {
         10240);
 }
 
-static Coordinate *parseRawCoordinateString(char *string){
-
-    Coordinate *extractedCoords = NULL;
-    char coordStr[strlen(string)];
-    strcpy(coordStr, string);
-    char delims[] = "[]()./,; -";
-    char* result = NULL;
-    char* coords[3];
-    int i = 0;
-
-    if(!(extractedCoords = (Coordinate *)malloc(sizeof(Coordinate)))) {
-        LOG("Out of memory");
-        _Exit(FALSE);
-    }
-
-    result = strtok(coordStr, delims);
-    while(result != NULL && i < 4) {
-        coords[i] = (char *)malloc(strlen(result)+1);
-        strcpy(coords[i], result);
-        result = strtok(NULL, delims);
-        ++i;
-    }
-
-    if(i < 2) {
-        LOG("Paste string doesn't contain enough delimiter-separated elements");
-        goto fail;
-    }
-
-    if((extractedCoords->x = atoi(coords[0])) < 1) {
-        LOG("Error converting paste string to coordinate");
-        goto fail;
-    }
-    if((extractedCoords->y = atoi(coords[1])) < 1) {
-        LOG("Error converting paste string to coordinate");
-        goto fail;
-    }
-    if((extractedCoords->z = atoi(coords[2])) < 1) {
-        LOG("Error converting paste string to coordinate");
-        goto fail;
-    }
-
-    return extractedCoords;
-
-fail:
-    free(extractedCoords);
-    return NULL;
-
-}
-
-
-
-
 // -- Constructor and destroyer -- //
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -301,6 +249,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     createActions();
     createMenus();
+
     createCoordBarWin();
     createConsoleWidget();
     createTracingTimeWidget();
@@ -320,14 +269,15 @@ MainWindow::MainWindow(QWidget *parent) :
     setCentralWidget(mainWidget);
 
     viewports = new Viewport*[NUM_VP];
+
+
     for(int i = 0; i < NUM_VP; i++) {
         viewports[i] = new Viewport(this, i);
     }
-
-    gridLayout->addWidget(viewports[0], 0, 1);
-    gridLayout->addWidget(viewports[1], 0, 2);
-    gridLayout->addWidget(viewports[2], 1, 1);
-    gridLayout->addWidget(viewports[3], 1, 2);
+    viewports[0]->setGeometry(0, 50, 500, 500);
+    viewports[1]->setGeometry(520, 50, 500, 500);
+    viewports[2]->setGeometry(0, 570, 500, 500);
+    viewports[3]->setGeometry(520, 570, 500, 500);
 
     for(int i = 0; i < NUM_VP; i++) {
         SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,
@@ -1061,21 +1011,24 @@ void MainWindow::pasteClipboardCoordinates(){
 
       Coordinate *extractedCoords = NULL;
 
-      if((extractedCoords = parseRawCoordinateString(pasteBuffer))) {
+      if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {
 
-            tempConfig->viewerState->currentPosition.x = extractedCoords->x;
-            tempConfig->viewerState->currentPosition.y = extractedCoords->y;
-            tempConfig->viewerState->currentPosition.z = extractedCoords->z;
+            state->viewerState->currentPosition.x = extractedCoords->x;
+            state->viewerState->currentPosition.y = extractedCoords->y;
+            state->viewerState->currentPosition.z = extractedCoords->z;
 
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
+
 
             //Viewer::updatePosition(TELL_COORDINATE_CHANGE);
             //Viewer::refreshViewports();
 
             free(extractedCoords);
 
+      } else {
+          qDebug("gnnaaaa");
       }
 
     } else {

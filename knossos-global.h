@@ -63,6 +63,7 @@
 #include "widgets/viewportsettingswidget.h"
 #include "widgets/datasavingwidget.h"
 #include "widgets/synchronizationwidget.h"
+#include "widgets/splashscreenwidget.h"
 
 #define KVERSION "3.2"
 
@@ -280,6 +281,7 @@ struct Coordinate{
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
     static bool transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
+    static Coordinate *parseRawCoordinateString(char *string);
 };
 
 
@@ -771,14 +773,12 @@ struct guiConfig {
 
 
     Console *console;
+    CommentsWidget *commentsWidget;
     TracingTimeWidget *tracingTimeWidget;
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
     NavigationWidget *navigationWidget;
     ToolsWidget *toolWidget;
     ViewportSettingsWidget *viewportSettingsWidget;
-
-    DataSavingWidget *dataSavingWidget;
-    SynchronizationWidget *synchronizationWidget;
 
 
     Viewport *vpXyWin;

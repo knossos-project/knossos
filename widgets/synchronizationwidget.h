@@ -8,6 +8,8 @@
 #include <QFormLayout>
 #include <QSpinBox>
 #include <QPushButton>
+#include "knossos-global.h"
+
 class SynchronizationWidget : public QDialog
 {
     Q_OBJECT
@@ -17,12 +19,15 @@ public:
 signals:
     
 public slots:
+    void connectButtonPushed();
 protected:
     void closeEvent(QCloseEvent *event);
     QLabel *connectionLabel;
     QLabel *remotePortLabel;
     QSpinBox *remotePortSpinBox;
     QPushButton *connectButton;
+    bool connected;
+
 };
 
 #endif // SYNCHRONIZATIONWIDGET_H

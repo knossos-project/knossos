@@ -7,6 +7,7 @@
 #include <QFormLayout>
 #include <QSpinBox>
 #include <QLabel>
+#include "knossos-global.h"
 
 class DataSavingWidget : public QDialog
 {
@@ -17,7 +18,8 @@ public:
 signals:
     
 public slots:
-
+    void autosaveButtonPushed(bool on);
+    void autonincrementFileNameButtonPushed(bool on);
 protected:
     void closeEvent(QCloseEvent *event);
     QRadioButton *autosaveButton;

@@ -49,7 +49,7 @@ public:
     static void UI_saveSkeleton(int32_t increment);
     static void UI_saveSettings();
     static void UI_loadSkeleton(QEvent *event);
-    static void UI_pasteClipboardCoordinates();
+
     static void UI_zoomOrthogonals(float step);
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
@@ -99,6 +99,7 @@ private:
 
     DataSavingWidget *dataSavingWidget;
     SynchronizationWidget *synchronizationWidget;
+    SplashScreenWidget *splashWidget;
 
     /* file actions */
     QAction *openAction;
