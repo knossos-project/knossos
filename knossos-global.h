@@ -781,6 +781,7 @@ struct agConfig {
 
     AG_Checkbox *vpPosSizeCheckbox;
     AG_Checkbox *showPosSizButtonsCheckbox;
+    int moveButtonActive;
 };
 
 struct viewPort {
@@ -956,6 +957,8 @@ struct viewerState {
     // 10 for knossos start
     int moveVP;
     int resizeVP;
+    int saveCoords;
+    Coordinate clickedCoordinate;
 
     int standardVpPosSize;
     int showPosSizButtons;

@@ -245,6 +245,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->resizeVP = 10;
     tempConfig->viewerState->standardVpPosSize = TRUE;
     tempConfig->viewerState->showPosSizButtons = TRUE;
+    tempConfig->viewerState->ag->moveButtonActive = TRUE;
 
     tempConfig->viewerState->viewPorts = malloc(tempConfig->viewerState->numberViewPorts * sizeof(struct viewPort));
     if(tempConfig->viewerState->viewPorts == NULL) {
@@ -503,6 +504,7 @@ static int32_t initStates() {
     state->viewerState->resizeVP = tempConfig->viewerState->resizeVP;
     state->viewerState->standardVpPosSize = tempConfig->viewerState->standardVpPosSize;
     state->viewerState->showPosSizButtons = tempConfig->viewerState->showPosSizButtons;
+    state->viewerState->ag->moveButtonActive = tempConfig->viewerState->ag->moveButtonActive;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;

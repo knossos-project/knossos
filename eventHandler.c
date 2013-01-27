@@ -1703,10 +1703,16 @@ void moveOrResizeVP(SDL_Event event) {
         return;
     }
 
+     if (state->viewerState->saveCoords){
+        state->viewerState->clickedCoordinate.x = event.motion.x - state->viewerState->viewPorts[foundVP].upperLeftCorner.x;
+        state->viewerState->clickedCoordinate.y = event.motion.y - state->viewerState->viewPorts[foundVP].upperLeftCorner.y;
+        state->viewerState->saveCoords = FALSE;
+    }
+
     if(state->viewerState->moveVP != -1) {
         SET_COORDINATE(state->viewerState->viewPorts[foundVP].upperLeftCorner,
-                       event.motion.x - state->viewerState->viewPorts[foundVP].edgeLength/2.0,
-                       event.motion.y - state->viewerState->viewPorts[foundVP].edgeLength/2.0, 0);
+                       event.motion.x - state->viewerState->clickedCoordinate.x,
+                       event.motion.y - state->viewerState->clickedCoordinate.y, 0);
 
         if(state->viewerState->viewPorts[foundVP].upperLeftCorner.x < 0) {
             state->viewerState->viewPorts[foundVP].upperLeftCorner.x = 0;
@@ -1806,12 +1812,5 @@ void moveOrResizeVP(SDL_Event event) {
                                 20);
         break;
     }
-    int i;
-    for (i = 0; i < state->viewerState->numberViewPorts; i++){
-    AG_WindowSetGeometryBounded(state->viewerState->ag->VpPosAndSizWin[i],
-                                state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 85,
-                                state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 55,
-                                80,
-                                50);
-    }
+    setVPPosSizWinPositions();
 }

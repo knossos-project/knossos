@@ -1362,22 +1362,23 @@ void UI_moveOrResizeVPCheckbox(){
 }
 
 static void UI_moveVP(AG_Event *event) {
-    state->viewerState->standardVpPosSize = FALSE;
-    state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
-    int foundVP = state->viewerState->moveVP = AG_INT(1);
+    if (state->viewerState->ag->moveButtonActive == TRUE){
+        state->viewerState->ag->moveButtonActive = FALSE;
+        state->viewerState->standardVpPosSize = FALSE;
+        state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
+        int foundVP = state->viewerState->moveVP = AG_INT(1);
+        state->viewerState->saveCoords = TRUE;
 
-    if(foundVP != VIEWPORT_XY
-       && foundVP != VIEWPORT_XZ
-       && foundVP != VIEWPORT_YZ
-       && foundVP != VIEWPORT_SKELETON) {
-        LOG("Unable to reposition. Invalid event parameter");
-        return;
+        if(foundVP != VIEWPORT_XY
+           && foundVP != VIEWPORT_XZ
+           && foundVP != VIEWPORT_YZ
+           && foundVP != VIEWPORT_SKELETON) {
+            LOG("Unable to reposition. Invalid event parameter");
+            return;
+        }
     }
-    //position mouse at center of specified viewport
-    SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
-                  + state->viewerState->viewPorts[foundVP].edgeLength/2.0
-                  , state->viewerState->viewPorts[foundVP].upperLeftCorner.y
-                  + state->viewerState->viewPorts[foundVP].edgeLength/2.0);
+    else{
+    state->viewerState->ag->moveButtonActive = TRUE;}
 }
 
 static void UI_resizeVP(AG_Event *event) {
@@ -4575,15 +4576,26 @@ void createVpPosSizWin(){
     int i;
     AG_Button *button;
     AG_Window *win;
-    AG_Box *box;
+    AG_Surface *buttonsurfaceAG, *buttonsurfaceAG2 = NULL;
+    SDL_Surface *buttonsurfaceSDL, *buttonsurfaceSDL2 = NULL;
+    buttonsurfaceSDL = SDL_LoadBMP("arrow");
+    buttonsurfaceSDL2 = SDL_LoadBMP("arrow2");
+    buttonsurfaceAG = AG_SurfaceFromSDL(buttonsurfaceSDL);
+    buttonsurfaceAG2 = AG_SurfaceFromSDL(buttonsurfaceSDL2);
+    if(!buttonsurfaceAG || !buttonsurfaceAG2){
+        LOG("Error: did not find icon files in KNOSSOS directory. Please reinstall KNOSSOS");
+        return;
+    }
     for (i = 0; i < state->viewerState->numberViewPorts; i++){
         win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
         state->viewerState->ag->VpPosAndSizWin[i] = win;
-        AG_WindowSetPadding(win, 0, 0, 3, 1);
-        box = AG_BoxNew(win, AG_BOX_VERT, AG_BOX_HOMOGENOUS);
-        AG_ExpandHoriz(box);
-        button = AG_ButtonNewFn(box, 0, "Position", UI_moveVP, "%i", i);
-        button = AG_ButtonNewFn(box, 0, "Size", UI_resizeVP, "%i", i);
+        AG_WindowSetPadding(win, 0, 0, 0, 0);
+        button = AG_ButtonNewFn(win, 0, "", UI_moveVP, "%i", i);
+        AG_ButtonSetPadding(button, 0, 0, 0, 0);
+        AG_ButtonSurface (button, buttonsurfaceAG);
+        button = AG_ButtonNewFn(win, 0, "", UI_resizeVP, "%i", i);
+        AG_ButtonSetPadding(button, 0, 0, 0, 0);
+        AG_ButtonSurface (button, buttonsurfaceAG2);
         AG_WindowShow(win);
     }
     setVPPosSizWinPositions();
@@ -4593,10 +4605,10 @@ void setVPPosSizWinPositions(){
     int i;
     for (i = 0; i < state->viewerState->numberViewPorts; i++){
     AG_WindowSetGeometryBounded(state->viewerState->ag->VpPosAndSizWin[i],
-                                state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 85,
-                                state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 55,
-                                80,
-                                50);
+                                state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 20,
+                                state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 40,
+                                1,
+                                40);
     }
 }
 
