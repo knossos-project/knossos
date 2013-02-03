@@ -4,7 +4,9 @@
 #include <QWidget>
 #include <QLabel>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QFrame>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -27,8 +29,14 @@ protected:
     QPushButton *newTreeButton;
 
     QLabel *commentLabel;
-    QSpinBox *commentSpinBox;
+    QLineEdit *commentField;
 
+    QPushButton *mergeTreesButton, *splitByConnectedComponentsButton, *restoreDefaultColorButton;
+    QLabel *id1Label, *id2Label;
+    QSpinBox *id1SpinBox, *id2SpinBox;
+
+    QLabel *rLabel, *gLabel, *bLabel, *aLabel;
+    QDoubleSpinBox *rSpinBox, *gSpinBox, *bSpinBox, *aSpinBox;
 
 };
 

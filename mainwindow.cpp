@@ -168,7 +168,7 @@ void MainWindow::createToolWidget() {
 
 void MainWindow::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget(this);
-    viewportSettingsWidget->setGeometry(500, 500, 350, 300);
+    viewportSettingsWidget->setGeometry(500, 500, 550, 300);
     viewportSettingsWidget->show();
 }
 

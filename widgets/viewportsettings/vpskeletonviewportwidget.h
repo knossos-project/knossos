@@ -2,6 +2,14 @@
 #define VPSKELETONVIEWPORTWIDGET_H
 
 #include <QWidget>
+#include <QLabel>
+#include <QFrame>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QGridLayout>
+
+
 
 class VPSkeletonViewportWidget : public QWidget
 {
@@ -12,6 +20,13 @@ public:
 signals:
     
 public slots:
+
+protected:
+    QLabel *datasetVisualizationLabel, *skeletonDisplayModesLabel;
+    QCheckBox *showXYPlaneCheckBox, *showXZPlaneCheckBox, *showYZPlaneCheckBox;
+    QRadioButton *wholeSkeletonButton, *onlyCurrentCubeButton, *onlyActiveTreeButton, *hideSkeletonButton;
+    QLabel *view3dlabel;
+    QCheckBox *rotateAroundActiveNodeCheckBox;
     
 };
 

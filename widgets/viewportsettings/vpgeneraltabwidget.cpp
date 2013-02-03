@@ -62,8 +62,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     gridLayout->addWidget(edgeNodeRadiusRatioLabel, 6, 0);
     gridLayout->addWidget(edgeNodeRadiusRatioSpinBox, 6, 1);
 
-
-
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
 
