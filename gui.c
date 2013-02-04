@@ -152,8 +152,8 @@ int32_t initGUI() {
 
     createMenuBar();
     createCoordBarWin();
-    createSkeletonVpToolsWin();
-    createVpPosSizWin();
+
+
     createDataSizeWin();
     createNavWin();
     createToolsWin();
@@ -177,10 +177,16 @@ int32_t initGUI() {
     createCommentsWin();
     /*createSetDynRangeWin(); */           /* Unused. */
 
-    createVpXzWin();
     createVpXyWin();
+    createVpPosSizWin(0);
+    createVpXzWin();
+    createVpPosSizWin(1);
     createVpYzWin();
+    createVpPosSizWin(2);
     createVpSkelWin();
+    createVpPosSizWin(3);
+    createSkeletonVpToolsWin();
+    setVPPosSizWinPositions();
 
     UI_loadSettings();
 
@@ -526,7 +532,7 @@ void createCoordBarWin() {
 void createSkeletonVpToolsWin() {
     AG_Window *win;
 
-    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND|AG_WINDOW_KEEPABOVE);
     AG_WindowSetGeometryBounded(win,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.x + state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength - 210,
                                 state->viewerState->viewPorts[VIEWPORT_SKELETON].upperLeftCorner.y + 5,
@@ -1666,8 +1672,8 @@ void createLoadDatasetImgJTableWin() {
 }
 
 static void createVpXyWin() {
-	state->viewerState->ag->vpXyWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
-
+	state->viewerState->ag->vpXyWin = AG_WindowNew(AG_WINDOW_PLAIN);
+    state->viewerState->ag->vpXyWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpXyWin, "XY");
 
     AG_WindowSetGeometry(state->viewerState->ag->vpXyWin,
@@ -1688,7 +1694,8 @@ static void createVpXyWin() {
 }
 
 static void createVpXzWin() {
-	state->viewerState->ag->vpXzWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
+	state->viewerState->ag->vpXzWin = AG_WindowNew(AG_WINDOW_PLAIN);
+	state->viewerState->ag->vpXzWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpXzWin, "XZ");
     AG_WindowSetGeometry(state->viewerState->ag->vpXzWin,
         5,
@@ -1709,7 +1716,8 @@ static void createVpXzWin() {
 }
 
 static void createVpYzWin() {
-	state->viewerState->ag->vpYzWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
+	state->viewerState->ag->vpYzWin = AG_WindowNew(AG_WINDOW_PLAIN);
+	state->viewerState->ag->vpYzWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpYzWin, "yz");
     AG_WindowSetGeometry(state->viewerState->ag->vpYzWin,
         10 + state->viewerState->viewPorts[0].edgeLength,
@@ -1729,7 +1737,8 @@ static void createVpYzWin() {
 }
 
 static void createVpSkelWin() {
-	state->viewerState->ag->vpSkelWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_KEEPBELOW);
+	state->viewerState->ag->vpSkelWin = AG_WindowNew(AG_WINDOW_PLAIN);
+	state->viewerState->ag->vpSkelWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpSkelWin, "Skeleton View");
     AG_WindowSetGeometry(state->viewerState->ag->vpSkelWin,
         10 + state->viewerState->viewPorts[1].edgeLength,
@@ -4572,8 +4581,7 @@ void resetVpPosSize(){
     setDataSizeWinPositions();
 }
 
-void createVpPosSizWin(){
-    int i;
+void createVpPosSizWin(int i){
     AG_Button *button;
     AG_Window *win;
     AG_Surface *buttonsurfaceAG, *buttonsurfaceAG2 = NULL;
@@ -4586,8 +4594,8 @@ void createVpPosSizWin(){
         LOG("Error: did not find icon files in KNOSSOS directory. Please reinstall KNOSSOS");
         return;
     }
-    for (i = 0; i < state->viewerState->numberViewPorts; i++){
         win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+        win->flags += AG_WINDOW_KEEPBELOW;
         state->viewerState->ag->VpPosAndSizWin[i] = win;
         AG_WindowSetPadding(win, 0, 0, 0, 0);
         button = AG_ButtonNewFn(win, 0, "", UI_moveVP, "%i", i);
@@ -4597,8 +4605,6 @@ void createVpPosSizWin(){
         AG_ButtonSetPadding(button, 0, 0, 0, 0);
         AG_ButtonSurface (button, buttonsurfaceAG2);
         AG_WindowShow(win);
-    }
-    setVPPosSizWinPositions();
 }
 
 void setVPPosSizWinPositions(){

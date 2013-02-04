@@ -156,6 +156,6 @@ static Coordinate *parseRawCoordinateString(char *string);
 static void prefDefaultPrefsWindow();
 static void prefDefaultPrefs();
 static void resetVpPosSize();
-static void createVpPosSizWin();
+static void createVpPosSizWin(int i);
 void setVPPosSizWinPositions();
 static void setDataSizeWinPositions();
