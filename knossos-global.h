@@ -1596,7 +1596,6 @@ struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree);
 struct treeListElement *findTreeByTreeID(int32_t treeID);
 int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
 struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
-uint32_t genTestNodes(uint32_t number);
 int32_t editNode(int32_t targetRevision,
                  int32_t nodeID,
                  struct nodeListElement *node,
@@ -1630,7 +1629,7 @@ void UI_popBranchNode();
 int32_t loadDefaultTreeLUT();
 void restoreDefaultTreeColor();
 void checkIdleTime();
-
+uint32_t genTestNodes(uint32_t number);
 /*
  * For client.c
  */
@@ -1697,3 +1696,5 @@ void reloadDataSizeWin();
  void createLoadTreeImgJTableWin();
  void createSetDynRangeWin();
  void treeColorAdjustmentsChanged();
+
+ void setVPPosSizWinPositions();

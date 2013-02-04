@@ -2516,22 +2516,6 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     return TRUE;
 }
 
-uint32_t genTestNodes(uint32_t number) {
-    uint32_t i;
-    Coordinate pos;
-    srand( time(NULL) );
-
-    for(i = 1; i < number; i++) {
-        pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
-        pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
-        pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, FALSE);
-    }
-
-    return TRUE;
-}
-
-
 uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
@@ -3789,6 +3773,31 @@ int32_t jumpToActiveNode() {
         updatePosition(TELL_COORDINATE_CHANGE);
     }
 
+    return TRUE;
+}
+
+uint32_t genTestNodes(uint32_t number) {
+    uint32_t i;
+    uint32_t newID;
+    Coordinate pos;
+    color4F treeCol;
+    //add new tree for test nodes
+    treeCol.r = -1.;
+    addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+
+    srand(time(NULL));
+    pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
+    pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
+    pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
+    UI_addSkeletonNode(&pos, rand()%4);
+    setActiveNode(CHANGE_MANUAL, NULL, newID);
+    for(i = 1; i < number; i++) {
+        pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
+        pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
+        pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
+        newID = UI_addSkeletonNodeAndLinkWithActive(&pos, rand()%4, FALSE);
+        setActiveNode(CHANGE_MANUAL, NULL, newID);
+    }
     return TRUE;
 }
 

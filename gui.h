@@ -157,5 +157,4 @@ static void prefDefaultPrefsWindow();
 static void prefDefaultPrefs();
 static void resetVpPosSize();
 static void createVpPosSizWin(int i);
-void setVPPosSizWinPositions();
 static void setDataSizeWinPositions();
