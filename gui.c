@@ -4584,27 +4584,31 @@ void resetVpPosSize(){
 void createVpPosSizWin(int i){
     AG_Button *button;
     AG_Window *win;
-    AG_Surface *buttonsurfaceAG, *buttonsurfaceAG2 = NULL;
-    SDL_Surface *buttonsurfaceSDL, *buttonsurfaceSDL2 = NULL;
+    AG_Surface *buttonsurfaceAG = NULL, *buttonsurfaceAG2 = NULL;
+    SDL_Surface *buttonsurfaceSDL = NULL, *buttonsurfaceSDL2 = NULL;
     buttonsurfaceSDL = SDL_LoadBMP("arrow");
     buttonsurfaceSDL2 = SDL_LoadBMP("arrow2");
-    buttonsurfaceAG = AG_SurfaceFromSDL(buttonsurfaceSDL);
-    buttonsurfaceAG2 = AG_SurfaceFromSDL(buttonsurfaceSDL2);
-    if(!buttonsurfaceAG || !buttonsurfaceAG2){
-        LOG("Error: did not find icon files in KNOSSOS directory. Please reinstall KNOSSOS");
-        return;
+    if(buttonsurfaceSDL) {
+        buttonsurfaceAG = AG_SurfaceFromSDL(buttonsurfaceSDL);
     }
-        win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
-        win->flags += AG_WINDOW_KEEPBELOW;
-        state->viewerState->ag->VpPosAndSizWin[i] = win;
-        AG_WindowSetPadding(win, 0, 0, 0, 0);
-        button = AG_ButtonNewFn(win, 0, "", UI_moveVP, "%i", i);
-        AG_ButtonSetPadding(button, 0, 0, 0, 0);
-        AG_ButtonSurface (button, buttonsurfaceAG);
-        button = AG_ButtonNewFn(win, 0, "", UI_resizeVP, "%i", i);
-        AG_ButtonSetPadding(button, 0, 0, 0, 0);
+    if(buttonsurfaceSDL2) {
+        buttonsurfaceAG2 = AG_SurfaceFromSDL(buttonsurfaceSDL2);
+    }
+    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+    win->flags += AG_WINDOW_KEEPBELOW;
+    state->viewerState->ag->VpPosAndSizWin[i] = win;
+    AG_WindowSetPadding(win, 0, 0, 0, 0);
+    button = AG_ButtonNewFn(win, 0, "p", UI_moveVP, "%i", i);
+    AG_ButtonSetPadding(button, 0, 0, 0, 0);
+    if(buttonsurfaceAG) {
+        AG_ButtonSurface(button, buttonsurfaceAG);
+    }
+    button = AG_ButtonNewFn(win, 0, "s", UI_resizeVP, "%i", i);
+    AG_ButtonSetPadding(button, 0, 0, 0, 0);
+    if(buttonsurfaceAG2) {
         AG_ButtonSurface (button, buttonsurfaceAG2);
-        AG_WindowShow(win);
+    }
+    AG_WindowShow(win);
 }
 
 void setVPPosSizWinPositions(){

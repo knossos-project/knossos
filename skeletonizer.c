@@ -3778,7 +3778,6 @@ int32_t jumpToActiveNode() {
 
 uint32_t genTestNodes(uint32_t number) {
     uint32_t i;
-    uint32_t newID;
     Coordinate pos;
     color4F treeCol;
     //add new tree for test nodes
@@ -3790,13 +3789,11 @@ uint32_t genTestNodes(uint32_t number) {
     pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
     pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
     UI_addSkeletonNode(&pos, rand()%4);
-    setActiveNode(CHANGE_MANUAL, NULL, newID);
     for(i = 1; i < number; i++) {
         pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
         pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
         pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        newID = UI_addSkeletonNodeAndLinkWithActive(&pos, rand()%4, FALSE);
-        setActiveNode(CHANGE_MANUAL, NULL, newID);
+        UI_addSkeletonNodeAndLinkWithActive(&pos, rand()%4, TRUE);
     }
     return TRUE;
 }
