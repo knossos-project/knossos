@@ -244,6 +244,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle("KnossosQT");
 
+    skeletonFileHistory = new QQueue<QString>();
     createActions();
     createMenus();
 
@@ -284,10 +285,11 @@ MainWindow::MainWindow(QWidget *parent) :
         state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
     }
 
-    this->loadFileDialog = new QFileDialog(this);
-    loadFileDialog->setWindowTitle(tr("Open Skeleton File"));
-    loadFileDialog->setDirectory(QDir::home());
-    loadFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
+
+    this->skeletonFileDialog = new QFileDialog(this);
+    skeletonFileDialog->setWindowTitle(tr("Open Skeleton File"));
+    skeletonFileDialog->setDirectory(QDir::home());
+    skeletonFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
 
     this->saveFileDialog = new QFileDialog(this);
     saveFileDialog->setWindowTitle(tr("Save Skeleton File"));
@@ -646,14 +648,19 @@ void MainWindow::createActions()
 {
     /* file actions */
     openAction = new QAction(tr("&Open"), this);
-    recentFileAction = new QAction(tr("&Recent Files"), this);
-    saveAction = new QAction(tr("&Save (CTRL+s)"), this);
+
+    historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        historyEntryActions[i] = new QAction("", this);
+        connect(historyEntryAction[i], SIGNAL()), this, SLOT(recentFilesSlot(int));
+    }
+
+    saveAction = new QAction(tr("&Save (CTRL+S)"), this);
     saveAsAction = new QAction(tr("&Save as"), this);
     quitAction = new QAction(tr("&Quit"), this);
 
 
     connect(openAction, SIGNAL(triggered()), this, SLOT(openSlot()));
-    connect(recentFileAction, SIGNAL(triggered()), this, SLOT(recentFilesSlot()));
     connect(saveAction, SIGNAL(triggered()), this, SLOT(saveSlot()));
     connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveAsSlot()));
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quitSlot()));
@@ -719,7 +726,14 @@ void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu("&File");
     fileMenu->addAction(openAction);
-    fileMenu->addAction(recentFileAction);
+    recentFileMenu = fileMenu->addMenu("Recent File(s)");
+
+    /* History Entries */
+    for(int i = 0; i < skeletonFileHistory->size(); i++) {
+        historyEntryActions[i]->setText(skeletonFileHistory->at(i));
+        recentFileMenu->addAction(historyEntryActions[i]);
+    }
+
     fileMenu->addAction(saveAction);
     fileMenu->addAction(saveAsAction);
     fileMenu->addSeparator();
@@ -789,25 +803,58 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 //file menu functionality
 
+/**
+  * This method opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
+  * the skeletonFileHistory Queue is updated with the file name entry. The history entries are compared to the the
+  * selected file names. If the file is already loaded it will not be put to the queue
+  *
+  */
 void MainWindow::openSlot()
 {
-    QStringList fileList;
-    if(loadFileDialog->exec()) {
 
-        fileList = loadFileDialog->selectedFiles();
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    bool alreadyLoaded;
 
-    }
-
-    if(fileList.size() > 0) {
-        QString fileName = fileList.at(0);
+    if(!fileName.isNull()) {
         loadedFile = new QFile(fileName);
+
+        QQueue<QString>::iterator it;
+        for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
+            QString path = *it;
+            if(path.compare(fileName), Qt::CaseInsensitive == 0) {
+                alreadyLoaded = true;
+            }
+        }
+
+        if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES && !alreadyLoaded) {
+            skeletonFileHistory->enqueue(fileName);
+        } else {
+            skeletonFileHistory->dequeue();
+            skeletonFileHistory->enqueue(fileName);
+        }
     }
+
+
 
 }
 
-void MainWindow::recentFilesSlot()
+/**
+  * This method puts the history entries of the loaded skeleton files to the recent file menu section
+  *
+  */
+void MainWindow::updateFileHistoryMenu() {
+    QQueue<QString>::iterator it;
+    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
+        QString path = *it;
+        historyEntryActions[i]->setText(path);
+    }
+}
+
+
+void MainWindow::recentFilesSlot(int index)
 {
-    QStringList fileList = loadFileDialog->history();
+    String fileName = skeletonFileHistory->at(index - 1);
+
 
 }
 
@@ -818,13 +865,22 @@ void MainWindow::saveSlot()
 
 }
 
+/**
+  * @todo message box other parameter, save as logic
+  */
 void MainWindow::saveAsSlot()
 {
-    QStringList fileList;
-    if(saveFileDialog->exec()) {
-        fileList = saveFileDialog->selectedFiles();
+
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    QFile file(fileName);
+    if(!file.open(QIODevice::WriteOnly)) {
+        QMessageBox box("The selected file could not be saved.");
+    } else {
+        // Save as logic
+        file.close();
     }
-    qDebug() << fileList.at(0);
+
+
 }
 
 void MainWindow::quitSlot()
@@ -1025,7 +1081,7 @@ void MainWindow::pasteClipboardCoordinates(){
             free(extractedCoords);
 
       } else {
-          qDebug("gnnaaaa");
+          qDebug("Unexpected Error in MainWindow::pasteCliboardCoordinates");
       }
 
     } else {
@@ -1046,4 +1102,16 @@ void MainWindow::zCoordinateChanged(int value) {
     state->viewerState->currentPosition.z = value;
 }
 
+void saveSettings() {
+
+}
+
+void loadSettings() {
+
+}
+
+int MainWindow::historyEntryClicked() {
+
+
+}
 

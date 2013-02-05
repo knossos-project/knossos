@@ -2,6 +2,14 @@
 #define TOOLSNODESTABWIDGET_H
 
 #include <QWidget>
+#include <QLabel>
+#include <QSpinBox>
+#include <QFrame>
+#include <QPushButton>
+
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QGridLayout>
 
 class ToolsNodesTabWidget : public QWidget
 {
@@ -13,6 +21,10 @@ signals:
     
 public slots:
     
+protected:
+    QLabel *activeNodeIdLabel, *idLabel;
+    QSpinBox *activeNodeIdSpinBox, *idSpinBox;
+    QPushButton *jumpToNodeButton, *deleteNodeButton, *linkNodeWithButton;
 };
 
 #endif // TOOLSNODESTABWIDGET_H

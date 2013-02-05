@@ -5,6 +5,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
+
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
@@ -20,6 +22,9 @@
 #include <QToolBar>
 #include <QSpinbox>
 #include <QLabel>
+#include <QQueue>
+#include <QKeySequence>
+#include <QSettings>
 #include "viewport.h"
 
 #include "knossos-global.h"
@@ -70,6 +75,8 @@ public:
     void createYZViewport();
     void createSkeletonViewport();
 
+signals:
+    int historyEntryClicked();
 protected:
 
 
@@ -107,6 +114,7 @@ private:
     QAction *saveAction;
     QAction *saveAsAction;
     QAction *quitAction;
+    QAction **historyEntryActions;
 
     /* edit skeleton actions */
     QAction *addNodeAction;
@@ -141,6 +149,7 @@ private:
 
     /* Qmenu-points */
     QMenu *fileMenu;
+    QMenu *recentFileMenu;
     QMenu *editMenu;
     QMenu *workModeMenu;
     QMenu *viewMenu;
@@ -148,18 +157,24 @@ private:
     QMenu *windowMenu;
     QMenu *helpMenu;
 
-    QFileDialog *loadFileDialog;
+    QFileDialog *skeletonFileDialog;
+    QQueue<QString> *skeletonFileHistory;
     QFileDialog *saveFileDialog;
     QFile *loadedFile;
+    void updateFileHistoryMenu();
 
     void createActions();
     void createMenus();
     void createCoordBarWin();
 
+    QSettings *settings;
+    void saveSettings();
+    void loadSettings();
+
 private slots:
     /* file menu */
     void openSlot();
-    void recentFilesSlot();
+    void recentFilesSlot(int index);
     void saveSlot();
     void saveAsSlot();
     void quitSlot();
