@@ -242,10 +242,10 @@
 #define ORIGINAL_MAG_COORDINATES    1
 
 
-#define AUTOTRACING_NORMAL  0
-#define AUTOTRACING_VIEWPORT    1
-#define AUTOTRACING_TRACING 2
-#define AUTOTRACING_MIRROR  3
+#define AUTOTRACING_NORMAL      0 //no additional move, recenter on new node
+#define AUTOTRACING_VIEWPORT    1 //additional move of autoTracingSteps along clicked viewport
+#define AUTOTRACING_TRACING     2 //additional move of autoTracingSteps along tracing direction
+#define AUTOTRACING_MIRROR      3 //additional move of steps equal to distance between last and new node along tracing direction
 
 #define ROTATIONSTATERESET 0
 #define ROTATIONSTATEXY 1

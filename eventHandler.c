@@ -521,183 +521,136 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
     /* We have to activate motion tracking only for the skeleton VP for a right click */
-    if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON)
+    if(state->viewerState->viewPorts[VPfound].type == VIEWPORT_SKELETON) {
         state->viewerState->viewPorts[VPfound].motionTracking = TRUE;
-
+    }
     /* If not, we look up which skeletonizer work mode is
     active and do the appropriate operation */
-        clickedCoordinate =
-            getCoordinateFromOrthogonalClick(event, VPfound);
+    clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
 
-        /* could not find any coordinate... */
-        if(clickedCoordinate == NULL)
-            return TRUE;
+    /* could not find any coordinate... */
+    if(clickedCoordinate == NULL) {
+        return TRUE;
+    }
 
-        switch(state->skeletonState->workMode) {
-            case SKELETONIZER_ON_CLICK_DROP_NODE:
-                /* function is inside skeletonizer.c */
-                UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type);
-                break;
-            case SKELETONIZER_ON_CLICK_ADD_NODE:
-                /* function is inside skeletonizer.c */
-                UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->viewPorts[VPfound].type);
-                tempConfig->skeletonState->workMode =
-                    SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-                break;
-            case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
-                /* function is inside skeletonizer.c */
-                if(state->skeletonState->activeNode) {
-                    if(SDL_GetModState() & KMOD_CTRL) {
-                        /* Add a "stump", a branch node to which we don't automatically move. */
-                        if((newNodeID = UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                                            state->viewerState->viewPorts[VPfound].type,
-                                                                            FALSE))) {
-                            pushBranchNode(CHANGE_MANUAL,
-                                           TRUE,
-                                           TRUE,
-                                           NULL,
-                                           newNodeID);
-                        }
-                    }
-                    else {
-                        lastPos.x = state->skeletonState->activeNode->position.x;
-                        lastPos.y = state->skeletonState->activeNode->position.y;
-                        lastPos.z = state->skeletonState->activeNode->position.z;
+    switch(state->skeletonState->workMode) {
+    case SKELETONIZER_ON_CLICK_DROP_NODE:
+        UI_addSkeletonNode(clickedCoordinate, state->viewerState->viewPorts[VPfound].type);
+        break;
+    case SKELETONIZER_ON_CLICK_ADD_NODE:
+        UI_addSkeletonNode(clickedCoordinate, state->viewerState->viewPorts[VPfound].type);
+        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+        break;
+    case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
+        if(state->skeletonState->activeNode == NULL) {
+            //1. no node to link with
+            UI_addSkeletonNode(clickedCoordinate,
+                               state->viewerState->viewPorts[VPfound].type);
+            break;
+        }
+        if(SDL_GetModState() & KMOD_CTRL) {
+            //2. Add a "stump", a branch node to which we don't automatically move.
+            if((newNodeID = UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+                                                                state->viewerState->viewPorts[VPfound].type,
+                                                                FALSE))) {
+                pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID);
+            }
+            break;
+        }
+        //3. Add a node and apply tracing modes
+        lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
 
-                        if(UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                               state->viewerState->viewPorts[VPfound].type,
-                                                               TRUE)) {
-
-
-                            /* Highlight the viewport with the biggest movement component and set
-                               behavior of f / d keys accordingly. */
-                            movement.x = clickedCoordinate->x - lastPos.x;
-                            movement.y = clickedCoordinate->y - lastPos.y;
-                            movement.z = clickedCoordinate->z - lastPos.z;
-
-
-                            if (state->viewerState->autoTracingDelay < 10) state->viewerState->autoTracingDelay = 10;
-                            if (state->viewerState->autoTracingDelay > 500) state->viewerState->autoTracingDelay = 500;
-                                if (state->viewerState->autoTracingSteps < 1) state->viewerState->autoTracingSteps = 1;
-                            if (state->viewerState->autoTracingSteps > 50) state->viewerState->autoTracingSteps = 50;
-
-                            //AutoTracingModes 2 and 3
-                            if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING) || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR))
-                            {
-                                floatCoordinate walkingVector;
-
-                                walkingVector.x = movement.x;
-                                walkingVector.y = movement.y;
-                                walkingVector.z = movement.z;
-
-                                if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING){
-                                    clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                    clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                    clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                }
-                                if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR){
-                                clickedCoordinate->x += walkingVector.x;
-                                clickedCoordinate->y += walkingVector.y;
-                                clickedCoordinate->z += walkingVector.z;
-                                }
-                            }
-
-                            /* Determine which viewport to highlight based on which movement component is biggest. */
-                            if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_YZ;
-                            }
-                            if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_XZ;
-                            }
-                            if((abs(movement.z) >= abs(movement.x)) && (abs(movement.z) >= abs(movement.y))) {
-                                state->viewerState->highlightVp = VIEWPORT_XY;
-                            }
-
-                            /* Determine the directions for the f and d keys based on the signs of the movement
-                               components along the three dimensions. */
-                            if(movement.x >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = -1;
-                            }
-                            if(movement.y >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = -1;
-                            }
-                            if(movement.z >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = -1;
-                            }
-
-                            //AutoTracingMode 1
-                            if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT){
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XY){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
-                                        clickedCoordinate->z += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
-                                        clickedCoordinate->z -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_XZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
-                                        clickedCoordinate->y += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
-                                        clickedCoordinate->y -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                else if (state->viewerState->viewPorts[VPfound].type == VIEWPORT_YZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
-                                        clickedCoordinate->x += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
-                                        clickedCoordinate->x -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                            }
-
-                            if (clickedCoordinate->x < 0) clickedCoordinate->x = 0;
-                            if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
-                            if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
-
-                            /* Do not allow clicks outside the dataset */
-                            if (clickedCoordinate->x
-                                > state->boundary.x)
-                                clickedCoordinate->x = state->boundary.x;
-                            if (clickedCoordinate->y
-                                > state->boundary.y)
-                                clickedCoordinate->y = state->boundary.y;
-                            if (clickedCoordinate->z
-                                > state->boundary.z)
-                                clickedCoordinate->z = state->boundary.z;
-
-                            /* Move to the new node position */
-                            tempConfig->remoteState->type = REMOTE_RECENTERING;
-                            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                                           clickedCoordinate->x,
-                                           clickedCoordinate->y,
-                                           clickedCoordinate->z);
-                            updateViewerState();
-                            sendRemoteSignal();
-                        }
-                    }
-                }
-                else {
-                    UI_addSkeletonNode(clickedCoordinate,
-                                       state->viewerState->viewPorts[VPfound].type);
-                }
-
-                break;
+        if(UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+                                               state->viewerState->viewPorts[VPfound].type,
+                                               TRUE) == FALSE) { //could not add node
+            break;
         }
 
+        /* Highlight the viewport with the biggest movement component and set
+           behavior of f / d keys accordingly. */
+        movement.x = clickedCoordinate->x - lastPos.x;
+        movement.y = clickedCoordinate->y - lastPos.y;
+        movement.z = clickedCoordinate->z - lastPos.z;
+        /* Determine which viewport to highlight based on which movement component is biggest. */
+        if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
+            state->viewerState->highlightVp = VIEWPORT_YZ;
+        }
+        else if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
+            state->viewerState->highlightVp = VIEWPORT_XZ;
+        }
+        else {
+            state->viewerState->highlightVp = VIEWPORT_XY;
+        }
+        /* Determine the directions for the f and d keys based on the signs of the movement
+           components along the three dimensions. */
+        state->viewerState->vpKeyDirection[VIEWPORT_YZ] = (movement.x >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0)? 1 : -1;
+
+        //Auto tracing adjustments
+
+        if (state->viewerState->autoTracingDelay < 10) { state->viewerState->autoTracingDelay = 10; }
+        else if (state->viewerState->autoTracingDelay > 500) { state->viewerState->autoTracingDelay = 500; }
+        if (state->viewerState->autoTracingSteps < 1) { state->viewerState->autoTracingSteps = 1; }
+        else if (state->viewerState->autoTracingSteps > 50) { state->viewerState->autoTracingSteps = 50; }
+
+
+        //Additional move of specified steps along clicked viewport
+        if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT) {
+            switch(state->viewerState->viewPorts[VPfound].type) {
+            case VIEWPORT_XY:
+                clickedCoordinate->z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            case VIEWPORT_XZ:
+                clickedCoordinate->y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            case VIEWPORT_YZ:
+                clickedCoordinate->x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            }
+        }
+
+        if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING)
+            || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR)) {
+            floatCoordinate walkingVector;
+            walkingVector.x = movement.x;
+            walkingVector.y = movement.y;
+            walkingVector.z = movement.z;
+            //Additional move of specified steps along tracing direction
+            if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING) {
+                clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+            }
+            //Additional move of steps equal to distance between last and new node along tracing direction.
+            if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR) {
+                clickedCoordinate->x += walkingVector.x;
+                clickedCoordinate->y += walkingVector.y;
+                clickedCoordinate->z += walkingVector.z;
+            }
+        }
+
+        /* Do not allow clicks outside the dataset */
+        if (clickedCoordinate->x < 0) { clickedCoordinate->x = 0; }
+        else if (clickedCoordinate->x > state->boundary.x) { clickedCoordinate->x = state->boundary.x; }
+        if (clickedCoordinate->y < 0) { clickedCoordinate->y = 0; }
+        else if (clickedCoordinate->y > state->boundary.y) { clickedCoordinate->y = state->boundary.y; }
+        if (clickedCoordinate->z < 0) { clickedCoordinate->z = 0; }
+        else if (clickedCoordinate->z > state->boundary.z) { clickedCoordinate->z = state->boundary.z; }
+
+        /* Move to the new node position */
+        tempConfig->remoteState->type = REMOTE_RECENTERING;
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                       clickedCoordinate->x,
+                       clickedCoordinate->y,
+                       clickedCoordinate->z);
+        updateViewerState();
+        sendRemoteSignal();
+        break;
+    }
     return TRUE;
 }
 
