@@ -1382,9 +1382,32 @@ static void UI_moveVP(AG_Event *event) {
             LOG("Unable to reposition. Invalid event parameter");
             return;
         }
+        focusViewport(foundVP);
     }
     else{
     state->viewerState->ag->moveButtonActive = TRUE;}
+}
+
+static void focusViewport(int foundVP){
+    switch(foundVP){
+        case VIEWPORT_XY:
+            AG_ObjectMoveToTail(state->viewerState->ag->vpXyWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[0]);
+            break;
+        case VIEWPORT_XZ:
+            AG_ObjectMoveToTail(state->viewerState->ag->vpXzWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[1]);
+            break;
+        case VIEWPORT_YZ:
+            AG_ObjectMoveToTail(state->viewerState->ag->vpYzWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[2]);
+            break;
+        case VIEWPORT_SKELETON:
+            AG_ObjectMoveToTail(state->viewerState->ag->vpSkelWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[3]);
+            AG_ObjectMoveToTail(state->viewerState->ag->skeletonVpToolsWin);
+            break;
+    }
 }
 
 static void UI_resizeVP(AG_Event *event) {
@@ -1398,6 +1421,9 @@ static void UI_resizeVP(AG_Event *event) {
        && foundVP != VIEWPORT_SKELETON) {
         return;
     }
+
+    focusViewport(foundVP);
+
     //position mouse at corner of specified viewport
     SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
                       + state->viewerState->viewPorts[foundVP].edgeLength

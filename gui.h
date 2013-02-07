@@ -158,3 +158,4 @@ static void prefDefaultPrefs();
 static void resetVpPosSize();
 static void createVpPosSizWin(int i);
 static void setDataSizeWinPositions();
+static void focusViewport(int VPfound);
