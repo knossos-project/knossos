@@ -856,9 +856,6 @@ struct viewerState {
     int32_t highlightVp;
     int32_t vpKeyDirection[3];
 
-    //Min distance to currently centered data cube for rendering of spatial skeleton structure.
-    //Unit: data cubes.
-    int32_t zoomCube;
 
     /* don't jump between mags on zooming */
     int datasetMagLock;
@@ -1496,7 +1493,6 @@ uint32_t initializeTextures();
 uint32_t cleanUpViewer(struct viewerState *viewerState);
 
 int32_t updateViewerState();
-uint32_t updateZoomCube();
 uint32_t userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
 int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
 uint32_t moveVPonTop(uint32_t currentVP);

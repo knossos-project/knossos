@@ -1020,11 +1020,10 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     //Thus, we have to translate there.
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
 
-
     //We take all skeletonDCs out of our current SC
-    for(currentPosDCCounter.x = currentPosDC.x - state->viewerState->zoomCube; currentPosDCCounter.x <= currentPosDC.x + state->viewerState->zoomCube; currentPosDCCounter.x++) {
-        for(currentPosDCCounter.y = currentPosDC.y - state->viewerState->zoomCube; currentPosDCCounter.y <= currentPosDC.y + state->viewerState->zoomCube; currentPosDCCounter.y++) {
-            for(currentPosDCCounter.z = currentPosDC.z - state->viewerState->zoomCube; currentPosDCCounter.z <= currentPosDC.z + state->viewerState->zoomCube; currentPosDCCounter.z++) {
+    for(currentPosDCCounter.x = currentPosDC.x - ((state->M/2)+1); currentPosDCCounter.x <= currentPosDC.x + ((state->M/2)+1); currentPosDCCounter.x++) {
+        for(currentPosDCCounter.y = currentPosDC.y - ((state->M/2)+1); currentPosDCCounter.y <= currentPosDC.y + ((state->M/2)+1); currentPosDCCounter.y++) {
+            for(currentPosDCCounter.z = currentPosDC.z - ((state->M/2)+1); currentPosDCCounter.z <= currentPosDC.z + ((state->M/2)+1); currentPosDCCounter.z++) {
                 currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs, currentPosDCCounter);
 
                 //If there is a valid skeletonDC, there are nodes / segments (or both) in it.
@@ -1519,7 +1518,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
         glEnable(GL_COLOR_MATERIAL);
     }
     if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
-
+//LOG("test string wirtte");
     /*
      * Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     */
@@ -2391,7 +2390,7 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    distToCurrPos = state->viewerState->zoomCube
+    distToCurrPos = ((state->M/2)+1)
         + 1 * state->cubeEdgeLength;
 
     //Check if there is an intersection between the given segment and one

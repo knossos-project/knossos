@@ -339,8 +339,6 @@ int32_t updateViewerState() {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    updateZoomCube();
-
     if(state->viewerState->workMode != tempConfig->viewerState->workMode)
         state->viewerState->workMode = tempConfig->viewerState->workMode;
 
@@ -363,47 +361,6 @@ int32_t updateViewerState() {
     return TRUE;
 }
 
-/* This function updates state->viewerState->zoomCube after the user changed the zoom factor. */
-
-uint32_t updateZoomCube() {
-    int32_t i, residue, max, currentZoomCube, oldZoomCube;
-
-    /* Notice int division! */
-    max = ((state->M/2)*2-1);
-    oldZoomCube = state->viewerState->zoomCube;
-
-    state->viewerState->zoomCube = 0;
-
-    for(i = 0; i < state->viewerState->numberViewPorts; i++) {
-        if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
-            residue = ((max*state->cubeEdgeLength)
-            - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthX
-            / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
-            / state->cubeEdgeLength;
-
-            if(residue%2) residue = residue / 2 + 1;
-            else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
-            currentZoomCube = (state->M/2)-residue;
-            if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
-
-            residue = ((max*state->cubeEdgeLength)
-            - ((int32_t)(state->viewerState->viewPorts[i].texture.displayedEdgeLengthY
-            / state->viewerState->viewPorts[i].texture.texUnitsPerDataPx)))
-            / state->cubeEdgeLength;
-
-            if(residue%2) residue = residue / 2 + 1;
-            else if((residue%2 == 0) && (residue != 0)) residue = (residue - 1) / 2 + 1;
-            currentZoomCube = (state->M/2)-residue;
-            if(state->viewerState->zoomCube < currentZoomCube) state->viewerState->zoomCube = currentZoomCube;
-        }
-    }
-    state->viewerState->zoomCube *= state->magnification;
-    if(oldZoomCube != state->viewerState->zoomCube) {
-        state->skeletonState->skeletonChanged = TRUE;
-    }
-
-    return TRUE;
-}
 
 uint32_t createScreen() {
     // initialize window
