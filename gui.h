@@ -149,7 +149,6 @@ static void UI_deleteCommentBoxesBtnPressed();
 static void UI_deleteCommentBoxes();
 static void UI_moveVP(AG_Event *event);
 static void UI_resizeVP(AG_Event *event);
-static void UI_moveOrResizeVPCheckbox();
 static void UI_showPosSizButtons();
 
 static Coordinate *parseRawCoordinateString(char *string);

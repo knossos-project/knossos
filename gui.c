@@ -1071,6 +1071,7 @@ void createViewPortPrefWin() {
     AG_Radio *radio;
     AG_Checkbox *checkbox;
     AG_Slider *slider;
+    AG_Button *button;
 
 	state->viewerState->ag->viewPortPrefWin = AG_WindowNew(0);
     AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
@@ -1145,19 +1146,17 @@ void createViewPortPrefWin() {
             AG_RadioAddItem(radio, "Lines and Points (fast)");
             AG_RadioAddItem(radio, "3D Skeleton");
         }
-        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(tab), 0);
-        box3 = AG_BoxNew(tab, AG_BOX_VERT, 0);
-        state->viewerState->ag->vpPosSizeCheckbox = AG_CheckboxNewFn(box3,
-                                                                     0,
-                                                                     "Use Standard Positions and Sizes",
-                                                                     UI_moveOrResizeVPCheckbox, NULL, NULL);
-        state->viewerState->ag->vpPosSizeCheckbox->state = TRUE;
+        box2 = AG_BoxNew(tab, AG_BOX_VERT, 0);
+        AG_LabelNew(box2, 0, "Viewport Sizes and Positions");
+        AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
 
-        state->viewerState->ag->showPosSizButtonsCheckbox = AG_CheckboxNewFn(box3,
+        state->viewerState->ag->showPosSizButtonsCheckbox = AG_CheckboxNewFn(box2,
                                                                      0,
                                                                      "Show Position and Resize Buttons",
                                                                      UI_showPosSizButtons, NULL, NULL);
         state->viewerState->ag->showPosSizButtonsCheckbox->state = TRUE;
+
+        button = AG_ButtonNewFn(box2, 0, "Use Standard Positions and Sizes", resetVpPosSize, NULL, NULL);
 
     }
     tab = AG_NotebookAddTab(tabs, "Slice Plane Viewports", AG_BOX_HOMOGENOUS);
@@ -1355,23 +1354,9 @@ void UI_showPosSizButtons(){
     }
 }
 
-void UI_moveOrResizeVPCheckbox(){
-    if (state->viewerState->standardVpPosSize == FALSE){
-        resetVpPosSize();
-        state->viewerState->standardVpPosSize = TRUE;
-        return;
-    }
-    if (state->viewerState->standardVpPosSize == TRUE){
-        state->viewerState->standardVpPosSize = FALSE;
-        return;
-    }
-}
-
 static void UI_moveVP(AG_Event *event) {
     if (state->viewerState->ag->moveButtonActive == TRUE){
         state->viewerState->ag->moveButtonActive = FALSE;
-        state->viewerState->standardVpPosSize = FALSE;
-        state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
         int foundVP = state->viewerState->moveVP = AG_INT(1);
         state->viewerState->saveCoords = TRUE;
 
@@ -1411,10 +1396,7 @@ static void focusViewport(int foundVP){
 }
 
 static void UI_resizeVP(AG_Event *event) {
-    state->viewerState->standardVpPosSize = FALSE;
-    state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
     int foundVP = state->viewerState->resizeVP = AG_INT(1);
-
     if(foundVP != VIEWPORT_XY
        && foundVP != VIEWPORT_XZ
        && foundVP != VIEWPORT_YZ
@@ -2585,12 +2567,8 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //updateDisplayListsSkeleton();
 
-    if(state->viewerState->standardVpPosSize == TRUE){
-        resetVpPosSize();
-    }
-
     //Dont allow viewports to go outside of screen -> scale them down
-    else {
+
         if(state->viewerState->screenSizeX > state->viewerState->screenSizeY){
             if(state->viewerState->viewPorts[VIEWPORT_XY].edgeLength > state->viewerState->screenSizeY){
                 state->viewerState->viewPorts[VIEWPORT_XY].edgeLength = state->viewerState->screenSizeY;
@@ -2677,7 +2655,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
                     20);
             }
         }
-    }
+
     resizeWindows(); //adjust window sizes, because AGAR sucks at it.
 
     drawGUI();
@@ -3567,10 +3545,6 @@ remote port
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsVPPosSiz", NULL);
     {
         memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->standardVpPosSize);
-        xmlNewProp(currentXMLNode, BAD_CAST"standardVpPosSize", attrString);
-
-        memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x);
         xmlNewProp(currentXMLNode, BAD_CAST"VP_XY_x", attrString);
 
@@ -3986,10 +3960,6 @@ static void UI_loadSettings() {
                 state->skeletonState->rotateAroundActiveNode = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsVPPosSiz")) {
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"standardVpPosSize");
-            if(attribute)
-                state->viewerState->standardVpPosSize = atoi((char *)attribute);
-            if(!state->viewerState->standardVpPosSize) state->viewerState->ag->vpPosSizeCheckbox->state = FALSE;
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_x");
             if(attribute)
                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = atoi((char *)attribute);

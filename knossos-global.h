@@ -779,7 +779,6 @@ struct agConfig {
     AG_Checkbox *datasetLinearFilteringBox;
     AG_Checkbox *AutoTracingBox;
 
-    AG_Checkbox *vpPosSizeCheckbox;
     AG_Checkbox *showPosSizButtonsCheckbox;
     int moveButtonActive;
 };
@@ -960,7 +959,6 @@ struct viewerState {
     int saveCoords;
     Coordinate clickedCoordinate;
 
-    int standardVpPosSize;
     int showPosSizButtons;
 };
 

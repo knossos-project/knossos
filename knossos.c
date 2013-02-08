@@ -243,7 +243,6 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->walkOrth = FALSE;
     tempConfig->viewerState->moveVP = 10;
     tempConfig->viewerState->resizeVP = 10;
-    tempConfig->viewerState->standardVpPosSize = TRUE;
     tempConfig->viewerState->showPosSizButtons = TRUE;
     tempConfig->viewerState->ag->moveButtonActive = TRUE;
 
@@ -502,7 +501,6 @@ static int32_t initStates() {
     state->skeletonState->idleTimeSession = 0;
     state->viewerState->moveVP = tempConfig->viewerState->moveVP;
     state->viewerState->resizeVP = tempConfig->viewerState->resizeVP;
-    state->viewerState->standardVpPosSize = tempConfig->viewerState->standardVpPosSize;
     state->viewerState->showPosSizButtons = tempConfig->viewerState->showPosSizButtons;
     state->viewerState->ag->moveButtonActive = tempConfig->viewerState->ag->moveButtonActive;
     /* the voxel dim stuff needs an cleanup. this is such a mess. fuck */
