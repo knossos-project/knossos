@@ -42,7 +42,7 @@ SOURCES +=\
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp
 
-
+PRECOMPILED_HEADER += knossos-global.h
 
 HEADERS  += mainwindow.h \
     eventmodel.h \
@@ -52,7 +52,6 @@ HEADERS  += mainwindow.h \
     remote.h \
     skeletonizer.h \
     renderer.h \
-    knossos-global.h \
     knossos.h\
     sleeper.h \
     viewport.h \

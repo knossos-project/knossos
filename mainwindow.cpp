@@ -1,6 +1,3 @@
-//the functions formerly placed in gui.h/gui.c are now in mainwindow
-// saveSkeletonCallback is replaced by QAction saveAction
-//AG_Events are replaced by QEvent
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -244,7 +241,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle("KnossosQT");
 
+
+    settings = new QSettings();
+    settings->beginGroup("MainWindow");
+
     skeletonFileHistory = new QQueue<QString>();
+
     createActions();
     createMenus();
 
@@ -302,6 +304,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    settings->endGroup();
     delete ui;
 }
 
@@ -396,7 +399,7 @@ bool MainWindow::initGUI() {
 
     //createNavOptionsWin();
     //createSyncOptionsWin();
-    createSaveOptionsWin();
+    //createSaveOptionsWin();
 
     //createAboutWin();
     /* all following 4 unused
@@ -647,28 +650,20 @@ void MainWindow::createSkeletonViewport() {
 void MainWindow::createActions()
 {
     /* file actions */
-    openAction = new QAction(tr("&Open"), this);
 
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
-        connect(historyEntryAction[i], SIGNAL()), this, SLOT(recentFilesSlot(int));
+        connect(historyEntryActions[i], SIGNAL(triggered()), this, SLOT(recentFilesSlot(int)));
     }
-
-    saveAction = new QAction(tr("&Save (CTRL+S)"), this);
-    saveAsAction = new QAction(tr("&Save as"), this);
-    quitAction = new QAction(tr("&Quit"), this);
-
-
-    connect(openAction, SIGNAL(triggered()), this, SLOT(openSlot()));
-    connect(saveAction, SIGNAL(triggered()), this, SLOT(saveSlot()));
-    connect(saveAsAction, SIGNAL(triggered()), this, SLOT(saveAsSlot()));
-    connect(quitAction, SIGNAL(triggered()), this, SLOT(quitSlot()));
 
     /* edit skeleton actions */
     addNodeAction = new QAction(tr("&Add Node"), this);
+    addNodeAction->setCheckable(true);
     linkWithActiveNodeAction = new QAction(tr("&Link with Active Node"), this);
+    linkWithActiveNodeAction->setCheckable(true);
     dropNodesAction = new QAction(tr("&Drop Nodes"), this);
+    dropNodesAction->setCheckable(true);
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
     clearSkeletonAction =  new QAction(tr("&Clear Skeleton"), this);
 
@@ -681,9 +676,13 @@ void MainWindow::createActions()
     /* view actions */
     workModeViewAction = new QAction(tr("&Work Mode"), this);
     dragDatasetAction = new QAction(tr("&Drag Dataset"), this);
+    dragDatasetAction->setCheckable(true);
     recenterOnClickAction = new QAction(tr("&Recenter on Click"), this);
+    recenterOnClickAction->setCheckable(true);
     zoomAndMultiresAction = new QAction(tr("Zoom and Multires.."), this);
+    zoomAndMultiresAction->setCheckable(true);
     tracingTimeAction = new QAction(tr("&Tracing Time"), this);
+    tracingTimeAction->setCheckable(true);
 
     connect(workModeViewAction, SIGNAL(triggered()), this, SLOT(workModeViewSlot()));
     connect(dragDatasetAction, SIGNAL(triggered()), this, SLOT(dragDatasetSlot()));
@@ -697,8 +696,11 @@ void MainWindow::createActions()
     defaultPreferencesAction = new QAction(tr("&Default Preferences"), this);
     datasetNavigationAction = new QAction(tr("&Dataset Navigation"), this);
     synchronizationAction = new QAction(tr("&Synchronization"), this);
+    synchronizationAction->setCheckable(true);
     dataSavingOptionsAction = new QAction(tr("&Data Saving Options"), this);
+    dataSavingOptionsAction->setCheckable(true);
     viewportSettingsAction = new QAction(tr("&Viewport Settings"), this);
+    viewportSettingsAction->setCheckable(true);
 
     connect(loadCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(loadCustomPreferencesSlot()));
     connect(saveCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(saveCustomPreferencesSlot()));
@@ -709,8 +711,11 @@ void MainWindow::createActions()
 
     /* window actions */
     toolsAction = new QAction(tr("&Tools"), this);
+    toolsAction->setCheckable(true);
     logAction = new QAction(tr("&Log"), this);
+    logAction->setCheckable(true);
     commentShortcutsAction = new QAction(tr("&Comment Shortcuts"), this);
+    commentShortcutsAction->setCheckable(true);
 
     connect(toolsAction, SIGNAL(triggered()), this, SLOT(toolsSlot()));
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
@@ -719,25 +724,27 @@ void MainWindow::createActions()
     /* Help actions */
     aboutAction = new QAction(tr("&About"), this);
 
+
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 }
 
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu("&File");
-    fileMenu->addAction(openAction);
+    fileMenu->addAction(QIcon("open"), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     recentFileMenu = fileMenu->addMenu("Recent File(s)");
 
     /* History Entries */
     for(int i = 0; i < skeletonFileHistory->size(); i++) {
+
         historyEntryActions[i]->setText(skeletonFileHistory->at(i));
         recentFileMenu->addAction(historyEntryActions[i]);
     }
 
-    fileMenu->addAction(saveAction);
-    fileMenu->addAction(saveAsAction);
+    fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QIcon("save_as"), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
     fileMenu->addSeparator();
-    fileMenu->addAction(quitAction);
+    fileMenu->addAction(QIcon("quit"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     editMenu = menuBar()->addMenu("&Edit Skeleton");
     workModeMenu = editMenu->addMenu("&Work Mode");
@@ -844,16 +851,18 @@ void MainWindow::openSlot()
   */
 void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
+    int i = 0;
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
         QString path = *it;
-        historyEntryActions[i]->setText(path);
+        historyEntryActions[i++]->setText(path);
+
     }
 }
 
 
 void MainWindow::recentFilesSlot(int index)
 {
-    String fileName = skeletonFileHistory->at(index - 1);
+    QString fileName = skeletonFileHistory->at(index - 1);
 
 
 }
@@ -874,7 +883,7 @@ void MainWindow::saveAsSlot()
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     QFile file(fileName);
     if(!file.open(QIODevice::WriteOnly)) {
-        QMessageBox box("The selected file could not be saved.");
+        QMessageBox box(this);
     } else {
         // Save as logic
         file.close();
@@ -895,19 +904,42 @@ void MainWindow::workModeEditSlot()
 
 }
 
+
 void MainWindow::addNodeSlot()
 {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+
+    if(linkWithActiveNodeAction->isChecked()) {
+        linkWithActiveNodeAction->setChecked(false);
+    }
+    if(dropNodesAction->isChecked()) {
+        dropNodesAction->setChecked(false);
+    }
 }
 
 void MainWindow::linkWithActiveNodeSlot()
 {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+
+    if(addNodeAction->isChecked()) {
+        addNodeAction->setChecked(false);
+    }
+    if(dropNodesAction->isChecked()) {
+        dropNodesAction->setChecked(false);
+    }
 }
 
 void MainWindow::dropNodesSlot()
 {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
+
+    if(addNodeAction->isChecked()) {
+        addNodeAction->setChecked(false);
+    }
+    if(linkWithActiveNodeAction->isChecked()) {
+        linkWithActiveNodeAction->setChecked(false);
+    }
+
 }
 
 
@@ -935,21 +967,29 @@ void MainWindow::workModeViewSlot()
 void MainWindow::dragDatasetSlot()
 {
    tempConfig->viewerState->workMode = ON_CLICK_DRAG;
+   if(recenterOnClickAction->isChecked()) {
+       recenterOnClickAction->setChecked(false);
+   }
 }
 
 void MainWindow::recenterOnClickSlot()
 {
    tempConfig->viewerState->workMode = ON_CLICK_RECENTER;
+   if(dragDatasetAction->isChecked()) {
+       dragDatasetAction->setChecked(true);
+   }
 }
 
 void MainWindow::zoomAndMultiresSlot()
 {
     this->zoomAndMultiresWidget->show();
+    zoomAndMultiresAction->setChecked(true);
 }
 
 void MainWindow::tracingTimeSlot()
 {
     this->tracingTimeWidget->show();
+    tracingTimeAction->setChecked(true);
 }
 
 /* preference menu functionality */
@@ -993,21 +1033,25 @@ void MainWindow::defaultPreferencesSlot()
 void MainWindow::datatasetNavigationSlot()
 {
     this->navigationWidget->show();
+    datasetNavigationAction->setChecked(true);
 }
 
 void MainWindow::synchronizationSlot()
 {
     this->synchronizationWidget->show();
+    synchronizationAction->setChecked(true);
 }
 
 void MainWindow::dataSavingOptionsSlot()
 {
     this->viewportSettingsWidget->show();
+    dataSavingOptionsAction->setChecked(true);
 }
 
 void MainWindow::viewportSettingsSlot()
 {
     this->viewportSettingsWidget->show();
+    viewportSettingsAction->setChecked(true);
 }
 
 /* window menu functionality */
@@ -1015,16 +1059,19 @@ void MainWindow::viewportSettingsSlot()
 void MainWindow::toolsSlot()
 {
     this->toolsWidget->show();
+    toolsAction->setChecked(true);
 }
 
 void MainWindow::logSlot()
 {
     this->console->show();
+    logAction->setChecked(true);
 }
 
 void MainWindow::commentShortcutsSlots()
 {
     this->commentsWidget->show();
+    commentShortcutsAction->setChecked(true);
 }
 
 /* help menu functionality */
@@ -1104,14 +1151,11 @@ void MainWindow::zCoordinateChanged(int value) {
 
 void saveSettings() {
 
+
 }
 
 void loadSettings() {
 
 }
 
-int MainWindow::historyEntryClicked() {
-
-
-}
 

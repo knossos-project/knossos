@@ -76,7 +76,7 @@ public:
     void createSkeletonViewport();
 
 signals:
-    int historyEntryClicked();
+
 protected:
 
 
@@ -109,11 +109,7 @@ private:
     SplashScreenWidget *splashWidget;
 
     /* file actions */
-    QAction *openAction;
     QAction *recentFileAction;
-    QAction *saveAction;
-    QAction *saveAsAction;
-    QAction *quitAction;
     QAction **historyEntryActions;
 
     /* edit skeleton actions */

@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
 {
 
     QApplication a(argc, argv);
+    QCoreApplication::setOrganizationName("Max-Planck Intitut für medizinische Forschung");
+    QCoreApplication::setApplicationName("Knossos QT");
 
     state = Knossos::emptyState();
 
