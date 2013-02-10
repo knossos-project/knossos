@@ -1,4 +1,6 @@
 #include "tracingtimewidget.h"
+#include <QLabel>
+#include <QVBoxLayout>
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)

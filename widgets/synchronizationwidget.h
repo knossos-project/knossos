@@ -2,20 +2,20 @@
 #define SYNCHRONIZATIONWIDGET_H
 
 #include <QDialog>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QLabel>
-#include <QFormLayout>
-#include <QSpinBox>
-#include <QPushButton>
-#include "knossos-global.h"
 
+
+class QSpinBox;
+class QPushButton;
+class QLabel;
 class SynchronizationWidget : public QDialog
 {
     Q_OBJECT
 public:
     explicit SynchronizationWidget(QWidget *parent = 0);
-    
+    QSpinBox *remotePortSpinBox;
+    QPushButton *connectButton;
+    bool connected;
+    void loadSettings();
 signals:
     
 public slots:
@@ -24,9 +24,8 @@ protected:
     void closeEvent(QCloseEvent *event);
     QLabel *connectionLabel;
     QLabel *remotePortLabel;
-    QSpinBox *remotePortSpinBox;
-    QPushButton *connectButton;
-    bool connected;
+
+
 
 };
 

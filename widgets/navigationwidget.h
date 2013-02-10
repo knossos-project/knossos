@@ -2,20 +2,27 @@
 #define NAVIGATIONWIDGET_H
 
 #include <QDialog>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QFormLayout>
-#include <QSpinBox>
-#include <QRadioButton>
-#include <QGroupBox>
-#include <QSpacerItem>
+
+class QSpinBox;
+class QRadioButton;
+class QLabel;
 class NavigationWidget : public QDialog
 {
     Q_OBJECT
 public:
     explicit NavigationWidget(QWidget *parent = 0);
-    
+    void loadSettings();
+    QSpinBox *movementSpeedSpinBox;
+    QSpinBox *jumpFramesSpinBox;
+    QSpinBox *recenterTimeParallelSpinBox;
+    QSpinBox *recenterTimeOrthoSpinBox;
+
+    QRadioButton *normalModeButton;
+    QRadioButton *additionalViewportDirectionMoveButton;
+    QRadioButton *additionalTracingDirectionMoveButton;
+    QRadioButton *additionalMirroredMoveButton;
+    QSpinBox *delayTimePerStepSpinBox;
+    QSpinBox *numberOfStepsSpinBox;
 signals:
     
 public slots:
@@ -28,22 +35,15 @@ protected:
     QLabel *recenterTimeParallelLabel;
     QLabel *recenterTimeOrthoLabel;
 
-    QSpinBox *movementSpeedSpinBox;
-    QSpinBox *jumpFramesSpinBox;
-    QSpinBox *recenterTimeParallelSpinBox;
-    QSpinBox *recenterTimeOrthoSpinBox;
+
 
     QLabel *advanceTracingModesLabel;
-    QRadioButton *normalModeButton;
-    QRadioButton *additionalViewportDirectionMoveButton;
-    QRadioButton *additionalTracingDirectionMoveButton;
-    QRadioButton *additionalMirroredMoveButton;
+
 
     QLabel *delayTimePerStepLabel;
     QLabel *numberOfStepsLabel;
 
-    QSpinBox *delayTimePerStepSpinBox;
-    QSpinBox *numberOfStepsSpinBox;
+
 };
 
 #endif // NAVIGATIONWIDGET_H

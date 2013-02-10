@@ -1,4 +1,11 @@
 #include "synchronizationwidget.h"
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QFormLayout>
+#include <QSpinBox>
+#include <QPushButton>
+#include "knossos-global.h"
 
 extern struct stateInfo *state;
 
@@ -29,12 +36,16 @@ SynchronizationWidget::SynchronizationWidget(QWidget *parent) :
     connect(connectButton, SIGNAL(clicked()), this, SLOT(connectButtonPushed()));
 }
 
+void SynchronizationWidget::loadSettings() {
+
+}
+
 void SynchronizationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
 }
 
 /**
-  * @todo In GUI.h there are two methods UI_SyncConnect and UI_SyncDisconnect which requests state->clientState->connect but do not change the value ? Who does this job
+  * @todo In GUI.c there are two methods UI_SyncConnect and UI_SyncDisconnect which requests state->clientState->connect but do not change the value ? Who does this job
   */
 void SynchronizationWidget::connectButtonPushed() {
     if(!connected) {

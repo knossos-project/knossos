@@ -1885,10 +1885,12 @@ bool Viewer::recalcTextureOffsets() {
 }
 
 bool Viewer::refreshViewports() {
+    /*
     state->viewerState->gui->vpXyWin->updateGL();
     state->viewerState->gui->vpXzWin->updateGL();
     state->viewerState->gui->vpYzWin->updateGL();
     state->viewerState->gui->vpSkelWin->updateGL();
+    */
 
 }
 

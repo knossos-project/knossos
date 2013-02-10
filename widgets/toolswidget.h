@@ -4,16 +4,17 @@
 #include <QDialog>
 #include <QTabWidget>
 
-#include "tools/toolsquicktabwidget.h"
-#include "tools/toolstreestabwidget.h"
-#include "tools/toolsnodestabwidget.h"
-
+class ToolsQuickTabWidget;
+class ToolsTreesTabWidget;
+class ToolsNodesTabWidget;
 class ToolsWidget : public QDialog
 {
     Q_OBJECT
 public:
     explicit ToolsWidget(QWidget *parent = 0);
-    
+    ToolsQuickTabWidget *toolsQuickTabWidget;
+    ToolsNodesTabWidget *toolsNodesTabWidget;
+    ToolsTreesTabWidget *toolsTreesTabWidget;
 signals:
     
 public slots:

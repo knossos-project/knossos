@@ -8,6 +8,7 @@
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 
 #include <QMainWindow>
+#include <QEvent>
 #include <QMenu>
 #include <QAction>
 #include <QLayout>
@@ -25,8 +26,6 @@
 #include <QQueue>
 #include <QKeySequence>
 #include <QSettings>
-#include "viewport.h"
-
 #include "knossos-global.h"
 #include <dirent.h>
 
@@ -34,6 +33,17 @@ namespace Ui {
 class MainWindow;
 }
 
+class Console;
+class TracingTimeWidget;
+class CommentsWidget;
+class DataSavingWidget;
+class SplashScreenWidget;
+class SynchronizationWidget;
+class ToolsWidget;
+class ViewportSettingsWidget;
+class ZoomAndMultiresWidget;
+class Viewport;
+class NavigationWidget;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -53,7 +63,7 @@ public:
     //static void saveSkelCallback(AG_Event *event);
     static void UI_saveSkeleton(int32_t increment);
     static void UI_saveSettings();
-    static void UI_loadSkeleton(QEvent *event);
+    void loadSkeleton();
 
     static void UI_zoomOrthogonals(float step);
     static void reloadDataSizeWin();
@@ -74,7 +84,7 @@ public:
     void createXZViewport();
     void createYZViewport();
     void createSkeletonViewport();
-
+    bool eventFilter(QObject *obj, QEvent *event);
 signals:
 
 protected:

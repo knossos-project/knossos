@@ -1,4 +1,12 @@
 #include "navigationwidget.h"
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QFormLayout>
+#include <QSpinBox>
+#include <QRadioButton>
+#include <QGroupBox>
+#include <QSpacerItem>
 
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)
@@ -71,6 +79,10 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
 
     mainLayout->addLayout(restLayout);
     this->setLayout(mainLayout);
+
+}
+
+void NavigationWidget::loadSettings() {
 
 }
 

@@ -2,18 +2,14 @@
 #define ZOOMANDMULTIRESWIDGET_H
 
 #include <QDialog>
-#include <QGridLayout>
-#include <QLabel>
-#include <QDoubleSpinBox>
-#include <QSlider>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QFrame>
-#include <QCheckBox>
-#include <QDebug>
-#include "knossos-global.h"
-#include "viewer.h"
 
+
+
+class QSlider;
+class QLabel;
+class QDoubleSpinBox;
+class QCheckBox;
+class QPushButton;
 class ZoomAndMultiresWidget : public QDialog
 {
     Q_OBJECT
@@ -31,7 +27,7 @@ public slots:
     void skeletonSpinBoxSlot(double value);
 protected:
     void closeEvent(QCloseEvent *event);
-private:
+public:
     // top layout
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewLabel;

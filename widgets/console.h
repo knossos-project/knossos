@@ -2,8 +2,8 @@
 #define CONSOLE_H
 
 #include <QDialog>
-#include <QPlainTextEdit>
 
+class QPlainTextEdit;
 class Console : public QDialog
 {
     Q_OBJECT

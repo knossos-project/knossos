@@ -1,5 +1,16 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "viewport.h"
+#include "widgets/console.h"
+#include "widgets/tracingtimewidget.h"
+#include "widgets/commentswidget.h"
+#include "widgets/zoomandmultireswidget.h"
+#include "widgets/navigationwidget.h"
+#include "widgets/toolswidget.h"
+#include "widgets/viewportsettingswidget.h"
+#include "widgets/datasavingwidget.h"
+#include "widgets/synchronizationwidget.h"
+#include "widgets/splashscreenwidget.h"
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -30,23 +41,17 @@ static void prefSyncOptions(QEvent *event){}
 static void prefViewportPrefs(){}
 static void prefSaveOptions(){}
 static void createViewportPrefWin() {}
-
 static void createDisplayOptionsWin() {}
-static void createSaveOptionsWin() {}
 static void createRenderingOptionsWin() {}
 static void createVolTracingOptionsWin() {}
 static void createSpatialLockingOptionsWin() {}
 static void createDataSetStatsWin() {}
-
 static void createLoadDatasetImgJTableWin() {}
 static void createLoadTreeImgJTableWin() {}
 static void createSetDynRangeWin() {}
-
 static void createCurrPosWdgt(){}
-static void createSkeletonVpToolsWdgt(){}
 static void createActNodeWdgt(){}
 static void datasetColorAdjustmentsChanged(){}
-
 static void createOpenCustomPrefsDlgWin(){}
 static void createSaveCustomPrefsAsDlgWin(){}
 
@@ -79,9 +84,8 @@ static void UI_enableSliceVPOverlayModified(){}
 static void UI_pushBranchBtnPressed(){}
 static void UI_popBranchBtnPressed(){}
 static void UI_enableLinearFilteringModified(){}
-static void UI_loadSettings(){}
+
 static void UI_setSkeletonPerspective(QEvent *event){}
-static void UI_orthoVPzoomSliderModified(){}
 static void UI_lockCurrentMagModified(QEvent *event){}
 static void UI_changeViewportPosSiz(){}
 static void UI_changeViewportPosSizCheckbox(){}
@@ -147,7 +151,7 @@ void MainWindow::createCommentsWidget() {
 
 void MainWindow::createZoomAndMultiresWidget() {
     zoomAndMultiresWidget = new ZoomAndMultiresWidget(this);
-    zoomAndMultiresWidget->setGeometry(1024, 100, 200, 200);
+    zoomAndMultiresWidget->setGeometry(1024, 100, 250, 200);
     zoomAndMultiresWidget->show();
 }
 
@@ -159,7 +163,7 @@ void MainWindow::createNavigationWidget() {
 
 void MainWindow::createToolWidget() {
     toolsWidget = new ToolsWidget(this);
-    toolsWidget->setGeometry(500, 100, 250, 300);
+    toolsWidget->setGeometry(500, 100, 300, 300);
     toolsWidget->show();
 }
 
@@ -420,7 +424,7 @@ bool MainWindow::initGUI() {
     //createVpYzWin();
     //createVpSkelWin();
 
-    UI_loadSettings();
+    //UI_loadSettings();
 
     return true;
 }
@@ -503,7 +507,7 @@ void MainWindow::UI_saveSettings(){
   * @todo Replacement for AG_String(X)
   * No QEvents
   */
-void MainWindow::UI_loadSkeleton(QEvent *event){
+void MainWindow::loadSkeleton(){
     char *path; // = AG_STRING(1);
     char *msg; // = AG_STRING(2);
 
@@ -654,7 +658,6 @@ void MainWindow::createActions()
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
-        connect(historyEntryActions[i], SIGNAL(triggered()), this, SLOT(recentFilesSlot(int)));
     }
 
     /* edit skeleton actions */
@@ -738,6 +741,7 @@ void MainWindow::createMenus()
     for(int i = 0; i < skeletonFileHistory->size(); i++) {
 
         historyEntryActions[i]->setText(skeletonFileHistory->at(i));
+        historyEntryActions[i]->installEventFilter(this);
         recentFileMenu->addAction(historyEntryActions[i]);
     }
 
@@ -1149,13 +1153,146 @@ void MainWindow::zCoordinateChanged(int value) {
     state->viewerState->currentPosition.z = value;
 }
 
-void saveSettings() {
+void MainWindow::saveSettings() {
+    settings->setValue("main_window.width", this->width());
+    settings->setValue("main_indow.height", this->height());
+    settings->setValue("main_window.position.x", this->x());
+    settings->setValue("main_window.position.y", this->y());
 
+    settings->setValue("comments_widget.width", this->commentsWidget->width());
+    settings->setValue("comments_widget.height", this->commentsWidget->height());
+    settings->setValue("comment_widget.position.x", this->commentsWidget->x());
+    settings->setValue("comments_widget.position.y", this->commentsWidget->y());
+    settings->setValue("comments_widget.visible", this->commentsWidget->isVisible());
+    settings->setValue("comments_widget.comment1", commentsWidget->textFields[0]->text());
+    settings->setValue("comments_widget.comment2", this->commentsWidget->textFields[1]->text());
+    settings->setValue("comments_widget.comment3", this->commentsWidget->textFields[2]->text());
+    settings->setValue("comments_widget.comment4", this->commentsWidget->textFields[3]->text());
+    settings->setValue("comments_widget.comment5", this->commentsWidget->textFields[4]->text());
+
+    settings->setValue("console_widget.width", this->console->width());
+    settings->setValue("console_widget.height", this->console->height());
+    settings->setValue("console_widget.position.x", this->console->x());
+    settings->setValue("console_widget.position.y", this->console->y());
+    settings->setValue("console_widget.visible", this->console->isVisible());
+
+    settings->setValue("data_saving_widget.width", this->dataSavingWidget->width());
+    settings->setValue("data_saving_widget.height", this->dataSavingWidget->height());
+    settings->setValue("data_saving_widget.position.x", this->dataSavingWidget->x());
+    settings->setValue("data_saving_widget.position.y", this->dataSavingWidget->y());
+    settings->setValue("data_saving_widget.visible", this->dataSavingWidget->isVisible());
+    settings->setValue("data_saving_widget.auto_saving", this->dataSavingWidget->autosaveButton->isChecked());
+    settings->setValue("data_saving_widget.autosave_interval", this->dataSavingWidget->autosaveIntervalSpinBox->value());
+    settings->setValue("data_saving_widget.autoincrement_filename", this->dataSavingWidget->autoincrementFileNameButton->isChecked());
+
+    settings->setValue("navigation_widget.width", this->navigationWidget->width());
+    settings->setValue("navigation_widget.height", this->navigationWidget->height());
+    settings->setValue("navigation_widget.position.x", this->navigationWidget->x());
+    settings->setValue("navigation_widget.position.y", this->navigationWidget->y());
+    settings->setValue("navigation_widget.visible", this->navigationWidget->isVisible());
+    settings->setValue("navigation_widget.general.movement_speed", this->navigationWidget->movementSpeedSpinBox->value());
+    settings->setValue("navigation_widget.general.jump_frames", this->navigationWidget->jumpFramesSpinBox->value());
+    settings->setValue("navigation_widget.general.recenter_parallel", this->navigationWidget->recenterTimeParallelSpinBox->value());
+    settings->setValue("navigation_widget.general.recenter_ortho", this->navigationWidget->recenterTimeOrthoSpinBox->value());
+    settings->setValue("navigation_widget.advanced.normal_mode", this->navigationWidget->normalModeButton->isChecked());
+    settings->setValue("navigation_widget.advanced.additional_viewport_direction_move", this->navigationWidget->additionalViewportDirectionMoveButton->isChecked());
+    settings->setValue("navigation_widget.advanced.additional_tracing_direction_move", this->navigationWidget->additionalTracingDirectionMoveButton->isChecked());
+    settings->setValue("navigation_widget.advanced.additional_mirrored_move", this->navigationWidget->additionalMirroredMoveButton->isChecked());
+    settings->setValue("navigation_widget.advanced.delay_time_per_step", this->navigationWidget->delayTimePerStepSpinBox->value());
+    settings->setValue("navigation_widget.advanced.number_of_steps", this->navigationWidget->numberOfStepsSpinBox->value());
+
+    settings->setValue("synchronization_widget.width", this->synchronizationWidget->width());
+    settings->setValue("synchronization_widget.height", this->synchronizationWidget->height());
+    settings->setValue("synchronization_widget.position.x", this->synchronizationWidget->x());
+    settings->setValue("synchronization_widget.position.y", this->synchronizationWidget->y());
+    settings->setValue("synchronization_widget.visible", this->synchronizationWidget->isVisible());
+    settings->setValue("synchronization_widget.remote_port", this->synchronizationWidget->remotePortSpinBox->value());
+    settings->setValue("synchronization-widget.connected", this->synchronizationWidget->connected);
+
+    settings->setValue("tools_widget.width", this->toolsWidget->width());
+    settings->setValue("tools_widget.height", this->toolsWidget->height());
+    settings->setValue("tools_widget.position.x", this->toolsWidget->x());
+    settings->setValue("tools_widget.position.y", this->toolsWidget->y());
+    settings->setValue("tools_widget.visible", this->toolsWidget->isVisible());
+    //settings->setValue("tools_widget.selected_tab", this->toolsWidget->);
+    //settings->setValue("tools_widget.quick.active_tree_id", this->toolsWidget->q TODO
+
+    settings->setValue("tracing_time_widget.width", this->tracingTimeWidget->width());
+    settings->setValue("tracing_time_widget.height", this->tracingTimeWidget->height());
+    settings->setValue("tracing_time_widget.position.x", this->tracingTimeWidget->x());
+    settings->setValue("tracing_time_widget.position.y", this->tracingTimeWidget->y());
+    settings->setValue("tracing_time_widget.visible", this->tracingTimeWidget->isVisible());
+
+    settings->setValue("viewport_settings_widget.width", this->viewportSettingsWidget->width());
+    settings->setValue("viewport_settings_widget.height", this->viewportSettingsWidget->height());
+    settings->setValue("viewport_settings_widget.position.x", this->viewportSettingsWidget->x());
+    settings->setValue("viewport_settings_widget.position.y", this->viewportSettingsWidget->y());
+    settings->setValue("viewport_settings_widget.visible", this->viewportSettingsWidget->isVisible());
+    //settings->setValue("viewport_settings_widget.selected_tab", this->viewportSettingsWidget->);
+
+
+    settings->setValue("zoom_and_multires_widget.width", this->zoomAndMultiresWidget->width());
+    settings->setValue("zoom_and_multires_widget.height", this->zoomAndMultiresWidget->height());
+    settings->setValue("zoom_and_multires_widget.position.x", this->zoomAndMultiresWidget->x());
+    settings->setValue("zoom_and_multires_widget.position.y", this->zoomAndMultiresWidget->y());
+    settings->setValue("zoom_and_multires_widget.visible", this->zoomAndMultiresWidget->isVisible());
+    settings->setValue("zoom_and_multires_widget.orthogonal_data_viewport", this->zoomAndMultiresWidget->orthogonalDataViewportSpinBox->value());
+    settings->setValue("zoom_and_multires_widget.skeleton_view_data_viewport", this->zoomAndMultiresWidget->orthogonalDataViewportSpinBox->value());
+    settings->setValue("zoom_and_multires_widget.lock_dataset_to_current_mag", this->zoomAndMultiresWidget->lockDatasetCheckBox->isChecked());
 
 }
 
-void loadSettings() {
+void MainWindow::loadSettings() {
+    int width = settings->value("main_window.width").toInt();
+    int height = settings->value("main_window.height").toInt();
+    int x = settings->value("main_window.position.x").toInt();
+    int y = settings->value("main_window.position.y").toInt();
+    bool visible;
+
+    this->setGeometry(x, y, width, height);
+
+    width = settings->value("comments_widget.width").toInt();
+    height = settings->value("comments_widget.height").toInt();
+    x = settings->value("comments_widget.position.x").toInt();
+    y = settings->value("comments_widget.position.y").toInt();
+    visible = settings->value("comments_widget.visible").toBool();
+
+    this->commentsWidget->setGeometry(x, y, width, height);
+    this->commentsWidget->setVisible(visible);
+
+    width = settings->value("console_widget.width").toInt();
+    height = settings->value("console_widget.width").toInt();
+    x = settings->value("console_widget.position.x").toInt();
+    y = settings->value("console_widget.position.y").toInt();
+    visible = settings->value("console_widget.visible").toBool();
+
+    this->console->setGeometry(x, y, width, height);
+    this->console->setVisible(visible);
+
+    width = settings->value("data_saving_widget.width").toInt();
+    height = settings->value("data_saving_widget.height").toInt();
+    x = settings->value("data_saving_widget.position.x").toInt();
+    y = settings->value("data_saving_widget.position.y").toInt();
+    visible = settings->value("data_saving_widget.visible").toBool();
+
+    this->dataSavingWidget->setGeometry(x, y, width, height);
+    this->dataSavingWidget->setVisible(visible);
+
+    width = settings->value("navigation_widget").toInt();
 
 }
 
+/**
+  * This Event Filter is used to find out which of the elements of the 2d array historyEntryAction is clicked
+  * @todo load the corresponding skeleton
+  */
+bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        if(historyEntryActions[i] == obj) {
+           QString fileName = historyEntryActions[i]->text();
+        }
+    }
+
+    return false;
+}
 

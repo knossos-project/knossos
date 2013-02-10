@@ -1,4 +1,5 @@
 #include "console.h"
+#include <QPlainTextEdit>
 
 Console::Console(QWidget *parent) :
     QDialog(parent)

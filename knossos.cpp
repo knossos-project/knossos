@@ -36,6 +36,7 @@ Loader *loaderEventObj;
 
 
 //IMPORTANT. SDL redefines main
+
 #ifdef main
 #undef main
 #endif
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
 {
 
     QApplication a(argc, argv);
-    QCoreApplication::setOrganizationName("Max-Planck Intitut für medizinische Forschung");
+    QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
 
     state = Knossos::emptyState();

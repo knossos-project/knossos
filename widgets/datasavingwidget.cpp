@@ -1,4 +1,11 @@
 #include "datasavingwidget.h"
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QCheckBox>
+#include <QLabel>
+#include <QSpinBox>
+#include "knossos-global.h"
 
 extern struct stateInfo *state;
 
@@ -9,16 +16,15 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     autosaveButton = new QCheckBox("Auto-Saving");
-    autosaveButton->setChecked(state->skeletonState->autoSaveBool);
     autosaveIntervalLabel = new QLabel("Autosave Interval");
     autosaveIntervalSpinBox = new QSpinBox();
-    autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
+
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
 
     autoincrementFileNameButton = new QCheckBox("Autoincrement File Name");
-    autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
+
 
     mainLayout->addWidget(autosaveButton);
     mainLayout->addLayout(formLayout);
@@ -30,6 +36,12 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
 }
 
+void DataSavingWidget::loadSettings() {
+   autosaveButton->setChecked(state->skeletonState->autoSaveBool);
+   autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
+   autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
+}
+
 void DataSavingWidget::closeEvent(QCloseEvent *event) {
     this->hide();
 }
@@ -37,6 +49,7 @@ void DataSavingWidget::closeEvent(QCloseEvent *event) {
 void DataSavingWidget::autosaveButtonPushed(bool on) {
     if(on) {
        state->skeletonState->autoSaveBool = true;
+
        state->skeletonState->autoSaveInterval = autosaveIntervalSpinBox->value();
     } else {
         state->skeletonState->autoSaveBool = false;

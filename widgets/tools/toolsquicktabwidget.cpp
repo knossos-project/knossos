@@ -1,5 +1,7 @@
 #include "toolsquicktabwidget.h"
 
+extern struct stateInfo *state;
+
 ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -97,4 +99,9 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     this->setLayout(mainLayout);
 
+
+}
+
+void ToolsQuickTabWidget::activeTreeIdSlot(int value) {
+    state->viewerState->gui->activeTreeID = value;
 }

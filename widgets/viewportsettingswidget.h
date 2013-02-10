@@ -3,16 +3,19 @@
 
 #include <QDialog>
 #include <QTabWidget>
-#include "viewportsettings/vpgeneraltabwidget.h"
-#include "viewportsettings/vpsliceplaneviewportwidget.h"
-#include "viewportsettings/vpskeletonviewportwidget.h"
 
+
+class VPGeneralTabWidget;
+class VPSlicePlaneViewportWidget;
+class VPSkeletonViewportWidget;
 class ViewportSettingsWidget : public QDialog
 {
     Q_OBJECT
 public:
     explicit ViewportSettingsWidget(QWidget *parent = 0);
-    
+    VPGeneralTabWidget *generalTabWidget;
+    VPSkeletonViewportWidget *skeletonViewportWidget;
+    VPSlicePlaneViewportWidget *slicePlaneViewportWidget;
 signals:
     
 public slots:

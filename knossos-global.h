@@ -54,16 +54,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <QtNetwork>
-#include "widgets/console.h"
-#include "widgets/tracingtimewidget.h"
-#include "widgets/commentswidget.h"
-#include "widgets/zoomandmultireswidget.h"
-#include "widgets/navigationwidget.h"
-#include "widgets/toolswidget.h"
-#include "widgets/viewportsettingswidget.h"
-#include "widgets/datasavingwidget.h"
-#include "widgets/synchronizationwidget.h"
-#include "widgets/splashscreenwidget.h"
+
 
 #define KVERSION "3.2"
 
@@ -263,7 +254,7 @@
 #define CATCH_RADIUS            10
 
 //Structures and custom types
-
+class Viewport;
 
 typedef uint8_t Byte;
 
@@ -772,12 +763,12 @@ struct guiConfig {
    // AG_FileDlg *fileDlgOpenImgJTable;
 
 
-    Console *console;
-    CommentsWidget *commentsWidget;
-    TracingTimeWidget *tracingTimeWidget;
+    //Console *console;
+   //CommentsWidget *commentsWidget;
+    //TracingTimeWidget *tracingTimeWidget;
 
-    NavigationWidget *navigationWidget;
-    ToolsWidget *toolWidget;
+    //NavigationWidget *navigationWidget;
+    //ToolsWidget *toolWidget;
 
     Viewport *vpXyWin;
     Viewport *vpXzWin;
@@ -1195,7 +1186,7 @@ struct skeletonState {
     int showXZplane;
     int showYZplane;
     int showNodeIDs;
-    int32_t autoFilenameIncrementBool;
+    bool autoFilenameIncrementBool;
 
     int32_t treeElements;
     int32_t totalNodeElements;
@@ -1208,7 +1199,7 @@ struct skeletonState {
     int mergeOnLoadFlag;
 
     uint32_t lastSaveTicks;
-    int32_t autoSaveBool;
+    bool autoSaveBool;
     uint32_t autoSaveInterval;
     uint32_t saveCnt;
     char *skeletonFile;

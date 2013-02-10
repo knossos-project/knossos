@@ -2,9 +2,8 @@
 #define TRACINGTIMEWIDGET_H
 
 #include <QDialog>
-#include <QLabel>
-#include <QVBoxLayout>
 
+class QLabel;
 class TracingTimeWidget : public QDialog
 {
     Q_OBJECT

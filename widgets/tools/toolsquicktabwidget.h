@@ -10,6 +10,7 @@
 #include <QSpinBox>
 #include <QLineEdit>
 #include <QPushButton>
+#include "knossos-global.h"
 
 class ToolsQuickTabWidget : public QWidget
 {
@@ -20,7 +21,8 @@ public:
 signals:
     
 public slots:
-protected:
+    void activeTreeIdSlot(int value);
+public:
     QLabel *treeCountLabel, *nodeCountLabel;
     QLabel *activeTreeLabel, *activeNodeLabel;
     QLabel *xLabel, *yLabel, *zLabel;

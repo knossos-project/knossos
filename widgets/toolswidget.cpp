@@ -1,13 +1,21 @@
 #include "toolswidget.h"
+#include "widgets/tools/toolsquicktabwidget.h"
+#include "widgets/tools/toolsnodestabwidget.h"
+#include "widgets/tools/toolstreestabwidget.h"
 
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Tools");
     tabs = new QTabWidget(this);
-    tabs->addTab(new ToolsQuickTabWidget(), "Quick");
-    tabs->addTab(new ToolsTreesTabWidget(), "Trees");
-    tabs->addTab(new ToolsNodesTabWidget(), "Nodes");
+
+    this->toolsQuickTabWidget = new ToolsQuickTabWidget();
+    this->toolsNodesTabWidget = new ToolsNodesTabWidget();
+    this->toolsTreesTabWidget = new ToolsTreesTabWidget();
+
+    tabs->addTab(toolsQuickTabWidget, "Quick");
+    tabs->addTab(toolsTreesTabWidget, "Trees");
+    tabs->addTab(toolsNodesTabWidget, "Nodes");
 
 }
 
