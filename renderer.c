@@ -849,7 +849,7 @@ static void renderActiveTreeSkeleton(uint32_t viewportType) {
     else
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+    //if(viewportType == VIEWPORT_ORTHO) glEnable(GL_CULL_FACE);
 
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
@@ -992,6 +992,7 @@ static void renderSuperCubeSkeleton(uint32_t viewportType) {
         return;
     }
 
+    uint32_t magSupercube;
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -1023,7 +1024,7 @@ static void renderSuperCubeSkeleton(uint32_t viewportType) {
     else
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+    //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1032,10 +1033,12 @@ static void renderSuperCubeSkeleton(uint32_t viewportType) {
     //Thus, we have to translate there.
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
 
+    magSupercube = ((state->M/2)+1) * state->magnification;
+
     //We take all skeletonDCs out of our current SC
-    for(currentPosDCCounter.x = currentPosDC.x - ((state->M/2)+1); currentPosDCCounter.x <= currentPosDC.x + ((state->M/2)+1); currentPosDCCounter.x++) {
-        for(currentPosDCCounter.y = currentPosDC.y - ((state->M/2)+1); currentPosDCCounter.y <= currentPosDC.y + ((state->M/2)+1); currentPosDCCounter.y++) {
-            for(currentPosDCCounter.z = currentPosDC.z - ((state->M/2)+1); currentPosDCCounter.z <= currentPosDC.z + ((state->M/2)+1); currentPosDCCounter.z++) {
+    for(currentPosDCCounter.x = currentPosDC.x - magSupercube; currentPosDCCounter.x <= currentPosDC.x + magSupercube; currentPosDCCounter.x++) {
+        for(currentPosDCCounter.y = currentPosDC.y - magSupercube; currentPosDCCounter.y <= currentPosDC.y + magSupercube; currentPosDCCounter.y++) {
+            for(currentPosDCCounter.z = currentPosDC.z - magSupercube; currentPosDCCounter.z <= currentPosDC.z + magSupercube; currentPosDCCounter.z++) {
                 currentSkeletonDC = (struct skeletonDC *)ht_get(state->skeletonState->skeletonDCs, currentPosDCCounter);
 
                 //If there is a valid skeletonDC, there are nodes / segments (or both) in it.
@@ -1248,7 +1251,7 @@ static void renderWholeSkeleton(uint32_t viewportType) {
     else
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+//    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1497,8 +1500,8 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
 
     //LOG("dl skeleton: %d", state->skeletonState->displayListSkeletonSkeletonizerVP);
     //LOG("dl slice: %d", state->skeletonState->displayListSkeletonSlicePlaneVP);
-    //LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
-    //LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
+    LOG("screenPxPerDataPx skeleton: %f", state->viewerState->viewPorts[VIEWPORT_SKELETON].screenPxXPerDataPx);
+    LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
 
     if(state->viewerState->lightOnOff) {
         /* Configure light */
@@ -1893,7 +1896,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     /*
      * Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
     */
-
+state->skeletonState->datasetChanged = TRUE;
     if(state->skeletonState->datasetChanged) {
 
         state->skeletonState->datasetChanged = FALSE;
@@ -2313,8 +2316,9 @@ static uint32_t renderSphere(Coordinate *pos, float radius, uint32_t viewportTyp
 
         /* render only a point if the sphere wouldn't be visible anyway */
 
-        if(state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-           * radius > 0.5f) {
+        if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+           * radius > 0.5f) && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+           * radius < 3.5f)) {
             glPointSize(2.f);
             glBegin(GL_POINTS);
                 glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
