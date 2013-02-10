@@ -834,8 +834,7 @@ static uint32_t setOGLforVP(uint32_t currentVP) {
 }
 */
 
-//Flag 0 if called for slice plane VP; Flag 1 if called for skeleton VP
-static GLuint renderActiveTreeSkeleton(Byte callFlag) {
+static void renderActiveTreeSkeleton(uint32_t viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -843,11 +842,15 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
     char *textBuffer;
     textBuffer = malloc(32);
     memset(textBuffer, '\0', 32);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP)) return;
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
-    if(callFlag) glEnable(GL_CULL_FACE);
+    if(viewportType == VIEWPORT_SKELETON)
+        glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+    else
+        glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
+
+    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -882,11 +885,11 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
             glLoadName(currentNode->nodeID + 50);
             if(state->skeletonState->overrideNodeRadiusBool) {
                 renderSphere(&(currentNode->position),
-                             state->skeletonState->overrideNodeRadiusVal);
+                             state->skeletonState->overrideNodeRadiusVal, viewportType);
             }
             else {
                 renderSphere(&(currentNode->position),
-                             currentNode->radius);
+                             currentNode->radius, viewportType);
             }
 
             if(state->skeletonState->highlightActiveTree) glColor4f(1., 0., 0., 1.);
@@ -906,16 +909,18 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
 								   * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentSegment->target->position),
                                    state->skeletonState->overrideNodeRadiusVal
-								   * state->skeletonState->segRadiusToNodeRadius);
+								   * state->skeletonState->segRadiusToNodeRadius,
+								   viewportType);
                 else
                     renderCylinder(&(currentSegment->source->position),
                                    currentSegment->source->radius
 								   * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentSegment->target->position),
                                    currentSegment->target->radius
-								   * state->skeletonState->segRadiusToNodeRadius);
+								   * state->skeletonState->segRadiusToNodeRadius,
+								   viewportType);
                     //Gets true, if called for slice plane VP
-                    if(!callFlag) {
+                    if(viewportType == VIEWPORT_ORTHO) {
                         if(state->skeletonState->showIntersections)
                             renderSegPlaneIntersection(currentSegment);
                     }
@@ -948,10 +953,10 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
                 glLoadName(state->skeletonState->activeNode->nodeID + 50);
                 if(state->skeletonState->overrideNodeRadiusBool)
                     renderSphere(&(state->skeletonState->activeNode->position),
-                                 state->skeletonState->overrideNodeRadiusVal * 1.5);
+                                 state->skeletonState->overrideNodeRadiusVal * 1.5, viewportType);
                 else
                     renderSphere(&(state->skeletonState->activeNode->position),
-                                 state->skeletonState->activeNode->radius * 1.5);
+                                 state->skeletonState->activeNode->radius * 1.5, viewportType);
                 glDisable(GL_BLEND);
                 //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
                 glColor4f(0., 0., 0., 1.);
@@ -969,23 +974,22 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
     //Stop display list recording
     glEndList();
     free(textBuffer);
-    return tempList;
+    return;
 }
 
-//Flag 0 if called for slice plane VP; Flag 1 if called for skeleton VP
-
+// viewportType: VIEWPORT_SKELETON or VIEWPORT_ORTHO
 /* This became dangerous with the introduction of multires... the HT
 could be queried too often for highly downsampled data sets -- O(N^3) comlexity
 here. It should be ok until mag 8 data sets, then we switch to a different
 rendering mode (knossos then uses the whole skeleton display list for the ortho VPs). */
-static GLuint renderSuperCubeSkeleton(Byte callFlag) {
-    GLuint tempList;
+static void renderSuperCubeSkeleton(uint32_t viewportType) {
+
     /* This prevents the O(n^3) time complexity problem - it is just heuristic
     however, could cause problems when Knossos is used with very high data cube
     edge lengths */
     if(state->magnification > 8) {
-        tempList = renderWholeSkeleton(callFlag);
-        return tempList;
+        renderWholeSkeleton(viewportType);
+        return;
     }
 
     Coordinate currentPosDC, currentPosDCCounter;
@@ -1007,11 +1011,19 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     textBuffer = malloc(32);
     memset(textBuffer, '\0', 32);
 
+    //LOG("skel vp dl: %d", state->skeletonState->displayListSkeletonSkeletonizerVP);
+    //LOG("ortho vp dl: %d", state->skeletonState->displayListSkeletonSlicePlaneVP);
+    //f(state->skeletonState->displayListSkeletonSkeletonizerVP == 0)
+    //    return;
+    //if(state->skeletonState->displayListSkeletonSlicePlaneVP == 0)
 
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP)) return;
+    if(viewportType == VIEWPORT_SKELETON)
+        glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+    else
+        glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    if(callFlag) glEnable(GL_CULL_FACE);
+    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1055,15 +1067,16 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                                     state->skeletonState->segRadiusToNodeRadius,
                                                    &currentSkeletonDCsegment->segment->target->position,
                                                    state->skeletonState->overrideNodeRadiusVal *
-                                                    state->skeletonState->segRadiusToNodeRadius);
+                                                    state->skeletonState->segRadiusToNodeRadius,
+                                                    viewportType);
                                 else
                                     renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                         currentSkeletonDCsegment->segment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                                         &(currentSkeletonDCsegment->segment->target->position),
-                                        currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                                        currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                                        viewportType);
 
-                                //Gets true, if called for slice plane VP
-                                if(!callFlag) {
+                                if(viewportType == VIEWPORT_ORTHO) {
                                     if(state->skeletonState->showIntersections)
                                         renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                 }
@@ -1101,15 +1114,17 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                         renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                             state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
                                             &(currentSkeletonDCsegment->segment->target->position),
-                                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius);
+                                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                                            viewportType);
                                     else
                                         renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                             currentSkeletonDCsegment->segment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                                             &(currentSkeletonDCsegment->segment->target->position),
-                                            currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                                            currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                                            viewportType);
 
                                     //Gets true, if called for slice plane VP
-                                    if(!callFlag) {
+                                    if(viewportType == VIEWPORT_ORTHO) {
                                         if(state->skeletonState->showIntersections)
                                             renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                     }
@@ -1152,9 +1167,9 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                             glLoadName(currentSkeletonDCnode->node->nodeID + 50);
                             //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius);
                             if(state->skeletonState->overrideNodeRadiusBool)
-                                renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal);
+                                renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
                             else
-                                renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius);
+                                renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius, viewportType);
 
                             //Check if this node is an active node and highlight if true
                             if(state->skeletonState->activeNode) {
@@ -1172,9 +1187,9 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                     glEnable(GL_BLEND);
                                     //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
                                     if(state->skeletonState->overrideNodeRadiusBool)
-                                        renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal);
+                                        renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
                                     else
-                                        renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
+                                        renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5, viewportType);
                                     glDisable(GL_BLEND);
                                     //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
                                     glColor4f(0.f, 0.f, 0.f, 1.f);
@@ -1215,22 +1230,25 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
 
     free(textBuffer);
 
-    return tempList;
+    return;
 }
-//set callFlag true, if called for slice plane VP
-static GLuint renderWholeSkeleton(Byte callFlag) {
+
+// viewportType: VIEWPORT_SKELETON or VIEWPORT_ORTHO
+static void renderWholeSkeleton(uint32_t viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
-
+        //return;
     char *textBuffer;
     textBuffer = malloc(32);
     memset(textBuffer, '\0', 32);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP)) return;
+    if(viewportType == VIEWPORT_SKELETON)
+        glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+    else
+        glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
-    if(callFlag) glEnable(GL_CULL_FACE);
+    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1266,9 +1284,9 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
             glLoadName(currentNode->nodeID + 50);
             if(state->skeletonState->overrideNodeRadiusBool)
-                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal);
+                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
             else
-                renderSphere(&(currentNode->position), currentNode->radius);
+                renderSphere(&(currentNode->position), currentNode->radius, viewportType);
 
             if((currentTree->treeID == state->skeletonState->activeTree->treeID)
                 && (state->skeletonState->highlightActiveTree)) {
@@ -1291,15 +1309,16 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
                     renderCylinder(&(currentSegment->source->position),
                         state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
                         &(currentSegment->target->position),
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius);
+                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                        viewportType);
                 else
                     renderCylinder(&(currentSegment->source->position),
                         currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                         &(currentSegment->target->position),
-                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                        viewportType);
 
-                //Gets true, if called for slice plane VP
-                if(!callFlag) {
+                if(viewportType == VIEWPORT_ORTHO) {
                     if(state->skeletonState->showIntersections)
                         renderSegPlaneIntersection(currentSegment);
                 }
@@ -1336,9 +1355,9 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
         glLoadName(state->skeletonState->activeNode->nodeID + 50);
         glEnable(GL_BLEND);
         if(state->skeletonState->overrideNodeRadiusBool)
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5);
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, viewportType);
         else
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5);
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, viewportType);
         glDisable(GL_BLEND);
         //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
         glColor4f(0., 0., 0., 1.);
@@ -1362,69 +1381,51 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
 
     free(textBuffer);
 
-    return tempList;
+    return;
 }
 
 uint32_t updateDisplayListsSkeleton() {
+
+   // glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP,1);
+   // glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP,1);
+   // glDeleteLists(state->skeletonState->displayListView,1);
+   // glDeleteLists(state->skeletonState->displayListDataset,1);
+
+
 
     if(state->skeletonState->skeletonChanged) {
         state->skeletonState->skeletonChanged = FALSE;
         state->viewerState->superCubeChanged = FALSE;
         state->skeletonState->skeletonSliceVPchanged = FALSE;
 
-        /* clean up the old display lists */
-        if(state->skeletonState->displayListSkeletonSkeletonizerVP) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
-            state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-        }
-        if(state->skeletonState->displayListSkeletonSlicePlaneVP) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
-            state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
-        }
 
         /* create new display lists that are up-to-date */
         if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderWholeSkeleton(FALSE);
-            if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderSuperCubeSkeleton(0);
-                    //renderWholeSkeleton(FALSE);
+            renderWholeSkeleton(VIEWPORT_SKELETON);
 
+            if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderSuperCubeSkeleton(FALSE);
-                    //renderWholeSkeleton(FALSE);
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(TRUE);
-            if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-                if(state->skeletonState->showIntersections)
-                    state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        renderSuperCubeSkeleton(FALSE);
-                        //renderWholeSkeleton(FALSE);
+            renderSuperCubeSkeleton(VIEWPORT_SKELETON);
 
-                else state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    state->skeletonState->displayListSkeletonSkeletonizerVP;
-            }
+            if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
         }
+
         /* TDitem active tree should be limited to current cube in this case */
         if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
+                renderActiveTreeSkeleton(VIEWPORT_SKELETON);
 
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderActiveTreeSkeleton(1);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-                if(state->skeletonState->showIntersections)
-                    state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        renderActiveTreeSkeleton(0);
-                else state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    state->skeletonState->displayListSkeletonSkeletonizerVP;
+                renderActiveTreeSkeleton(VIEWPORT_ORTHO);
             }
         }
     }
@@ -1432,38 +1433,24 @@ uint32_t updateDisplayListsSkeleton() {
     if(state->viewerState->superCubeChanged) {
         state->viewerState->superCubeChanged = FALSE;
 
-        if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
-            state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(1);
-        }
+        if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE)
+            renderSuperCubeSkeleton(VIEWPORT_SKELETON);
 
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-            if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderSuperCubeSkeleton(0);
-                    //renderWholeSkeleton(FALSE);
-
-            }
+            if(!(state->skeletonState->displayMode & DSP_ACTIVETREE))
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
         }
     }
 
     if(state->skeletonState->skeletonSliceVPchanged) {
         state->skeletonState->skeletonSliceVPchanged = FALSE;
-        glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
-        state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
 
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderActiveTreeSkeleton(0);
+                renderActiveTreeSkeleton(VIEWPORT_ORTHO);
             }
             else {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderWholeSkeleton(0);
-                    renderSuperCubeSkeleton(0);
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
             }
         }
     }
@@ -1492,11 +1479,26 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     glLoadIdentity();
 
     /* left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem */
-//LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);
+
     glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY, -1000, 10 *state->skeletonState->volBoundary);
+
+    /* tdItem: check whether doing
+    state->viewerState->viewPorts[VIEWPORT_SKELETON] is actually save
+    - are the viewports fixed inside array? */
+
+    /* This is not the right place. It should actually be updated BEFORE the VP
+    is renderer. Tha value lags always by one frame.. Which isn't that problematic. */
+    state->viewerState->viewPorts[VIEWPORT_SKELETON].screenPxXPerDataPx =
+        (float)state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength / ((
+        (float)state->skeletonState->volBoundary - 2.f * ((float)state->skeletonState->volBoundary * state->skeletonState->zoomLevel))/2.f);
+
+    //LOG("dl skeleton: %d", state->skeletonState->displayListSkeletonSkeletonizerVP);
+    //LOG("dl slice: %d", state->skeletonState->displayListSkeletonSlicePlaneVP);
+    //LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
+    //LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
 
     if(state->viewerState->lightOnOff) {
         /* Configure light */
@@ -1518,7 +1520,6 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
         glEnable(GL_COLOR_MATERIAL);
     }
     if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
-//LOG("test string wirtte");
     /*
      * Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     */
@@ -1875,6 +1876,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
         }
 
         glPopMatrix();
+        glEnable(GL_TEXTURE_2D);
         glEndList();
     }
     else {
@@ -2052,7 +2054,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     //glDisable(GL_BLEND);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
-
+    //glEnable(GL_TEXTURE_2D);
     glDisable(GL_MULTISAMPLE);
     glLoadIdentity();
 
@@ -2220,67 +2222,72 @@ uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP,
     else return FALSE;
 }
 
+/* the viewport flag indicates ortho or skeleton VP */
 static uint32_t renderCylinder(Coordinate *base,
                                float baseRadius,
                                Coordinate *top,
-                               float topRadius) {
+                               float topRadius,
+                               uint32_t viewportType) {
     float currentAngle = 0.;
-    //int32_t transFactor = 1;
-    //Coordinate transBase, transTop;
+    //return TRUE;
     floatCoordinate segDirection, tempVec, *tempVec2;
     GLUquadricObj *gluCylObj = NULL;
 
-    //if(coordinateMag == ORIGINAL_MAG_COORDINATES) {
-    //    transFactor = 1.f;
-    //}
 
-    /*transBase.x = base->x / transFactor;
-    transBase.y = base->y / transFactor;
-    transBase.z = base->z / transFactor;
-    transTop.x = top->x / transFactor;
-    transTop.y = top->y / transFactor;
-    transTop.z = top->z / transFactor;
-    topRadius = topRadius / transFactor;
-    baseRadius = baseRadius / transFactor;
-*/
     if(!(state->skeletonState->displayMode & DSP_LINES_POINTS)) {
-        glPushMatrix();
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-        glTranslatef((float)base->x, (float)base->y, (float)base->z);
+        if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+            * baseRadius < 2.f)
+           && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+            * topRadius < 2.f)) {
 
-        //Some calculations for the correct direction of the cylinder.
-        tempVec.x = 0.;
-        tempVec.y = 0.;
-        tempVec.z = 1.;
-        segDirection.x = (float)(top->x - base->x);
-        segDirection.y = (float)(top->y - base->y);
-        segDirection.z = (float)(top->z - base->z);
-
-        //temVec2 defines the rotation axis
-        tempVec2 = crossProduct(&tempVec, &segDirection);
-        currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
-
-        //some gl implementations have problems with the params occuring for
-        //segs in straight directions. we need a fix here.
-        glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
-
-        free(tempVec2);
-
-        if((baseRadius > 100.f) || topRadius > 100.f) {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
-        }
-        else if((baseRadius > 15.f) || topRadius > 15.f) {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+            glBegin(GL_LINES);
+                glVertex3f((float)base->x, (float)base->y, (float)base->z);
+                glVertex3f((float)top->x, (float)top->y, (float)top->z);
+            glEnd();
         }
         else {
-            gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
-        }
 
-        gluDeleteQuadric(gluCylObj);
-        glPopMatrix();
+            glPushMatrix();
+            gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+
+            glTranslatef((float)base->x, (float)base->y, (float)base->z);
+
+            //Some calculations for the correct direction of the cylinder.
+            tempVec.x = 0.;
+            tempVec.y = 0.;
+            tempVec.z = 1.;
+            segDirection.x = (float)(top->x - base->x);
+            segDirection.y = (float)(top->y - base->y);
+            segDirection.z = (float)(top->z - base->z);
+
+            //temVec2 defines the rotation axis
+            tempVec2 = crossProduct(&tempVec, &segDirection);
+            currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
+
+            //some gl implementations have problems with the params occuring for
+            //segs in straight directions. we need a fix here.
+            glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
+
+            free(tempVec2);
+
+            //tdItem use state->viewerState->viewPorts[viewportType].screenPxXPerDataPx for proper LOD
+            //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
+            if((baseRadius > 100.f) || topRadius > 100.f) {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
+            }
+            else if((baseRadius > 15.f) || topRadius > 15.f) {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+            }
+            else {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
+            }
+
+            gluDeleteQuadric(gluCylObj);
+            glPopMatrix();
+        }
     }
     else {
         glBegin(GL_LINES);
@@ -2292,45 +2299,58 @@ static uint32_t renderCylinder(Coordinate *base,
     return TRUE;
 }
 
-
-static uint32_t renderSphere(Coordinate *pos, float radius) {
+// viewportType: VIEWPORT_SKELETON or VIEWPORT_ORTHO
+static uint32_t renderSphere(Coordinate *pos, float radius, uint32_t viewportType) {
+    //return TRUE;
     GLUquadricObj *gluSphereObj = NULL;
-    //Coordinate transPos;
-    int32_t transFactor = 1;
 
-    //if(coordinateMag == ORIGINAL_MAG_COORDINATES)
-    //    transFactor = state->magnification;
 
-    //transPos.x = pos->x / transFactor;
-    //transPos.y = pos->y / transFactor;
-    //transPos.z = pos->z / transFactor;
+    /* Add frustum culling here */
 
-    radius = radius / (float)transFactor;
 
     /* Render point instead of sphere if user has chosen mode */
     if(!(state->skeletonState->displayMode & DSP_LINES_POINTS)) {
-        glPushMatrix();
-        glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
-        gluSphereObj = gluNewQuadric();
-        gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
-        if(radius > 100.) {
-            gluSphere(gluSphereObj, radius, 10, 10);
+        /* render only a point if the sphere wouldn't be visible anyway */
+
+        if(state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+           * radius > 0.5f) {
+            glPointSize(2.f);
+            glBegin(GL_POINTS);
+                glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
+            glEnd();
+            glPointSize(1.f);
         }
-        else if(radius > 15.) {
-            gluSphere(gluSphereObj, radius, 6, 6);
+        else if(state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+           * radius < 0.5f) {
+            glBegin(GL_POINTS);
+                glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
+            glEnd();
         }
         else {
-            gluSphere(gluSphereObj, radius, 4, 4);
+            glPushMatrix();
+            glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
+            gluSphereObj = gluNewQuadric();
+            gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
+
+            if(radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx  > 100.) {
+                gluSphere(gluSphereObj, radius, 15, 15);
+            }
+            else if(radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx  > 15.) {
+                gluSphere(gluSphereObj, radius, 8, 8);
+            }
+            else {
+                gluSphere(gluSphereObj, radius, 4, 4);
+            }
+
+
+            gluDeleteQuadric(gluSphereObj);
+            glPopMatrix();
         }
-
-
-        gluDeleteQuadric(gluSphereObj);
-        glPopMatrix();
     }
     else {
-        glPointSize(radius*3.);
+        glPointSize(radius*2.);
         glBegin(GL_POINTS);
             glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
         glEnd();
@@ -2514,6 +2534,13 @@ uint32_t initRenderer() {
     glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
     glLoadIdentity();
+
+    // redo on resize?
+    state->skeletonState->displayListSkeletonSkeletonizerVP = glGenLists(1);
+    state->skeletonState->displayListSkeletonSlicePlaneVP = glGenLists(1);
+    state->skeletonState->displayListView = glGenLists(1);
+    state->skeletonState->displayListDataset = glGenLists(1);
+
 
     return TRUE;
 }
@@ -2773,4 +2800,189 @@ uint32_t setRotationState(int setTo){
         state->skeletonState->rotationState[15] = 1.0;
     }
     return TRUE;
+}
+
+
+/*
+ * Crazy fast and simplified renderer that uses frustum culling and
+ * a level-of-detail implementation to speed things up. It is still based
+ * on display lists. Replacing these with large batch vertex transfers
+ * (see renderer svn branch) should speed up things further.
+ */
+
+static GLuint renderWholeSkeleton2(uint32_t viewportType) {
+/* We use a depth first search for each tree and render it while traversing it.
+ * This allows us to render only party of the tree without loosing visual quality. */
+
+    /* increases as long as nothing gets rendered */
+    float cumTreeLen;
+
+
+    struct treeListElement *currentTree;
+    struct nodeListElement *currentNode;
+    struct segmentListElement *currentSegment;
+
+    char *textBuffer;
+    textBuffer = malloc(32);
+    memset(textBuffer, '\0', 32);
+
+    GLuint tempList;
+    tempList = glGenLists(1);
+    glNewList(tempList, GL_COMPILE);
+    if(viewportType) glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    //Save current matrix stack (modelview!!)
+    glPushMatrix();
+
+    //Rendering of objects has to start always at the origin of our data pixel coordinate system.
+    //Thus, we have to translate there.
+    glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
+
+    //We iterate over the whole tree structure here.
+    currentTree = state->skeletonState->firstTree;
+
+    while(currentTree) {
+        currentNode = currentTree->firstNode;
+
+
+        /* start the tree traversal */
+        /*
+        -> start at first node, render it
+        -> push all target nodes on stack
+        -> pop node from stack, increase cumTreeLen by their seg distance
+        -> render if cumTreeLen > threshold, set cumTreeLen to 0
+        -> push all target nodes on stack
+        -> pop stack, increase cumTreeLen by their seg distance
+        -> render  if cumTreeLen > threshold, set cumTreeLen to 0
+        */
+
+        /* take care of lonely nodes */
+
+
+
+        while(currentNode) {
+            //Set color
+            if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                && (state->skeletonState->highlightActiveTree)) {
+                    glColor4f(1., 0., 0., 1.);
+            }
+            else
+                glColor4f(currentTree->color.r,
+                          currentTree->color.g,
+                          currentTree->color.b,
+                          currentTree->color.a);
+
+            if(currentNode->isBranchNode) {
+                glColor4f(0., 0., 1., 1.);
+            }
+            else if(currentNode->comment != NULL) {
+                glColor4f(1., 1., 0., 1.);
+            }
+
+            //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
+            glLoadName(currentNode->nodeID + 50);
+            if(state->skeletonState->overrideNodeRadiusBool)
+                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
+            else
+                renderSphere(&(currentNode->position), currentNode->radius, viewportType);
+
+            if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                && (state->skeletonState->highlightActiveTree)) {
+                    glColor4f(1., 0., 0., 1.);
+            }
+            else
+                glColor4f(currentTree->color.r,
+                          currentTree->color.g,
+                          currentTree->color.b,
+                          currentTree->color.a);
+            currentSegment = currentNode->firstSegment;
+            while(currentSegment) {
+                //2 indicates a backward connection, which should not be rendered.
+                if(currentSegment->flag == 2) {
+                    currentSegment = currentSegment->next;
+                    continue;
+                }
+                glLoadName(3);
+                if(state->skeletonState->overrideNodeRadiusBool)
+                    renderCylinder(&(currentSegment->source->position),
+                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position),
+                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                        viewportType);
+                else
+                    renderCylinder(&(currentSegment->source->position),
+                        currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
+                        &(currentSegment->target->position),
+                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                        viewportType);
+
+                //Gets true, if called for slice plane VP
+                if(viewportType == VIEWPORT_ORTHO) {
+                    if(state->skeletonState->showIntersections)
+                        renderSegPlaneIntersection(currentSegment);
+                }
+
+                currentSegment = currentSegment->next;
+
+            }
+            //Render the node description only when option is set.
+            if(state->skeletonState->showNodeIDs) {
+                glColor4f(0., 0., 0., 1.);
+                memset(textBuffer, '\0', 32);
+                sprintf(textBuffer, "%d", currentNode->nodeID);
+                renderText(&(currentNode->position), textBuffer);
+            }
+
+            currentNode = currentNode->next;
+        }
+
+        currentTree = currentTree->next;
+    }
+
+    //Highlight active node
+    if(state->skeletonState->activeNode) {
+        if(state->skeletonState->activeNode->isBranchNode) {
+            glColor4f(0., 0., 1., 0.2);
+        }
+        else if(state->skeletonState->activeNode->comment != NULL) {
+            glColor4f(1., 1., 0., 0.2);
+        }
+        else {
+            glColor4f(1.0, 0., 0., 0.2);
+        }
+
+        glLoadName(state->skeletonState->activeNode->nodeID + 50);
+        glEnable(GL_BLEND);
+        if(state->skeletonState->overrideNodeRadiusBool)
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, viewportType);
+        else
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, viewportType);
+        glDisable(GL_BLEND);
+        //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
+        glColor4f(0., 0., 0., 1.);
+        memset(textBuffer, '\0', 32);
+        sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
+        renderText(&(state->skeletonState->activeNode->position), textBuffer);
+        /*if(state->skeletonState->activeNode->comment) {
+            glPushMatrix();
+            glTranslated(10,10, 10);
+            renderText(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->comment);
+            glPopMatrix();
+        }*/
+
+    }
+    //Restore modelview matrix
+    glPopMatrix();
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    //Stop display list recording
+    glEndList();
+
+    free(textBuffer);
+
+    return tempList;
+
+
+
+
 }

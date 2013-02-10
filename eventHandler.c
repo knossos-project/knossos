@@ -684,6 +684,7 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
                 state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
                 state->skeletonState->viewChanged = TRUE;
+                state->skeletonState->skeletonChanged = TRUE;
             }
         }
         /* Orthogonal VP or outside VP */
@@ -749,6 +750,7 @@ static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound)
                 state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
                 if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
                 state->skeletonState->viewChanged = TRUE;
+                state->skeletonState->skeletonChanged = TRUE;
             }
         }
         /* Orthogonal VP or outside VP */
@@ -1271,7 +1273,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_g:
         if(SDL_GetModState() & KMOD_SHIFT) {
             //For testing issues
-            genTestNodes(10000);
+            genTestNodes(50000);
         }
         break;
     case SDLK_n:

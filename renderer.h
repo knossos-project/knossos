@@ -24,11 +24,11 @@
 
 //static uint32_t setOGLforVP(uint32_t currentVP);
 //static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color);
-static GLuint renderWholeSkeleton(Byte callFlag);
-static GLuint renderSuperCubeSkeleton(Byte callFlag);
-static GLuint renderActiveTreeSkeleton(Byte callFlag);
-static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius);
-static uint32_t renderSphere(Coordinate *pos, float radius);
+static void renderWholeSkeleton(uint32_t viewportType);
+static void renderSuperCubeSkeleton(uint32_t viewportType);
+static void renderActiveTreeSkeleton(uint32_t viewportType);
+static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, uint32_t viewportType);
+static uint32_t renderSphere(Coordinate *pos, float radius, uint32_t viewportType);
 static uint32_t renderText(Coordinate *pos, char *string);
 uint32_t updateDisplayListsSkeleton();
 static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);

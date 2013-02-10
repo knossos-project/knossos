@@ -2176,6 +2176,9 @@ void UI_zoomOrthogonals(float step) {
     int32_t i = 0;
     int32_t triggerMagChange = FALSE;
 
+    //Necessary for LOD
+    state->skeletonState->skeletonChanged = TRUE;
+
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
 
@@ -2545,27 +2548,34 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     it should be sufficient to set the change flags to TRUE */
     if(state->skeletonState->displayListSkeletonSkeletonizerVP) {
         glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
-        state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
+       // state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
     }
     if(state->skeletonState->displayListSkeletonSlicePlaneVP) {
         glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
-        state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
+        //state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
     }
     if(state->skeletonState->displayListView) {
         glDeleteLists(state->skeletonState->displayListView, 1);
-        state->skeletonState->displayListView = 0;
+        //state->skeletonState->displayListView = 0;
     }
     if(state->skeletonState->displayListDataset) {
         glDeleteLists(state->skeletonState->displayListDataset, 1);
-        state->skeletonState->displayListDataset = 0;
+       // state->skeletonState->displayListDataset = 0;
     }
+
+    state->skeletonState->displayListSkeletonSkeletonizerVP = glGenLists(1);
+    state->skeletonState->displayListSkeletonSlicePlaneVP = glGenLists(1);
+    state->skeletonState->displayListView = glGenLists(1);
+    state->skeletonState->displayListDataset = glGenLists(1);
+
+
     /* all display lists have to be rebuilt */
     state->skeletonState->viewChanged = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->datasetChanged = TRUE;
     state->skeletonState->skeletonSliceVPchanged = TRUE;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    //updateDisplayListsSkeleton();
+    updateDisplayListsSkeleton();
 
     //Dont allow viewports to go outside of screen -> scale them down
 

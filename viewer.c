@@ -503,7 +503,7 @@ static uint32_t sliceExtract_standard(Byte *datacube,
                                       struct viewPort *viewPort) {
 
     int32_t i, j;
-
+//return TRUE; remove comment to disable extraction for benchmarking
     switch(viewPort->type) {
         case SLICE_XY:
             for(i = 0; i < state->cubeSliceArea; i++) {

@@ -92,6 +92,10 @@
 #define VIEWPORT_YZ	2
 #define VIEWPORT_SKELETON 3
 #define VIEWPORT_UNDEFINED 4
+/* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
+This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
+values. The XY vp always used. */
+#define VIEWPORT_ORTHO 0
 
 #define X_AXIS 0
 #define Y_AXIS 1
