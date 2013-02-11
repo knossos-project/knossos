@@ -849,7 +849,7 @@ static void renderActiveTreeSkeleton(uint32_t viewportType) {
     else
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    //if(viewportType == VIEWPORT_ORTHO) glEnable(GL_CULL_FACE);
+    if(viewportType == VIEWPORT_ORTHO) glEnable(GL_CULL_FACE);
 
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
@@ -1025,6 +1025,8 @@ static void renderSuperCubeSkeleton(uint32_t viewportType) {
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+    //else glDisable(GL_CULL_FACE);
+
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1251,7 +1253,7 @@ static void renderWholeSkeleton(uint32_t viewportType) {
     else
         glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-//    if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+    //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1300,6 +1302,7 @@ static void renderWholeSkeleton(uint32_t viewportType) {
                           currentTree->color.g,
                           currentTree->color.b,
                           currentTree->color.a);
+
             currentSegment = currentNode->firstSegment;
             while(currentSegment) {
                 //2 indicates a backward connection, which should not be rendered.
@@ -1404,7 +1407,7 @@ uint32_t updateDisplayListsSkeleton() {
 
         /* create new display lists that are up-to-date */
         if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
-            renderWholeSkeleton(VIEWPORT_SKELETON);
+            renderWholeSkeleton2(VIEWPORT_SKELETON);
 
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 renderSuperCubeSkeleton(VIEWPORT_ORTHO);
@@ -1500,8 +1503,8 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
 
     //LOG("dl skeleton: %d", state->skeletonState->displayListSkeletonSkeletonizerVP);
     //LOG("dl slice: %d", state->skeletonState->displayListSkeletonSlicePlaneVP);
-    LOG("screenPxPerDataPx skeleton: %f", state->viewerState->viewPorts[VIEWPORT_SKELETON].screenPxXPerDataPx);
-    LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
+  //  LOG("screenPxPerDataPx skeleton: %f", state->viewerState->viewPorts[VIEWPORT_SKELETON].screenPxXPerDataPx);
+    //LOG("screenPxPerDataPx ortho: %f", state->viewerState->viewPorts[VIEWPORT_ORTHO].screenPxXPerDataPx);
 
     if(state->viewerState->lightOnOff) {
         /* Configure light */
@@ -2240,9 +2243,9 @@ static uint32_t renderCylinder(Coordinate *base,
     if(!(state->skeletonState->displayMode & DSP_LINES_POINTS)) {
 
         if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-            * baseRadius < 2.f)
+            * baseRadius < 1.f)
            && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-            * topRadius < 2.f)) {
+            * topRadius < 1.f)) {
 
             glBegin(GL_LINES);
                 glVertex3f((float)base->x, (float)base->y, (float)base->z);
@@ -2317,19 +2320,13 @@ static uint32_t renderSphere(Coordinate *pos, float radius, uint32_t viewportTyp
         /* render only a point if the sphere wouldn't be visible anyway */
 
         if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-           * radius > 0.5f) && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+           * radius > 0.0f) && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
            * radius < 3.5f)) {
             glPointSize(2.f);
             glBegin(GL_POINTS);
                 glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
             glEnd();
             glPointSize(1.f);
-        }
-        else if(state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-           * radius < 0.5f) {
-            glBegin(GL_POINTS);
-                glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
-            glEnd();
         }
         else {
             glPushMatrix();
@@ -2339,11 +2336,11 @@ static uint32_t renderSphere(Coordinate *pos, float radius, uint32_t viewportTyp
             gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
             if(radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx  > 100.) {
-                gluSphere(gluSphereObj, radius, 15, 15);
-            }
+                gluSphere(gluSphereObj, radius, 8, 8);
+            }/* do not add to many slices to the spheres until frustum culling is working!
             else if(radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx  > 15.) {
                 gluSphere(gluSphereObj, radius, 8, 8);
-            }
+            }*/
             else {
                 gluSphere(gluSphereObj, radius, 4, 4);
             }
@@ -2808,32 +2805,37 @@ uint32_t setRotationState(int setTo){
 
 
 /*
- * Crazy fast and simplified renderer that uses frustum culling and
- * a level-of-detail implementation to speed things up. It is still based
+ * Crazy fast and simplified tree rendering that uses frustum culling and
+ * a heuristic level-of-detail implementation that exploits the implicit
+ * sorting of the tree node list to avoid a depth first search for the compilation
+ * of a spatial graph that is similar to the true skeleton, but without nodes /
+ * vertices that would not be visible anyway. It is still based
  * on display lists. Replacing these with large batch vertex transfers
  * (see renderer svn branch) should speed up things further.
  */
 
-static GLuint renderWholeSkeleton2(uint32_t viewportType) {
-/* We use a depth first search for each tree and render it while traversing it.
- * This allows us to render only party of the tree without loosing visual quality. */
-
-    /* increases as long as nothing gets rendered */
-    float cumTreeLen;
-
-
+static void renderWholeSkeleton2(uint32_t viewportType) {
     struct treeListElement *currentTree;
-    struct nodeListElement *currentNode;
+    struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
+    floatCoordinate node1, node2;
+    float cumDistToLastRenderedNode;
+
+    uint32_t virtualSegRendered, allowHeuristic;
+    uint32_t skippedCnt = 0;
+    uint32_t renderNode;
 
     char *textBuffer;
     textBuffer = malloc(32);
     memset(textBuffer, '\0', 32);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP)) return;
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
-    if(viewportType) glEnable(GL_CULL_FACE);
+    if(viewportType == VIEWPORT_SKELETON)
+        glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+    else
+        glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
+
+    //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -2846,96 +2848,187 @@ static GLuint renderWholeSkeleton2(uint32_t viewportType) {
     currentTree = state->skeletonState->firstTree;
 
     while(currentTree) {
+
+        lastNode = NULL;
+        lastRenderedNode = NULL;
+        cumDistToLastRenderedNode = 0.f;
+
         currentNode = currentTree->firstNode;
-
-
-        /* start the tree traversal */
-        /*
-        -> start at first node, render it
-        -> push all target nodes on stack
-        -> pop node from stack, increase cumTreeLen by their seg distance
-        -> render if cumTreeLen > threshold, set cumTreeLen to 0
-        -> push all target nodes on stack
-        -> pop stack, increase cumTreeLen by their seg distance
-        -> render  if cumTreeLen > threshold, set cumTreeLen to 0
-        */
-
-        /* take care of lonely nodes */
-
-
-
         while(currentNode) {
-            //Set color
-            if((currentTree->treeID == state->skeletonState->activeTree->treeID)
-                && (state->skeletonState->highlightActiveTree)) {
-                    glColor4f(1., 0., 0., 1.);
-            }
-            else
-                glColor4f(currentTree->color.r,
-                          currentTree->color.g,
-                          currentTree->color.b,
-                          currentTree->color.a);
 
-            if(currentNode->isBranchNode) {
-                glColor4f(0., 0., 1., 1.);
-            }
-            else if(currentNode->comment != NULL) {
-                glColor4f(1., 1., 0., 1.);
-            }
+            /* Frustum culling */
+            //add it here
+            virtualSegRendered = FALSE;
+            renderNode = TRUE;
 
-            //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
-            glLoadName(currentNode->nodeID + 50);
-            if(state->skeletonState->overrideNodeRadiusBool)
-                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
-            else
-                renderSphere(&(currentNode->position), currentNode->radius, viewportType);
-
-            if((currentTree->treeID == state->skeletonState->activeTree->treeID)
-                && (state->skeletonState->highlightActiveTree)) {
-                    glColor4f(1., 0., 0., 1.);
-            }
-            else
-                glColor4f(currentTree->color.r,
-                          currentTree->color.g,
-                          currentTree->color.b,
-                          currentTree->color.a);
-            currentSegment = currentNode->firstSegment;
-            while(currentSegment) {
-                //2 indicates a backward connection, which should not be rendered.
-                if(currentSegment->flag == 2) {
+            /* First test whether this node is actually connected to the next,
+            i.e. whether the implicit sorting is not broken here. */
+            allowHeuristic = FALSE;
+            if(currentNode->next) {
+                currentSegment = currentNode->next->firstSegment;
+                while(currentSegment) {
+                    if((currentSegment->target == currentNode) ||
+                       (currentSegment->source == currentNode)) {
+                        /* Connected, heuristic is allowed */
+                        allowHeuristic = TRUE;
+                        break;
+                    }
                     currentSegment = currentSegment->next;
-                    continue;
                 }
-                glLoadName(3);
-                if(state->skeletonState->overrideNodeRadiusBool)
-                    renderCylinder(&(currentSegment->source->position),
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
-                        &(currentSegment->target->position),
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
-                        viewportType);
-                else
-                    renderCylinder(&(currentSegment->source->position),
-                        currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
-                        &(currentSegment->target->position),
-                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
-                        viewportType);
+            }
 
-                //Gets true, if called for slice plane VP
-                if(viewportType == VIEWPORT_ORTHO) {
-                    if(state->skeletonState->showIntersections)
-                        renderSegPlaneIntersection(currentSegment);
+
+            currentSegment = currentNode->firstSegment;
+            while(currentSegment && allowHeuristic) {
+                /* isBranchNode tells you only whether the node is on the branch point stack,
+                 * not whether it is actually a node connected to more than two other nodes! */
+                if((currentSegment->target == lastNode)
+                    || (currentSegment->source == lastNode)
+                    &&
+                    (!(
+                       (currentNode->comment)
+                       || (currentNode->isBranchNode)
+                       || (currentNode->numSegs > 2)
+                       || (currentNode->radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx > 5.f)))) {
+
+                    /* Node is a candidate for LOD culling */
+
+                    /* Do we really skip this node? Test cum dist. to last rendered node! */
+                    node1.x = (float)currentNode->position.x;
+                    node1.y = (float)currentNode->position.y;
+                    node1.z = (float)currentNode->position.z;
+
+                    node2.x = (float)lastNode->position.x - node1.x;
+                    node2.y = (float)lastNode->position.y - node1.y;
+                    node2.z = (float)lastNode->position.z - node1.z;;
+
+                    cumDistToLastRenderedNode += (sqrtf(scalarProduct(&node2, &node2))
+                        * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx);
+
+                        //LOG("cumDistToLastRenderedNode: %f", cumDistToLastRenderedNode);
+                        //LOG(" state->viewerState->cumDistRenderThres: %f",  state->viewerState->cumDistRenderThres);
+
+                    if(cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
+
+
+                        /* We can safely break early */
+                        break;
+
+                    }
+                    else {
+                        renderNode = FALSE;
+                        /* We can safely break early */
+                        break;
+                    }
                 }
-
                 currentSegment = currentSegment->next;
+            }
 
+            if(renderNode) {
+
+                cumDistToLastRenderedNode = 0.f;
+
+                if(lastNode != lastRenderedNode) {
+                    virtualSegRendered = TRUE;
+                    /* We need a "virtual" segment now */
+                    /* This will probably always be a line, we ignore the pathological cases*/
+                    renderCylinder(&(lastRenderedNode->position),
+                                   lastRenderedNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   &(currentNode->position),
+                                   currentNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   viewportType);
+                }
+
+                /* Second pass over segments needed... But only if node is actually rendered! */
+                currentSegment = currentNode->firstSegment;
+                while(currentSegment) {
+
+                    //2 indicates a backward connection, which should not be rendered.
+                    if(currentSegment->flag == 2){
+                        currentSegment = currentSegment->next;
+                        continue;
+                    }
+
+                    if(virtualSegRendered
+                       && ((currentSegment->source == lastNode)
+                       || (currentSegment->target == lastNode))) {
+                        currentSegment = currentSegment->next;
+                        continue;
+                       }
+
+
+                    if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                        && (state->skeletonState->highlightActiveTree)) {
+                            glColor4f(1., 0., 0., 1.);
+                    }
+                    else
+                        glColor4f(currentTree->color.r,
+                                  currentTree->color.g,
+                                  currentTree->color.b,
+                                  currentTree->color.a);
+
+
+                    glLoadName(3);
+                    if(state->skeletonState->overrideNodeRadiusBool)
+                        renderCylinder(&(currentSegment->source->position),
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                            &(currentSegment->target->position),
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                            viewportType);
+                    else
+                        renderCylinder(&(currentSegment->source->position),
+                            currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
+                            &(currentSegment->target->position),
+                            currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                            viewportType);
+
+                    if(viewportType == VIEWPORT_ORTHO) {
+                        if(state->skeletonState->showIntersections)
+                            renderSegPlaneIntersection(currentSegment);
+                    }
+
+
+                    currentSegment = currentSegment->next;
+
+                }
+
+                //Set color
+                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                    && (state->skeletonState->highlightActiveTree)) {
+                        glColor4f(1., 0., 0., 1.);
+                }
+                else
+                    glColor4f(currentTree->color.r,
+                              currentTree->color.g,
+                              currentTree->color.b,
+                              currentTree->color.a);
+
+                if(currentNode->isBranchNode) {
+                    glColor4f(0., 0., 1., 1.);
+                }
+                else if(currentNode->comment != NULL) {
+                    glColor4f(1., 1., 0., 1.);
+                }
+
+                //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
+                glLoadName(currentNode->nodeID + 50);
+                if(state->skeletonState->overrideNodeRadiusBool)
+                    renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, viewportType);
+                else
+                    renderSphere(&(currentNode->position), currentNode->radius, viewportType);
+
+                //Render the node description only when option is set.
+                if(state->skeletonState->showNodeIDs) {
+                    glColor4f(0., 0., 0., 1.);
+                    memset(textBuffer, '\0', 32);
+                    sprintf(textBuffer, "%d", currentNode->nodeID);
+                    renderText(&(currentNode->position), textBuffer);
+                }
+                lastRenderedNode = currentNode;
             }
-            //Render the node description only when option is set.
-            if(state->skeletonState->showNodeIDs) {
-                glColor4f(0., 0., 0., 1.);
-                memset(textBuffer, '\0', 32);
-                sprintf(textBuffer, "%d", currentNode->nodeID);
-                renderText(&(currentNode->position), textBuffer);
-            }
+            else skippedCnt++;
+
+            lastNode = currentNode;
 
             currentNode = currentNode->next;
         }
@@ -2967,6 +3060,7 @@ static GLuint renderWholeSkeleton2(uint32_t viewportType) {
         memset(textBuffer, '\0', 32);
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
         renderText(&(state->skeletonState->activeNode->position), textBuffer);
+
         /*if(state->skeletonState->activeNode->comment) {
             glPushMatrix();
             glTranslated(10,10, 10);
@@ -2983,10 +3077,8 @@ static GLuint renderWholeSkeleton2(uint32_t viewportType) {
     glEndList();
 
     free(textBuffer);
+float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
+    LOG("percent nodes skipped in this DL: %f", tmp);
 
-    return tempList;
-
-
-
-
+    return;
 }

@@ -262,6 +262,7 @@ static struct nodeListElement *addNodeListElement(
     newElement->radius = radius;
     //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
     //Take the provided nodeID.
+    newElement->numSegs = 0;
     newElement->nodeID = nodeID;
     newElement->isBranchNode = FALSE;
     newElement->createdInMag = inMag;
@@ -524,6 +525,10 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
 
     sourceSeg->reverseSegment->reverseSegment = sourceSeg;
 
+    /* numSegs counts forward AND backward segments!!! */
+    sourceNode->numSegs++;
+    targetNode->numSegs++;
+
     /*
      * Add the segment to the skeleton DC structure
     */
@@ -573,6 +578,10 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
         unlockSkeleton(FALSE);
         return FALSE;
     }
+
+    /* numSegs counts forward AND backward segments!!! */
+    segToDel->source->numSegs--;
+    segToDel->target->numSegs--;
 
 
     //Out of skeleton structure

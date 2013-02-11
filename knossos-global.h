@@ -912,6 +912,8 @@ struct viewerState {
     //YZ can't be different to XZ because of the intrinsic properties of the SBF-SEM.
     float voxelXYtoZRatio;
 
+    float cumDistRenderThres;
+
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
     uint32_t workMode;
     int superCubeChanged;
@@ -1001,6 +1003,9 @@ struct nodeListElement {
     int32_t timestamp;
 
     struct commentListElement *comment;
+
+    /* counts forward AND backward segments!!! */
+    int32_t numSegs;
 
     int32_t nodeID;
     Coordinate position;

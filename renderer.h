@@ -25,6 +25,7 @@
 //static uint32_t setOGLforVP(uint32_t currentVP);
 //static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color);
 static void renderWholeSkeleton(uint32_t viewportType);
+static void renderWholeSkeleton2(uint32_t viewportType);
 static void renderSuperCubeSkeleton(uint32_t viewportType);
 static void renderActiveTreeSkeleton(uint32_t viewportType);
 static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, uint32_t viewportType);
