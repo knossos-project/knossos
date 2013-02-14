@@ -37,3 +37,6 @@ static uint32_t renderViewportBorders(uint32_t currentVP);
 static uint32_t updateRotationStateMatrix(float M1[16], float M2[16]);
 static uint32_t rotateSkeletonViewport();
 static uint32_t setRotationState(int setTo);
+static uint32_t sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType);
+static uint32_t updateFrustumClippingPlanes(uint32_t viewportType);
+

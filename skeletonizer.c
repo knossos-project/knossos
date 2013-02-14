@@ -355,6 +355,8 @@ int32_t addNode(int32_t targetRevision,
         tempTree->firstNode = tempNode;
     }
 
+    updateCircRadius(tempNode);
+
     if(time == -1) {
         time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks();
     }
@@ -442,8 +444,10 @@ int32_t editNode(int32_t targetRevision,
         SET_COORDINATE(node->position, newXPos, newYPos, newZPos);
     }
 
-    if(newRadius != 0.)
+    if(newRadius != 0.) {
         node->radius = newRadius;
+    }
+
     node->createdInMag = inMag;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
@@ -453,6 +457,7 @@ int32_t editNode(int32_t targetRevision,
         addSegmentToSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
     }
+    updateCircRadius(node);
 
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
@@ -478,9 +483,25 @@ int32_t editNode(int32_t targetRevision,
     return TRUE;
 }
 
+uint32_t updateCircRadius(struct nodeListElement *node) {
+    struct segmentListElement *currentSegment = NULL;
+    node->circRadius = node->radius;
+
+    /* Any segment longer than the current circ radius?*/
+    currentSegment = node->firstSegment;
+    while(currentSegment) {
+        if(currentSegment->length > node->circRadius)
+            node->circRadius = currentSegment->length;
+        currentSegment = currentSegment->next;
+    }
+
+    return TRUE;
+}
+
 uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
     struct nodeListElement *targetNode, *sourceNode;
     struct segmentListElement *sourceSeg;
+    floatCoordinate node1, node2;
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
@@ -529,6 +550,18 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     sourceNode->numSegs++;
     targetNode->numSegs++;
 
+    /* Do we really skip this node? Test cum dist. to last rendered node! */
+    node1.x = (float)sourceNode->position.x;
+    node1.y = (float)sourceNode->position.y;
+    node1.z = (float)sourceNode->position.z;
+
+    node2.x = (float)targetNode->position.x - node1.x;
+    node2.y = (float)targetNode->position.y - node1.y;
+    node2.z = (float)targetNode->position.z - node1.z;;
+
+    sourceSeg->length = sourceSeg->reverseSegment->length
+        = sqrtf(scalarProduct(&node2, &node2));
+
     /*
      * Add the segment to the skeleton DC structure
     */
@@ -536,6 +569,8 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     addSegmentToSkeletonStruct(sourceSeg);
 
     // printf("added segment for nodeID %d: %d, %d, %d -> nodeID %d: %d, %d, %d\n", sourceNode->nodeID, sourceNode->position.x + 1, sourceNode->position.y + 1, sourceNode->position.z + 1, targetNode->nodeID, targetNode->position.x + 1, targetNode->position.y + 1, targetNode->position.z + 1);
+
+    updateCircRadius(sourceNode);
 
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
@@ -606,12 +641,18 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
             segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
     }
 
+    /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
+    segToDel->length = 0.f;
+    updateCircRadius(segToDel->source);
+
     free(segToDel);
     state->skeletonState->totalSegmentElements--;
 
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->unsavedChanges = TRUE;
     state->skeletonState->skeletonRevision++;
+
+
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("brdd", KIKI_DELSEGMENT, sourceNodeID, targetNodeID))

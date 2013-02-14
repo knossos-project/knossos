@@ -1532,6 +1532,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     state->skeletonState->viewChanged = TRUE;
     if(state->skeletonState->viewChanged) {
         state->skeletonState->viewChanged = FALSE;
+        state->skeletonState->skeletonChanged = TRUE;
         if(state->skeletonState->displayListView) glDeleteLists(state->skeletonState->displayListView, 1);
         state->skeletonState->displayListView = glGenLists(1);
         /* COMPILE_AND_EXECUTE because we grab the rotation matrix inside! */
@@ -1728,6 +1729,8 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
                 break;
         }
 
+
+
         /*
          * Draw the slice planes for orientation inside the data stack
          */
@@ -1737,6 +1740,11 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
         /* single operation! TDitem */
         glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
         glTranslatef(0.5,0.5,0.5);
+
+        /* Frustum culling lags by one frame, the clipping planes should
+        actually be updated BEFORE the geometry DL is built. */
+        updateFrustumClippingPlanes(VIEWPORT_SKELETON);
+
         glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
 
         glEnable(GL_TEXTURE_2D);
@@ -2811,15 +2819,16 @@ uint32_t setRotationState(int setTo){
  * of a spatial graph that is similar to the true skeleton, but without nodes /
  * vertices that would not be visible anyway. It is still based
  * on display lists. Replacing these with large batch vertex transfers
- * (see renderer svn branch) should speed up things further.
+ * (see renderer svn branch) should speed up things further. Ugly code,
+ * not nice to read, should be simplified...
  */
 
 static void renderWholeSkeleton2(uint32_t viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
-    floatCoordinate node1, node2;
     float cumDistToLastRenderedNode;
+    floatCoordinate currNodePos;
 
     uint32_t virtualSegRendered, allowHeuristic;
     uint32_t skippedCnt = 0;
@@ -2858,6 +2867,18 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
             /* Frustum culling */
             //add it here
+
+            /* Should be stored, mem <-> cpu tradeoff  */
+            currNodePos.x = (float)currentNode->position.x;
+            currNodePos.y = (float)currentNode->position.y;
+            currNodePos.z = (float)currentNode->position.z;
+
+            if(!sphereInFrustum(currNodePos, currentNode->circRadius, viewportType)) {
+                currentNode = currentNode->next;
+                skippedCnt++;
+                continue;
+            }
+
             virtualSegRendered = FALSE;
             renderNode = TRUE;
 
@@ -2894,16 +2915,8 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
                     /* Node is a candidate for LOD culling */
 
                     /* Do we really skip this node? Test cum dist. to last rendered node! */
-                    node1.x = (float)currentNode->position.x;
-                    node1.y = (float)currentNode->position.y;
-                    node1.z = (float)currentNode->position.z;
-
-                    node2.x = (float)lastNode->position.x - node1.x;
-                    node2.y = (float)lastNode->position.y - node1.y;
-                    node2.z = (float)lastNode->position.z - node1.z;;
-
-                    cumDistToLastRenderedNode += (sqrtf(scalarProduct(&node2, &node2))
-                        * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx);
+                    cumDistToLastRenderedNode += currentSegment->length
+                        * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx;
 
                         //LOG("cumDistToLastRenderedNode: %f", cumDistToLastRenderedNode);
                         //LOG(" state->viewerState->cumDistRenderThres: %f",  state->viewerState->cumDistRenderThres);
@@ -3077,8 +3090,144 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
     glEndList();
 
     free(textBuffer);
-float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
+    float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
     LOG("percent nodes skipped in this DL: %f", tmp);
 
     return;
+}
+
+/* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
+static uint32_t updateFrustumClippingPlanes(uint32_t viewportType) {
+
+    float   frustum[6][4];
+    float   proj[16];
+    float   modl[16];
+    float   clip[16];
+    float   t;
+
+    /* Get the current PROJECTION matrix from OpenGL */
+    glGetFloatv( GL_PROJECTION_MATRIX, proj );
+
+    /* Get the current MODELVIEW matrix from OpenGL */
+    glGetFloatv( GL_MODELVIEW_MATRIX, modl );
+
+    /* Combine the two matrices (multiply projection by modelview) */
+    clip[ 0] = modl[ 0] * proj[ 0] + modl[ 1] * proj[ 4] + modl[ 2] * proj[ 8] + modl[ 3] * proj[12];
+    clip[ 1] = modl[ 0] * proj[ 1] + modl[ 1] * proj[ 5] + modl[ 2] * proj[ 9] + modl[ 3] * proj[13];
+    clip[ 2] = modl[ 0] * proj[ 2] + modl[ 1] * proj[ 6] + modl[ 2] * proj[10] + modl[ 3] * proj[14];
+    clip[ 3] = modl[ 0] * proj[ 3] + modl[ 1] * proj[ 7] + modl[ 2] * proj[11] + modl[ 3] * proj[15];
+
+    clip[ 4] = modl[ 4] * proj[ 0] + modl[ 5] * proj[ 4] + modl[ 6] * proj[ 8] + modl[ 7] * proj[12];
+    clip[ 5] = modl[ 4] * proj[ 1] + modl[ 5] * proj[ 5] + modl[ 6] * proj[ 9] + modl[ 7] * proj[13];
+    clip[ 6] = modl[ 4] * proj[ 2] + modl[ 5] * proj[ 6] + modl[ 6] * proj[10] + modl[ 7] * proj[14];
+    clip[ 7] = modl[ 4] * proj[ 3] + modl[ 5] * proj[ 7] + modl[ 6] * proj[11] + modl[ 7] * proj[15];
+
+    clip[ 8] = modl[ 8] * proj[ 0] + modl[ 9] * proj[ 4] + modl[10] * proj[ 8] + modl[11] * proj[12];
+    clip[ 9] = modl[ 8] * proj[ 1] + modl[ 9] * proj[ 5] + modl[10] * proj[ 9] + modl[11] * proj[13];
+    clip[10] = modl[ 8] * proj[ 2] + modl[ 9] * proj[ 6] + modl[10] * proj[10] + modl[11] * proj[14];
+    clip[11] = modl[ 8] * proj[ 3] + modl[ 9] * proj[ 7] + modl[10] * proj[11] + modl[11] * proj[15];
+
+    clip[12] = modl[12] * proj[ 0] + modl[13] * proj[ 4] + modl[14] * proj[ 8] + modl[15] * proj[12];
+    clip[13] = modl[12] * proj[ 1] + modl[13] * proj[ 5] + modl[14] * proj[ 9] + modl[15] * proj[13];
+    clip[14] = modl[12] * proj[ 2] + modl[13] * proj[ 6] + modl[14] * proj[10] + modl[15] * proj[14];
+    clip[15] = modl[12] * proj[ 3] + modl[13] * proj[ 7] + modl[14] * proj[11] + modl[15] * proj[15];
+
+    /* Extract the numbers for the RIGHT plane */
+    frustum[0][0] = clip[ 3] - clip[ 0];
+    frustum[0][1] = clip[ 7] - clip[ 4];
+    frustum[0][2] = clip[11] - clip[ 8];
+    frustum[0][3] = clip[15] - clip[12];
+
+    /* Normalize the result */
+    t = sqrt( frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2] );
+    frustum[0][0] /= t;
+    frustum[0][1] /= t;
+    frustum[0][2] /= t;
+    frustum[0][3] /= t;
+
+    /* Extract the numbers for the LEFT plane */
+    frustum[1][0] = clip[ 3] + clip[ 0];
+    frustum[1][1] = clip[ 7] + clip[ 4];
+    frustum[1][2] = clip[11] + clip[ 8];
+    frustum[1][3] = clip[15] + clip[12];
+
+    /* Normalize the result */
+    t = sqrt( frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2] * frustum[1][2] );
+    frustum[1][0] /= t;
+    frustum[1][1] /= t;
+    frustum[1][2] /= t;
+    frustum[1][3] /= t;
+
+    /* Extract the BOTTOM plane */
+    frustum[2][0] = clip[ 3] + clip[ 1];
+    frustum[2][1] = clip[ 7] + clip[ 5];
+    frustum[2][2] = clip[11] + clip[ 9];
+    frustum[2][3] = clip[15] + clip[13];
+
+    /* Normalize the result */
+    t = sqrt( frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2] * frustum[2][2] );
+    frustum[2][0] /= t;
+    frustum[2][1] /= t;
+    frustum[2][2] /= t;
+    frustum[2][3] /= t;
+
+    /* Extract the TOP plane */
+    frustum[3][0] = clip[ 3] - clip[ 1];
+    frustum[3][1] = clip[ 7] - clip[ 5];
+    frustum[3][2] = clip[11] - clip[ 9];
+    frustum[3][3] = clip[15] - clip[13];
+
+    /* Normalize the result */
+    t = sqrt( frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2] );
+    frustum[3][0] /= t;
+    frustum[3][1] /= t;
+    frustum[3][2] /= t;
+    frustum[3][3] /= t;
+
+    /* Extract the FAR plane */
+    frustum[4][0] = clip[ 3] - clip[ 2];
+    frustum[4][1] = clip[ 7] - clip[ 6];
+    frustum[4][2] = clip[11] - clip[10];
+    frustum[4][3] = clip[15] - clip[14];
+
+    /* Normalize the result */
+    t = sqrt( frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2] );
+    frustum[4][0] /= t;
+    frustum[4][1] /= t;
+    frustum[4][2] /= t;
+    frustum[4][3] /= t;
+
+    /* Extract the NEAR plane */
+    frustum[5][0] = clip[ 3] + clip[ 2];
+    frustum[5][1] = clip[ 7] + clip[ 6];
+    frustum[5][2] = clip[11] + clip[10];
+    frustum[5][3] = clip[15] + clip[14];
+
+    /* Normalize the result */
+    t = sqrt( frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2] );
+    frustum[5][0] /= t;
+    frustum[5][1] /= t;
+    frustum[5][2] /= t;
+    frustum[5][3] /= t;
+
+
+    memcpy(state->viewerState->viewPorts[viewportType].frustum,
+           frustum, sizeof(frustum));
+
+    return TRUE;
+}
+
+
+/* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
+static uint32_t sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType){
+   int p;
+
+   for( p = 0; p < 6; p++ )
+      if( state->viewerState->viewPorts[viewportType].frustum[p][0]
+         * pos.x + state->viewerState->viewPorts[viewportType].frustum[p][1]
+         * pos.y + state->viewerState->viewPorts[viewportType].frustum[p][2]
+         * pos.z + state->viewerState->viewPorts[viewportType].frustum[p][3]
+         <= -radius )
+         return FALSE;
+   return TRUE;
 }

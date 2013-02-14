@@ -836,7 +836,10 @@ struct viewPort {
 
     struct nodeListElement *draggedNode;
 
-    GLuint displayList;
+    /* Stores the current view frustum planes */
+    float frustum[6][4];
+
+    GLuint displayList; // not used anymore?
 
     //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
     //would result in a data pixel movement
@@ -1007,6 +1010,10 @@ struct nodeListElement {
     /* counts forward AND backward segments!!! */
     int32_t numSegs;
 
+    /* circumsphere radius - max. of length of all segments and node radius.
+    Used for frustum culling */
+    float circRadius;
+
     int32_t nodeID;
     Coordinate position;
     int32_t isBranchNode;
@@ -1023,6 +1030,8 @@ struct segmentListElement {
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
     int32_t flag;
+
+    float length;
 
     char *comment;
 
@@ -1549,6 +1558,9 @@ uint32_t updateSkeletonState();
 int32_t updateTreeColors();
 int32_t nextCommentlessNode();
 int32_t previousCommentlessNode();
+
+
+uint32_t updateCircRadius(struct nodeListElement *node);
 
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
 //uint32_t saveNMLSkeleton();
