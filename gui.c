@@ -456,6 +456,8 @@ void createSyncOptionsWin() {
     AG_WindowSetBottomBorder(state->viewerState->ag->syncOptWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->syncOptWin, "Synchronization Settings");
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
+    state->viewerState->ag->syncOptWin->hMin = 120;
+    state->viewerState->ag->syncOptWin->wMin = 200;
 
     state->viewerState->ag->syncOptLabel = AG_LabelNew(state->viewerState->ag->syncOptWin, 0, NULL);
     {
@@ -501,7 +503,9 @@ void createSaveOptionsWin() {
         AG_WindowSetSideBorders(win, 3);
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Data Saving Options");
-            AG_WindowSetGeometry(win, 618, 348, 200, 80);
+        AG_WindowSetGeometry(win, 618, 348, 200, 80);
+        win->hMin = 80;
+        win->wMin = 200;
 
         AG_CheckboxNewInt(win, 0, "Auto-Saving", &state->skeletonState->autoSaveBool);
 
@@ -1042,7 +1046,8 @@ void createConsoleWin() {
     AG_WindowSetBottomBorder(state->viewerState->ag->consoleWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->consoleWin, "log");
     AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
-
+    state->viewerState->ag->consoleWin->hMin = 129;
+    state->viewerState->ag->consoleWin->wMin = 421;
     state->viewerState->ag->agConsole = AG_ConsoleNew(state->viewerState->ag->consoleWin, AG_CONSOLE_EXPAND|AG_CONSOLE_AUTOSCROLL);
     AG_ConsoleSetFont (state->viewerState->ag->agConsole, monospace);
 
@@ -1078,6 +1083,8 @@ void createViewPortPrefWin() {
     AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
+    state->viewerState->ag->viewPortPrefWin->wMin = 497;
+    state->viewerState->ag->viewPortPrefWin->hMin = 317;
 
     /* Create notebook with tabs in window */
     tabs = AG_NotebookNew(state->viewerState->ag->viewPortPrefWin, AG_NOTEBOOK_EXPAND);
@@ -1443,6 +1450,8 @@ void createCommentsWin() {
         AG_WindowSetBottomBorder(win, 3);
         AG_WindowSetCaption(win, "Comment Shortcuts");
         AG_WindowSetGeometry(win, 628, 543, 250, 167);
+        win->hMin = 167;
+        win->wMin = 250;
 
         box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
@@ -3555,6 +3564,10 @@ remote port
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"vpSettingsVPPosSiz", NULL);
     {
         memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->ag->showPosSizButtonsCheckbox->state);
+        xmlNewProp(currentXMLNode, BAD_CAST"showPosSizButtonsCheckbox", attrString);
+
+        memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x);
         xmlNewProp(currentXMLNode, BAD_CAST"VP_XY_x", attrString);
 
@@ -3970,6 +3983,10 @@ static void UI_loadSettings() {
                 state->skeletonState->rotateAroundActiveNode = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"vpSettingsVPPosSiz")) {
+
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showPosSizButtonsCheckbox");
+            if(attribute)
+                state->viewerState->ag->showPosSizButtonsCheckbox->state = atoi((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_XY_x");
             if(attribute)
                 state->viewerState->viewPorts[VIEWPORT_XY].upperLeftCorner.x = atoi((char *)attribute);
@@ -4416,19 +4433,19 @@ static void resizeWindows() {
     win = state->viewerState->ag->tracingTimeWin;
     if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->commentsWin;
-    if(win) { AG_WindowSetGeometry(win, -1, -1, 250, 167); }
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->navOptWin;
     if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->syncOptWin;
-    if(win) { AG_WindowSetGeometry(win, -1, -1, 200, 120); }
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->viewPortPrefWin;
     if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->saveOptWin;
-    if(win) { AG_WindowSetGeometry(win, -1, -1, 200, 80); }
+    if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->navWin;
     if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->consoleWin;
-    if(win) AG_WindowSetGeometry(win, -1, -1, 421, 129);
+    if(win) AG_WindowSetGeometry(win, -1, -1, -1, -1);
     win = state->viewerState->ag->dataSetStatsWin;
     if(win) { AG_WindowSetGeometry(win, -1, -1, -1, -1); }
     win = state->viewerState->ag->setDynRangeWin;
