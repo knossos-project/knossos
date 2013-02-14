@@ -52,7 +52,7 @@ Coordinate *Coordinate::parseRawCoordinateString(char *string) {
 
     if(!(extractedCoords = (Coordinate *)malloc(sizeof(Coordinate)))) {
         LOG("Out of memory");
-        _Exit(FALSE);
+        _Exit(false);
     }
 
     result = strtok(coordStr, delims);

@@ -195,16 +195,16 @@ static void updateGuiconfig() {
     state->viewerState->gui->totalTrees = state->skeletonState->treeElements;
     state->viewerState->gui->totalNodes = state->skeletonState->totalNodeElements;
     if(state->skeletonState->totalNodeElements == 0) {
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, FALSE);
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, FALSE);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, false);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, false);
         state->viewerState->gui->activeNodeID = 0;
         state->viewerState->gui->activeNodeCoord.x = 0;
         state->viewerState->gui->activeNodeCoord.y = 0;
         state->viewerState->gui->activeNodeCoord.z = 0;
     }
     else {
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, TRUE);
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, TRUE);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, true);
+        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, true);
     }
 
     if(state->skeletonState->activeNode) {
@@ -343,7 +343,7 @@ void MainWindow::showSplashScreen() {
 
 bool MainWindow::initGUI() {
     /* set the window caption */
-    //updateTitlebar(FALSE);
+    //updateTitlebar(false);
 
     state->viewerState->gui->oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
@@ -445,13 +445,13 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
         if(hit == NULL) {
             LOG("Cannot find a path separator char in %s\n", path);
-            return FALSE;
+            return false;
         }
 
         baseLen = (int32_t)(hit - path);
         if(baseLen > 2047) {
             LOG("Path too long\n");
-            return FALSE;
+            return false;
         }
 
         strncpy(target, path, baseLen);
@@ -462,11 +462,11 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 }
 
 
-uint32_t MainWindow::addRecentFile(char *path, uint32_t pos){return FALSE;}
+bool MainWindow::addRecentFile(char *path, uint32_t pos){return false;}
 
 
 void MainWindow::UI_saveSkeleton(int32_t increment){
-
+    /*
     //create directory if it does not exist
     DIR *skelDir;
     cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
@@ -496,7 +496,7 @@ void MainWindow::UI_saveSkeleton(int32_t increment){
     }
 
     WRAP_saveSkeleton();
-
+    */
 }
 
 void MainWindow::UI_saveSettings(){
@@ -526,7 +526,7 @@ void MainWindow::loadSkeleton(){
 
 void MainWindow::UI_zoomOrthogonals(float step){
     int32_t i = 0;
-        int32_t triggerMagChange = FALSE;
+        int32_t triggerMagChange = false;
 
         for(i = 0; i < state->viewerState->numberViewports; i++) {
             if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
@@ -957,8 +957,8 @@ void MainWindow::clearSkeletonSlot()
     QMessageBox *prompt = new QMessageBox(this);
 
 
-    Skeletonizer::clearSkeleton(CHANGE_MANUAL, FALSE);
-    updateTitlebar(FALSE);
+    Skeletonizer::clearSkeleton(CHANGE_MANUAL, false);
+    updateTitlebar(false);
 }
 
 /* view menu functionality */

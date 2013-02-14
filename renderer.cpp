@@ -140,8 +140,8 @@ static uint32_t renderText(Coordinate *pos, char *string) {
 
 static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
 
-    if(!state->skeletonState->showIntersections) return TRUE;
-    if(state->skeletonState->displayMode & DSP_LINES_POINTS) return TRUE;
+    if(!state->skeletonState->showIntersections) return true;
+    if(state->skeletonState->displayMode & DSP_LINES_POINTS) return true;
 
     float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
     int32_t i, distToCurrPos;
@@ -438,7 +438,7 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ))) {
         LOG("Wrong VP type given for renderOrthogonalVP() call.");
-        return FALSE;
+        return false;
     }
 
     /* probably not needed TDitem
@@ -893,9 +893,9 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
          // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
 
-        state->skeletonState->viewChanged = TRUE;
+        state->skeletonState->viewChanged = true;
         if(state->skeletonState->viewChanged) {
-            state->skeletonState->viewChanged = FALSE;
+            state->skeletonState->viewChanged = false;
             if(state->skeletonState->displayListView) glDeleteLists(state->skeletonState->displayListView, 1);
             state->skeletonState->displayListView = glGenLists(1);
             // COMPILE_AND_EXECUTE because we grab the rotation matrix inside!
@@ -1262,7 +1262,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
         if(state->skeletonState->datasetChanged) {
 
-            state->skeletonState->datasetChanged = FALSE;
+            state->skeletonState->datasetChanged = false;
             if(state->skeletonState->displayListDataset) glDeleteLists(state->skeletonState->displayListDataset, 1);
             state->skeletonState->displayListDataset = glGenLists(1);
             glNewList(state->skeletonState->displayListDataset, GL_COMPILE);
@@ -1429,7 +1429,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
         renderViewportBorders(currentVP);
 
-        return TRUE;
+        return true;
 }
 
 uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width) {
@@ -1452,7 +1452,7 @@ uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32
 
     glSelectBuffer(8192, selectionBuffer);
 
-    state->viewerState->selectModeFlag = TRUE;
+    state->viewerState->selectModeFlag = true;
 
     glRenderMode(GL_SELECT);
 
@@ -1517,12 +1517,12 @@ uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32
         ptr += names + 2;
     }
 
-    state->viewerState->selectModeFlag = FALSE;
+    state->viewerState->selectModeFlag = false;
     if(ptrName) {
         return *ptrName - 50;
     }
     else {
-        return FALSE;
+        return false;
     }
 }
 
@@ -1929,7 +1929,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     struct skeletonDCsegment *firstRenderedSkeletonDCsegment;
     struct skeletonDCsegment *currentSkeletonDCsegmentSearch;
 
-    Byte rendered = FALSE;
+    Byte rendered = false;
 
     firstRenderedSkeletonDCsegment = (skeletonDCsegment*)malloc(sizeof(struct skeletonDCsegment));
     memset(firstRenderedSkeletonDCsegment, '\0', sizeof(struct skeletonDCsegment));
@@ -2006,7 +2006,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                 firstRenderedSkeletonDCsegment->segment = (struct segmentListElement *)currentSkeletonDCsegment;
                             }
                             else {
-                                rendered = FALSE;
+                                rendered = false;
                                 currentSkeletonDCsegmentSearch = firstRenderedSkeletonDCsegment;
                                 //Check all segments in the current SC if they were rendered...
                                 /* this adds O(n^2) :( ) */
@@ -2014,13 +2014,13 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
                                     //Already rendered, skip this
                                     if(((struct skeletonDCsegment *)currentSkeletonDCsegmentSearch->segment) == currentSkeletonDCsegment) {
                                         //currentSkeletonDCsegmentSearch = currentSkeletonDCsegmentSearch->next;
-                                        rendered = TRUE;
+                                        rendered = true;
                                         break;
                                     }
                                     currentSkeletonDCsegmentSearch = currentSkeletonDCsegmentSearch->next;
                                 }*/
                                 //So render it and add a new element to the list of rendered segments
-                                if(rendered == FALSE) {
+                                if(rendered == false) {
                                     //Set color
                                     if((currentSkeletonDCsegment->segment->source->correspondingTree == state->skeletonState->activeTree)
                                         && (state->skeletonState->highlightActiveTree))
@@ -2303,9 +2303,9 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
 static uint32_t updateDisplayListsSkeleton() {
 
     if(state->skeletonState->skeletonChanged) {
-        state->skeletonState->skeletonChanged = FALSE;
-        state->viewerState->superCubeChanged = FALSE;
-        state->skeletonState->skeletonSliceVPchanged = FALSE;
+        state->skeletonState->skeletonChanged = false;
+        state->viewerState->superCubeChanged = false;
+        state->skeletonState->skeletonSliceVPchanged = false;
 
         /* clean up the old display lists */
         if(state->skeletonState->displayListSkeletonSkeletonizerVP) {
@@ -2320,30 +2320,30 @@ static uint32_t updateDisplayListsSkeleton() {
         /* create new display lists that are up-to-date */
         if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderWholeSkeleton(FALSE);
+                renderWholeSkeleton(false);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
                     //renderSuperCubeSkeleton(0);
-                    renderWholeSkeleton(FALSE);
+                    renderWholeSkeleton(false);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(FALSE);
-                    renderWholeSkeleton(FALSE);
+                    //renderSuperCubeSkeleton(false);
+                    renderWholeSkeleton(false);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
             state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(TRUE);
+                renderSuperCubeSkeleton(true);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
                 if(state->skeletonState->showIntersections)
                     state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        //renderSuperCubeSkeleton(FALSE);
-                        renderWholeSkeleton(FALSE);
+                        //renderSuperCubeSkeleton(false);
+                        renderWholeSkeleton(false);
 
                 else state->skeletonState->displayListSkeletonSlicePlaneVP =
                     state->skeletonState->displayListSkeletonSkeletonizerVP;
@@ -2365,7 +2365,7 @@ static uint32_t updateDisplayListsSkeleton() {
     }
 
     if(state->viewerState->superCubeChanged) {
-        state->viewerState->superCubeChanged = FALSE;
+        state->viewerState->superCubeChanged = false;
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
             glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
@@ -2379,14 +2379,14 @@ static uint32_t updateDisplayListsSkeleton() {
             if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
                     //renderSuperCubeSkeleton(0);
-                    renderWholeSkeleton(FALSE);
+                    renderWholeSkeleton(false);
 
             }
         }
     }
 
     if(state->skeletonState->skeletonSliceVPchanged) {
-        state->skeletonState->skeletonSliceVPchanged = FALSE;
+        state->skeletonState->skeletonSliceVPchanged = false;
         glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
         state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
 

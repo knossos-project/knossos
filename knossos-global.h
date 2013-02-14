@@ -41,16 +41,16 @@
 #define KNOSSOS_GLOBAL_H
 
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_net.h>
-#include <GL/gl.h>
+/**
+* temporarily uncommented
+* #include <GL/gl.h>
+* #include <libxml/parser.h>
+* include <libxml/xmlmemory.h>
+* #include <agar/core.h>
+*#include <agar/gui.h>
+*/
 
-#include <libxml/parser.h>
-#include <libxml/xmlmemory.h>
-
-#include <agar/core.h>
-#include <agar/gui.h>
-
+#include <QtOpenGL>
 #include <QWaitCondition>
 #include <QMutex>
 #include <QtNetwork>
@@ -923,7 +923,7 @@ struct viewerState {
     uint32_t recenteringTimeOrth;
     uint32_t walkOrth;
 
-	SDL_Surface *screen;
+    //SDL_Surface *screen;
 
     //Keyboard repeat rate
     uint32_t stepsPerSec;
@@ -1237,10 +1237,12 @@ struct clientState {
     int32_t connectionTimeout;
     int32_t connectionTried;
     char serverAddress[1024];
+
+    /** @todo temporarily uncommented
     IPaddress remoteServer;
     TCPsocket remoteSocket;
     SDLNet_SocketSet socketSet;
-
+    */
     uint32_t myId;
     uint32_t saveMaster;
 

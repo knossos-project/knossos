@@ -27,7 +27,7 @@ static bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t e
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 static bool DcoiFromPos(Hashtable *Dcoi) {
@@ -86,15 +86,20 @@ static bool DcoiFromPos(Hashtable *Dcoi) {
     addCubicDcSet(origin.x, origin.y + halfSc + 1, origin.z + halfSc + 1, halfSc, Dcoi);
     addCubicDcSet(origin.x + halfSc + 1, origin.y + halfSc + 1, origin.z + halfSc + 1, halfSc, Dcoi);
 
-    return TRUE;
+    return true;
 }
 
+/**
+ * @brief slotListGetElement
+ * @param slotList
+ * @return false changed to NULL
+ */
 static CubeSlot *slotListGetElement(CubeSlotList *slotList) {
     if(slotList->elements > 0) {
         return slotList->firstSlot;
     }
     else {
-        return FALSE;
+        return NULL;
     }
 }
 
@@ -109,7 +114,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
      * Specify either freeDcSlot or freeOcSlot.
      *
      * Caution: Not writing data into a cube slot and returning
-     * FALSE from this function results in a busy wait in the
+     * false from this function results in a busy wait in the
      * viewer that kills performance, so that situation should
      * never occur.
      *
@@ -117,7 +122,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
 
     if((freeDcSlot && freeOcSlot) ||
        (!freeDcSlot && !freeOcSlot)) {
-        return FALSE;
+        return false;
     }
 
     if((coordinate.x > 9999) ||
@@ -248,7 +253,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     }
 
     free(filename);
-    return TRUE;
+    return true;
 
 loadcube_fail:
     if(freeDcSlot) {
@@ -259,7 +264,7 @@ loadcube_fail:
     }
 
     free(filename);
-    return TRUE;
+    return true;
 }
 
 // ALWAYS give the slotList*Element functions an element that
@@ -295,14 +300,14 @@ static bool slotListDel(CubeSlotList *delList){
 
     free(delList);
 
-    return TRUE;
+    return true;
 }
 static bool cleanUpLoader(struct loaderState *loaderState) {
-    bool returnValue = TRUE;
+    bool returnValue = true;
 
-    if(Hashtable::ht_rmtable(loaderState->Dcoi) == LL_FAILURE) { returnValue = FALSE; }
-    else if(slotListDel(loaderState->freeDcSlots) == FALSE) { returnValue = FALSE; }
-    else if(slotListDel(loaderState->freeOcSlots) == FALSE) { returnValue = FALSE; }
+    if(Hashtable::ht_rmtable(loaderState->Dcoi) == LL_FAILURE) { returnValue = false; }
+    else if(slotListDel(loaderState->freeDcSlots) == false) { returnValue = false; }
+    else if(slotListDel(loaderState->freeOcSlots) == false) { returnValue = false; }
     free(state->loaderState->bogusDc);
     free(state->loaderState->bogusOc);
     free(loaderState->DcSetChunk);
@@ -411,7 +416,7 @@ static bool initLoader() {
     state->loaderState->bogusDc = (Byte*)malloc(state->cubeBytes);
     if(state->loaderState->bogusDc == NULL) {
         LOG("Out of memory.");
-        return FALSE;
+        return false;
     }
     bogusDc = fopen("bogus.raw", "r");
     if(bogusDc != NULL) {
@@ -429,12 +434,12 @@ static bool initLoader() {
         state->loaderState->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
         if(state->loaderState->bogusOc == NULL) {
             LOG("Out of memory.");
-            return FALSE;
+            return false;
         }
         memset(state->loaderState->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);
     }
 
-    return TRUE;
+    return true;
 }
 static bool removeLoadedCubes(int32_t magChange) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
@@ -458,14 +463,14 @@ static bool removeLoadedCubes(int32_t magChange) {
     mergeCube2Pointer = Hashtable::ht_new(state->cubeSetElements * 20);
     if(mergeCube2Pointer == HT_FAILURE) {
         LOG("Unable to create the temporary cube2pointer table.");
-        return FALSE;
+        return false;
     }
     state->protectCube2Pointer->lock();
     if(Hashtable::ht_union(mergeCube2Pointer,
                 state->Dc2Pointer[state->loaderMagnification],
                 state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
         LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
-        return FALSE;
+        return false;
     }
     state->protectCube2Pointer->unlock();
 
@@ -503,7 +508,7 @@ static bool removeLoadedCubes(int32_t magChange) {
                         currentCube->coordinate.y,
                         currentCube->coordinate.z,
                         state->loaderMagnification);
-                    return FALSE;
+                    return false;
                 }
 
                 if(slotListAddElement(state->loaderState->freeDcSlots, delCubePtr) < 1) {
@@ -512,7 +517,7 @@ static bool removeLoadedCubes(int32_t magChange) {
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
                         currentCube->coordinate.z);
-                    return FALSE;
+                    return false;
                 }
             }
 
@@ -530,7 +535,7 @@ static bool removeLoadedCubes(int32_t magChange) {
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
                         currentCube->coordinate.z);
-                    return FALSE;
+                    return false;
                 }
 
                 if(slotListAddElement(state->loaderState->freeOcSlots, delCubePtr) < 1) {
@@ -539,7 +544,7 @@ static bool removeLoadedCubes(int32_t magChange) {
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
                         currentCube->coordinate.z);
-                    return FALSE;
+                    return false;
                 }
             }
 
@@ -558,7 +563,7 @@ static bool removeLoadedCubes(int32_t magChange) {
                        currentCube->coordinate.x,
                        currentCube->coordinate.y,
                        currentCube->coordinate.z);
-                return FALSE;
+                return false;
             }
         }
 
@@ -568,12 +573,12 @@ static bool removeLoadedCubes(int32_t magChange) {
     if(Hashtable::ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
         LOG("Error removing temporary cube to pointer table. This is a memory leak.");
     }
-    return TRUE;
+    return true;
 }
 static bool loadCubes() {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     CubeSlot *currentDcSlot = NULL, *currentOcSlot = NULL;
-    uint32_t loadedDc = FALSE, loadedOc = FALSE;
+    uint32_t loadedDc = false, loadedOc = false;
 
     nextCube = currentCube = state->loaderState->Dcoi->listEntry->next;
     while(nextCube != state->loaderState->Dcoi->listEntry) {
@@ -581,13 +586,13 @@ static bool loadCubes() {
 
         // Load the datacube for the current coordinate.
 
-        if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == FALSE) {
+        if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == false) {
             LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
                 state->magnification);
-            return FALSE;
+            return false;
         }
 
         loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL);
@@ -603,13 +608,13 @@ static bool loadCubes() {
         // Load the overlay cube if overlay is activated.
 
         if(state->overlay) {
-            if((currentOcSlot = slotListGetElement(state->loaderState->freeOcSlots)) == FALSE) {
+            if((currentOcSlot = slotListGetElement(state->loaderState->freeOcSlots)) == false) {
                 LOG("Error getting a slot for the next Oc, wanted to load (%d, %d, %d), mag%d dataset.",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
                     state->magnification);
-                return FALSE;
+                return false;
             }
 
             loadedOc = loadCube(currentCube->coordinate, NULL, currentOcSlot->cube);
@@ -637,7 +642,7 @@ static bool loadCubes() {
                     currentCube->coordinate.z,
                     currentDcSlot->cube,
                     state->loaderMagnification);
-                return FALSE;
+                return false;
             }
             //qDebug("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
             //    currentCube->coordinate.x,
@@ -657,7 +662,7 @@ static bool loadCubes() {
                     currentCube->coordinate.z,
                     currentOcSlot->cube,
                     state->loaderMagnification);
-                return FALSE;
+                return false;
             }
         }
         state->protectCube2Pointer->unlock();
@@ -668,14 +673,14 @@ static bool loadCubes() {
             if(slotListDelElement(state->loaderState->freeDcSlots, currentDcSlot) < 0) {
                 LOG("Error deleting the current Dc slot %p from the list.",
                     currentDcSlot->cube);
-                return FALSE;
+                return false;
             }
         }
         if(loadedOc) {
             if(slotListDelElement(state->loaderState->freeOcSlots, currentOcSlot) < 0) {
                 LOG("Error deleting the current Oc slot %p from the list.",
                     currentOcSlot->cube);
-                return FALSE;
+                return false;
             }
         }
 
@@ -686,7 +691,7 @@ static bool loadCubes() {
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z);
-            return FALSE;
+            return false;
         }
 
         // We need to be able to cancel the loading when the
@@ -705,16 +710,16 @@ static bool loadCubes() {
             state->loaderState->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
             if(state->loaderState->Dcoi == HT_FAILURE) {
                 LOG("Error creating new empty Dcoi. Fatal.");
-                _Exit(FALSE);
+                _Exit(false);
             }
-            return FALSE;
+            return false;
         }
         else {
             state->protectLoadSignal->unlock();
         }
         currentCube = nextCube;
     }
-    return TRUE;
+    return true;
 }
 
 /**
@@ -735,7 +740,7 @@ void Loader::start() {
     initLoader();
 
     // Start "signal wait" loop.
-    while(TRUE)  {
+    while(true)  {
        // as long the loadSignal is false, the loops waits
        while(state->loadSignal == false) {
             //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
@@ -745,7 +750,7 @@ void Loader::start() {
     }
 
     // Free the structures in loaderState and loaderState itself.
-    if(cleanUpLoader(state->loaderState) == FALSE) {
+    if(cleanUpLoader(state->loaderState) == false) {
         LOG("Error cleaning up loading thread.");
         return;
     }
@@ -793,7 +798,7 @@ void Loader::load() {
     // DCOI now contains the coordinates of all cubes we want, based
     // on our current position. However, some of those might already be
     // in memory. We remove them.
-    if(removeLoadedCubes(magChange) != TRUE) {
+    if(removeLoadedCubes(magChange) != true) {
         LOG("Error removing already loaded cubes from DCOI.");
         return;
     }
@@ -807,7 +812,7 @@ void Loader::load() {
     // our current position and that are not yet in memory. We go through
     // that list and load all those datacubes into free memory slots as
     // stored in the list freeDcSlots.
-    if(loadCubes() == FALSE) {
+    if(loadCubes() == false) {
         LOG("Loading of all DCOI did not complete.");
     }
     state->protectLoadSignal->lock();

@@ -149,7 +149,7 @@ intassn:
         |
         BOERGENS _INTEGER
         {
-                tempConfig->boergens = TRUE;
+                tempConfig->boergens = true;
         }
         ;
 wordassn:

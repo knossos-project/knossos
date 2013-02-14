@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     state = Knossos::emptyState();
 
     state->loadSignal = false;
-    state->remoteSignal = FALSE;
-    state->quitSignal = FALSE;
-    state->clientSignal = FALSE;
+    state->remoteSignal = false;
+    state->quitSignal = false;
+    state->clientSignal = false;
     state->conditionLoadSignal = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
     state->conditionClientSignal = new QWaitCondition();
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
     if(Knossos::tempConfigDefaults() != true) {
         LOG("Error loading default parameters.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     // TODO
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     //2012.12.11 HARDCODED FOR TESTING LOADER
     strncpy(state->path, "C:\\path\\e1088_mag1_large\\", 1024);
@@ -238,11 +238,11 @@ int32_t Knossos::initStates() {
        // TODO
        //loadDefaultTreeLUT();
 
-       state->viewerState->treeLutSet = FALSE;
+       state->viewerState->treeLutSet = false;
 
        state->viewerState->vpConfigs = (vpConfig *)malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
        if(state->viewerState->vpConfigs == NULL)
-           return FALSE;
+           return false;
        memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
        for(i = 0; i < state->viewerState->numberViewports; i++) {
@@ -290,7 +290,7 @@ int32_t Knossos::initStates() {
 
        if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
            LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-           return FALSE;
+           return false;
        }
 
        // TODO
@@ -312,14 +312,14 @@ int32_t Knossos::initStates() {
        state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
        if(state->clientState->inBuffer == NULL) {
            LOG("Out of memory.");
-           return FALSE;
+           return false;
        }
        memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
 
        state->clientState->inBuffer->data = (Byte *)malloc(128);
        if(state->clientState->inBuffer->data == NULL) {
            LOG("Out of memory.");
-           return FALSE;
+           return false;
        }
        memset(state->clientState->inBuffer->data, '\0', 128);
 
@@ -329,14 +329,14 @@ int32_t Knossos::initStates() {
        state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
        if(state->clientState->outBuffer == NULL) {
            LOG("Out of memory.");
-           return FALSE;
+           return false;
        }
        memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
 
        state->clientState->outBuffer->data = (Byte *) malloc(128);
        if(state->clientState->outBuffer->data == NULL) {
            LOG("Out of memory.");
-           return FALSE;
+           return false;
        }
        memset(state->clientState->outBuffer->data, '\0', 128);
 
@@ -402,7 +402,7 @@ int32_t Knossos::initStates() {
        //  than one was found
        Knossos::findAndRegisterAvailableDatasets();
 
-       return TRUE;
+       return true;
 
 }
 
@@ -487,7 +487,7 @@ bool Knossos::unlockSkeleton(int32_t increment) {
 
 bool Knossos::sendClientSignal() {
     state->protectClientSignal->lock();
-    state->clientSignal = TRUE;
+    state->clientSignal = true;
     state->protectClientSignal->unlock();
 
     state->conditionClientSignal->wakeOne();
@@ -497,7 +497,7 @@ bool Knossos::sendClientSignal() {
 
 bool Knossos::sendRemoteSignal() {
     state->protectRemoteSignal->lock();
-    state->remoteSignal = TRUE;
+    state->remoteSignal = true;
     state->protectRemoteSignal->unlock();
 
     state->conditionRemoteSignal->wakeOne();
@@ -553,7 +553,7 @@ bool Knossos::readConfigFile(const char *path) {
                 yyparse(state);
                 yy_delete_buffer(confParseBuffer);
                 fclose(configFile);
-                return TRUE;
+                return true;
             }
         }
         */
@@ -611,40 +611,40 @@ struct stateInfo *Knossos::emptyState() {
 
     state = (stateInfo *) malloc(sizeof(struct stateInfo));
     if(state == NULL)
-        return FALSE; // FALSE ?
+        return false; // false ?
      memset(state, '\0', sizeof(struct stateInfo));
 
      state->viewerState = (viewerState *) malloc(sizeof(struct viewerState));
      if(state->viewerState == NULL)
-        return FALSE;
+        return false;
      memset(state->viewerState, '\0', sizeof(struct viewerState));
 
 
      state->viewerState->gui = (struct guiConfig *)malloc(sizeof(struct guiConfig));
      if(state->viewerState->gui == NULL) {
-        return FALSE;
+        return false;
      }
      memset(state->viewerState->gui, '\0', sizeof(struct guiConfig));
 
 
      state->remoteState = (remoteState *)malloc(sizeof(struct remoteState));
      if(state->remoteState == NULL)
-        return FALSE;
+        return false;
      memset(state->remoteState, '\0', sizeof(struct remoteState));
 
      state->clientState = (clientState *)malloc(sizeof(struct clientState));
      if(state->clientState == NULL)
-        return FALSE;
+        return false;
      memset(state->clientState, '\0', sizeof(struct clientState));
 
      state->loaderState = (loaderState *)malloc(sizeof(struct loaderState));
      if(state->loaderState == NULL)
-         return FALSE;
+         return false;
      memset(state->loaderState, '\0', sizeof(struct loaderState));
 
      state->skeletonState = (skeletonState *) malloc(sizeof(struct skeletonState));
      if(state->skeletonState == NULL)
-        return FALSE;
+        return false;
      memset(state->skeletonState, '\0', sizeof(struct skeletonState));
 
 
@@ -662,7 +662,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         char currKconfPath[1024];
         char datasetBaseDirName[1024];
         char datasetBaseExpName[1024];
-        int32_t isPathSepTerminated = FALSE;
+        int32_t isPathSepTerminated = false;
         uint32_t pathLen;
 
         memset(currPath, '\0', 1024);
@@ -689,7 +689,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                     || (state->path[pathLen-i] == '/')) {
                     if(i == 1) {
                         /* This is the trailing path separator, ignore. */
-                        isPathSepTerminated = TRUE;
+                        isPathSepTerminated = true;
                         continue;
                     }
                     /* this contains the path "one level up" */
@@ -769,7 +769,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
              * Multires might be confusing to untrained tracers! Experts can easily enable it..
              * The loaded gui config might lock K to the current mag later one, which is fine. */
             if(state->highestAvailableMag > 1) {
-                state->viewerState->datasetMagLock = TRUE;
+                state->viewerState->datasetMagLock = true;
             }
 
             if(state->highestAvailableMag > NUM_MAG_DATASETS) {
@@ -827,7 +827,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             state->scale.y /= (float)state->magnification;
             state->scale.z /= (float)state->magnification;
 
-            state->viewerState->datasetMagLock = TRUE;
+            state->viewerState->datasetMagLock = true;
 
 
         }
@@ -859,11 +859,11 @@ bool Knossos::tempConfigDefaults() {
         if(tempConfig == NULL) {
             tempConfig = Knossos::emptyState();
             if(tempConfig == NULL)
-                return FALSE;
+                return false;
         }
 
         // General stuff
-        tempConfig->boergens = FALSE;
+        tempConfig->boergens = false;
         tempConfig->boundary.x = 1000;
         tempConfig->boundary.y = 1000;
         tempConfig->boundary.z = 1000;
@@ -876,25 +876,25 @@ bool Knossos::tempConfigDefaults() {
         tempConfig->cubeEdgeLength = 128;
         tempConfig->M = 3;
         tempConfig->magnification = 1;
-        tempConfig->overlay = FALSE;
+        tempConfig->overlay = false;
 
         // For the viewer
         tempConfig->viewerState->highlightVp = VIEWPORT_UNDEFINED;
         tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
         tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
         tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-        tempConfig->viewerState->overlayVisible = FALSE;
-        tempConfig->viewerState->datasetColortableOn = FALSE;
-        tempConfig->viewerState->datasetAdjustmentOn = FALSE;
-        tempConfig->viewerState->treeColortableOn = FALSE;
-        tempConfig->viewerState->viewerReady = FALSE;
-        tempConfig->viewerState->drawVPCrosshairs = TRUE;
-        tempConfig->viewerState->showVPLabels = FALSE;
+        tempConfig->viewerState->overlayVisible = false;
+        tempConfig->viewerState->datasetColortableOn = false;
+        tempConfig->viewerState->datasetAdjustmentOn = false;
+        tempConfig->viewerState->treeColortableOn = false;
+        tempConfig->viewerState->viewerReady = false;
+        tempConfig->viewerState->drawVPCrosshairs = true;
+        tempConfig->viewerState->showVPLabels = false;
         tempConfig->viewerState->stepsPerSec = 40;
         tempConfig->viewerState->numberViewports = 4;
         tempConfig->viewerState->inputmap = NULL;
         tempConfig->viewerState->dropFrames = 1;
-        tempConfig->viewerState->userMove = FALSE;
+        tempConfig->viewerState->userMove = false;
         tempConfig->viewerState->screenSizeX = 1024;
         tempConfig->viewerState->screenSizeY = 740;
         tempConfig->viewerState->filterType = GL_LINEAR;
@@ -909,11 +909,11 @@ bool Knossos::tempConfigDefaults() {
         tempConfig->viewerState->depthCutOff = 5.;
         tempConfig->viewerState->luminanceBias = 0;
         tempConfig->viewerState->luminanceRangeDelta = 255;
-        tempConfig->viewerState->autoTracingEnabled = FALSE;
+        tempConfig->viewerState->autoTracingEnabled = false;
         tempConfig->viewerState->autoTracingDelay = 50;
         tempConfig->viewerState->autoTracingSteps = 10;
         tempConfig->viewerState->recenteringTimeOrth = 500;
-        tempConfig->viewerState->walkOrth = FALSE;
+        tempConfig->viewerState->walkOrth = false;
 
         tempConfig->viewerState->vpConfigs = (vpConfig *) malloc(tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
         if(tempConfig->viewerState->vpConfigs == NULL) {
@@ -960,28 +960,28 @@ bool Knossos::tempConfigDefaults() {
         snprintf(tempConfig->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
 
         // For the client
-        tempConfig->clientState->connectAsap = FALSE;
+        tempConfig->clientState->connectAsap = false;
         tempConfig->clientState->connectionTimeout = 3000;
         tempConfig->clientState->remotePort = 7890;
         strncpy(tempConfig->clientState->serverAddress, "localhost", 1024);
-        tempConfig->clientState->connected = FALSE;
-        tempConfig->clientState->synchronizeSkeleton = TRUE;
-        tempConfig->clientState->synchronizePosition = TRUE;
-        tempConfig->clientState->saveMaster = FALSE;
+        tempConfig->clientState->connected = false;
+        tempConfig->clientState->synchronizeSkeleton = true;
+        tempConfig->clientState->synchronizePosition = true;
+        tempConfig->clientState->saveMaster = false;
 
         // For the remote
         tempConfig->remoteState->activeTrajectory = 0;
         tempConfig->remoteState->maxTrajectories = 16;
-        tempConfig->remoteState->type = FALSE;
+        tempConfig->remoteState->type = false;
 
         // For the skeletonizer
         tempConfig->skeletonState->lockRadius = 100;
-        tempConfig->skeletonState->lockPositions = FALSE;
+        tempConfig->skeletonState->lockPositions = false;
 
         strncpy(tempConfig->skeletonState->onCommentLock, "seed", 1024);
-        tempConfig->skeletonState->branchpointUnresolved = FALSE;
-        tempConfig->skeletonState->autoFilenameIncrementBool = TRUE;
-        tempConfig->skeletonState->autoSaveBool = TRUE;
+        tempConfig->skeletonState->branchpointUnresolved = false;
+        tempConfig->skeletonState->autoFilenameIncrementBool = true;
+        tempConfig->skeletonState->autoSaveBool = true;
         tempConfig->skeletonState->autoSaveInterval = 5;
         tempConfig->skeletonState->skeletonTime = 0;
         //tempConfig->skeletonState->skeletonTimeCorrection = SDL_GetTicks(); TODO SDL_GetTicks
@@ -1006,7 +1006,7 @@ bool Knossos::readDataConfAndLocalConf() {
     if(length >= 1010) {
         // We need to append "/knossos.conf"
         LOG("Data path too long.");
-        _Exit(FALSE);
+        _Exit(false);
     }
 
     strcat(configFile, tempConfig->path);
@@ -1063,7 +1063,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
              rval = (char *)malloc((strlen(equals) + 1) * sizeof(char));
              if(rval == NULL) {
                  LOG("Out of memory.");
-                 _Exit(FALSE);
+                 _Exit(false);
              }
              memset(rval, '\0', strlen(equals) + 1);
 
@@ -1075,7 +1075,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
      lval = (char *) malloc((llen + 1) * sizeof(char));
      if(lval == NULL) {
          LOG("Out of memory.");
-         _Exit(FALSE);
+         _Exit(false);
      }
      memset(lval, '\0', llen + 1);
 
@@ -1088,7 +1088,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(tempConfig->path, rval, 1023);
                      break;
                  case 1:
-                     tempConfig->clientState->connectAsap = TRUE;
+                     tempConfig->clientState->connectAsap = true;
                      break;
                  case 2:
                      tempConfig->scale.x = (float)strtod(rval, NULL);
@@ -1124,8 +1124,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      tempConfig->magnification = (int32_t)atoi(rval);
                      break;
                  case 13:
-                     tempConfig->overlay = TRUE;
-                     tempConfig->viewerState->overlayVisible = TRUE;
+                     tempConfig->overlay = true;
+                     tempConfig->viewerState->overlayVisible = true;
                      break;
                  case 14:
                      strncpy(tempConfig->viewerState->gui->settingsFile, rval, 2000);
@@ -1145,7 +1145,7 @@ void Knossos::catchSegfault(int signum) {
     fflush(stdout);
     fflush(stderr);
 
-    _Exit(FALSE);
+    _Exit(false);
 
 }
 #endif
@@ -1158,10 +1158,10 @@ void Knossos::catchSegfault(int signum) {
 
 int32_t loadDefaultTreeLUT() {
 
-    if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
+    if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
         Knossos::loadTreeLUTFallback();
         MainWindow::treeColorAdjustmentsChanged();
     }
 
-    return TRUE;
+    return true;
 }

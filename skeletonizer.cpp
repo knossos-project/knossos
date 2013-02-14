@@ -1,6 +1,8 @@
+/**
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <GL/gl.h>
+*/
 #include <time.h>
 
 #include "skeletonizer.h"
@@ -58,7 +60,7 @@ static nodeListElement *addNodeListElement(
     //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
     //Take the provided nodeID.
     newElement->nodeID = nodeID;
-    newElement->isBranchNode = FALSE;
+    newElement->isBranchNode = false;
     newElement->createdInMag = inMag;
 
     return newElement;
@@ -148,7 +150,7 @@ static bool addNodeToSkeletonStruct(nodeListElement *node) {
     }
     currentNewSkeletonDCnode->node = node;
 
-    return TRUE;
+    return true;
 }
 
 static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
@@ -162,10 +164,10 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
 
     if(segment) {
         if(segment->flag == 2)
-            return FALSE;
+            return false;
     }
     else
-        return FALSE;
+        return false;
 
     curMagTargetPos.x = segment->target->position.x / state->magnification;
     curMagTargetPos.y = segment->target->position.y / state->magnification;
@@ -193,7 +195,7 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
-        return FALSE;
+        return false;
     }
     currentNewSkeletonDCsegment = (skeletonDCsegment*)malloc(sizeof (skeletonDCsegment));
     memset(currentNewSkeletonDCsegment, '\0', sizeof(skeletonDCsegment));
@@ -237,7 +239,7 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 static bool delNodeFromSkeletonStruct(nodeListElement *node) {
@@ -254,7 +256,7 @@ static bool delNodeFromSkeletonStruct(nodeListElement *node) {
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
-        return FALSE;
+        return false;
     }
 
     currentSkeletonDCnode = currentSkeletonDC->firstSkeletonDCnode;
@@ -276,7 +278,7 @@ static bool delNodeFromSkeletonStruct(nodeListElement *node) {
         currentSkeletonDCnode = currentSkeletonDCnode->next;
     }
 
-    return TRUE;
+    return true;
 }
 
 static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
@@ -290,11 +292,11 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
 
     if(segment) {
         if(segment->flag == 2) {
-            return FALSE;
+            return false;
         }
     }
     else {
-        return FALSE;
+        return false;
     }
     curMagTargetPos.x = segment->target->position.x / state->magnification;
     curMagTargetPos.y = segment->target->position.y / state->magnification;
@@ -321,7 +323,7 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
         LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
-        return FALSE;
+        return false;
     }
 
     lastSkeletonDCsegment = NULL;
@@ -357,7 +359,7 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
             if(currentSkeletonDC == HT_FAILURE) {
                 //A skeleton DC is missing
                 LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
-                return FALSE;
+                return false;
             }
 
             lastSkeletonDCsegment = NULL;
@@ -386,16 +388,16 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 static void WRAP_popBranchNode() {
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
-    state->skeletonState->askingPopBranchConfirmation = FALSE;
+    state->skeletonState->askingPopBranchConfirmation = false;
 }
 
 static void popBranchNodeCanceled() {
-    state->skeletonState->askingPopBranchConfirmation = FALSE;
+    state->skeletonState->askingPopBranchConfirmation = false;
 }
 
 bool Skeletonizer::initSkeletonizer() {
@@ -408,7 +410,7 @@ bool Skeletonizer::initSkeletonizer() {
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
         LOG("Unable to create skeleton hash-table.");
-        return FALSE;
+        return false;
     }
 
     state->skeletonState->skeletonRevision = 0;
@@ -427,23 +429,23 @@ bool Skeletonizer::initSkeletonizer() {
 
     state->skeletonState->mergeOnLoadFlag = 0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
-    state->skeletonState->autoFilenameIncrementBool = TRUE;
+    state->skeletonState->autoFilenameIncrementBool = true;
     state->skeletonState->greatestNodeID = 0;
 
-    state->skeletonState->showXYplane = FALSE;
-    state->skeletonState->showXZplane = FALSE;
-    state->skeletonState->showYZplane = FALSE;
-    state->skeletonState->showNodeIDs = FALSE;
-    state->skeletonState->highlightActiveTree = TRUE;
-    state->skeletonState->rotateAroundActiveNode = TRUE;
-    state->skeletonState->showIntersections = FALSE;
+    state->skeletonState->showXYplane = false;
+    state->skeletonState->showXZplane = false;
+    state->skeletonState->showYZplane = false;
+    state->skeletonState->showNodeIDs = false;
+    state->skeletonState->highlightActiveTree = false;
+    state->skeletonState->rotateAroundActiveNode = false;
+    state->skeletonState->showIntersections = false;
 
     state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
     state->skeletonState->displayListView = 0;
     state->skeletonState->displayListDataset = 0;
 
     state->skeletonState->defaultNodeRadius = 1.5;
-    state->skeletonState->overrideNodeRadiusBool = FALSE;
+    state->skeletonState->overrideNodeRadiusBool = false;
     state->skeletonState->overrideNodeRadiusVal = 1.;
 
     state->skeletonState->currentComment = NULL;
@@ -473,15 +475,15 @@ bool Skeletonizer::initSkeletonizer() {
     if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
         state->skeletonState->volBoundary = state->boundary.x * 2;
 
-    state->skeletonState->viewChanged = TRUE;
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->datasetChanged = TRUE;
-    state->skeletonState->skeletonSliceVPchanged = TRUE;
-    state->skeletonState->unsavedChanges = FALSE;
+    state->skeletonState->viewChanged = true;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->datasetChanged = true;
+    state->skeletonState->skeletonSliceVPchanged = true;
+    state->skeletonState->unsavedChanges = false;
 
-    state->skeletonState->askingPopBranchConfirmation = FALSE;
+    state->skeletonState->askingPopBranchConfirmation = false;
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
@@ -495,7 +497,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
     treeCol.a = 1.;
 
     if(!state->skeletonState->activeTree)
-        addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+        addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
 
     addedNodeID = addNode(CHANGE_MANUAL,
                           0,
@@ -505,10 +507,10 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                           VPtype,
                           state->magnification,
                           -1,
-                          TRUE);
+                          true);
     if(!addedNodeID) {
         LOG("Error: Could not add new node!");
-        return FALSE;
+        return false;
     }
 
     setActiveNode(CHANGE_MANUAL, NULL, addedNodeID);
@@ -517,13 +519,13 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
+        pushBranchNode(CHANGE_MANUAL, true, true, NULL, addedNodeID);
         addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
     }
 
     Remote::checkIdleTime();
 
-    return TRUE;
+    return true;
 }
 
 uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive) {
@@ -532,7 +534,7 @@ uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCo
     if(!state->skeletonState->activeNode) {
         LOG("Please create a node before trying to link nodes.");
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-        return FALSE;
+        return false;
     }
 
     //Add a new node at the target position first.
@@ -544,10 +546,10 @@ uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCo
                            VPtype,
                            state->magnification,
                            -1,
-                           TRUE);
+                           true);
     if(!targetNodeID) {
         LOG("Could not add new node while trying to add node and link with active node!");
-        return FALSE;
+        return false;
     }
 
     addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
@@ -559,7 +561,7 @@ uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCo
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
+        pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID);
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
 
         Remote::checkIdleTime();
@@ -574,7 +576,7 @@ bool Skeletonizer::updateSkeletonState() {
         if(state->skeletonState->autoSaveInterval) {
             if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = SDL_GetTicks();
-                MainWindow::UI_saveSkeleton(TRUE);
+                MainWindow::UI_saveSkeleton(true);
             }
         }
     }*/
@@ -585,7 +587,7 @@ bool Skeletonizer::updateSkeletonState() {
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
         //setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
     }
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::nextCommentlessNode() { return false;}
@@ -601,9 +603,9 @@ bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increm
 
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     memset(skeletonFileBase, '\0', 8192);
@@ -673,9 +675,9 @@ bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increm
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 //uint32_t saveNMLSkeleton() { }
@@ -714,7 +716,7 @@ int32_t Skeletonizer::saveSkeleton() {
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
+        pushBranchNode(CHANGE_MANUAL, false, false, currentNode, 0);
     }
 
     xmlDocument = xmlNewDoc(BAD_CAST"1.0");
@@ -827,7 +829,7 @@ int32_t Skeletonizer::saveSkeleton() {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        return FALSE; //No Skeleton to save
+        return false; //No Skeleton to save
     }
 
     while(currentTree) {
@@ -977,12 +979,12 @@ int32_t Skeletonizer::saveSkeleton() {
 bool Skeletonizer::loadSkeleton() {
   /*  xmlDocPtr xmlDocument; SDL TODO
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
-    int32_t neuronID = 0, nodeID = 0, merge = FALSE;
+    int32_t neuronID = 0, nodeID = 0, merge = false;
     int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
     Byte VPtype;
     int32_t inMag, magnification = 0;
-    int32_t globalMagnificationSpecified = FALSE;
+    int32_t globalMagnificationSpecified = false;
     xmlChar *attribute;
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode = NULL;
@@ -1014,7 +1016,7 @@ bool Skeletonizer::loadSkeleton() {
     currentCoordinate = (Coordinate*) malloc(sizeof(Coordinate));
     if(currentCoordinate == NULL) {
         LOG("Out of memory.");
-        return FALSE;
+        return false;
     }
     memset(currentCoordinate, '\0', sizeof(currentCoordinate));
 
@@ -1022,29 +1024,29 @@ bool Skeletonizer::loadSkeleton() {
 
     if(xmlDocument == NULL) {
         LOG("Document not parsed successfully.");
-        return FALSE;
+        return false;
     }
 
     thingsXMLNode = xmlDocGetRootElement(xmlDocument);
     if(thingsXMLNode == NULL) {
         LOG("Empty document.");
         xmlFreeDoc(xmlDocument);
-        return FALSE;
+        return false;
     }
 
-    if(xmlStrEqual(thingsXMLNode->name, (const xmlChar *)"things") == FALSE) {
+    if(xmlStrEqual(thingsXMLNode->name, (const xmlChar *)"things") == false) {
         LOG("Root element %s in file %s unrecognized. Not loading.",
             thingsXMLNode->name,
             state->skeletonState->skeletonFile);
-        return FALSE;
+        return false;
     }
 
     if(!state->skeletonState->mergeOnLoadFlag) {
-        merge = FALSE;
-        clearSkeleton(CHANGE_MANUAL, TRUE);
+        merge = false;
+        clearSkeleton(CHANGE_MANUAL, true);
     }
     else {
-        merge = TRUE;
+        merge = true;
         greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
     }
@@ -1074,7 +1076,7 @@ bool Skeletonizer::loadSkeleton() {
 
                     if(attribute) {
                         magnification = atoi((char *)attribute);
-                        globalMagnificationSpecified = TRUE;
+                        globalMagnificationSpecified = true;
                     }
                     else
                         magnification = 0;
@@ -1228,7 +1230,7 @@ bool Skeletonizer::loadSkeleton() {
 
                         currentNode = findNodeByNodeID(nodeID);
                         if(currentNode)
-                            pushBranchNode(CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
+                            pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0);
                     }
                 }
 
@@ -1281,12 +1283,12 @@ bool Skeletonizer::loadSkeleton() {
                 neuronColor.a = 1.;
 
             if(!merge) {
-                currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(neuronID);
             }
             else {
                 neuronID += greatestTreeIDbeforeLoading;
-                currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             }
@@ -1377,10 +1379,10 @@ bool Skeletonizer::loadSkeleton() {
                                 time = skeletonTime; // For legacy skeleton files
 
                             if(!merge)
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
                             }
                         }
 
@@ -1429,7 +1431,7 @@ bool Skeletonizer::loadSkeleton() {
     free(currentCoordinate);
     xmlFreeDoc(xmlDocument);
 
-    MainWindow::addRecentFile(state->skeletonState->skeletonFile, FALSE);
+    MainWindow::addRecentFile(state->skeletonState->skeletonFile, false);
 
     if(activeNodeID) {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
@@ -1450,7 +1452,7 @@ bool Skeletonizer::loadSkeleton() {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();*/
-    return TRUE;
+    return true;
 }
 
 void Skeletonizer::setDefaultSkelFileName() {
@@ -1490,10 +1492,10 @@ bool Skeletonizer::delActiveNode() {
         delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode);
     }
     else {
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::delActiveTree() {
@@ -1518,12 +1520,12 @@ bool Skeletonizer::delActiveTree() {
     }
     else {
        LOG("No active tree available.");
-       return FALSE;
+       return false;
     }
 
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel) {
@@ -1532,9 +1534,9 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     // Delete the segment out of the segment list and out of the visualization structure!
 
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(!segToDel)
@@ -1546,8 +1548,8 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     if(!segToDel) {
         LOG("Cannot delete segment, no segment with corresponding node IDs available!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
 
@@ -1576,8 +1578,8 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     free(segToDel);
     state->skeletonState->totalSegmentElements--;
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -1588,9 +1590,9 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel) {
@@ -1601,9 +1603,9 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
     struct nodeListElement *newActiveNode = NULL;
     int32_t treeID;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(!nodeToDel)
@@ -1613,8 +1615,8 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
 
     if(!nodeToDel) {
         LOG("The given node %d doesn't exist. Unable to delete it.", nodeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     treeID = nodeToDel->correspondingTree->treeID;
@@ -1678,8 +1680,8 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
             treeID,
             (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, treeID) - 1));
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -1691,8 +1693,8 @@ bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListEleme
         Viewer::refreshViewports();
     }
 
-    Knossos::unlockSkeleton(TRUE);
-    return TRUE;
+    Knossos::unlockSkeleton(true);
+    return true;
 }
 
 bool Skeletonizer::delTree(int32_t targetRevision, int32_t treeID) {
@@ -1701,16 +1703,16 @@ bool Skeletonizer::delTree(int32_t targetRevision, int32_t treeID) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d. Unable to delete it.", treeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     currentNode = currentTree->firstNode;
@@ -1734,8 +1736,8 @@ bool Skeletonizer::delTree(int32_t targetRevision, int32_t treeID) {
 
     state->skeletonState->treeElements--;
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -1746,9 +1748,9 @@ bool Skeletonizer::delTree(int32_t targetRevision, int32_t treeID) {
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition) {
@@ -1855,15 +1857,15 @@ bool Skeletonizer::setActiveTreeByID(int32_t treeID) {
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d!", treeID);
-        return FALSE;
+        return false;
     }
 
     state->skeletonState->activeTree = currentTree;
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
 
     state->viewerState->gui->activeTreeID = currentTree->treeID;
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID) {
@@ -1875,9 +1877,9 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
      // set to NULL.
 
     if(targetRevision != CHANGE_NOSYNC) {
-        if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-            Knossos::unlockSkeleton(FALSE);
-            return FALSE;
+        if(Knossos::lockSkeleton(targetRevision) == false) {
+            Knossos::unlockSkeleton(false);
+            return false;
         }
     }
 
@@ -1885,8 +1887,8 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
         node = findNodeByNodeID(nodeID);
         if(!node) {
             LOG("No node with id %d available.", nodeID);
-            Knossos::unlockSkeleton(FALSE);
-            return FALSE;
+            Knossos::unlockSkeleton(false);
+            return false;
         }
     }
 
@@ -1896,8 +1898,8 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
 
 
     state->skeletonState->activeNode = node;
-    state->skeletonState->viewChanged = TRUE;
-    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->viewChanged = true;
+    state->skeletonState->skeletonChanged = true;
 
     if(node) {
         setActiveTreeByID(node->correspondingTree->treeID);
@@ -1919,7 +1921,7 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
             memset(state->skeletonState->commentBuffer, '\0', 10240);
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
 
     if(targetRevision != CHANGE_NOSYNC) {
         state->skeletonState->skeletonRevision++;
@@ -1932,7 +1934,7 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
         else {
             Viewer::refreshViewports();
         }
-        Knossos::unlockSkeleton(TRUE);
+        Knossos::unlockSkeleton(true);
     }
 
     if(node) {
@@ -1945,7 +1947,7 @@ bool Skeletonizer::setActiveNode(int32_t targetRevision, nodeListElement *node, 
 
     // drawGUI();
 
-    return TRUE;
+    return true;
 }
 
 int32_t Skeletonizer::addNode(int32_t targetRevision,
@@ -1963,12 +1965,12 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
     floatCoordinate lockVector;
     int32_t lockDistance = 0;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
-    state->skeletonState->branchpointUnresolved = FALSE;
+    state->skeletonState->branchpointUnresolved = false;
 
      // respectLocks refers to locking the position to a specific coordinate such as to
      // disallow tracing areas further than a certain distance away from a specific point in the
@@ -1984,8 +1986,8 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
             lockDistance = Renderer::euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
                 LOG("Node is too far away from lock point (%d), not adding.", lockDistance);
-                Knossos::unlockSkeleton(FALSE);
-                return FALSE;
+                Knossos::unlockSkeleton(false);
+                return false;
             }
         }
     }
@@ -1996,15 +1998,15 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
 
     if(tempNode) {
         LOG("Node with ID %d already exists, no node added.", nodeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
     tempTree = findTreeByTreeID(treeID);
 
     if(!tempTree) {
         LOG("There exists no tree with the provided ID %d!", treeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     // One node more in all trees
@@ -2045,13 +2047,13 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
 
     //Add a pointer to the node in the skeleton DC structure
     addNodeToSkeletonStruct(tempNode);
-    state->skeletonState->skeletonChanged = TRUE;
+    state->skeletonState->skeletonChanged = true;
 
     if(nodeID > state->skeletonState->greatestNodeID) {
         state->skeletonState->greatestNodeID = nodeID;
     }
     state->skeletonState->skeletonRevision++;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("brddfddddddd", KIKI_ADDNODE,
@@ -2072,7 +2074,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
         Viewer::refreshViewports();
     }
 
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
     return nodeID;
 }
@@ -2083,15 +2085,15 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
         LOG("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     //Check if source and target nodes are existant
@@ -2100,14 +2102,14 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     if(!(sourceNode) || !(targetNode)) {
         LOG("Could not link the nodes, because at least one is missing!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(sourceNode == targetNode) {
         LOG("Cannot link node with itself!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     //One segment more in all trees
@@ -2130,8 +2132,8 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     // printf("added segment for nodeID %d: %d, %d, %d -> nodeID %d: %d, %d, %d\n", sourceNode->nodeID, sourceNode->position.x + 1, sourceNode->position.y + 1, sourceNode->position.z + 1, targetNode->nodeID, targetNode->position.x + 1, targetNode->position.y + 1, targetNode->position.z + 1);
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -2142,9 +2144,9 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
@@ -2152,9 +2154,9 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
 
     treeListElement *currentTree, *treeToDel;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     currentTree = state->skeletonState->firstTree;
@@ -2179,8 +2181,8 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
         LOG("Unable to create skeleton hash-table.");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     //Generate empty tree structures
@@ -2191,7 +2193,7 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
 
-    if(loadingSkeleton == FALSE) {
+    if(loadingSkeleton == false) {
         setDefaultSkelFileName();
     }
 
@@ -2202,7 +2204,7 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 
     state->skeletonState->skeletonRevision++;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("br", KIKI_CLEARSKELETON)) {
@@ -2214,9 +2216,9 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     }
     state->skeletonState->skeletonRevision = 0;
 
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
@@ -2228,11 +2230,11 @@ bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t t
 
     if(treeID1 == treeID2) {
         LOG("Could not merge trees. Provided IDs are the same!");
-        return FALSE;
+        return false;
     }
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     tree1 = findTreeByTreeID(treeID1);
@@ -2240,8 +2242,8 @@ bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t t
 
     if(!(tree1) || !(tree2)) {
         LOG("Could not merge trees, provided IDs are not valid!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     currentNode = tree2->firstNode;
@@ -2305,8 +2307,8 @@ bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t t
     }
 
     state->skeletonState->treeElements--;
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -2317,8 +2319,8 @@ bool Skeletonizer::mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t t
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
-    return TRUE;
+    Knossos::unlockSkeleton(true);
+    return true;
 }
 
 nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
@@ -2427,16 +2429,16 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
 
      //  The variable sync is a workaround for the problem that this function
      // will sometimes be called by other syncable functions that themselves hold
-     // the lock and handle synchronization. If set to FALSE, all synchro
+     // the lock and handle synchronization. If set to false, all synchro
      // routines will be skipped.
 
     treeListElement *newElement = NULL;
 
-    if(sync != FALSE) {
-        if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+    if(sync != false) {
+        if(Knossos::lockSkeleton(targetRevision) == false) {
             LOG("addtreelistelement unable to lock.");
-            Knossos::unlockSkeleton(FALSE);
-            return FALSE;
+            Knossos::unlockSkeleton(false);
+            return false;
         }
     }
 
@@ -2444,14 +2446,14 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
     newElement = findTreeByTreeID(treeID);
     if(newElement) {
         LOG("Tree with ID %d already exists!", treeID);
-        Knossos::unlockSkeleton(TRUE);
+        Knossos::unlockSkeleton(true);
         return newElement;
     }
 
     newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
     if(newElement == NULL) {
         LOG("Out of memory while trying to allocate memory for a new treeListElement.");
-        Knossos::unlockSkeleton(FALSE);
+        Knossos::unlockSkeleton(false);
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct treeListElement));
@@ -2482,7 +2484,7 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
     else {
         newElement->color = color;
     }
-    newElement->colorSetManually = FALSE;
+    newElement->colorSetManually = false;
 
     memset(newElement->comment, '\0', 8192);
 
@@ -2502,10 +2504,10 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
     if(treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = treeID;
     }
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
 
-    if(sync != FALSE) {
+    if(sync != false) {
         state->skeletonState->skeletonRevision++;
 
         if(targetRevision == CHANGE_MANUAL) {
@@ -2515,7 +2517,7 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
             }
         }
 
-        Knossos::unlockSkeleton(TRUE);
+        Knossos::unlockSkeleton(true);
     }
     else {
         Viewer::refreshViewports();
@@ -2572,10 +2574,10 @@ bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     treeListElement *tree = NULL;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
+    if(Knossos::lockSkeleton(targetRevision) == false) {
         LOG("addTreeComment unable to lock.");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     tree = findTreeByTreeID(treeID);
@@ -2584,7 +2586,7 @@ bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *
         strncpy(tree->comment, comment, 8192);
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -2595,9 +2597,9 @@ bool Skeletonizer::addTreeComment(int32_t targetRevision, int32_t treeID, char *
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 segmentListElement* Skeletonizer::findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID) {
@@ -2632,10 +2634,10 @@ bool Skeletonizer::genTestNodes(uint32_t number) {
         pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
         pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
         pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, FALSE);
+        addNode(CHANGE_MANUAL, 0, state->skeletonState->defaultNodeRadius, 1, &pos, VIEWPORT_UNDEFINED, state->magnification, 0, false);
     }
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::editNode(int32_t targetRevision,
@@ -2650,9 +2652,9 @@ bool Skeletonizer::editNode(int32_t targetRevision,
 
     segmentListElement *currentSegment = NULL;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(!node) {
@@ -2660,8 +2662,8 @@ bool Skeletonizer::editNode(int32_t targetRevision,
     }
     if(!node) {
         LOG("Cannot edit: node id %d invalid.", nodeID);
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     nodeID = node->nodeID;
@@ -2693,8 +2695,8 @@ bool Skeletonizer::editNode(int32_t targetRevision,
         currentSegment = currentSegment->next;
     }
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -2713,9 +2715,9 @@ bool Skeletonizer::editNode(int32_t targetRevision,
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 void* Skeletonizer::popStack(stack *stack) {
@@ -2737,14 +2739,14 @@ void* Skeletonizer::popStack(stack *stack) {
 bool Skeletonizer::pushStack(stack *stack, void *element) {
     if(element == NULL) {
         LOG("Stack can't hold NULL.");
-        return FALSE;
+        return false;
     }
 
     if(stack->stackpointer + 1 == stack->size) {
         stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
         if(stack->elements == NULL) {
             LOG("Out of memory.");
-            _Exit(FALSE);
+            _Exit(false);
         }
         stack->size = stack->size * 2;
     }
@@ -2754,7 +2756,7 @@ bool Skeletonizer::pushStack(stack *stack, void *element) {
 
     stack->elements[stack->stackpointer] = element;
 
-    return TRUE;
+    return true;
 }
 
 stack* Skeletonizer::newStack(int32_t size) {
@@ -2768,14 +2770,14 @@ stack* Skeletonizer::newStack(int32_t size) {
     newStack = (stack*) malloc(sizeof(struct stack));
     if(newStack == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(newStack, '\0', sizeof(struct stack));
 
     newStack->elements = (void**)malloc(sizeof(void *) * size);
     if(newStack->elements == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(newStack->elements, '\0', sizeof(void *) * size);
 
@@ -2790,19 +2792,19 @@ bool Skeletonizer::delStack(stack *stack) {
     free(stack->elements);
     free(stack);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::delDynArray(dynArray *array) {
     free(array->elements);
     free(array);
 
-    return TRUE;
+    return true;
 }
 
 void* Skeletonizer::getDynArray(dynArray *array, int32_t pos) {
     if(pos > array->end) {
-        return FALSE;
+        return false;
     }
     return array->elements[pos];
 }
@@ -2813,7 +2815,7 @@ bool Skeletonizer::setDynArray(dynArray *array, int32_t pos, void *value) {
                                   array->firstSize) * sizeof(void *));
         if(array->elements == NULL) {
             LOG("Out of memory.");
-            _Exit(FALSE);
+            _Exit(false);
         }
         memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
         array->end = array->end + array->firstSize;
@@ -2821,7 +2823,7 @@ bool Skeletonizer::setDynArray(dynArray *array, int32_t pos, void *value) {
 
     array->elements[pos] = value;
 
-    return TRUE;
+    return true;
 }
 
 dynArray* Skeletonizer::newDynArray(int32_t size) {
@@ -2830,14 +2832,14 @@ dynArray* Skeletonizer::newDynArray(int32_t size) {
     newArray = (dynArray*)malloc(sizeof(struct dynArray));
     if(newArray == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(newArray, '\0', sizeof(struct dynArray));
 
     newArray->elements = (void**)malloc(sizeof(void *) * size);
     if(newArray->elements == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(newArray->elements, '\0', sizeof(void *) * size);
 
@@ -2863,9 +2865,9 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
     Byte *visitedRight = NULL, *visitedLeft = NULL, **visited = NULL;
     uint32_t visitedRightLen = 16384, visitedLeftLen = 16384, *visitedLen = NULL;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
      //  This function takes a node and splits the connected component
@@ -2882,8 +2884,8 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
 
     node = findNodeByNodeID(nodeID);
     if(!node) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
 
@@ -2915,7 +2917,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
 
     if(visitedRight == NULL || visitedLeft == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
 
     memset(visitedLeft, NODE_PRISTINE, 16384);
@@ -2942,7 +2944,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
             *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
             if(*visited == NULL) {
                 LOG("Out of memory.");
-                _Exit(FALSE);
+                _Exit(false);
             }
 
             memset(*visited + *visitedLen, NODE_PRISTINE, 16384 * sizeof(Byte));
@@ -3007,7 +3009,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = addTreeListElement(FALSE, CHANGE_MANUAL, 0, treeCol);
+        newTree = addTreeListElement(false, CHANGE_MANUAL, 0, treeCol);
         // Splitting the connected component.
 
         while((n = (struct nodeListElement *)popStack(componentNodes))) {
@@ -3046,7 +3048,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
             n->correspondingTree = newTree;
         }
         state->viewerState->gui->activeTreeID = state->skeletonState->activeTree->treeID;
-        state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->skeletonChanged = true;
     }
     else {
         LOG("The connected component is equal to the entire tree, not splitting.");
@@ -3058,7 +3060,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
     free(visitedLeft);
     free(visitedRight);
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3070,7 +3072,7 @@ int32_t Skeletonizer::splitConnectedComponent(int32_t targetRevision, int32_t no
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
     return nodeCount;
 }
@@ -3080,9 +3082,9 @@ bool Skeletonizer::addComment(int32_t targetRevision, const char *content, nodeL
 
     commentListElement *newComment;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     newComment = (commentListElement*)malloc(sizeof(struct commentListElement));
@@ -3101,7 +3103,7 @@ bool Skeletonizer::addComment(int32_t targetRevision, const char *content, nodeL
 
     if(content) {
         strncpy(newComment->content, content, strlen(content));
-        state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->skeletonChanged = true;
     }
 
     if(!state->skeletonState->currentComment) {
@@ -3125,7 +3127,7 @@ bool Skeletonizer::addComment(int32_t targetRevision, const char *content, nodeL
             state->skeletonState->currentComment->content,
             strlen(state->skeletonState->currentComment->content));
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3136,9 +3138,9 @@ bool Skeletonizer::addComment(int32_t targetRevision, const char *content, nodeL
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID) {
@@ -3147,9 +3149,9 @@ bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *curren
     int32_t nodeID = 0;
     nodeListElement *commentNode = NULL;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(commentNodeID) {
@@ -3161,8 +3163,8 @@ bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *curren
 
     if(!currentComment) {
         LOG("Please provide a valid comment element to delete!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(currentComment->content) {
@@ -3171,7 +3173,7 @@ bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *curren
     if(currentComment->node) {
         nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
-        state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->skeletonChanged = true;
     }
 
     if(state->skeletonState->currentComment == currentComment) {
@@ -3192,7 +3194,7 @@ bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *curren
 
     free(currentComment);
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3203,9 +3205,9 @@ bool Skeletonizer::delComment(int32_t targetRevision, commentListElement *curren
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID) {
@@ -3213,9 +3215,9 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(nodeID) {
@@ -3223,8 +3225,8 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
     }
     if(!currentComment) {
         LOG("Please provide a valid comment element to edit!");
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     nodeID = currentComment->node->nodeID;
@@ -3255,7 +3257,7 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
         newNode->comment = currentComment;
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3270,9 +3272,9 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 commentListElement* Skeletonizer::nextComment(char *searchString) {
     commentListElement *firstComment, *currentComment;
@@ -3391,20 +3393,20 @@ bool Skeletonizer::unlockPosition() {
     if(state->skeletonState->positionLocked) {
         LOG("Spatial locking disabled.");
     }
-    state->skeletonState->positionLocked = FALSE;
+    state->skeletonState->positionLocked = false;
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
-    state->skeletonState->positionLocked = TRUE;
+    state->skeletonState->positionLocked = true;
     SET_COORDINATE(state->skeletonState->lockedPosition,
                    lockCoordinate.x,
                    lockCoordinate.y,
                    lockCoordinate.z);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::popBranchNode(int32_t targetRevision) {
@@ -3416,15 +3418,15 @@ bool Skeletonizer::popBranchNode(int32_t targetRevision) {
     nodeListElement *branchNode = NULL;
     PTRSIZEINT branchNodeID = 0;
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     // Nodes on the branch stack may not actually exist anymore
-    while(TRUE){
+    while(true){
         if (branchNode != NULL)
-            if (branchNode->isBranchNode == TRUE) {
+            if (branchNode->isBranchNode == true) {
                 break;
             }
         branchNodeID = (PTRSIZEINT)popStack(state->skeletonState->branchStack);
@@ -3455,16 +3457,16 @@ bool Skeletonizer::popBranchNode(int32_t targetRevision) {
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 
         branchNode->isBranchNode--;
-        state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->skeletonChanged = true;
 
         Viewer::updatePosition(TELL_COORDINATE_CHANGE);
 
-        state->skeletonState->branchpointUnresolved = TRUE;
+        state->skeletonState->branchpointUnresolved = true;
     }
 
 exit_popbranchnode:
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3476,16 +3478,16 @@ exit_popbranchnode:
         Viewer::refreshViewports();
     }
 
-    Knossos::unlockSkeleton(TRUE);
-    return TRUE;
+    Knossos::unlockSkeleton(true);
+    return true;
 }
 
 bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     if(branchNodeID) {
@@ -3495,24 +3497,24 @@ bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeF
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
             pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
-                branchNode->isBranchNode = TRUE;
+                branchNode->isBranchNode = true;
             }
-            state->skeletonState->skeletonChanged = TRUE;
+            state->skeletonState->skeletonChanged = true;
             LOG("Branch point (node ID %d) added.", branchNode->nodeID);
         }
         else {
             LOG("Active node is already a branch point");
-            Knossos::unlockSkeleton(TRUE);
-            return TRUE;
+            Knossos::unlockSkeleton(true);
+            return true;
         }
     }
     else {
         LOG("Make a node active before adding branch points.");
-        Knossos::unlockSkeleton(TRUE);
-        return TRUE;
+        Knossos::unlockSkeleton(true);
+        return true;
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
@@ -3523,17 +3525,17 @@ bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeF
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    if(Knossos::lockSkeleton(targetRevision) == FALSE) {
-        Knossos::unlockSkeleton(FALSE);
-        return FALSE;
+    if(Knossos::lockSkeleton(targetRevision) == false) {
+        Knossos::unlockSkeleton(false);
+        return false;
     }
 
     state->skeletonState->workMode = workMode;
@@ -3549,9 +3551,9 @@ bool Skeletonizer::setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode
     else {
         Viewer::refreshViewports();
     }
-    Knossos::unlockSkeleton(TRUE);
+    Knossos::unlockSkeleton(true);
 
-    return TRUE;
+    return true;
 }
 
 bool Skeletonizer::jumpToActiveNode() {
@@ -3566,7 +3568,7 @@ bool Skeletonizer::jumpToActiveNode() {
         Viewer::updatePosition(TELL_COORDINATE_CHANGE);
     }
 
-    return TRUE;
+    return true;
 }
 
 void Skeletonizer::UI_popBranchNode() {
@@ -3575,8 +3577,8 @@ void Skeletonizer::UI_popBranchNode() {
     //  branch point nodes don't exist anymore (nodes have been deleted).
 
     // This is workaround around agar bug #171
-    if(state->skeletonState->askingPopBranchConfirmation == FALSE) {
-        state->skeletonState->askingPopBranchConfirmation = TRUE;
+    if(state->skeletonState->askingPopBranchConfirmation == false) {
+        state->skeletonState->askingPopBranchConfirmation = true;
 
         if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
             //yesNoPrompt(NULL,
@@ -3598,9 +3600,9 @@ void Skeletonizer::restoreDefaultTreeColor() {
     state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
     state->skeletonState->activeTree->color.a = 1.;
 
-    state->skeletonState->activeTree->colorSetManually = FALSE;
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    state->skeletonState->activeTree->colorSetManually = false;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
 }
 
 bool Skeletonizer::updateTreeColors() {
@@ -3613,7 +3615,7 @@ bool Skeletonizer::updateTreeColors() {
         tree->color.a = 1.;
         tree = tree->next;
     }
-    state->skeletonState->skeletonChanged = TRUE;
-    return TRUE;
+    state->skeletonState->skeletonChanged = true;
+    return true;
 }
 

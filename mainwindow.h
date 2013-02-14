@@ -29,6 +29,7 @@
 #include "knossos-global.h"
 #include <dirent.h>
 
+
 namespace Ui {
 class MainWindow;
 }
@@ -58,7 +59,7 @@ public:
 
     static bool initGUI();
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    static uint32_t addRecentFile(char *path, uint32_t pos);
+    static bool addRecentFile(char *path, uint32_t pos);
 
     //static void saveSkelCallback(AG_Event *event);
     static void UI_saveSkeleton(int32_t increment);

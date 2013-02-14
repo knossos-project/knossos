@@ -1,8 +1,6 @@
 //AGAR and SDL TODOS here
 //commented out thread loop
 
-#include <SDL/SDL.h>
-
 #include "skeletonizer.h"
 #include "remote.h"
 #include "knossos.h"
@@ -19,7 +17,7 @@ Client::Client(QObject *parent) :
 {
 }
 
-static int32_t connectToServer() {
+static bool connectToServer() {
     /*clientState *clientState = state->clientState;
     int32_t i = 0;
     int32_t timeoutIn100ms = 0;
@@ -34,13 +32,13 @@ static int32_t connectToServer() {
     SDLNet_ResolveHost(&(clientState->remoteServer), clientState->serverAddress, clientState->remotePort);
     if(clientState->remoteServer.host == INADDR_NONE) {
         LOG("Couldn't resolve remote server: %s", SDLNet_GetError());
-        return FALSE;
+        return false;
     }
 
-    clientState->connectionTried = FALSE;
+    clientState->connectionTried = false;
     ThreadWrapper_SDLNet_TCP_Open = SDL_CreateThread(Wrapper_SDLNet_TCP_Open, clientState);
     for(i = 0; i < timeoutIn100ms; i++) {
-            if(clientState->connectionTried == TRUE) {
+            if(clientState->connectionTried == true) {
                 break;
             }
             SDL_Delay(100);
@@ -48,26 +46,26 @@ static int32_t connectToServer() {
     if(clientState->remoteSocket == NULL) {
             LOG("Error or timeout while connecting to server: %s.", SDLNet_GetError());
             SDL_KillThread(ThreadWrapper_SDLNet_TCP_Open);
-            return FALSE;
+            return false;
     }
 
-    clientState->connected = TRUE;
+    clientState->connected = true;
     LOG("Connection established to %s:%d", clientState->serverAddress, clientState->remotePort);
 
     clientState->socketSet = SDLNet_AllocSocketSet(1);
     if(clientState->socketSet == NULL) {
         LOG("Error allocating socket set: %s", SDLNet_GetError());
-        return FALSE;
+        return false;
     }
 
     SDLNet_TCP_AddSocket(clientState->socketSet, clientState->remoteSocket);
 
     AG_LabelText(state->viewerState->ag->syncOptLabel, "Connected to server.");
     */
-    return TRUE;
+    return true;
 }
 
-static int32_t closeConnection() {
+static bool closeConnection() {
 /*    if(state->clientState->remoteSocket != NULL) {
         SDLNet_TCP_Close(state->clientState->remoteSocket);
         state->clientState->remoteSocket = NULL;
@@ -78,10 +76,10 @@ static int32_t closeConnection() {
         state->clientState->socketSet = NULL;
     }
 
-    state->clientState->connected = FALSE;
+    state->clientState->connected = false;
     AG_LabelText(state->viewerState->ag->syncOptLabel, "No connection to server.");
 */
-    return TRUE;
+    return true;
 }
 
 static float bytesToFloat(Byte *source) {
@@ -207,13 +205,13 @@ static uint32_t parseInBuffer() {
                     break; //ignore this message if invalid
                 }
                 if(state->clientState->myId == (uint32_t)d[0]) {
-                    state->clientState->saveMaster = TRUE;
+                    state->clientState->saveMaster = true;
                     LOG("Instance id %d (%s) now autosaving.",
                         state->clientState->myId,
                         state->name);
                 }
                 else {
-                    state->clientState->saveMaster = FALSE;
+                    state->clientState->saveMaster = false;
                 }
                 break;
 
@@ -325,7 +323,7 @@ static uint32_t parseInBuffer() {
                 pPosition->y = d[8];
                 pPosition->z = d[9];
 
-                Skeletonizer::addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE);
+                Skeletonizer::addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], false);
 
                 free(pPosition);
                 pPosition = NULL;
@@ -394,7 +392,7 @@ static uint32_t parseInBuffer() {
                 treeCol.g = f[1];
                 treeCol.b = f[2];
                 treeCol.a = 1.;
-                Skeletonizer::addTreeListElement(TRUE, d[0], d[1], treeCol);
+                Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol);
 
                 break;
 
@@ -440,7 +438,7 @@ static uint32_t parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::pushBranchNode(d[0], TRUE, TRUE, NULL, d[1]);
+                Skeletonizer::pushBranchNode(d[0], true, true, NULL, d[1]);
 
                 break;
 
@@ -462,7 +460,7 @@ static uint32_t parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::clearSkeleton(d[0], FALSE);
+                Skeletonizer::clearSkeleton(d[0], false);
 
                 break;
 
@@ -513,12 +511,12 @@ static uint32_t parseInBuffer() {
 
 loopExit:
 
-    return TRUE;
+    return true;
 
 critical:
     LOG("Error parsing remote input.");
     Client::skeletonSyncBroken();
-    return FALSE;
+    return false;
 }
 
 static bool flushOutBuffer() {
@@ -538,33 +536,33 @@ static bool flushOutBuffer() {
     }
 
     state->protectOutBuffer->lock();
-    return TRUE;
+    return true;
 }
 
 static bool cleanUpClient() {
     free(state->clientState);
     state->clientState = NULL;
 
-    return TRUE;
+    return true;
 }
 
 static int32_t clientRun() {
     clientState *clientState = state->clientState;
     Byte *message = NULL;
     uint32_t messageLen = 0, nameLen = 0, readLen = 0;
-    SDL_Event autoSaveOffEvent;
+    //SDL_Event autoSaveOffEvent;
 
     message = (Byte*)malloc(8192 * sizeof(Byte));
     if(message == NULL) {
         LOG("Out of memory");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(message, '\0', 8192 * sizeof(Byte));
 
-    autoSaveOffEvent.type = SDL_USEREVENT;
-    autoSaveOffEvent.user.code = USEREVENT_NOAUTOSAVE;
+    //autoSaveOffEvent.type = SDL_USEREVENT;
+    //autoSaveOffEvent.user.code = USEREVENT_NOAUTOSAVE;
 
-    if(connectToServer() == TRUE) {
+    if(connectToServer() == true) {
         /*
          * Autosave is turned off. Whether a knossos instance autosaves or
          * does not autosave during synchronization is determined by the "save
@@ -607,7 +605,7 @@ static int32_t clientRun() {
         Client::IOBufferAppend(clientState->outBuffer, message, messageLen, state->protectOutBuffer);
         memset(message, '\0', 8192 * sizeof(Byte));
 
-        while(TRUE) {
+        while(true) {
             /*
              * Slowing this loop down might be a good idea if it proves
              * to eat a lot of power. It probably wouldn't hurt, synchronizing
@@ -654,8 +652,8 @@ static int32_t clientRun() {
             parseInBuffer();
 
             state->protectClientSignal->lock();
-            if(state->clientSignal == TRUE) {
-                state->clientSignal = FALSE;
+            if(state->clientSignal == true) {
+                state->clientSignal = false;
                 state->protectClientSignal->lock();
                 break;
             }
@@ -663,7 +661,7 @@ static int32_t clientRun() {
         }
     }
 
-    state->clientState->saveMaster = FALSE;
+    state->clientState->saveMaster = false;
     if(!state->skeletonState->autoSaveBool) {
        // AG_TextMsg(AG_MSG_INFO, AGAR TODO
        //            "Synchronization has ended and this instance "
@@ -673,7 +671,7 @@ static int32_t clientRun() {
 
     closeConnection();
 
-    return TRUE;
+    return true;
 }
 
 
@@ -695,10 +693,10 @@ void Client::start() {
         i++;
         Sleeper::msleep(500);
         /*state->protectClientSignal->lock();
-        while(state->clientSignal == FALSE) {
+        while(state->clientSignal == false) {
         //    SDL_CondWait(state->conditionClientSignal, state->protectClientSignal);
         }
-        state->clientSignal = FALSE;
+        state->clientSignal = false;
         state->protectClientSignal->unlock();
 
         if(state->quitSignal == true) {
@@ -735,7 +733,7 @@ bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
     data = (Byte*)malloc(128 * sizeof(Byte));
     if(data == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(data, '\0', 128 * sizeof(Byte));
 
@@ -753,13 +751,13 @@ bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
 
     free(data);
 
-    return TRUE;
+    return true;
 }
 
 bool Client::skeletonSyncBroken() {
     LOG("Skeletons have gone out of sync, stopping synchronization.");
-    state->clientState->synchronizeSkeleton = FALSE;
-    return TRUE;
+    state->clientState->synchronizeSkeleton = false;
+    return true;
 }
 
 int32_t Client::bytesToInt(Byte *source) {
@@ -770,19 +768,19 @@ int32_t Client::bytesToInt(Byte *source) {
 
 bool Client::integerToBytes(Byte *dest, int32_t source) {
     memcpy(dest, &source, sizeof(int32_t));
-    return TRUE;
+    return true;
 }
 
 bool Client::floatToBytes(Byte *dest, float source) {
     memcpy(dest, &source, sizeof(float));
-    return TRUE;
+    return true;
 }
 
 int Client::Wrapper_SDLNet_TCP_Open(void *params) {
     clientState *cState = (clientState*)params;
   //  clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
-    cState->connectionTried = TRUE;
-    return TRUE;
+    cState->connectionTried = true;
+    return true;
 }
 
 bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t length, QMutex *mutex) {
@@ -819,7 +817,7 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
                 if(mutex != NULL) {
                     mutex->unlock();
                 }
-                return FALSE;
+                return false;
             }
 
             LOG("Enlarging IO buffer %p to %d", iobuffer, newSize);
@@ -830,7 +828,7 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
                 if(mutex != NULL) {
                     mutex->unlock();
                 }
-                return FALSE;
+                return false;
             }
 
             iobuffer->size = newSize;
@@ -838,13 +836,13 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
         }
         else {
             /* Nothing we can do here, this probably indicates a network error
-             * so the FALSE return value from this function should be used to
+             * so the false return value from this function should be used to
              * close the connection */
             LOG("Maximum buffer size for %p reached. This probably indicates a network error.", iobuffer);
             if(mutex != NULL) {
                 mutex->unlock();
             }
-            return FALSE;
+            return false;
         }
     }
 
@@ -864,7 +862,7 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
     if(mutex != NULL) {
         mutex->unlock();
     }
-    return TRUE;
+    return true;
 }
 
 bool Client::addPeer(uint32_t id, char *name,
@@ -876,7 +874,7 @@ bool Client::addPeer(uint32_t id, char *name,
     newPeer = (peerListElement*)malloc(sizeof(struct peerListElement));
     if(newPeer == NULL) {
         printf("3Out of memory\n");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(newPeer, '\0', sizeof(struct peerListElement));
 
@@ -900,13 +898,13 @@ bool Client::addPeer(uint32_t id, char *name,
     SET_COORDINATE(newPeer->scale, xScale, yScale, zScale);
     SET_COORDINATE(newPeer->offset, xOffset, yOffset, zOffset);
 
-    return TRUE;
+    return true;
 }
 
 
 bool Client::delPeer(uint32_t id) {
     printf("delPeer() is not implemented.\n");
-    return TRUE;
+    return true;
 }
 
 bool Client::syncMessage(const char *fmt, ...) {
@@ -924,7 +922,7 @@ bool Client::syncMessage(const char *fmt, ...) {
      * buffer. Proper locking is ensured through IOBufferAppend().
      */
 
-    /* Returning FALSE from this function means that synchronized skeletons have
+    /* Returning false from this function means that synchronized skeletons have
      * gone out of sync and this should be handled accordingly (usually by
      * closing the connection).
      */
@@ -943,12 +941,12 @@ bool Client::syncMessage(const char *fmt, ...) {
 
     if(!state->clientState->synchronizeSkeleton ||
        !state->clientState->connected) {
-        return TRUE;
+        return true;
     }
     packedBytes = (Byte*)malloc(PACKLEN * sizeof(Byte));
     if(packedBytes == NULL) {
         printf("5Out of memory\n");
-        _Exit(FALSE);
+        _Exit(false);
     }
 
     memset(packedBytes, '\0', PACKLEN * sizeof(Byte));
@@ -1037,15 +1035,15 @@ bool Client::syncMessage(const char *fmt, ...) {
                        packedBytes,
                        len,
                        state->protectOutBuffer)) {
-        return FALSE;
+        return false;
     }
-    return TRUE;
+    return true;
 
 lenoverflow:
 
     va_end(ap);
     LOG("Length overflow in client.c, syncMessage(). Tell the programmers to find the bug or increase PACKLEN.");
-    return FALSE;
+    return false;
 }
 
 int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
@@ -1088,7 +1086,7 @@ int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
         printf("\n");
         */
 
-        return FALSE;
+        return false;
     }
 
     while(*fmt) {
@@ -1151,7 +1149,7 @@ Coordinate* Client::transNetCoordinate(uint32_t id, int32_t x, uint32_t y, int32
     outCoordinate = (Coordinate*)malloc(sizeof(Coordinate));
     if(outCoordinate == NULL) {
         printf("4Out of memory\n");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(outCoordinate, '\0', sizeof(Coordinate));
 

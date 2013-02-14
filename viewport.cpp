@@ -216,7 +216,7 @@ bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
     }
     if(event->modifiers() == Qt::ShiftModifier) {
         // Delete segment between clicked and active node
-        if(state->skeletonState->activeNode == FALSE) {
+        if(state->skeletonState->activeNode == false) {
             return true;
         }
         if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
@@ -233,7 +233,7 @@ bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
         }
     }
     else if(event->modifiers() == Qt::ControlModifier) {
-        if(state->skeletonState->activeNode == FALSE) {
+        if(state->skeletonState->activeNode == false) {
             return true;
         }
         Skeletonizer::addSegment(CHANGE_MANUAL,
@@ -254,7 +254,7 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
     // We have to activate motion tracking only for the skeleton VP for a right click
     if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
-        state->viewerState->vpConfigs[VPfound].motionTracking = TRUE;
+        state->viewerState->vpConfigs[VPfound].motionTracking = true;
     }
     // If not, we look up which skeletonizer work mode is
     // active and do the appropriate operation
@@ -262,7 +262,7 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
     // could not find any coordinate...
     if(clickedCoordinate == NULL) {
-            return TRUE;
+            return true;
     }
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
@@ -286,8 +286,8 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
             // Add a "stump", a branch node to which we don't automatically move.
             if((newNodeID = Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                             state->viewerState->vpConfigs[VPfound].type,
-                                                                            FALSE))) {
-            Skeletonizer::pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID);
+                                                                            false))) {
+            Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, NULL, newNodeID);
             }
         }
         else {
@@ -297,8 +297,8 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
             if(Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                  state->viewerState->vpConfigs[VPfound].type,
-                                                                 TRUE)
-               == FALSE) {
+                                                                 true)
+               == false) {
                 break;
             }
             // Highlight the viewport with the biggest movement component and set
@@ -426,7 +426,7 @@ bool Viewport::handleMouseMotion(QMouseEvent *event, int32_t VPfound) {}
 bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
     uint32_t i;
     for(i = 0; i < state->viewerState->numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].motionTracking == FALSE) {
+        if(state->viewerState->vpConfigs[i].motionTracking == false) {
             continue;
         }
         // motion tracking mode is active for viewport i
@@ -624,15 +624,15 @@ bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) 
 }
 
 bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
-    if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == TRUE)
+    if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true)
         && (state->skeletonState->rotationcounter == 0)) {
         state->skeletonState->rotdx += xrel(event->x());
         state->skeletonState->rotdy += yrel(event->y());
-        state->skeletonState->viewChanged = TRUE;
+        state->skeletonState->viewChanged = true;
         Remote::checkIdleTime();
-        return TRUE;
+        return true;
     }
-    return TRUE;
+    return true;
 }
 
 bool Viewport::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
@@ -664,7 +664,7 @@ bool Viewport::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
         if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
                 state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-                state->skeletonState->viewChanged = TRUE;
+                state->skeletonState->viewChanged = true;
             }
         }
         // Orthogonal VP or outside VP
@@ -729,7 +729,7 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
             if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
                 state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
                 if (state->skeletonState->zoomLevel < SKELZOOMMIN) { state->skeletonState->zoomLevel = SKELZOOMMIN;}
-                state->skeletonState->viewChanged = TRUE;
+                state->skeletonState->viewChanged = true;
             }
         }
         // Orthogonal VP or outside VP
@@ -1006,15 +1006,15 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
-           state->viewerState->drawVPCrosshairs = FALSE;
+           state->viewerState->drawVPCrosshairs = false;
         }
         else {
-           state->viewerState->drawVPCrosshairs = TRUE;
+           state->viewerState->drawVPCrosshairs = true;
         }
     } else if(event->key() == Qt::Key_J) {
         Skeletonizer::UI_popBranchNode();
     } else if(event->key() == Qt::Key_B) {
-        Skeletonizer::pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
+        Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     } else if(event->key() == Qt::Key_X) {
         if(event->key() == Qt::Key_Shift) {
             prevNode = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode);
@@ -1033,7 +1033,7 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Z) {
         if(state->skeletonState->activeTree == NULL) {
-            return TRUE;
+            return true;
         }
 
         //get tree with previous ID
@@ -1071,26 +1071,26 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
         }
 
     } else if(event->key() == Qt::Key_I) {
-        if (state->viewerState->gui->zoomSkeletonViewport == FALSE){
+        if (state->viewerState->gui->zoomSkeletonViewport == false){
            // UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-            state->skeletonState->viewChanged = TRUE;
+            state->skeletonState->viewChanged = true;
         }
     } else if(event->key() == Qt::Key_O) {
-        if (state->viewerState->gui->zoomSkeletonViewport == FALSE){
+        if (state->viewerState->gui->zoomSkeletonViewport == false){
             //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
             if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
-            state->skeletonState->viewChanged = TRUE;
+            state->skeletonState->viewChanged = true;
         }
     } else if(event->key() == Qt::Key_S) {
         if(event->key() == Qt::Key_Control) {
             //saveSkelCallback(NULL);
-            return TRUE;
+            return true;
         }
         if(state->skeletonState->activeNode) {
             tempConfig->viewerState->currentPosition.x =
@@ -1107,7 +1107,7 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
         // UI_workModeLink(); TODO UI_workModeLink
     } else if(event->key() == Qt::Key_C) {
         treeCol.r = -1.;
-        Skeletonizer::addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+        Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(event->key() == Qt::Key_Shift) {
@@ -1122,7 +1122,7 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
             state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
             state->viewerState->gui->enableOrthoSkelOverlay = 0;
         }
-        state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->skeletonChanged = true;
         Renderer::drawGUI();
     } else if(event->key() == Qt::Key_Delete) {
         Skeletonizer::delActiveNode();

@@ -40,7 +40,7 @@ static int32_t vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *b
     newElement = (vpListElement *) malloc(sizeof( vpListElement));
     if(newElement == NULL) {
         qDebug("Out of memory\n");
-        // Do not return FALSE here. That's a bug. FAIL is hackish... Is there a
+        // Do not return false here. That's a bug. FAIL is hackish... Is there a
         // better way? */
         return FAIL;
     }
@@ -87,7 +87,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
     newVpList = vpListNew();
     if(newVpList == NULL) {
         qDebug("Error generating new vpList.");
-        _Exit(FALSE);
+        _Exit(false);
     }
 
     for(i = 0; i < viewerState->numberViewports; i++) {
@@ -97,7 +97,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
         currentBacklog = backlogNew();
         if(currentBacklog == NULL) {
             qDebug("Error creating backlog.");
-            _Exit(FALSE);
+            _Exit(false);
         }
         vpListAddElement(newVpList, &(viewerState->vpConfigs[i]), currentBacklog);
     }
@@ -146,7 +146,7 @@ static int32_t vpListDelElement( vpList *list,  vpListElement *element) {
         list->entry = element->next;
     }
 
-    if(backlogDel(element->backlog) == FALSE) {
+    if(backlogDel(element->backlog) == false) {
         qDebug("Error deleting backlog at %p of vpList element at %p.",
                element->backlog, element);
         return FAIL;
@@ -180,7 +180,7 @@ static int32_t backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32
     newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
     if(newElement == NULL) {
         qDebug("Out of memory.");
-        /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
+        /* Do not return false here. That's a bug. FAIL is hackish... Is there a better way? */
         return FAIL;
     }
 
@@ -795,20 +795,20 @@ static bool initViewer() {
     calcLeftUpperTexAbsPx();
 
     // init the skeletonizer
-    if(Skeletonizer::initSkeletonizer() == FALSE) {
+    if(Skeletonizer::initSkeletonizer() == false) {
         LOG("Error initializing the skeletonizer.");
-        return FALSE;
+        return false;
     }
 
     //if(SDLNet_Init() == FAIL) {
     //    LOG("Error initializing SDLNet: %s.", SDLNet_GetError());
-    //    return FALSE;
+    //    return false;
     //}
 
     // init the gui
-    if(MainWindow::initGUI() == FALSE) {
+    if(MainWindow::initGUI() == false) {
         LOG("Error initializing the gui system");
-        return FALSE;
+        return false;
     }
 
     // TDitem
@@ -819,9 +819,9 @@ static bool initViewer() {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
         if(Viewer::loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
-                          GL_RGBA) == FALSE) {
+                          GL_RGBA) == false) {
             LOG("Overlay color map stdOverlay.lut does not exist.");
-            state->overlay = FALSE;
+            state->overlay = false;
         }
     }
 
@@ -834,7 +834,7 @@ static bool initViewer() {
                * 3);
     if(state->viewerState->texData == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(state->viewerState->texData, '\0',
            TEXTURE_EDGE_LEN
@@ -852,7 +852,7 @@ static bool initViewer() {
                    4);
         if(state->viewerState->overlayData == NULL) {
             LOG("Out of memory.");
-            _Exit(FALSE);
+            _Exit(false);
         }
         memset(state->viewerState->overlayData, '\0',
                TEXTURE_EDGE_LEN
@@ -869,7 +869,7 @@ static bool initViewer() {
                                                          * 3);
     if(state->viewerState->defaultTexData == NULL) {
         LOG("Out of memory.");
-        _Exit(FALSE);
+        _Exit(false);
     }
     memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
                                                      * sizeof(Byte)
@@ -882,7 +882,7 @@ static bool initViewer() {
                                                                  * 4);
         if(state->viewerState->defaultOverlayData == NULL) {
             LOG("Out of memory.");
-            _Exit(FALSE);
+            _Exit(false);
         }
         memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
                                                              * sizeof(Byte)
@@ -890,9 +890,9 @@ static bool initViewer() {
     }
 
     // init the rendering system
-    if(Renderer::initRenderer() == FALSE) {
+    if(Renderer::initRenderer() == false) {
         qDebug("Error initializing the rendering system.");
-        return FALSE;
+        return false;
     }
 
     viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
@@ -900,7 +900,7 @@ static bool initViewer() {
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -1013,7 +1013,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
 bool Viewer::updatePosition(int32_t serverMovement) {
     Coordinate jump;
 
-    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != TRUE) {
+    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
         jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
         jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
         jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
@@ -1081,7 +1081,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
     }
 
     /* necessary? */
-    state->viewerState->userMove = TRUE;
+    state->viewerState->userMove = true;
     recalcTextureOffsets();
 
     /*for(i = 0; i < state->viewerState->numberViewports; i++) {
@@ -1098,7 +1098,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                             upOrDownFlag);
     //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
-    //state->skeletonState->skeletonChanged = TRUE;
+    //state->skeletonState->skeletonChanged = true;
 
     return true;
 }
@@ -1141,13 +1141,13 @@ void Viewer::start() {
     // might cancel the current loading process. When all textures / backlogs
     // have been processed, we go into an idle state, in which we wait for events.
 
-    state->viewerState->viewerReady = TRUE;
+    state->viewerState->viewerReady = true;
 
     updateViewerState();
     recalcTextureOffsets();
     // Display info about skeleton save path here TODO
 
-    while(TRUE) {
+    while(true) {
 
         // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
@@ -1210,13 +1210,13 @@ void Viewer::start() {
 
                 // TODO Crashes because of SDL
                 //while(SDL_PollEvent(&event)) {
-                //   if(EventModel::handleEvent(event) == FALSE) {
-                //       state->viewerState->viewerReady = FALSE;
-                //       //return TRUE;
+                //   if(EventModel::handleEvent(event) == false) {
+                //       state->viewerState->viewerReady = false;
+                //       //return true;
                 //   }
                 //}
 
-                if(viewerState->userMove == TRUE) {
+                if(viewerState->userMove == true) {
                     break;
                 }
             }
@@ -1233,16 +1233,16 @@ void Viewer::start() {
         vpListDel(viewports);
 
         //TODO Crashes because of SDL
-        //if(viewerState->userMove == FALSE) {
+        //if(viewerState->userMove == false) {
         //    if(SDL_WaitEvent(&event)) {
-        //        if(EventModel::handleEvent(event) != TRUE) {
-        //            state->viewerState->viewerReady = FALSE;
-        //            //return TRUE;
+        //        if(EventModel::handleEvent(event) != true) {
+        //            state->viewerState->viewerReady = false;
+        //            //return true;
         //        }
         //    }
         //}
-        viewerState->userMove = FALSE;
-    }//end while(TRUE)
+        viewerState->userMove = false;
+    }//end while(true)
 
     QThread::currentThread()->quit();
     emit finished();
@@ -1277,7 +1277,7 @@ bool Viewer::createScreen() {
 
   /*if(state->viewerState->screen == NULL) {
         printf("Unable to create screen: %s\n", SDL_GetError());
-        return FALSE;
+        return false;
     }*/
 
   //set clear color (background) and clear with it
@@ -1486,16 +1486,16 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     Coordinate newPosition_dc;
 
     //The skeleton VP view has to be updated after a current pos change
-    state->skeletonState->viewChanged = TRUE;
+    state->skeletonState->viewChanged = true;
     if(state->skeletonState->showIntersections) {
-        state->skeletonState->skeletonSliceVPchanged = TRUE;
+        state->skeletonState->skeletonSliceVPchanged = true;
     }
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
 
     lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
-    viewerState->userMove = TRUE;
+    viewerState->userMove = true;
 
     if ((viewerState->currentPosition.x + x) >= 0 &&
         (viewerState->currentPosition.x + x) <= state->boundary.x &&
@@ -1519,7 +1519,7 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
     if(serverMovement == TELL_COORDINATE_CHANGE &&
-        state->clientState->connected == TRUE &&
+        state->clientState->connected == true &&
         state->clientState->synchronizePosition) {
         Client::broadcastPosition(viewerState->currentPosition.x,
                                   viewerState->currentPosition.y,
@@ -1544,7 +1544,7 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     tempConfig->viewerState->currentPosition.z = viewerState->currentPosition.z;
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
-        state->viewerState->superCubeChanged = TRUE;
+        state->viewerState->superCubeChanged = true;
 
         viewerEventObj->sendLoadSignal(viewerState->currentPosition.x,
                                 viewerState->currentPosition.y,
@@ -1552,19 +1552,19 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
                                 NO_MAG_CHANGE);
     }
     Remote::checkIdleTime();
-    return TRUE;
+    return true;
 }
 
 int32_t updatePosition(int32_t serverMovement) {
         Coordinate jump;
 
-    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != TRUE) {
+    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
         jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
         jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
         jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
         Viewer::userMove(jump.x, jump.y, jump.z, serverMovement);
     }
-    return TRUE;
+    return true;
 }
 
 
@@ -1594,7 +1594,7 @@ bool Viewer::recalcTextureOffsets() {
 
     /* Every time the texture offset coords change,
     the skeleton VP must be updated. */
-    state->skeletonState->viewChanged = TRUE;
+    state->skeletonState->viewChanged = true;
     calcDisplayedEdgeLength();
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {

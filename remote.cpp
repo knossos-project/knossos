@@ -10,17 +10,17 @@ Remote::Remote(QObject *parent) :
 {
 }
 
-static int32_t cleanUpRemote() {
+static bool cleanUpRemote() {
     free(state->remoteState);
     state->remoteState = NULL;
 
-    return TRUE;
+    return true;
 }
 
 void Remote::start() {
     struct remoteState *remoteState = state->remoteState;
 
-    // remoteSignal is != FALSE as long as the remote is active.
+    // remoteSignal is != false as long as the remote is active.
     // Checking for remoteSignal is therefore a way of seeing if the remote
     // is available for doing something.
     //
@@ -28,18 +28,18 @@ void Remote::start() {
     // on to listen to a socket and get its instructions from there or it
     // will follow the trajectory given in a file.
     int i = 0;
-    while(TRUE) {
+    while(true) {
         //qDebug("remote says hello %i", ++i);
         Sleeper::msleep(50);
         /*SDL_LockMutex(state->protectRemoteSignal);
-        while(state->remoteSignal == FALSE) {
+        while(state->remoteSignal == false) {
             SDL_CondWait(state->conditionRemoteSignal, state->protectRemoteSignal);
         }
 
-        state->remoteSignal = FALSE;
+        state->remoteSignal = false;
         SDL_UnlockMutex(state->protectRemoteSignal);
 
-        if(state->quitSignal == TRUE)
+        if(state->quitSignal == true)
             break;
 
         updateRemoteState();
@@ -58,7 +58,7 @@ void Remote::start() {
                 printf("No such remote type (%d)\n", remoteState->type);
         }
 
-        if(state->quitSignal == TRUE) {
+        if(state->quitSignal == true) {
             break;
         }
         */
