@@ -1,4 +1,14 @@
 #include "toolsquicktabwidget.h"
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QFormLayout>
+#include <QLabel>
+#include <QFrame>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include "knossos-global.h"
+#include "skeletonizer.h"
 
 extern struct stateInfo *state;
 
@@ -99,9 +109,51 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     this->setLayout(mainLayout);
 
+    connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
+    connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
+    connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
+    connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
+    connect(findPreviousButton, SIGNAL(clicked()), this, SLOT(findPreviousButtonClicked()));
+    connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeButtonClicked()));
+    connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));
+
 
 }
 
-void ToolsQuickTabWidget::activeTreeIdSlot(int value) {
+void ToolsQuickTabWidget::loadSettings() {
+    treeCountLabel->setText(QString("Tree Count: %1").arg(state->viewerState->gui->totalTrees));
+    nodeCountLabel->setText(QString("Node Count: %1").arg(state->viewerState->gui->totalNodes));
+    activeTreeSpinBox->setValue(state->viewerState->gui->activeTreeID);
+    xLabel->setText(QString("x: %1").arg(state->viewerState->gui->activeNodeCoord.x));
+    yLabel->setText(QString("y: %1").arg(state->viewerState->gui->activeNodeCoord.y));
+    zLabel->setText(QString("z: %1").arg(state->viewerState->gui->activeNodeCoord.z));
+
+}
+
+void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
     state->viewerState->gui->activeTreeID = value;
+}
+
+void ToolsQuickTabWidget::commentChanged(QString comment) {
+    state->viewerState->gui->commentBuffer = const_cast<char *>(comment.toStdString().c_str());
+}
+
+void ToolsQuickTabWidget::searchForChanged(QString comment) {
+    state->viewerState->gui->commentSearchBuffer = const_cast<char *>(comment.toStdString().c_str());
+}
+
+void ToolsQuickTabWidget::findNextButtonClicked() {
+    Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
+}
+
+void ToolsQuickTabWidget::findPreviousButtonClicked() {
+    Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
+}
+
+void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
+    Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+}
+
+void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
+    Skeletonizer::popBranchNode(CHANGE_MANUAL);
 }

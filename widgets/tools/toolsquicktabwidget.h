@@ -2,26 +2,28 @@
 #define TOOLSQUICKTABWIDGET_H
 
 #include <QWidget>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QFormLayout>
-#include <QLabel>
-#include <QFrame>
-#include <QSpinBox>
-#include <QLineEdit>
-#include <QPushButton>
-#include "knossos-global.h"
 
+class QLabel;
+class QSpinBox;
+class QPushButton;
+class QLineEdit;
 class ToolsQuickTabWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit ToolsQuickTabWidget(QWidget *parent = 0);
-    
+    void loadSettings();
 signals:
     
 public slots:
-    void activeTreeIdSlot(int value);
+    void activeTreeIdChanged(int value);
+    void commentChanged(QString comment);
+    void searchForChanged(QString comment);
+    void findNextButtonClicked();
+    void findPreviousButtonClicked();
+    void pushBranchNodeButtonClicked();
+    void popBranchNodeButtonClicked();
+
 public:
     QLabel *treeCountLabel, *nodeCountLabel;
     QLabel *activeTreeLabel, *activeNodeLabel;

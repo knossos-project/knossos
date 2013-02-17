@@ -3,8 +3,6 @@
 
 #include <QDialog>
 
-
-
 class QSlider;
 class QLabel;
 class QDoubleSpinBox;

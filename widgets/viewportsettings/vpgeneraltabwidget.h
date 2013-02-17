@@ -2,15 +2,11 @@
 #define VPGENERALTABWIDGET_H
 
 #include <QWidget>
-#include <QLabel>
-#include <QFrame>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QRadioButton>
-#include <QCheckBox>
-#include <QSpinBox>
-#include "knossos-global.h"
 
+class QLabel;
+class QCheckBox;
+class QSpinBox;
+class QRadioButton;
 class VPGeneralTabWidget : public QWidget
 {
     Q_OBJECT

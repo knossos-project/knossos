@@ -6,11 +6,15 @@
 #include <math.h>
 
 #include <QtOpenGL>
+/** @todo must be changed to Q_OS_MACX when QT5 is used */
+#ifdef Q_WS_MACX
+    #include <OpenGL.h>
+#else
+    #include <GL/gl.h>
+    #include <GL/glext.h>
+    #include <GL/glu.h>
+#endif
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glu.h>
-//#include <GL/glut.h>
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;

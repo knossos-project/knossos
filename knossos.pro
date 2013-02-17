@@ -102,8 +102,7 @@ OTHER_FILES += \
     customCursor.xpm \
     config.y \
 
-LIBS += -lSDL -lSDL_net -lxml2
+LIBS += -lxml2
 
-INCLUDEPATH += ../../MinGW/include/SDL \
-               ../../MinGW/include/libxml \
+INCLUDEPATH += ../../MinGW/include/libxml \
                ../../MinGW/include/GL

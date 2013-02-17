@@ -1,4 +1,13 @@
 #include "toolsnodestabwidget.h"
+#include <QLabel>
+#include <QSpinBox>
+#include <QFrame>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QGridLayout>
+#include "knossos-global.h"
+extern struct stateInfo *state;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     QWidget(parent)

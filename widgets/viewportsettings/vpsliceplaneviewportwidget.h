@@ -2,17 +2,12 @@
 #define VPSLICEPLANEVIEWPORTWIDGET_H
 
 #include <QWidget>
-#include <Qlabel>
-#include <QFrame>
-#include <QDoubleSpinBox>
-#include <QSpinBox>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QSlider>
-#include <QVBoxLayout>
-#include <QGridLayout>
-
-
+class QLabel;
+class QCheckBox;
+class QDoubleSpinBox;
+class QPushButton;
+class QSpinBox;
+class QSlider;
 class VPSlicePlaneViewportWidget : public QWidget
 {
     Q_OBJECT

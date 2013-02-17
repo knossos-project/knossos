@@ -2,15 +2,10 @@
 #define VPSKELETONVIEWPORTWIDGET_H
 
 #include <QWidget>
-#include <QLabel>
-#include <QFrame>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QVBoxLayout>
-#include <QGridLayout>
 
-
-
+class QLabel;
+class QCheckBox;
+class QRadioButton;
 class VPSkeletonViewportWidget : public QWidget
 {
     Q_OBJECT

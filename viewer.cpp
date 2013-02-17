@@ -1,5 +1,3 @@
-//commented out sdl directives
-
 #include "viewer.h"
 #include "knossos.h"
 #include "client.h"
@@ -23,7 +21,7 @@ Viewer::Viewer(QObject *parent) :
 static vpList* vpListNew() {
     vpList *newVpList = NULL;
 
-    newVpList = (vpList *) malloc(sizeof( vpList));
+    newVpList = (vpList *) malloc(sizeof(vpList));
     if(newVpList == NULL) {
         qDebug("Out of memory.\n");
         return NULL;
@@ -37,7 +35,7 @@ static vpList* vpListNew() {
 static int32_t vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
     vpListElement *newElement;
 
-    newElement = (vpListElement *) malloc(sizeof( vpListElement));
+    newElement = (vpListElement *) malloc(sizeof(vpListElement));
     if(newElement == NULL) {
         qDebug("Out of memory\n");
         // Do not return false here. That's a bug. FAIL is hackish... Is there a

@@ -2,25 +2,28 @@
 #define TOOLSTREESTABWIDGET_H
 
 #include <QWidget>
-#include <QLabel>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QFrame>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QGridLayout>
 
+class QLabel;
+class QSpinBox;
+class QLineEdit;
+class QDoubleSpinBox;
+class QPushButton;
 class ToolsTreesTabWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit ToolsTreesTabWidget(QWidget *parent = 0);
-    
+    void loadSettings();
 signals:
     
 public slots:
+    void activeTreeIDChanged(int value);
+    void deleteActiveTreeButtonClicked();
+    void newTreeButtonClicked();
+    void mergeTreesButtonClicked();
+    void id1Changed(int value);
+    void id2Changed(int value);
+
 protected:
     QLabel *activeTreeLabel;
     QSpinBox *activeTreeSpinBox;

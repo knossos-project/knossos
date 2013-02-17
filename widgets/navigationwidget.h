@@ -26,6 +26,16 @@ public:
 signals:
     
 public slots:
+    void movementSpeedChanged(int value);
+    void jumpFramesChanged(int value);
+    void recenterTimeParallelChanged(int value);
+    void recenterTimeOrthoChanged(int value);
+    void normalModeButtonClicked(bool on);
+    void additionalViewportDirectionMoveButtonClicked(bool on);
+    void additionalTracingDirectionMoveButtonClicked(bool on);
+    void additionalMirroredMoveButtonClicked(bool on);
+    void delayTimePerStepChanged(int value);
+    void numberOfStepsChanged(int value);
 protected:
     void closeEvent(QCloseEvent *event);
 

@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QMutex>
 #include <QWaitCondition>
+
 #include "mainwindow.h"
 #include "knossos-global.h"
 #include "viewer.h"
@@ -33,13 +34,6 @@ Loader *loaderEventObj;
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 
-
-
-//IMPORTANT. SDL redefines main
-
-#ifdef main
-#undef main
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -141,6 +135,8 @@ int main(int argc, char *argv[])
     //move each object onto its thread,
     //connect started and finished-signals for correct termination
     //start the threads
+
+    /** @todo temporarily uncommented
     for(int i = 0; i < NUMTHREADS; i++) {
         threadObjs[i]->moveToThread(threads[i]);
         QObject::connect(threads[i], SIGNAL(started()), threadObjs[i], SLOT(start()));
@@ -148,9 +144,9 @@ int main(int argc, char *argv[])
         QObject::connect(threadObjs[i], SIGNAL(finished()), threadObjs[i], SLOT(deleteLater()));
         QObject::connect(threadObjs[i], SIGNAL(finished()), threads[i], SLOT(deleteLater()));
         threads[i]->start();
-    }
+    } */
 
-    //SDL_Quit(); // SDL_QUIT
+
     //clean up main, when all threads have terminated
     if( loaderThread->isFinished()
         && viewerThread->isFinished()

@@ -1,5 +1,11 @@
 #include "vpgeneraltabwidget.h"
-
+#include <QLabel>
+#include <QSpinBox>
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QFrame>
+#include "knossos-global.h"
 extern struct stateInfo *state;
 
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :

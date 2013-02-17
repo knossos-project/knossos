@@ -3,7 +3,6 @@
 
 #include <QDialog>
 
-
 class QCheckBox;
 class QLabel;
 class QSpinBox;

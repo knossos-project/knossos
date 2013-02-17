@@ -1,4 +1,12 @@
 #include "vpskeletonviewportwidget.h"
+#include <QLabel>
+#include <QFrame>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include "knossos-global.h"
+extern struct stateInfo *state;
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     QWidget(parent)

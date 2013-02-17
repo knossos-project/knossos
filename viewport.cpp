@@ -32,7 +32,7 @@ void Viewport::initializeGL() {
 
 void Viewport::resizeGL(int w, int h) {
     qDebug("resizing");
-
+    glClearColor(0, 0, 0, 1);
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -52,6 +52,7 @@ void Viewport::resizeGL(int w, int h) {
   */
 
 void Viewport::paintGL() {
+
     if(this->plane < 3) {
         drawViewport(this->plane);
     } else
@@ -76,7 +77,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     if(event->button() == Qt::LeftButton) {
         handleMouseButtonLeft(event, plane);
     }
-    else if(event->button() == Qt::MiddleButton) {
+    else if(event->button() == Qt::MidButton) {
         handleMouseButtonMiddle(event, plane);
     }
     else if(event->button() == Qt::RightButton) {

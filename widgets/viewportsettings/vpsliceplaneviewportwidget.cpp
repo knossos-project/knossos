@@ -1,4 +1,15 @@
 #include "vpsliceplaneviewportwidget.h"
+#include <Qlabel>
+#include <QFrame>
+#include <QDoubleSpinBox>
+#include <QSpinBox>
+#include <QCheckBox>
+#include <QPushButton>
+#include <QSlider>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include "knossos-global.h"
+extern struct stateInfo *state;
 
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QWidget(parent)

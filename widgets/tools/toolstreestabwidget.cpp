@@ -1,5 +1,18 @@
 #include "toolstreestabwidget.h"
 
+#include <QWidget>
+#include <QLabel>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
+#include <QFrame>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QGridLayout>
+#include "knossos-global.h"
+extern struct stateInfo *state;
+
 ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -73,7 +86,40 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     gridLayout->addWidget(mergeTreesButton, 6, 0);
     gridLayout->addWidget(id1Label, 6, 1);
     gridLayout->addWidget(id1SpinBox, 6, 2);
+    gridLayout->addWidget(id2Label, 6, 3);
+    gridLayout->addWidget(id2SpinBox, 6, 4);
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
 }
+
+void ToolsTreesTabWidget::loadSettings() {
+    activeTreeSpinBox->setValue(state->viewerState->gui->activeTreeID);
+    commentField->setText(QString(state->viewerState->gui->treeCommentBuffer));
+}
+
+void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
+    state->viewerState->gui->activeTreeID = value;
+}
+
+void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
+
+}
+
+void ToolsTreesTabWidget::newTreeButtonClicked() {
+
+}
+
+void ToolsTreesTabWidget::mergeTreesButtonClicked() {
+
+}
+
+void ToolsTreesTabWidget::id1Changed(int value) {
+
+}
+
+void ToolsTreesTabWidget::id2Changed(int value) {
+
+}
+
+

@@ -3,7 +3,6 @@
 
 #include <QDialog>
 
-
 class QLineEdit;
 class QLabel;
 class QPushButton;
@@ -24,7 +23,6 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
-private:
     static const int NUM = 5;
     QLabel **labels;
     QPushButton *button;

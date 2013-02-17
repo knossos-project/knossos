@@ -2,15 +2,10 @@
 #define TOOLSNODESTABWIDGET_H
 
 #include <QWidget>
-#include <QLabel>
-#include <QSpinBox>
-#include <QFrame>
-#include <QPushButton>
 
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QGridLayout>
-
+class QLabel;
+class QSpinBox;
+class QPushButton;
 class ToolsNodesTabWidget : public QWidget
 {
     Q_OBJECT
