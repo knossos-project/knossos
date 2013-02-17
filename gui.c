@@ -153,8 +153,6 @@ int32_t initGUI() {
     createMenuBar();
     createCoordBarWin();
 
-
-    createDataSizeWin();
     createNavWin();
     createToolsWin();
     createConsoleWin();
@@ -178,10 +176,13 @@ int32_t initGUI() {
     /*createSetDynRangeWin(); */           /* Unused. */
 
     createVpXyWin();
+    createDataSizeWin(0);
     createVpPosSizWin(0);
     createVpXzWin();
+    createDataSizeWin(1);
     createVpPosSizWin(1);
     createVpYzWin();
+    createDataSizeWin(2);
     createVpPosSizWin(2);
     createVpSkelWin();
     createVpPosSizWin(3);
@@ -578,44 +579,49 @@ void reloadDataSizeWin() {
     }
 }
 
-void createDataSizeWin() {
+void createDataSizeWin(int i) {
     AG_Window *win;
     AG_Label *label;
-
-    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
-    AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win, 0, " ");
-    {
-        AG_LabelSetPadding(label, 1, 1, 1, 1);
-        AG_ExpandHoriz(label);
-        state->viewerState->ag->dataSizeLabelxy = label;
+    if (i == 0){
+        win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+        AG_WindowSetPadding(win, 0, 0, 3, 1);
+        label = AG_LabelNew(win, 0, " ");
+        {
+            AG_LabelSetPadding(label, 1, 1, 1, 1);
+            AG_ExpandHoriz(label);
+            state->viewerState->ag->dataSizeLabelxy = label;
+        }
+        AG_WindowShow(win);
+        state->viewerState->ag->dataSizeWinxy = win;
     }
-    AG_WindowShow(win);
-    state->viewerState->ag->dataSizeWinxy = win;
 
-    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
-    AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0, " ");
-    {
-        AG_LabelSetPadding(label, 1, 1, 1, 1);
-        AG_ExpandHoriz(label);
-        state->viewerState->ag->dataSizeLabelxz = label;
+    if (i == 1){
+        win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+        AG_WindowSetPadding(win, 0, 0, 3, 1);
+        label = AG_LabelNew(win,0, " ");
+        {
+            AG_LabelSetPadding(label, 1, 1, 1, 1);
+            AG_ExpandHoriz(label);
+            state->viewerState->ag->dataSizeLabelxz = label;
+        }
+        AG_WindowShow(win);
+        state->viewerState->ag->dataSizeWinxz = win;
     }
-    AG_WindowShow(win);
-    state->viewerState->ag->dataSizeWinxz = win;
 
-    win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
-    AG_WindowSetPadding(win, 0, 0, 3, 1);
-    label = AG_LabelNew(win,0, " ");
-    {
-        AG_LabelSetPadding(label, 1, 1, 1, 1);
-        AG_ExpandHoriz(label);
-        state->viewerState->ag->dataSizeLabelyz = label;
+    if(i == 2){
+        win = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
+        AG_WindowSetPadding(win, 0, 0, 3, 1);
+        label = AG_LabelNew(win,0, " ");
+        {
+            AG_LabelSetPadding(label, 1, 1, 1, 1);
+            AG_ExpandHoriz(label);
+            state->viewerState->ag->dataSizeLabelyz = label;
+        }
+        AG_WindowShow(win);
+        state->viewerState->ag->dataSizeWinyz = win;
+        setDataSizeWinPositions();
     }
-    AG_WindowShow(win);
-    state->viewerState->ag->dataSizeWinyz = win;
 
-    setDataSizeWinPositions();
 }
 
 void createNavWin() {
@@ -1384,20 +1390,23 @@ static void focusViewport(int foundVP){
     switch(foundVP){
         case VIEWPORT_XY:
             AG_ObjectMoveToTail(state->viewerState->ag->vpXyWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinxy);
             AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[0]);
             break;
         case VIEWPORT_XZ:
             AG_ObjectMoveToTail(state->viewerState->ag->vpXzWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinxz);
             AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[1]);
             break;
         case VIEWPORT_YZ:
             AG_ObjectMoveToTail(state->viewerState->ag->vpYzWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinyz);
             AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[2]);
             break;
         case VIEWPORT_SKELETON:
             AG_ObjectMoveToTail(state->viewerState->ag->vpSkelWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[3]);
             AG_ObjectMoveToTail(state->viewerState->ag->skeletonVpToolsWin);
+            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[3]);
             break;
     }
 }
