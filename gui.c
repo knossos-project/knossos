@@ -153,6 +153,20 @@ int32_t initGUI() {
     createMenuBar();
     createCoordBarWin();
 
+    createVpSkelWin();
+    createVpPosSizWin(3);
+    createSkeletonVpToolsWin();
+    createVpYzWin();
+    createDataSizeWin(2);
+    createVpPosSizWin(2);
+    createVpXzWin();
+    createDataSizeWin(1);
+    createVpPosSizWin(1);
+    createVpXyWin();
+    createDataSizeWin(0);
+    createVpPosSizWin(0);
+    setVPPosSizWinPositions();
+
     createNavWin();
     createToolsWin();
     createConsoleWin();
@@ -174,20 +188,6 @@ int32_t initGUI() {
     createTracingTimeWin();
     createCommentsWin();
     /*createSetDynRangeWin(); */           /* Unused. */
-
-    createVpXyWin();
-    createDataSizeWin(0);
-    createVpPosSizWin(0);
-    createVpXzWin();
-    createDataSizeWin(1);
-    createVpPosSizWin(1);
-    createVpYzWin();
-    createDataSizeWin(2);
-    createVpPosSizWin(2);
-    createVpSkelWin();
-    createVpPosSizWin(3);
-    createSkeletonVpToolsWin();
-    setVPPosSizWinPositions();
 
     UI_loadSettings();
 
@@ -593,6 +593,7 @@ void createDataSizeWin(int i) {
         }
         AG_WindowShow(win);
         state->viewerState->ag->dataSizeWinxy = win;
+        setDataSizeWinPositions();
     }
 
     if (i == 1){
@@ -619,7 +620,6 @@ void createDataSizeWin(int i) {
         }
         AG_WindowShow(win);
         state->viewerState->ag->dataSizeWinyz = win;
-        setDataSizeWinPositions();
     }
 
 }
@@ -1387,26 +1387,51 @@ static void UI_moveVP(AG_Event *event) {
 }
 
 static void focusViewport(int foundVP){
+    int i;
     switch(foundVP){
         case VIEWPORT_XY:
-            AG_ObjectMoveToTail(state->viewerState->ag->vpXyWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinxy);
-            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[0]);
+            for (i = 0; i < state->viewerState->viewportOrder[0]*3; i++){
+                AG_ObjectMoveDown(state->viewerState->ag->VpPosAndSizWin[0]);
+                AG_ObjectMoveDown(state->viewerState->ag->dataSizeWinxy);
+                AG_ObjectMoveDown(state->viewerState->ag->vpXyWin);
+            }
+            if (state->viewerState->viewportOrder[1] < state->viewerState->viewportOrder[0]) state->viewerState->viewportOrder[1]++;
+            if (state->viewerState->viewportOrder[2] < state->viewerState->viewportOrder[0]) state->viewerState->viewportOrder[2]++;
+            if (state->viewerState->viewportOrder[3] < state->viewerState->viewportOrder[0]) state->viewerState->viewportOrder[3]++;
+            state->viewerState->viewportOrder[0] = 0;
             break;
         case VIEWPORT_XZ:
-            AG_ObjectMoveToTail(state->viewerState->ag->vpXzWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinxz);
-            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[1]);
+            for (i = 0; i < state->viewerState->viewportOrder[1]*3; i++){
+                AG_ObjectMoveDown(state->viewerState->ag->VpPosAndSizWin[1]);
+                AG_ObjectMoveDown(state->viewerState->ag->dataSizeWinxz);
+                AG_ObjectMoveDown(state->viewerState->ag->vpXzWin);
+            }
+            if (state->viewerState->viewportOrder[0] < state->viewerState->viewportOrder[1]) state->viewerState->viewportOrder[0]++;
+            if (state->viewerState->viewportOrder[2] < state->viewerState->viewportOrder[1]) state->viewerState->viewportOrder[2]++;
+            if (state->viewerState->viewportOrder[3] < state->viewerState->viewportOrder[1]) state->viewerState->viewportOrder[3]++;
+            state->viewerState->viewportOrder[1] = 0;
             break;
         case VIEWPORT_YZ:
-            AG_ObjectMoveToTail(state->viewerState->ag->vpYzWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->dataSizeWinyz);
-            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[2]);
+            for (i = 0; i < state->viewerState->viewportOrder[2]*3; i++){
+                AG_ObjectMoveDown(state->viewerState->ag->VpPosAndSizWin[2]);
+                AG_ObjectMoveDown(state->viewerState->ag->dataSizeWinyz);
+                AG_ObjectMoveDown(state->viewerState->ag->vpYzWin);
+            }
+            if (state->viewerState->viewportOrder[0] < state->viewerState->viewportOrder[2]) state->viewerState->viewportOrder[0]++;
+            if (state->viewerState->viewportOrder[1] < state->viewerState->viewportOrder[2]) state->viewerState->viewportOrder[1]++;
+            if (state->viewerState->viewportOrder[3] < state->viewerState->viewportOrder[2]) state->viewerState->viewportOrder[3]++;
+            state->viewerState->viewportOrder[2] = 0;
             break;
         case VIEWPORT_SKELETON:
-            AG_ObjectMoveToTail(state->viewerState->ag->vpSkelWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->skeletonVpToolsWin);
-            AG_ObjectMoveToTail(state->viewerState->ag->VpPosAndSizWin[3]);
+            for (i = 0; i < state->viewerState->viewportOrder[3]*3; i++){
+                AG_ObjectMoveDown(state->viewerState->ag->skeletonVpToolsWin);
+                AG_ObjectMoveDown(state->viewerState->ag->VpPosAndSizWin[3]);
+                AG_ObjectMoveDown(state->viewerState->ag->vpSkelWin);
+            }
+            if (state->viewerState->viewportOrder[0] < state->viewerState->viewportOrder[3]) state->viewerState->viewportOrder[0]++;
+            if (state->viewerState->viewportOrder[1] < state->viewerState->viewportOrder[3]) state->viewerState->viewportOrder[1]++;
+            if (state->viewerState->viewportOrder[2] < state->viewerState->viewportOrder[3]) state->viewerState->viewportOrder[2]++;
+            state->viewerState->viewportOrder[3] = 0;
             break;
     }
 }
@@ -1698,6 +1723,7 @@ void createLoadDatasetImgJTableWin() {
 }
 
 static void createVpXyWin() {
+    state->viewerState->viewportOrder[VIEWPORT_XY] = 0;
 	state->viewerState->ag->vpXyWin = AG_WindowNew(AG_WINDOW_PLAIN);
     state->viewerState->ag->vpXyWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpXyWin, "XY");
@@ -1720,6 +1746,7 @@ static void createVpXyWin() {
 }
 
 static void createVpXzWin() {
+    state->viewerState->viewportOrder[VIEWPORT_XZ] = 1;
 	state->viewerState->ag->vpXzWin = AG_WindowNew(AG_WINDOW_PLAIN);
 	state->viewerState->ag->vpXzWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpXzWin, "XZ");
@@ -1742,6 +1769,7 @@ static void createVpXzWin() {
 }
 
 static void createVpYzWin() {
+    state->viewerState->viewportOrder[VIEWPORT_YZ] = 2;
 	state->viewerState->ag->vpYzWin = AG_WindowNew(AG_WINDOW_PLAIN);
 	state->viewerState->ag->vpYzWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpYzWin, "yz");
@@ -1763,6 +1791,7 @@ static void createVpYzWin() {
 }
 
 static void createVpSkelWin() {
+    state->viewerState->viewportOrder[VIEWPORT_SKELETON] = 3;
 	state->viewerState->ag->vpSkelWin = AG_WindowNew(AG_WINDOW_PLAIN);
 	state->viewerState->ag->vpSkelWin->flags += AG_WINDOW_KEEPBELOW;
     AG_WindowSetCaption(state->viewerState->ag->vpSkelWin, "Skeleton View");

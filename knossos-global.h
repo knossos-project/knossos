@@ -966,6 +966,7 @@ struct viewerState {
     Coordinate clickedCoordinate;
 
     int showPosSizButtons;
+    int viewportOrder[4];
 };
 
 struct commentListElement {
