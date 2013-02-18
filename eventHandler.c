@@ -1273,7 +1273,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_g:
         if(SDL_GetModState() & KMOD_SHIFT) {
             //For testing issues
-            genTestNodes(50000);
+            //genTestNodes(5000);
         }
         break;
     case SDLK_n:

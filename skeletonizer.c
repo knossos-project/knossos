@@ -371,7 +371,7 @@ int32_t addNode(int32_t targetRevision,
     //        tempNode->correspondingTree);
 
     //Add a pointer to the node in the skeleton DC structure
-    addNodeToSkeletonStruct(tempNode);
+//    addNodeToSkeletonStruct(tempNode);
     state->skeletonState->skeletonChanged = TRUE;
 
     if(nodeID > state->skeletonState->greatestNodeID)
@@ -433,12 +433,12 @@ int32_t editNode(int32_t targetRevision,
     nodeID = node->nodeID;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    delNodeFromSkeletonStruct(node);
+    /*delNodeFromSkeletonStruct(node);
     currentSegment = node->firstSegment;
     while(currentSegment) {
         delSegmentFromSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
-    }
+    }*/
 
     if(!((newXPos < 0) || (newXPos > state->boundary.x)
        || (newYPos < 0) || (newYPos > state->boundary.y)
@@ -453,12 +453,12 @@ int32_t editNode(int32_t targetRevision,
     node->createdInMag = inMag;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    addNodeToSkeletonStruct(node);
-    currentSegment = node->firstSegment;
+    //addNodeToSkeletonStruct(node);
+    /*currentSegment = node->firstSegment;
     while(currentSegment) {
         addSegmentToSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
-    }
+    }*/
     updateCircRadius(node);
 
     state->skeletonState->skeletonChanged = TRUE;
@@ -568,7 +568,7 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
      * Add the segment to the skeleton DC structure
     */
 
-    addSegmentToSkeletonStruct(sourceSeg);
+   // addSegmentToSkeletonStruct(sourceSeg);
 
     // printf("added segment for nodeID %d: %d, %d, %d -> nodeID %d: %d, %d, %d\n", sourceNode->nodeID, sourceNode->position.x + 1, sourceNode->position.y + 1, sourceNode->position.z + 1, targetNode->nodeID, targetNode->position.x + 1, targetNode->position.y + 1, targetNode->position.z + 1);
 
@@ -622,7 +622,7 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
 
 
     //Out of skeleton structure
-    delSegmentFromSkeletonStruct(segToDel);
+//    delSegmentFromSkeletonStruct(segToDel);
 
     if(segToDel == segToDel->source->firstSegment)
         segToDel->source->firstSegment = segToDel->next;
@@ -2125,7 +2125,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
      * Delete the node out of the visualization structure
      */
 
-    delNodeFromSkeletonStruct(nodeToDel);
+    //delNodeFromSkeletonStruct(nodeToDel);
 
     if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
@@ -2670,6 +2670,7 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
 }
 
 uint32_t addNodeToSkeletonStruct(struct nodeListElement *node) {
+
     struct skeletonDC *currentSkeletonDC;
     struct skeletonDCnode *currentNewSkeletonDCnode;
     Coordinate currentMagPos;
