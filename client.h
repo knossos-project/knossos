@@ -32,14 +32,11 @@ public:
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
     
 signals:
-    
+    void finished();
 public slots:
-
-public Q_SLOTS:
     void start();
 
-Q_SIGNALS:
-    void finished();
+
     
 };
 

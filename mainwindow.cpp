@@ -15,84 +15,6 @@
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 
-//-- static functions --//
-
-static void setGUIcolors(){}
-static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY){}
-static void resizeWindows(){}
-static void agInputWdgtGainedFocus(QEvent *event){}
-static void agInputWdgtLostFocus(QEvent *event){}
-
-static void currPosWdgtModified(QEvent *event){}
-static void actNodeIDWdgtModified(QEvent *event){}
-static void actTreeIDWdgtModified(QEvent *event){}
-static void actTreeColorWdgtModified(QEvent *event){}
-static void actNodeCommentWdgtModified(QEvent *event){}
-static void actTreeCommentWdgtModified(QEvent *event){}
-
-static void prefNavOptions(QEvent *event){}
-static void prefLoadCustomPrefs(QEvent *event){}
-static void prefSaveCustomPrefsAs(QEvent *event){}
-static void prefSyncOptions(QEvent *event){}
-//static void prefRenderingQualityOptions(QEvent *event){}
-//static void prefVolTracingOptions(QEvent *event){}
-//static void prefSpatialLockingOptions(QEvent *event){}
-//static void prefAGoptions(QEvent *event){}
-static void prefViewportPrefs(){}
-static void prefSaveOptions(){}
-static void createViewportPrefWin() {}
-static void createDisplayOptionsWin() {}
-static void createRenderingOptionsWin() {}
-static void createVolTracingOptionsWin() {}
-static void createSpatialLockingOptionsWin() {}
-static void createDataSetStatsWin() {}
-static void createLoadDatasetImgJTableWin() {}
-static void createLoadTreeImgJTableWin() {}
-static void createSetDynRangeWin() {}
-static void createCurrPosWdgt(){}
-static void createActNodeWdgt(){}
-static void datasetColorAdjustmentsChanged(){}
-static void createOpenCustomPrefsDlgWin(){}
-static void createSaveCustomPrefsAsDlgWin(){}
-
-//  Wrapper functions around KNOSSOS internals for use by the UI
-// (GUI / Keyboard / (Mouse))
-
-static void WRAP_loadSkeleton(){}
-static void WRAP_saveSkeleton(){}
-static void UI_lockActiveNodeBtnPressed(){}
-static void UI_disableLockingBtnPressed(){}
-static void UI_commentLockWdgtModified(QEvent *event){}
-static void UI_findNextBtnPressed(){}
-static void UI_findPrevBtnPressed(){}
-static void UI_deleteNodeBtnPressed(){}
-static void UI_jumpToNodeBtnPressed(){}
-static void UI_linkActiveNodeWithBtnPressed(){}
-static void UI_actNodeRadiusWdgtModified(){}
-static void UI_deleteTreeBtnPressed(){}
-static void UI_newTreeBtnPressed(){}
-static void UI_splitTreeBtnPressed(){}
-static void UI_mergeTreesBtnPressed(){}
-static void UI_helpDeleteTree(){}
-static void UI_renderModelRadioModified(){}
-static void UI_displayModeRadioModified(){}
-static void UI_setHighlightActiveTree(){}
-static void UI_setShowVPLabels(){}
-static void UI_setShowNodeIDs(){}
-static void UI_skeletonChanged(){}
-static void UI_enableSliceVPOverlayModified(){}
-static void UI_pushBranchBtnPressed(){}
-static void UI_popBranchBtnPressed(){}
-static void UI_enableLinearFilteringModified(){}
-
-static void UI_setSkeletonPerspective(QEvent *event){}
-static void UI_lockCurrentMagModified(QEvent *event){}
-static void UI_changeViewportPosSiz(){}
-static void UI_changeViewportPosSizCheckbox(){}
-static void createDataSizeWin() {}
-static void prefDefaultPrefs(){}
-static void resetViewportPosSiz(){}
-
 void MainWindow:: createCoordBarWin() {
     copyButton = new QPushButton("Copy");
     pasteButton = new QPushButton("Paste");
@@ -163,7 +85,7 @@ void MainWindow::createNavigationWidget() {
 
 void MainWindow::createToolWidget() {
     toolsWidget = new ToolsWidget(this);
-    toolsWidget->setGeometry(500, 100, 300, 300);
+    toolsWidget->setGeometry(500, 100, 300, 500);
     toolsWidget->show();
 }
 
@@ -184,7 +106,6 @@ void MainWindow::createSychronizationWidget() {
     synchronizationWidget->setGeometry(100, 350, 150, 100);
     synchronizationWidget->show();
 }
-
 
 
 /**
@@ -396,7 +317,7 @@ bool MainWindow::initGUI() {
     //createMenuBar();
     //createCoordBarWin();
     //createSkeletonVpToolsWin();
-    createDataSizeWin();
+    //createDataSizeWin();
     //createNavWin();
     //createToolsWin();
     //createConsoleWin();
@@ -412,7 +333,7 @@ bool MainWindow::initGUI() {
     createSpatialLockingOptionsWin();
     createVolTracingOptionsWin();   */
 
-    createDataSetStatsWin();
+    //createDataSetStatsWin();
     //createViewportPrefWin();
     //createZoomingWin();
     //createTracingTimeWin();
@@ -519,7 +440,7 @@ void MainWindow::loadSkeleton(){
         //yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
     }
     else {
-        WRAP_loadSkeleton();
+        //WRAP_loadSkeleton(); /**@todo */
     }
 }
 

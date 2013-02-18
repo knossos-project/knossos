@@ -18,11 +18,19 @@ signals:
     
 public slots:
     void activeTreeIDChanged(int value);
+    void commentChanged(QString comment);
     void deleteActiveTreeButtonClicked();
     void newTreeButtonClicked();
     void mergeTreesButtonClicked();
     void id1Changed(int value);
     void id2Changed(int value);
+    void splitByConnectedComponentsButtonClicked();
+    void rChanged(double value);
+    void gChanged(double value);
+    void bChanged(double value);
+    void aChanged(double value);
+    void restoreDefaultColorButtonClicked();
+
 
 protected:
     QLabel *activeTreeLabel;

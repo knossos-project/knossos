@@ -16,6 +16,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     QWidget(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
+
     treeCountLabel = new QLabel("Tree Count: 0");
     nodeCountLabel = new QLabel("Node Count: 0");
 
