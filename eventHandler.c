@@ -1646,11 +1646,11 @@ void moveOrResizeVP(SDL_Event event) {
     int foundVP;
     if(state->viewerState->moveVP != -1) {
         foundVP = state->viewerState->moveVP;
-        LOG("moveVP: %i", foundVP);
+        //LOG("moveVP: %i", foundVP);
     }
     else {
         foundVP = state->viewerState->resizeVP;
-        LOG("resizeVP: %i", foundVP);
+        //LOG("resizeVP: %i", foundVP);
     }
 
     if(foundVP != VIEWPORT_XY
