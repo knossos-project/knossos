@@ -92,6 +92,8 @@ uint32_t initSkeletonizer() {
     //state->skeletonState->displayListView = 0;
     //state->skeletonState->displayListDataset = 0;
 
+
+
     state->skeletonState->defaultNodeRadius = 1.5;
     state->skeletonState->overrideNodeRadiusBool = FALSE;
     state->skeletonState->overrideNodeRadiusVal = 1.;

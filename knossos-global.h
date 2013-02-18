@@ -295,10 +295,10 @@ typedef struct {
 } Coordinate;
 
 typedef struct {
-        float r;
-        float g;
-        float b;
-        float a;
+        GLfloat r;
+        GLfloat g;
+        GLfloat b;
+        GLfloat a;
 } color4F;
 
 typedef struct {
@@ -1077,6 +1077,28 @@ struct IOBuffer {
     Byte *data;
 };
 
+typedef struct {
+    floatCoordinate *vertices;
+    floatCoordinate *normals;
+    color4F *colors;
+
+    /* useful for flexible mesh manipulations */
+    uint32_t vertsBuffSize;
+    uint32_t normsBuffSize;
+    uint32_t colsBuffSize;
+    /* indicates last used element in corresponding buffer */
+    uint32_t vertsIndex;
+    uint32_t normsIndex;
+    uint32_t colsIndex;
+} mesh;
+
+typedef struct {
+        GLbyte r;
+        GLbyte g;
+        GLbyte b;
+        GLbyte a;
+} color4B;
+
 struct skeletonState {
     uint32_t skeletonRevision;
 
@@ -1200,6 +1222,11 @@ struct skeletonState {
 
 	// Current zoom level. 0: no zoom; near 1: maximum zoom.
 	float zoomLevel;
+
+    /* temporary vertex buffers that are available for rendering, get cleared
+    every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
 
     int branchpointUnresolved;
 
@@ -1340,6 +1367,14 @@ struct cmdAddComment {
  *      Macros
  *
  */
+#define SET_COLOR(color, rc, gc, bc, ac) \
+        { \
+        color.r = rc; \
+        color.g = gc; \
+        color.b = bc; \
+        color.a = ac; \
+        }
+
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
@@ -1535,6 +1570,9 @@ uint32_t renderOrthogonalVP(uint32_t currentVP);
 uint32_t renderSkeletonVP(uint32_t currentVP);
 uint32_t drawViewportProperties(uint32_t currentVP);
 uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
+
+uint32_t doubleMeshCapacity(mesh *toDouble);
+uint32_t initMesh(mesh *meshToInit, uint32_t initialSize);
 //Some math helper functions
 float radToDeg(float rad);
 float degToRad(float deg);

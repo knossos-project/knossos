@@ -1097,7 +1097,7 @@ uint32_t initializeTextures() {
     /*problem of deleting textures when calling again after resize?! TDitem */
     for(i = 0; i < state->viewerState->numberViewPorts; i++) {
         if(state->viewerState->viewPorts[i].type != VIEWPORT_SKELETON) {
-            //state->viewerState->viewPorts[i].displayList = glGenLists(1);
+
             glGenTextures(1, &state->viewerState->viewPorts[i].texture.texHandle);
             if(state->overlay)
                 glGenTextures(1, &state->viewerState->viewPorts[i].texture.overlayHandle);

@@ -1147,7 +1147,7 @@ void createViewPortPrefWin() {
             AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
             AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
         }
-
+/*
         box2 = AG_BoxNew(box1, AG_BOX_VERT, 0);
         AG_ExpandHoriz(box2);
         AG_LabelNew(box2, 0, "Skeleton Rendering Model");
@@ -1162,7 +1162,7 @@ void createViewPortPrefWin() {
         box2 = AG_BoxNew(tab, AG_BOX_VERT, 0);
         AG_LabelNew(box2, 0, "Viewport Sizes and Positions");
         AG_SeparatorSetPadding(AG_SeparatorNewHoriz(box2), 0);
-
+*/
         state->viewerState->ag->showPosSizButtonsCheckbox = AG_CheckboxNewFn(box2,
                                                                      0,
                                                                      "Show Position and Resize Buttons",
@@ -1325,7 +1325,7 @@ void createViewPortPrefWin() {
                     AG_BindInt(radio, "value", &state->viewerState->ag->radioSkeletonDisplayMode);
                     AG_ExpandHoriz(radio);
                     AG_RadioAddItem(radio, "Whole Skeleton");
-                    AG_RadioAddItem(radio, "Only Current Cube");
+                    //AG_RadioAddItem(radio, "Only Current Cube");
                     AG_RadioAddItem(radio, "Only Active Tree");
                     AG_RadioAddItem(radio, "Hide Skeleton (fast)");
                 }
@@ -2622,7 +2622,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
     state->skeletonState->datasetChanged = TRUE;
     state->skeletonState->skeletonSliceVPchanged = TRUE;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    updateDisplayListsSkeleton();
+    //updateDisplayListsSkeleton();
 
     //Dont allow viewports to go outside of screen -> scale them down
 
@@ -3063,13 +3063,13 @@ static void UI_displayModeRadioModified() {
         case 0: /* Whole Skeleton */
             state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
             break;
-        case 1: /* Only Current Cube */
+        /*case 1: // Only Current Cube
             state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
-            break;
-        case 2: /* Only Active Tree */
+            break;*/
+        case 1: /* Only Active Tree */
             state->skeletonState->displayMode |= DSP_ACTIVETREE;
             break;
-        case 3: /* Hide Skeleton */
+        case 2: /* Hide Skeleton */
             state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
             break;
     }

@@ -512,7 +512,7 @@ static int32_t initStates() {
     state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
     state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
     state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
-    state->viewerState->cumDistRenderThres = 10.f; //in screen pixels
+    state->viewerState->cumDistRenderThres = 5.f; //in screen pixels
 
     loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
     loadDefaultTreeLUT();
