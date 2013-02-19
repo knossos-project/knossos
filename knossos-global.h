@@ -886,10 +886,10 @@ struct viewerState {
     Byte *defaultOverlayData;
     uint32_t numberViewports;
     uint32_t splash;
-    uint32_t viewerReady;
+    bool viewerReady;
     GLuint splashTexture;
     //Flag to indicate user movement
-	uint32_t userMove;
+    bool userMove;
     int32_t highlightVp;
     int32_t vpKeyDirection[3];
 
@@ -921,7 +921,7 @@ struct viewerState {
 
     uint32_t recenteringTime;
     uint32_t recenteringTimeOrth;
-    uint32_t walkOrth;
+    bool walkOrth;
 
     //SDL_Surface *screen;
 
@@ -932,12 +932,12 @@ struct viewerState {
     int lightOnOff;
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
-    int drawVPCrosshairs;
+    bool drawVPCrosshairs;
 
     //Show height/width-labels inside VPs
-    int showVPLabels;
+    bool showVPLabels;
 
-    int selectModeFlag;
+    bool selectModeFlag;
 
     uint32_t dropFrames;
 
@@ -950,7 +950,7 @@ struct viewerState {
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
     uint32_t workMode;
-    int superCubeChanged;
+    bool superCubeChanged;
 
     struct guiConfig *gui;
     struct inputmap *inputmap;
@@ -960,12 +960,12 @@ struct viewerState {
 
     GLuint datasetColortable[3][256];
     GLuint datasetAdjustmentTable[3][256];
-    int datasetColortableOn;
-    int datasetAdjustmentOn;
+    bool datasetColortableOn;
+    bool datasetAdjustmentOn;
     GLuint neutralDatasetTable[3][256];
 
-    int treeLutSet;
-    int treeColortableOn;
+    bool treeLutSet;
+    bool treeColortableOn;
     float treeColortable[RGB_LUTSIZE];
     float treeAdjustmentTable[RGB_LUTSIZE];
     float defaultTreeTable[RGB_LUTSIZE];
@@ -979,12 +979,12 @@ struct viewerState {
 
     GLuint overlayColorMap[4][256];
 
-    int overlayVisible;
+    bool overlayVisible;
 
 
     // Advanced Tracing Modes Stuff
 
-    int autoTracingEnabled;
+    bool autoTracingEnabled;
     int autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
@@ -1100,7 +1100,7 @@ struct skeletonState {
     //    was loaded in the current knossos instance.
 
 
-    int32_t unsavedChanges;
+    bool unsavedChanges;
     int32_t skeletonTime;
     int32_t skeletonTimeCorrection;
 
@@ -1131,8 +1131,8 @@ struct skeletonState {
 
     uint32_t numberComments;
 
-    int lockPositions;
-    uint32_t positionLocked;
+    bool lockPositions;
+    bool positionLocked;
     char onCommentLock[1024];
     Coordinate lockedPosition;
     long unsigned int lockRadius;
@@ -1145,7 +1145,8 @@ struct skeletonState {
 
     float translateX, translateY;
 
-    // Display list, which renders the skeleton defined in skeletonDisplayMode
+    // Display list,
+    //which renders the skeleton defined in skeletonDisplayMode
     //(may be same as in displayListSkeletonSkeletonizerVPSlicePlaneVPs
     GLuint displayListSkeletonSkeletonizerVP;
     // Display list, which renders the skeleton of the slice plane VPs
@@ -1164,13 +1165,13 @@ struct skeletonState {
     // The next three flags cause recompilation of the above specified display lists.
 
     //TRUE, if all display lists must be updated
-    int skeletonChanged;
+    bool skeletonChanged;
     //TRUE, if the view on the skeleton changed
-    int viewChanged;
+    bool viewChanged;
     //TRUE, if dataset parameters (size, ...) changed
-    int datasetChanged;
+    bool datasetChanged;
     //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
-    int skeletonSliceVPchanged;
+    bool skeletonSliceVPchanged;
 
     //uint32_t skeletonDisplayMode;
     uint32_t displayMode;
@@ -1212,16 +1213,16 @@ struct skeletonState {
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     float zoomLevel;
 
-    int branchpointUnresolved;
+    bool branchpointUnresolved;
 
     // This is for a workaround around agar bug #171
-    int askingPopBranchConfirmation;
+    bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
 };
 
 struct remoteState {
 		// type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
-		int32_t type;
+        bool type;
 		int32_t maxTrajectories;
 		int32_t activeTrajectory;
         Coordinate recenteringPosition;
@@ -1229,13 +1230,13 @@ struct remoteState {
 
 
 struct clientState {
-    int32_t connectAsap;
+    bool connectAsap;
     int32_t remotePort;
-    int32_t connected;
+    bool connected;
     Byte synchronizePosition;
     Byte synchronizeSkeleton;
     int32_t connectionTimeout;
-    int32_t connectionTried;
+    bool connectionTried;
     char serverAddress[1024];
 
     /** @todo temporarily uncommented
@@ -1244,7 +1245,7 @@ struct clientState {
     SDLNet_SocketSet socketSet;
     */
     uint32_t myId;
-    uint32_t saveMaster;
+    bool saveMaster;
 
     struct peerListElement *firstPeer;
     struct IOBuffer *inBuffer;

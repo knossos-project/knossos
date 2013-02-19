@@ -8,31 +8,23 @@
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 
 #include <QMainWindow>
-#include <QEvent>
-#include <QMenu>
-#include <QAction>
-#include <QLayout>
-#include <QGridLayout>
-#include <QMessageBox>
-#include <QDebug>
-#include <QFileDialog>
-#include <QFile>
-#include <QDir>
-#include <QDebug>
-#include <QStringList>
-#include <QToolBar>
-#include <QSpinbox>
-#include <QLabel>
 #include <QQueue>
-#include <QKeySequence>
-#include <QSettings>
-#include "knossos-global.h"
-#include <dirent.h>
+
 
 
 namespace Ui {
 class MainWindow;
 }
+
+class QLabel;
+class QToolBar;
+class QSettings;
+class QPushButton;
+class QSpinBox;
+class QMessageBox;
+class QGridLayout;
+class QFileDialog;
+class QFile;
 
 class Console;
 class TracingTimeWidget;
@@ -71,6 +63,7 @@ public:
     static void treeColorAdjustmentsChanged();
 
     void showSplashScreen();
+    void showAboutScreen();
     void createConsoleWidget();
     void createTracingTimeWidget();
     void createCommentsWidget();

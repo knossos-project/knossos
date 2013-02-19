@@ -13,11 +13,26 @@ class VPSlicePlaneViewportWidget : public QWidget
     Q_OBJECT
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
-    
+    void loadSettings();
 signals:
     
 public slots:
-    
+    void enableOverlayChecked(bool on);
+    void datasetLinearFilteringChecked(bool on);
+    void hightlightIntersectionsChecked(bool on);
+    void depthCutoffChanged(double value);
+    void useOwnDatasetColorsChecked(bool on);
+    void useOwnTreeColorsChecked(bool on);
+    void useOwnDatasetColorsButtonClicked();
+    void useOwnTreeColorButtonClicked();
+    void biasSliderMoved(int value);
+    void biasChanged(int value);
+    void rangeDeltaSliderMoved(int value);
+    void rangeDeltaChanged(int value);
+    void enableColorOverlayChecked(bool on);
+    void drawIntersectionsCrossHairChecked(bool on);
+    void showViewPortsSizeChecked(bool on);
+
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
     QCheckBox *enableOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;

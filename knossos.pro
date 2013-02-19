@@ -42,9 +42,10 @@ SOURCES +=\
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp
 
-PRECOMPILED_HEADER +=  knossos-global.h
+
 
 HEADERS  += mainwindow.h \
+    knossos-global.h \
     eventmodel.h \
     client.h \
     loader.h \

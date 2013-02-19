@@ -7,6 +7,7 @@
 #include <QSpinBox>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QSpacerItem>
 #include "knossos-global.h"
 #include "skeletonizer.h"
 
@@ -107,8 +108,8 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     gridLayout4->addWidget(popBranchNodeButton, 1, 2);
 
     mainLayout->addLayout(gridLayout4);
-
     this->setLayout(mainLayout);
+
 
     connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));

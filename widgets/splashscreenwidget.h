@@ -2,7 +2,8 @@
 #define SPLASHSCREENWIDGET_H
 
 #include <QDialog>
-
+class QPixmap;
+class QLabel;
 class SplashScreenWidget : public QDialog
 {
     Q_OBJECT
@@ -14,6 +15,8 @@ signals:
 public slots:
 protected:
     QPixmap *image;
+    QLabel *trick;
+
 };
 
 #endif // SPLASHSCREENWIDGET_H

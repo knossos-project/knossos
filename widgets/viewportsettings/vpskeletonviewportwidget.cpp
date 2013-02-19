@@ -59,5 +59,42 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
+    mainLayout->addStretch(50);
+}
+
+void VPSkeletonViewportWidget::loadSettings() {
+
+}
+
+void VPSkeletonViewportWidget::showXYPlaneChecked(bool on) {
+
+}
+
+void VPSkeletonViewportWidget::showXZPlaneChecked(bool on) {
+
+}
+
+void VPSkeletonViewportWidget::showYZPlaneChecked(bool on) {
+
+}
+
+void VPSkeletonViewportWidget::wholeSkeletonSelected() {
+
+}
+
+void VPSkeletonViewportWidget::onlyCurrentCubeSelected() {
+
+}
+
+void VPSkeletonViewportWidget::onlyActiveTreeSelected() {
+
+}
+
+void VPSkeletonViewportWidget::hideSkeletonSelected() {
+
+}
+
+void VPSkeletonViewportWidget::rotateAroundActiveNodeChecked(bool on) {
+
 }
 

@@ -28,10 +28,9 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->overrideNodeRadiusButton = new QCheckBox("Override Node Radius");
     this->overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
 
-    this->overrideNodeRadiusSpinBox = new QSpinBox();
-    this->overrideNodeRadiusSpinBox->setValue(state->skeletonState->overrideNodeRadiusVal);
 
-    this->edgeNodeRadiusRatioSpinBox = new QSpinBox();
+
+    this->edgeNodeRadiusRatioSpinBox = new QDoubleSpinBox();
     this->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
     this->edgeNodeRadiusRatioLabel = new QLabel("Edge <-> Node Radius Ratio:");
 
@@ -40,7 +39,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->Skeleton3dButton = new QRadioButton("3D Skeleton");
 
     if(!state->skeletonState->overrideNodeRadiusBool) {
-        this->overrideNodeRadiusSpinBox->setEnabled(false);
         this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
     }
 
@@ -54,77 +52,92 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
 
     QGridLayout *gridLayout = new QGridLayout();
 
-    gridLayout->addWidget(skeletonVisualizationLabel, 0, 0);
-    gridLayout->addWidget(skeletonRenderingModelLabel, 0, 2);
-    gridLayout->addWidget(line, 1, 0);
-    gridLayout->addWidget(line2, 1, 2);
-    gridLayout->addWidget(this->lightEffectsButton, 2, 0);
-    gridLayout->addWidget(linesAndPointsButton, 2, 2);
-    gridLayout->addWidget(hightlightActiveTreeButton, 3, 0);
-    gridLayout->addWidget(Skeleton3dButton, 3, 2);
-    gridLayout->addWidget(showAllNodeIdsButton, 4, 0);
-    gridLayout->addWidget(overrideNodeRadiusButton, 5, 0);
-    gridLayout->addWidget(overrideNodeRadiusSpinBox, 5, 1);
-    gridLayout->addWidget(edgeNodeRadiusRatioLabel, 6, 0);
-    gridLayout->addWidget(edgeNodeRadiusRatioSpinBox, 6, 1);
+    gridLayout->addWidget(skeletonVisualizationLabel, 1, 1);
+    gridLayout->addWidget(skeletonRenderingModelLabel, 1, 2);
+    gridLayout->addWidget(line, 2, 1);
+    gridLayout->addWidget(line2, 2, 2);
+
+    gridLayout->addWidget(this->lightEffectsButton, 3, 1);
+    gridLayout->addWidget(linesAndPointsButton, 3, 2);
+    gridLayout->addWidget(hightlightActiveTreeButton, 4, 1);
+    gridLayout->addWidget(Skeleton3dButton, 4, 2);
+
+    gridLayout->addWidget(showAllNodeIdsButton, 5, 1);
+    gridLayout->addWidget(overrideNodeRadiusButton, 6, 1);
+    gridLayout->addWidget(edgeNodeRadiusRatioLabel, 7, 1);
+    gridLayout->addWidget(edgeNodeRadiusRatioSpinBox, 7, 2);
+
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
+    mainLayout->addStretch(50);
 
     connect(lightEffectsButton, SIGNAL(clicked(bool)), this, SLOT(lightEffectsChecked(bool)));
     connect(showAllNodeIdsButton, SIGNAL(clicked(bool)), this, SLOT(showAllNodeIdsChecked(bool)));
     connect(hightlightActiveTreeButton, SIGNAL(clicked(bool)), this, SLOT(hightlightActiveTreeChecked(bool)));
     connect(overrideNodeRadiusButton, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
+    connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(linesAndPointsButton, SIGNAL(clicked(bool)), this, SLOT(linesAndPointsChecked(bool)));
     connect(Skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(Skeleton3dChecked(bool)));
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
-    if(on) {
-
-    } else {
-
-    }
+    state->viewerState->lightOnOff = on;
 }
 
+/**
+  * @todo bool param is not needed here
+  */
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
-    if(on) {
-
+    if(state->skeletonState->highlightActiveTree) {
+        state->skeletonState->highlightActiveTree = false;
     } else {
-
+        state->skeletonState->highlightActiveTree = true;
     }
+
+    state->skeletonState->skeletonChanged = true;
 }
 
+/**
+  * @todo bool param is not need here
+  */
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
-    if(on) {
-
+    if(state->skeletonState->showNodeIDs) {
+        state->skeletonState->showNodeIDs = false;
     } else {
-
+        state->skeletonState->showNodeIDs = true;
     }
+
+    state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
+    state->skeletonState->overrideNodeRadiusBool = on;
+
     if(on) {
-        this->overrideNodeRadiusSpinBox->setEnabled(true);
         this->edgeNodeRadiusRatioSpinBox->setEnabled(true);
     } else {
-        this->overrideNodeRadiusSpinBox->setEnabled(false);
         this->edgeNodeRadiusRatioLabel->setEnabled(false);
     }
 }
 
-void VPGeneralTabWidget::linesAndPointsChecked(bool on) {
-    if(on) {
-
-    } else {
-
-    }
+/**
+  * @todo for what is overrideNodeRadiusVal ?
+  */
+void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
+    state->skeletonState->segRadiusToNodeRadius = value;
 }
 
+/**
+  * @todo the numeric order of radioRenderingModel
+  */
+void VPGeneralTabWidget::linesAndPointsChecked(bool on) {
+    state->viewerState->gui->radioRenderingModel;
+}
+
+/**
+  * @todo the numeric order of radioRanderingModel
+  */
 void VPGeneralTabWidget::Skeleton3dChecked(bool on) {
-    if(on) {
-
-    } else {
-
-    }
+    state->viewerState->gui->radioRenderingModel;
 }

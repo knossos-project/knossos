@@ -1,5 +1,27 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+#include <QEvent>
+#include <QMenu>
+#include <QAction>
+#include <QLayout>
+#include <QGridLayout>
+#include <QMessageBox>
+#include <QDebug>
+#include <QFileDialog>
+#include <QFile>
+#include <QDir>
+#include <QDebug>
+#include <QStringList>
+#include <QToolBar>
+#include <QSpinbox>
+#include <QLabel>
+#include <QQueue>
+#include <QKeySequence>
+#include <QSettings>
+#include <dirent.h>
+#include "knossos-global.h"
+
 #include "viewport.h"
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
@@ -258,6 +280,12 @@ void MainWindow::showSplashScreen() {
     QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
 
+}
+
+void MainWindow::showAboutScreen() {
+    this->splashWidget = new SplashScreenWidget(this);
+    splashWidget->setGeometry(400, 400, 500, 500);
+    splashWidget->show();
 }
 
 // -- static methods -- //
@@ -553,6 +581,7 @@ void MainWindow::treeColorAdjustmentsChanged(){
                     Skeletonizer::updateTreeColors();
             }
 }
+
 
 void MainWindow::createXYViewport() {
 
@@ -1003,7 +1032,7 @@ void MainWindow::commentShortcutsSlots()
 
 void MainWindow::aboutSlot()
 {
-    showSplashScreen();
+    this->showAboutScreen();
 }
 
 /* toolbar slots */

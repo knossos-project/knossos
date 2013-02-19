@@ -107,4 +107,85 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
+
+    connect(enableOverlayCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableOverlayChecked(bool)));
+    connect(datasetLinearFilteringCheckBox, SIGNAL(clicked(bool)), this, SLOT(datasetLinearFilteringChecked(bool)));
+    connect(highlightIntersectionsCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightIntersectionsChecked(bool)));
+    connect(depthCutoffSpinBox, SIGNAL(valueChanged(double)), this, SLOT(depthCutoffChanged(double)));
+    connect(useOwnDatasetColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnDatasetColorsChecked(bool)));
+    connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
+    connect(useOwnTreeColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnTreeColorsChecked(bool)));
+    connect(biasSlider, SIGNAL(sliderMoved(int)), this, SLOT(biasSliderMoved(int)));
+    connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
+    connect(rangeDeltaSlider, SIGNAL(sliderMoved(int)), this, SLOT(rangeDeltaSliderMoved(int)));
+    connect(rangeDeltaSpinBox, SIGNAL(valueChanged(int)), this, SLOT(rangeDeltaChanged(int)));
+    connect(enableColorOverlayCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableColorOverlayChecked(bool)));
+    connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
+    connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }
+
+void VPSlicePlaneViewportWidget::loadSettings() {
+
+}
+
+void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
+
+}
+
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
+
+}
+
+void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
+
+}
+
+void VPSlicePlaneViewportWidget::biasSliderMoved(int value) {
+
+}
+
+void VPSlicePlaneViewportWidget::biasChanged(int value) {
+
+}
+
+void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
+
+}
+
+void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
+
+}
+
+void VPSlicePlaneViewportWidget::enableColorOverlayChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
+
+}
+
+void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
+
+}
+
+

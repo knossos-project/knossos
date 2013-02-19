@@ -5,14 +5,14 @@
 
 class QLabel;
 class QCheckBox;
-class QSpinBox;
+class QDoubleSpinBox;
 class QRadioButton;
 class VPGeneralTabWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
-    
+    void loadSettings();
 signals:
     
 public slots:
@@ -20,7 +20,7 @@ public slots:
     void hightlightActiveTreeChecked(bool on);
     void showAllNodeIdsChecked(bool on);
     void overrideNodeRadiusChecked(bool on);
-
+    void edgeNodeRadiusRatioChanged(double value);
     void linesAndPointsChecked(bool on);
     void Skeleton3dChecked(bool on);
 protected:
@@ -30,8 +30,8 @@ protected:
     QCheckBox *hightlightActiveTreeButton;
     QCheckBox *showAllNodeIdsButton;
     QCheckBox *overrideNodeRadiusButton;
-    QSpinBox *overrideNodeRadiusSpinBox;
-    QSpinBox *edgeNodeRadiusRatioSpinBox;
+
+    QDoubleSpinBox *edgeNodeRadiusRatioSpinBox;
     QLabel *edgeNodeRadiusRatioLabel;
 
     QRadioButton *linesAndPointsButton;
