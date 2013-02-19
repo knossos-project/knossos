@@ -60,24 +60,40 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
     mainLayout->addStretch(50);
+
+    connect(showXYPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXYPlaneChecked(bool)));
+    connect(showYZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showYZPlaneChecked(bool)));
+    connect(showXZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXZPlaneChecked(bool)));
+    connect(wholeSkeletonButton, SIGNAL(clicked()), this, SLOT(wholeSkeletonSelected()));
+    connect(onlyCurrentCubeButton, SIGNAL(clicked()), this, SLOT(onlyCurrentCubeSelected()));
+    connect(onlyActiveTreeButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
+    connect(hideSkeletonButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
+    connect(rotateAroundActiveNodeCheckBox, SIGNAL(clicked(bool)), SLOT(rotateAroundActiveNodeChecked(bool)));
 }
 
 void VPSkeletonViewportWidget::loadSettings() {
+    showXYPlaneCheckBox->setChecked(state->skeletonState->showXYplane);
+    showYZPlaneCheckBox->setChecked(state->skeletonState->showYZplane);
+    showXZPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
 
+    rotateAroundActiveNodeCheckBox->setChecked(state->skeletonState->rotateAroundActiveNode);
 }
 
 void VPSkeletonViewportWidget::showXYPlaneChecked(bool on) {
-
+    state->skeletonState->showXYplane = on;
 }
 
 void VPSkeletonViewportWidget::showXZPlaneChecked(bool on) {
-
+    state->skeletonState->showXZplane = on;
 }
 
 void VPSkeletonViewportWidget::showYZPlaneChecked(bool on) {
-
+    state->skeletonState->showYZplane = on;
 }
 
+/**
+  * @todo numeric order of radio buttons
+  */
 void VPSkeletonViewportWidget::wholeSkeletonSelected() {
 
 }
@@ -95,6 +111,6 @@ void VPSkeletonViewportWidget::hideSkeletonSelected() {
 }
 
 void VPSkeletonViewportWidget::rotateAroundActiveNodeChecked(bool on) {
-
+    state->skeletonState->rotateAroundActiveNode = on;
 }
 

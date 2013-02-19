@@ -493,7 +493,7 @@ struct stateInfo {
     uint32_t cubeSetElements;
 
     // Cube hierarchy mode
-    int32_t boergens;
+    bool boergens;
 
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
@@ -501,7 +501,7 @@ struct stateInfo {
 
     // Use overlay cubes to color the data.
     // Values: TRUE, FALSE.
-    uint32_t overlay;
+    bool overlay;
 
 
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
@@ -521,11 +521,11 @@ struct stateInfo {
     bool quitSignal;
 
     // These signals are used to communicate with the remote.
-    int32_t remoteSignal;
+    bool remoteSignal;
 
     // Same for the client. The client threading code is basically
     // copy-pasted from the remote.
-    int32_t clientSignal;
+    bool clientSignal;
 
     int32_t maxTrajectories;
 
@@ -898,7 +898,7 @@ struct viewerState {
     int32_t zoomCube;
 
     // don't jump between mags on zooming
-    int datasetMagLock;
+    bool datasetMagLock;
 
     //Flag to indicate user repositioning
 	uint32_t userRepositioning;

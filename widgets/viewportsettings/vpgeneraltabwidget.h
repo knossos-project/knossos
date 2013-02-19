@@ -22,7 +22,7 @@ public slots:
     void overrideNodeRadiusChecked(bool on);
     void edgeNodeRadiusRatioChanged(double value);
     void linesAndPointsChecked(bool on);
-    void Skeleton3dChecked(bool on);
+    void skeleton3dChecked(bool on);
 protected:
     QLabel *skeletonVisualizationLabel;
     QLabel *skeletonRenderingModelLabel;
@@ -35,7 +35,7 @@ protected:
     QLabel *edgeNodeRadiusRatioLabel;
 
     QRadioButton *linesAndPointsButton;
-    QRadioButton *Skeleton3dButton;
+    QRadioButton *skeleton3dButton;
 };
 
 #endif // VPGENERALTABWIDGET_H

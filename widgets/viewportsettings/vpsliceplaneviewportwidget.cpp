@@ -8,8 +8,11 @@
 #include <QSlider>
 #include <QVBoxLayout>
 #include <QGridLayout>
+#include <QFileDialog>
 #include "knossos-global.h"
+
 extern struct stateInfo *state;
+extern struct stateInfo *tempConfig;
 
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QWidget(parent)
@@ -37,11 +40,19 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 
     biasLabel = new QLabel("Bias");
     biasSpinBox = new QSpinBox();
+    biasSpinBox->setMaximum(255);
+    biasSpinBox->setSingleStep(1);
     biasSlider = new QSlider(Qt::Horizontal);
+    biasSlider->setMaximum(255);
+    biasSlider->setSingleStep(1);
 
     rangeDeltaLabel = new QLabel("Range Delta");
     rangeDeltaSlider = new QSlider(Qt::Horizontal);
+    rangeDeltaSlider->setMaximum(255);
+    rangeDeltaSlider->setSingleStep(1);
     rangeDeltaSpinBox = new QSpinBox();
+    rangeDeltaSpinBox->setMaximum(255);
+    rangeDeltaSpinBox->setSingleStep(1);
 
     objectIDOverlayLabel = new QLabel("Object ID Overlay");
     viewportObjectsLabel = new QLabel("Viewport Objects");
@@ -125,67 +136,112 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 }
 
 void VPSlicePlaneViewportWidget::loadSettings() {
+    enableOverlayCheckBox->setChecked(state->viewerState->gui->enableOrthoSkelOverlay);
+    if(state->viewerState->filterType == GL_LINEAR) {
+        datasetLinearFilteringCheckBox->setChecked(true);
+    }
+    highlightIntersectionsCheckBox->setChecked(state->skeletonState->showIntersections);
+    depthCutoffSpinBox->setValue(state->viewerState->depthCutOff);
+    useOwnDatasetColorsCheckBox->setChecked(state->viewerState->datasetColortableOn);
+    useOwnTreeColorsCheckBox->setChecked(state->viewerState->treeColortableOn);
+    biasSpinBox->setValue(state->viewerState->luminanceBias);
+    biasSlider->setValue(state->viewerState->luminanceBias);
+    rangeDeltaSpinBox->setValue(state->viewerState->luminanceRangeDelta);
+    rangeDeltaSlider->setValue(state->viewerState->luminanceRangeDelta);
+    enableColorOverlayCheckBox->setChecked(state->viewerState->overlayVisible);
+    drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
+    showViewPortsSizeCheckBox->setChecked(state->viewerState->showVPLabels);
 
 }
 
 void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
-
+    state->viewerState->gui->enableOrthoSkelOverlay = on;
 }
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
-
+    if(on) {
+        tempConfig->viewerState->filterType = GL_LINEAR;
+    } else {
+        tempConfig->viewerState->filterType = GL_NEAREST;
+    }
 }
 
 void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
-
+    state->skeletonState->showIntersections = on;
 }
 
 void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
-
+    state->viewerState->depthCutOff = value;
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {
-
+    state->viewerState->datasetColortableOn = on;
 }
 
+/**
+  * @todo
+  */
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.*)"));
+    if(!fileName.isEmpty()) {
 
+    }
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
-
+    state->viewerState->treeColortableOn = on;
 }
 
+/**
+  * @todo
+  */
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.*)"));
+    if(!fileName.isEmpty()) {
 
+    }
 }
+
 
 void VPSlicePlaneViewportWidget::biasSliderMoved(int value) {
-
+    state->viewerState->luminanceBias = value;
+    biasSpinBox->setValue(value);
 }
 
 void VPSlicePlaneViewportWidget::biasChanged(int value) {
-
+    state->viewerState->luminanceBias = value;
+    biasSlider->setValue(value);
 }
 
-void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
 
+void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
+    state->viewerState->luminanceRangeDelta = value;
+    rangeDeltaSpinBox->setValue(value);
 }
 
 void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
-
+    state->viewerState->luminanceRangeDelta = value;
+    rangeDeltaSlider->setValue(value);
 }
 
 void VPSlicePlaneViewportWidget::enableColorOverlayChecked(bool on) {
-
+    state->viewerState->overlayVisible = on;
 }
 
 void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
-
+    state->viewerState->drawVPCrosshairs = on;
 }
 
+/**
+  * @todo in GUI.c there are some AG_Widget Show/Hide Commands, but for which widget
+  * what happens if the option is selected
+  */
 void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
-
+    if(state->viewerState->showVPLabels) {
+        state->viewerState->showVPLabels = false;
+    } else {
+        state->viewerState->showVPLabels = true;
+    }
 }
 
 

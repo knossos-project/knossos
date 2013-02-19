@@ -28,15 +28,13 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->overrideNodeRadiusButton = new QCheckBox("Override Node Radius");
     this->overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
 
-
-
     this->edgeNodeRadiusRatioSpinBox = new QDoubleSpinBox();
     this->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
     this->edgeNodeRadiusRatioLabel = new QLabel("Edge <-> Node Radius Ratio:");
 
     this->linesAndPointsButton = new QRadioButton("Lines and Points(fast)");
 
-    this->Skeleton3dButton = new QRadioButton("3D Skeleton");
+    this->skeleton3dButton = new QRadioButton("3D Skeleton");
 
     if(!state->skeletonState->overrideNodeRadiusBool) {
         this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
@@ -60,7 +58,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     gridLayout->addWidget(this->lightEffectsButton, 3, 1);
     gridLayout->addWidget(linesAndPointsButton, 3, 2);
     gridLayout->addWidget(hightlightActiveTreeButton, 4, 1);
-    gridLayout->addWidget(Skeleton3dButton, 4, 2);
+    gridLayout->addWidget(skeleton3dButton, 4, 2);
 
     gridLayout->addWidget(showAllNodeIdsButton, 5, 1);
     gridLayout->addWidget(overrideNodeRadiusButton, 6, 1);
@@ -78,7 +76,17 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(overrideNodeRadiusButton, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(linesAndPointsButton, SIGNAL(clicked(bool)), this, SLOT(linesAndPointsChecked(bool)));
-    connect(Skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(Skeleton3dChecked(bool)));
+    connect(skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(Skeleton3dChecked(bool)));
+}
+
+void VPGeneralTabWidget::loadSettings() {
+   lightEffectsButton->setChecked(state->viewerState->lightOnOff);
+   hightlightActiveTreeButton->setChecked(state->skeletonState->activeTree);
+   showAllNodeIdsButton->setChecked(state->skeletonState->showNodeIDs);
+   overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
+   edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
+   linesAndPointsButton->setChecked(state->viewerState->gui->radioRenderingModel); // see comment in corresponding slot below
+   skeleton3dButton->setChecked(state->viewerState->gui->radioRenderingModel); // see comment in corresponding slot below
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
@@ -138,6 +146,6 @@ void VPGeneralTabWidget::linesAndPointsChecked(bool on) {
 /**
   * @todo the numeric order of radioRanderingModel
   */
-void VPGeneralTabWidget::Skeleton3dChecked(bool on) {
+void VPGeneralTabWidget::skeleton3dChecked(bool on) {
     state->viewerState->gui->radioRenderingModel;
 }
