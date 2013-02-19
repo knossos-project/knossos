@@ -2318,7 +2318,7 @@ static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint3
         Color buffer picking brings its own issues on the other hand, so we
         stick with SELECT mode for the time being. */
         if(state->viewerState->selectModeFlag) {
-            glPointSize(radius*2.);
+            glPointSize(radius * 2.);
             glBegin(GL_POINTS);
                 glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
             glEnd();
@@ -2391,16 +2391,16 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
     floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
     GLUquadricObj *gluCylObj = NULL;
 
-    sSp_local.x = (float)segment->source->position.x;// / state->magnification;
-    sSp_local.y = (float)segment->source->position.y;// / state->magnification;
-    sSp_local.z = (float)segment->source->position.z;// / state->magnification;
+    sSp_local.x = (float)segment->source->position.x;
+    sSp_local.y = (float)segment->source->position.y;
+    sSp_local.z = (float)segment->source->position.z;
 
-    sTp_local.x = (float)segment->target->position.x;// / state->magnification;
-    sTp_local.y = (float)segment->target->position.y;// / state->magnification;
-    sTp_local.z = (float)segment->target->position.z;// / state->magnification;
+    sTp_local.x = (float)segment->target->position.x;
+    sTp_local.y = (float)segment->target->position.y;
+    sTp_local.z = (float)segment->target->position.z;
 
-    sSr_local = (float)segment->source->radius;// / state->magnification;
-    sTr_local = (float)segment->target->radius;// / state->magnification;
+    sSr_local = (float)segment->source->radius;
+    sTr_local = (float)segment->target->radius;
 
     //n contains the normal vectors of the 3 orthogonal planes
     float n[3][3] = {{1.,0.,0.},
@@ -2885,15 +2885,12 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
-            /* Picking causes problems, because the very small picking matrix
-            needs to be active. */
-            //if(! state->viewerState->selectModeFlag) {
-                if(!sphereInFrustum(currNodePos, currentNode->circRadius, viewportType)) {
-                    currentNode = currentNode->next;
-                    skippedCnt++;
-                    continue;
-                }
-            //}
+            if(!sphereInFrustum(currNodePos, currentNode->circRadius, viewportType)) {
+                currentNode = currentNode->next;
+                lastNode = lastRenderedNode = NULL;
+                skippedCnt++;
+                continue;
+            }
 
             virtualSegRendered = FALSE;
             renderNode = TRUE;
@@ -2933,9 +2930,6 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
                     /* Do we really skip this node? Test cum dist. to last rendered node! */
                     cumDistToLastRenderedNode += currentSegment->length
                         * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx;
-
-                    //LOG("cumDistToLastRenderedNode: %f", cumDistToLastRenderedNode);
-                    //LOG(" state->viewerState->cumDistRenderThres: %f",  state->viewerState->cumDistRenderThres);
 
                     if(cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
                         break;
@@ -3128,7 +3122,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
             renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, currentColor, viewportType);
 
         /* Description of active node is always rendered,
-        gnoring state->skeletonState->showNodeIDs */
+        ignoring state->skeletonState->showNodeIDs */
 
         glColor4f(0., 0., 0., 1.);
         memset(textBuffer, '\0', 32);
