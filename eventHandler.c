@@ -240,7 +240,7 @@ static uint32_t handleUserEvent(SDL_Event event) {
 static uint32_t handleMouse(SDL_Event event) {
     /* holds the subscript for the viewPorts array of the found VP.
     -1 means that there's no VP under the mouse pointer */
-    int32_t i, VPfound;
+    int32_t i, VPfound, clickedButton;
 
     /* this functions returns a pointer to the widget most on top
     at the mouse pointer tip - even when it's a hidden window... AG_Widget:AG_GLView*/
@@ -272,7 +272,12 @@ static uint32_t handleMouse(SDL_Event event) {
         case SDL_MOUSEBUTTONUP:
             /* The user release the mouse, so we have to
             stop/reset all mouse tracking features */
-
+                        if (state->viewerState->moveVP != -1){
+                            state->viewerState->moveVP = -1;
+                        }
+                        if (state->viewerState->resizeVP != -1){
+                            state->viewerState->resizeVP = -1;
+                        }
             for(i = 0; i < state->viewerState->numberViewPorts; i++) {
                 state->viewerState->viewPorts[i].draggedNode = NULL;
                 state->viewerState->viewPorts[i].motionTracking = FALSE;
@@ -286,15 +291,18 @@ static uint32_t handleMouse(SDL_Event event) {
         case SDL_MOUSEBUTTONDOWN:
             switch(event.button.button) {
                 case SDL_BUTTON_LEFT:
-                    if (state->viewerState->moveVP != -1){
-                        state->viewerState->moveVP = -1;
-                    }
-                    if (state->viewerState->resizeVP != -1){
-                        state->viewerState->resizeVP = -1;
-                    }
-                    /* the user did not click inside any VP, so we return */
-                    if(VPfound == -1) return TRUE;
-                    handleMouseButtonLeft(event, VPfound);
+                    clickedButton = mouseOverMoveButton(event);
+                    if ((clickedButton >= 0) && (clickedButton <= 3)){
+                        UI_moveVP(clickedButton);
+                        }
+                    else if((clickedButton >= 4) && (clickedButton <= 7)){
+                        UI_resizeVP(clickedButton-4);
+                        }
+                    else{
+                        /* the user did not click inside any VP, so we return */
+                        if(VPfound == -1) return TRUE;
+                        handleMouseButtonLeft(event, VPfound);
+                        }
                     break;
 
                 case SDL_BUTTON_MIDDLE:
@@ -798,11 +806,6 @@ static uint32_t handleMouseMotion(SDL_Event event, int32_t VPfound) {
     else if(event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
         handleMouseMotionRightHold(event, VPfound);
     }
-
-    else if(state->viewerState->moveVP != -1
-            || state->viewerState->resizeVP != -1) {
-        moveOrResizeVP(event);
-    }
     return TRUE;
 }
 
@@ -823,6 +826,12 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
         }
         */
 
+
+    if(state->viewerState->moveVP != -1
+            || state->viewerState->resizeVP != -1) {
+        moveOrResizeVP(event);
+    }
+    else{
         /* motion tracking mode is active for viewPort i */
         if(state->viewerState->viewPorts[i].motionTracking == TRUE) {
             switch(state->viewerState->viewPorts[i].type) {
@@ -891,7 +900,7 @@ static uint32_t handleMouseMotionLeftHold(SDL_Event event, int32_t VPfound) {
             }
             return TRUE;
         }
-    }
+    }}
 
     return TRUE;
 }
@@ -1770,4 +1779,25 @@ void moveOrResizeVP(SDL_Event event) {
         break;
     }
     setVPPosSizWinPositions();
+}
+
+int mouseOverMoveButton(SDL_Event event){
+    int i;
+    if (state->viewerState->ag->showPosSizButtonsCheckbox->state == TRUE){
+        for (i = 0; i< state->viewerState->numberViewPorts; i++){
+            if ((event.motion.x > state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 20)
+             && (event.motion.x < state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 4)
+             && (event.motion.y > state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 40)
+             && (event.motion.y < state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 24))
+                return i;
+        }
+        for (i = 0; i< state->viewerState->numberViewPorts; i++){
+            if ((event.motion.x > state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 20)
+             && (event.motion.x < state->viewerState->viewPorts[i].upperLeftCorner.x + state->viewerState->viewPorts[i].edgeLength - 4)
+             && (event.motion.y > state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 20)
+             && (event.motion.y < state->viewerState->viewPorts[i].upperLeftCorner.y + state->viewerState->viewPorts[i].edgeLength - 4))
+                return (i+state->viewerState->numberViewPorts);
+        }
+    }
+    return -1;
 }

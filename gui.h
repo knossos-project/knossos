@@ -147,8 +147,8 @@ static void UI_orthoVPzoomSliderModified();
 static void UI_lockCurrentMagModified(AG_Event *event);
 static void UI_deleteCommentBoxesBtnPressed();
 static void UI_deleteCommentBoxes();
-static void UI_moveVP(AG_Event *event);
-static void UI_resizeVP(AG_Event *event);
+void UI_moveVP(int foundVP);
+void UI_resizeVP(int foundVP);
 static void UI_showPosSizButtons();
 
 static Coordinate *parseRawCoordinateString(char *string);

@@ -38,3 +38,4 @@ static uint32_t handleKeyboard(SDL_Event event);
 static void moveOrResizeVP(SDL_Event event);
 static Coordinate *getCoordinateFromOrthogonalClick(SDL_Event event, int32_t VPfound);
 static int32_t checkForViewPortWdgt(AG_Widget *wdgt);
+static int mouseOverMoveButton(SDL_Event event);

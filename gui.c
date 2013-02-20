@@ -154,18 +154,19 @@ int32_t initGUI() {
     createCoordBarWin();
 
     createVpSkelWin();
-    createVpPosSizWin(3);
+    createVpPosSizWin(VIEWPORT_SKELETON);
     createSkeletonVpToolsWin();
     createVpYzWin();
-    createDataSizeWin(2);
-    createVpPosSizWin(2);
+    createDataSizeWin(VIEWPORT_YZ);
+    createVpPosSizWin(VIEWPORT_YZ);
     createVpXzWin();
-    createDataSizeWin(1);
-    createVpPosSizWin(1);
+    createDataSizeWin(VIEWPORT_XZ);
+    createVpPosSizWin(VIEWPORT_XZ);
     createVpXyWin();
-    createDataSizeWin(0);
-    createVpPosSizWin(0);
+    createDataSizeWin(VIEWPORT_XY);
+    createVpPosSizWin(VIEWPORT_XY);
     setVPPosSizWinPositions();
+    setDataSizeWinPositions();
 
     createNavWin();
     createToolsWin();
@@ -593,7 +594,6 @@ void createDataSizeWin(int i) {
         }
         AG_WindowShow(win);
         state->viewerState->ag->dataSizeWinxy = win;
-        setDataSizeWinPositions();
     }
 
     if (i == 1){
@@ -1367,12 +1367,9 @@ void UI_showPosSizButtons(){
     }
 }
 
-static void UI_moveVP(AG_Event *event) {
-    if (state->viewerState->ag->moveButtonActive == TRUE){
-        state->viewerState->ag->moveButtonActive = FALSE;
-        int foundVP = state->viewerState->moveVP = AG_INT(1);
+void UI_moveVP(int foundVP) {
+        state->viewerState->moveVP = foundVP;
         state->viewerState->saveCoords = TRUE;
-
         if(foundVP != VIEWPORT_XY
            && foundVP != VIEWPORT_XZ
            && foundVP != VIEWPORT_YZ
@@ -1381,9 +1378,6 @@ static void UI_moveVP(AG_Event *event) {
             return;
         }
         focusViewport(foundVP);
-    }
-    else{
-    state->viewerState->ag->moveButtonActive = TRUE;}
 }
 
 static void focusViewport(int foundVP){
@@ -1436,8 +1430,8 @@ static void focusViewport(int foundVP){
     }
 }
 
-static void UI_resizeVP(AG_Event *event) {
-    int foundVP = state->viewerState->resizeVP = AG_INT(1);
+void UI_resizeVP(int foundVP) {
+    state->viewerState->resizeVP = foundVP;
     if(foundVP != VIEWPORT_XY
        && foundVP != VIEWPORT_XZ
        && foundVP != VIEWPORT_YZ
@@ -4659,12 +4653,12 @@ void createVpPosSizWin(int i){
     win->flags += AG_WINDOW_KEEPBELOW;
     state->viewerState->ag->VpPosAndSizWin[i] = win;
     AG_WindowSetPadding(win, 0, 0, 0, 0);
-    button = AG_ButtonNewFn(win, 0, "p", UI_moveVP, "%i", i);
+    button = AG_ButtonNewFn(win, 0, "p", NULL, "%i", i);
     AG_ButtonSetPadding(button, 0, 0, 0, 0);
     if(buttonsurfaceAG) {
         AG_ButtonSurface(button, buttonsurfaceAG);
     }
-    button = AG_ButtonNewFn(win, 0, "s", UI_resizeVP, "%i", i);
+    button = AG_ButtonNewFn(win, 0, "s", NULL, "%i", i);
     AG_ButtonSetPadding(button, 0, 0, 0, 0);
     if(buttonsurfaceAG2) {
         AG_ButtonSurface (button, buttonsurfaceAG2);
