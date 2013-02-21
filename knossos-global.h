@@ -1430,11 +1430,10 @@ struct cmdAddComment {
     printf("[%s:%d] ", __FILE__, __LINE__); \
     printf(__VA_ARGS__); \
     printf("\n"); \
-    if(state->viewerState->viewerReady) \
-        AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \
     }
 
-/*
+/*       if(state->viewerState->viewerReady) \
+        AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \
  *
  *      Function prototypes
  *

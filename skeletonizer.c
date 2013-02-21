@@ -63,9 +63,9 @@ uint32_t initSkeletonizer() {
 
     state->skeletonState->skeletonRevision = 0;
 
-    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(2048);
+    state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
     state->skeletonState->firstTree = NULL;
@@ -1494,6 +1494,7 @@ uint32_t loadSkeleton() {
         LOG("Document not parsed successfully.");
         return FALSE;
     }
+    LOG("Document parsed successfully.");
 
     thingsXMLNode = xmlDocGetRootElement(xmlDocument);
     if(thingsXMLNode == NULL) {
@@ -1784,7 +1785,7 @@ uint32_t loadSkeleton() {
                             else
                                 nodeID = 0;
 
-                            LOG("Adding node: %d", nodeID);
+                            //LOG("Adding node (1): %d", nodeID);
                             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"radius");
                             if(attribute) {
                                 radius = (float)strtod((char *)attribute, (char **)NULL);
@@ -2545,9 +2546,9 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
         setDefaultSkelFileName();
     }
 
-    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(2048);
+    state->skeletonState->branchStack = newStack(1048576);
 
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 
