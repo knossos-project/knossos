@@ -243,10 +243,10 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
-            glNewList(state->viewerState->viewPorts[VIEWPORT_XY].displayList, GL_COMPILE);
+            //glNewList(state->viewerState->viewPorts[VIEWPORT_XY].displayList, GL_COMPILE);
             renderWholeSkeleton2(VIEWPORT_XY);
-            glEndList();
-            glCallList(state->viewerState->viewPorts[VIEWPORT_XY].displayList);
+            //glEndList();
+            //glCallList(state->viewerState->viewPorts[VIEWPORT_XY].displayList);
 
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
@@ -367,10 +367,10 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            glNewList(state->viewerState->viewPorts[VIEWPORT_XZ].displayList, GL_COMPILE);
+            //glNewList(state->viewerState->viewPorts[VIEWPORT_XZ].displayList, GL_COMPILE);
             renderWholeSkeleton2(VIEWPORT_XZ);
-            glEndList();
-            glCallList(state->viewerState->viewPorts[VIEWPORT_XZ].displayList);
+            //glEndList();
+            //glCallList(state->viewerState->viewPorts[VIEWPORT_XZ].displayList);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -484,10 +484,10 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
-            glNewList(state->viewerState->viewPorts[VIEWPORT_YZ].displayList, GL_COMPILE);
+            //glNewList(state->viewerState->viewPorts[VIEWPORT_YZ].displayList, GL_COMPILE);
             renderWholeSkeleton2(VIEWPORT_YZ);
-            glEndList();
-            glCallList(state->viewerState->viewPorts[VIEWPORT_YZ].displayList);
+            //glEndList();
+            //glCallList(state->viewerState->viewPorts[VIEWPORT_YZ].displayList);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -1900,11 +1900,11 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     a difference... VBOs are the way to go, but this requires us to generate
     all geometry instead of using the glu functions. Check out the renderer SVN
     branch, everything is already there. */
-    glNewList(state->viewerState->viewPorts[VIEWPORT_SKELETON].displayList, GL_COMPILE);
+//    glNewList(state->viewerState->viewPorts[VIEWPORT_SKELETON].displayList, GL_COMPILE);
 
     renderWholeSkeleton2(VIEWPORT_SKELETON);
-    glEndList();
-    glCallList(state->viewerState->viewPorts[VIEWPORT_SKELETON].displayList);
+//    glEndList();
+//    glCallList(state->viewerState->viewPorts[VIEWPORT_SKELETON].displayList);
     /*
      * Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
     */
