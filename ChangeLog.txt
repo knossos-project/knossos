@@ -1,5 +1,5 @@
 ==================================
-=  KNOSSOS V3.2 - Change Log     =
+=  KNOSSOS V3.3 - Change Log     =
 ==================================
 
 KNOSSOS is a software tool for the visualization and annotation of 3D image
@@ -11,7 +11,7 @@ connectivity.
 -  General Information           -
 ----------------------------------
 
-Release Date: October 11, 2012
+Release Date: February xx, 2013
 
 Homepage: http://www.knossostool.org/ and
 http://code.google.com/p/knossos-skeletonizer/
@@ -21,62 +21,18 @@ http://code.google.com/p/knossos-skeletonizer/
 -  Bugfixes                     -
 ----------------------------------
 
-- Checkboxes represent the correct state
-- Window sizes stable after main window resizes
-- Fixed flickering viewports at coordinates that are multiples of 128
-- Fixed jumping to last branch node
-- After deleting a tree, the next new node is added to the active tree
-- Newly created and saved skeleton files also appear in recent files
-- Skeleton file paths containing dots are handled correctly
-- If default skeleton files folder (skeletonFiles in knossos install
-  directory)) is missing, it will automatically be created on a save
-  event
-- Titlebar updates correctly when skeleton is cleared
+- Removed many memory leaks
+- Fixed OpenGL display list problems that lead to unstable behavior on many computers
 
 ----------------------------------
 -  New Features / Enhancements   -
 ----------------------------------
 
-- Support for dynamic switching between datasets sampled at different
-  resolutions ("multires")
-- Advanced tracing modes: The user has the possibility to use three different
-  tracing modes: Additional viewport direction move mode, Additional tracing
-  direction move mode, Additional mirrored move mode
-- Tracing time window shows the KNOSSOS running time, tracing time and idle
-  time
-- Users can bind comments to the [F1] - [F5] keys to easily add them to nodes
-- Nodes with comments now appear in yellow. But branch nodes with comments 
-  remain blue.
-- Added shortcuts: Go to next / previous node via [x] / [SHIFT] + [x]; Go to
-  next/previous tree via [y] / [SHIFT] + [y]; Move 10 coordinate units via
-  [e] / [r]; Quit KNOSSOS via [ALT] + [F4]; Save file via [CTRL] + [s];
-  Connect / disconnect nodes via [ALT] + [left click]; Change zoom in skeleton
-  viewport via [i] / [o] when mouse is in skeleton viewport
-- Reset button in skeleton viewport resets to default view
-- Skeleton viewport settings are now saved in skeleton file
-- Skeleton colors can be defined in a lookup table
-- User can reset preferences to default
-- Physical size of the microscopy data can be displayed in the viewports
-- Microscopy data can be stored in inverse cube order (z first) on hard drive
-- Larger field of view of data viewports (displaying twice as much data for
-  supercube edge 3 with the same cube loading times) at the expense of a bit 
-  less buffering
-- Size of viewports adjusted
-- Selecting nodes via [Shift] + [left click] selects nodes within a radius from
-  the mouse click position
-- Tree deletion requires confirmation
-- Limited recentering time to 5 seconds
-- Improvements in saving / autosaving skeleton files: Saving a skeleton without
-  the ".nml" extension will automatically add the extension to the file name;
-  Empty skeletons can not be saved; Trying to save an unchanged skeleton asks
-  for confirmation
-- More state information is saved in user settings
-- Coordinates delimited by various separators can be pasted from other
-  applications
-- Sliders for bias / range delta
-- KNOSSOS launcher and synchronizer updated to be compatible with Phyton 3
-  (Python 2.x still supported)
-- Python starter will give a warning when launching knossos without
-  selecting a dataset
-- Unsuccessfully loading a skeleton does not clear the old skeleton
-- Changed shortcuts: Connect / disconnect nodes via [SHIFT] + [middle click]
+- Massive performance improvements and better visual quality while handling
+  large skeletons (5k-500k nodes) through a completely reworked rendering
+  engine (view frustum culling, dynamic level-of-detail algorithm, large vertex batches)
+- Adjustable position and size of viewports
+- Conditional highlighting (coloring) of nodes based on a set of definable comment strings
+
+
+
