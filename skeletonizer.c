@@ -3654,6 +3654,61 @@ struct commentListElement *previousComment(char *searchString) {
     return state->skeletonState->currentComment;
 }
 
+color4F getNodeColor(struct nodeListElement *node) {
+    int nr;
+    color4F color;
+
+    SET_COLOR(color, 0., 0., 0., 0.);
+    if(node->isBranchNode) { //branch nodes are blue
+        SET_COLOR(color, 0., 0., 1., 1.);
+        return color;
+    }
+
+    if(node->comment != NULL) {
+        if(state->skeletonState->userCommentColoringOn == FALSE) { //comment nodes have default color
+            SET_COLOR(color, 1., 1., 0., 1.);
+            return color;
+        }
+        //conditional node coloring enabled
+        if((nr = commentContainsSubstr(node->comment, -1)) == -1) { //no substring match => default color
+            SET_COLOR(color, 1., 1., 0., 1.);
+            return color;
+        }
+        if(state->skeletonState->commentColors[nr].a > 0) { //substring match
+            color = state->skeletonState->commentColors[nr];
+        }
+        else { //substring match, but no color selected => default color
+            SET_COLOR(color, 1., 1., 0., 1.);
+        }
+    }
+    return color;
+}
+
+// index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
+// If -1, all substrings are compared against the comment.
+unsigned int commentContainsSubstr(struct commentListElement *comment, int index) {
+    int i;
+
+    if(!comment) {
+        return -1;
+    }
+    if(index == -1) { //no index specified
+        for(i = 0; i < NUM_COMMSUBSTR; i++) {
+            if(strlen(state->viewerState->ag->commentSubstr[i]) > 0
+                && strstr(comment->content, state->viewerState->ag->commentSubstr[i]) != NULL) {
+                return i;
+            }
+        }
+    }
+    else if(index > -1 && index < NUM_COMMSUBSTR) {
+        if(strlen(state->viewerState->ag->commentSubstr[index]) > 0
+           && strstr(comment->content, state->viewerState->ag->commentSubstr[index]) != NULL) {
+            return index;
+        }
+    }
+    return -1;
+}
+
 uint32_t searchInComment(char *searchString, struct commentListElement *comment) {
 
     return TRUE;

@@ -130,6 +130,9 @@ values. The XY vp always used. */
 #define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
+#define NUM_COMMSHORTCUTS 5 //number of shortcut places for comments
+#define NUM_COMMSUBSTR 5 //number of comment substrings for conditional comment node coloring/radii
+
 /*
  * For the Lookup tables
  */
@@ -766,12 +769,15 @@ struct agConfig {
     AG_Label *tracingTime;
     AG_Label *idleTime;
 
-    //Chars for commentsWin
+    //for comment shortcuts
     char *comment1;
     char *comment2;
     char *comment3;
     char *comment4;
     char *comment5;
+
+    //substrings for comment node preferences
+    char *commentSubstr[NUM_COMMSUBSTR];
 
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
@@ -1141,6 +1147,9 @@ struct skeletonState {
 
     uint32_t numberComments;
 
+    unsigned int userCommentColoringOn;
+    unsigned int commentNodeRadiusOn;
+
 	int lockPositions;
 	uint32_t positionLocked;
 	char onCommentLock[1024];
@@ -1204,6 +1213,9 @@ struct skeletonState {
 
     int32_t greatestNodeID;
     int32_t greatestTreeID;
+
+    color4F commentColors[NUM_COMMSUBSTR];
+    float commentNodeRadii[NUM_COMMSUBSTR];
 
     //If TRUE, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
@@ -1670,6 +1682,8 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
 uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID);
 struct commentListElement *nextComment(char *searchString);
 struct commentListElement *previousComment(char *searchString);
+color4F getNodeColor(struct nodeListElement *node);
+unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 uint32_t searchInComment(char *searchString, struct commentListElement *comment);
 int32_t unlockPosition();
 int32_t lockPosition(Coordinate lockCoordinate);

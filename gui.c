@@ -128,27 +128,27 @@ int32_t initGUI() {
 
     state->viewerState->ag->commentBuffer = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->commentBuffer, '\0', 10240 * sizeof(char));
-
     state->viewerState->ag->commentSearchBuffer = malloc(2048 * sizeof(char));
     memset(state->viewerState->ag->commentSearchBuffer, '\0', 2048 * sizeof(char));
 
     state->viewerState->ag->treeCommentBuffer = malloc(8192 * sizeof(char));
     memset(state->viewerState->ag->treeCommentBuffer, '\0', 8192 * sizeof(char));
-
     state->viewerState->ag->comment1 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment1, '\0', 10240 * sizeof(char));
-
     state->viewerState->ag->comment2 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment2, '\0', 10240 * sizeof(char));
-
     state->viewerState->ag->comment3 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment3, '\0', 10240 * sizeof(char));
-
     state->viewerState->ag->comment4 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment4, '\0', 10240 * sizeof(char));
-
     state->viewerState->ag->comment5 = malloc(10240 * sizeof(char));
     memset(state->viewerState->ag->comment5, '\0', 10240 * sizeof(char));
+
+    int i;
+    for (i = 0; i < NUM_COMMSUBSTR; i++) {
+        state->viewerState->ag->commentSubstr[i] = malloc(10240 * sizeof(char));
+        memset(state->viewerState->ag->commentSubstr[i], '\0', 10240 * sizeof(char));
+    }
 
     createMenuBar();
     createCoordBarWin();
@@ -323,7 +323,7 @@ void createMenuBar() {
 		//AG_MenuAction(menuItem, "navigation", NULL, winShowNavigator, "%p");
 		AG_MenuAction(menuItem, "Tools", NULL, winShowTools, "%p");
 		AG_MenuAction(menuItem, "Log", NULL, winShowConsole, "%p");
-        AG_MenuAction(menuItem, "Comment Shortcuts", NULL, viewComments, NULL, NULL);
+        AG_MenuAction(menuItem, "Comments", NULL, viewComments, NULL, NULL);
 	}
 
     menuItem = AG_MenuNode(appMenu->root, "Help", NULL);
@@ -986,7 +986,7 @@ void createToolsWin() {
             AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
             AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
         }
-        AG_LabelNew(nodesTab, 0, "Lock to Nodes With Comment:");
+        AG_LabelNew(nodesTab, 0, "Lock to Nodes with Comment:");
         comment = AG_TextboxNew(nodesTab, AG_TEXTBOX_ABANDON_FOCUS, NULL);
         {
             AG_ExpandHoriz(comment);
@@ -1469,57 +1469,257 @@ void createSetDynRangeWin() {
 
 void createCommentsWin() {
     AG_Window *win;
+    AG_Notebook *commentTabs;
+    AG_Box *box;
+    AG_NotebookTab *shortcuts;
+    AG_NotebookTab *preferences;
     AG_Button *button;
     AG_Textbox *textbox;
-    AG_Box *box;
-	win = AG_WindowNew(AG_WINDOW_NORESIZE);
-    {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
-        AG_WindowSetCaption(win, "Comment Shortcuts");
-        AG_WindowSetGeometry(win, 628, 543, 250, 167);
-        win->hMin = 167;
-        win->wMin = 250;
+    AG_Checkbox *chkBox;
+    AG_Numerical *radiusNumerical;
+    AG_Combo *colorCombo;
 
-        box = AG_BoxNew(win, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+	win = AG_WindowNew(AG_WINDOW_NORESIZE);
+
+    AG_WindowSetSideBorders(win, 3);
+    AG_WindowSetBottomBorder(win, 3);
+    AG_WindowSetCaption(win, "Comment Shortcuts");
+    AG_WindowSetGeometry(win, 628, 543, 389, 260);//250, 167);
+    win->hMin = 167;
+    win->wMin = 250;
+
+    commentTabs = AG_NotebookNew(win, AG_NOTEBOOK_EXPAND);
+    shortcuts = AG_NotebookAddTab(commentTabs, "shortcuts", AG_BOX_HOMOGENOUS);
+    {
+        box = AG_BoxNew(shortcuts, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+
+        textbox = AG_TextboxNew(shortcuts, AG_TEXTBOX_ABANDON_FOCUS, "F1: ");
         {
-            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F1: ");
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->comment1, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        textbox = AG_TextboxNew(shortcuts, AG_TEXTBOX_ABANDON_FOCUS, "F2: ");
+        {
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->comment2, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        textbox = AG_TextboxNew(shortcuts, AG_TEXTBOX_ABANDON_FOCUS, "F3: ");
+        {
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->comment3, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        textbox = AG_TextboxNew(shortcuts, AG_TEXTBOX_ABANDON_FOCUS, "F4: ");
+        {
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->comment4, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        textbox = AG_TextboxNew(shortcuts, AG_TEXTBOX_ABANDON_FOCUS, "F5: ");
+        {
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->comment5, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+        button = AG_ButtonNewFn(shortcuts, 0, "Clear Comment Boxes", UI_deleteCommentBoxesBtnPressed, NULL);
+        AG_ExpandHoriz(button);
+    }
+
+    preferences = AG_NotebookAddTab(commentTabs, "preferences", AG_BOX_HOMOGENOUS);
+    {
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+
+        chkBox = AG_CheckboxNewFn(box, AG_CHECKBOX_SET, "Enable Color", commentColorWdgtSwitched, NULL, NULL);
+        {
+            AG_BindInt(chkBox, "state", &state->skeletonState->userCommentColoringOn);
+        }
+        chkBox = AG_CheckboxNewFn(box, TRUE, "Enable Radius", commentNodeRadiusWdgtSwitched, NULL, NULL);
+        {
+            AG_BindInt(chkBox, "state", &state->skeletonState->commentNodeRadiusOn);
+        }
+        AG_SeparatorNewHoriz(preferences);
+
+        AG_LabelNew(preferences, 0, "Set Color and Radius of Comment Nodes containing...");
+
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "1. ");
             {
                 AG_ExpandHoriz(textbox);
-                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment1, 10240);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[0], 10240);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
-            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F2: ");
+            colorCombo = AG_ComboNew(box, 0, "color");
+            {
+                AG_ExpandHoriz(colorCombo);
+                AG_ComboSizeHint(colorCombo, "colors...", 5);
+                AG_TlistAdd(colorCombo->list, NULL, "green");
+                AG_TlistAdd(colorCombo->list, NULL, "rose");
+                AG_TlistAdd(colorCombo->list, NULL, "azure");
+                AG_TlistAdd(colorCombo->list, NULL, "purple");
+                AG_TlistAdd(colorCombo->list, NULL, "brown");
+
+                AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 0);
+                AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            radiusNumerical = AG_NumericalNewFltR(box, 0, NULL, "rad: ", &state->skeletonState->commentNodeRadii[0], 0.1, 500000);
+            {
+                AG_ExpandHoriz(radiusNumerical);
+                AG_NumericalSetIncrement (radiusNumerical, 0.25);
+                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 0);
+                AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "2. ");
             {
                 AG_ExpandHoriz(textbox);
-                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment2, 10240);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[1], 10240);
+                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 1);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
-            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F3: ");
+            colorCombo = AG_ComboNew(box, 0, "color");
+            {
+                AG_ExpandHoriz(colorCombo);
+                AG_ComboSizeHint(colorCombo, "colors...", 5);
+                AG_TlistAdd(colorCombo->list, NULL, "green");
+                AG_TlistAdd(colorCombo->list, NULL, "rose");
+                AG_TlistAdd(colorCombo->list, NULL, "azure");
+                AG_TlistAdd(colorCombo->list, NULL, "purple");
+                AG_TlistAdd(colorCombo->list, NULL, "brown");
+
+                AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 1);
+                AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            radiusNumerical = AG_NumericalNewFltR(box, 0, NULL, "rad: ", &state->skeletonState->commentNodeRadii[1], 0.1, 500000);
+            {
+                AG_ExpandHoriz(radiusNumerical);
+                AG_NumericalSetIncrement (radiusNumerical, 0.25);
+                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 1);
+                AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "3. ");
             {
                 AG_ExpandHoriz(textbox);
-                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment3, 10240);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[2], 10240);
+                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 2);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
-            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F4: ");
+            colorCombo = AG_ComboNew(box, 0, "color");
+            {
+                AG_ExpandHoriz(colorCombo);
+                AG_ComboSizeHint(colorCombo, "colors...", 5);
+                AG_TlistAdd(colorCombo->list, NULL, "green");
+                AG_TlistAdd(colorCombo->list, NULL, "rose");
+                AG_TlistAdd(colorCombo->list, NULL, "azure");
+                AG_TlistAdd(colorCombo->list, NULL, "purple");
+                AG_TlistAdd(colorCombo->list, NULL, "brown");
+
+                AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 2);
+                AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            radiusNumerical = AG_NumericalNewFltR(box, 0, NULL, "rad: ", &state->skeletonState->commentNodeRadii[2], 0.1, 500000);
+            {
+                AG_ExpandHoriz(radiusNumerical);
+                AG_NumericalSetIncrement (radiusNumerical, 0.25);
+                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 2);
+                AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "4. ");
             {
                 AG_ExpandHoriz(textbox);
-                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment4, 10240);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[3], 10240);
+                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 3);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
-            textbox = AG_TextboxNew(win, AG_TEXTBOX_ABANDON_FOCUS, "F5: ");
+            colorCombo = AG_ComboNew(box, 0, "color");
+            {
+                AG_ExpandHoriz(colorCombo);
+                AG_ComboSizeHint(colorCombo, "colors...", 5);
+                AG_TlistAdd(colorCombo->list, NULL, "green");
+                AG_TlistAdd(colorCombo->list, NULL, "rose");
+                AG_TlistAdd(colorCombo->list, NULL, "azure");
+                AG_TlistAdd(colorCombo->list, NULL, "purple");
+                AG_TlistAdd(colorCombo->list, NULL, "brown");
+
+                AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 3);
+                AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            radiusNumerical = AG_NumericalNewFltR(box, 0, NULL, "rad: ", &state->skeletonState->commentNodeRadii[3], 0.1, 500000);
+            {
+                AG_ExpandHoriz(radiusNumerical);
+                AG_NumericalSetIncrement (radiusNumerical, 0.25);
+                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 3);
+                AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
+        box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "5. ");
             {
                 AG_ExpandHoriz(textbox);
-                AG_TextboxBindASCII(textbox, state->viewerState->ag->comment5, 10240);
+                AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[4], 10240);
+                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 4);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
-            button = AG_ButtonNewFn(win, 0, "Clear Comment Boxes", UI_deleteCommentBoxesBtnPressed, NULL);
-            AG_ExpandHoriz(button);
+            colorCombo = AG_ComboNew(box, 0, "color");
+            {
+                AG_ExpandHoriz(colorCombo);
+                AG_ComboSizeHint(colorCombo, "colors...", 5);
+                AG_TlistAdd(colorCombo->list, NULL, "green");
+                AG_TlistAdd(colorCombo->list, NULL, "rose");
+                AG_TlistAdd(colorCombo->list, NULL, "azure");
+                AG_TlistAdd(colorCombo->list, NULL, "purple");
+                AG_TlistAdd(colorCombo->list, NULL, "brown");
+
+                AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 4);
+                AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+            radiusNumerical = AG_NumericalNewFltR(box, 0, NULL, "rad: ", &state->skeletonState->commentNodeRadii[4], 0.1, 500000);
+            {
+                AG_ExpandHoriz(radiusNumerical);
+                AG_NumericalSetIncrement (radiusNumerical, 0.25);
+                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 4);
+                AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
         }
     }
     state->viewerState->ag->commentsWin = win;
@@ -2462,6 +2662,66 @@ static void UI_commentLockWdgtModified(AG_Event *event) {
     }
 }
 
+static void commentColorWdgtSwitched(AG_Event *event) {
+    LOG("commentcoloring: %i", state->skeletonState->userCommentColoringOn);
+}
+
+static void commentNodeRadiusWdgtSwitched() {
+    LOG("user radius: %i", state->skeletonState->commentNodeRadiusOn);
+}
+
+static void commentColorSelected(AG_Event *event) {
+    int nr = AG_INT(1);
+    AG_TlistItem *item = AG_PTR(2);
+
+    if(strcmp(item->text, "green") == 0) {
+        SET_COLOR(state->skeletonState->commentColors[nr], 0.13, 0.69, 0.3, 1.);
+
+    }
+    if(strcmp(item->text, "rose") == 0) {
+        SET_COLOR(state->skeletonState->commentColors[nr], 0.94, 0.89, 0.69, 1.);
+
+    }
+    if(strcmp(item->text, "azure") == 0) {
+        SET_COLOR(state->skeletonState->commentColors[nr], 0.6, 0.85, 0.92, 1.);
+
+    }
+   if(strcmp(item->text, "purple") == 0) {
+        SET_COLOR(state->skeletonState->commentColors[nr], 0.64, 0.29, 0.64, 1.);
+
+    }
+    if(strcmp(item->text, "brown") == 0) {
+        SET_COLOR(state->skeletonState->commentColors[nr], 0.73, 0.48, 0.34, 1.);
+    }
+}
+
+static void commentNodeRadiusChanged(AG_Event *event) {
+    /*int nr = AG_INT(1);
+    struct commentListElement *firstComment, *currentComment;
+
+    if(state->skeletonState->commentNodeRadiusOn == FALSE
+       || state->skeletonState->currentComment == NULL) {
+        return;
+    }
+
+    firstComment = state->skeletonState->currentComment->next;
+    currentComment = firstComment;
+    do {
+        if(commentContainsSubstr(currentComment, nr) != -1) {
+            editNode(CHANGE_MANUAL,
+                     0,
+                     currentComment->node,
+                     state->skeletonState->commentNodeRadii[nr],
+                     currentComment->node->position.x,
+                     currentComment->node->position.y,
+                     currentComment->node->position.z,
+                     state->magnification);
+
+        }
+        currentComment = currentComment->next;
+    } while(firstComment != currentComment);*/
+}
+
 static void  UI_lockCurrentMagModified(AG_Event *event) {
     int lockOn = AG_INT(1);
     if(lockOn) {
@@ -2837,7 +3097,6 @@ static void agInputWdgtGainedFocus(AG_Event *event) {
 static void agInputWdgtLostFocus(AG_Event *event) {
     state->viewerState->ag->agInputWdgtFocused = FALSE;
 }
-
 
 /*
  *  Wrapper functions around KNOSSOS internals for use by the UI

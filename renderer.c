@@ -248,7 +248,6 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
             //glEndList();
             //glCallList(state->viewerState->viewPorts[VIEWPORT_XY].displayList);
 
-
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
             if(state->viewerState->selectModeFlag)
@@ -1261,6 +1260,7 @@ static void renderWholeSkeleton(uint32_t viewportType) {
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
     color4F currentColor;
+
         //return;
     char *textBuffer;
     textBuffer = malloc(32);
@@ -1894,9 +1894,9 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     glEnable(GL_TEXTURE_2D);
 
 
-    /* This is only a temporary display lists, used only once. GL_COMPILE instead
-    of GL_COMPILE_AND_EXECTUE is used, some drivers only optimize DLs when
-    this flag is used apparently. tdItem: test whether DL usage actually makes
+    /* This is only a temporary display list, used only once. GL_COMPILE instead
+    of GL_COMPILE_AND_EXECTUE is used, apparently, some drivers only optimize DLs when
+    this flag is used. tdItem: test whether DL usage actually makes
     a difference... VBOs are the way to go, but this requires us to generate
     all geometry instead of using the glu functions. Check out the renderer SVN
     branch, everything is already there. */
@@ -1905,6 +1905,7 @@ uint32_t renderSkeletonVP(uint32_t currentVP) {
     renderWholeSkeleton2(VIEWPORT_SKELETON);
 //    glEndList();
 //    glCallList(state->viewerState->viewPorts[VIEWPORT_SKELETON].displayList);
+
     /*
      * Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
     */
@@ -2820,6 +2821,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
     uint32_t virtualSegRendered, allowHeuristic;
     uint32_t skippedCnt = 0;
     uint32_t renderNode;
+    color4F nodeColor;
 
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
@@ -3023,13 +3025,16 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
                 else {
                     currentColor = currentTree->color;
                 }
-
-                if(currentNode->isBranchNode) {
+                nodeColor = getNodeColor(currentNode); //returns (0, 0, 0, 0) for no coloring
+                if(nodeColor.a > 0) {
+                    SET_COLOR(currentColor, nodeColor.r, nodeColor.g, nodeColor.b, nodeColor.a);
+                }
+                /*if(currentNode->isBranchNode) {
                     SET_COLOR(currentColor, 0.f, 0.f, 1.f, 1.f);
                 }
                 else if(currentNode->comment != NULL) {
                     SET_COLOR(currentColor, 1.f, 1.f, 0.f, 1.f);
-                }
+                }*/
 
                 /* The first 50 entries of the openGL namespace are reserved
                 for static objects (like slice plane quads...) */
@@ -3103,7 +3108,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
     /* Highlight active node */
     if(state->skeletonState->activeNode) {
-        if(state->skeletonState->activeNode->isBranchNode) {
+        /*if(state->skeletonState->activeNode->isBranchNode) {
             SET_COLOR(currentColor, 0.f, 0.f, 1.f, 0.2f);
         }
         else if(state->skeletonState->activeNode->comment != NULL) {
@@ -3111,6 +3116,14 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
         }
         else {
             SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
+        }*/
+
+        nodeColor = getNodeColor(state->skeletonState->activeNode);
+        if(nodeColor.r > 0) {
+            SET_COLOR(currentColor, nodeColor.r, nodeColor.g, nodeColor.b, 0.2);
+        }
+        else {
+            SET_COLOR(currentColor, 1., 0., 0., 0.2);
         }
 
         if(state->viewerState->selectModeFlag)

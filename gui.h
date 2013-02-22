@@ -44,6 +44,14 @@ static void resizeWindows();
 static void agInputWdgtGainedFocus(AG_Event *event);
 static void agInputWdgtLostFocus(AG_Event *event);
 
+// enable/disable comment coloring and comment node radii
+static void commentColorWdgtSwitched();
+static void commentNodeRadiusWdgtSwitched();
+
+// color/radius chosen for a comment node
+static void commentColorSelected(AG_Event *event);
+static void commentNodeRadiusChanged(AG_Event *event);
+
 static void currPosWdgtModified(AG_Event *event);
 static void actNodeIDWdgtModified(AG_Event *event);
 static void actTreeIDWdgtModified(AG_Event *event);
