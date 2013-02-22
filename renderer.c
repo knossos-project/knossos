@@ -2338,6 +2338,7 @@ static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint3
         glColor4fv(&color);
         glPushMatrix();
         glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
+        glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
         gluSphereObj = gluNewQuadric();
         gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
         gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
@@ -2351,7 +2352,7 @@ static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint3
         else {
             gluSphere(gluSphereObj, radius, 5, 5);
         }
-
+        //glScalef(1.f, 1.f, 1.f/state->viewerState->voxelXYtoZRatio);
         gluDeleteQuadric(gluSphereObj);
         glPopMatrix();
     }
@@ -2807,9 +2808,11 @@ uint32_t setRotationState(int setTo){
  * a heuristic level-of-detail implementation that exploits the implicit
  * sorting of the tree node list to avoid a depth first search for the compilation
  * of a spatial graph that is similar to the true skeleton, but without nodes /
- * vertices that would not be visible anyway. It is still based
- * on display lists but uses large vertex batches for line and point geometry
- * (most data). Ugly code, not nice to read, should be simplified...
+ * vertices that would not be visible anyway. It uses large vertex batches for
+ * line and point geometry (most data) drawn with vertex arrays, since the geometry is highly
+ * dynamic (can change each frame). VBOs would make a lot of sense if we had a
+ * smart spatial organization of the skeleton.
+ * Ugly code, not nice to read, should be simplified...
  */
 
 static void renderWholeSkeleton2(uint32_t viewportType) {
@@ -2822,6 +2825,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
     uint32_t skippedCnt = 0;
     uint32_t renderNode;
     color4F nodeColor;
+    float currentRadius;
 
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
@@ -2890,7 +2894,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
             if(!sphereInFrustum(currNodePos, currentNode->circRadius, viewportType)) {
                 currentNode = currentNode->next;
                 lastNode = lastRenderedNode = NULL;
-                skippedCnt++;
+                //skippedCnt++;
                 continue;
             }
 
@@ -2946,6 +2950,15 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
             if(renderNode) {
 
+                /* This sets the current color for the segment rendering */
+                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                    && (state->skeletonState->highlightActiveTree)) {
+                        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 1.f);
+                }
+                else {
+                    currentColor = currentTree->color;
+                }
+
                 cumDistToLastRenderedNode = 0.f;
 
                 if(lastNode != lastRenderedNode) {
@@ -2978,17 +2991,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
                        || (currentSegment->target == lastNode))) {
                         currentSegment = currentSegment->next;
                         continue;
-                       }
-
-
-                    if((currentTree->treeID == state->skeletonState->activeTree->treeID)
-                        && (state->skeletonState->highlightActiveTree)) {
-                            SET_COLOR(currentColor, 1.f, 0.f, 0.f, 1.f);
                     }
-                    else {
-                        currentColor = currentTree->color;
-                    }
-
 
                     if(state->viewerState->selectModeFlag)
                         glLoadName(3);
@@ -3017,46 +3020,29 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
                 }
 
-                /* Set color */
-                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
-                    && (state->skeletonState->highlightActiveTree)) {
-                        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 1.f);
-                }
-                else {
-                    currentColor = currentTree->color;
-                }
-                nodeColor = getNodeColor(currentNode); //returns (0, 0, 0, 0) for no coloring
-                if(nodeColor.a > 0) {
-                    SET_COLOR(currentColor, nodeColor.r, nodeColor.g, nodeColor.b, nodeColor.a);
-                }
-                /*if(currentNode->isBranchNode) {
-                    SET_COLOR(currentColor, 0.f, 0.f, 1.f, 1.f);
-                }
-                else if(currentNode->comment != NULL) {
-                    SET_COLOR(currentColor, 1.f, 1.f, 0.f, 1.f);
-                }*/
 
                 /* The first 50 entries of the openGL namespace are reserved
                 for static objects (like slice plane quads...) */
-
                 if(state->viewerState->selectModeFlag)
                     glLoadName(currentNode->nodeID + 50);
 
-                if(state->skeletonState->overrideNodeRadiusBool)
-                    renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, currentColor, viewportType);
-                else
-                    renderSphere(&(currentNode->position), currentNode->radius, currentColor, viewportType);
+                /* Changes the current color & radius if the node has a comment */
+                /* This is a bit hackish, but does the job */
+                setColorFromNode(currentNode, &currentColor);
+                setRadiusFromNode(currentNode, &currentRadius);
+
+                renderSphere(&(currentNode->position), currentRadius, currentColor, viewportType);
 
                 /* Render the node description only when option is set. */
                 if(state->skeletonState->showNodeIDs) {
-                    glColor4f(0., 0., 0., 1.);
+                    glColor4f(0.f, 0.f, 0.f, 1.f);
                     memset(textBuffer, '\0', 32);
                     sprintf(textBuffer, "%d", currentNode->nodeID);
                     renderText(&(currentNode->position), textBuffer);
                 }
                 lastRenderedNode = currentNode;
             }
-            else skippedCnt++;
+            //else skippedCnt++;
 
             lastNode = currentNode;
 
@@ -3108,23 +3094,14 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
     /* Highlight active node */
     if(state->skeletonState->activeNode) {
-        /*if(state->skeletonState->activeNode->isBranchNode) {
-            SET_COLOR(currentColor, 0.f, 0.f, 1.f, 0.2f);
-        }
-        else if(state->skeletonState->activeNode->comment != NULL) {
-            SET_COLOR(currentColor, 1.f, 1.f, 0.f, 0.2f);
-        }
-        else {
-            SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
-        }*/
 
-        nodeColor = getNodeColor(state->skeletonState->activeNode);
-        if(nodeColor.r > 0) {
-            SET_COLOR(currentColor, nodeColor.r, nodeColor.g, nodeColor.b, 0.2);
-        }
-        else {
-            SET_COLOR(currentColor, 1., 0., 0., 0.2);
-        }
+        /* Set the default color for the active node */
+        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
+
+        /* Color gets changes in case there is a comment & conditional comment
+        highlighting */
+        setColorFromNode(state->skeletonState->activeNode, &currentColor);
+        currentColor.a = 0.2f;
 
         if(state->viewerState->selectModeFlag)
             glLoadName(state->skeletonState->activeNode->nodeID + 50);
@@ -3149,7 +3126,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
     glEnable(GL_BLEND);
 
     free(textBuffer);
-    float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
+    //float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
     //LOG("percent nodes skipped in this DL: %f", tmp);
 
     return;

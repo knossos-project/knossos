@@ -341,8 +341,8 @@ void createNavOptionsWin() {
 
 	state->viewerState->ag->navOptWin = AG_WindowNew(0);
 
-    AG_WindowSetSideBorders(state->viewerState->ag->navOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->navOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->navOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->navOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
@@ -402,8 +402,8 @@ void createNavOptionsWin() {
 
 void createSpatialLockingOptionsWin() {
 	state->viewerState->ag->spatLockOptWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->spatLockOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->spatLockOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->spatLockOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->spatLockOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->spatLockOptWin, "Spatial Locking");
     AG_WindowSetGeometryAligned(state->viewerState->ag->spatLockOptWin, AG_WINDOW_MC, 200, 120);
 
@@ -413,8 +413,8 @@ void createSpatialLockingOptionsWin() {
 
 void createVolTracingOptionsWin() {
 	state->viewerState->ag->volTraceOptWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->volTraceOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->volTraceOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->volTraceOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->volTraceOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->volTraceOptWin, "Volumetric Tracing");
     AG_WindowSetGeometryAligned(state->viewerState->ag->volTraceOptWin, AG_WINDOW_MC, 210, 125);
 
@@ -425,8 +425,8 @@ void createVolTracingOptionsWin() {
 
 void createRenderingOptionsWin() {
 	state->viewerState->ag->renderingOptWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->renderingOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->renderingOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->renderingOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->renderingOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->renderingOptWin, "Rendering Quality");
     AG_WindowSetGeometryAligned(state->viewerState->ag->renderingOptWin, AG_WINDOW_MC, 200, 65);
     AG_CheckboxNew(state->viewerState->ag->renderingOptWin, 0, "Light Effects");
@@ -439,8 +439,8 @@ void createRenderingOptionsWin() {
 void createDisplayOptionsWin() {
 
 	state->viewerState->ag->dispOptWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->dispOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->dispOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->dispOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->dispOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->dispOptWin, "Display Settings");
     AG_WindowSetGeometryAligned(state->viewerState->ag->dispOptWin, AG_WINDOW_MC, 300, 250);
     AG_WindowSetCloseAction(state->viewerState->ag->dispOptWin, AG_WINDOW_HIDE);
@@ -454,8 +454,8 @@ void createSyncOptionsWin() {
     AG_Numerical *numerical;
 
 	state->viewerState->ag->syncOptWin = AG_WindowNew(AG_WINDOW_NORESIZE);
-    AG_WindowSetSideBorders(state->viewerState->ag->syncOptWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->syncOptWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->syncOptWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->syncOptWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->syncOptWin, "Synchronization Settings");
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     state->viewerState->ag->syncOptWin->hMin = 120;
@@ -502,8 +502,8 @@ void createSaveOptionsWin() {
 
 	win = AG_WindowNew(AG_WINDOW_NORESIZE);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Data Saving Options");
         AG_WindowSetGeometry(win, 618, 348, 200, 80);
         win->hMin = 80;
@@ -626,8 +626,8 @@ void createDataSizeWin(int i) {
 
 void createNavWin() {
 	state->viewerState->ag->navWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->navWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->navWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->navWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->navWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->navWin, "Navigation");
     AG_WindowSetGeometryAligned(state->viewerState->ag->navWin, AG_WINDOW_MR, 250, 200);
     AG_WindowSetCloseAction(state->viewerState->ag->navWin, AG_WINDOW_HIDE);
@@ -648,8 +648,8 @@ void createToolsWin() {
 
     /* Create window */
 	state->viewerState->ag->toolsWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->toolsWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->toolsWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->toolsWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->toolsWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->toolsWin, "tools");
     AG_WindowSetGeometry(state->viewerState->ag->toolsWin, 1040, 298, 326, 408);
 
@@ -1022,8 +1022,8 @@ void createAboutWin() {
 
     AG_WindowSetCaption(state->viewerState->ag->aboutWin, "About KNOSSOS");
     AG_WindowSetGeometryAligned(state->viewerState->ag->aboutWin, AG_WINDOW_MC, 520, 542);
-    AG_WindowSetSideBorders(state->viewerState->ag->aboutWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->aboutWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->aboutWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->aboutWin, 4);
 
     splashSDL = SDL_LoadBMP("splash");
     splashAG = AG_SurfaceFromSDL(splashSDL);
@@ -1048,8 +1048,8 @@ void createConsoleWin() {
     monospace = AG_FetchFont("_agFontMinimal", 10, -1);
 
 	state->viewerState->ag->consoleWin = AG_WindowNew(AG_WINDOW_NORESIZE);
-    AG_WindowSetSideBorders(state->viewerState->ag->consoleWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->consoleWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->consoleWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->consoleWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->consoleWin, "log");
     AG_WindowSetGeometry(state->viewerState->ag->consoleWin, 618, 529, 421, 129);
     state->viewerState->ag->consoleWin->hMin = 129;
@@ -1058,15 +1058,15 @@ void createConsoleWin() {
     AG_ConsoleSetFont (state->viewerState->ag->agConsole, monospace);
 
     AG_Expand(state->viewerState->ag->agConsole);
-    AG_ConsoleAppendLine(state->viewerState->ag->agConsole , "Welcome to KNOSSOS 3.2");
+    AG_ConsoleAppendLine(state->viewerState->ag->agConsole , "Welcome to KNOSSOS 3.3");
     AG_WindowSetCloseAction(state->viewerState->ag->consoleWin, AG_WINDOW_HIDE);
 	AG_WindowHide(state->viewerState->ag->consoleWin);
 }
 
 void createDataSetStatsWin() {
 	state->viewerState->ag->dataSetStatsWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->dataSetStatsWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->dataSetStatsWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->dataSetStatsWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->dataSetStatsWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->dataSetStatsWin, "Dataset Statistics");
     AG_WindowSetGeometryAligned(state->viewerState->ag->dataSetStatsWin, AG_WINDOW_MC, 200, 80);
     AG_WindowSetCloseAction(state->viewerState->ag->dataSetStatsWin, AG_WINDOW_HIDE);
@@ -1085,8 +1085,8 @@ void createViewPortPrefWin() {
     AG_Button *button;
 
 	state->viewerState->ag->viewPortPrefWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->viewPortPrefWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->viewPortPrefWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->viewPortPrefWin, "Viewport Settings");
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
     state->viewerState->ag->viewPortPrefWin->wMin = 497;
@@ -1188,7 +1188,7 @@ void createViewPortPrefWin() {
                 checkbox = AG_CheckboxNewInt(box2, 0, "Highlight Intersections", &state->skeletonState->showIntersections);
                 AG_SetEvent(checkbox, "checkbox-changed", UI_skeletonChanged, NULL);
 
-                numerical = AG_NumericalNewFltR(box2, 0, NULL, "Depth Cutoff: ", &state->viewerState->depthCutOff, 0.51, 32.);
+                numerical = AG_NumericalNewFltR(box2, 0, NULL, "Depth Cutoff: ", &state->viewerState->depthCutOff, 0.51, 5000.);
                 {
                     AG_NumericalSetIncrement(numerical, 0.5);
                     AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
@@ -1442,17 +1442,17 @@ void UI_resizeVP(int foundVP) {
     focusViewport(foundVP);
 
     //position mouse at corner of specified viewport
-    SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
+    /*SDL_WarpMouse(state->viewerState->viewPorts[foundVP].upperLeftCorner.x
                       + state->viewerState->viewPorts[foundVP].edgeLength
                       , state->viewerState->viewPorts[foundVP].upperLeftCorner.y
-                      + state->viewerState->viewPorts[foundVP].edgeLength);
+                      + state->viewerState->viewPorts[foundVP].edgeLength);*/
 }
 
 void createSetDynRangeWin() {
     AG_Box *box;
 	state->viewerState->ag->setDynRangeWin = AG_WindowNew(0);
-    AG_WindowSetSideBorders(state->viewerState->ag->setDynRangeWin, 3);
-    AG_WindowSetBottomBorder(state->viewerState->ag->setDynRangeWin, 3);
+    AG_WindowSetSideBorders(state->viewerState->ag->setDynRangeWin, 4);
+    AG_WindowSetBottomBorder(state->viewerState->ag->setDynRangeWin, 4);
     AG_WindowSetCaption(state->viewerState->ag->setDynRangeWin, "Set Dynamic Range");
     AG_WindowSetGeometryAligned(state->viewerState->ag->setDynRangeWin, AG_WINDOW_MC, 200, 80);
     box = AG_BoxNew(state->viewerState->ag->setDynRangeWin, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
@@ -1479,10 +1479,10 @@ void createCommentsWin() {
     AG_Numerical *radiusNumerical;
     AG_Combo *colorCombo;
 
-	win = AG_WindowNew(AG_WINDOW_NORESIZE);
+	win = AG_WindowNew(0);
 
-    AG_WindowSetSideBorders(win, 3);
-    AG_WindowSetBottomBorder(win, 3);
+    AG_WindowSetSideBorders(win, 4);
+    AG_WindowSetBottomBorder(win, 4);
     AG_WindowSetCaption(win, "Comment Shortcuts");
     AG_WindowSetGeometry(win, 628, 543, 389, 260);//250, 167);
     win->hMin = 167;
@@ -1535,18 +1535,18 @@ void createCommentsWin() {
     preferences = AG_NotebookAddTab(commentTabs, "preferences", AG_BOX_HOMOGENOUS);
     {
         box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
-
-        chkBox = AG_CheckboxNewFn(box, AG_CHECKBOX_SET, "Enable Color", commentColorWdgtSwitched, NULL, NULL);
+        AG_ExpandHoriz(box);
+        chkBox = AG_CheckboxNewFn(box, AG_CHECKBOX_SET, "Enable cond. coloring", commentColorWdgtSwitched, NULL, NULL);
         {
             AG_BindInt(chkBox, "state", &state->skeletonState->userCommentColoringOn);
         }
-        chkBox = AG_CheckboxNewFn(box, TRUE, "Enable Radius", commentNodeRadiusWdgtSwitched, NULL, NULL);
+        chkBox = AG_CheckboxNewFn(box, TRUE, "Enable cond. radius", commentNodeRadiusWdgtSwitched, NULL, NULL);
         {
             AG_BindInt(chkBox, "state", &state->skeletonState->commentNodeRadiusOn);
         }
         AG_SeparatorNewHoriz(preferences);
 
-        AG_LabelNew(preferences, 0, "Set Color and Radius of Comment Nodes containing...");
+        AG_LabelNew(preferences, 0, "Define substring, color and rendering radius:");
 
         box = AG_BoxNew(preferences, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
@@ -1741,8 +1741,8 @@ void createTracingTimeWin() {
     AG_Label *label;
 	win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Tracing Time");
         AG_WindowSetGeometry(win, 879, 543, 160, 90);
         label = AG_LabelNew(win, 0, "Running Time: 00:00:00");
@@ -1767,8 +1767,8 @@ void createZoomingWin() {
 
 	win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Zoom and Multiresolution Settings");
         AG_WindowSetGeometry(win, 739, 348, 300, 194);
 
@@ -1860,8 +1860,8 @@ void createLoadTreeImgJTableWin() {
 
     win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Load Tree Color Lookup Table");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -1888,8 +1888,8 @@ void createLoadDatasetImgJTableWin() {
 
     win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Load Dataset Color Lookup Table");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -2006,8 +2006,8 @@ static void createOpenFileDlgWin() {
 
 	win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Open Skeleton File");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -2044,8 +2044,8 @@ static void createSaveAsFileDlgWin() {
 
     win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Save Skeleton File");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -2080,8 +2080,8 @@ static void createOpenCustomPrefsDlgWin() {
 
 	win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Open Custom Preferences File");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -2114,8 +2114,8 @@ static void createSaveCustomPrefsAsDlgWin() {
 
 	win = AG_WindowNew(0);
     {
-        AG_WindowSetSideBorders(win, 3);
-        AG_WindowSetBottomBorder(win, 3);
+        AG_WindowSetSideBorders(win, 4);
+        AG_WindowSetBottomBorder(win, 4);
         AG_WindowSetCaption(win, "Save Custom Preferences File As");
         AG_WindowSetGeometryAligned(win, AG_WINDOW_MC, 900, 500);
         AG_WindowSetCloseAction(win, AG_WINDOW_DETACH);
@@ -2659,11 +2659,11 @@ static void UI_commentLockWdgtModified(AG_Event *event) {
 }
 
 static void commentColorWdgtSwitched(AG_Event *event) {
-    LOG("commentcoloring: %i", state->skeletonState->userCommentColoringOn);
+    //LOG("commentcoloring: %i", state->skeletonState->userCommentColoringOn);
 }
 
 static void commentNodeRadiusWdgtSwitched() {
-    LOG("user radius: %i", state->skeletonState->commentNodeRadiusOn);
+    //LOG("user radius: %i", state->skeletonState->commentNodeRadiusOn);
 }
 
 static void commentColorSelected(AG_Event *event) {

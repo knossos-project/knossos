@@ -3654,35 +3654,64 @@ struct commentListElement *previousComment(char *searchString) {
     return state->skeletonState->currentComment;
 }
 
-color4F getNodeColor(struct nodeListElement *node) {
+void setColorFromNode(struct nodeListElement *node, color4F *color) {
     int nr;
-    color4F color;
 
-    SET_COLOR(color, 0., 0., 0., 0.);
-    if(node->isBranchNode) { //branch nodes are blue
-        SET_COLOR(color, 0., 0., 1., 1.);
-        return color;
+    if(node->isBranchNode) { //branch nodes are always blue
+        SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
+        return;
     }
 
     if(node->comment != NULL) {
-        if(state->skeletonState->userCommentColoringOn == FALSE) { //comment nodes have default color
-            SET_COLOR(color, 1., 1., 0., 1.);
-            return color;
+        // default color for comment nodes
+        SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
+
+        if(state->skeletonState->userCommentColoringOn == FALSE) {
+            // conditional node coloring is disabled
+            // comment nodes have default color, return
+            return;
         }
-        //conditional node coloring enabled
-        if((nr = commentContainsSubstr(node->comment, -1)) == -1) { //no substring match => default color
-            SET_COLOR(color, 1., 1., 0., 1.);
-            return color;
+
+        if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
+            //no substring match => keep default color and return
+            return;
         }
-        if(state->skeletonState->commentColors[nr].a > 0) { //substring match
-            color = state->skeletonState->commentColors[nr];
-        }
-        else { //substring match, but no color selected => default color
-            SET_COLOR(color, 1., 1., 0., 1.);
+        if(state->skeletonState->commentColors[nr].a > 0.f) {
+            //substring match, change color
+            *color = state->skeletonState->commentColors[nr];
         }
     }
-    return color;
+    return;
 }
+
+void setRadiusFromNode(struct nodeListElement *node, float *radius) {
+    int nr;
+
+    if(state->skeletonState->overrideNodeRadiusBool)
+        *radius = state->skeletonState->overrideNodeRadiusVal;
+    else
+        *radius = node->radius;
+
+    if(node->comment != NULL) {
+        if(state->skeletonState->commentNodeRadiusOn == FALSE) {
+            // conditional node radius is disabled
+            // return
+            return;
+        }
+
+        if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
+            //no substring match => keep default radius and return
+            return;
+        }
+
+        if(state->skeletonState->commentNodeRadii[nr] > 0.f) {
+            //substring match, change radius
+            *radius = state->skeletonState->commentNodeRadii[nr];
+        }
+    }
+    return;
+}
+
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
 // If -1, all substrings are compared against the comment.

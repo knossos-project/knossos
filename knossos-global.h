@@ -1682,7 +1682,8 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
 uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID);
 struct commentListElement *nextComment(char *searchString);
 struct commentListElement *previousComment(char *searchString);
-color4F getNodeColor(struct nodeListElement *node);
+void setColorFromNode(struct nodeListElement *node, color4F *color);
+void setRadiusFromNode(struct nodeListElement *node, float *radius);
 unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 uint32_t searchInComment(char *searchString, struct commentListElement *comment);
 int32_t unlockPosition();
