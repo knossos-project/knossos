@@ -1589,7 +1589,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[1], 10240);
-                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 1);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1624,7 +1623,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[2], 10240);
-                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 2);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1659,7 +1657,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[3], 10240);
-                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 3);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1694,7 +1691,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(textbox);
                 AG_TextboxBindASCII(textbox, state->viewerState->ag->commentSubstr[4], 10240);
-                AG_SetEvent(textbox, "textbox-postchg", commSubstrModified, "%i", 4);
                 AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
