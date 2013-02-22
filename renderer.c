@@ -2824,7 +2824,6 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
     uint32_t virtualSegRendered, allowHeuristic;
     uint32_t skippedCnt = 0;
     uint32_t renderNode;
-    color4F nodeColor;
     float currentRadius;
 
 
@@ -2843,13 +2842,13 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
     if((state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
         if(viewportType != VIEWPORT_SKELETON) {
-            return TRUE;
+            return;
         }
     }
 
     if((state->skeletonState->displayMode & DSP_SKEL_VP_HIDE)) {
         if(viewportType == VIEWPORT_SKELETON) {
-            return TRUE;
+            return;
         }
     }
 
@@ -2923,13 +2922,13 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
                 /* isBranchNode tells you only whether the node is on the branch point stack,
                  * not whether it is actually a node connected to more than two other nodes! */
                 if((currentSegment->target == lastNode)
-                    || (currentSegment->source == lastNode)
+                    || ((currentSegment->source == lastNode)
                     &&
                     (!(
                        (currentNode->comment)
                        || (currentNode->isBranchNode)
                        || (currentNode->numSegs > 2)
-                       || (currentNode->radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx > 5.f)))) {
+                       || (currentNode->radius * state->viewerState->viewPorts[viewportType].screenPxXPerDataPx > 5.f))))) {
 
                     /* Node is a candidate for LOD culling */
 

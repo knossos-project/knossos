@@ -1521,8 +1521,8 @@ uint32_t loadSkeleton() {
     }
 
     /* If "createdin"-node does not exist, skeleton was created in a version
-     * before 3.2 */
-    strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
+     * before 3.3 */
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.3");
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {

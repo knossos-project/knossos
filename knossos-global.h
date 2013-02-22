@@ -36,7 +36,7 @@
 #include <agar/gui.h>
 
 
-#define KVERSION "3.2"
+#define KVERSION "3.3"
 
 #define TRUE    1
 #define FALSE   0
@@ -776,8 +776,10 @@ struct agConfig {
     char *comment4;
     char *comment5;
 
-    //substrings for comment node preferences
+    // substrings for comment node preferences
     char *commentSubstr[NUM_COMMSUBSTR];
+    // colors of color-dropdown in comment node preferences
+    char* commentColors[NUM_COMMSUBSTR];
 
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
@@ -1735,6 +1737,8 @@ void UI_loadSkeleton(AG_Event *event);
 void UI_pasteClipboardCoordinates();
 void UI_copyClipboardCoordinates();
 void UI_zoomOrthogonals(float step);
+void UI_moveVP(int foundVP);
+void UI_resizeVP(int foundVP);
 void createToolsWin();
 void createViewPortPrefWin();
 void reloadDataSizeWin();

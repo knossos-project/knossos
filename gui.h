@@ -50,7 +50,7 @@ static void commentNodeRadiusWdgtSwitched();
 
 // color/radius chosen for a comment node
 static void commentColorSelected(AG_Event *event);
-static void commentNodeRadiusChanged(AG_Event *event);
+static void commentColorRemoved(AG_Event *event);
 
 static void currPosWdgtModified(AG_Event *event);
 static void actNodeIDWdgtModified(AG_Event *event);
@@ -155,8 +155,6 @@ static void UI_orthoVPzoomSliderModified();
 static void UI_lockCurrentMagModified(AG_Event *event);
 static void UI_deleteCommentBoxesBtnPressed();
 static void UI_deleteCommentBoxes();
-void UI_moveVP(int foundVP);
-void UI_resizeVP(int foundVP);
 static void UI_showPosSizButtons();
 
 static Coordinate *parseRawCoordinateString(char *string);

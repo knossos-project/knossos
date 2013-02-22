@@ -148,6 +148,9 @@ int32_t initGUI() {
     for (i = 0; i < NUM_COMMSUBSTR; i++) {
         state->viewerState->ag->commentSubstr[i] = malloc(10240 * sizeof(char));
         memset(state->viewerState->ag->commentSubstr[i], '\0', 10240 * sizeof(char));
+
+        state->viewerState->ag->commentColors[i] = malloc(1024 * sizeof(char));
+        memset(state->viewerState->ag->commentColors[i], '\0', 1024 * sizeof(char));
     }
 
     createMenuBar();
@@ -187,10 +190,11 @@ int32_t initGUI() {
     createViewPortPrefWin();
     createZoomingWin();
     createTracingTimeWin();
-    createCommentsWin();
-    /*createSetDynRangeWin(); */           /* Unused. */
 
     UI_loadSettings();
+    //commentswin must be created after loading settings (because of color drop down selection)
+    createCommentsWin();
+    /*createSetDynRangeWin(); */           /* Unused. */
 
     return TRUE;
 }
@@ -200,8 +204,8 @@ void updateAGconfig() {
     state->viewerState->ag->totalTrees = state->skeletonState->treeElements;
     state->viewerState->ag->totalNodes = state->skeletonState->totalNodeElements;
     if(state->skeletonState->totalNodeElements == 0) {
-        if(!strcmp (state->skeletonState->skeletonCreatedInVersion, "pre-3.2")){
-            strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
+        if(!strcmp (state->skeletonState->skeletonCreatedInVersion, "pre-3.3")){
+            strcpy(state->skeletonState->skeletonCreatedInVersion, "3.3");
         }
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt1, FALSE);
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt2, FALSE);
@@ -1478,7 +1482,7 @@ void createCommentsWin() {
     AG_Checkbox *chkBox;
     AG_Numerical *radiusNumerical;
     AG_Combo *colorCombo;
-
+    AG_TlistItem *colorItem;
 	win = AG_WindowNew(0);
 
     AG_WindowSetSideBorders(win, 4);
@@ -1567,8 +1571,12 @@ void createCommentsWin() {
                 AG_TlistAdd(colorCombo->list, NULL, "azure");
                 AG_TlistAdd(colorCombo->list, NULL, "purple");
                 AG_TlistAdd(colorCombo->list, NULL, "brown");
-
+                colorItem = AG_TlistFindText(colorCombo->list, state->viewerState->ag->commentColors[0]);
+                if(colorItem) {
+                    AG_TlistSelect(colorCombo->list, colorItem);
+                }
                 AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 0);
+                AG_SetEvent(colorCombo, "combo-text-unknown", commentColorRemoved, "%i", 0);
                 AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1576,7 +1584,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(radiusNumerical);
                 AG_NumericalSetIncrement (radiusNumerical, 0.25);
-                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 0);
                 AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1602,7 +1609,12 @@ void createCommentsWin() {
                 AG_TlistAdd(colorCombo->list, NULL, "purple");
                 AG_TlistAdd(colorCombo->list, NULL, "brown");
 
+                colorItem = AG_TlistFindText(colorCombo->list, state->viewerState->ag->commentColors[1]);
+                if(colorItem) {
+                    AG_TlistSelect(colorCombo->list, colorItem);
+                }
                 AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 1);
+                AG_SetEvent(colorCombo, "combo-text-unknown", commentColorRemoved, "%i", 1);
                 AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1610,7 +1622,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(radiusNumerical);
                 AG_NumericalSetIncrement (radiusNumerical, 0.25);
-                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 1);
                 AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1635,8 +1646,12 @@ void createCommentsWin() {
                 AG_TlistAdd(colorCombo->list, NULL, "azure");
                 AG_TlistAdd(colorCombo->list, NULL, "purple");
                 AG_TlistAdd(colorCombo->list, NULL, "brown");
-
+                colorItem = AG_TlistFindText(colorCombo->list, state->viewerState->ag->commentColors[2]);
+                if(colorItem) {
+                    AG_TlistSelect(colorCombo->list, colorItem);
+                }
                 AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 2);
+                AG_SetEvent(colorCombo, "combo-text-unknown", commentColorRemoved, "%i", 2);
                 AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1644,7 +1659,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(radiusNumerical);
                 AG_NumericalSetIncrement (radiusNumerical, 0.25);
-                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 2);
                 AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1669,8 +1683,12 @@ void createCommentsWin() {
                 AG_TlistAdd(colorCombo->list, NULL, "azure");
                 AG_TlistAdd(colorCombo->list, NULL, "purple");
                 AG_TlistAdd(colorCombo->list, NULL, "brown");
-
+                colorItem = AG_TlistFindText(colorCombo->list, state->viewerState->ag->commentColors[3]);
+                if(colorItem) {
+                    AG_TlistSelect(colorCombo->list, colorItem);
+                }
                 AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 3);
+                AG_SetEvent(colorCombo, "combo-text-unknown", commentColorRemoved, "%i", 3);
                 AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1678,7 +1696,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(radiusNumerical);
                 AG_NumericalSetIncrement (radiusNumerical, 0.25);
-                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 3);
                 AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1703,8 +1720,12 @@ void createCommentsWin() {
                 AG_TlistAdd(colorCombo->list, NULL, "azure");
                 AG_TlistAdd(colorCombo->list, NULL, "purple");
                 AG_TlistAdd(colorCombo->list, NULL, "brown");
-
+                colorItem = AG_TlistFindText(colorCombo->list, state->viewerState->ag->commentColors[4]);
+                if(colorItem) {
+                    AG_TlistSelect(colorCombo->list, colorItem);
+                }
                 AG_SetEvent(colorCombo, "combo-selected", commentColorSelected, "%i", 4);
+                AG_SetEvent(colorCombo, "combo-text-unknown", commentColorRemoved, "%i", 4);
                 AG_SetEvent(colorCombo, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(colorCombo, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1712,7 +1733,6 @@ void createCommentsWin() {
             {
                 AG_ExpandHoriz(radiusNumerical);
                 AG_NumericalSetIncrement (radiusNumerical, 0.25);
-                AG_SetEvent(radiusNumerical, "numerical-changed", commentNodeRadiusChanged, "%i", 4);
                 AG_SetEvent(radiusNumerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(radiusNumerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -2670,6 +2690,9 @@ static void commentColorSelected(AG_Event *event) {
     int nr = AG_INT(1);
     AG_TlistItem *item = AG_PTR(2);
 
+    // store the text, so it can be saved in the user settings
+    strcpy(state->viewerState->ag->commentColors[nr], item->text);
+
     if(strcmp(item->text, "green") == 0) {
         SET_COLOR(state->skeletonState->commentColors[nr], 0.13, 0.69, 0.3, 1.);
 
@@ -2691,31 +2714,13 @@ static void commentColorSelected(AG_Event *event) {
     }
 }
 
-static void commentNodeRadiusChanged(AG_Event *event) {
-    /*int nr = AG_INT(1);
-    struct commentListElement *firstComment, *currentComment;
-
-    if(state->skeletonState->commentNodeRadiusOn == FALSE
-       || state->skeletonState->currentComment == NULL) {
-        return;
+static void commentColorRemoved(AG_Event *event) {
+    int nr = AG_INT(1);
+    int i;
+    strcpy(state->viewerState->ag->commentColors[nr], "");
+    for(i = 0; i < NUM_COMMSUBSTR; i++) {
+        LOG("removed. color[%i]: %s", i, state->viewerState->ag->commentColors[i]);
     }
-
-    firstComment = state->skeletonState->currentComment->next;
-    currentComment = firstComment;
-    do {
-        if(commentContainsSubstr(currentComment, nr) != -1) {
-            editNode(CHANGE_MANUAL,
-                     0,
-                     currentComment->node,
-                     state->skeletonState->commentNodeRadii[nr],
-                     currentComment->node->position.x,
-                     currentComment->node->position.y,
-                     currentComment->node->position.z,
-                     state->magnification);
-
-        }
-        currentComment = currentComment->next;
-    } while(firstComment != currentComment);*/
 }
 
 static void  UI_lockCurrentMagModified(AG_Event *event) {
@@ -3579,7 +3584,7 @@ remote port
 */
     xmlChar attrString[1024];
     xmlDocPtr xmlDocument;
-    xmlNodePtr settingsXMLNode, currentXMLNode, currentRecentFile, currentWindow;
+    xmlNodePtr settingsXMLNode, currentXMLNode, currentRecentFile, currentWindow, currentSubstr;
     char windowType[2048];
     AG_Window *win = NULL;
     memset(attrString, '\0', 1024 * sizeof(xmlChar));
@@ -3698,7 +3703,7 @@ remote port
         xmlNewProp(currentXMLNode, BAD_CAST"viewWorkMode", attrString);
     }
 
-    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"comments", NULL);
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"commentShortcuts", NULL);
     {
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment1);
@@ -3720,7 +3725,37 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->comment5);
         xmlNewProp(currentXMLNode, BAD_CAST"comment5", attrString);
     }
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"commentNodePrefs", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->skeletonState->userCommentColoringOn);
+        xmlNewProp(currentXMLNode, BAD_CAST"condNodeColoring", attrString);
 
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%i", state->skeletonState->commentNodeRadiusOn);
+        xmlNewProp(currentXMLNode, BAD_CAST"commentNodeRadius", attrString);
+
+        for(i = 0; i < NUM_COMMSUBSTR; i++) {
+            currentSubstr = xmlNewTextChild(currentXMLNode, NULL, BAD_CAST"substring", NULL);
+
+            memset(attrString, '\0', 1024);
+            xmlStrPrintf(attrString, 1024, BAD_CAST"%i", i);
+            xmlNewProp(currentSubstr, BAD_CAST"index", attrString);
+
+            memset(attrString, '\0', 1024);
+            xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->commentSubstr[i]);
+            xmlNewProp(currentSubstr, BAD_CAST"content", attrString);
+
+            memset(attrString, '\0', 1024);
+            xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->viewerState->ag->commentColors[i]);
+            xmlNewProp(currentSubstr, BAD_CAST"color", attrString);
+
+            memset(attrString, '\0', 1024);
+            xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->skeletonState->commentNodeRadii[i]);
+            xmlNewProp(currentSubstr, BAD_CAST"radius", attrString);
+        }
+
+    }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"datasetNavigation", NULL);
     {
         memset(attrString, '\0', 1024);
@@ -3968,8 +4003,8 @@ remote port
 static void UI_loadSettings() {
     int i;
     xmlDocPtr xmlDocument;
-    xmlNodePtr currentXMLNode, currentRecentFile, currentWindow;
-    xmlChar *attribute, *path, *pos;
+    xmlNodePtr currentXMLNode, currentRecentFile, currentWindow, currentSubstr;
+    xmlChar *attribute, *path, *pos, *index;
     char *win = NULL;
     int32_t reqScreenSizeX = 0, reqScreenSizeY = 0, x_win = 0, y_win = 0, w_win = 0, h_win = 0, visible_win = 0;
     AG_Window *win_ptr = NULL;
@@ -4017,7 +4052,6 @@ static void UI_loadSettings() {
                         }
                     }
                 }
-
                 currentRecentFile = currentRecentFile->next;
             }
         }
@@ -4119,9 +4153,7 @@ static void UI_loadSettings() {
                         }
                     }
                 }
-
                 currentWindow = currentWindow->next;
-
             }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"workModes")) {
@@ -4163,6 +4195,38 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"comment5");
             if(attribute)
                 strcpy(state->viewerState->ag->comment5, (char *)attribute);
+        }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *) "commentNodePrefs")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "condNodeColoring");
+            if(attribute) {
+                state->skeletonState->userCommentColoringOn = atoi((char *) attribute);
+            }
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *) "commentNodeRadius");
+            if(attribute) {
+                state->skeletonState->commentNodeRadiusOn = atoi((char *) attribute);
+            }
+
+            currentSubstr = currentXMLNode->xmlChildrenNode;
+            while(currentSubstr) {
+                if(xmlStrEqual(currentSubstr->name, (const xmlChar *)"substring")) {
+                    index = xmlGetProp(currentSubstr, (const xmlChar *)"index");
+                    if(index && atoi((char *) index) < NUM_COMMSUBSTR) {
+                        attribute = xmlGetProp(currentSubstr, (const xmlChar *) "content");
+                        if(attribute) {
+                            strcpy(state->viewerState->ag->commentSubstr[atoi((char *) index)], (char *)attribute);
+                        }
+                        attribute = xmlGetProp(currentSubstr, (const xmlChar *) "color");
+                        if(attribute) {
+                            strcpy(state->viewerState->ag->commentColors[atoi((char *) index)], (char *)attribute);
+                        }
+                        attribute = xmlGetProp(currentSubstr, (const xmlChar *) "radius");
+                        if(attribute) {
+                            state->skeletonState->commentNodeRadii[atoi((char *) index)] = atof((char *)attribute);
+                        }
+                    }
+                }
+                currentSubstr = currentSubstr->next;
+            }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"dataSavingOptions")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoSaving");

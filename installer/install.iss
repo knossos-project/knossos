@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Knossos"
-#define MyAppVersion "3.2Beta2"
+#define MyAppVersion "3.3Beta1"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
@@ -47,9 +47,10 @@ Name: "{app}\skeletonFiles"
 Source: "{#KNOSSOS_SRC_PATH}knossos.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}icon"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}logo.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#KNOSSOS_SRC_PATH}arrow"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#KNOSSOS_SRC_PATH}arrow2"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}glut32.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}iconv.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#KNOSSOS_SRC_PATH}libfreetype-6.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}libSDL_Clipboard.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}libxml2.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}pthreadVC2.dll"; DestDir: "{app}"; Flags: ignoreversion
