@@ -23,7 +23,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName} {#MyAppVersion}
-DefaultGroupName={#MyAppName}
+DefaultGroupName={#MyAppName} {#MyAppVersion}
 LicenseFile={#License}
 OutputBaseFilename=knossos-setup{#MyAppVersion}
 SetupIconFile=logo.ico
@@ -32,6 +32,7 @@ WizardImageFile=bar.bmp
 Compression=lzma
 SolidCompression=yes
 UsePreviousAppDir=no
+UsePreviousGroup=no
 
 
 [Languages]
