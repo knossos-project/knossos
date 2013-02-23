@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Knossos"
-#define MyAppVersion "3.3Beta1"
+#define MyAppVersion "3.3-Beta1"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
@@ -22,7 +22,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={pf}\{#MyAppName}
+DefaultDirName={pf}\{#MyAppName} {#MyAppVersion}
 DefaultGroupName={#MyAppName}
 LicenseFile={#License}
 OutputBaseFilename=knossos-setup{#MyAppVersion}
@@ -31,6 +31,7 @@ WizardSmallImageFile=logo.bmp
 WizardImageFile=bar.bmp
 Compression=lzma
 SolidCompression=yes
+UsePreviousAppDir=no
 
 
 [Languages]
