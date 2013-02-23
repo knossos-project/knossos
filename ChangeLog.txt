@@ -11,7 +11,7 @@ connectivity.
 -  General Information           -
 ----------------------------------
 
-Release Date: February xx, 2013
+Release Date: February 22, 2013
 
 Homepage: http://www.knossostool.org/ and
 http://code.google.com/p/knossos-skeletonizer/
@@ -32,7 +32,8 @@ http://code.google.com/p/knossos-skeletonizer/
   large skeletons (5k-500k nodes) through a completely reworked rendering
   engine (view frustum culling, dynamic level-of-detail algorithm, large vertex batches)
 - Adjustable position and size of viewports
-- Conditional highlighting (coloring) of nodes based on a set of definable comment strings
+- Conditional radii and highlighting (coloring) of nodes based on a set of definable comment strings
+- Python starter now remembers the last opened folder or starts in the Knossos folder
 
 
 
