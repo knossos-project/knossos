@@ -12,6 +12,7 @@ extern stateInfo *state;
 Loader::Loader(QObject *parent) :
     QObject(parent)
 {
+
 }
 
 static bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target) {
@@ -734,6 +735,7 @@ static bool loadCubes() {
   */
 
 void Loader::start() {
+    qDebug() << "Loader: start begin";
     state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
@@ -757,6 +759,7 @@ void Loader::start() {
 
     QThread::currentThread()->quit();
     emit finished();
+    qDebug() << "Loader: start ended";
 }
 
 /**
@@ -768,6 +771,7 @@ void Loader::start() {
   *
   */
 void Loader::load() {
+    qDebug() << "Load: load begin";
     loaderState *loaderState = state->loaderState;
     int32_t magChange = false;
 
@@ -816,4 +820,5 @@ void Loader::load() {
         LOG("Loading of all DCOI did not complete.");
     }
     state->protectLoadSignal->lock();
+    qDebug() << "Loader: load ended";
 }

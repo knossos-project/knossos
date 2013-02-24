@@ -3277,6 +3277,9 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
     return true;
 }
 commentListElement* Skeletonizer::nextComment(char *searchString) {
+
+
+
     commentListElement *firstComment, *currentComment;
 
     if(!strlen(searchString)) {

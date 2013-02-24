@@ -56,15 +56,10 @@ public:
 
 signals:
     void loadSignal();
-
+    void finished();
 public slots:
-
-public Q_SLOTS:
     //Entry point for viewer thread, general viewer coordination, "main loop"
     void start();
-
-Q_SIGNALS:
-    void finished();
     
 };
 

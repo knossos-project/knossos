@@ -1,6 +1,11 @@
 #include "tracingtimewidget.h"
 #include <QLabel>
 #include <QVBoxLayout>
+#include "knossos-global.h"
+#include "mainwindow.h"
+
+extern struct stateInfo *state;
+extern struct stateInfo *tempConfig;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)
@@ -16,9 +21,15 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     layout->addWidget(idleTimeLabel);
     this->setLayout(layout);
 
+    loadSettings();
+}
+
+void TracingTimeWidget::loadSettings() {
 
 }
 
 void TracingTimeWidget::closeEvent(QCloseEvent *event) {
     this->hide();
+    MainWindow *parent = (MainWindow *) this->parentWidget();
+    parent->uncheckTracingTimeAction();
 }

@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         _Exit(false);
     }
     //2012.12.11 HARDCODED FOR TESTING LOADER
-    strncpy(state->path, "C:\\path\\e1088_mag1_large\\", 1024);
+    strncpy(state->path, "../../e1088_mag1_large/", 1024);
     strncpy(state->name, "e1088_mag1_large", 1024);
     state->boundary.x = 2048;
     state->boundary.y = 1792;

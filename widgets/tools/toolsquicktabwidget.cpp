@@ -47,7 +47,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     mainLayout->addWidget(line2);
 
-
     activeNodeLabel = new QLabel("Active Node ID:");
     activeNodeSpinBox = new QSpinBox();
     activeNodeSpinBox->setDisabled(true);
@@ -108,6 +107,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     gridLayout4->addWidget(popBranchNodeButton, 1, 2);
 
     mainLayout->addLayout(gridLayout4);
+    mainLayout->addStretch(20);
     this->setLayout(mainLayout);
 
 
@@ -119,7 +119,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeButtonClicked()));
     connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));
 
-
+    loadSettings();
 }
 
 void ToolsQuickTabWidget::loadSettings() {
@@ -144,10 +144,17 @@ void ToolsQuickTabWidget::searchForChanged(QString comment) {
     state->viewerState->gui->commentSearchBuffer = const_cast<char *>(comment.toStdString().c_str());
 }
 
+/**
+  * @bug if the searchForField is empty the application crashes while invoking nextComment
+  */
 void ToolsQuickTabWidget::findNextButtonClicked() {
+    qDebug() << state->viewerState->gui->commentSearchBuffer;
     Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
 }
 
+/**
+  * @bug the application crashes while invoking nextComment
+  */
 void ToolsQuickTabWidget::findPreviousButtonClicked() {
     Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
 }
@@ -156,6 +163,9 @@ void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
     Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
 }
 
+/**
+  * @bug the application crashes while invoking popBranchNode
+  */
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
 }

@@ -13,14 +13,12 @@ public:
     static int32_t remoteJump(int32_t x, int32_t y, int32_t z);
     
 signals:
-    
+    void finished();
 public slots:
-
-public Q_SLOTS:
     void start();
 
-Q_SIGNALS:
-    void finished();
+
+
     
 };
 

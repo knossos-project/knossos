@@ -10,6 +10,7 @@
 #include <QDebug>
 #include "knossos-global.h"
 #include "viewer.h"
+#include "mainwindow.h"
 
 extern struct stateInfo *state;
 
@@ -151,10 +152,16 @@ void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
   * @todo updateViewports
   */
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
+    const int MIN_ZOOM = 0.02;
+    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MIN_ZOOM;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MIN_ZOOM;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MIN_ZOOM;
 
-    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = 0.02;
-    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = 0.02;
-    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = 0.02;
+    orthogonalDataViewportSlider->setValue(MIN_ZOOM);
+    orthogonalDataViewportSpinBox->setValue(MIN_ZOOM);
+    skeletonViewSlider->setValue(MIN_ZOOM);
+    skeletonViewSpinBox->setValue(MIN_ZOOM);
+
     state->skeletonState->zoomLevel = 0.0;
     //Viewer::refreshViewports();
 
@@ -162,4 +169,6 @@ void ZoomAndMultiresWidget::zoomDefaultsSlot() {
 
 void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
     this->hide();
+    MainWindow *parent = (MainWindow *) this->parentWidget();
+    parent->uncheckZoomAndMultiresAction();
 }

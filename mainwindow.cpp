@@ -20,8 +20,8 @@
 #include <QKeySequence>
 #include <QSettings>
 #include <dirent.h>
-#include "knossos-global.h"
 
+#include "knossos-global.h"
 #include "viewport.h"
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
@@ -36,6 +36,80 @@
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
+
+// -- Constructor and destroyer -- //
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    setWindowTitle("KnossosQT");
+
+    settings = new QSettings();
+    settings->beginGroup("MainWindow");
+
+    skeletonFileHistory = new QQueue<QString>();
+
+    createActions();
+    createMenus();
+
+    createCoordBarWin();
+    createConsoleWidget();
+    createTracingTimeWidget();
+    createCommentsWidget();
+    createViewportSettingsWidget();
+    createZoomAndMultiresWidget();
+    createNavigationWidget();
+    createToolWidget();
+
+    createDataSavingWidget();
+    createSychronizationWidget();
+
+
+    mainWidget = new QWidget(this);
+    gridLayout = new QGridLayout();
+    mainWidget->setLayout(gridLayout);
+    setCentralWidget(mainWidget);
+
+    viewports = new Viewport*[NUM_VP];
+
+
+    for(int i = 0; i < NUM_VP; i++) {
+        viewports[i] = new Viewport(this, i);
+    }
+    viewports[0]->setGeometry(5, 40, 500, 500);
+    viewports[1]->setGeometry(510, 40, 500, 500);
+    viewports[2]->setGeometry(5, 545, 500, 500);
+    viewports[3]->setGeometry(510, 545, 500, 500);
+
+    for(int i = 0; i < NUM_VP; i++) {
+        SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,
+                       viewports[i]->geometry().topLeft().x(),
+                       viewports[i]->geometry().topLeft().y(),
+                       0);
+        state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
+    }
+
+
+    this->skeletonFileDialog = new QFileDialog(this);
+    skeletonFileDialog->setWindowTitle(tr("Open Skeleton File"));
+    skeletonFileDialog->setDirectory(QDir::home());
+    skeletonFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
+
+    this->saveFileDialog = new QFileDialog(this);
+    saveFileDialog->setWindowTitle(tr("Save Skeleton File"));
+    saveFileDialog->setDirectory(QDir::home());
+    saveFileDialog->setFileMode(QFileDialog::AnyFile);
+    saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
+
+    updateTitlebar(false);
+}
+
+MainWindow::~MainWindow()
+{
+    settings->endGroup();
+    delete ui;
+}
 
 void MainWindow:: createCoordBarWin() {
     copyButton = new QPushButton("Copy");
@@ -75,58 +149,57 @@ void MainWindow:: createCoordBarWin() {
 
 // Dialogs
 void MainWindow::createConsoleWidget() {
-
     console = new Console(this);
     console->setGeometry(800, 500, 200, 120);
-    console->show();
+
 }
 
 void MainWindow::createTracingTimeWidget() {
     tracingTimeWidget = new TracingTimeWidget(this);
     tracingTimeWidget->setGeometry(800, 350, 200, 100);
-    tracingTimeWidget->show();
+
 }
 
 void MainWindow::createCommentsWidget() {
     commentsWidget = new CommentsWidget(this);
     commentsWidget->setGeometry(800, 100, 200, 150);
-    commentsWidget->show();
+
 }
 
 void MainWindow::createZoomAndMultiresWidget() {
     zoomAndMultiresWidget = new ZoomAndMultiresWidget(this);
-    zoomAndMultiresWidget->setGeometry(1024, 100, 250, 200);
-    zoomAndMultiresWidget->show();
+    zoomAndMultiresWidget->setGeometry(1024, 100, 380, 200);
+
 }
 
 void MainWindow::createNavigationWidget() {
     navigationWidget = new NavigationWidget(this);
     navigationWidget->setGeometry(1024, 350, 200, 200);
-    navigationWidget->show();
+
 }
 
 void MainWindow::createToolWidget() {
     toolsWidget = new ToolsWidget(this);
-    toolsWidget->setGeometry(500, 100, 300, 500);
-    toolsWidget->show();
+    toolsWidget->setGeometry(500, 100, 430, 610);
+
 }
 
 void MainWindow::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget(this);
-    viewportSettingsWidget->setGeometry(500, 500, 550, 300);
-    viewportSettingsWidget->show();
+    viewportSettingsWidget->setGeometry(500, 500, 680, 400);
+
 }
 
 void MainWindow::createDataSavingWidget() {
     dataSavingWidget = new DataSavingWidget(this);
     dataSavingWidget->setGeometry(100, 100, 100, 90);
-    dataSavingWidget->show();
+
 }
 
 void MainWindow::createSychronizationWidget() {
     synchronizationWidget = new SynchronizationWidget(this);
     synchronizationWidget->setGeometry(100, 350, 150, 100);
-    synchronizationWidget->show();
+
 }
 
 
@@ -180,80 +253,7 @@ static void updateGuiconfig() {
         10240);
 }
 
-// -- Constructor and destroyer -- //
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
-    this->setWindowTitle("KnossosQT");
 
-
-    settings = new QSettings();
-    settings->beginGroup("MainWindow");
-
-    skeletonFileHistory = new QQueue<QString>();
-
-    createActions();
-    createMenus();
-
-    createCoordBarWin();
-    createConsoleWidget();
-    createTracingTimeWidget();
-    createCommentsWidget();
-    createViewportSettingsWidget();
-    createZoomAndMultiresWidget();
-    createNavigationWidget();
-    createToolWidget();
-
-    createDataSavingWidget();
-    createSychronizationWidget();
-
-
-    mainWidget = new QWidget(this);
-    gridLayout = new QGridLayout();
-    mainWidget->setLayout(gridLayout);
-    setCentralWidget(mainWidget);
-
-    viewports = new Viewport*[NUM_VP];
-
-
-    for(int i = 0; i < NUM_VP; i++) {
-        viewports[i] = new Viewport(this, i);
-    }
-    viewports[0]->setGeometry(0, 50, 500, 500);
-    viewports[1]->setGeometry(520, 50, 500, 500);
-    viewports[2]->setGeometry(0, 570, 500, 500);
-    viewports[3]->setGeometry(520, 570, 500, 500);
-
-    for(int i = 0; i < NUM_VP; i++) {
-        SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,
-                       viewports[i]->geometry().topLeft().x(),
-                       viewports[i]->geometry().topLeft().y(),
-                       0);
-        state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
-    }
-
-
-    this->skeletonFileDialog = new QFileDialog(this);
-    skeletonFileDialog->setWindowTitle(tr("Open Skeleton File"));
-    skeletonFileDialog->setDirectory(QDir::home());
-    skeletonFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
-
-    this->saveFileDialog = new QFileDialog(this);
-    saveFileDialog->setWindowTitle(tr("Save Skeleton File"));
-    saveFileDialog->setDirectory(QDir::home());
-    saveFileDialog->setFileMode(QFileDialog::AnyFile);
-    saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
-
-    updateTitlebar(false);
-}
-
-MainWindow::~MainWindow()
-{
-    settings->endGroup();
-    delete ui;
-}
 
 void MainWindow::updateTitlebar(bool useFilename) {
     char *filename;
@@ -582,6 +582,57 @@ void MainWindow::treeColorAdjustmentsChanged(){
             }
 }
 
+void MainWindow::datasetColorAdjustmentsChanged() {
+    int32_t doAdjust = FALSE;
+        int32_t i = 0;
+        int32_t dynIndex;
+        GLuint tempTable[3][256];
+
+        if(state->viewerState->datasetColortableOn) {
+            memcpy(state->viewerState->datasetAdjustmentTable,
+                   state->viewerState->datasetColortable,
+                   RGB_LUTSIZE * sizeof(GLuint));
+            doAdjust = TRUE;
+        }
+        else {
+            memcpy(state->viewerState->datasetAdjustmentTable,
+                   state->viewerState->neutralDatasetTable,
+                   RGB_LUTSIZE * sizeof(GLuint));
+        }
+
+        /*
+         * Apply the dynamic range settings to the adjustment table
+         *
+         */
+
+        if((state->viewerState->luminanceBias != 0) ||
+           (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
+            for(i = 0; i < 256; i++) {
+                dynIndex = (int32_t)((i - state->viewerState->luminanceBias) /
+                                     (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
+
+                if(dynIndex < 0)
+                    dynIndex = 0;
+                if(dynIndex > MAX_COLORVAL)
+                    dynIndex = MAX_COLORVAL;
+
+                tempTable[0][i] = state->viewerState->datasetAdjustmentTable[0][dynIndex];
+                tempTable[1][i] = state->viewerState->datasetAdjustmentTable[1][dynIndex];
+                tempTable[2][i] = state->viewerState->datasetAdjustmentTable[2][dynIndex];
+            }
+
+            for(i = 0; i < 256; i++) {
+                state->viewerState->datasetAdjustmentTable[0][i] = tempTable[0][i];
+                state->viewerState->datasetAdjustmentTable[1][i] = tempTable[1][i];
+                state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
+            }
+
+            doAdjust = TRUE;
+        }
+
+        state->viewerState->datasetAdjustmentOn = doAdjust;
+}
+
 
 void MainWindow::createXYViewport() {
 
@@ -604,7 +655,6 @@ void MainWindow::createSkeletonViewport() {
 void MainWindow::createActions()
 {
     /* file actions */
-
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
@@ -637,7 +687,6 @@ void MainWindow::createActions()
     tracingTimeAction = new QAction(tr("&Tracing Time"), this);
     tracingTimeAction->setCheckable(true);
 
-    connect(workModeViewAction, SIGNAL(triggered()), this, SLOT(workModeViewSlot()));
     connect(dragDatasetAction, SIGNAL(triggered()), this, SLOT(dragDatasetSlot()));
     connect(recenterOnClickAction, SIGNAL(triggered()), this, SLOT(recenterOnClickSlot()));
     connect(zoomAndMultiresAction, SIGNAL(triggered()), this, SLOT(zoomAndMultiresSlot()));
@@ -701,16 +750,17 @@ void MainWindow::createMenus()
     fileMenu->addAction(QIcon("quit"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     editMenu = menuBar()->addMenu("&Edit Skeleton");
-    workModeMenu = editMenu->addMenu("&Work Mode");
-        workModeMenu->addAction(addNodeAction);
-        workModeMenu->addAction(linkWithActiveNodeAction);
-        workModeMenu->addAction(dropNodesAction);
+    workModeEditMenu = editMenu->addMenu("&Work Mode");
+        workModeEditMenu->addAction(addNodeAction);
+        workModeEditMenu->addAction(linkWithActiveNodeAction);
+        workModeEditMenu->addAction(dropNodesAction);
     editMenu->addAction(skeletonStatisticsAction);
     editMenu->addAction(clearSkeletonAction);
 
     viewMenu = menuBar()->addMenu("&View");
-    viewMenu->addAction(workModeViewAction);
-    viewMenu->addAction(dragDatasetAction);
+    workModeViewMenu = viewMenu->addMenu("&Work Mode");
+        workModeViewMenu->addAction(dragDatasetAction);
+        workModeViewMenu->addAction(recenterOnClickAction);
     viewMenu->addAction(zoomAndMultiresAction);
     viewMenu->addAction(tracingTimeAction);
 
@@ -739,6 +789,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     // TODO temporary condition
     if(5 > 0) {
+
         prompt = new QMessageBox(this);
         prompt->setWindowTitle("Confirmation");
         prompt->setText("There are unsaved changes. Really Quit?");
@@ -853,12 +904,6 @@ void MainWindow::quitSlot()
 
 /* edit skeleton functionality */
 
-void MainWindow::workModeEditSlot()
-{
-
-}
-
-
 void MainWindow::addNodeSlot()
 {
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
@@ -899,24 +944,21 @@ void MainWindow::dropNodesSlot()
 
 void MainWindow::skeletonStatisticsSlot()
 {
-
+    QMessageBox::information(this, "Information", "This feature is not yet implemented", QMessageBox::Ok);
 }
 
 void MainWindow::clearSkeletonSlot()
 {
-    QMessageBox *prompt = new QMessageBox(this);
+    int ret = QMessageBox::question(this, "", "Really clear the skeleton (you can not undo this) ?", QMessageBox::Ok | QMessageBox::No);
 
-
-    Skeletonizer::clearSkeleton(CHANGE_MANUAL, false);
-    updateTitlebar(false);
+    switch(ret) {
+        case QMessageBox::Ok:
+            Skeletonizer::clearSkeleton(CHANGE_MANUAL, false);
+            updateTitlebar(FALSE);
+    }
 }
 
 /* view menu functionality */
-
-void MainWindow::workModeViewSlot()
-{
-
-}
 
 void MainWindow::dragDatasetSlot()
 {
@@ -950,12 +992,23 @@ void MainWindow::tracingTimeSlot()
 
 void MainWindow::loadCustomPreferencesSlot()
 {
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.xml)");
+    if(!fileName.isEmpty()) {
+        cpBaseDirectory(state->viewerState->gui->settingsFile, const_cast<char *>(fileName.toStdString().c_str()), 2048);
+        strncpy(state->viewerState->gui->settingsFile, fileName.toStdString().c_str(), 2048);
+        /** @todo UI_loadSettings */
 
+    }
 }
 
 void MainWindow::saveCustomPreferencesSlot()
 {
-
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.xml)");
+    if(!fileName.isEmpty()) {
+        cpBaseDirectory(state->viewerState->gui->customPrefsDirectory, const_cast<char *>(fileName.toStdString().c_str()), 2048);
+        strncpy(state->viewerState->gui->settingsFile, fileName.toStdString().c_str(), 2048);
+        /** @todo UI_saveSettings */
+    }
 }
 
 /**
@@ -963,24 +1016,18 @@ void MainWindow::saveCustomPreferencesSlot()
   */
 void MainWindow::defaultPreferencesSlot()
 {
-    QMessageBox *prompt = new QMessageBox(this);
-    prompt->setWindowTitle("Warning");
-    prompt->setText("Do you want load the load the default preferences?");
 
-    QPushButton *yesButton = prompt->addButton(tr("Yes"), QMessageBox::ActionRole);
-    QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
-    prompt->exec();
+    int ret = QMessageBox::question(this, "", "Do you really want to load the default preferences ?", QMessageBox::Yes | QMessageBox::No);
 
+    switch(ret) {
+        case QMessageBox::Yes:
 
-    if((QPushButton *) prompt->clickedButton() == yesButton) {
+            break;
+    case QMessageBox::No:
 
-        prompt->close();
+           break;
     }
 
-    if((QPushButton *) prompt->clickedButton() == noButton) {
-
-        prompt->close();
-    }
 
 }
 
@@ -1246,3 +1293,53 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     return false;
 }
 
+/**
+  * @todo
+  */
+void MainWindow::loadDefaultPrefs() {
+    this->showMaximized();
+
+    Knossos::loadTreeLUTFallback();
+    treeColorAdjustmentsChanged();
+    datasetColorAdjustmentsChanged();
+
+
+
+
+}
+
+void MainWindow::uncheckToolsAction() {
+    this->toolsAction->setChecked(false);
+}
+
+void MainWindow::uncheckViewportSettingAction() {
+    this->viewportSettingsAction->setChecked(false);
+}
+
+void MainWindow::uncheckCommentShortcutsAction() {
+    this->commentShortcutsAction->setChecked(false);
+}
+
+void MainWindow::uncheckConsoleAction() {
+    this->logAction->setChecked(false);
+}
+
+void MainWindow::uncheckDataSavingAction() {
+    this->dataSavingOptionsAction->setChecked(false);
+}
+
+void MainWindow::uncheckSynchronizationAction() {
+    this->synchronizationAction->setChecked(false);
+}
+
+void MainWindow::uncheckTracingTimeAction() {
+    this->tracingTimeAction->setChecked(false);
+}
+
+void MainWindow::uncheckZoomAndMultiresAction() {
+    this->zoomAndMultiresAction->setChecked(false);
+}
+
+void MainWindow::uncheckNavigationAction() {
+    this->datasetNavigationAction->setChecked(false);
+}

@@ -4,13 +4,9 @@
 //updateAGconfig is now updateGuiConfig()
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
-
 #include <QMainWindow>
 #include <QQueue>
-
-
 
 namespace Ui {
 class MainWindow;
@@ -60,7 +56,9 @@ public:
 
     static void UI_zoomOrthogonals(float step);
     static void reloadDataSizeWin();
-    static void treeColorAdjustmentsChanged();
+
+    void treeColorAdjustmentsChanged();
+    void datasetColorAdjustmentsChanged();
 
     void showSplashScreen();
     void showAboutScreen();
@@ -79,6 +77,18 @@ public:
     void createYZViewport();
     void createSkeletonViewport();
     bool eventFilter(QObject *obj, QEvent *event);
+
+    void loadDefaultPrefs();
+
+    void uncheckToolsAction();
+    void uncheckViewportSettingAction();
+    void uncheckCommentShortcutsAction();
+    void uncheckConsoleAction();
+    void uncheckTracingTimeAction();
+    void uncheckZoomAndMultiresAction();
+    void uncheckDataSavingAction();
+    void uncheckSynchronizationAction();
+    void uncheckNavigationAction();
 signals:
 
 protected:
@@ -141,6 +151,7 @@ private:
 
     /* window actions */
     QAction *toolsAction;
+
     QAction *logAction;
     QAction *commentShortcutsAction;
 
@@ -151,8 +162,9 @@ private:
     QMenu *fileMenu;
     QMenu *recentFileMenu;
     QMenu *editMenu;
-    QMenu *workModeMenu;
+    QMenu *workModeEditMenu;
     QMenu *viewMenu;
+    QMenu *workModeViewMenu;
     QMenu *preferenceMenu;
     QMenu *windowMenu;
     QMenu *helpMenu;
@@ -180,7 +192,6 @@ private slots:
     void quitSlot();
 
     /* edit skeleton menu*/
-    void workModeEditSlot();
     void addNodeSlot();
     void linkWithActiveNodeSlot();
     void dropNodesSlot();
@@ -188,7 +199,6 @@ private slots:
     void clearSkeletonSlot();
 
     /* view menu */
-    void workModeViewSlot();
     void dragDatasetSlot();
     void recenterOnClickSlot();
     void zoomAndMultiresSlot();

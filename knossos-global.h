@@ -253,6 +253,11 @@
 
 #define CATCH_RADIUS            10
 
+#define AUTOTRACING_MODE_NORMAL 0
+#define AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE 1
+#define AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE 2
+#define AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE 3
+
 //Structures and custom types
 class Viewport;
 
@@ -268,11 +273,11 @@ struct Coordinate{
     int32_t x;
     int32_t y;
     int32_t z;
-
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
     static bool transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
     static Coordinate *parseRawCoordinateString(char *string);
+
 };
 
 
@@ -433,7 +438,41 @@ struct assignment {
 
 struct stateInfo {
 
-//  Info about the data
+    //  Info about the data
+    // Use overlay cubes to color the data.
+    bool overlay;
+    // Tell the loading thread that it should interrupt its work /
+    // its sleep and do something new.
+    bool loadSignal;
+
+    // If loadSignal is TRUE and quitSignal is TRUE, make the
+    // loading thread quit. loadSignal == TRUE means the loader
+    // has been signalled. If quitSignal != TRUE, it will go on
+    // loading its stuff.
+    bool quitSignal;
+
+    // These signals are used to communicate with the remote.
+    bool remoteSignal;
+
+    // Same for the client. The client threading code is basically
+    // copy-pasted from the remote.
+    bool clientSignal;
+
+    // Cube hierarchy mode
+    bool boergens;
+
+    // Path to the current cube files for the viewer and loader.
+    char path[1024];
+    char loaderPath[1024];
+    // Paths to all available datasets of the 3-D image pyramid
+    char magPaths[NUM_MAG_DATASETS][1024];
+
+    // Current dataset identifier string
+    char name[1024];
+    char loaderName[1024];
+    char magNames[NUM_MAG_DATASETS][1024];
+
+    char datasetBaseExpName[1024];
 
 
     // stores the currently active magnification;
@@ -451,18 +490,24 @@ struct stateInfo {
     // log2uint32(state->magnification)
     uint32_t loaderMagnification;
 
-    // Path to the current cube files for the viewer and loader.
-    char path[1024];
-    char loaderPath[1024];
-    // Paths to all available datasets of the 3-D image pyramid
-    char magPaths[NUM_MAG_DATASETS][1024];
+    // Bytes in one datacube: 2^3N
+    uint32_t cubeBytes;
 
-    // Current dataset identifier string
-    char name[1024];
-    char loaderName[1024];
-    char magNames[NUM_MAG_DATASETS][1024];
+    // Edge length of one cube in pixels: 2^N
+    int32_t cubeEdgeLength;
 
-    char datasetBaseExpName[1024];
+    // Area of a cube slice in pixels;
+    int32_t cubeSliceArea;
+
+    // Supercube edge length in datacubes.
+    int32_t M;
+    uint32_t cubeSetElements;
+
+
+    // Bytes in one supercube (This is pretty much the memory
+    // footprint of KNOSSOS): M^3 * 2^3M
+    uint32_t cubeSetBytes;
+
 
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
@@ -479,53 +524,11 @@ struct stateInfo {
     // M being the edge length of a supercube (the set of all
     // simultaneously loaded datacubes) in datacubes:
 
-    // Bytes in one datacube: 2^3N
-    uint32_t cubeBytes;
-
-    // Edge length of one cube in pixels: 2^N
-    int32_t cubeEdgeLength;
-
-    // Area of a cube slice in pixels;
-    int32_t cubeSliceArea;
-
-    // Supercube edge length in datacubes.
-    int32_t M;
-    uint32_t cubeSetElements;
-
-    // Cube hierarchy mode
-    bool boergens;
-
-    // Bytes in one supercube (This is pretty much the memory
-    // footprint of KNOSSOS): M^3 * 2^3M
-    uint32_t cubeSetBytes;
-
-    // Use overlay cubes to color the data.
-    // Values: TRUE, FALSE.
-    bool overlay;
-
-
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
 
     // Tells the loading thread, that state->path and or state->name changed
 
     int32_t datasetChangeSignal;
-
-    // Tell the loading thread that it should interrupt its work /
-    // its sleep and do something new.
-    bool loadSignal;
-
-    // If loadSignal is TRUE and quitSignal is TRUE, make the
-    // loading thread quit. loadSignal == TRUE means the loader
-    // has been signalled. If quitSignal != TRUE, it will go on
-    // loading its stuff.
-    bool quitSignal;
-
-    // These signals are used to communicate with the remote.
-    bool remoteSignal;
-
-    // Same for the client. The client threading code is basically
-    // copy-pasted from the remote.
-    bool clientSignal;
 
     int32_t maxTrajectories;
 
@@ -1089,6 +1092,9 @@ struct IOBuffer {
     Byte *data;
 };
 
+/**
+  * @struct skeletonState
+  */
 struct skeletonState {
     uint32_t skeletonRevision;
 
@@ -1218,6 +1224,8 @@ struct skeletonState {
     // This is for a workaround around agar bug #171
     bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
+
+    QString skeletonFileAsQString;
 };
 
 struct remoteState {

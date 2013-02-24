@@ -8,7 +8,7 @@
 
 #include "eventmodel.h"
 
-
+class QPushButton;
 class Viewport : public QGLWidget
 {
     Q_OBJECT
@@ -34,6 +34,7 @@ protected:
     int plane; //XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
+    QPushButton *xy, *xz, *yz, *flip, *reset;
 
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);

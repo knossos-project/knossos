@@ -64,7 +64,10 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     enableCommentLockingCheckBox = new QCheckBox("Enable comment locking");
     lockingRadiusLabel = new QLabel("Locking Radius:");
     lockToNodesWithCommentLabel = new QLabel("Lock To Nodes With Comment:");
+    lockingRadiusSpinBox = new QSpinBox();
     lockingToNodesWithCommentField = new QLineEdit("seed");
+    lockToActiveNodeButton = new QPushButton("Lock to Active Node");
+    disableLockingButton = new QPushButton("Disable Locking");
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(activeNodeIdLabel, activeNodeIdSpinBox);
@@ -115,7 +118,7 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout4);
 
     setLayout(mainLayout);
-
+    //mainLayout->addStretch(50);
     connect(activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
     connect(jumpToNodeButton, SIGNAL(clicked()), this, SLOT(jumpToNodeButtonClicked()));
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
@@ -127,14 +130,13 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     connect(activeNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(activeNodeRadiusChanged(double)));
     connect(defaultNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(defaultNodeRadiusChanged(double)));
     connect(enableCommentLockingCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCommentLockingChecked(bool)));
-
-    /*
     connect(lockingRadiusSpinBox, SIGNAL(valueChanged(int)), this, SLOT(lockingRadiusChanged(int)));
     connect(lockingToNodesWithCommentField, SIGNAL(textChanged(QString)), this, SLOT(lockToNodesWithCommentChanged(QString)));
     connect(lockToActiveNodeButton, SIGNAL(clicked()), this, SLOT(lockToActiveNodeButtonClicked()));
     connect(disableLockingButton, SIGNAL(clicked()), this, SLOT(disableLockingButtonClicked()));
-    */
 
+
+    loadSettings();
 }
 
 void ToolsNodesTabWidget::loadSettings() {
@@ -148,6 +150,7 @@ void ToolsNodesTabWidget::loadSettings() {
     enableCommentLockingCheckBox->setChecked(state->skeletonState->lockPositions);
     lockingRadiusSpinBox->setValue(state->skeletonState->lockRadius);
     lockingToNodesWithCommentField->setText(state->skeletonState->onCommentLock);
+
 }
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
@@ -190,10 +193,16 @@ void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     }
 }
 
+/**
+  * @attention the invovation of nextComment does not lead to a crash, interesting!
+  */
 void ToolsNodesTabWidget::findNextButtonClicked() {
     Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
 }
 
+/**
+  * @attention the invovation of nextComment does not lead to a crash, interesting!
+  */
 void ToolsNodesTabWidget::findPreviousButtonClicked() {
     Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
 }

@@ -8,6 +8,7 @@
 #include <QGroupBox>
 #include <QSpacerItem>
 #include "knossos-global.h"
+#include "mainwindow.h"
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -98,17 +99,21 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     connect(this->numberOfStepsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(numberOfStepsChanged(int)));
 }
 
-/**
-  * @todo the numerical order of autoTracingMode
-  */
+
 void NavigationWidget::loadSettings() {
     movementSpeedSpinBox->setValue(state->viewerState->stepsPerSec);
     jumpFramesSpinBox->setValue(state->viewerState->dropFrames);
     recenterTimeOrthoSpinBox->setValue(state->viewerState->recenteringTimeOrth);
     recenterTimeParallelSpinBox->setValue(state->viewerState->recenteringTime);
 
-    if(state->viewerState->autoTracingMode == 0) {
-
+    if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_NORMAL) {
+        this->normalModeButton->setChecked(true);
+    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE) {
+        this->additionalTracingDirectionMoveButton->setChecked(true);
+    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE) {
+        this->additionalViewportDirectionMoveButton->setChecked(true);
+    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE) {
+        this->additionalMirroredMoveButton->setChecked(true);
     }
 
     delayTimePerStepSpinBox->setValue(state->viewerState->autoTracingDelay);
@@ -131,23 +136,28 @@ void NavigationWidget::recenterTimeParallelChanged(int value) {
     tempConfig->viewerState->recenteringTime = value;
 }
 
-/**
-  * @todo find out the numeric order of tracing modes
-  */
 void NavigationWidget::normalModeButtonClicked(bool on) {
-
+    if(on) {
+        state->viewerState->autoTracingMode = AUTOTRACING_MODE_NORMAL;
+    }
 }
 
 void NavigationWidget::additionalViewportDirectionMoveButtonClicked(bool on) {
-
+    if(on) {
+        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE;
+    }
 }
 
 void NavigationWidget::additionalTracingDirectionMoveButtonClicked(bool on) {
-
+    if(on) {
+        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE;
+    }
 }
 
 void NavigationWidget::additionalMirroredMoveButtonClicked(bool on) {
-
+    if(on) {
+        state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE;
+    }
 }
 
 void NavigationWidget::delayTimePerStepChanged(int value) {
@@ -160,4 +170,6 @@ void NavigationWidget::numberOfStepsChanged(int value) {
 
 void NavigationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
+    MainWindow *parent = (MainWindow *) this->parentWidget();
+    parent->uncheckNavigationAction();
 }

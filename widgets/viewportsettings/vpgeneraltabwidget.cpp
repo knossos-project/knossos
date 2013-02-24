@@ -29,6 +29,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
 
     this->edgeNodeRadiusRatioSpinBox = new QDoubleSpinBox();
+    this->edgeNodeRadiusRatioSpinBox->setSingleStep(0.1);
     this->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
     this->edgeNodeRadiusRatioLabel = new QLabel("Edge <-> Node Radius Ratio:");
 
@@ -76,7 +77,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(overrideNodeRadiusButton, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(linesAndPointsButton, SIGNAL(clicked(bool)), this, SLOT(linesAndPointsChecked(bool)));
-    connect(skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(Skeleton3dChecked(bool)));
+    connect(skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(skeleton3dChecked(bool)));
 }
 
 void VPGeneralTabWidget::loadSettings() {
@@ -85,36 +86,28 @@ void VPGeneralTabWidget::loadSettings() {
    showAllNodeIdsButton->setChecked(state->skeletonState->showNodeIDs);
    overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
    edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
-   linesAndPointsButton->setChecked(state->viewerState->gui->radioRenderingModel); // see comment in corresponding slot below
-   skeleton3dButton->setChecked(state->viewerState->gui->radioRenderingModel); // see comment in corresponding slot below
+
+   if(state->viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) {
+       linesAndPointsButton->setChecked(true);
+   } else if(viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) { // should be 3D SKELETON see comment in skeleton3d slot
+       skeleton3dButton->setChecked(true);
+   }
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
     state->viewerState->lightOnOff = on;
 }
 
-/**
-  * @todo bool param is not needed here
-  */
+
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
-    if(state->skeletonState->highlightActiveTree) {
-        state->skeletonState->highlightActiveTree = false;
-    } else {
-        state->skeletonState->highlightActiveTree = true;
-    }
+    state->skeletonState->highlightActiveTree = on;
 
     state->skeletonState->skeletonChanged = true;
 }
 
-/**
-  * @todo bool param is not need here
-  */
+
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
-    if(state->skeletonState->showNodeIDs) {
-        state->skeletonState->showNodeIDs = false;
-    } else {
-        state->skeletonState->showNodeIDs = true;
-    }
+    state->skeletonState->showNodeIDs = on;
 
     state->skeletonState->skeletonChanged = true;
 }
@@ -136,16 +129,18 @@ void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
     state->skeletonState->segRadiusToNodeRadius = value;
 }
 
-/**
-  * @todo the numeric order of radioRenderingModel
-  */
+
 void VPGeneralTabWidget::linesAndPointsChecked(bool on) {
-    state->viewerState->gui->radioRenderingModel;
+    if(on) {
+        state->viewerState->gui->radioRenderingModel = DSP_LINES_POINTS;
+    }
 }
 
 /**
-  * @todo the numeric order of radioRanderingModel
+  * @todo what is the constant for 3D Skeleton ?
   */
 void VPGeneralTabWidget::skeleton3dChecked(bool on) {
-    state->viewerState->gui->radioRenderingModel;
+    if(on) {
+        state->viewerState->gui->radioRenderingModel;
+    }
 }

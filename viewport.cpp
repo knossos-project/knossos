@@ -1,11 +1,17 @@
 #include "knossos-global.h"
 #include "viewport.h"
 #include "renderer.h"
-
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
 
+/**
+  * @note The button group for skeleton viewport does not work as expected
+  * another approach is needed
+  */
 Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
     this->plane = plane;
@@ -14,6 +20,27 @@ Viewport::Viewport(QWidget *parent, int plane) :
     this->setMouseTracking(true);
     setStyleSheet("background:black");
     this->setCursor(Qt::CrossCursor);
+
+
+    if(plane == VIEWPORT_SKELETON) {
+        this->xy = new QPushButton("xy");
+        this->xz = new QPushButton("xz");
+        this->xy = new QPushButton("yz");
+        this->flip = new QPushButton("flip");
+        this->reset = new QPushButton("reset");
+
+        QVBoxLayout *mainLayout = new QVBoxLayout();
+        QHBoxLayout *hLayout = new QHBoxLayout();
+
+        hLayout->addWidget(xy);
+        hLayout->addWidget(xz);
+        hLayout->addWidget(yz);
+        hLayout->addWidget(flip);
+        hLayout->addWidget(reset);
+
+        mainLayout->addLayout(hLayout);
+        setLayout(mainLayout);
+    }
 }
 
 void Viewport::initializeGL() {
@@ -23,16 +50,16 @@ void Viewport::initializeGL() {
     glEnable(GL_BLEND);
     glEnable(GL_POLYGON_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(0, 0, 0, 1);
-    /* display some basic openGL driver statistics */
+
+    /* display some basic openGL driver statistics
     qDebug("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
     glGetString(GL_RENDERER), glGetString(GL_VENDOR));
+    */
 
 }
 
 void Viewport::resizeGL(int w, int h) {
     qDebug("resizing");
-    glClearColor(0, 0, 0, 1);
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -45,6 +72,8 @@ void Viewport::resizeGL(int w, int h) {
                    geometry().topLeft().y(),
                    0);
     state->viewerState->vpConfigs[plane].edgeLength = width();
+
+
 }
 
 /**
@@ -52,11 +81,16 @@ void Viewport::resizeGL(int w, int h) {
   */
 
 void Viewport::paintGL() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0, 0, 0, 1);
 
-    if(this->plane < 3) {
+    if(this->plane < VIEWPORT_SKELETON) {
         drawViewport(this->plane);
     } else
         drawSkeletonViewport();
+
+
+
 }
 
 //functions to determine position x/y relative to last position lastX, lastY

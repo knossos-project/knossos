@@ -6,6 +6,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include "knossos-global.h"
+#include "mainwindow.h"
 
 extern struct stateInfo *state;
 
@@ -42,6 +43,7 @@ void SynchronizationWidget::loadSettings() {
 
 void SynchronizationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
+    MainWindow *parent = (MainWindow *) this->parentWidget();
 }
 
 /**

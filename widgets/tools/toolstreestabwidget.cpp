@@ -42,11 +42,16 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     aLabel = new QLabel("A:");
 
     rSpinBox = new QDoubleSpinBox();
+    rSpinBox->setSingleStep(0.01);
     gSpinBox = new QDoubleSpinBox();
+    gSpinBox->setSingleStep(0.01);
     bSpinBox = new QDoubleSpinBox();
+    bSpinBox->setSingleStep(0.01);
     aSpinBox = new QDoubleSpinBox();
+    aSpinBox->setSingleStep(0.01);
 
     mergeTreesButton = new QPushButton("Merge Trees");
+    this->restoreDefaultColorButton = new QPushButton("Restore default color");
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -96,11 +101,12 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     mainLayout->addWidget(line3);
 
     QGridLayout *gridLayout4 = new QGridLayout();
-    gridLayout4->addWidget(id1Label, 1, 1);
-    gridLayout4->addWidget(id1SpinBox, 1, 2);
-    gridLayout4->addWidget(id2Label, 1, 3);
-    gridLayout4->addWidget(id2SpinBox, 1, 4);
-    gridLayout4->addWidget(mergeTreesButton, 2, 1);
+    gridLayout4->addWidget(mergeTreesButton, 1, 1);
+    gridLayout4->addWidget(id1Label, 1, 2);
+    gridLayout4->addWidget(id1SpinBox, 1, 3);
+    gridLayout4->addWidget(id2Label, 1, 4);
+    gridLayout4->addWidget(id2SpinBox, 1, 5);
+
     mainLayout->addLayout(gridLayout4);
     mainLayout->addWidget(line4);
     mainLayout->addWidget(splitByConnectedComponentsButton);
@@ -116,9 +122,10 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     gridLayout5->addWidget(aLabel, 1, 7);
     gridLayout5->addWidget(aSpinBox, 1, 8);
     mainLayout->addLayout(gridLayout5);
-
     mainLayout->addWidget(restoreDefaultColorButton);
 
+
+    mainLayout->addStretch(20);
     setLayout(mainLayout);
 
     connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIDChanged(int)));
@@ -131,6 +138,8 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     connect(bSpinBox, SIGNAL(valueChanged(double)), this, SLOT(bChanged(double)));
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
+
+    loadSettings();
 }
 
 void ToolsTreesTabWidget::loadSettings() {
@@ -149,8 +158,11 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
-    /** @todo Prompt YES NO */
-    Skeletonizer::delActiveTree();
+    int retValue = QMessageBox::warning(this, "Warning", "Do you really want to delete the active tree", QMessageBox::Yes, QMessageBox::No);
+    switch(retValue) {
+        case QMessageBox::Yes:
+        Skeletonizer::delActiveTree();
+    }
 }
 
 void ToolsTreesTabWidget::newTreeButtonClicked() {

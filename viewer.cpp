@@ -1,4 +1,5 @@
 #include "viewer.h"
+#include <QDebug>
 #include "knossos.h"
 #include "client.h"
 #include "skeletonizer.h"
@@ -790,6 +791,7 @@ static bool calcLeftUpperTexAbsPx() {
   * @TODO SDLNet_Init()
   */
 static bool initViewer() {
+    qDebug() << "Viewer: initViewer begin";
     calcLeftUpperTexAbsPx();
 
     // init the skeletonizer
@@ -898,6 +900,7 @@ static bool initViewer() {
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
+    qDebug() << "Viewer: initViewe completed";
     return true;
 }
 
@@ -1118,7 +1121,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::start() {
-
+    qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
     struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
@@ -1244,6 +1247,7 @@ void Viewer::start() {
 
     QThread::currentThread()->quit();
     emit finished();
+    qDebug() << "Viewer: start ended";
 }
 
 //Initializes the window with the parameter given in viewerState

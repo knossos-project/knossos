@@ -11,15 +11,13 @@ public:
     explicit Loader(QObject *parent = 0);
 
 signals:
-    
+    void finished();
 public slots:
     void load();
-
-public Q_SLOTS:
     void start();
 
-Q_SIGNALS:
-    void finished();
+
+
     
 };
 

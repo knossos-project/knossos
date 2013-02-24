@@ -40,9 +40,7 @@ SOURCES +=\
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
     widgets/synchronizationwidget.cpp \
-    widgets/splashscreenwidget.cpp
-
-
+    widgets/splashscreenwidget.cpp \
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -71,19 +69,17 @@ HEADERS  += mainwindow.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
-    widgets/splashscreenwidget.h
+    widgets/splashscreenwidget.h \
+
 
 FORMS    += mainwindow.ui
 
 OTHER_FILES += \
     knossos.layout \
-    glut32.dll \
     iconv.dll \
     libfreetype-6.dll \
     libxml2.dll \
     pthreadVC2.dll \
-    SDL.dll \
-    SDL_net.dll \
     zlib1.dll \
     icon \
     LICENSE \

@@ -7,6 +7,7 @@
 #include <QFormLayout>
 #include <QVariant>
 #include "knossos-global.h"
+#include "mainwindow.h"
 
 extern struct stateInfo *state;
 
@@ -36,20 +37,33 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
 
     connect(button, SIGNAL(clicked()), this, SLOT(deleteComments()));
 
+    loadSettings();
 }
 
 void CommentsWidget::loadSettings() {
-
+    textFields[0]->setText(QString(state->viewerState->gui->comment1));
+    textFields[1]->setText(QString(state->viewerState->gui->comment2));
+    textFields[2]->setText(QString(state->viewerState->gui->comment3));
+    textFields[3]->setText(QString(state->viewerState->gui->comment4));
+    textFields[4]->setText(QString(state->viewerState->gui->comment5));
 }
 
 void CommentsWidget::deleteComments() {
-    for(int i = 0; i < NUM; i++) {
-        textFields[i]->clear();
+    int retValue = QMessageBox::warning(this, "Warning", "Do you really want to clear all comment boxes?", QMessageBox::Yes, QMessageBox::No);
+    switch(retValue) {
+        case QMessageBox::Yes:
+            for(int i = 0; i < NUM; i++) {
+                textFields[i]->clear();
+            }
+
     }
+
 }
 
 void CommentsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
+    MainWindow *parent = (MainWindow *) this->parentWidget();
+    parent->uncheckCommentShortcutsAction();
 }
 
 /**
