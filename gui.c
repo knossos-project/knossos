@@ -2832,11 +2832,9 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
             200,
             20);
 
-        setVPPosSizWinPositions();
         state->viewerState->moveVP = -1;
         state->viewerState->resizeVP = -1;
     }
-
     state->viewerState->screenSizeX = newWinLenX;
     state->viewerState->screenSizeY = newWinLenY;
 
@@ -2969,7 +2967,8 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         }
 
     resizeWindows(); //adjust window sizes, because AGAR sucks at it.
-
+    setVPPosSizWinPositions();
+    setDataSizeWinPositions();
     drawGUI();
 }
 
