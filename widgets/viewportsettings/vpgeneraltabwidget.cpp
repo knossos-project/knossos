@@ -89,7 +89,7 @@ void VPGeneralTabWidget::loadSettings() {
 
    if(state->viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) {
        linesAndPointsButton->setChecked(true);
-   } else if(viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) { // should be 3D SKELETON see comment in skeleton3d slot
+   } else if(state->viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) { // should be 3D SKELETON see comment in skeleton3d slot
        skeleton3dButton->setChecked(true);
    }
 }

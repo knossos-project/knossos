@@ -1,8 +1,7 @@
-//removed SDL_init, for the time being
 //2012.12.11 contains hardcoded location of a dataset right now (in main)
 //sendLoadSignal() has been moved to viewer class
 
-#include <QtGui/QApplication>
+#include <QApplication>
 #include <QSplashScreen>
 #include <QPixmap>
 #include <QImage>
@@ -10,6 +9,7 @@
 #include <QTimer>
 #include <QMutex>
 #include <QWaitCondition>
+
 
 #include "mainwindow.h"
 #include "knossos-global.h"
@@ -43,7 +43,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Knossos QT");
 
     state = Knossos::emptyState();
-
     state->loadSignal = false;
     state->remoteSignal = false;
     state->quitSignal = false;
@@ -68,6 +67,7 @@ int main(int argc, char *argv[])
     if(argc >= 2) {
         Knossos::configFromCli(argc, argv);
     }
+
     if(tempConfig->path[0] != '\0') {
         // Got a path from cli.
         Knossos::readDataConfAndLocalConf();
@@ -230,9 +230,7 @@ int32_t Knossos::initStates() {
        state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
        state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
        Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-
-       // TODO
-       //loadDefaultTreeLUT();
+       Knossos::loadTreeLUTFallback();
 
        state->viewerState->treeLutSet = false;
 
@@ -643,11 +641,7 @@ struct stateInfo *Knossos::emptyState() {
         return false;
      memset(state->skeletonState, '\0', sizeof(struct skeletonState));
 
-
-
      return state;
-
-
 }
 
 bool Knossos::findAndRegisterAvailableDatasets() {
@@ -789,6 +783,11 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             /* state->magnification already contains the right mag! */
 
             pathLen = strlen(state->path);
+
+            /**
+             * @badcode the pathLen is in some cases 0, so that array index = - 1
+             * can be replaced as QFile would do the platform specific things automatically
+             */
 
             if((state->path[pathLen-1] == '\\')
                || (state->path[pathLen-1] == '/')) {
@@ -1152,12 +1151,12 @@ void Knossos::catchSegfault(int signum) {
   * A structural update might be advantegous for the future.
   */
 
-int32_t loadDefaultTreeLUT() {
+void loadDefaultTreeLUT() {
 
     if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
         Knossos::loadTreeLUTFallback();
         MainWindow::treeColorAdjustmentsChanged();
     }
 
-    return true;
+
 }

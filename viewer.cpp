@@ -387,10 +387,8 @@ static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) 
         nextElement = currentElement->next;
 
         if(currentElement->cubeType == CUBE_DATA) {
-            //SDL_LockMutex(state->protectCube2Pointer);
             state->protectCube2Pointer->lock();
             cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
-            //SDL_UnlockMutex(state->protectCube2Pointer);
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
@@ -420,10 +418,9 @@ static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) 
             }
         }
         else if(currentElement->cubeType == CUBE_OVERLAY) {
-            //SDL_LockMutex(state->protectCube2Pointer);
+
             state->protectCube2Pointer->lock();
             cube = Hashtable::ht_get((Hashtable*) state->Oc2Pointer, currentElement->cube);
-            //SDL_UnlockMutex(state->protectCube2Pointer);
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {

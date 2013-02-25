@@ -7,8 +7,9 @@
 
 #include <QtOpenGL>
 /** @todo must be changed to Q_OS_MACX when QT5 is used */
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MACX
     #include <OpenGL.h>
+    #include <glu.h>
 #else
     #include <GL/gl.h>
     #include <GL/glext.h>

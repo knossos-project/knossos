@@ -262,7 +262,7 @@ void MainWindow::updateTitlebar(bool useFilename) {
     filename = strrchr(state->skeletonState->skeletonFile, '/');
 #else
     filename = strrchr(state->skeletonState->skeletonFile, '\\');
-#endif*/
+#endif
     }
 
     if(!useFilename ||!filename) {
@@ -583,7 +583,7 @@ void MainWindow::treeColorAdjustmentsChanged(){
 }
 
 void MainWindow::datasetColorAdjustmentsChanged() {
-    int32_t doAdjust = FALSE;
+    bool doAdjust = false;
         int32_t i = 0;
         int32_t dynIndex;
         GLuint tempTable[3][256];
@@ -592,7 +592,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
             memcpy(state->viewerState->datasetAdjustmentTable,
                    state->viewerState->datasetColortable,
                    RGB_LUTSIZE * sizeof(GLuint));
-            doAdjust = TRUE;
+            doAdjust = true;
         }
         else {
             memcpy(state->viewerState->datasetAdjustmentTable,
@@ -627,7 +627,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
                 state->viewerState->datasetAdjustmentTable[2][i] = tempTable[2][i];
             }
 
-            doAdjust = TRUE;
+            doAdjust = true;
         }
 
         state->viewerState->datasetAdjustmentOn = doAdjust;
@@ -954,7 +954,7 @@ void MainWindow::clearSkeletonSlot()
     switch(ret) {
         case QMessageBox::Ok:
             Skeletonizer::clearSkeleton(CHANGE_MANUAL, false);
-            updateTitlebar(FALSE);
+            updateTitlebar(false);
     }
 }
 

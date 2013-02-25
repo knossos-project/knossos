@@ -22,7 +22,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
     this->setCursor(Qt::CrossCursor);
 
 
-    if(plane == VIEWPORT_SKELETON) {
+    if(plane == VIEWPORT_SKELETON + 10) {
         this->xy = new QPushButton("xy");
         this->xz = new QPushButton("xz");
         this->xy = new QPushButton("yz");

@@ -44,6 +44,7 @@ void SynchronizationWidget::loadSettings() {
 void SynchronizationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     MainWindow *parent = (MainWindow *) this->parentWidget();
+    parent->uncheckSynchronizationAction();
 }
 
 /**

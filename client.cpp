@@ -8,7 +8,6 @@
 #include "client.h"
 #include "sleeper.h"
 
-
 extern stateInfo *state;
 extern stateInfo *tempConfig;
 extern Viewer *viewerEventObj;
@@ -16,6 +15,34 @@ Client::Client(QObject *parent) :
     QObject(parent)
 {
 }
+
+/**
+ * This method is a replacement for the SDL_NET functionality.
+ * @todo is KIKI a local server in tools/kiki.py ?
+ * a replacement for the SocketSet functionality
+ */
+static bool qconnectToServer() {
+    //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
+    int timeoutIn100ms = 30; // ??
+
+    // lookup the host
+    QHostInfo hostInfo = QHostInfo::fromName(QHostInfo::localHostName());
+    if(hostInfo.error() != QHostInfo::NoError) {
+        qDebug() << hostInfo.errorString();
+        return false;
+    }
+
+    // connect to host
+    state->clientState->remoteSocket = new QTcpSocket();
+    state->clientState->remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
+
+
+
+
+
+    return true;
+}
+
 
 static bool connectToServer() {
     /*clientState *clientState = state->clientState;
@@ -64,6 +91,24 @@ static bool connectToServer() {
     */
     return true;
 }
+
+static bool qcloseConnection() {
+    if(state->clientState->remoteSocket != NULL) {
+        state->clientState->remoteSocket->close();
+    }
+
+    /**
+     * @todo socket set stuff
+     */
+
+    state->clientState->connected = false;
+
+    /**
+     * @todo Label stuff
+     */
+}
+
+
 
 static bool closeConnection() {
 /*    if(state->clientState->remoteSocket != NULL) {
@@ -519,6 +564,25 @@ critical:
     return false;
 }
 
+static bool qflushOutBuffer() {
+
+
+
+    state->protectOutBuffer->lock();
+
+    if(state->clientState->outBuffer->length > 0) {
+        /**
+         * @todo there are conversion troubles between Byte * and const char *
+         */
+        //state->clientState->remoteSocket->writeData(state->clientState->outBuffer->data, state->clientState->outBuffer->length */);
+        memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->length);
+        state->clientState->outBuffer->length = 0;
+    }
+
+    state->protectOutBuffer->unlock();
+    return true;
+}
+
 static bool flushOutBuffer() {
     //Can this block at inconvenient times?
 
@@ -535,7 +599,7 @@ static bool flushOutBuffer() {
         clientState->outBuffer->length = 0;
     }
 
-    state->protectOutBuffer->lock();
+    state->protectOutBuffer->unlock();
     return true;
 }
 
@@ -674,6 +738,49 @@ static int32_t clientRun() {
     return true;
 }
 
+/**
+ * This method is a replacement for the SDL_NET functionality.
+ */
+static void qstart() {
+    clientState *clientState = state->clientState;
+
+    while(!state->viewerState->viewerReady or state->viewerState->splash) {
+        Sleeper::msleep(50);
+    }
+
+    if(clientState->connectAsap) {
+        Knossos::sendClientSignal();
+    }
+
+    for(int i = 1; i < 5; i++) {
+        viewerEventObj->sendLoadSignal(i * 100, i * 100, i * 100, NO_MAG_CHANGE);
+        Sleeper::sleep(500);
+        state->protectClientSignal->lock();
+        while(!state->clientSignal) {
+            state->conditionClientSignal->wait(state->protectClientSignal);
+        }
+
+        state->clientSignal = false;
+        state->protectClientSignal->unlock();
+
+        if(state->quitSignal == true) {
+            break;
+        }
+
+        clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
+        clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
+        clientState->remotePort = tempConfig->clientState->remotePort;
+        strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+
+        clientRun();
+
+        if(state->quitSignal == false) {
+            break;
+        }
+    }
+
+    cleanUpClient();
+}
 
 void Client::start() {
     clientState *clientState = state->clientState;
@@ -849,16 +956,6 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
     memcpy(&iobuffer->data[iobuffer->length], data, length);
     iobuffer->length += length;
 
-    /*
-    printf("iobuffer->data[]: ");
-    for(i=0;i<iobuffer->length;i++)
-        printf("%dd ", iobuffer->data[i]);
-    printf("\n");
-    printf("iobuffer->length = %d\n", iobuffer->length);
-
-    printf("added %d bytes to outbuffer\n", length);
-    */
-
     if(mutex != NULL) {
         mutex->unlock();
     }
@@ -903,7 +1000,7 @@ bool Client::addPeer(uint32_t id, char *name,
 
 
 bool Client::delPeer(uint32_t id) {
-    printf("delPeer() is not implemented.\n");
+    qDebug() << "delPeer() is not implemented.\n";
     return true;
 }
 
@@ -1076,15 +1173,6 @@ int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
     }
 
     else if(buffer->length < (uint32_t)len) {
-        /*printf("In parseInBufferByFmt(): buffer->length = %d, len = %d. Shit.\n",
-                buffer->length, len);
-
-        printf("contents of input buffer: \n");
-        for(i=0; i<buffer->length; i++) {
-            printf("%dd ", buffer->data[i]);
-        }
-        printf("\n");
-        */
 
         return false;
     }

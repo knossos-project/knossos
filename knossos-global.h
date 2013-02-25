@@ -56,6 +56,7 @@
 #include <QtNetwork>
 
 
+
 #define KVERSION "3.2"
 
 #define FAIL    -1
@@ -68,12 +69,19 @@
 
 #define NUM_MAG_DATASETS 65536
 
+#if QT_POINTER_SIZE == 4
+#define PTRSIZEINT int32_t
+#elif QT_POINTER_SIZE == 8
+#define PTRSIZEINT int64_t
+#endif
+
+/*
 #ifdef ARCH_64
 #define PTRSIZEINT int64_t
 #else
 #define PTRSIZEINT int32_t
 #endif
-
+*/
 // The edge length of a datacube is 2^N, which makes the size of a
 // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
 // So N cannot be larger than 10.
@@ -1247,6 +1255,8 @@ struct clientState {
     bool connectionTried;
     char serverAddress[1024];
 
+    QHostAddress *remoteServer;
+    QTcpSocket *remoteSocket;
     /** @todo temporarily uncommented
     IPaddress remoteServer;
     TCPsocket remoteSocket;

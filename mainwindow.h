@@ -57,8 +57,8 @@ public:
     static void UI_zoomOrthogonals(float step);
     static void reloadDataSizeWin();
 
-    void treeColorAdjustmentsChanged();
-    void datasetColorAdjustmentsChanged();
+    static void treeColorAdjustmentsChanged();
+    static void datasetColorAdjustmentsChanged();
 
     void showSplashScreen();
     void showAboutScreen();

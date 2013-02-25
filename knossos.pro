@@ -9,7 +9,6 @@ QT       += core gui opengl network
 TARGET = knossos
 TEMPLATE = app
 
-
 SOURCES +=\
     mainwindow.cpp \
     eventmodel.cpp \
