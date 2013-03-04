@@ -176,7 +176,7 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
     }
     memset(filename, '\0', strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
 
-#ifdef LINUX
+#ifdef Q_OS_UNIX
     if(state->boergens) {
         snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
                  "%sz%.4d/y%.4d/x%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
@@ -768,8 +768,9 @@ void Loader::start() {
     while(true)  {
        // as long the loadSignal is false, the loops waits
        while(state->loadSignal == false) {
-            //LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
-            //printf("Waiting for the load signal at %ums.\n", SDL_GetTicks());
+            LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
+            qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
+            load();
             state->conditionLoadSignal->wait(state->protectLoadSignal);
        }
     }

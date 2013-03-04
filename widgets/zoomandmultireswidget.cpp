@@ -172,9 +172,6 @@ void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
     }
 }
 
-/**
-  * @todo updateViewports
-  */
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
     const int MIN_ZOOM = 0.02;
     state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MIN_ZOOM;
@@ -187,7 +184,7 @@ void ZoomAndMultiresWidget::zoomDefaultsSlot() {
     skeletonViewSpinBox->setValue(MIN_ZOOM);
 
     state->skeletonState->zoomLevel = 0.0;
-    //Viewer::refreshViewports();
+    Viewer::refreshViewports();
 
 }
 

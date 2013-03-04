@@ -579,6 +579,7 @@ struct stateInfo {
 
     QMutex *protectSkeleton;
 
+    QTime time; // it is not allowed to modify this object
 
  //---  Info about the state of KNOSSOS in general. --------
 
@@ -1257,9 +1258,7 @@ struct clientState {
 
     QHostAddress *remoteServer;
     QTcpSocket *remoteSocket;
-    /** @todo temporarily uncommented
-    IPaddress remoteServer;
-    TCPsocket remoteSocket;
+    /** @todo A replacement for SDL SocketSet
     SDLNet_SocketSet socketSet;
     */
     uint32_t myId;

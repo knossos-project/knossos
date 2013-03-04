@@ -809,7 +809,7 @@ static bool calcLeftUpperTexAbsPx() {
 
 /**
   * Initializes the viewer, is called only once after the viewing thread started
-  * @TODO SDLNet_Init()
+  *
   */
 static bool initViewer() {
     qDebug() << "Viewer: initViewer begin";
@@ -821,16 +821,14 @@ static bool initViewer() {
         return false;
     }
 
-    //if(SDLNet_Init() == FAIL) {
-    //    LOG("Error initializing SDLNet: %s.", SDLNet_GetError());
-    //    return false;
-    //}
 
     // init the gui
+    /*
     if(MainWindow::initGUI() == false) {
         LOG("Error initializing the gui system");
         return false;
     }
+    */
 
     // TDitem
 
@@ -1316,7 +1314,7 @@ bool Viewer::initializeTextures() {
     uint32_t i = 0;
 
     /*problem of deleting textures when calling again after resize?! TDitem */
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
+    for(int i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
             //state->viewerState->vpConfigs[i].displayList = glGenLists(1);
             glGenTextures(1, &state->viewerState->vpConfigs[i].texture.texHandle);
@@ -1914,10 +1912,11 @@ bool Viewer::refreshViewports() {
     state->viewerState->gui->vpYzWin->updateGL();
     state->viewerState->gui->vpSkelWin->updateGL();
     */
-
+    return true;
 }
 
 bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
+    qDebug() << "Viewer: sendLoadSignal begin";
     state->protectLoadSignal->lock();
     state->loadSignal = true;
     emit loadSignal();
@@ -1935,6 +1934,6 @@ bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChang
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
-
+    qDebug() << "Viewer: sendLoadSignal ended";
     return true;
 }

@@ -43,7 +43,12 @@
 #include <QQueue>
 #include <QKeySequence>
 #include <QSettings>
+#include <QDir>
+/*
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
+*/
 
 #include "knossos-global.h"
 #include "viewport.h"
@@ -68,11 +73,60 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
+    this->setWindowIcon(QIcon("icon"));
 
     settings = new QSettings();
     settings->beginGroup("MainWindow");
-
     skeletonFileHistory = new QQueue<QString>();
+
+    state->viewerState->gui->oneShiftedCurrPos.x =
+        state->viewerState->currentPosition.x + 1;
+    state->viewerState->gui->oneShiftedCurrPos.y =
+        state->viewerState->currentPosition.y + 1;
+    state->viewerState->gui->oneShiftedCurrPos.z =
+        state->viewerState->currentPosition.z + 1;
+
+    state->viewerState->gui->activeTreeID = 1;
+    state->viewerState->gui->activeNodeID = 1;
+
+    state->viewerState->gui->totalNodes = 0;
+    state->viewerState->gui->totalTrees = 0;
+
+    state->viewerState->gui->zoomOrthoVPs =
+        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
+
+    state->viewerState->gui->radioSkeletonDisplayMode = 0;
+
+    /* init here instead of initSkeletonizer to fix some init order issue */
+    state->skeletonState->displayMode = 0;
+    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+
+    state->viewerState->gui->radioRenderingModel = 1;
+
+    state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
+
+    state->viewerState->gui->commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
+    memset(state->viewerState->gui->commentSearchBuffer, '\0', 2048 * sizeof(char));
+
+    state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
+    memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
+
+    state->viewerState->gui->comment1 = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->comment1, '\0', 10240 * sizeof(char));
+
+    state->viewerState->gui->comment2 = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->comment2, '\0', 10240 * sizeof(char));
+
+    state->viewerState->gui->comment3 = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->comment3, '\0', 10240 * sizeof(char));
+
+    state->viewerState->gui->comment4 = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->comment4, '\0', 10240 * sizeof(char));
+
+    state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
+    memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
+
 
     createActions();
     createMenus();
@@ -145,10 +199,16 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(pasteButton);
 
     xField = new QSpinBox();
+    xField->setMaximum(10000);
+    xField->setMinimumWidth(75);
     xField->setValue(state->viewerState->currentPosition.x);
     yField = new QSpinBox();
+    yField->setMaximum(10000);
+    yField->setMinimumWidth(75);
     yField->setValue(state->viewerState->currentPosition.y);
     zField = new QSpinBox();
+    zField->setMaximum(10000);
+    zField->setMinimumWidth(75);
     zField->setValue(state->viewerState->currentPosition.z);
 
     xLabel = new QLabel("x");
@@ -282,7 +342,7 @@ static void updateGuiconfig() {
 void MainWindow::updateTitlebar(bool useFilename) {
     char *filename;
     if(state->skeletonState->skeletonFile) {
-#ifdef LINUX
+#ifdef Q_OS_UNIX
     filename = strrchr(state->skeletonState->skeletonFile, '/');
 #else
     filename = strrchr(state->skeletonState->skeletonFile, '\\');
@@ -314,103 +374,12 @@ void MainWindow::showAboutScreen() {
 
 // -- static methods -- //
 
-bool MainWindow::initGUI() {
-    /* set the window caption */
-    //updateTitlebar(false);
-
-    state->viewerState->gui->oneShiftedCurrPos.x =
-        state->viewerState->currentPosition.x + 1;
-    state->viewerState->gui->oneShiftedCurrPos.y =
-        state->viewerState->currentPosition.y + 1;
-    state->viewerState->gui->oneShiftedCurrPos.z =
-        state->viewerState->currentPosition.z + 1;
-
-    state->viewerState->gui->activeTreeID = 1;
-    state->viewerState->gui->activeNodeID = 1;
-
-    state->viewerState->gui->totalNodes = 0;
-    state->viewerState->gui->totalTrees = 0;
-
-    state->viewerState->gui->zoomOrthoVPs =
-        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
-
-    state->viewerState->gui->radioSkeletonDisplayMode = 0;
-
-    /* init here instead of initSkeletonizer to fix some init order issue */
-    state->skeletonState->displayMode = 0;
-    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-
-    state->viewerState->gui->radioRenderingModel = 1;
-
-    state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
-    memset(state->viewerState->gui->commentSearchBuffer, '\0', 2048 * sizeof(char));
-
-    state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
-    memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
-
-    state->viewerState->gui->comment1 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment1, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment2 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment2, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment3 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment3, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment4 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment4, '\0', 10240 * sizeof(char));
-
-    state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
-
-    //createMenuBar();
-    //createCoordBarWin();
-    //createSkeletonVpToolsWin();
-    //createDataSizeWin();
-    //createNavWin();
-    //createToolsWin();
-    //createConsoleWin();
-
-    //createNavOptionsWin();
-    //createSyncOptionsWin();
-    //createSaveOptionsWin();
-
-    //createAboutWin();
-    /* all following 4 unused
-    createDisplayOptionsWin();
-    createRenderingOptionsWin();
-    createSpatialLockingOptionsWin();
-    createVolTracingOptionsWin();   */
-
-    //createDataSetStatsWin();
-    //createViewportPrefWin();
-    //createZoomingWin();
-    //createTracingTimeWin();
-    //createCommentsWin();
-    /*createSetDynRangeWin(); */           /* Unused. */
-
-    //createVpXzWin();
-    //createVpXyWin();
-    //createVpYzWin();
-    //createVpSkelWin();
-
-    //UI_loadSettings();
-
-    return true;
-}
-
-
-
-
 bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
     char *hit;
         int32_t baseLen;
 
-    #ifdef LINUX
+    #ifdef Q_OS_UNIX
         hit = strrchr(path, '/');
     #else
         hit = strrchr(path, '\\');
@@ -468,8 +437,9 @@ void MainWindow::UI_saveSkeleton(int32_t increment){
         return;
     }
 
-    WRAP_saveSkeleton();
+    //WRAP_saveSkeleton();
     */
+
 }
 
 void MainWindow::UI_saveSettings(){
@@ -478,7 +448,7 @@ void MainWindow::UI_saveSettings(){
 
 /**
   * @todo Replacement for AG_String(X)
-  * No QEvents
+  * Prompt and Wrap_loadSkeleton
   */
 void MainWindow::loadSkeleton(){
     char *path; // = AG_STRING(1);
@@ -808,11 +778,9 @@ void MainWindow::createMenus()
 
 }
 
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // TODO temporary condition
-    if(5 > 0) {
+    if(state->skeletonState->unsavedChanges) {
 
         prompt = new QMessageBox(this);
         prompt->setWindowTitle("Confirmation");
@@ -876,7 +844,6 @@ void MainWindow::openSlot()
 
 /**
   * This method puts the history entries of the loaded skeleton files to the recent file menu section
-  *
   */
 void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
@@ -888,7 +855,10 @@ void MainWindow::updateFileHistoryMenu() {
     }
 }
 
-
+/**
+ * @todo
+ *
+ */
 void MainWindow::recentFilesSlot(int index)
 {
     QString fileName = skeletonFileHistory->at(index - 1);
@@ -896,6 +866,9 @@ void MainWindow::recentFilesSlot(int index)
 
 }
 
+/**
+ * @todo
+ */
 void MainWindow::saveSlot()
 {
 
@@ -908,7 +881,6 @@ void MainWindow::saveSlot()
   */
 void MainWindow::saveAsSlot()
 {
-
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     QFile file(fileName);
     if(!file.open(QIODevice::WriteOnly)) {
@@ -971,6 +943,9 @@ void MainWindow::skeletonStatisticsSlot()
     QMessageBox::information(this, "Information", "This feature is not yet implemented", QMessageBox::Ok);
 }
 
+/**
+ * @todo Invokation of Skeleton::clearSkeleton leads to crashing the application
+ */
 void MainWindow::clearSkeletonSlot()
 {
     int ret = QMessageBox::question(this, "", "Really clear the skeleton (you can not undo this) ?", QMessageBox::Ok | QMessageBox::No);
@@ -1013,7 +988,9 @@ void MainWindow::tracingTimeSlot()
 }
 
 /* preference menu functionality */
-
+/**
+ * @todo UI_loadSettings
+ */
 void MainWindow::loadCustomPreferencesSlot()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.xml)");
@@ -1025,6 +1002,9 @@ void MainWindow::loadCustomPreferencesSlot()
     }
 }
 
+/**
+ * @todo UI_saveSettings
+ */
 void MainWindow::saveCustomPreferencesSlot()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.xml)");
@@ -1147,8 +1127,8 @@ void MainWindow::pasteClipboardCoordinates(){
             this->zField->setValue(extractedCoords->z);
 
 
-            //Viewer::updatePosition(TELL_COORDINATE_CHANGE);
-            //Viewer::refreshViewports();
+            Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+            Viewer::refreshViewports();
 
             free(extractedCoords);
 
@@ -1263,6 +1243,9 @@ void MainWindow::saveSettings() {
 
 }
 
+/**
+ * this method is a proposal for the qsettings variant
+ */
 void MainWindow::loadSettings() {
     int width = settings->value("main_window.width").toInt();
     int height = settings->value("main_window.height").toInt();
@@ -1326,10 +1309,6 @@ void MainWindow::loadDefaultPrefs() {
     Knossos::loadTreeLUTFallback();
     treeColorAdjustmentsChanged();
     datasetColorAdjustmentsChanged();
-
-
-
-
 }
 
 void MainWindow::uncheckToolsAction() {

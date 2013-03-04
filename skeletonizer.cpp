@@ -22,13 +22,13 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-/**
+
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+/**
 #include <GL/gl.h>
 */
 #include <time.h>
-
 #include "skeletonizer.h"
 #include "knossos-global.h"
 #include "renderer.h"
@@ -122,7 +122,6 @@ static segmentListElement* addSegmentListElement (segmentListElement **currentSe
 
     //Valid segment
     newElement->flag = SEGMENT_FORWARD;
-
     newElement->source = sourceNode;
     newElement->target = targetNode;
     return newElement;
@@ -595,15 +594,15 @@ uint32_t Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCo
 }
 
 bool Skeletonizer::updateSkeletonState() {
- /*   //Time to auto-save
+    //Time to auto-save
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
-            if((SDL_GetTicks() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
-                state->skeletonState->lastSaveTicks = SDL_GetTicks();
+            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
+                state->skeletonState->lastSaveTicks = state->time.elapsed();
                 MainWindow::UI_saveSkeleton(true);
             }
         }
-    }*/
+    }
 
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber) {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
@@ -707,7 +706,7 @@ bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increm
 //uint32_t saveNMLSkeleton() { }
 
 int32_t Skeletonizer::saveSkeleton() {
-  /*  treeListElement *currentTree = NULL; SDL TODO
+    treeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
     segmentListElement *currentSegment = NULL;
@@ -790,7 +789,7 @@ int32_t Skeletonizer::saveSkeleton() {
     xmlStrPrintf(attrString,
                  128,
                  BAD_CAST"%d",
-                 state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+                 state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -984,7 +983,7 @@ int32_t Skeletonizer::saveSkeleton() {
                                          BAD_CAST"branchpoint",
                                          NULL);
 
-#ifdef ARCH_64
+#if QT_POINTER_SIZE == 8
         xmlStrPrintf(attrString, 128, BAD_CAST"%"PRId64, currentBranchPointID);
 #else
         xmlStrPrintf(attrString, 128, BAD_CAST"%d", currentBranchPointID);
@@ -996,12 +995,12 @@ int32_t Skeletonizer::saveSkeleton() {
 
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
     xmlFreeDoc(xmlDocument);
-    return r;*/
+    return r;
 }
 //uint32_t loadNMLSkeleton() { }
 
 bool Skeletonizer::loadSkeleton() {
-  /*  xmlDocPtr xmlDocument; SDL TODO
+    xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
     int32_t neuronID = 0, nodeID = 0, merge = false;
     int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
@@ -1198,10 +1197,10 @@ bool Skeletonizer::loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute)
                         state->skeletonState->idleTime = atof((char *)attribute);
-                    state->skeletonState->idleTimeNow = SDL_GetTicks();
+                    state->skeletonState->idleTimeNow = state->time.elapsed();
                     state->skeletonState->idleTimeLoadOffset =atof((char *)attribute);
                 }
-                state->skeletonState->idleTimeTicksOffset = SDL_GetTicks();
+                state->skeletonState->idleTimeTicksOffset = state->time.elapsed();
                 currentXMLNode = currentXMLNode->next;
             }
         }
@@ -1475,7 +1474,7 @@ bool Skeletonizer::loadSkeleton() {
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
-    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();*/
+    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }
 
@@ -1489,7 +1488,7 @@ void Skeletonizer::setDefaultSkelFileName() {
     if(localtimestruct->tm_year >= 100)
         localtimestruct->tm_year -= 100;
 
-#ifdef LINUX
+#ifdef Q_OS_UNIX
     snprintf(state->skeletonState->skeletonFile,
             8192,
             "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
@@ -3301,10 +3300,7 @@ bool Skeletonizer::editComment(int32_t targetRevision, commentListElement *curre
     return true;
 }
 commentListElement* Skeletonizer::nextComment(char *searchString) {
-
-
-
-    commentListElement *firstComment, *currentComment;
+   commentListElement *firstComment, *currentComment;
 
     if(!strlen(searchString)) {
         //->previous here because it would be unintuitive for the user otherwise.
@@ -3468,7 +3464,7 @@ bool Skeletonizer::popBranchNode(int32_t targetRevision) {
     }
 
     if(branchNode && branchNode->isBranchNode) {
-#ifdef ARCH_64
+#if QT_POINTER_SIZE == 8
         LOG("Branch point (node ID %"PRId64") deleted.", branchNodeID);
 #else
         LOG("Branch point (node ID %d) deleted.", branchNodeID);

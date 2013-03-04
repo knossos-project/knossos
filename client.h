@@ -35,12 +35,15 @@
   * @brief The client class is dedicated to open more than one knossos instance at wish.
   * This is based that users can work with datasets in different magnification at once!
   */
-
+class QAbstractSocket;
 class Client : public QObject
 {
     Q_OBJECT
 public:
     explicit Client(QObject *parent = 0);
+
+    bool qconnectToServer();
+
     static bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
     static bool skeletonSyncBroken();
     static int32_t bytesToInt(Byte *source);
@@ -59,7 +62,8 @@ signals:
     void finished();
 public slots:
     void start();
-
+    void socketConnectionSucceeded();
+    void socketConnectionFailed(QAbstractSocket::SocketError error);
     
 };
 

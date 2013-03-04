@@ -45,7 +45,6 @@ Viewport::Viewport(QWidget *parent, int plane) :
     setStyleSheet("background:black");
     this->setCursor(Qt::CrossCursor);
 
-
     if(plane == VIEWPORT_SKELETON + 10) {
         this->xy = new QPushButton("xy");
         this->xz = new QPushButton("xz");
@@ -68,12 +67,13 @@ Viewport::Viewport(QWidget *parent, int plane) :
 }
 
 void Viewport::initializeGL() {
-    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_TEXTURE_2D);
+    /*
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
     glEnable(GL_BLEND);
     glEnable(GL_POLYGON_SMOOTH);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); */
 
     /* display some basic openGL driver statistics
     qDebug("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
@@ -105,8 +105,8 @@ void Viewport::resizeGL(int w, int h) {
   */
 
 void Viewport::paintGL() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0, 0, 0, 1);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClearColor(0, 0, 0, 1);
 
     if(this->plane < VIEWPORT_SKELETON) {
         drawViewport(this->plane);

@@ -36,6 +36,9 @@ extern Viewer *viewerEventObj;
 Client::Client(QObject *parent) :
     QObject(parent)
 {
+    state->clientState->remoteSocket = new QTcpSocket();
+    connect(state->clientState->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
+    connect(state->clientState->remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
 }
 
 /**
@@ -43,7 +46,7 @@ Client::Client(QObject *parent) :
  * @todo is KIKI a local server in tools/kiki.py ?
  * a replacement for the SocketSet functionality
  */
-static bool qconnectToServer() {
+bool qconnectToServer() {
     //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
     int timeoutIn100ms = 30; // ??
 
@@ -55,10 +58,7 @@ static bool qconnectToServer() {
     }
 
     // connect to host
-    state->clientState->remoteSocket = new QTcpSocket();
     state->clientState->remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
-
-
 
 
 
@@ -1274,4 +1274,14 @@ Coordinate* Client::transNetCoordinate(uint32_t id, int32_t x, uint32_t y, int32
     Coordinate::transCoordinate(outCoordinate, x, y, z, peer->scale, peer->offset);
 
     return outCoordinate;
+}
+
+
+void Client::socketConnectionSucceeded() {
+    LOG("Socket connection established");
+}
+
+void Client::socketConnectionFailed(QAbstractSocket::SocketError error) {
+    LOG(state->clientState->remoteSocket->errorString().toStdString().c_str());
+
 }

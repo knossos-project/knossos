@@ -64,10 +64,8 @@ public:
     ~MainWindow();
 
     void closeEvent(QCloseEvent *event);
-
     void updateTitlebar(bool useFilename);
 
-    static bool initGUI();
     static bool cpBaseDirectory(char *target, char *path, size_t len);
     static bool addRecentFile(char *path, uint32_t pos);
 
