@@ -29,4 +29,9 @@ static uint32_t delNodeFromSkeletonStruct(struct nodeListElement *node);
 static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment);
 static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();
+
+//undo stuff
 static void refreshUndoRedoBuffers();
+static void flushCmdList(struct cmdList *cmdlist);
+static void undoSplitTree(cmdSplitTree *cmd);
+static void delCmdListElement(struct cmdListElement *cmdEl);

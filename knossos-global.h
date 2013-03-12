@@ -268,20 +268,21 @@ values. The XY vp always used. */
 #define CMD_DELTREE 1 //delete tree
 #define CMD_ADDTREE 2 //add tree
 #define CMD_SPLITTREE 3 //split tree
-#define CMD_CHGTREECOL 4 //change tree color
-#define CMD_CHGACTIVETREE 5 //change active tree
+#define CMD_MERGETREE 4 //merge tree
+#define CMD_CHGTREECOL 5 //change tree color
+#define CMD_CHGACTIVETREE 6 //change active tree
 
-#define CMD_DELNODE 6 //delete node
-#define CMD_ADDNODE 7 //add node
-#define CMD_LINKNODE 8 //add segment
-#define CMD_UNLINKNODE 9 //delete segment
-#define CMD_PUSHBRANCH 10 //add branchpoint
-#define CMD_POPBRANCH 11 //pop branchpoint
-#define CMD_CHGACTIVENODE 12 //change active node
+#define CMD_DELNODE 7 //delete node
+#define CMD_ADDNODE 8 //add node
+#define CMD_LINKNODE 9 //add segment
+#define CMD_UNLINKNODE 10 //delete segment
+#define CMD_PUSHBRANCH 11 //add branchpoint
+#define CMD_POPBRANCH 12 //pop branchpoint
+#define CMD_CHGACTIVENODE 13 //change active node
 
-#define CMD_ADDCOMMENT 13 //add comment
-#define CMD_CHGCOMMENT 14 //change comment
-#define CMD_DELCOMMENT 15 //delete comment
+#define CMD_ADDCOMMENT 14 //add comment
+#define CMD_CHGCOMMENT 15 //change comment
+#define CMD_DELCOMMENT 16 //delete comment
 
 /*
  *
@@ -1310,70 +1311,84 @@ struct cmdListElement {
     struct cmdListElement *next;
 };
 
-struct cmdDelNode {
-    struct NodeListElement *deletedNode;
-};
+typedef struct {
+    struct nodeListElement *deletedNode;
+} cmdDelNode;
 
-struct cmdAddNode {
+typedef struct {
     int prevActiveNodeID;
     struct nodeListElement *newNode;
     int oldWorkMode;
     int newWorkMode;
-};
+} cmdAddNode;
 
-struct cmdLinkNode {
+typedef struct {
     int NodeID1;
     int NodeID2;
-};
+} cmdLinkNode;
 
-struct cmdUnlinkNode {
+typedef struct {
     int NodeID1;
     int NodeID2;
-};
+} cmdUnlinkNode;
 
-struct cmdChangeTreeColor {
-    int treeID;
-    color4F oldColor;
-};
-
-struct cmdAddTree {
-    int treeID;
-};
-
-struct cmdPopBranch {
+typedef struct {
     int popNodeID;
     int oldActiveNodeID;
-};
+} cmdPopBranch;
 
-struct cmdPushBranchNode {
+typedef struct {
     int NodeID;
-};
+} cmdPushBranchNode;
 
-struct cmdChangeActiveNode {
+typedef struct {
     int oldActiveNodeID;
     int newActiveNodeID;
-};
+} cmdChangeActiveNode;
 
-struct cmdChangeActiveTree {
+typedef struct {
     int oldActiveTreeID;
     int newActiveTreeID;
-};
+} cmdChangeActiveTree;
 
-struct cmdChangeComment {
+typedef struct {
+    int treeID;
+} cmdAddTree;
+
+
+typedef struct {
+
+} cmdDelTree;
+
+typedef struct {
+    struct treeListElement *firstTree;
+    int32_t greatestTreeID;
+} cmdSplitTree;
+
+typedef struct {
+
+} cmdMergeTree;
+
+typedef struct {
+    int treeID;
+    color4F oldColor;
+} cmdChangeTreeColor;
+
+typedef struct {
     int nodeID;
 	char* oldComment;
 	char* newComment;
-};
+} cmdChangeComment;
 
-struct cmdDeleteComment {
+typedef struct {
 	int nodeID;
 	char* comment;
-};
+} cmdDelComment;
 
-struct cmdAddComment {
+typedef struct {
 	int nodeID;
 	char* comment;
-};
+} cmdAddComment;
 
 /*
  *
@@ -1699,6 +1714,10 @@ int32_t loadDefaultTreeLUT();
 void restoreDefaultTreeColor();
 void checkIdleTime();
 uint32_t genTestNodes(uint32_t number);
+//undo stuff
+void undo();
+void addToUndo(struct cmdListElement *cmdEl);
+
 /*
  * For client.c
  */

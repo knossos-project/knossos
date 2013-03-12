@@ -116,14 +116,14 @@ uint32_t initSkeletonizer() {
     state->skeletonState->searchStrBuffer = malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
 
-    state->skeletonState->undoList = malloc(CMD_MAXSTEPS * sizeof(state->skeletonState->undoList));
-    memset(state->skeletonState->undoList, '\0', CMD_MAXSTEPS * sizeof(state->skeletonState->undoList));
+    state->skeletonState->undoList = malloc(sizeof(struct cmdList));
+    memset(state->skeletonState->undoList, '\0', sizeof(struct cmdList));
     state->skeletonState->undoList->cmdCount = 0;
     state->skeletonState->undoList->firstCmd = NULL;
     state->skeletonState->undoList->lastCmd = NULL;
 
-    state->skeletonState->redoList = malloc(CMD_MAXSTEPS * sizeof(state->skeletonState->redoList));
-    memset(state->skeletonState->redoList, '\0', CMD_MAXSTEPS * sizeof(state->skeletonState->redoList));
+    state->skeletonState->redoList = malloc(sizeof(struct cmdList));
+    memset(state->skeletonState->redoList, '\0', sizeof(struct cmdList));
     state->skeletonState->redoList->cmdCount = 0;
     state->skeletonState->redoList->firstCmd = NULL;
     state->skeletonState->redoList->lastCmd = NULL;
@@ -3075,6 +3075,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
                                 int32_t nodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
+    struct cmdListElement *cmdEl = NULL; cmdSplitTree *cmd;
     struct stack *remainingNodes = NULL;
     struct stack *componentNodes = NULL;
     struct nodeListElement *n = NULL, *last = NULL, *node = NULL;
@@ -3106,6 +3107,15 @@ int32_t splitConnectedComponent(int32_t targetRevision,
      *  TODO trees might become empty when the connected component spans more
      *       than one tree.
      */
+
+    //add command to undo list first in order to save current tree-list
+    cmd = malloc(sizeof(cmdSplitTree));
+    //copyTreeList(cmd->firstTree);
+    cmd->greatestTreeID = state->skeletonState->greatestTreeID;
+    cmdEl = malloc(sizeof(struct cmdListElement));
+    cmdEl->cmdType = CMD_SPLITTREE;
+    cmdEl->cmd = cmd;
+    addToUndo(cmdEl);
 
     node = findNodeByNodeID(nodeID);
     if(!node) {
@@ -3941,4 +3951,211 @@ void refreshUndoRedoBuffers(){
     struct treeListElement *copy = state->skeletonState->activeTree;
     state->skeletonState->undoList->lastCmd->cmd = testingTree;
     state->skeletonState->undoList->lastCmd->next;
+}
+
+void undo() {
+    struct cmdListElement *cmdEl = state->skeletonState->undoList->lastCmd;
+
+    if(cmdEl == NULL) {
+        return; //nothing to undo
+    }
+
+    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree; cmdMergeTree *mergeTree;
+    cmdChangeTreeColor *chgTreeColor; cmdChangeActiveTree *chgActiveTree;
+    cmdDelNode *delNode; cmdAddNode *addNode; cmdLinkNode *linkNode; cmdUnlinkNode *unlinkNode;
+    cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
+    cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        splitTree = (cmdSplitTree*) cmdEl->cmd;
+        undoSplitTree(cmdEl->cmd);
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
+    //remove cmd from undo-list and add to redo-list
+    state->skeletonState->undoList->lastCmd = cmdEl->prev;
+    cmdEl->prev->next = NULL;
+
+    cmdEl->prev = state->skeletonState->redoList->lastCmd;
+    state->skeletonState->redoList->lastCmd->next = cmdEl;
+    state->skeletonState->redoList->lastCmd = cmdEl;
+}
+
+void redo() {
+    struct cmdListElement *cmdEl = state->skeletonState->redoList->lastCmd;
+
+    if(cmdEl == NULL) {
+        return; //nothing to redo
+    }
+
+    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree; cmdMergeTree *mergeTree;
+    cmdChangeTreeColor *chgTreeColor; cmdChangeActiveTree *chgActiveTree;
+    cmdDelNode *delNode; cmdAddNode *addNode; cmdLinkNode *linkNode; cmdUnlinkNode *unlinkNode;
+    cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
+    cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        splitTree = (cmdSplitTree*) cmdEl->cmd;
+        undoSplitTree(cmdEl->cmd);
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
+    //remove cmd from redo-list and add to undo-list
+    state->skeletonState->redoList->lastCmd = cmdEl->prev;
+    cmdEl->prev->next = NULL;
+
+    cmdEl->prev = state->skeletonState->undoList->lastCmd;
+    state->skeletonState->undoList->lastCmd->next = cmdEl;
+    state->skeletonState->undoList->lastCmd = cmdEl;
+}
+
+void addToUndo(struct cmdListElement *cmdEl) {
+       // flushCmdList(state->skeletonState->redoList); undo todo
+
+    if(state->skeletonState->undoList->firstCmd == NULL) {
+       state->skeletonState->undoList->firstCmd = cmdEl;
+       state->skeletonState->undoList->lastCmd = cmdEl;
+       cmdEl->prev = NULL;
+       cmdEl->next = NULL;
+    }
+    else if(state->skeletonState->undoList->cmdCount < CMD_MAXSTEPS) {
+       state->skeletonState->undoList->lastCmd->next = cmdEl;
+       cmdEl->prev = state->skeletonState->undoList->lastCmd;
+       cmdEl->next = NULL;
+       state->skeletonState->undoList->lastCmd = cmdEl;
+    }
+    state->skeletonState->undoList->cmdCount++;
+}
+
+static void undoSplitTree(cmdSplitTree *cmd) {
+
+}
+
+static void flushCmdList(struct cmdList *cmdlist) {
+    struct cmdListElement *elToDel = NULL;
+    struct cmdListElement *nextEl = NULL;
+
+    if(cmdlist->firstCmd == NULL) {
+        return;
+    }
+
+    elToDel = cmdList->lastCmd;
+    while(elToDel) {
+        nextEl = elToDel->prev;
+        delCmdListElement(elToDel);
+        elToDel = nextEl;
+    }
+
+    cmdlist->cmdCount = 0;
+    cmdList->firstCmd = NULL;
+    cmdList->lastCmd = NULL;
+}
+
+static void delCmdListElement(struct cmdListElement *cmdEl) {
+    cmdSplitTree *splitTreeCMD;
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        splitTreeCMD = (cmdSplitTree*) cmdEl->cmd;
+        //deleteTreeList(splitTreeCMD->firstTree);
+        free(splitTreeCMD);
+        free(cmdEl);
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
 }
