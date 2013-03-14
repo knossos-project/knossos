@@ -46,7 +46,7 @@ Client::Client(QObject *parent) :
  * @todo is KIKI a local server in tools/kiki.py ?
  * a replacement for the SocketSet functionality
  */
-bool qconnectToServer() {
+static bool connectToServer() {
     //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
     int timeoutIn100ms = 30; // ??
 
@@ -59,94 +59,29 @@ bool qconnectToServer() {
 
     // connect to host
     state->clientState->remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
+    state->clientState->socketSet = new QSet<QTcpSocket *>();
+    state->clientState->socketSet->insert(state->clientState->remoteSocket);
 
+    // AG_LabelText(state->viewerState->ag->syncOptLabel, "Connected to server.");
 
 
     return true;
 }
-
-
-static bool connectToServer() {
-    /*clientState *clientState = state->clientState;
-    int32_t i = 0;
-    int32_t timeoutIn100ms = 0;
-    SDL_Thread *ThreadWrapper_SDLNet_TCP_Open; SDL TODO
-
-    timeoutIn100ms = roundFloat((float)state->clientState->connectionTimeout / 100.);
-    if(timeoutIn100ms < 1) {
-        timeoutIn100ms = 1;
-    }
-    timeoutIn100ms = 30;
-
-    SDLNet_ResolveHost(&(clientState->remoteServer), clientState->serverAddress, clientState->remotePort);
-    if(clientState->remoteServer.host == INADDR_NONE) {
-        LOG("Couldn't resolve remote server: %s", SDLNet_GetError());
-        return false;
-    }
-
-    clientState->connectionTried = false;
-    ThreadWrapper_SDLNet_TCP_Open = SDL_CreateThread(Wrapper_SDLNet_TCP_Open, clientState);
-    for(i = 0; i < timeoutIn100ms; i++) {
-            if(clientState->connectionTried == true) {
-                break;
-            }
-            SDL_Delay(100);
-    }
-    if(clientState->remoteSocket == NULL) {
-            LOG("Error or timeout while connecting to server: %s.", SDLNet_GetError());
-            SDL_KillThread(ThreadWrapper_SDLNet_TCP_Open);
-            return false;
-    }
-
-    clientState->connected = true;
-    LOG("Connection established to %s:%d", clientState->serverAddress, clientState->remotePort);
-
-    clientState->socketSet = SDLNet_AllocSocketSet(1);
-    if(clientState->socketSet == NULL) {
-        LOG("Error allocating socket set: %s", SDLNet_GetError());
-        return false;
-    }
-
-    SDLNet_TCP_AddSocket(clientState->socketSet, clientState->remoteSocket);
-
-    AG_LabelText(state->viewerState->ag->syncOptLabel, "Connected to server.");
-    */
-    return true;
-}
-
-static bool qcloseConnection() {
-    if(state->clientState->remoteSocket != NULL) {
-        state->clientState->remoteSocket->close();
-    }
-
-    /**
-     * @todo socket set stuff
-     */
-
-    state->clientState->connected = false;
-
-    /**
-     * @todo Label stuff
-     */
-}
-
-
 
 static bool closeConnection() {
-/*    if(state->clientState->remoteSocket != NULL) {
-        SDLNet_TCP_Close(state->clientState->remoteSocket);
-        state->clientState->remoteSocket = NULL;
-    }
+    if(state->clientState->remoteSocket != NULL) {
+           state->clientState->remoteSocket->close();
+       }
 
-    if(state->clientState->socketSet != NULL) {
-        SDLNet_FreeSocketSet(state->clientState->socketSet);
-        state->clientState->socketSet = NULL;
-    }
+       delete(state->clientState->socketSet);
 
-    state->clientState->connected = false;
-    AG_LabelText(state->viewerState->ag->syncOptLabel, "No connection to server.");
-*/
-    return true;
+       state->clientState->connected = false;
+
+
+      state->clientState->connected = false;
+      //AG_LabelText(state->viewerState->ag->syncOptLabel, "No connection to server.");
+      return true;
+
 }
 
 static float bytesToFloat(Byte *source) {
@@ -763,7 +698,7 @@ static int32_t clientRun() {
 /**
  * This method is a replacement for the SDL_NET functionality.
  */
-static void qstart() {
+void Client::start() {
     clientState *clientState = state->clientState;
 
     while(!state->viewerState->viewerReady or state->viewerState->splash) {
@@ -804,55 +739,6 @@ static void qstart() {
     cleanUpClient();
 }
 
-void Client::start() {
-    clientState *clientState = state->clientState;
-
-    // Workaround to make --connect-asap work (on windows?)
-    // We need to wait for the viewer thread to become ready.
-
-    //while(!state->viewerState->viewerReady || state->viewerState->splash) {
-    //    Sleeper::msleep(50);
-    //}
-    //if(state->clientState->connectAsap) {
-    //    Knossos::sendClientSignal();
-    //}
-    int i = 1;
-    while(i < 5) {
-        viewerEventObj->sendLoadSignal(i*100, i*100, i*100, NO_MAG_CHANGE);
-        i++;
-        Sleeper::msleep(500);
-        /*state->protectClientSignal->lock();
-        while(state->clientSignal == false) {
-        //    SDL_CondWait(state->conditionClientSignal, state->protectClientSignal);
-        }
-        state->clientSignal = false;
-        state->protectClientSignal->unlock();
-
-        if(state->quitSignal == true) {
-            break;
-        }
-
-        //  Update state.
-
-
-        clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
-        clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
-        clientState->remotePort = tempConfig->clientState->remotePort;
-        strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
-
-
-         //  Workaround because SDL_PushEvent in clientRun() will fail with no
-         //  error if the connection is established as fast as possible.
-
-        clientRun();
-
-        if(state->quitSignal == true) {
-            break;
-        }*/
-    }
-
-    cleanUpClient();
-}
 
 bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
     clientState *clientState = state->clientState;

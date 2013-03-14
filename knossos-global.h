@@ -54,6 +54,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <QtNetwork>
+#include <QSet>
 
 
 
@@ -1239,7 +1240,7 @@ struct skeletonState {
 
 struct remoteState {
 		// type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
-        bool type;
+        int32_t type;
 		int32_t maxTrajectories;
 		int32_t activeTrajectory;
         Coordinate recenteringPosition;
@@ -1258,9 +1259,7 @@ struct clientState {
 
     QHostAddress *remoteServer;
     QTcpSocket *remoteSocket;
-    /** @todo A replacement for SDL SocketSet
-    SDLNet_SocketSet socketSet;
-    */
+    QSet<QTcpSocket *> *socketSet;
     uint32_t myId;
     bool saveMaster;
 

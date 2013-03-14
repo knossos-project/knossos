@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
        LOG("Error during initialization of the state struct.");
         _Exit(false);
     }
+
     //2012.12.11 HARDCODED FOR TESTING LOADER
     strncpy(state->path, "../../e1088_mag1_large/", 1024);
     strncpy(state->name, "e1088_mag1_large", 1024);
@@ -205,7 +206,6 @@ int32_t Knossos::initStates() {
 
    state->magnification = tempConfig->magnification;
    state->overlay = tempConfig->overlay;
-
 
    // For the viewer
    state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;

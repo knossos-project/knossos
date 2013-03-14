@@ -34,7 +34,13 @@ class Remote : public QObject
 public:
     explicit Remote(QObject *parent = 0);
     static void checkIdleTime();
-    static int32_t remoteJump(int32_t x, int32_t y, int32_t z);
+    static bool remoteJump(int32_t x, int32_t y, int32_t z);
+    static bool updateRemoteState();
+    static bool remoteTrajectory(int32_t trajNumber);
+    static bool remoteWalkTo(int32_t x, int32_t y, int32_t z);
+    static bool remoteWalk(int32_t x, int32_t y, int32_t z);
+    static bool newTrajectory(char *trajName, char *trajectory);
+    static bool cleanUpRemote();
     
 signals:
     void finished();
