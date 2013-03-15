@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-
 #include "skeletonizer.h"
 #include "remote.h"
 #include "knossos.h"
@@ -521,39 +520,19 @@ critical:
     return false;
 }
 
-static bool qflushOutBuffer() {
-
-
+/**
+ * @test Byte * is converted to char *
+ */
+static bool flushOutBuffer() {
 
     state->protectOutBuffer->lock();
 
     if(state->clientState->outBuffer->length > 0) {
-        /**
-         * @todo there are conversion troubles between Byte * and const char *
-         */
-        //state->clientState->remoteSocket->writeData(state->clientState->outBuffer->data, state->clientState->outBuffer->length */);
+        char *content = (char *)state->clientState->outBuffer->data;
+        state->clientState->remoteSocket->write(content, state->clientState->outBuffer->length);
+        state->clientState->remoteSocket->flush();
         memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->length);
         state->clientState->outBuffer->length = 0;
-    }
-
-    state->protectOutBuffer->unlock();
-    return true;
-}
-
-static bool flushOutBuffer() {
-    //Can this block at inconvenient times?
-
-    clientState *clientState = state->clientState;
-
-    state->protectOutBuffer->lock();
-
-    if(clientState->outBuffer->length > 0) {
-        // check return value
-        //SDLNet_TCP_Send(clientState->remoteSocket, SDL TODO
-        //        state->clientState->outBuffer->data,
-        //       state->clientState->outBuffer->length);
-        memset(clientState->outBuffer->data, '\0', clientState->outBuffer->size);
-        clientState->outBuffer->length = 0;
     }
 
     state->protectOutBuffer->unlock();
@@ -567,7 +546,12 @@ static bool cleanUpClient() {
     return true;
 }
 
-static int32_t clientRun() {
+/**
+ * @todo autoSaveOffEvent
+ * @todo pushEvent
+ * @test byte buffer is temporarily converted to char *(because of the socket read method) and backwards
+ */
+static bool clientRun() {
     clientState *clientState = state->clientState;
     Byte *message = NULL;
     uint32_t messageLen = 0, nameLen = 0, readLen = 0;
@@ -648,20 +632,16 @@ static int32_t clientRun() {
              */
             //SDLNet_CheckSockets(clientState->socketSet, 100); TODO SDLNet_Checksockets immediate crash
 
-            //if(SDLNet_SocketReady(clientState->remoteSocket))
-            if(true){
-                //readLen = SDLNet_TCP_Recv(clientState->remoteSocket, message, 8192); //TODO SDLNet_TCP_Recv crash
+
+            if(state->clientState->remoteSocket->isValid()) {
+                char *msg = "";
+                readLen = state->clientState->remoteSocket->read(msg, 8192);
+                message = (Byte *) msg;
                 if(readLen == 0) {
                     LOG("Remote server closed the connection.");
                     break;
                 }
-                /*
-                printf("Raw message from socket: ");
-                for(i=0; i<readLen;i++)
-                    printf("%dd ", message[i]);
-                printf("\n");
-                printf("SDLNet_TCP_Recv() returned %d\n", readLen);
-                */
+
 
                 Client::IOBufferAppend(clientState->inBuffer, message, readLen, NULL);
                 memset(message, '\0', 8192);

@@ -409,18 +409,18 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
 
-            // @todo replacement for this here
-            //moveEvent.user.data1 = sendMove;
-            //while(SDL_PushEvent(&moveEvent) == FAIL) {
-                //printf("get error: %s\n", SDL_GetError());
-                //SDL_Delay(10);
-            //}
+            /** @todo replacement for this here
+            moveEvent.user.data1 = sendMove;
+            while(SDL_PushEvent(&moveEvent) == FAIL) {
+                printf("get error: %s\n", SDL_GetError());
+                SDL_Delay(10);
+            } */
         }
 
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
-        //SDL_Delay(eventDelay); @todo SDL_Delay
+        Sleeper::sleep(eventDelay);
     }
 
     Remote::checkIdleTime();

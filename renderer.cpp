@@ -30,14 +30,24 @@
 #include <math.h>
 
 #include <QtOpenGL>
-/** @todo must be changed to Q_OS_MACX when QT5 is used */
-#ifdef Q_OS_MACX
-    #include <OpenGL.h>
-    #include <glu.h>
-#else
-    #include <GL/gl.h>
-    #include <GL/glext.h>
-    #include <GL/glu.h>
+#if QT_VERSION < 5
+    #ifdef Q_WS_MACX
+        #include <OpenGL.h>
+        #include <glu.h>
+    #else
+        #include <GL/gl.h>
+        #include <GL/glext.h>
+        #include <GL/glu.h>
+    #endif
+#elif QT_VERSION >= 5
+    #ifdef Q_OS_MACX
+        #include <OpenGL.h>
+        #include <glu.h>
+    #else
+        #include <GL/gl.h>
+        #include <GL/glext.h>
+        #include <GL/glu.h>
+    #endif
 #endif
 
 
