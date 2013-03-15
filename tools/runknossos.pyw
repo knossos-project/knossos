@@ -76,7 +76,7 @@ class RunKnossos(RunKnossosUI):
         kukupath = self.configFilePath()
 
         try:
-            with open(kukupath, "r+") as kuku:
+            with open(kukupath, "w+") as kuku:
                 kukuConf = json.load(kuku)
                 lastDir = kukuConf["lastDir"]
 
