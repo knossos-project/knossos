@@ -4103,7 +4103,7 @@ static void flushCmdList(struct cmdList *cmdlist) {
         return;
     }
 
-    elToDel = cmdList->lastCmd;
+    elToDel = cmdlist->lastCmd;
     while(elToDel) {
         nextEl = elToDel->prev;
         delCmdListElement(elToDel);
@@ -4111,8 +4111,8 @@ static void flushCmdList(struct cmdList *cmdlist) {
     }
 
     cmdlist->cmdCount = 0;
-    cmdList->firstCmd = NULL;
-    cmdList->lastCmd = NULL;
+    cmdlist->firstCmd = NULL;
+    cmdlist->lastCmd = NULL;
 }
 
 static void delCmdListElement(struct cmdListElement *cmdEl) {
