@@ -1572,9 +1572,12 @@ uint32_t loadSkeleton() {
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"activeNode")) {
-                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
-                    if(attribute)
-                        activeNodeID = atoi((char *)attribute);
+                    if(!merge) {
+                        attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
+                        if(attribute) {
+                            activeNodeID = atoi((char *)attribute);
+                        }
+                    }
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"scale")) {
@@ -3109,13 +3112,14 @@ int32_t splitConnectedComponent(int32_t targetRevision,
      */
 
     //add command to undo list first in order to save current tree-list
-    cmd = malloc(sizeof(cmdSplitTree));
+  /*  cmd = malloc(sizeof(cmdSplitTree));
     //copyTreeList(cmd->firstTree);
     cmd->greatestTreeID = state->skeletonState->greatestTreeID;
     cmdEl = malloc(sizeof(struct cmdListElement));
     cmdEl->cmdType = CMD_SPLITTREE;
     cmdEl->cmd = cmd;
     addToUndo(cmdEl);
+    */
 
     node = findNodeByNodeID(nodeID);
     if(!node) {
@@ -4095,24 +4099,24 @@ static void undoSplitTree(cmdSplitTree *cmd) {
 
 }
 
-static void flushCmdList(struct cmdList *cmdlist) {
+static void flushCmdList(struct cmdList *cmdList) {
     struct cmdListElement *elToDel = NULL;
     struct cmdListElement *nextEl = NULL;
 
-    if(cmdlist->firstCmd == NULL) {
+    if(cmdList->firstCmd == NULL) {
         return;
     }
 
-    elToDel = cmdlist->lastCmd;
+    elToDel = cmdList->lastCmd;
     while(elToDel) {
         nextEl = elToDel->prev;
         delCmdListElement(elToDel);
         elToDel = nextEl;
     }
 
-    cmdlist->cmdCount = 0;
-    cmdlist->firstCmd = NULL;
-    cmdlist->lastCmd = NULL;
+    cmdList->cmdCount = 0;
+    cmdList->firstCmd = NULL;
+    cmdList->lastCmd = NULL;
 }
 
 static void delCmdListElement(struct cmdListElement *cmdEl) {
