@@ -950,7 +950,7 @@ int32_t loadNeutralDatasetLUT(GLuint *datasetLut) {
     return TRUE;
 }
 
-int32_t loadDefaultTreeLUT() {
+static int32_t loadDefaultTreeLUT() {
     if(loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == FALSE) {
         loadTreeLUTFallback();
         treeColorAdjustmentsChanged();

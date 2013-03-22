@@ -1521,8 +1521,8 @@ uint32_t loadSkeleton() {
     }
 
     /* If "createdin"-node does not exist, skeleton was created in a version
-     * before 3.3 */
-    strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.3");
+     * before 3.2 */
+    strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
@@ -2072,7 +2072,7 @@ uint32_t delActiveTree() {
 }
 
 /*
- * We have to delete the node out of 2 structures: the skeleton nested linked list structure
+ * We have to delete the node from 2 structures: the skeleton's nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
 uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel) {
@@ -2222,14 +2222,164 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage("brd", KIKI_DELTREE, treeID))
+        if(!syncMessage("brd", KIKI_DELTREE, treeID)) {
             skeletonSyncBroken();
+        }
     }
-    else
+    else {
         refreshViewports();
-
+    }
     unlockSkeleton(TRUE);
 
+    return TRUE;
+}
+
+int delSkeletonFromCmd(cmdSplitTree *cmd) {
+    struct treeListElement *current;
+    struct treeListElement *treeToDel;
+
+    if(cmd->firstTree == NULL) {
+        return FALSE;
+    }
+    current = cmd->firstTree;
+    while(current) {
+        treeToDel = current;
+        current = current->next;
+        delTreeFromCmd(treeToDel, cmd);
+    }
+    return TRUE;
+}
+
+int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd) {
+    struct nodeListELement *currentNode;
+    struct nodeListElement *nodeToDel;
+
+    if(treeToDel == NULL) {
+        return FALSE;
+    }
+
+    currentNode = treeToDel->firstNode;
+    while(currentNode) {
+        nodeToDel = currentNode;
+        currentNode = nodeToDel->next;
+        delNodeFromCmd(nodeToDel, cmd);
+    }
+    treeToDel->firstNode = NULL;
+
+    if(treeToDel->previous) {
+        treeToDel->previous->next = treeToDel->next;
+    }
+    if(treeToDel->next) {
+        treeToDel->next->previous = treeToDel->previous;
+    }
+    free(treeToDel);
+    return TRUE;
+}
+
+int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd) {
+    struct segmentListElement *currentSegment;
+    struct segmentListElement *tempNext;
+
+    if(nodeToDel == NULL) {
+        return FALSE;
+    }
+
+    if(nodeToDel->comment) {
+        delCommentFromCmd(nodeToDel->comment, cmd);
+    }
+
+    /*
+     * First, delete all segments pointing towards and away of the nodeToDelhas
+     * been */
+
+    currentSegment = nodeToDel->firstSegment;
+    while(currentSegment) {
+        tempNext = currentSegment->next;
+        if(currentSegment->flag == SEGMENT_FORWARD) {
+            delSegmentFromCmd(currentSegment);
+        }
+        else if(currentSegment->flag == SEGMENT_BACKWARD) {
+            delSegmentFromCmd(currentSegment->reverseSegment);
+        }
+        currentSegment = tempNext;
+    }
+    nodeToDel->firstSegment = NULL;
+
+    //TDitem: is this necessary for undo?
+    if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
+        nodeToDel->correspondingTree->firstNode = nodeToDel->next;
+    }
+    else {
+        if(nodeToDel->previous) {
+            nodeToDel->previous->next = nodeToDel->next;
+        }
+        if(nodeToDel->next) {
+            nodeToDel->next->previous = nodeToDel->previous;
+        }
+    }
+    free(nodeToDel);
+}
+
+int delCommentFromCmd(struct commentListElement *commentToDel, cmdSplitTree *cmd) {
+    int32_t nodeID = 0;
+
+    if(commentToDel == NULL) {
+        return FALSE;
+    }
+    if(commentToDel->content) {
+        free(commentToDel->content);
+    }
+    if(commentToDel->node) {
+        nodeID = commentToDel->node->nodeID;
+        commentToDel->node->comment = NULL;
+    }
+
+    if(commentToDel->next == commentToDel) { //only comment in list
+        cmd->currentComment = NULL;
+    }
+    else {
+        commentToDel->next->previous = commentToDel->previous;
+        commentToDel->previous->next = commentToDel->next;
+        if(cmd->currentComment == commentToDel) {
+            cmd->currentComment = commentToDel->next;
+        }
+    }
+    free(commentToDel);
+}
+
+int delSegmentFromCmd(struct segmentListElement *segToDel) {
+    if(!segToDel) {
+        return FALSE;
+    }
+    /* numSegs counts forward AND backward segments!!! */
+    segToDel->source->numSegs--;
+    segToDel->target->numSegs--;
+
+    if(segToDel == segToDel->source->firstSegment)
+        segToDel->source->firstSegment = segToDel->next;
+    else {
+        //if(segToDel->previous) //Why??? Previous EXISTS if its not the first seg...
+            segToDel->previous->next = segToDel->next;
+        if(segToDel->next) {
+            segToDel->next->previous = segToDel->previous;
+        }
+    }
+
+    //Delete reverse segment in target node
+    if(segToDel->reverseSegment == segToDel->target->firstSegment) {
+        segToDel->target->firstSegment = segToDel->reverseSegment->next;
+    }
+    else {
+        //if(segToDel->reverseSegment->previous)
+            segToDel->reverseSegment->previous->next = segToDel->reverseSegment->next;
+        if(segToDel->reverseSegment->next)
+            segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
+    }
+    /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
+    segToDel->length = 0.f;
+    updateCircRadius(segToDel->source);
+
+    free(segToDel);
     return TRUE;
 }
 
@@ -3970,6 +4120,7 @@ void undo() {
     cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
     cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
 
+    state->skeletonState->undoList->cmdCount--;
     switch(cmdEl->cmdType) {
     case CMD_DELTREE:
         break;
@@ -4010,8 +4161,9 @@ void undo() {
     }
     //remove cmd from undo-list and add to redo-list
     state->skeletonState->undoList->lastCmd = cmdEl->prev;
-    cmdEl->prev->next = NULL;
-
+    if(cmdEl->prev) {
+        cmdEl->prev->next = NULL;
+    }
     cmdEl->prev = state->skeletonState->redoList->lastCmd;
     state->skeletonState->redoList->lastCmd->next = cmdEl;
     state->skeletonState->redoList->lastCmd = cmdEl;
@@ -4070,27 +4222,38 @@ void redo() {
     }
     //remove cmd from redo-list and add to undo-list
     state->skeletonState->redoList->lastCmd = cmdEl->prev;
-    cmdEl->prev->next = NULL;
-
+    if(cmdEl->prev) {
+        cmdEl->prev->next = NULL;
+    }
     cmdEl->prev = state->skeletonState->undoList->lastCmd;
     state->skeletonState->undoList->lastCmd->next = cmdEl;
     state->skeletonState->undoList->lastCmd = cmdEl;
 }
 
 void addToUndo(struct cmdListElement *cmdEl) {
-       // flushCmdList(state->skeletonState->redoList); undo todo
+    struct cmdListElement *tmpCmd;
 
-    if(state->skeletonState->undoList->firstCmd == NULL) {
+     // flushCmdList(state->skeletonState->redoList); undo todo
+
+    if(state->skeletonState->undoList->firstCmd == NULL) { //undolist empty
        state->skeletonState->undoList->firstCmd = cmdEl;
        state->skeletonState->undoList->lastCmd = cmdEl;
        cmdEl->prev = NULL;
        cmdEl->next = NULL;
     }
-    else if(state->skeletonState->undoList->cmdCount < CMD_MAXSTEPS) {
+    else if(state->skeletonState->undoList->cmdCount < CMD_MAXSTEPS) { //undolist not empty, not full
        state->skeletonState->undoList->lastCmd->next = cmdEl;
        cmdEl->prev = state->skeletonState->undoList->lastCmd;
        cmdEl->next = NULL;
        state->skeletonState->undoList->lastCmd = cmdEl;
+    }
+    else { //undolist full
+        tmpCmd = state->skeletonState->undoList->firstCmd->next;
+        free(state->skeletonState->undoList->firstCmd);
+        state->skeletonState->undoList->firstCmd = tmpCmd;
+        if(state->skeletonState->undoList->firstCmd) {
+            state->skeletonState->undoList->firstCmd->prev = NULL;
+        }
     }
     state->skeletonState->undoList->cmdCount++;
 }
@@ -4129,7 +4292,8 @@ static void delCmdListElement(struct cmdListElement *cmdEl) {
         break;
     case CMD_SPLITTREE:
         splitTreeCMD = (cmdSplitTree*) cmdEl->cmd;
-        //deleteTreeList(splitTreeCMD->firstTree);
+        delSkeletonFromCmd(splitTreeCMD);
+        //TDItem necessary to delete comment list?
         free(splitTreeCMD);
         free(cmdEl);
         break;

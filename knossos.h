@@ -33,7 +33,7 @@ static int32_t readDataConfAndLocalConf();
 static int32_t stripNewlines(char *string);
 static int32_t configFromCli(int argCount, char *arguments[]);
 static int32_t loadNeutralDatasetLUT(GLuint *lut);
-
+static int32_t loadDefaultTreeLUT();
 int32_t readConfigFile(char *path);
 static int32_t findAndRegisterAvailableDatasets();
 #ifdef LINUX

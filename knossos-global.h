@@ -1362,6 +1362,7 @@ typedef struct {
 
 typedef struct {
     struct treeListElement *firstTree;
+    struct commentListElement *currentComment;
     int32_t greatestTreeID;
 } cmdSplitTree;
 
@@ -1642,7 +1643,6 @@ uint32_t delActiveTree();
 uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel);
 uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel);
 uint32_t delTree(int32_t targetRevision, int32_t treeID);
-
 struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree, Coordinate searchPosition);
 struct nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
@@ -1710,13 +1710,17 @@ int32_t pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_
 uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
-int32_t loadDefaultTreeLUT();
 void restoreDefaultTreeColor();
 void checkIdleTime();
 uint32_t genTestNodes(uint32_t number);
 //undo stuff
 void undo();
 void addToUndo(struct cmdListElement *cmdEl);
+int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd);
+int delSkeletonFromCmd(cmdSplitTree *cmd);
+int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd);
+int delCommentFromCmd(struct commentListElement *commentToDel, cmdSplitTree *cmd);
+int delSegmentFromCmd(struct segmentListElement *segToDel);
 
 /*
  * For client.c
