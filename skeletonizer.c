@@ -2234,23 +2234,57 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     return TRUE;
 }
 
-int delSkeletonFromCmd(cmdSplitTree *cmd) {
-    struct treeListElement *current;
-    struct treeListElement *treeToDel;
+int delSkelStateFromCmd(cmdSplitTree *cmd) {
+    struct skeletonState *stateToDel = NULL;
 
-    if(cmd->firstTree == NULL) {
+    if(cmd->skelState == NULL) {
         return FALSE;
     }
-    current = cmd->firstTree;
-    while(current) {
-        treeToDel = current;
-        current = current->next;
-        delTreeFromCmd(treeToDel, cmd);
-    }
+    delTreesFromState(cmd->skelState);
+    ht_rmtable(cmd->skelState->skeletonDCs);
+    free(cmd->skelState->searchStrBuffer);
+    free(cmd->skelState->prevSkeletonFile);
+    free(cmd->skelState->skeletonFile);
+    free(cmd->skelState);
+    cmd->skelState = NULL;
+
     return TRUE;
 }
 
-int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd) {
+int delTreesFromState(struct skeletonState *skelState) {
+    struct treeListElement *current;
+    struct treeListElement *treeToDel;
+
+    if(skelState->firstTree == NULL) {
+        return FALSE;
+    }
+    current = skelState->firstTree;
+    while(current) {
+        treeToDel = current;
+        current = current->next;
+        delTreeFromState(treeToDel, skelState);
+    }
+    skelState->treeElements = 0;
+    skelState->firstTree = NULL;
+    skelState->activeTree = NULL;
+    skelState->activeNode = NULL;
+    skelState->greatestTreeID = 0;
+    skelState->greatestNodeID = 0;
+    delStack(skelState->branchStack);
+    skelState->branchStack = NULL;
+    delDynArray(skelState->nodeCounter);
+    skelState->nodeCounter = NULL;
+    delDynArray(skelState->nodesByNodeID);
+    skelState->nodesByNodeID = NULL;
+    free(skelState->commentBuffer);
+    skelState->commentBuffer = NULL;
+    free(skelState->currentComment);
+    skelState->currentComment = NULL;
+
+    return TRUE;
+}
+
+int delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState) {
     struct nodeListELement *currentNode;
     struct nodeListElement *nodeToDel;
 
@@ -2262,7 +2296,7 @@ int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd) {
     while(currentNode) {
         nodeToDel = currentNode;
         currentNode = nodeToDel->next;
-        delNodeFromCmd(nodeToDel, cmd);
+        delNodeFromState(nodeToDel, skelState);
     }
     treeToDel->firstNode = NULL;
 
@@ -2276,7 +2310,7 @@ int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd) {
     return TRUE;
 }
 
-int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd) {
+int delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState) {
     struct segmentListElement *currentSegment;
     struct segmentListElement *tempNext;
 
@@ -2285,7 +2319,7 @@ int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd) {
     }
 
     if(nodeToDel->comment) {
-        delCommentFromCmd(nodeToDel->comment, cmd);
+        delCommentFromState(nodeToDel->comment, skelState);
     }
 
     /*
@@ -2320,7 +2354,7 @@ int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd) {
     free(nodeToDel);
 }
 
-int delCommentFromCmd(struct commentListElement *commentToDel, cmdSplitTree *cmd) {
+int delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState) {
     int32_t nodeID = 0;
 
     if(commentToDel == NULL) {
@@ -2335,13 +2369,13 @@ int delCommentFromCmd(struct commentListElement *commentToDel, cmdSplitTree *cmd
     }
 
     if(commentToDel->next == commentToDel) { //only comment in list
-        cmd->currentComment = NULL;
+        skelState->currentComment = NULL;
     }
     else {
         commentToDel->next->previous = commentToDel->previous;
         commentToDel->previous->next = commentToDel->next;
-        if(cmd->currentComment == commentToDel) {
-            cmd->currentComment = commentToDel->next;
+        if(skelState->currentComment == commentToDel) {
+            skelState->currentComment = commentToDel->next;
         }
     }
     free(commentToDel);
@@ -3263,8 +3297,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
 
     //add command to undo list first in order to save current tree-list
   /*  cmd = malloc(sizeof(cmdSplitTree));
-    //copyTreeList(cmd->firstTree);
-    cmd->greatestTreeID = state->skeletonState->greatestTreeID;
+    //copySkelState(state->skeletonState, cmd->skelState);
     cmdEl = malloc(sizeof(struct cmdListElement));
     cmdEl->cmdType = CMD_SPLITTREE;
     cmdEl->cmd = cmd;
@@ -4233,7 +4266,7 @@ void redo() {
 void addToUndo(struct cmdListElement *cmdEl) {
     struct cmdListElement *tmpCmd;
 
-     // flushCmdList(state->skeletonState->redoList); undo todo
+    flushCmdList(state->skeletonState->redoList);
 
     if(state->skeletonState->undoList->firstCmd == NULL) { //undolist empty
        state->skeletonState->undoList->firstCmd = cmdEl;
@@ -4292,8 +4325,7 @@ static void delCmdListElement(struct cmdListElement *cmdEl) {
         break;
     case CMD_SPLITTREE:
         splitTreeCMD = (cmdSplitTree*) cmdEl->cmd;
-        delSkeletonFromCmd(splitTreeCMD);
-        //TDItem necessary to delete comment list?
+        delSkelStateFromCmd(splitTreeCMD);
         free(splitTreeCMD);
         free(cmdEl);
         break;

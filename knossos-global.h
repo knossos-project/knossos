@@ -1361,9 +1361,7 @@ typedef struct {
 } cmdDelTree;
 
 typedef struct {
-    struct treeListElement *firstTree;
-    struct commentListElement *currentComment;
-    int32_t greatestTreeID;
+    struct skeletonState *skelState;
 } cmdSplitTree;
 
 typedef struct {
@@ -1716,10 +1714,11 @@ uint32_t genTestNodes(uint32_t number);
 //undo stuff
 void undo();
 void addToUndo(struct cmdListElement *cmdEl);
-int delNodeFromCmd(struct nodeListElement *nodeToDel, cmdSplitTree *cmd);
-int delSkeletonFromCmd(cmdSplitTree *cmd);
-int delTreeFromCmd(struct treeListElement *treeToDel, cmdSplitTree *cmd);
-int delCommentFromCmd(struct commentListElement *commentToDel, cmdSplitTree *cmd);
+int delSkelStateFromCmd(cmdSplitTree *cmd);
+int delTreesFromState(struct skeletonState *skelState);
+int delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
+int delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
+int delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
 int delSegmentFromCmd(struct segmentListElement *segToDel);
 
 /*
