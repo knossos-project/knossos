@@ -102,3 +102,6 @@ LIBS += -lxml2
 
 INCLUDEPATH += ../../MinGW/include/libxml \
                ../../MinGW/include/GL
+
+RESOURCES += \
+    Resources.qrc

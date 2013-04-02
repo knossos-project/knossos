@@ -34,8 +34,7 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) :
 
 
     trick = new QLabel();
-
-    trick->setPixmap(QPixmap("splash"));
+    trick->setPixmap(QPixmap(":/images/splash"));
 
     mainLayout->addWidget(trick);
     setLayout(mainLayout);

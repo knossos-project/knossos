@@ -43,6 +43,7 @@ Client::Client(QObject *parent) :
 /**
  * This method is a replacement for the SDL_NET functionality.
  * @todo is KIKI a local server in tools/kiki.py ?
+ * @todo checking if the socket is executed in a separete thread
  * a replacement for the SocketSet functionality
  */
 static bool connectToServer() {

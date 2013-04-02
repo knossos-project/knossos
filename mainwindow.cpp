@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
-    this->setWindowIcon(QIcon("icon"));
+    this->setWindowIcon(QIcon(":/images/logo.ico"));
 
     settings = new QSettings();
     settings->beginGroup("MainWindow");
@@ -450,10 +450,9 @@ void MainWindow::UI_saveSettings(){
   * @todo Replacement for AG_String(X)
   * Prompt and Wrap_loadSkeleton
   */
-void MainWindow::loadSkeleton(){
+void MainWindow::loadSkeleton() {
     char *path; // = AG_STRING(1);
     char *msg; // = AG_STRING(2);
-
 
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, path, 8192);
@@ -820,6 +819,14 @@ void MainWindow::openSlot()
     bool alreadyLoaded;
 
     if(!fileName.isNull()) {
+        int ret = QMessageBox::question(this, "", "Should the loaded skeleton be merged with the current skeleton?", QMessageBox::Yes | QMessageBox::No);
+        switch(ret) {
+            case QMessageBox::Yes:
+            break;
+            case QMessageBox::No:
+            break;
+        }
+
         loadedFile = new QFile(fileName);
 
         QQueue<QString>::iterator it;
@@ -836,10 +843,8 @@ void MainWindow::openSlot()
             skeletonFileHistory->dequeue();
             skeletonFileHistory->enqueue(fileName);
         }
+
     }
-
-
-
 }
 
 /**
@@ -1049,7 +1054,7 @@ void MainWindow::synchronizationSlot()
 
 void MainWindow::dataSavingOptionsSlot()
 {
-    this->viewportSettingsWidget->show();
+    this->dataSavingWidget->show();
     dataSavingOptionsAction->setChecked(true);
 }
 

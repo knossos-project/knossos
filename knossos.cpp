@@ -108,10 +108,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(Knossos::initStates() != true) {
-       LOG("Error during initialization of the state struct.");
-        _Exit(false);
-    }
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
     strncpy(state->path, "../../e1088_mag1_large/", 1024);
@@ -130,6 +126,11 @@ int main(int argc, char *argv[])
     state->cubeSetBytes = 262144000;
     state->boergens = 0;
     Knossos::printConfigValues();
+
+    if(Knossos::initStates() != true) {
+       LOG("Error during initialization of the state struct.");
+        _Exit(false);
+    }
 
     MainWindow window;
     window.showMaximized();
@@ -384,7 +385,7 @@ int32_t Knossos::initStates() {
 
    // searches for multiple mag datasets and enables multires if more
    //  than one was found
-   //Knossos::findAndRegisterAvailableDatasets(); /** @todo temporarily uncommented leads to a crash */
+   // Knossos::findAndRegisterAvailableDatasets(); /** @todo temporarily uncommented leads to a crash */
 
    return true;
 
