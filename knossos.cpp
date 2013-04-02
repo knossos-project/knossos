@@ -110,27 +110,28 @@ int main(int argc, char *argv[])
 
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
-    strncpy(state->path, "../../e1088_mag1_large/", 1024);
-    strncpy(state->name, "e1088_mag1_large", 1024);
-    state->boundary.x = 2048;
-    state->boundary.y = 1792;
-    state->boundary.z = 2048;
-    state->scale.x = 22.0;
-    state->scale.y = 22.0;
-    state->scale.z = 33.0;
-    state->cubeBytes = 2097152;
-    state->cubeEdgeLength = 128;
-    state->cubeSliceArea = 16384;
-    state->M = 1;
-    state->cubeSetElements = 125;
-    state->cubeSetBytes = 262144000;
-    state->boergens = 0;
-    Knossos::printConfigValues();
+    strncpy(tempConfig->path, "../../e1088_mag1_large/", 1024);
+    strncpy(tempConfig->name, "e1088_mag1_large", 1024);
+    tempConfig->boundary.x = 2048;
+    tempConfig->boundary.y = 1792;
+    tempConfig->boundary.z = 2048;
+    tempConfig->scale.x = 22.0;
+    tempConfig->scale.y = 22.0;
+    tempConfig->scale.z = 33.0;
+    tempConfig->cubeBytes = 2097152;
+    tempConfig->cubeEdgeLength = 128;
+    tempConfig->cubeSliceArea = 16384;
+    tempConfig->M = 1;
+    tempConfig->cubeSetElements = 125;
+    tempConfig->cubeSetBytes = 262144000;
+    tempConfig->boergens = 0;
 
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.");
         _Exit(false);
     }
+
+    Knossos::printConfigValues();
 
     MainWindow window;
     window.showMaximized();
@@ -158,12 +159,13 @@ int main(int argc, char *argv[])
     //move each object onto its thread,
     //connect started and finished-signals for correct termination
     //start the threads
-
+    /*
     threadObjs[1]->moveToThread(threads[1]);
     QObject::connect(threads[1], SIGNAL(started()), threadObjs[1], SLOT(start()));
     threads[1]->start();
+    */
 
-     /** @todo temporarily uncommented
+    /** @todo temporarily outcommented
     for(int i = 0; i < NUMTHREADS; i++) {
         threadObjs[i]->moveToThread(threads[i]);
         QObject::connect(threads[i], SIGNAL(started()), threadObjs[i], SLOT(start()));
@@ -173,11 +175,13 @@ int main(int argc, char *argv[])
         threads[i]->start();
     } */
 
-
-
     return a.exec();
 }
 
+/**
+ * This function overwrites the values of state with the value of tempConfig
+ * Beyond it allocates the dynamic data structures
+ */
 int32_t Knossos::initStates() {
    state->time.start();
 
@@ -385,7 +389,8 @@ int32_t Knossos::initStates() {
 
    // searches for multiple mag datasets and enables multires if more
    //  than one was found
-   // Knossos::findAndRegisterAvailableDatasets(); /** @todo temporarily uncommented leads to a crash */
+
+   Knossos::findAndRegisterAvailableDatasets(); /** @todo temporarily uncommented leads to a crash */
 
    return true;
 
@@ -584,6 +589,7 @@ struct stateInfo *Knossos::emptyState() {
     struct stateInfo *state = NULL;
 
     state = new stateInfo();
+
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
     state->remoteState = new remoteState();
@@ -619,6 +625,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
     * Launching it with another dataset than mag1 leads to the old
     * behavior, that only this mag is shown, this happens also
     * when the path contains no mag string. */
+
     if((strstr(state->name, "mag") != NULL) && (state->magnification == 1)) {
 
         /* take base path and go one level up */
