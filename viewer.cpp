@@ -821,7 +821,6 @@ static bool initViewer() {
         return false;
     }
 
-
     // init the gui
     /*
     if(MainWindow::initGUI() == false) {
@@ -1140,6 +1139,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::start() {
+
     qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
     struct vpList *viewports = NULL;
@@ -1918,10 +1918,9 @@ bool Viewer::refreshViewports() {
 bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
     qDebug() << "Viewer: sendLoadSignal begin";
     state->protectLoadSignal->lock();
-    state->loadSignal = true;
-    emit loadSignal();
-    qDebug("I send a load signal to %i, %i, %i", x, y, z);
+    state->loadSignal = true;  
     state->datasetChangeSignal = magChanged;
+
 
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
@@ -1930,7 +1929,13 @@ bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChang
                    x / state->magnification,
                    y / state->magnification,
                    z / state->magnification);
+    /* test */
+    state->currentPositionX.x = x;
+    state->currentPositionX.y = y;
+    state->currentPositionX.z = z;
 
+    emit loadSignal();
+    qDebug("I send a load signal to %i, %i, %i", x, y, z);
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();

@@ -406,6 +406,24 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
 bool MainWindow::addRecentFile(char *path, uint32_t pos){return false;}
 
+bool MainWindow::addRecentFile(QString fileName) {
+    QQueue<QString>::iterator it;
+    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
+        QString path = *it;
+        if(path.compare(fileName), Qt::CaseInsensitive == 0) {
+            return false;
+        }
+    }
+
+    if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
+        skeletonFileHistory->enqueue(fileName);
+    } else {
+        skeletonFileHistory->dequeue();
+        skeletonFileHistory->enqueue(fileName);
+    }
+
+    return true;
+}
 
 void MainWindow::UI_saveSkeleton(int32_t increment){
     /*
@@ -816,33 +834,17 @@ void MainWindow::openSlot()
 {
 
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-    bool alreadyLoaded;
+    int decision;
 
     if(!fileName.isNull()) {
+        char *fileNameAsCharArray = const_cast<char *>(fileName.toStdString().c_str());
+        MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, fileNameAsCharArray, 2048);
+
         int ret = QMessageBox::question(this, "", "Should the loaded skeleton be merged with the current skeleton?", QMessageBox::Yes | QMessageBox::No);
-        switch(ret) {
-            case QMessageBox::Yes:
-            break;
-            case QMessageBox::No:
-            break;
-        }
+
+
 
         loadedFile = new QFile(fileName);
-
-        QQueue<QString>::iterator it;
-        for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-            QString path = *it;
-            if(path.compare(fileName), Qt::CaseInsensitive == 0) {
-                alreadyLoaded = true;
-            }
-        }
-
-        if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES && !alreadyLoaded) {
-            skeletonFileHistory->enqueue(fileName);
-        } else {
-            skeletonFileHistory->dequeue();
-            skeletonFileHistory->enqueue(fileName);
-        }
 
     }
 }

@@ -55,13 +55,24 @@ Loader *loaderEventObj;
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 
-
 int main(int argc, char *argv[])
-{
-
+{ 
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
+
+
+    // The idea behind all this is that we have four sources of
+    // configuration data:
+    //
+    //  * Arguments passed by KUKU
+    //  * Local knossos.conf
+    //  * knossos.conf that comes with the data
+    //  * Default parameters
+    //
+    // All this config data should be used. Command line overrides
+    // local knossos.conf and local knossos.conf overrides knossos.conf
+    // from data and knossos.conf from data overrides defaults.
 
     state = Knossos::emptyState();
     state->loadSignal = false;
@@ -110,20 +121,20 @@ int main(int argc, char *argv[])
 
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
-    strncpy(tempConfig->path, "../../e1088_mag1_large/", 1024);
-    strncpy(tempConfig->name, "e1088_mag1_large", 1024);
+    strncpy(tempConfig->path, "../../../../../e1088_mag1/", 1024);
+    strncpy(tempConfig->name, "070317_e1088", 1024);
     tempConfig->boundary.x = 2048;
     tempConfig->boundary.y = 1792;
     tempConfig->boundary.z = 2048;
     tempConfig->scale.x = 22.0;
     tempConfig->scale.y = 22.0;
     tempConfig->scale.z = 33.0;
-    tempConfig->cubeBytes = 2097152;
+    tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
     tempConfig->cubeEdgeLength = 128;
-    tempConfig->cubeSliceArea = 16384;
-    tempConfig->M = 1;
-    tempConfig->cubeSetElements = 125;
-    tempConfig->cubeSetBytes = 262144000;
+    tempConfig->cubeSliceArea = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
+    tempConfig->M = 3;
+    tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
+    tempConfig->cubeSetBytes = tempConfig->cubeSetElements* tempConfig->cubeBytes;
     tempConfig->boergens = 0;
 
     if(Knossos::initStates() != true) {
@@ -163,9 +174,10 @@ int main(int argc, char *argv[])
     threadObjs[1]->moveToThread(threads[1]);
     QObject::connect(threads[1], SIGNAL(started()), threadObjs[1], SLOT(start()));
     threads[1]->start();
+
+    viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);
     */
 
-    /** @todo temporarily outcommented
     for(int i = 0; i < NUMTHREADS; i++) {
         threadObjs[i]->moveToThread(threads[i]);
         QObject::connect(threads[i], SIGNAL(started()), threadObjs[i], SLOT(start()));
@@ -173,7 +185,8 @@ int main(int argc, char *argv[])
         QObject::connect(threadObjs[i], SIGNAL(finished()), threadObjs[i], SLOT(deleteLater()));
         QObject::connect(threadObjs[i], SIGNAL(finished()), threads[i], SLOT(deleteLater()));
         threads[i]->start();
-    } */
+    }
+
 
     return a.exec();
 }
@@ -390,7 +403,8 @@ int32_t Knossos::initStates() {
    // searches for multiple mag datasets and enables multires if more
    //  than one was found
 
-   Knossos::findAndRegisterAvailableDatasets(); /** @todo temporarily uncommented leads to a crash */
+
+   Knossos::findAndRegisterAvailableDatasets();
 
    return true;
 
@@ -600,6 +614,13 @@ struct stateInfo *Knossos::emptyState() {
     return state;
 }
 
+/**
+ * This function checks the selected dataset directory for
+ * available magnifications(subfolder ending with magX)
+ * The main directory name should be end with mag1. Dont forget the
+ * path separator
+ * Otherwise some strange behaviour has been observed in single cases.
+ */
 bool Knossos::findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
     uint32_t currMag, i;
@@ -632,8 +653,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         pathLen = strlen(state->path);
 
         for(i = 1; i < pathLen; i++) {
-            if((state->path[pathLen-i] == '\\')
-                || (state->path[pathLen-i] == '/')) {
+            if((state->path[pathLen-i] == '\\') || (state->path[pathLen-i] == '/')) {
                 if(i == 1) {
                     /* This is the trailing path separator, ignore. */
                     isPathSepTerminated = true;
@@ -681,7 +701,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                 currMag);
     #endif
             FILE *testKconf;
-            sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+            //sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
 
             /* try fopen() on knossos.conf of currently tested dataset */
             if ((testKconf = fopen(currKconfPath, "r"))) {
@@ -740,11 +760,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         /* state->magnification already contains the right mag! */
 
         pathLen = strlen(state->path);
-
-        /**
-         * @badcode the pathLen is in some cases 0, so that array index = - 1
-         * can be replaced as QFile would do the platform specific things automatically
-         */
 
         if((state->path[pathLen-1] == '\\')
            || (state->path[pathLen-1] == '/')) {

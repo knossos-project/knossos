@@ -768,11 +768,12 @@ void Loader::start() {
     while(true)  {
        // as long the loadSignal is false, the loops waits
        while(state->loadSignal == false) {
-            LOG("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
-            qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
-            load();
             state->conditionLoadSignal->wait(state->protectLoadSignal);
        }
+
+       qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
+       qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
+       load();
     }
 
     // Free the structures in loaderState and loaderState itself.
@@ -832,10 +833,11 @@ void Loader::load() {
     }
 
     state->loaderMagnification = Knossos::log2uint32(state->magnification);
+
     strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
     strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
-        //2012.12.11 HARDCODED for testing loader
-    strncpy(state->loaderName, "e1088_mag1_large", 1024);
+    //2012.12.11 HARDCODED for testing loader
+    //strncpy(state->loaderName, "e1088_mag1_large", 1024);
     // DCOI is now a list of all datacubes that we want in memory, given
     // our current position and that are not yet in memory. We go through
     // that list and load all those datacubes into free memory slots as

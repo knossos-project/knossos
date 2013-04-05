@@ -67,6 +67,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
 }
 
 void Viewport::initializeGL() {
+
     glEnable(GL_TEXTURE_2D);
     /*
     glDisable(GL_DEPTH_TEST);

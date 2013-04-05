@@ -68,6 +68,7 @@ public:
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
     static bool addRecentFile(char *path, uint32_t pos);
+    bool addRecentFile(QString fileName);
 
     //static void saveSkelCallback(AG_Event *event);
     static void UI_saveSkeleton(int32_t increment);
