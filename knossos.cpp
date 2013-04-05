@@ -31,7 +31,6 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-
 #include "mainwindow.h"
 #include "knossos-global.h"
 #include "viewer.h"
@@ -154,10 +153,6 @@ int main(int argc, char *argv[])
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
-    //viewer and loder instance, because signals and slots need objects, from which they are emitted/called
-    viewerEventObj = new Viewer();
-    loaderEventObj = new Loader();
-    QObject::connect(viewerEventObj, SIGNAL(loadSignal()), loaderEventObj, SLOT(load()));
 
     QThread *viewerThread = new QThread();
     QThread *loaderThread = new QThread();
@@ -170,23 +165,33 @@ int main(int argc, char *argv[])
     //move each object onto its thread,
     //connect started and finished-signals for correct termination
     //start the threads
-    /*
+
+    threadObjs[0]->moveToThread(threads[0]);
+    QObject::connect(threads[0], SIGNAL(started()), viewer, SLOT(start()));
+    threads[0]->start();
+
     threadObjs[1]->moveToThread(threads[1]);
-    QObject::connect(threads[1], SIGNAL(started()), threadObjs[1], SLOT(start()));
+    QObject::connect(threads[1], SIGNAL(started()), loader, SLOT(start()));
+    QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     threads[1]->start();
 
-    viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);
-    */
+    /*
+    //viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);
 
-    for(int i = 0; i < NUMTHREADS; i++) {
+
+    //viewer->start();
+
+    /*
+    for(int i = 0; i < 2; i++) {
         threadObjs[i]->moveToThread(threads[i]);
         QObject::connect(threads[i], SIGNAL(started()), threadObjs[i], SLOT(start()));
+
         QObject::connect(threadObjs[i], SIGNAL(finished()), threads[i], SLOT(quit()));
         QObject::connect(threadObjs[i], SIGNAL(finished()), threadObjs[i], SLOT(deleteLater()));
         QObject::connect(threadObjs[i], SIGNAL(finished()), threads[i], SLOT(deleteLater()));
         threads[i]->start();
     }
-
+    */
 
     return a.exec();
 }

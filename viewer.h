@@ -43,13 +43,13 @@
  */
 
 
-
+class Viewport;
 class Viewer : public QObject
 {
     Q_OBJECT
 public:
     explicit Viewer(QObject *parent = 0);
-
+    //Viewport *vp;
     //from knossos-global.h
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);

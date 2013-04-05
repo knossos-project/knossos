@@ -59,6 +59,7 @@ protected:
     int lastX; //last x position
     int lastY; //last y position
     QPushButton *xy, *xz, *yz, *flip, *reset;
+    EventModel *delegate;
 
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);

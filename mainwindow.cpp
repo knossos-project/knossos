@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
@@ -151,10 +152,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     viewports = new Viewport*[NUM_VP];
 
-
     for(int i = 0; i < NUM_VP; i++) {
         viewports[i] = new Viewport(this, i);
     }
+
+
+
     viewports[0]->setGeometry(5, 40, 500, 500);
     viewports[1]->setGeometry(510, 40, 500, 500);
     viewports[2]->setGeometry(5, 545, 500, 500);
@@ -719,6 +722,7 @@ void MainWindow::createActions()
     connect(saveCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(saveCustomPreferencesSlot()));
     connect(defaultPreferencesAction, SIGNAL(triggered()), this, SLOT(defaultPreferencesSlot()));
     connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));
+    connect(synchronizationAction, SIGNAL(triggered()), this, SLOT(synchronizationSlot()));
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
     connect(viewportSettingsAction, SIGNAL(triggered()), this, SLOT(viewportSettingsSlot()));
 

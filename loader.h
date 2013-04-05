@@ -39,6 +39,8 @@ signals:
 public slots:
     void load();
     void start();
+protected:
+    bool initialized;
 
 
 

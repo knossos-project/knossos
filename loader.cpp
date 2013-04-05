@@ -29,13 +29,14 @@
 #include "knossos.h"
 #include "sleeper.h"
 
-
 extern stateInfo *state;
+
+static int instance = 0;
 
 Loader::Loader(QObject *parent) :
     QObject(parent)
 {
-
+    instance += 1;
 }
 
 static bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target) {
@@ -486,14 +487,14 @@ static bool removeLoadedCubes(int32_t magChange) {
 
     mergeCube2Pointer = Hashtable::ht_new(state->cubeSetElements * 20);
     if(mergeCube2Pointer == HT_FAILURE) {
-        LOG("Unable to create the temporary cube2pointer table.");
+        qDebug("Unable to create the temporary cube2pointer table.");
         return false;
     }
     state->protectCube2Pointer->lock();
     if(Hashtable::ht_union(mergeCube2Pointer,
                 state->Dc2Pointer[state->loaderMagnification],
                 state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
-        LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
+        qDebug("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
         return false;
     }
     state->protectCube2Pointer->unlock();
@@ -759,10 +760,11 @@ static bool loadCubes() {
 
 void Loader::start() {
     qDebug() << "Loader: start begin";
-    state->protectLoadSignal->lock();
+    state->protectLoadSignal->lock();   
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
     initLoader();
+    initialized = true;
 
     // Start "signal wait" loop.
     while(true)  {
@@ -797,6 +799,12 @@ void Loader::start() {
   */
 void Loader::load() {
     qDebug() << "Load: load begin";
+    if(!initialized) {
+        qDebug() << "Warning, Loader was not initialized";
+        qDebug() << "Load: begin ended";
+        return;
+    }
+
     loaderState *loaderState = state->loaderState;
     int32_t magChange = false;
 
@@ -808,7 +816,7 @@ void Loader::load() {
     }
 
     if(state->quitSignal == true) {
-        LOG("Loader quitting.");
+        qDebug("Loader quitting.");
         return;
     }
 
@@ -818,17 +826,17 @@ void Loader::load() {
     // DcoiFromPos fills the Dcoi hashtable with all datacubes that
     // we want to be in memory, given our current position.
     if(DcoiFromPos(loaderState->Dcoi) != true) {
-        LOG("Error computing DCOI from position.");
+        qDebug("Error computing DCOI from position.");
         return;
     }
 
-    state->protectLoadSignal->unlock();
 
+    state->protectLoadSignal->unlock();
     // DCOI now contains the coordinates of all cubes we want, based
     // on our current position. However, some of those might already be
     // in memory. We remove them.
     if(removeLoadedCubes(magChange) != true) {
-        LOG("Error removing already loaded cubes from DCOI.");
+        qDebug("Error removing already loaded cubes from DCOI.");
         return;
     }
 
@@ -842,9 +850,12 @@ void Loader::load() {
     // our current position and that are not yet in memory. We go through
     // that list and load all those datacubes into free memory slots as
     // stored in the list freeDcSlots.
+
     if(loadCubes() == false) {
-        LOG("Loading of all DCOI did not complete.");
+        qDebug("Loading of all DCOI did not complete.");
     }
     state->protectLoadSignal->lock();
+
+    //state = true;
     qDebug() << "Loader: load ended";
 }

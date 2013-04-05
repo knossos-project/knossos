@@ -32,6 +32,7 @@
 #include "remote.h"
 #include "sleeper.h"
 #include "mainwindow.h"
+#include "viewport.h"
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -1311,12 +1312,15 @@ bool Viewer::createScreen() {
 * @attention Calling makes only sense after full initialization of the OGL screen
 */
 bool Viewer::initializeTextures() {
+    Viewport *vp = new Viewport(NULL, 0);
+    vp->show();
     uint32_t i = 0;
 
     /*problem of deleting textures when calling again after resize?! TDitem */
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
             //state->viewerState->vpConfigs[i].displayList = glGenLists(1);
+            vp->context()->makeCurrent();
             glGenTextures(1, &state->viewerState->vpConfigs[i].texture.texHandle);
             if(state->overlay) {
                 glGenTextures(1, &state->viewerState->vpConfigs[i].texture.overlayHandle);
@@ -1929,13 +1933,11 @@ bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChang
                    x / state->magnification,
                    y / state->magnification,
                    z / state->magnification);
-    /* test */
-    state->currentPositionX.x = x;
-    state->currentPositionX.y = y;
-    state->currentPositionX.z = z;
 
+    /*
     emit loadSignal();
     qDebug("I send a load signal to %i, %i, %i", x, y, z);
+    */
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
