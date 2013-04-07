@@ -2234,19 +2234,17 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     return TRUE;
 }
 
-int delSkelStateFromCmd(cmdSplitTree *cmd) {
-    struct skeletonState *stateToDel = NULL;
-
-    if(cmd->skelState == NULL) {
+int delSkelState(struct skeletonState *skelState) {
+    if(skelState == NULL) {
         return FALSE;
     }
-    delTreesFromState(cmd->skelState);
-    ht_rmtable(cmd->skelState->skeletonDCs);
-    free(cmd->skelState->searchStrBuffer);
-    free(cmd->skelState->prevSkeletonFile);
-    free(cmd->skelState->skeletonFile);
-    free(cmd->skelState);
-    cmd->skelState = NULL;
+    delTreesFromState(skelState);
+    ht_rmtable(skelState->skeletonDCs);
+    free(skelState->searchStrBuffer);
+    free(skelState->prevSkeletonFile);
+    free(skelState->skeletonFile);
+    free(skelState);
+    skelState = NULL;
 
     return TRUE;
 }
@@ -2285,8 +2283,8 @@ int delTreesFromState(struct skeletonState *skelState) {
 }
 
 int delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState) {
-    struct nodeListELement *currentNode;
-    struct nodeListElement *nodeToDel;
+    struct nodeListELement *currentNode = NULL;
+    struct nodeListElement *nodeToDel = NULL;
 
     if(treeToDel == NULL) {
         return FALSE;
@@ -2379,6 +2377,7 @@ int delCommentFromState(struct commentListElement *commentToDel, struct skeleton
         }
     }
     free(commentToDel);
+    return TRUE;
 }
 
 int delSegmentFromCmd(struct segmentListElement *segToDel) {
@@ -3297,11 +3296,12 @@ int32_t splitConnectedComponent(int32_t targetRevision,
 
     //add command to undo list first in order to save current tree-list
   /*  cmd = malloc(sizeof(cmdSplitTree));
-    //copySkelState(state->skeletonState, cmd->skelState);
+    // cmd->skelState = copySkelState(state->skeletonState);
     cmdEl = malloc(sizeof(struct cmdListElement));
     cmdEl->cmdType = CMD_SPLITTREE;
     cmdEl->cmd = cmd;
-    addToUndo(cmdEl);
+    pushCmd(state->skeletonState->undoList, cmdEl);
+    flushCmdList(state->skeletonState->redoList);
     */
 
     node = findNodeByNodeID(nodeID);
@@ -4141,27 +4141,39 @@ void refreshUndoRedoBuffers(){
 }
 
 void undo() {
-    struct cmdListElement *cmdEl = state->skeletonState->undoList->lastCmd;
+    struct cmdListElement *redoCmdEl = NULL;
+    struct cmdListElement *cmdEl = NULL;
 
-    if(cmdEl == NULL) {
-        return; //nothing to undo
-    }
-
-    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree; cmdMergeTree *mergeTree;
+    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree, *redoSplitTree; cmdMergeTree *mergeTree;
     cmdChangeTreeColor *chgTreeColor; cmdChangeActiveTree *chgActiveTree;
     cmdDelNode *delNode; cmdAddNode *addNode; cmdLinkNode *linkNode; cmdUnlinkNode *unlinkNode;
     cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
     cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
 
-    state->skeletonState->undoList->cmdCount--;
+    cmdEl = popCmd(state->skeletonState->undoList);
+    if(cmdEl == NULL) {
+        return; //nothing to undo
+    }
+
     switch(cmdEl->cmdType) {
     case CMD_DELTREE:
         break;
     case CMD_ADDTREE:
         break;
     case CMD_SPLITTREE:
+        //first add to redo-list cmd holding current skeletonState
+        redoSplitTree = malloc(sizeof(cmdSplitTree));
+        //redoSplitTree->skelState = copySkelState(state->skeletonState);
+        redoCmdEl = malloc(sizeof(struct cmdListElement));
+        redoCmdEl->cmdType = CMD_SPLITTREE;
+        redoCmdEl->cmd = redoSplitTree;
+        pushCmd(state->skeletonState->redoList, redoCmdEl);
+
+        //then undo
+        delSkelState(state->skeletonState);
         splitTree = (cmdSplitTree*) cmdEl->cmd;
-        undoSplitTree(cmdEl->cmd);
+        //state->skeletonState = copySkelState(splitTree->skelState);
+        delCmdListElement(cmdEl);
         break;
     case CMD_MERGETREE:
         break;
@@ -4192,14 +4204,6 @@ void undo() {
     default:
         LOG("no matching command");
     }
-    //remove cmd from undo-list and add to redo-list
-    state->skeletonState->undoList->lastCmd = cmdEl->prev;
-    if(cmdEl->prev) {
-        cmdEl->prev->next = NULL;
-    }
-    cmdEl->prev = state->skeletonState->redoList->lastCmd;
-    state->skeletonState->redoList->lastCmd->next = cmdEl;
-    state->skeletonState->redoList->lastCmd = cmdEl;
 }
 
 void redo() {
@@ -4222,7 +4226,6 @@ void redo() {
         break;
     case CMD_SPLITTREE:
         splitTree = (cmdSplitTree*) cmdEl->cmd;
-        undoSplitTree(cmdEl->cmd);
         break;
     case CMD_MERGETREE:
         break;
@@ -4263,36 +4266,51 @@ void redo() {
     state->skeletonState->undoList->lastCmd = cmdEl;
 }
 
-void addToUndo(struct cmdListElement *cmdEl) {
-    struct cmdListElement *tmpCmd;
+//get last command
+static struct cmdListElement *popCmd(struct cmdList *cmdList) {
+    struct cmdListElement *returnCmd = cmdList->lastCmd;
 
-    flushCmdList(state->skeletonState->redoList);
+    if(returnCmd == NULL) {
+        return NULL;
+    }
 
-    if(state->skeletonState->undoList->firstCmd == NULL) { //undolist empty
-       state->skeletonState->undoList->firstCmd = cmdEl;
-       state->skeletonState->undoList->lastCmd = cmdEl;
-       cmdEl->prev = NULL;
-       cmdEl->next = NULL;
+    cmdList->lastCmd = returnCmd->prev;
+    if(returnCmd->prev) {
+        returnCmd->prev->next = NULL;
     }
-    else if(state->skeletonState->undoList->cmdCount < CMD_MAXSTEPS) { //undolist not empty, not full
-       state->skeletonState->undoList->lastCmd->next = cmdEl;
-       cmdEl->prev = state->skeletonState->undoList->lastCmd;
-       cmdEl->next = NULL;
-       state->skeletonState->undoList->lastCmd = cmdEl;
+    else { //was first in list
+        cmdList->firstCmd = NULL;
     }
-    else { //undolist full
-        tmpCmd = state->skeletonState->undoList->firstCmd->next;
-        free(state->skeletonState->undoList->firstCmd);
-        state->skeletonState->undoList->firstCmd = tmpCmd;
-        if(state->skeletonState->undoList->firstCmd) {
-            state->skeletonState->undoList->firstCmd->prev = NULL;
-        }
-    }
-    state->skeletonState->undoList->cmdCount++;
+    cmdList->cmdCount--;
+
+    return returnCmd;
 }
 
-static void undoSplitTree(cmdSplitTree *cmd) {
+static void pushCmd(struct cmdList *cmdList, struct cmdListElement *cmdListEl) {
+    struct cmdListElement *cmdToDel = NULL;
 
+    if(cmdList->firstCmd == NULL) { //list empty
+        cmdList->firstCmd = cmdListEl;
+        cmdList->lastCmd = cmdListEl;
+        cmdListEl->next = NULL;
+        cmdListEl->prev = NULL;
+        cmdList->cmdCount = 1;
+    }
+    else {
+        cmdList->lastCmd->next = cmdListEl;
+        cmdListEl->prev = cmdList->lastCmd;
+        cmdListEl->next = NULL;
+        cmdList->lastCmd = cmdListEl;
+        if(cmdList->cmdCount < CMD_MAXSTEPS) {  //list not full
+            cmdList->cmdCount++;
+        }
+        else { //list is full, remove oldest cmd (only happens for undo list)
+            cmdToDel = cmdList->firstCmd;
+            cmdList->firstCmd = cmdToDel->next;
+            cmdList->firstCmd->prev = NULL;
+            delCmdListElement(cmdToDel);
+        }
+    }
 }
 
 static void flushCmdList(struct cmdList *cmdList) {
@@ -4315,6 +4333,7 @@ static void flushCmdList(struct cmdList *cmdList) {
     cmdList->lastCmd = NULL;
 }
 
+// also sets pointer to NULL for you
 static void delCmdListElement(struct cmdListElement *cmdEl) {
     cmdSplitTree *splitTreeCMD;
 
@@ -4325,9 +4344,10 @@ static void delCmdListElement(struct cmdListElement *cmdEl) {
         break;
     case CMD_SPLITTREE:
         splitTreeCMD = (cmdSplitTree*) cmdEl->cmd;
-        delSkelStateFromCmd(splitTreeCMD);
+        delSkelState(splitTreeCMD->skelState);
         free(splitTreeCMD);
         free(cmdEl);
+        cmdEl = NULL;
         break;
     case CMD_MERGETREE:
         break;

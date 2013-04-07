@@ -263,7 +263,7 @@ values. The XY vp always used. */
 /* command types */
 
 //next line should be changeable for user later...
-#define CMD_MAXSTEPS 10
+#define CMD_MAXSTEPS 10 // Must not be 0!!
 
 #define CMD_DELTREE 1 //delete tree
 #define CMD_ADDTREE 2 //add tree
@@ -1713,8 +1713,7 @@ void checkIdleTime();
 uint32_t genTestNodes(uint32_t number);
 //undo stuff
 void undo();
-void addToUndo(struct cmdListElement *cmdEl);
-int delSkelStateFromCmd(cmdSplitTree *cmd);
+int delSkelState(struct skeletonState *skelState);
 int delTreesFromState(struct skeletonState *skelState);
 int delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
 int delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);

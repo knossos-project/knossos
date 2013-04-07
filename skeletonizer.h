@@ -33,5 +33,6 @@ static void popBranchNodeCanceled();
 //undo stuff
 static void refreshUndoRedoBuffers();
 static void flushCmdList(struct cmdList *cmdlist);
-static void undoSplitTree(cmdSplitTree *cmd);
-static void delCmdListElement(struct cmdListElement *cmdEl);
+static struct cmdListElement *popCmd(struct cmdList *cmdList);
+static void pushCmd(struct cmdList *cmdList, struct cmdListElement *cmdListEl);
+static void delCmdListElement(struct cmdListElement *cmdEl); // also sets pointer to NULL for you
