@@ -1114,6 +1114,19 @@ void createViewPortPrefWin() {
         state->viewerState->ag->highlightActiveTreeBox = AG_CheckboxNewFn(box2, 0, "Highlight Active Tree", UI_setHighlightActiveTree, NULL);
         state->viewerState->ag->showAllNodeIDsBox = AG_CheckboxNewFn(box2, 0, "Show All Node IDs", UI_setShowNodeIDs, NULL);
 
+        numerical = AG_NumericalNewFltR(box2,
+                                        0,
+                                        NULL,
+                                        "Rendering quality (1 best , 20 fastest): ",
+                                        &state->viewerState->cumDistRenderThres,
+                                        1.,
+                                        20.);
+        {
+            AG_NumericalSetIncrement(numerical, 1.);
+            AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+        }
+
         box3 = AG_BoxNew(box2, AG_BOX_HORIZ, 0);
         {
             AG_ExpandHoriz(box3);
@@ -3816,6 +3829,10 @@ remote port
         xmlNewProp(currentXMLNode, BAD_CAST"edgeNodeRadiusRatio", attrString);
 
         memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->viewerState->cumDistRenderThres);
+        xmlNewProp(currentXMLNode, BAD_CAST"renderingQuality", attrString);
+
+        memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->displayMode);
         xmlNewProp(currentXMLNode, BAD_CAST"displayModeBitFlags", attrString);
 
@@ -4260,9 +4277,15 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"overrideNodeRadius");
             if(attribute)
                 state->skeletonState->overrideNodeRadiusVal = atof((char *)attribute);
+
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"edgeNodeRadiusRatio");
             if(attribute)
                 state->skeletonState->segRadiusToNodeRadius = atof((char *)attribute);
+
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"renderingQuality");
+            if(attribute)
+                state->viewerState->cumDistRenderThres = atof((char *)attribute);
+
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"displayModeBitFlags");
             if(attribute)
                 state->skeletonState->displayMode = atoi((char *)attribute);

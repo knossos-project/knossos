@@ -2231,10 +2231,10 @@ static uint32_t renderCylinder(Coordinate *base,
     GLUquadricObj *gluCylObj = NULL;
 
 
-    if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
+    if(((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
         * baseRadius < 1.f)
        && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-        * topRadius < 1.f)) {
+        * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
         if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
             doubleMeshCapacity(&(state->skeletonState->lineVertBuffer));
@@ -2334,7 +2334,7 @@ static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint3
 
     if((state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
        * radius > 0.0f) && (state->viewerState->viewPorts[viewportType].screenPxXPerDataPx
-       * radius < 2.0f)) {
+       * radius < 2.0f) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
         /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
         Color buffer picking brings its own issues on the other hand, so we
