@@ -323,6 +323,7 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
                 ((float)state->boundary.z / 2.) - state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z,
                 ((float)state->boundary.z / 2.) + state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z);
 
+
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
 
@@ -330,13 +331,22 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
 						-((float)state->boundary.y / 2.),
 						-((float)state->boundary.z / 2.));
 
-            updateFrustumClippingPlanes(VIEWPORT_XZ);
 
             glTranslatef((float)state->viewerState->currentPosition.x,
 						(float)state->viewerState->currentPosition.y,
 						(float)state->viewerState->currentPosition.z);
 
             glRotatef(90., 1., 0., 0.);
+
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+						-(float)state->viewerState->currentPosition.y,
+						-(float)state->viewerState->currentPosition.z);
+
+            updateFrustumClippingPlanes(VIEWPORT_XZ);
+
+            glTranslatef((float)state->viewerState->currentPosition.x,
+						(float)state->viewerState->currentPosition.y,
+						(float)state->viewerState->currentPosition.z);
 
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
@@ -450,11 +460,22 @@ uint32_t renderOrthogonalVP(uint32_t currentVP)  {
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
 
-            updateFrustumClippingPlanes(VIEWPORT_YZ);
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                         (float)state->viewerState->currentPosition.y,
+                         (float)state->viewerState->currentPosition.z);
 
-            glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
+
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                         -(float)state->viewerState->currentPosition.y,
+                         -(float)state->viewerState->currentPosition.z);
+
+            updateFrustumClippingPlanes(VIEWPORT_YZ);
+
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                         (float)state->viewerState->currentPosition.y,
+                         (float)state->viewerState->currentPosition.z);
 
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
