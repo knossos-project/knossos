@@ -2904,7 +2904,11 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
         currentNode = currentTree->firstNode;
         while(currentNode) {
 
-            /* Frustum culling. Should be stored, mem <-> cpu tradeoff  */
+            /* We start with frustum culling:
+             * all nodes that are not in the current viewing frustum for the
+             * currently rendered viewports are discarded. This is very fast. */
+
+            /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
             currNodePos.x = (float)currentNode->position.x;
             currNodePos.y = (float)currentNode->position.y;
             currNodePos.z = (float)currentNode->position.z;
@@ -2924,7 +2928,7 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
             /* First test whether this node is actually connected to the next,
             i.e. whether the implicit sorting is not broken here. */
             allowHeuristic = FALSE;
-            if(currentNode->next) {
+            if(currentNode->next && (!(currentNode->numSegs > 2))) {
                 currentSegment = currentNode->next->firstSegment;
                 while(currentSegment) {
                     if((currentSegment->target == currentNode) ||
