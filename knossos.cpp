@@ -54,6 +54,7 @@ Loader *loaderEventObj;
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 
+
 int main(int argc, char *argv[])
 { 
     QApplication a(argc, argv);
@@ -128,8 +129,9 @@ int main(int argc, char *argv[])
     tempConfig->scale.x = 22.0;
     tempConfig->scale.y = 22.0;
     tempConfig->scale.z = 33.0;
-    tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
     tempConfig->cubeEdgeLength = 128;
+    tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
+
     tempConfig->cubeSliceArea = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
     tempConfig->M = 3;
     tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
@@ -166,9 +168,8 @@ int main(int argc, char *argv[])
     //connect started and finished-signals for correct termination
     //start the threads
 
-    threadObjs[0]->moveToThread(threads[0]);
-    QObject::connect(threads[0], SIGNAL(started()), viewer, SLOT(start()));
-    threads[0]->start();
+
+    viewer->start();
 
     threadObjs[1]->moveToThread(threads[1]);
     QObject::connect(threads[1], SIGNAL(started()), loader, SLOT(start()));

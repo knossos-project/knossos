@@ -467,6 +467,7 @@ Renderer::Renderer(QObject *parent) :
 }
 
 bool Renderer::drawGUI() {
+
      return true;
 }
 
@@ -476,7 +477,7 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
     if(!((state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XY)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ))) {
-        LOG("Wrong VP type given for renderOrthogonalVP() call.");
+        qDebug("Wrong VP type given for renderOrthogonalVP() call.");
         return false;
     }
 

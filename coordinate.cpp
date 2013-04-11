@@ -26,6 +26,9 @@
 
 extern stateInfo *state;
 
+/**
+ * This function calculates the coordinates of the datacube from pixel coordinates
+ */
 Coordinate Coordinate::Px2DcCoord(Coordinate pxCoordinate) {
     Coordinate dcCoordinate;
 

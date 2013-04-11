@@ -150,6 +150,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
+
     viewports = new Viewport*[NUM_VP];
 
     for(int i = 0; i < NUM_VP; i++) {

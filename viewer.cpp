@@ -38,8 +38,11 @@ extern  stateInfo *tempConfig;
 extern  stateInfo *state;
 extern Viewer *viewerEventObj;
 
+int correct_cubes = 0;
+int cubes_in_backlog = 0;
+
 Viewer::Viewer(QObject *parent) :
-    QObject(parent)
+    QThread(parent)
 {
 
 }
@@ -407,22 +410,25 @@ static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) 
 
     elements = currentVp->backlog->elements;
     currentElement = currentVp->backlog->entry;
-
+    qDebug() << "starting to handle backlog";
     for(i = 0; i < elements; i++)  {
         nextElement = currentElement->next;
 
         if(currentElement->cubeType == CUBE_DATA) {
             state->protectCube2Pointer->lock();
+            qDebug() << currentElement->cube.x << " " << currentElement->cube.y << " " << currentElement->cube.z;
             cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
+                //qDebug() << "failed to get cube in backlog";
                 // if(currentElement->cube.x >= 3) {
                        //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
                  //}
                  //LOG("failed to get cube in viewer");
-            }
-            else {
+            } else {
+                cubes_in_backlog += 1;
+                qDebug() << "vpHandleBacklog" << cubes_in_backlog;
                 dcSliceExtract(cube,
                                currentElement->slice,
                                currentElement->dcOffset,
@@ -586,6 +592,7 @@ static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState
             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
+
             // Take care of the data textures.
 
             glBindTexture(GL_TEXTURE_2D,
@@ -615,8 +622,9 @@ static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState
                                 GL_RGB,
                                 GL_UNSIGNED_BYTE,
                                 viewerState->defaultTexData);
-            }
-            else {
+            } else {
+                correct_cubes += 1;
+                qDebug() << "vpGenerateTexture" <<correct_cubes;
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
                                dcOffset,
@@ -913,13 +921,15 @@ static bool initViewer() {
         qDebug("Error initializing the rendering system.");
         return false;
     }
+    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+    //viewerEventObj->sendLoadSignal(830, 1000, 830, NO_MAG_CHANGE);
 
     viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
-    qDebug() << "Viewer: initViewe completed";
+    qDebug() << "Viewer: initViewer completed";
     return true;
 }
 
@@ -1139,7 +1149,14 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
   *
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
-void Viewer::start() {
+void Viewer::run() {
+
+
+    Viewport *vp = new Viewport(NULL, 0);
+    vp->show();
+
+    QObject::connect(this, SIGNAL(now()), vp, SLOT(repaint()));
+
 
     qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
@@ -1168,7 +1185,7 @@ void Viewer::start() {
     recalcTextureOffsets();
     // Display info about skeleton save path here TODO
 
-    while(true) {
+    //while(true) {
 
         // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
@@ -1180,7 +1197,10 @@ void Viewer::start() {
         drawCounter = 0;
 
         currentVp = viewports->entry;
+
         while(viewports->elements > 0) {
+
+
             nextVp = currentVp->next;
             // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
 
@@ -1189,6 +1209,8 @@ void Viewer::start() {
             // one or start loading everything from scratch if there is none.
 
             if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
+
+
                 if(currentVp->backlog->elements == 0) {
                     // There is no backlog. That means we haven't yet attempted
                     // to load the texture for this viewport, which is what we
@@ -1241,6 +1263,7 @@ void Viewer::start() {
                     break;
                 }
             }
+
             // An incoming user movement event makes the current backlog &
             // viewport lists obsolete and we regenerate them dependant on
             // the new position
@@ -1250,8 +1273,11 @@ void Viewer::start() {
             // if the users moves
 
             currentVp = nextVp;
+
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
+
+
 
         //TODO Crashes because of SDL
         //if(viewerState->userMove == false) {
@@ -1263,11 +1289,18 @@ void Viewer::start() {
         //    }
         //}
         viewerState->userMove = false;
-    }//end while(true)
 
-    QThread::currentThread()->quit();
-    emit finished();
+
+    //}//end while(true)
+
+    //QThread::currentThread()->quit();
+    //emit finished();
+
+
     qDebug() << "Viewer: start ended";
+    emit now();
+
+
 }
 
 //Initializes the window with the parameter given in viewerState
@@ -1312,15 +1345,14 @@ bool Viewer::createScreen() {
 * @attention Calling makes only sense after full initialization of the OGL screen
 */
 bool Viewer::initializeTextures() {
-    Viewport *vp = new Viewport(NULL, 0);
-    vp->show();
     uint32_t i = 0;
 
     /*problem of deleting textures when calling again after resize?! TDitem */
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+            //vp->makeCurrent();
             //state->viewerState->vpConfigs[i].displayList = glGenLists(1);
-            vp->context()->makeCurrent();
+            //vp->context()->makeCurrent();
             glGenTextures(1, &state->viewerState->vpConfigs[i].texture.texHandle);
             if(state->overlay) {
                 glGenTextures(1, &state->viewerState->vpConfigs[i].texture.overlayHandle);

@@ -258,6 +258,8 @@ static bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot) 
             goto loadcube_fail;
         }
         qDebug("read cubeFile successfully");
+
+
     }
     else {
         readBytes = (uint32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
@@ -661,7 +663,7 @@ static bool loadCubes() {
             if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification],
                                  currentCube->coordinate, currentDcSlot->cube)
                           != HT_SUCCESS) {
-                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+                qDebug("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
@@ -669,12 +671,12 @@ static bool loadCubes() {
                     state->loaderMagnification);
                 return false;
             }
-            //qDebug("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-            //    currentCube->coordinate.x,
-            //    currentCube->coordinate.y,
-            //    currentCube->coordinate.z,
-            //    currentDcSlot->cube,
-            //    state->loaderMagnification);
+            qDebug("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+                currentCube->coordinate.x,
+                currentCube->coordinate.y,
+                currentCube->coordinate.z,
+                currentDcSlot->cube,
+                state->loaderMagnification);
         }
 
         if(loadedOc) {

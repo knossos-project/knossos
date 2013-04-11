@@ -42,14 +42,11 @@
  *  from the loader thread.
  */
 
-
-class Viewport;
-class Viewer : public QObject
+class Viewer : public QThread
 {
     Q_OBJECT
 public:
     explicit Viewer(QObject *parent = 0);
-    //Viewport *vp;
     //from knossos-global.h
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
@@ -77,13 +74,16 @@ public:
     static bool refreshViewports();
 
     bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
-
+    void run();
 signals:
     void loadSignal();
     void finished();
+    void now();
+    void now2();
+    void now3();
 public slots:
     //Entry point for viewer thread, general viewer coordination, "main loop"
-    void start();
+    //void start();
     
 };
 

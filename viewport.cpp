@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include "sleeper.h"
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -70,6 +71,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
 void Viewport::initializeGL() {
 
     glEnable(GL_TEXTURE_2D);
+
     /*
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
@@ -85,12 +87,13 @@ void Viewport::initializeGL() {
 }
 
 void Viewport::resizeGL(int w, int h) {
+
     qDebug("resizing");
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
-    glFrustum(-x, +x, -1.0, +1.0, 0.0, 15.0);
+    glFrustum(-x, +x, -1.0, +1.0, 1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
     SET_COORDINATE(state->viewerState->vpConfigs[plane].upperLeftCorner,
@@ -107,17 +110,16 @@ void Viewport::resizeGL(int w, int h) {
   */
 
 void Viewport::paintGL() {
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glClearColor(0, 0, 0, 1);
-
-    if(this->plane < VIEWPORT_SKELETON) {
-        drawViewport(this->plane);
-    } else
-        drawSkeletonViewport();
-
-
+    if(state->viewerState->viewerReady) {
+        if(this->plane < VIEWPORT_SKELETON) {
+            drawViewport(this->plane);
+        }  else {
+            drawSkeletonViewport();
+        }
+    }
 
 }
+
 
 //functions to determine position x/y relative to last position lastX, lastY
 int Viewport::xrel(int x) {
@@ -128,12 +130,15 @@ int Viewport::yrel(int y) {
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
+
+
     if(event->button() == Qt::LeftButton) {
         handleMouseMotionLeftHold(event, plane);
     }
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
+
     if(event->button() == Qt::LeftButton) {
         handleMouseButtonLeft(event, plane);
     }
