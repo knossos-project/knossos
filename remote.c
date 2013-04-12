@@ -436,7 +436,7 @@ void checkIdleTime(){
     int time =SDL_GetTicks();
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = time;
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 60000){
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000){ //tolerance of 15 minutes
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
