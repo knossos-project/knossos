@@ -32,11 +32,12 @@ http://code.google.com/p/knossos-skeletonizer/
 
 - Massive performance improvements and better visual quality while handling
   large skeletons (5k-500k nodes) through a completely reworked rendering
-  engine (view frustum culling, dynamic level-of-detail algorithm, large vertex batches)
+  engine (view frustum culling, dynamic level-of-detail algorithm, large vertex batches).
+  The user has direct GUI control over the rendering quality with the new option: "Rendering quality".
 - Adjustable position and size of viewports
 - Conditional radii and highlighting (coloring) of nodes based on a set of definable comment strings
 - Python starter now remembers the last opened folder or starts in the Knossos folder
-- Improvement of Skeleton Viewport rotation  ----- [TODO: specify what has changed]
+- Improvement of Skeleton Viewport rotation, behaves now as expected.
 - Added Buttons to rotate Skeleton Viewport by 90 and 180 degrees.
 - Recentering on a very distant node is performed by a jump instead of a smooth move.
 
