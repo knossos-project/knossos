@@ -1173,21 +1173,21 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z += 10  * state->magnification);
+                               tempConfig->viewerState->currentPosition.z += 10  * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                                sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y += 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.y += 10 * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
                                tempConfig->viewerState->currentPosition.z);
                                sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               tempConfig->viewerState->currentPosition.x += 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.x += 10 * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
                                sendRemoteSignal();
@@ -1202,21 +1202,21 @@ static uint32_t handleKeyboard(SDL_Event event) {
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z -= 10 * state->magnification);
+                               tempConfig->viewerState->currentPosition.z -= 10 * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                                sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y -= 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.y -= 10 * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
                                tempConfig->viewerState->currentPosition.z);
                                sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                               tempConfig->viewerState->currentPosition.x -= 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.x -= 10 * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
                                sendRemoteSignal();
