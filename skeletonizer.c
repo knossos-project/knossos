@@ -1032,6 +1032,7 @@ int32_t saveSkeleton() {
     struct segmentListElement *currentSegment = NULL;
     struct commentListElement *currentComment = NULL;
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
+    char buffer[8192];
     int32_t r;
     xmlChar attrString[128];
 
@@ -1040,7 +1041,7 @@ int32_t saveSkeleton() {
                paramsXMLNode, branchesXMLNode, commentsXMLNode;
 
     memset(attrString, '\0', 128 * sizeof(xmlChar));
-
+    memset(buffer, '\0', 8192);
     /*
      *  This function should always be called through UI_saveSkeleton
      *  for proper error and file name display to the user.
@@ -1109,11 +1110,12 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
     memset(attrString, '\0', 128);
 
+    sprintf(buffer, "%d", state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"time", NULL);
     xmlStrPrintf(attrString,
                  128,
-                 BAD_CAST"%d",
-                 state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+                 BAD_CAST"%s",
+                 xorIt(buffer));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1170,7 +1172,9 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%i", state->skeletonState->idleTime);
+    memset(buffer, '\0', 8192);
+    snprintf(buffer, 8192, "%d", state->skeletonState->idleTime);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%s", xorIt(buffer));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1567,8 +1571,14 @@ uint32_t loadSkeleton() {
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"time")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute)
-                        skeletonTime = atoi((char *)attribute);
+                    if(attribute) {
+                        if(hasObfuscatedTime()) {
+                            skeletonTime = asciiArrayToInt(xorIt((char *)attribute));
+                        }
+                        else {
+                            skeletonTime = atoi((char *)attribute);
+                        }
+                    }
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"activeNode")) {
@@ -1645,8 +1655,14 @@ uint32_t loadSkeleton() {
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
 
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute)
-                        state->skeletonState->idleTime = atof((char *)attribute);
+                    if(attribute) {
+                        if(hasObfuscatedTime()) {
+                            state->skeletonState->idleTime = asciiArrayToInt(xorIt((char *)attribute));
+                        }
+                        else {
+                            state->skeletonState->idleTime = atoi((char*)attribute);
+                        }
+                    }
                     state->skeletonState->idleTimeNow = SDL_GetTicks();
                 }
                 currentXMLNode = currentXMLNode->next;
@@ -4376,4 +4392,47 @@ static void delCmdListElement(struct cmdListElement *cmdEl) {
     default:
         LOG("no matching command");
     }
+}
+
+static char *xorIt(char *text) {
+    char *key = "Kteam:F$&jRMk^mw-mtN>(R+Ak_o&Dt^gtD.+MLhDYsS.soB&eBeSI|F'oqzQZcoSs#*bKsiTTPob-kMlwZdbPe|+IyidZItpC}otK(w-zLJiidT#p?Zp"; //len 117
+    char buffer[8192];
+    int32_t i;
+
+    memset(buffer, '\0', 8192);
+    for(i = 0; i < strlen(text); i++) {
+        buffer[i] = text[i] ^ key[i%strlen(key)];
+    }
+
+    return buffer;
+}
+
+static int asciiArrayToInt(char *asciiArray) {
+    int result = 0;
+    int i;c
+
+    for(i = 0; i < strlen(asciiArray); i++) {
+        asciiArray[i] = (char)asciiArray[i];
+    }
+
+    if(sscanf(asciiArray, "%d", &result) != 1) {
+        LOG("Your string does not contain any number.");
+        return -1;
+    };
+
+    return result;
+}
+
+static int hasObfuscatedTime() { //3.3 and later
+    int major = 0, minor = 0;
+    char point;
+
+    sscanf(state->skeletonState->skeletonCreatedInVersion, "%d%c%d", &major, &point, &minor);
+
+    if(major >= 3) {
+        if(minor >= 3) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }

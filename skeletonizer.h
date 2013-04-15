@@ -30,6 +30,10 @@ static uint32_t delSegmentFromSkeletonStruct(struct segmentListElement *segment)
 static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();
 
+static int asciiArrayToInt(char *asciiArray);
+static int hasObfuscatedTime();
+static char *xorIt(char *text);
+
 //undo stuff
 static void refreshUndoRedoBuffers();
 static void flushCmdList(struct cmdList *cmdlist);

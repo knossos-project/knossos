@@ -432,11 +432,11 @@ static int32_t remoteTrajectory(int32_t trajNumber) {
     return TRUE;
 }
 
-void checkIdleTime(){
+void checkIdleTime() {
     int time =SDL_GetTicks();
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = time;
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000){ //tolerance of 15 minutes
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000) { //tolerance of 15 minutes
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
