@@ -4429,10 +4429,11 @@ static int hasObfuscatedTime() { //3.3 and later
 
     sscanf(state->skeletonState->skeletonCreatedInVersion, "%d%c%d", &major, &point, &minor);
 
-    if(major >= 3) {
-        if(minor >= 3) {
-            return TRUE;
-        }
+    if(major > 3) {
+        return TRUE;
+    }
+    if(major == 3 && minor >= 3) {
+        return TRUE;
     }
     return FALSE;
 }
