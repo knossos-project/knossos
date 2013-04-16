@@ -1032,7 +1032,9 @@ int32_t saveSkeleton() {
     struct segmentListElement *currentSegment = NULL;
     struct commentListElement *currentComment = NULL;
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
+    char text[8192];
     char buffer[8192];
+
     int32_t r;
     xmlChar attrString[128];
 
@@ -1041,6 +1043,7 @@ int32_t saveSkeleton() {
                paramsXMLNode, branchesXMLNode, commentsXMLNode;
 
     memset(attrString, '\0', 128 * sizeof(xmlChar));
+    memset(text, '\0', 8192);
     memset(buffer, '\0', 8192);
     /*
      *  This function should always be called through UI_saveSkeleton
@@ -1110,12 +1113,13 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
     memset(attrString, '\0', 128);
 
-    sprintf(buffer, "%d", state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    sprintf(text, "%d", state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    xorIt(buffer, text);
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"time", NULL);
     xmlStrPrintf(attrString,
                  128,
                  BAD_CAST"%s",
-                 xorIt(buffer));
+                 buffer);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1172,9 +1176,11 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
+    memset(text, '\0', 8192);
     memset(buffer, '\0', 8192);
-    snprintf(buffer, 8192, "%d", state->skeletonState->idleTime);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%s", xorIt(buffer));
+    snprintf(text, 8192, "%d", state->skeletonState->idleTime);
+    xorIt(buffer, text);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%s", buffer);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1464,6 +1470,9 @@ uint32_t loadSkeleton() {
     int32_t time, activeNodeID = 0;
     int32_t skeletonTime = 0;
     color4F neuronColor;
+    char buffer[8192];
+
+    memset(buffer, '\0', 8192);
 
     LOG("Starting to load skeleton...");
 
@@ -1573,7 +1582,8 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         if(hasObfuscatedTime()) {
-                            skeletonTime = asciiArrayToInt(xorIt((char *)attribute));
+                            xorIt(buffer, (char *)attribute);
+                            skeletonTime = asciiArrayToInt(buffer);
                         }
                         else {
                             skeletonTime = atoi((char *)attribute);
@@ -1657,7 +1667,9 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         if(hasObfuscatedTime()) {
-                            state->skeletonState->idleTime = asciiArrayToInt(xorIt((char *)attribute));
+                            memset(buffer, '\0', 8192);
+                            xorIt(buffer, attribute);
+                            state->skeletonState->idleTime = asciiArrayToInt(buffer);
                         }
                         else {
                             state->skeletonState->idleTime = atoi((char*)attribute);
@@ -2364,6 +2376,7 @@ int delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *sk
         }
     }
     free(nodeToDel);
+    return TRUE;
 }
 
 int delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState) {
@@ -4394,22 +4407,18 @@ static void delCmdListElement(struct cmdListElement *cmdEl) {
     }
 }
 
-static char *xorIt(char *text) {
+static void xorIt(char* buffer, char *text) {
     char *key = "Kteam:F$&jRMk^mw-mtN>(R+Ak_o&Dt^gtD.+MLhDYsS.soB&eBeSI|F'oqzQZcoSs#*bKsiTTPob-kMlwZdbPe|+IyidZItpC}otK(w-zLJiidT#p?Zp"; //len 117
-    char buffer[8192];
     int32_t i;
 
-    memset(buffer, '\0', 8192);
     for(i = 0; i < strlen(text); i++) {
         buffer[i] = text[i] ^ key[i%strlen(key)];
     }
-
-    return buffer;
 }
 
 static int asciiArrayToInt(char *asciiArray) {
     int result = 0;
-    int i;c
+    int i;
 
     for(i = 0; i < strlen(asciiArray); i++) {
         asciiArray[i] = (char)asciiArray[i];
@@ -4423,7 +4432,7 @@ static int asciiArrayToInt(char *asciiArray) {
     return result;
 }
 
-static int hasObfuscatedTime() { //3.3 and later
+static int hasObfuscatedTime() { //3.4 and later
     int major = 0, minor = 0;
     char point;
 
@@ -4432,7 +4441,7 @@ static int hasObfuscatedTime() { //3.3 and later
     if(major > 3) {
         return TRUE;
     }
-    if(major == 3 && minor >= 3) {
+    if(major == 3 && minor >= 4) {
         return TRUE;
     }
     return FALSE;
