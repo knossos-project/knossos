@@ -4866,6 +4866,7 @@ void prefDefaultPrefs(){
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->stepsPerSec = 40;
     tempConfig->viewerState->dropFrames = 1;
+    tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->workMode = 0;
     tempConfig->viewerState->filterType = 9729;
     state->viewerState->ag->useLastActNodeRadiusAsDefault = 0;
