@@ -350,7 +350,7 @@ void createNavOptionsWin() {
     AG_WindowSetCaption(state->viewerState->ag->navOptWin, "Navigation Settings");
     AG_LabelNew(state->viewerState->ag->navOptWin, 0, "General");
     AG_SeparatorSetPadding(AG_SeparatorNewHoriz(state->viewerState->ag->navOptWin), 0);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 300);
     box = AG_BoxNew(state->viewerState->ag->navOptWin, AG_BOX_VERT, 0);
     {
         numerical = AG_NumericalNewUint(box, 0, NULL, "Movement Speed: ", &tempConfig->viewerState->stepsPerSec);
@@ -360,6 +360,12 @@ void createNavOptionsWin() {
     }
 
         numerical = AG_NumericalNewUint(box, 0, NULL, "Jump Frames: ", &tempConfig->viewerState->dropFrames);
+    {
+        AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+        AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+    }
+
+    numerical = AG_NumericalNewUint(box, 0, NULL, "Walk Frames: ", &tempConfig->viewerState->walkFrames);
     {
         AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
@@ -3785,6 +3791,10 @@ remote port
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->dropFrames);
         xmlNewProp(currentXMLNode, BAD_CAST"jumpFrames", attrString);
+
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->walkFrames);
+        xmlNewProp(currentXMLNode, BAD_CAST"walkFrames", attrString);
     }
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"dataSavingOptions", NULL);
@@ -4193,6 +4203,9 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"jumpFrames");
             if(attribute)
                 tempConfig->viewerState->dropFrames = atoi((char *)attribute);
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"walkFrames");
+            if(attribute)
+                tempConfig->viewerState->walkFrames = atoi((char *)attribute);
         }
 
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"comments")) {
@@ -4842,7 +4855,7 @@ void prefDefaultPrefs(){
     AG_WindowSetGeometry(state->viewerState->ag->zoomingWin, 739, 348, 300, 194);
     AG_WindowSetGeometry(state->viewerState->ag->tracingTimeWin, 879, 543, 160, 90);
     AG_WindowSetGeometry(state->viewerState->ag->commentsWin, 628, 543, 250, 167);
-    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 280);
+    AG_WindowSetGeometry(state->viewerState->ag->navOptWin, 1116, 30, 250, 300);
     AG_WindowSetGeometry(state->viewerState->ag->syncOptWin, 618, 429, 200, 120);
     AG_WindowSetGeometry(state->viewerState->ag->viewPortPrefWin, 678, 30, 497, 317);
     AG_WindowSetGeometry(state->viewerState->ag->saveOptWin, 618, 348, 200, 80);

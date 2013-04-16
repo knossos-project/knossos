@@ -345,6 +345,9 @@ int32_t updateViewerState() {
     if(state->viewerState->dropFrames != tempConfig->viewerState->dropFrames)
         state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
 
+    if(state->viewerState->walkFrames != tempConfig->viewerState->walkFrames)
+        state->viewerState->walkFrames = tempConfig->viewerState->walkFrames;
+
     if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
         state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
 

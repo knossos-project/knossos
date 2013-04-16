@@ -222,6 +222,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->viewerState->numberViewPorts = 4;
     tempConfig->viewerState->inputmap = NULL;
     tempConfig->viewerState->dropFrames = 1;
+    tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->userMove = FALSE;
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
@@ -485,6 +486,7 @@ static int32_t initStates() {
     state->viewerState->numberViewPorts = tempConfig->viewerState->numberViewPorts;
     state->viewerState->inputmap = tempConfig->viewerState->inputmap;
     state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+    state->viewerState->walkFrames = tempConfig->viewerState->walkFrames;
     state->viewerState->userMove = tempConfig->viewerState->userMove;
     state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
     state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
