@@ -33,6 +33,7 @@ static void popBranchNodeCanceled();
 static int asciiArrayToInt(char *asciiArray);
 static int hasObfuscatedTime();
 static void xorIt(char* buffer, char *text);
+static int32_t xorInt(int32_t xorMe);
 
 //undo stuff
 static void refreshUndoRedoBuffers();

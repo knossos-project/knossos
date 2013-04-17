@@ -1032,10 +1032,8 @@ int32_t saveSkeleton() {
     struct segmentListElement *currentSegment = NULL;
     struct commentListElement *currentComment = NULL;
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
-    char text[8192];
-    char buffer[8192];
-
     int32_t r;
+    int32_t time;
     xmlChar attrString[128];
 
     xmlDocPtr xmlDocument;
@@ -1043,8 +1041,7 @@ int32_t saveSkeleton() {
                paramsXMLNode, branchesXMLNode, commentsXMLNode;
 
     memset(attrString, '\0', 128 * sizeof(xmlChar));
-    memset(text, '\0', 8192);
-    memset(buffer, '\0', 8192);
+
     /*
      *  This function should always be called through UI_saveSkeleton
      *  for proper error and file name display to the user.
@@ -1113,13 +1110,13 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
     memset(attrString, '\0', 128);
 
-    sprintf(text, "%d", state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
-    xorIt(buffer, text);
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"time", NULL);
+    time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks();
+    //LOG("saved time: %d", time);
     xmlStrPrintf(attrString,
                  128,
-                 BAD_CAST"%s",
-                 buffer);
+                 BAD_CAST"%d",
+                 xorInt(time));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1176,11 +1173,7 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    memset(text, '\0', 8192);
-    memset(buffer, '\0', 8192);
-    snprintf(text, 8192, "%d", state->skeletonState->idleTime);
-    xorIt(buffer, text);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%s", buffer);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", xorInt(state->skeletonState->idleTime));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1470,9 +1463,6 @@ uint32_t loadSkeleton() {
     int32_t time, activeNodeID = 0;
     int32_t skeletonTime = 0;
     color4F neuronColor;
-    char buffer[8192];
-
-    memset(buffer, '\0', 8192);
 
     LOG("Starting to load skeleton...");
 
@@ -1582,8 +1572,8 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         if(hasObfuscatedTime()) {
-                            xorIt(buffer, (char *)attribute);
-                            skeletonTime = asciiArrayToInt(buffer);
+                            skeletonTime = xorInt(atoi((char*)attribute));
+                            //LOG("loaded time: %d", skeletonTime);
                         }
                         else {
                             skeletonTime = atoi((char *)attribute);
@@ -1667,9 +1657,7 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         if(hasObfuscatedTime()) {
-                            memset(buffer, '\0', 8192);
-                            xorIt(buffer, attribute);
-                            state->skeletonState->idleTime = asciiArrayToInt(buffer);
+                            state->skeletonState->idleTime = xorInt(atoi((char*)attribute));
                         }
                         else {
                             state->skeletonState->idleTime = atoi((char*)attribute);
@@ -4414,6 +4402,10 @@ static void xorIt(char* buffer, char *text) {
     for(i = 0; i < strlen(text); i++) {
         buffer[i] = text[i] ^ key[i%strlen(key)];
     }
+}
+
+static int32_t xorInt(int32_t xorMe) {
+    return xorMe ^ (int32_t) 5642179165;
 }
 
 static int asciiArrayToInt(char *asciiArray) {
