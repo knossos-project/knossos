@@ -44,12 +44,15 @@
 #include <QKeySequence>
 #include <QSettings>
 #include <QDir>
+#include <QThread>
 /*
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 */
 
+#include "loader.h"
+#include "viewer.h"
 #include "knossos-global.h"
 #include "viewport.h"
 #include "widgets/console.h"
@@ -158,11 +161,12 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
 
-
     viewports[0]->setGeometry(5, 40, 500, 500);
     viewports[1]->setGeometry(510, 40, 500, 500);
     viewports[2]->setGeometry(5, 545, 500, 500);
     viewports[3]->setGeometry(510, 545, 500, 500);
+
+
 
     for(int i = 0; i < NUM_VP; i++) {
         SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,

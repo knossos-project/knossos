@@ -33,6 +33,7 @@
 #include "sleeper.h"
 #include "mainwindow.h"
 #include "viewport.h"
+#include <QGLContext>
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -824,6 +825,7 @@ static bool initViewer() {
     qDebug() << "Viewer: initViewer begin";
     calcLeftUpperTexAbsPx();
 
+
     // init the skeletonizer
     if(Skeletonizer::initSkeletonizer() == false) {
         LOG("Error initializing the skeletonizer.");
@@ -916,11 +918,16 @@ static bool initViewer() {
                                                              * 4);
     }
 
+    /* temporarily moved to the run() Method */
+    /*
+    Viewer::initializeTextures();
     // init the rendering system
+
     if(Renderer::initRenderer() == false) {
         qDebug("Error initializing the rendering system.");
         return false;
     }
+
     SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
     //viewerEventObj->sendLoadSignal(830, 1000, 830, NO_MAG_CHANGE);
 
@@ -930,6 +937,7 @@ static bool initViewer() {
                    NO_MAG_CHANGE);
 
     qDebug() << "Viewer: initViewer completed";
+    */
     return true;
 }
 
@@ -1122,7 +1130,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
         }
     }*/
-    viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
+    sendLoadSignal(state->viewerState->currentPosition.x,
                             state->viewerState->currentPosition.y,
                             state->viewerState->currentPosition.z,
                             upOrDownFlag);
@@ -1151,25 +1159,36 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
 
-
-    Viewport *vp = new Viewport(NULL, 0);
+    vp = new Viewport(NULL, 0);
+    vp2 = new Viewport(NULL, 1);
+    vp3 = new Viewport(NULL, 2);
     vp->show();
+    vp2->show();
+    vp3->show();
 
-    QObject::connect(this, SIGNAL(now()), vp, SLOT(repaint()));
-
-
-    qDebug() << "Viewer: start begin";
-    struct viewerState *viewerState = state->viewerState;
-    struct vpList *viewports = NULL;
-    struct vpListElement *currentVp = NULL, *nextVp = NULL;
-    uint32_t drawCounter = 0;
-
+    connect(this, SIGNAL(now()), vp, SLOT(repaint()));
+    connect(this, SIGNAL(now2()), vp2, SLOT(repaint()));
+    connect(this, SIGNAL(now3()), vp3, SLOT(repaint()));
 
     // init the viewer thread and all subsystems handled by it
     if(!initViewer()) {
        LOG("Error initializing the viewer.");
        return;
     }
+
+    if(Renderer::initRenderer() == false) {
+        qDebug("Error initializing the rendering system.");
+
+    }
+
+    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+
+
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z,
+                   NO_MAG_CHANGE);
+
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -1178,6 +1197,11 @@ void Viewer::run() {
     // While we are loading the textures, we check for events. Some events
     // might cancel the current loading process. When all textures / backlogs
     // have been processed, we go into an idle state, in which we wait for events.
+    qDebug() << "Viewer: start begin";
+    struct viewerState *viewerState = state->viewerState;
+    struct vpList *viewports = NULL;
+    struct vpListElement *currentVp = NULL, *nextVp = NULL;
+    uint32_t drawCounter = 0;
 
     state->viewerState->viewerReady = true;
 
@@ -1185,7 +1209,7 @@ void Viewer::run() {
     recalcTextureOffsets();
     // Display info about skeleton save path here TODO
 
-    //while(true) {
+
 
         // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
@@ -1199,6 +1223,13 @@ void Viewer::run() {
         currentVp = viewports->entry;
 
         while(viewports->elements > 0) {
+
+            if(drawCounter == 0)
+                vp->makeCurrent();
+            else if(drawCounter == 1)
+                vp2->makeCurrent();
+            else if(drawCounter == 2)
+                vp3->makeCurrent();
 
 
             nextVp = currentVp->next;
@@ -1274,6 +1305,8 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
+
+
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
@@ -1291,14 +1324,18 @@ void Viewer::run() {
         viewerState->userMove = false;
 
 
-    //}//end while(true)
+    //end while(true)
 
     //QThread::currentThread()->quit();
     //emit finished();
 
 
     qDebug() << "Viewer: start ended";
+
     emit now();
+    emit now2();
+    emit now3();
+
 
 
 }
@@ -1343,6 +1380,8 @@ bool Viewer::createScreen() {
 *
 * Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
 * @attention Calling makes only sense after full initialization of the OGL screen
+* The functionality is moved into the initializeGL respectively initializeOverlayGL method of the
+* GLWidgets
 */
 bool Viewer::initializeTextures() {
     uint32_t i = 0;
@@ -1353,6 +1392,7 @@ bool Viewer::initializeTextures() {
             //vp->makeCurrent();
             //state->viewerState->vpConfigs[i].displayList = glGenLists(1);
             //vp->context()->makeCurrent();
+
             glGenTextures(1, &state->viewerState->vpConfigs[i].texture.texHandle);
             if(state->overlay) {
                 glGenTextures(1, &state->viewerState->vpConfigs[i].texture.overlayHandle);

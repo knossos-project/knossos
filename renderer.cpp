@@ -1617,7 +1617,6 @@ int32_t Renderer::sgn(float number) {
 
 bool Renderer::initRenderer() {
     /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
-    Viewer::initializeTextures();
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     /* Initialize the basic model view matrix for the skeleton VP
     Perform basic coordinate system rotations */

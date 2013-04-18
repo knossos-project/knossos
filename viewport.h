@@ -44,6 +44,7 @@ public:
 
 protected:
     void initializeGL();
+    void initializeOverlayGL();
     void resizeGL(int w, int h);
     void paintGL();
     void mouseMoveEvent(QMouseEvent *event);

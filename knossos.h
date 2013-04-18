@@ -28,7 +28,7 @@
 
 class Knossos : public QObject {
 public:
-    static bool stripNewlines(char *string);
+    bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
     static bool printConfigValues();
     static bool loadNeutralDatasetLUT(GLuint *datasetLut);

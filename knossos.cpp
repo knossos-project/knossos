@@ -48,8 +48,7 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-Viewer *viewerEventObj;
-Loader *loaderEventObj;
+
 
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
@@ -156,25 +155,10 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
 
-    QThread *viewerThread = new QThread();
-    QThread *loaderThread = new QThread();
-    QThread *remoteThread = new QThread();
-    QThread *clientThread = new QThread();
-    //objects and corresponding threads must be at the same index
-    QObject *threadObjs[NUMTHREADS] = {viewer, loader, remote, client};
-    QThread *threads[NUMTHREADS] = {viewerThread, loaderThread, remoteThread, clientThread};
-
-    //move each object onto its thread,
-    //connect started and finished-signals for correct termination
-    //start the threads
-
-
-    viewer->start();
-
-    threadObjs[1]->moveToThread(threads[1]);
-    QObject::connect(threads[1], SIGNAL(started()), loader, SLOT(start()));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
-    threads[1]->start();
+    viewer->start();
+    loader->start();
+
 
     /*
     //viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);

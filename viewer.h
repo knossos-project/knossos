@@ -31,6 +31,7 @@
 #include <QCursor>
 #include "knossos-global.h"
 #include "knossos.h"
+#include "renderer.h"
 
 /**
  *
@@ -42,11 +43,15 @@
  *  from the loader thread.
  */
 
+class Viewport;
+class MainWindow;
 class Viewer : public QThread
 {
     Q_OBJECT
 public:
     explicit Viewer(QObject *parent = 0);
+
+    Viewport *vp, *vp2, *vp3;
     //from knossos-global.h
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
@@ -73,8 +78,9 @@ public:
     static bool recalcTextureOffsets();
     static bool refreshViewports();
 
-    bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
+    static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
     void run();
+
 signals:
     void loadSignal();
     void finished();

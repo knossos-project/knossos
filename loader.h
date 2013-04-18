@@ -28,17 +28,16 @@
 #include <QObject>
 #include <QThread>
 
-class Loader : public QObject
+class Loader : public QThread
 {
     Q_OBJECT
 public:
     explicit Loader(QObject *parent = 0);
-
+    void run();
 signals:
     void finished();
 public slots:
     void load();
-    void start();
 protected:
     bool initialized;
 

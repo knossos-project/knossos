@@ -31,7 +31,7 @@
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
-extern Viewer *viewerEventObj;
+
 Client::Client(QObject *parent) :
     QObject(parent)
 {
@@ -691,7 +691,7 @@ void Client::start() {
     }
 
     for(int i = 1; i < 5; i++) {
-        viewerEventObj->sendLoadSignal(i * 100, i * 100, i * 100, NO_MAG_CHANGE);
+        //viewerEventObj->sendLoadSignal(i * 100, i * 100, i * 100, NO_MAG_CHANGE);
         Sleeper::sleep(500);
         state->protectClientSignal->lock();
         while(!state->clientSignal) {

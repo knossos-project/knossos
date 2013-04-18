@@ -31,12 +31,11 @@
 
 extern stateInfo *state;
 
-static int instance = 0;
 
 Loader::Loader(QObject *parent) :
-    QObject(parent)
+    QThread(parent)
 {
-    instance += 1;
+
 }
 
 static bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target) {
@@ -760,7 +759,7 @@ static bool loadCubes() {
   * - in short: this thread does nothing but waiting for the loadSignal and processing it
   */
 
-void Loader::start() {
+void Loader::run() {
     qDebug() << "Loader: start begin";
     state->protectLoadSignal->lock();   
 

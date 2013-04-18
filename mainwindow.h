@@ -55,6 +55,7 @@ class ViewportSettingsWidget;
 class ZoomAndMultiresWidget;
 class Viewport;
 class NavigationWidget;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

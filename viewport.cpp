@@ -68,10 +68,42 @@ Viewport::Viewport(QWidget *parent, int plane) :
     }
 }
 
+
+
 void Viewport::initializeGL() {
+    if(plane < VIEWPORT_SKELETON) {
+        glGenTextures(1, &state->viewerState->vpConfigs[plane].texture.texHandle);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[plane].texture.texHandle);
 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+        // loads an empty texture into video memory - during user movement, this
+        // texture is updated via glTexSubImage2D in vpGenerateTexture & vpHandleBacklog
+        // We need GL_RGB as texture internal format to color the textures
+
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGB,
+                     state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                     state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                     0,
+                     GL_RGB,
+                     GL_UNSIGNED_BYTE,
+                     state->viewerState->defaultTexData);
+
+        //Handle overlay textures.
+
+    }
+
+    //glEnable(GL_TEXTURE_2D);
     /*
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
@@ -86,6 +118,36 @@ void Viewport::initializeGL() {
 
 }
 
+void Viewport::initializeOverlayGL() {
+    if(plane < VIEWPORT_SKELETON) {
+        if(state->overlay) {
+            glGenTextures(1, &state->viewerState->vpConfigs[plane].texture.overlayHandle);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[plane].texture.overlayHandle);
+
+            //Set the parameters for the texture.
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+            glTexImage2D(GL_TEXTURE_2D,
+                         0,
+                         GL_RGBA,
+                         state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                         state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                         0,
+                         GL_RGBA,
+                         GL_UNSIGNED_BYTE,
+                         state->viewerState->defaultOverlayData);
+        }
+    }
+}
+
 void Viewport::resizeGL(int w, int h) {
 
     qDebug("resizing");
@@ -93,7 +155,7 @@ void Viewport::resizeGL(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
-    glFrustum(-x, +x, -1.0, +1.0, 1, 15.0);
+    glFrustum(-x, +x, -1.0, +1.0, 0.1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
     SET_COORDINATE(state->viewerState->vpConfigs[plane].upperLeftCorner,
@@ -110,6 +172,11 @@ void Viewport::resizeGL(int w, int h) {
   */
 
 void Viewport::paintGL() {
+
+
+
+
+
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
             drawViewport(this->plane);
