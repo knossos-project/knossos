@@ -154,13 +154,15 @@ MainWindow::MainWindow(QWidget *parent) :
     setCentralWidget(mainWidget);
 
 
+    /*
     viewports = new Viewport*[NUM_VP];
 
     for(int i = 0; i < NUM_VP; i++) {
         viewports[i] = new Viewport(this, i);
     }
 
-
+    */
+    /*
     viewports[0]->setGeometry(5, 40, 500, 500);
     viewports[1]->setGeometry(510, 40, 500, 500);
     viewports[2]->setGeometry(5, 545, 500, 500);
@@ -174,7 +176,7 @@ MainWindow::MainWindow(QWidget *parent) :
                        viewports[i]->geometry().topLeft().y(),
                        0);
         state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
-    }
+    } */
 
 
     this->skeletonFileDialog = new QFileDialog(this);

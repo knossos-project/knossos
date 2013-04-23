@@ -174,9 +174,6 @@ void Viewport::resizeGL(int w, int h) {
 void Viewport::paintGL() {
 
 
-
-
-
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
             drawViewport(this->plane);
@@ -197,7 +194,6 @@ int Viewport::yrel(int y) {
 }
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-
 
     if(event->button() == Qt::LeftButton) {
         handleMouseMotionLeftHold(event, plane);

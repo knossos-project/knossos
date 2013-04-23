@@ -33,12 +33,12 @@
 
 #include "mainwindow.h"
 #include "knossos-global.h"
+#include "sleeper.h"
 #include "viewer.h"
 #include "loader.h"
 #include "remote.h"
 #include "client.h"
 #include "knossos.h"
-
 
 //#include "y.tab.h"
 //#include "lex.yy.h"
@@ -118,7 +118,6 @@ int main(int argc, char *argv[])
         }
     }
 
-
     //2012.12.11 HARDCODED FOR TESTING LOADER
     strncpy(tempConfig->path, "../../../../../e1088_mag1/", 1024);
     strncpy(tempConfig->name, "070317_e1088", 1024);
@@ -143,10 +142,10 @@ int main(int argc, char *argv[])
     }
 
     Knossos::printConfigValues();
-
+    /*
     MainWindow window;
     window.showMaximized();
-
+    */
     // built up threads. Do not follow instructions of qt documentation on QThread
     // as they are outdated since qt 4.4!
     // Instead of subclassing a QThread, normal QObjects are to be moved onto threads
@@ -155,12 +154,26 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
 
+
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
-    viewer->start();
+    //viewer->start();
     loader->start();
+    viewer->run();
 
 
-    /*
+
+    for(int i = 0; i < 100; i++) {
+        int x = 830 + i * 5;
+        int y = 1000 + i * 5;
+        int z = 830 + i * 5;
+
+
+        SET_COORDINATE(state->viewerState->currentPosition, x, y, z)
+        Viewer::sendLoadSignal(x, y, z, NO_MAG_CHANGE);
+        Sleeper::msleep(250);
+        viewer->run();
+
+    }
     //viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);
 
 
@@ -187,7 +200,6 @@ int main(int argc, char *argv[])
  */
 int32_t Knossos::initStates() {
    state->time.start();
-
 
    //General stuff
    state->boergens = tempConfig->boergens;

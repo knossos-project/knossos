@@ -51,7 +51,11 @@ class Viewer : public QThread
 public:
     explicit Viewer(QObject *parent = 0);
 
-    Viewport *vp, *vp2, *vp3;
+    MainWindow *window;
+
+    static bool initViewer();
+
+    Viewport *vp, *vp2, *vp3, *vp4;
     //from knossos-global.h
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
@@ -87,6 +91,7 @@ signals:
     void now();
     void now2();
     void now3();
+    void now4();
 public slots:
     //Entry point for viewer thread, general viewer coordination, "main loop"
     //void start();

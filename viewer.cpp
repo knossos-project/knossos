@@ -45,7 +45,47 @@ int cubes_in_backlog = 0;
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
+    window = new MainWindow();
+    window->showMaximized();
 
+    vp = new Viewport(window, VIEWPORT_XY);
+    vp2 = new Viewport(window, VIEWPORT_XZ);
+    vp3 = new Viewport(window, VIEWPORT_YZ);
+    vp4 = new Viewport(window, VIEWPORT_SKELETON);
+
+    vp->setGeometry(5, 40, 500, 500);
+    vp2->setGeometry(510, 40, 500, 500);
+    vp3->setGeometry(5, 545, 500, 500);
+    vp4->setGeometry(510, 545, 500, 500);
+
+    vp->show();
+    vp2->show();
+    vp3->show();
+    vp4->show();
+
+    connect(this, SIGNAL(now()), vp, SLOT(updateGL()));
+    connect(this, SIGNAL(now2()), vp2, SLOT(updateGL()));
+    connect(this, SIGNAL(now3()), vp3, SLOT(updateGL()));
+    connect(this, SIGNAL(now4()), vp4, SLOT(updateGL()));
+
+    // init the viewer thread and all subsystems handled by it
+    if(!Viewer::initViewer()) {
+       LOG("Error initializing the viewer.");
+       return;
+    }
+
+    if(Renderer::initRenderer() == false) {
+        qDebug("Error initializing the rendering system.");
+
+    }
+
+    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+
+
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z,
+                   NO_MAG_CHANGE);
 }
 
 static vpList* vpListNew() {
@@ -821,7 +861,7 @@ static bool calcLeftUpperTexAbsPx() {
   * Initializes the viewer, is called only once after the viewing thread started
   *
   */
-static bool initViewer() {
+bool Viewer::initViewer() {
     qDebug() << "Viewer: initViewer begin";
     calcLeftUpperTexAbsPx();
 
@@ -1159,37 +1199,6 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
 
-    vp = new Viewport(NULL, 0);
-    vp2 = new Viewport(NULL, 1);
-    vp3 = new Viewport(NULL, 2);
-    vp->show();
-    vp2->show();
-    vp3->show();
-
-    connect(this, SIGNAL(now()), vp, SLOT(repaint()));
-    connect(this, SIGNAL(now2()), vp2, SLOT(repaint()));
-    connect(this, SIGNAL(now3()), vp3, SLOT(repaint()));
-
-    // init the viewer thread and all subsystems handled by it
-    if(!initViewer()) {
-       LOG("Error initializing the viewer.");
-       return;
-    }
-
-    if(Renderer::initRenderer() == false) {
-        qDebug("Error initializing the rendering system.");
-
-    }
-
-    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
-
-
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z,
-                   NO_MAG_CHANGE);
-
-
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available. If they aren't, they are added to a backlog
@@ -1207,11 +1216,9 @@ void Viewer::run() {
 
     updateViewerState();
     recalcTextureOffsets();
+
     // Display info about skeleton save path here TODO
-
-
-
-        // This creates a circular doubly linked list of
+    // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
         // completely loaded) from the viewport-array in the viewerState
         // structure.
@@ -1223,7 +1230,6 @@ void Viewer::run() {
         currentVp = viewports->entry;
 
         while(viewports->elements > 0) {
-
             if(drawCounter == 0)
                 vp->makeCurrent();
             else if(drawCounter == 1)
@@ -1305,13 +1311,15 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
-
+            emit now();
+            emit now2();
+            emit now3();
 
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
 
-
+        emit now4();
         //TODO Crashes because of SDL
         //if(viewerState->userMove == false) {
         //    if(SDL_WaitEvent(&event)) {
@@ -1324,17 +1332,12 @@ void Viewer::run() {
         viewerState->userMove = false;
 
 
-    //end while(true)
 
     //QThread::currentThread()->quit();
     //emit finished();
 
 
     qDebug() << "Viewer: start ended";
-
-    emit now();
-    emit now2();
-    emit now3();
 
 
 
