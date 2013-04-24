@@ -774,16 +774,15 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     struct nodeListElement *prevNode;
     color4F treeCol;
 
+    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+    bool shift   = keyMod.testFlag(Qt::ShiftModifier);
+    bool control = keyMod.testFlag(Qt::ControlModifier);
+    bool alt     = keyMod.testFlag(Qt::AltModifier);
+
     // new qt version
     if(event->key() == Qt::Key_Left) {
-        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-        bool shift = keyMod.testFlag(Qt::ShiftModifier);
         if(shift) {
-            qDebug() << "left and shift";
-        }
-
-        if(shift) {
-            qDebug() << "shift + left";
+            qDebug() << "shift + left key";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             qDebug() << state->viewerState->activeVP;
                 case VIEWPORT_XY:
@@ -797,7 +796,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
-            qDebug() << "left key and any other key";
+            qDebug() << "left key";
 
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
@@ -811,8 +810,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         }
-    } else if(event->key() == Qt::RightArrow) {
-            if(event->key() == Qt::Key_Shift) {
+    } else if(event->key() == Qt::Key_Right) {
+
+            if(shift) {
+                qDebug() << "shift + right key";
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
@@ -825,6 +826,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                         break;
                 }
             } else {
+                qDebug() << "right key";
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
                         Viewer::userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
@@ -839,7 +841,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 }
 
     } else if(event->key() == Qt::Key_Down) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "key down and shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
@@ -852,6 +855,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
+            qDebug() << "key down";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
@@ -865,7 +869,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             }
         }
     } else if(event->key() == Qt::Key_Up) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "key up and shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
@@ -878,6 +883,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
+            qDebug() << "key up";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
@@ -891,6 +897,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             }
         }
     } else if(event->key() == Qt::Key_R) {
+        qDebug() << "r pressed";
         state->viewerState->walkOrth = 1;
         switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             case VIEWPORT_XY:
@@ -919,6 +926,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             break;
         }
     } else if(event->key() == Qt::Key_E) {
+        qDebug() << "E pressed";
         state->viewerState->walkOrth = 1;
         switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             case VIEWPORT_XY:
@@ -947,7 +955,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             break;
         }
     } else if(event->key() == Qt::Key_F) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "F und shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE);
@@ -960,6 +969,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
+            qDebug() << "F pressed";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
@@ -974,7 +984,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
 
         }
     } else if(event->key() == Qt::Key_D) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "D und Shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE);
@@ -987,6 +998,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
+            qDebug() << "D pressed";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
@@ -1002,31 +1014,38 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_G) {
 
     } else if(event->key() == Qt::Key_N) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "N und shift";
             Skeletonizer::nextCommentlessNode();
         } else {
+            qDebug() << "N pressed";
             Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_P) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "P und shift";
             Skeletonizer::previousCommentlessNode();
         } else {
+            qDebug() << "P pressed";
             Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_3) {
+        qDebug() << "3 pressed";
         if(state->viewerState->drawVPCrosshairs) {
            state->viewerState->drawVPCrosshairs = false;
         }
         else {
-           state->viewerState->drawVPCrosshairs = false;
+           state->viewerState->drawVPCrosshairs = true;
         }
     } else if(event->key() == Qt::Key_J) {
+        qDebug() << "J pressed";
         Skeletonizer::UI_popBranchNode();
     } else if(event->key() == Qt::Key_B) {
-        qDebug() << "pushed b";
+        qDebug() << "B pressed";
         Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     } else if(event->key() == Qt::Key_X) {
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "X und shift";
             prevNode = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode);
             if(prevNode) {
                 Skeletonizer::setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
@@ -1038,16 +1057,19 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 Knossos::sendRemoteSignal();
             }
             else {
+                qDebug() << "x pressed";
                 LOG("Reached first node.");
             }
         }
     } else if(event->key() == Qt::Key_Z) {
+
         if(state->skeletonState->activeTree == NULL) {
             return true;
         }
 
         //get tree with previous ID
-        if(event->key() == Qt::Key_Shift) {
+        if(shift) {
+            qDebug() << "Z und shift";
             prevTree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
             if(prevTree) {
                 if(Skeletonizer::setActiveTreeByID(prevTree->treeID)) {
@@ -1059,10 +1081,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     Knossos::sendRemoteSignal();
                 }
             } else {
+                qDebug() << "Z pressed";
                 LOG("Reached first tree.");
             }
 
         } else {
+            qDebug() << "Z pressed";
             //get tree with next ID
             nextTree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
             if(nextTree) {
@@ -1081,6 +1105,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
 
     } else if(event->key() == Qt::Key_I) {
+        qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
            // UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
         }
@@ -1089,6 +1114,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             state->skeletonState->viewChanged = false;
         }
     } else if(event->key() == Qt::Key_O) {
+        qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
         }
@@ -1098,10 +1124,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             state->skeletonState->viewChanged = true;
         }
     } else if(event->key() == Qt::Key_S) {
-        if(event->key() == Qt::Key_Control) {
+        if(control) {
+            qDebug() << "S und control";
             //saveSkelCallback(NULL);
             return true;
         }
+        qDebug() << "S pressed";
         if(state->skeletonState->activeNode) {
             tempConfig->viewerState->currentPosition.x =
                 state->skeletonState->activeNode->position.x;
@@ -1112,18 +1140,23 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             Viewer::updatePosition(TELL_COORDINATE_CHANGE);
         }
     } else if(event->key() == Qt::Key_A) {
+        qDebug() << "A pressed";
         //UI_workModeAdd(); TODO UI_workModeAdd
     } else if(event->key() == Qt::Key_W) {
+        qDebug() << "W pressed";
         // UI_workModeLink(); TODO UI_workModeLink
     } else if(event->key() == Qt::Key_C) {
+        qDebug() << "C pressed";
         treeCol.r = -1.;
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
-       if(event->key() == Qt::Key_Shift) {
+       if(shift) {
+           qDebug() << "V und shift";
             //MainWindow::pasteClipboardCoordinates();
        }
     } else if(event->key() == Qt::Key_1) {
+        qDebug() << "1 pressed";
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
             state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
             state->viewerState->gui->enableOrthoSkelOverlay = 1;
@@ -1135,8 +1168,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         state->skeletonState->skeletonChanged = true;
         Renderer::drawGUI();
     } else if(event->key() == Qt::Key_Delete) {
+        qDebug() << "Delete Key pressed";
         Skeletonizer::delActiveNode();
     } else if(event->key() == Qt::Key_F1) {
+        qDebug() << "F1 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
             Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
@@ -1144,6 +1179,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F2) {
+        qDebug() << "F2 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
             Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
@@ -1151,6 +1187,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F3) {
+        qDebug() << "F3 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
             Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
@@ -1158,7 +1195,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F4) {
-        if(event->key() == Qt::Key_Alt) {
+        if(alt) {
+            qDebug() << "F4 und alt";
             if(state->skeletonState->unsavedChanges) {
                 //yesNoPrompt(NULL, "There are unsaved changes. Really quit?", quitKnossos, NULL);
             }
@@ -1166,6 +1204,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 //Knossos::quitKnossos(); TODO quitKnossos
             }
         } else {
+            qDebug() << "F4 pressed";
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
                 Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
@@ -1174,6 +1213,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             }
         }
     } else if(event->key() == Qt::Key_F5) {
+        qDebug() << "F5 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
             Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }

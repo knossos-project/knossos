@@ -49,7 +49,12 @@
   *
   * @todo The calculation in which viewport the event occured can be removed, since Viewport events know their corresponding Viewport.
   *
-  * @attention The modifier (SHIFT, ALT, CTRL)
+  * @warning The api documentation for event-handlig in QT 5 seems to be outdated :
+  * Keyboard modifier like SHIFT, ALT and CONTROl has to be requested from QApplication
+  * If two modifier are pressed at the same time the method is to use the testFlag method
+  * of the QKeyModifiers object. All other variants were not successful.
+  * If new functionality has to be integrated which uses modifier just use the way it is done in this class
+  * You will save a couple of hours ..
   */
 class EventModel : public QObject
 {

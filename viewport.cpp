@@ -250,6 +250,12 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         qDebug() << "_<-_+_sh";
     }
     */
+    if(event->key() == Qt::Key_Left) {
+        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+        if(keyMod.testFlag(Qt::ShiftModifier)) {
+            qDebug() << "hier klappts";
+        }
+    }
 
     handleKeyboard(event);
 }
@@ -310,19 +316,7 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 }
 
 bool Viewport::handleKeyboard(QKeyEvent *event) {
-
-    if(event->key() == Qt::LeftArrow) {
-        qDebug() << "LEFT";
-    }
-
-    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-
-    if(keyMod.testFlag(Qt::ShiftModifier) && event->key() == Qt::LeftArrow) {
-        qDebug() << "shift + <-";
-    }
-
-    return true;
-    //return delegate->handleKeyboard(event);
+    return delegate->handleKeyboard(event);
 }
 
 Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
