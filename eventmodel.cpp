@@ -37,13 +37,12 @@ EventModel::EventModel(QObject *parent) :
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
 {
 
-
     int32_t clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
     //new active node selected
-    if(event->modifiers() == Qt::ControlModifier) {
+    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         qDebug("control and mouseleft");
         //first assume that user managed to hit the node
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
@@ -82,7 +81,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
     }
     else {
         // Handle the orthogonal viewports
-
         switch(state->viewerState->workMode) {
             case ON_CLICK_RECENTER:
                 clickedCoordinate =
@@ -108,7 +106,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
 
 
     //Set Connection between Active Node and Clicked Node
-    if(event->modifiers() == Qt::AltModifier) {
+    if(QApplication::keyboardModifiers() == Qt::AltModifier) {
         qDebug("alt and mouseleft");
         int32_t clickedNode;
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
@@ -138,8 +136,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
 
 
     if(clickedNode) {
-        if(event->modifiers() == Qt::ShiftModifier) {
-            if(event->modifiers() == Qt::ControlModifier) {
+        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+        if(keyMod.testFlag(Qt::ShiftModifier)) {
+            if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("shift and control and mouse middle");
                 // Pressed SHIFT and CTRL
             } else {
@@ -165,7 +164,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
                 }
             }
         }
-        else if(event->ModifiedChange == Qt::ControlModifier) {
+        else if(keyMod.testFlag(Qt::ControlModifier)) {
             qDebug("control and mouse middle");
             // Pressed CTRL only.
             if(state->skeletonState->activeNode) {
@@ -189,7 +188,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
     // Delete Connection between Active Node and Clicked Node
 
-    if(event->modifiers() == Qt::ControlModifier) {
+    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         qDebug("control and mouse right");
         int32_t clickedNode;
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound, event->x()
@@ -402,6 +401,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
+
+    qDebug() << "mouse motion with left button clicked";
 
     uint32_t i;
 
@@ -616,13 +617,18 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
 
+    qDebug() << "wheel up";
+
     float radius;
 
     if(VPfound == -1)
         return true;
 
-    if((state->skeletonState->activeNode) && ((event->modifiers() == Qt::ShiftModifier))) {
-        qDebug("shift and mouse wheel up");
+    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+
+
+    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
+        qDebug("shift and mouse wheel up and activeNode");
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         Skeletonizer::editNode(CHANGE_MANUAL,
@@ -652,7 +658,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(event->modifiers() == Qt::ControlModifier) {
+            if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("again control and mouse wheel up");
                 //MainWindow::UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
             }
@@ -684,12 +690,17 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
 
 bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 
+    qDebug() << "mouseWheelDown";
+
+
     float radius;
 
     if(VPfound == -1)
         return true;
 
-    if((state->skeletonState->activeNode) && ((event->modifiers() == Qt::ShiftModifier))) {
+    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+
+    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ControlModifier))) {
         qDebug("shift and mouse wheel down");
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
@@ -709,8 +720,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 
 
         //drawGUI();
-    }
-    else {
+    } else {
         // Skeleton VP
         if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
 
@@ -723,7 +733,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(event->modifiers() == Qt::ControlModifier) {
+            if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("control and mouse wheel down");
                 //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
             }
@@ -766,8 +776,16 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
 
     // new qt version
     if(event->key() == Qt::Key_Left) {
-        if(event->key() == Qt::Key_Shift) {
+        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+        bool shift = keyMod.testFlag(Qt::ShiftModifier);
+        if(shift) {
+            qDebug() << "left and shift";
+        }
+
+        if(shift) {
+            qDebug() << "shift + left";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
+            qDebug() << state->viewerState->activeVP;
                 case VIEWPORT_XY:
                     Viewer::userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -779,6 +797,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                     break;
             }
         } else {
+            qDebug() << "left key and any other key";
+
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
                     Viewer::userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
@@ -1003,6 +1023,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_J) {
         Skeletonizer::UI_popBranchNode();
     } else if(event->key() == Qt::Key_B) {
+        qDebug() << "pushed b";
         Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     } else if(event->key() == Qt::Key_X) {
         if(event->key() == Qt::Key_Shift) {

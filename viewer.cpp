@@ -1646,12 +1646,15 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;
 
-        viewerEventObj->sendLoadSignal(viewerState->currentPosition.x,
+        sendLoadSignal(viewerState->currentPosition.x,
                                 viewerState->currentPosition.y,
                                 viewerState->currentPosition.z,
                                 NO_MAG_CHANGE);
     }
     Remote::checkIdleTime();
+
+
+
     return true;
 }
 

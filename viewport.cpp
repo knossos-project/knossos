@@ -40,12 +40,15 @@ extern stateInfo *tempConfig;
 Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
     delegate = new EventModel();
+    connect(delegate, SIGNAL(rerender()), this, SLOT(updateGL()));
+
     this->plane = plane;
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
     setStyleSheet("background:black");
     this->setCursor(Qt::CrossCursor);
+    this->setFocusPolicy(Qt::StrongFocus);
 
     if(plane == VIEWPORT_SKELETON + 10) {
         this->xy = new QPushButton("xy");
@@ -66,6 +69,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
         mainLayout->addLayout(hLayout);
         setLayout(mainLayout);
     }
+
 }
 
 
@@ -193,14 +197,27 @@ int Viewport::yrel(int y) {
     return (y - this->lastY);
 }
 
+
+
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
-    if(event->button() == Qt::LeftButton) {
+    qDebug() << "mouse move Event";
+
+
+    if(QApplication::mouseButtons() == Qt::LeftButton) {
         handleMouseMotionLeftHold(event, plane);
+    } else if(QApplication::mouseButtons() == Qt::MidButton) {
+        handleMouseMotionMiddleHold(event, plane);
+    } else if(QApplication::mouseButtons() == Qt::RightArrow) {
+        handleMouseMotionRightHold(event, plane);
     }
 }
 
+
+
 void Viewport::mousePressEvent(QMouseEvent *event) {
+
+    qDebug() << "pressEvent";
 
     if(event->button() == Qt::LeftButton) {
         handleMouseButtonLeft(event, plane);
@@ -211,6 +228,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     else if(event->button() == Qt::RightButton) {
         handleMouseButtonRight(event, plane);
     }
+
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
@@ -226,6 +244,13 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+    /*
+    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+    if(keyMod.testFlag(Qt::ShiftModifier) && event->key() == Qt::Key_Left) {
+        qDebug() << "_<-_+_sh";
+    }
+    */
+
     handleKeyboard(event);
 }
 
@@ -285,7 +310,19 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 }
 
 bool Viewport::handleKeyboard(QKeyEvent *event) {
-    return delegate->handleKeyboard(event);
+
+    if(event->key() == Qt::LeftArrow) {
+        qDebug() << "LEFT";
+    }
+
+    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+
+    if(keyMod.testFlag(Qt::ShiftModifier) && event->key() == Qt::LeftArrow) {
+        qDebug() << "shift + <-";
+    }
+
+    return true;
+    //return delegate->handleKeyboard(event);
 }
 
 Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {

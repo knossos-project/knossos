@@ -3523,16 +3523,17 @@ bool Skeletonizer::pushBranchNode(int32_t targetRevision, int32_t setBranchNodeF
                 branchNode->isBranchNode = true;
             }
             state->skeletonState->skeletonChanged = true;
-            LOG("Branch point (node ID %d) added.", branchNode->nodeID);
+            qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
+
         }
         else {
-            LOG("Active node is already a branch point");
+            qDebug("Active node is already a branch point");
             Knossos::unlockSkeleton(true);
             return true;
         }
     }
     else {
-        LOG("Make a node active before adding branch points.");
+        qDebug("Make a node active before adding branch points.");
         Knossos::unlockSkeleton(true);
         return true;
     }

@@ -48,6 +48,8 @@
   * SDL Events are replaced through the corresponding QT-Events
   *
   * @todo The calculation in which viewport the event occured can be removed, since Viewport events know their corresponding Viewport.
+  *
+  * @attention The modifier (SHIFT, ALT, CTRL)
   */
 class EventModel : public QObject
 {
@@ -75,6 +77,7 @@ protected:
     int mouseY;
 
 signals:
+    void rerender();
     
 public slots:
     

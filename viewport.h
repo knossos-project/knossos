@@ -38,7 +38,6 @@ class Viewport : public QGLWidget
     Q_OBJECT
 public:
     explicit Viewport(QWidget *parent, int plane);
-
     void drawViewport(int plane);
     void drawSkeletonViewport();
 
@@ -56,7 +55,7 @@ protected:
     void customEvent(QEvent *event);
     int xrel(int x);
     int yrel(int y);
-    int plane; //XY_VIEWPORT, ...
+    int plane; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
     QPushButton *xy, *xz, *yz, *flip, *reset;
@@ -76,7 +75,7 @@ private:
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
 signals:
-    void mouseDrag(QEvent *event, int plane);
+
 public slots:
     
 };

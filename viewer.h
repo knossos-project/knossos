@@ -87,6 +87,7 @@ public:
 
 signals:
     void loadSignal();
+    void view();
     void finished();
     void now();
     void now2();

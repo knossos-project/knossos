@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     viewer->run();
 
 
-
+    /*
     for(int i = 0; i < 100; i++) {
         int x = 830 + i * 5;
         int y = 1000 + i * 5;
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
         Sleeper::msleep(250);
         viewer->run();
 
-    }
+    }   */
     //viewer->sendLoadSignal(829, 1000, 832, NO_MAG_CHANGE);
 
 
