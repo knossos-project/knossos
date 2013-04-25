@@ -53,50 +53,50 @@ public:
 
     MainWindow *window;
 
-    static bool initViewer();
-
     Viewport *vp, *vp2, *vp3, *vp4;
     //from knossos-global.h
-    static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
+
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
-    static bool updatePosition(int32_t serverMovement);
+
     static bool calcDisplayedEdgeLength();
 
-    /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    static bool changeDatasetMag(uint32_t upOrDownFlag);
-
-    //Initializes the window with the parameter given in viewerState
+       //Initializes the window with the parameter given in viewerState
     static bool createScreen();
 
     //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
     //Calling makes only sense after full initialization of the SDL / OGL screen
-    static bool initializeTextures();
-
-    //Frees allocated memory
-    static bool cleanUpViewer(struct viewerState *viewerState);
+    static bool initializeTextures(); // it now part of the initGL function of the viewport
 
     static bool updateViewerState();
     static bool updateZoomCube();
-    static bool userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
     static int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
-    static bool recalcTextureOffsets();
     static bool refreshViewports();
-
-    static bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
     void run();
 
 signals:
     void loadSignal();
-    void view();
     void finished();
-    void now();
-    void now2();
-    void now3();
-    void now4();
+    void updateGLSignal();
+    void updateGLSignal2();
+    void updateGLSignal3();
+    void updateGLSignal4();
+
+protected:
+    bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
+    bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
+    bool initViewer();
+
 public slots:
-    //Entry point for viewer thread, general viewer coordination, "main loop"
-    //void start();
-    
+    bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
+    bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
+    /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool changeDatasetMag(uint32_t upOrDownFlag);
+    bool userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
+    bool recalcTextureOffsets();
+    bool calcLeftUpperTexAbsPx();
+    bool updatePosition(int32_t serverMovement);
 };
 
 #endif // VIEWER_H

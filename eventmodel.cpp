@@ -434,7 +434,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                     if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove((int)state->viewerState->vpConfigs[i].userMouseSlideX,
+                        emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX,
                             (int)state->viewerState->vpConfigs[i].userMouseSlideY, 0,
                             TELL_COORDINATE_CHANGE);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
@@ -450,7 +450,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                     if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                        emit userMoveSignal((int)state->viewerState->vpConfigs[i].userMouseSlideX, 0,
                             (int)state->viewerState->vpConfigs[i].userMouseSlideY,
                             TELL_COORDINATE_CHANGE);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
@@ -466,7 +466,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
                     if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        Viewer::userMove(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
+                        emit userMoveSignal(0, (int)state->viewerState->vpConfigs[i].userMouseSlideY,
                             (int)state->viewerState->vpConfigs[i].userMouseSlideX,
                             TELL_COORDINATE_CHANGE);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
@@ -660,23 +660,23 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
             // Zoom when CTRL is pressed
             if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("again control and mouse wheel up");
-                //MainWindow::UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
+                emit zoomOrthogonalsSignal(-0.1);
             }
             // Move otherwise
             else {
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
-                        Viewer::userMove(0, 0, state->viewerState->dropFrames
+                        emit userMoveSignal(0, 0, state->viewerState->dropFrames
                             * state->magnification,
                             TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
-                        Viewer::userMove(0, state->viewerState->dropFrames
+                        emit userMoveSignal(0, state->viewerState->dropFrames
                             * state->magnification, 0,
                             TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
-                        Viewer::userMove(state->viewerState->dropFrames
+                        emit userMoveSignal(state->viewerState->dropFrames
                             * state->magnification, 0, 0,
                             TELL_COORDINATE_CHANGE);
                         break;
@@ -735,23 +735,23 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
             // Zoom when CTRL is pressed
             if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("control and mouse wheel down");
-                //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
+                emit zoomOrthogonalsSignal(0.1);
             }
             // Move otherwise
             else {
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
-                        Viewer::userMove(0, 0, -state->viewerState->dropFrames
+                        emit userMoveSignal(0, 0, -state->viewerState->dropFrames
                             * state->magnification,
                             TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
-                        Viewer::userMove(0, -state->viewerState->dropFrames
+                        emit userMoveSignal(0, -state->viewerState->dropFrames
                             * state->magnification, 0,
                             TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
-                        Viewer::userMove(-state->viewerState->dropFrames
+                        emit userMoveSignal(-state->viewerState->dropFrames
                             * state->magnification, 0, 0,
                             TELL_COORDINATE_CHANGE);
                         break;
@@ -786,13 +786,13 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
             qDebug() << state->viewerState->activeVP;
                 case VIEWPORT_XY:
-                    Viewer::userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         } else {
@@ -800,13 +800,13 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
 
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -816,26 +816,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 qDebug() << "shift + right key";
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
-                        Viewer::userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
-                        Viewer::userMove(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
-                        Viewer::userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
                         break;
                 }
             } else {
                 qDebug() << "right key";
                 switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                     case VIEWPORT_XY:
-                        Viewer::userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_XZ:
-                        Viewer::userMove(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                         break;
                     case VIEWPORT_YZ:
-                        Viewer::userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                        emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                         break;
                     }
                 }
@@ -845,26 +845,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             qDebug() << "key down and shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         } else {
             qDebug() << "key down";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -873,26 +873,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             qDebug() << "key up and shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         } else {
             qDebug() << "key up";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -959,26 +959,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             qDebug() << "F und shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         } else {
             qDebug() << "F pressed";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
 
@@ -988,26 +988,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             qDebug() << "D und Shift";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         } else {
             qDebug() << "D pressed";
             switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:
-                    Viewer::userMove(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_XZ:
-                    Viewer::userMove(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_YZ:
-                    Viewer::userMove(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                    emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
             }
         }
@@ -1107,7 +1107,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_I) {
         qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
-           // UI_zoomOrthogonals(-0.1); TODO UI_zoomOrtho
+            emit zoomOrthogonalsSignal(-0.1);
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
@@ -1116,7 +1116,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_O) {
         qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
-            //UI_zoomOrthogonals(0.1); TODO UI_zoomOrtho
+            emit zoomOrthogonalsSignal(0.1);
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
@@ -1137,7 +1137,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 state->skeletonState->activeNode->position.y;
             tempConfig->viewerState->currentPosition.z =
                 state->skeletonState->activeNode->position.z;
-            Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+            emit updatePositionSignal(TELL_COORDINATE_CHANGE);
         }
     } else if(event->key() == Qt::Key_A) {
         qDebug() << "A pressed";

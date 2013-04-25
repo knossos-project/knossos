@@ -40,7 +40,7 @@ public:
     explicit ToolsNodesTabWidget(QWidget *parent = 0);
     void loadSettings();
 signals:
-    
+    void updatePositionSignal(int32_t serverMovement);
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

@@ -82,8 +82,9 @@ protected:
     int mouseY;
 
 signals:
-    void rerender();
-    
+    bool userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
+    void zoomOrthogonalsSignal(float steps);
+    void updatePositionSignal(int32_t serverMovement);
 public slots:
     
 };

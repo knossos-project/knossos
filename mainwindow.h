@@ -76,7 +76,6 @@ public:
     static void UI_saveSettings();
     void loadSkeleton();
 
-    static void UI_zoomOrthogonals(float step);
     static void reloadDataSizeWin();
 
     static void treeColorAdjustmentsChanged();
@@ -112,7 +111,9 @@ public:
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
 signals:
-
+    bool changeDatasetMagSignal(uint32_t upOrDownFlag);
+    void recalcTextureOffsetsSignal();
+    void updatePositionSignal(int32_t serverMoment);
 protected:
 
 
@@ -250,6 +251,7 @@ private slots:
     void yCoordinateChanged(int value);
     void zCoordinateChanged(int value);
 
+    void zoomOrthogonals(float step);
 };
 
 #endif // MAINWINDOW_H

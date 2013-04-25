@@ -203,7 +203,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
         tempConfig->viewerState->currentPosition.y = state->skeletonState->activeNode->position.y / state->magnification;
         tempConfig->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
 
-        /** @todo updatePosition */
+        emit updatePositionSignal();
     }
 
 }

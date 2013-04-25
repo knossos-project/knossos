@@ -40,6 +40,7 @@ public:
     explicit Viewport(QWidget *parent, int plane);
     void drawViewport(int plane);
     void drawSkeletonViewport();
+    EventModel *delegate;
 
 protected:
     void initializeGL();
@@ -59,7 +60,7 @@ protected:
     int lastX; //last x position
     int lastY; //last y position
     QPushButton *xy, *xz, *yz, *flip, *reset;
-    EventModel *delegate;
+
 
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);

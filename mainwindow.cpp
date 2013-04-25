@@ -191,6 +191,8 @@ MainWindow::MainWindow(QWidget *parent) :
     saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
 
     updateTitlebar(false);
+
+
 }
 
 MainWindow::~MainWindow()
@@ -493,8 +495,7 @@ void MainWindow::loadSkeleton() {
     }
 }
 
-
-void MainWindow::UI_zoomOrthogonals(float step){
+void MainWindow::zoomOrthogonals(float step){
     int32_t i = 0;
         int32_t triggerMagChange = false;
 
@@ -539,9 +540,9 @@ void MainWindow::UI_zoomOrthogonals(float step){
         state->viewerState->gui->zoomOrthoVPs =
             state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
 
-        if(triggerMagChange) Viewer::changeDatasetMag(triggerMagChange);
+        if(triggerMagChange) emit changeDatasetMagSignal(triggerMagChange);
 
-        Viewer::recalcTextureOffsets();
+        emit recalcTextureOffsetsSignal();
 }
 
 /**
@@ -1145,7 +1146,7 @@ void MainWindow::pasteClipboardCoordinates(){
             this->zField->setValue(extractedCoords->z);
 
 
-            Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+            emit updatePositionSignal(TELL_COORDINATE_CHANGE);
             Viewer::refreshViewports();
 
             free(extractedCoords);

@@ -1470,7 +1470,7 @@ bool Skeletonizer::loadSkeleton() {
         tempConfig->viewerState->currentPosition.z =
             loadedPosition.z - 1;
 
-        Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;

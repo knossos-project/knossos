@@ -63,10 +63,10 @@ Viewer::Viewer(QObject *parent) :
     vp3->show();
     vp4->show();
 
-    connect(this, SIGNAL(now()), vp, SLOT(updateGL()));
-    connect(this, SIGNAL(now2()), vp2, SLOT(updateGL()));
-    connect(this, SIGNAL(now3()), vp3, SLOT(updateGL()));
-    connect(this, SIGNAL(now4()), vp4, SLOT(updateGL()));
+    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()));
+    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()));
+    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()));
+    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()));
 
     // init the viewer thread and all subsystems handled by it
     if(!Viewer::initViewer()) {
@@ -80,6 +80,15 @@ Viewer::Viewer(QObject *parent) :
     }
 
     SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+
+    connect(vp->delegate, SIGNAL(zoomOrthogonalsSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+
+
+    connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
+    connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
 
 
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -274,7 +283,7 @@ static int32_t backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32
     return backlog->elements;
 }
 
-static bool sliceExtract_standard(Byte *datacube,
+bool sliceExtract_standard(Byte *datacube,
                                        Byte *slice,
                                        vpConfig *vpConfig) {
     int32_t i, j;
@@ -319,7 +328,7 @@ static bool sliceExtract_standard(Byte *datacube,
 }
 
 
-static bool sliceExtract_adjust(Byte *datacube,
+bool sliceExtract_adjust(Byte *datacube,
                                      Byte *slice,
                                      vpConfig *vpConfig) {
     int32_t i, j;
@@ -366,7 +375,7 @@ static bool sliceExtract_adjust(Byte *datacube,
 }
 
 
-static bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
 
     if(state->viewerState->datasetAdjustmentOn) {
@@ -380,7 +389,7 @@ static bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfi
     return true;
 }
 
-static bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     int32_t i, j;
     int32_t objId, *objIdP;
 
@@ -762,7 +771,7 @@ static bool upsampleVPTexture(vpConfig *vpConfig) {
 
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
-static bool calcLeftUpperTexAbsPx() {
+bool calcLeftUpperTexAbsPx() {
     uint32_t i = 0;
     Coordinate currentPosition_dc, currPosTrans;
     viewerState *viewerState = state->viewerState;
@@ -867,7 +876,9 @@ bool Viewer::initViewer() {
 
 
     // init the skeletonizer
-    if(Skeletonizer::initSkeletonizer() == false) {
+    Skeletonizer skeletonizer;
+
+    if(skeletonizer.initSkeletonizer() == false) {
         LOG("Error initializing the skeletonizer.");
         return false;
     }
@@ -886,7 +897,7 @@ bool Viewer::initViewer() {
 
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
-        if(Viewer::loadDatasetColorTable("stdOverlay.lut",
+        if(loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
                           GL_RGBA) == false) {
             LOG("Overlay color map stdOverlay.lut does not exist.");
@@ -1176,7 +1187,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
                             upOrDownFlag);
     //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
-    //state->skeletonState->skeletonChanged = true;
+    state->skeletonState->skeletonChanged = true;
 
     return true;
 }
@@ -1311,15 +1322,15 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
-            emit now();
-            emit now2();
-            emit now3();
+            emit updateGLSignal();
+            emit updateGLSignal();
+            emit updateGLSignal3();
 
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
 
-        emit now4();
+        emit updateGLSignal4();
         //TODO Crashes because of SDL
         //if(viewerState->userMove == false) {
         //    if(SDL_WaitEvent(&event)) {
@@ -1460,19 +1471,6 @@ bool Viewer::initializeTextures() {
                          state->viewerState->defaultOverlayData);
         }
     }
-    return true;
-}
-
-//Frees allocated memory
-bool Viewer::cleanUpViewer( viewerState *viewerState) {
-/*
-    int i;
-    for(i = 0; i < viewerState->numberViewports; i++) {
-        free(viewerState->vpConfigs[i].texture.data);
-        free(viewerState->vpConfigs[i].texture.empty);
-    }
-    free(viewerState->vpConfigs);
-*/
     return true;
 }
 
@@ -1653,20 +1651,6 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     }
     Remote::checkIdleTime();
 
-
-
-    return true;
-}
-
-int32_t updatePosition(int32_t serverMovement) {
-        Coordinate jump;
-
-    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
-        jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
-        jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
-        jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
-        Viewer::userMove(jump.x, jump.y, jump.z, serverMovement);
-    }
     return true;
 }
 

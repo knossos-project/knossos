@@ -38,7 +38,9 @@ public:
     //methods
     explicit Skeletonizer(QObject *parent = 0);
 
-    static bool initSkeletonizer();
+    bool initSkeletonizer();
+
+
     static bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
     static bool updateSkeletonState();
@@ -49,7 +51,7 @@ public:
     //uint32_t saveNMLSkeleton();
     static int32_t saveSkeleton();
     //uint32_t loadNMLSkeleton();
-    static bool loadSkeleton();
+    bool loadSkeleton();
 
     static void setDefaultSkelFileName();
 
@@ -124,9 +126,8 @@ public:
     static bool updateTreeColors();
 
 signals:
-
 public slots:
-
+    void updatePositionSignal(int32_t serverMovement);
 };
 
 #endif // SKELETONIZER_H

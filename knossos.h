@@ -27,6 +27,7 @@
 #include <QObject>
 
 class Knossos : public QObject {
+    Q_OBJECT
 public:
     bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
@@ -50,6 +51,9 @@ public:
     static uint32_t log2uint32(register uint32_t x);
     static uint32_t ones32(register uint32_t x);
     static void loadTreeLUTFallback();
+
+signals:
+    bool loadDataSetColortableSignal(const char *path, GLuint *table, int32_t type);
 };
 
 

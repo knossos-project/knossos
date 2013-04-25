@@ -40,9 +40,6 @@ public slots:
     void load();
 protected:
     bool initialized;
-
-
-
     
 };
 

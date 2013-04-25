@@ -53,6 +53,8 @@ struct stateInfo *state = NULL;
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
 
+Knossos *knossos = new Knossos();
+
 
 int main(int argc, char *argv[])
 { 
@@ -154,6 +156,7 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
 
+    QObject::connect(knossos, SIGNAL(loadDataSetColortableSignal(const char*,GLuint*,int32_t)), viewer, SLOT(loadDatasetColorTable(const char*,GLuint*,int32_t));
 
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     //viewer->start();
@@ -1085,7 +1088,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      tempConfig->M = (int32_t)atoi(rval);
                      break;
                  case 10:
-                     Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
+                     Viewer::loadDatasetColorTableSignal(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
                      break;
                  case 11:
                      Knossos::readConfigFile(rval);
