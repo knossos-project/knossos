@@ -1,0 +1,46 @@
+==================================
+=  KNOSSOS V3.4 - Release Notes  =
+==================================
+
+KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed
+for the rapid reconstruction of neural morphology and connectivity. 
+
+
+----------------------------------
+-  General Information           -
+----------------------------------
+
+Release Date: April 19, 2013
+
+Homepage: http://www.knossostool.org/ and http://code.google.com/p/knossos-skeletonizer/
+
+----------------------------------
+- Known Issues                   -
+----------------------------------
+
+- Delay after launching the installer
+	
+	Windows only:
+	There are reports that the installer sometimes requires several minutes to launch. Please
+	just wait a few minutes in case nothing happens after double clicking it. We are investigating
+	the problem.
+
+----------------------------------
+- Important new Features         -
+----------------------------------
+
+- New Rendering Engine
+
+    Skeletons are displayed in KNOSSOS V3.4 with a new rendering engine that allows the fluent
+	handling of skeletons with several 100k nodes. It is based on a heuristic level-of-detail
+	algorithm that downsamples the spatial skeleton graph dynamically, dependent on the current
+	zoom level applied by the user. The new rendering engine should also make KNOSSOS much more
+	stable on older graphics cards (esp. compared to 3.2).
+
+- Better Rotation in Skeleton Viewport
+
+	Rotating the 3D skeleton with the mouse is now based on a rolling-ball rotation model.
+
+- Tracing Time
+
+	The tracing time is now obfuscated in skeleton files.
