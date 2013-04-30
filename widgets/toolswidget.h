@@ -40,7 +40,7 @@ public:
     ToolsNodesTabWidget *toolsNodesTabWidget;
     ToolsTreesTabWidget *toolsTreesTabWidget;
 signals:
-    
+    void uncheckSignal();
 public slots:
 protected:
     void closeEvent(QCloseEvent *event);

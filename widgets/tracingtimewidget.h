@@ -35,7 +35,7 @@ public:
     explicit TracingTimeWidget(QWidget *parent = 0);
     void loadSettings();
 signals:
-    
+    void uncheckSignal();
 public slots:
 
 protected:

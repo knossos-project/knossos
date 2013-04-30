@@ -48,7 +48,7 @@ public:
     QSpinBox *delayTimePerStepSpinBox;
     QSpinBox *numberOfStepsSpinBox;
 signals:
-    
+    void uncheckSignal();
 public slots:
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);

@@ -82,9 +82,15 @@ protected:
     int mouseY;
 
 signals:
-    bool userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
-    void zoomOrthogonalsSignal(float steps);
+    void rerender();
+    void userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
     void updatePositionSignal(int32_t serverMovement);
+    void pasteCoordinateSignal();
+    void zoomOrthoSignal(float step);
+    void updateViewerStateSignal();
+    // SIGNAL MIT RÜCKGABEWERT?
+    uint32_t retrieveVisibleObjectBeneathSquareSignal(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
+
 public slots:
     
 };

@@ -100,20 +100,12 @@ public:
     bool eventFilter(QObject *obj, QEvent *event);
 
     void loadDefaultPrefs();
-
-    void uncheckToolsAction();
-    void uncheckViewportSettingAction();
-    void uncheckCommentShortcutsAction();
-    void uncheckConsoleAction();
-    void uncheckTracingTimeAction();
-    void uncheckZoomAndMultiresAction();
-    void uncheckDataSavingAction();
-    void uncheckSynchronizationAction();
-    void uncheckNavigationAction();
 signals:
-    bool changeDatasetMagSignal(uint32_t upOrDownFlag);
+    void changeDatasetMagSignal(int32_t serverMovement);
     void recalcTextureOffsetsSignal();
-    void updatePositionSignal(int32_t serverMoment);
+    void updatePositionSignal(int32_t serverMovement);
+    void refreshViewportsSignal();
+
 protected:
 
 
@@ -252,6 +244,17 @@ private slots:
     void zCoordinateChanged(int value);
 
     void zoomOrthogonals(float step);
+    void uncheckToolsAction();
+    void uncheckViewportSettingAction();
+    void uncheckCommentShortcutsAction();
+    void uncheckConsoleAction();
+    void uncheckTracingTimeAction();
+    void uncheckZoomAndMultiresAction();
+    void uncheckDataSavingAction();
+
+    void uncheckSynchronizationAction();
+    void uncheckNavigationAction();
+
 };
 
 #endif // MAINWINDOW_H

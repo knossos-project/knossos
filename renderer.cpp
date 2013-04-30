@@ -26,7 +26,7 @@
 // #define GLUT_DISABLE_ATEXIT_HACK what is this?
 
 #include "renderer.h"
-#include "viewer.h"
+#include "functions.h"
 #include <math.h>
 
 #include <QtOpenGL>
@@ -54,6 +54,32 @@
 extern stateInfo *state;
 extern stateInfo *tempConfig;
 
+Renderer::Renderer(QObject *parent) :
+    QObject(parent)
+{
+    /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    /* Initialize the basic model view matrix for the skeleton VP
+    Perform basic coordinate system rotations */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glTranslatef((float)state->skeletonState->volBoundary / 2.,
+        (float)state->skeletonState->volBoundary / 2.,
+        -((float)state->skeletonState->volBoundary / 2.));
+
+    glScalef(-1., 1., 1.);
+    //);
+    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
+    glRotatef(235., 1., 0., 0.);
+    glRotatef(210., 0., 0., 1.);
+    setRotationState(ROTATIONSTATERESET);
+    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+    /* save the matrix for further use... */
+    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+
+    glLoadIdentity();
+}
 
 static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius) {
     float currentAngle = 0.;
@@ -101,7 +127,7 @@ static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *t
 
         free(tempVec2);
 
-        gluCylinder(gluCylObj, baseRadius, topRadius, Renderer::euclidicNorm(&segDirection), 4, 1);
+        gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 4, 1);
         gluDeleteQuadric(gluCylObj);
         glPopMatrix();
     }
@@ -250,8 +276,8 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
                 gluQuadricNormals(gluCylObj, GLU_SMOOTH);
                 gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-                length = Renderer::euclidicNorm(&segDir);
-                distSourceInter = Renderer::euclidicNorm(&tempVec3);
+                length = euclidicNorm(&segDir);
+                distSourceInter = euclidicNorm(&tempVec3);
 
                 if(sSr_local < sTr_local)
                     radius = sTr_local + sSr_local * (1. - distSourceInter / length);
@@ -461,10 +487,7 @@ static uint32_t renderViewportBorders(uint32_t currentVP) {
     return true;
 }
 
-Renderer::Renderer(QObject *parent) :
-    QObject(parent)
-{
-}
+
 
 bool Renderer::drawGUI() {
 
@@ -1575,10 +1598,6 @@ float Renderer::degToRad(float deg) {
     return ((deg / 180.) * PI);
 }
 
-float Renderer::scalarProduct(floatCoordinate *v1, floatCoordinate *v2) {
-    return ((v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z));
-}
-
 floatCoordinate* Renderer::crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
     floatCoordinate *result = NULL;
     result = (floatCoordinate*)malloc(sizeof(floatCoordinate));
@@ -1592,56 +1611,11 @@ float Renderer::vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
 
-float Renderer::euclidicNorm(floatCoordinate *v) {
-    return ((float)sqrt((double)scalarProduct(v, v)));
-}
-
-bool Renderer::normalizeVector(floatCoordinate *v) {
-    float norm = euclidicNorm(v);
-    v->x /= norm;
-    v->y /= norm;
-    v->z /= norm;
-    return true;
-}
-
-int32_t Renderer::roundFloat(float number) {
-    if(number >= 0) return (int32_t)(number + 0.5);
-    else return (int32_t)(number - 0.5);
-}
-
 int32_t Renderer::sgn(float number) {
     if(number > 0.) return 1;
     else if(number == 0.) return 0;
     else return -1;
 }
-
-bool Renderer::initRenderer() {
-    /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    /* Initialize the basic model view matrix for the skeleton VP
-    Perform basic coordinate system rotations */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glTranslatef((float)state->skeletonState->volBoundary / 2.,
-        (float)state->skeletonState->volBoundary / 2.,
-        -((float)state->skeletonState->volBoundary / 2.));
-
-    glScalef(-1., 1., 1.);
-    //);
-    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
-    glRotatef(235., 1., 0., 0.);
-    glRotatef(210., 0., 0., 1.);
-    setRotationState(ROTATIONSTATERESET);
-    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-    /* save the matrix for further use... */
-    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-
-    glLoadIdentity();
-
-    return true;
-}
-
 
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

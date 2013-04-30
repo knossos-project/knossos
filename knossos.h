@@ -52,8 +52,12 @@ public:
     static uint32_t ones32(register uint32_t x);
     static void loadTreeLUTFallback();
 
+
 signals:
-    bool loadDataSetColortableSignal(const char *path, GLuint *table, int32_t type);
+    void calcDisplayedEdgeLengthSignal();
+
+
+
 };
 
 

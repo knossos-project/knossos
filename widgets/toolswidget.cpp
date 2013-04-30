@@ -26,7 +26,6 @@
 #include "widgets/tools/toolsquicktabwidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
-#include "mainwindow.h"
 
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
@@ -46,7 +45,5 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
 
 void ToolsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *)this->parentWidget();
-    parent->uncheckToolsAction();
-
+    emit uncheckSignal();
 }

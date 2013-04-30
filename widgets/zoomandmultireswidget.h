@@ -66,6 +66,9 @@ public:
     QLabel *currentActiveMagDatasetLabel;
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
+signals:
+    void refreshSignal();
+    void uncheckSignal();
 };
 
 #endif // ZOOMANDMULTIRESWIDGET_H

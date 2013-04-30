@@ -26,6 +26,7 @@
 #include "sleeper.h"
 #include "viewer.h"
 #include "renderer.h"
+#include "functions.h"
 #include <QDebug>
 
 
@@ -323,7 +324,7 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     }
     uint32_t timePerStep;
 
-    walkLength = Renderer::euclidicNorm(&walkVector);
+    walkLength = euclidicNorm(&walkVector);
 
     if(walkLength < 1.) walkLength = 10.;
 

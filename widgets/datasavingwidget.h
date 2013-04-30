@@ -42,7 +42,7 @@ public:
     QCheckBox *autoincrementFileNameButton;
     void loadSettings();
 signals:
-    
+    void uncheckSignal();
 public slots:
     void autosaveButtonPushed(bool on);
     void autonincrementFileNameButtonPushed(bool on);

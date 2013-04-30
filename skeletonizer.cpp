@@ -37,9 +37,98 @@
 #include "client.h"
 #include "viewer.h"
 #include "mainwindow.h"
+#include "functions.h"
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
+
+Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
+
+    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
+        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
+
+    //updateSkeletonState();
+
+    //Create a new hash-table that holds the skeleton datacubes
+    state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
+
+    /*@todo
+    if(state->skeletonState->skeletonDCs == HT_FAILURE) {
+        LOG("Unable to create skeleton hash-table.");
+        return false;
+    }*/
+
+    state->skeletonState->skeletonRevision = 0;
+
+    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodesByNodeID = newDynArray(1048576);
+    state->skeletonState->branchStack = newStack(2048);
+
+    // Generate empty tree structures
+    state->skeletonState->firstTree = NULL;
+    state->skeletonState->treeElements = 0;
+    state->skeletonState->totalNodeElements = 0;
+    state->skeletonState->totalSegmentElements = 0;
+    state->skeletonState->activeTree = NULL;
+    state->skeletonState->activeNode = NULL;
+
+    state->skeletonState->mergeOnLoadFlag = 0;
+    state->skeletonState->segRadiusToNodeRadius = 0.5;
+    state->skeletonState->autoFilenameIncrementBool = true;
+    state->skeletonState->greatestNodeID = 0;
+
+    state->skeletonState->showXYplane = false;
+    state->skeletonState->showXZplane = false;
+    state->skeletonState->showYZplane = false;
+    state->skeletonState->showNodeIDs = false;
+    state->skeletonState->highlightActiveTree = false;
+    state->skeletonState->rotateAroundActiveNode = false;
+    state->skeletonState->showIntersections = false;
+
+    state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
+    state->skeletonState->displayListView = 0;
+    state->skeletonState->displayListDataset = 0;
+
+    state->skeletonState->defaultNodeRadius = 1.5;
+    state->skeletonState->overrideNodeRadiusBool = false;
+    state->skeletonState->overrideNodeRadiusVal = 1.;
+
+    state->skeletonState->currentComment = NULL;
+
+    state->skeletonState->lastSaveTicks = 0;
+    state->skeletonState->autoSaveInterval = 5;
+
+    state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
+    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
+    setDefaultSkelFileName();
+
+    state->skeletonState->prevSkeletonFile = (char*) malloc(8192 * sizeof(char));
+    memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
+
+    state->skeletonState->commentBuffer = (char*) malloc(10240 * sizeof(char));
+    memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
+
+    state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
+    memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
+
+    state->skeletonState->saveCnt = 0;
+
+    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y))
+        state->skeletonState->volBoundary = state->boundary.y * 2;
+    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
+        state->skeletonState->volBoundary = state->boundary.x * 2;
+
+    state->skeletonState->viewChanged = true;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->datasetChanged = true;
+    state->skeletonState->skeletonSliceVPchanged = true;
+    state->skeletonState->unsavedChanges = false;
+
+    state->skeletonState->askingPopBranchConfirmation = false;
+
+}
 
 static nodeListElement *addNodeListElement(
               int32_t nodeID,
@@ -203,8 +292,8 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
     segVector.z = (float)(curMagTargetPos.z - curMagSourcePos.z);
 
-    segVectorLength = Renderer::euclidicNorm(&segVector);
-    Renderer::normalizeVector(&segVector);
+    segVectorLength = euclidicNorm(&segVector);
+    normalizeVector(&segVector);
 
     SET_COORDINATE(lastSegVectorPoint,
                    curMagSourcePos.x,
@@ -233,9 +322,9 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
 
     //We walk along the entire segment and add pointers to the segment in all skeleton DCs we are passing.
     for(i = 0; i <= ((int)segVectorLength); i++) {
-        currentSegVectorPoint.x = curMagSourcePos.x + Renderer::roundFloat(((float)i) * segVector.x);
-        currentSegVectorPoint.y = curMagSourcePos.y + Renderer::roundFloat(((float)i) * segVector.y);
-        currentSegVectorPoint.z = curMagSourcePos.z + Renderer::roundFloat(((float)i) * segVector.z);
+        currentSegVectorPoint.x = curMagSourcePos.x + roundFloat(((float)i) * segVector.x);
+        currentSegVectorPoint.y = curMagSourcePos.y + roundFloat(((float)i) * segVector.y);
+        currentSegVectorPoint.z = curMagSourcePos.z + roundFloat(((float)i) * segVector.z);
 
         if(!COMPARE_COORDINATE(Coordinate::Px2DcCoord(lastSegVectorPoint), Coordinate::Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to add a pointer to the segment inside the skeleton DC
@@ -332,8 +421,8 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
     segVector.z = (float)(curMagTargetPos.z - curMagSourcePos.z);
 
-    segVectorLength = Renderer::euclidicNorm(&segVector);
-    Renderer::normalizeVector(&segVector);
+    segVectorLength = euclidicNorm(&segVector);
+    normalizeVector(&segVector);
 
     SET_COORDINATE(lastSegVectorPoint,
                    curMagSourcePos.x,
@@ -371,9 +460,9 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
 
     //We walk along the entire segment and delete pointers to the segment in all skeleton DCs we are passing.
     for(i = 0; i <= ((int)segVectorLength); i++) {
-        currentSegVectorPoint.x = curMagSourcePos.x + Renderer::roundFloat(((float)i) * segVector.x);
-        currentSegVectorPoint.y = curMagSourcePos.y + Renderer::roundFloat(((float)i) * segVector.y);
-        currentSegVectorPoint.z = curMagSourcePos.z + Renderer::roundFloat(((float)i) * segVector.z);
+        currentSegVectorPoint.x = curMagSourcePos.x + roundFloat(((float)i) * segVector.x);
+        currentSegVectorPoint.y = curMagSourcePos.y + roundFloat(((float)i) * segVector.y);
+        currentSegVectorPoint.z = curMagSourcePos.z + roundFloat(((float)i) * segVector.z);
 
         if(!COMPARE_COORDINATE(Coordinate::Px2DcCoord(lastSegVectorPoint), Coordinate::Px2DcCoord(currentSegVectorPoint))) {
             //We crossed a skeleton DC boundary, now we have to delete the pointer to the segment inside the skeleton DC
@@ -423,91 +512,6 @@ static void popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = false;
 }
 
-bool Skeletonizer::initSkeletonizer() {
-    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
-        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
-
-    //updateSkeletonState();
-
-    //Create a new hash-table that holds the skeleton datacubes
-    state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
-    if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        LOG("Unable to create skeleton hash-table.");
-        return false;
-    }
-
-    state->skeletonState->skeletonRevision = 0;
-
-    state->skeletonState->nodeCounter = newDynArray(128);
-    state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(2048);
-
-    // Generate empty tree structures
-    state->skeletonState->firstTree = NULL;
-    state->skeletonState->treeElements = 0;
-    state->skeletonState->totalNodeElements = 0;
-    state->skeletonState->totalSegmentElements = 0;
-    state->skeletonState->activeTree = NULL;
-    state->skeletonState->activeNode = NULL;
-
-    state->skeletonState->mergeOnLoadFlag = 0;
-    state->skeletonState->segRadiusToNodeRadius = 0.5;
-    state->skeletonState->autoFilenameIncrementBool = true;
-    state->skeletonState->greatestNodeID = 0;
-
-    state->skeletonState->showXYplane = false;
-    state->skeletonState->showXZplane = false;
-    state->skeletonState->showYZplane = false;
-    state->skeletonState->showNodeIDs = false;
-    state->skeletonState->highlightActiveTree = false;
-    state->skeletonState->rotateAroundActiveNode = false;
-    state->skeletonState->showIntersections = false;
-
-    state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-    state->skeletonState->displayListView = 0;
-    state->skeletonState->displayListDataset = 0;
-
-    state->skeletonState->defaultNodeRadius = 1.5;
-    state->skeletonState->overrideNodeRadiusBool = false;
-    state->skeletonState->overrideNodeRadiusVal = 1.;
-
-    state->skeletonState->currentComment = NULL;
-
-    state->skeletonState->lastSaveTicks = 0;
-    state->skeletonState->autoSaveInterval = 5;
-
-    state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
-    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
-    setDefaultSkelFileName();
-
-    state->skeletonState->prevSkeletonFile = (char*) malloc(8192 * sizeof(char));
-    memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
-
-    state->skeletonState->commentBuffer = (char*) malloc(10240 * sizeof(char));
-    memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
-
-    state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
-    memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
-
-    state->skeletonState->saveCnt = 0;
-
-    if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z))
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-    if((state->boundary.y >= state->boundary.x) && (state->boundary.y >= state->boundary.y))
-        state->skeletonState->volBoundary = state->boundary.y * 2;
-    if((state->boundary.z >= state->boundary.x) && (state->boundary.z >= state->boundary.y))
-        state->skeletonState->volBoundary = state->boundary.x * 2;
-
-    state->skeletonState->viewChanged = true;
-    state->skeletonState->skeletonChanged = true;
-    state->skeletonState->datasetChanged = true;
-    state->skeletonState->skeletonSliceVPchanged = true;
-    state->skeletonState->unsavedChanges = false;
-
-    state->skeletonState->askingPopBranchConfirmation = false;
-
-    return true;
-}
 
 bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     int32_t addedNodeID;
@@ -1469,8 +1473,9 @@ bool Skeletonizer::loadSkeleton() {
             loadedPosition.y - 1;
         tempConfig->viewerState->currentPosition.z =
             loadedPosition.z - 1;
-
+        /* @todo change to Signal loadSkeleton has to be non-static
         emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+        */
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
@@ -1796,8 +1801,8 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
             distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
             distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
             //set nearest distance to distance to first node found, then to distance of any nearer node found.
-            if(smallestDistance == 0 || Renderer::euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = Renderer::euclidicNorm(&distanceVector);
+            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(&distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
             currentNode = currentNode->next;
@@ -1823,8 +1828,8 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
             distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
             distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
 
-            if(smallestDistance == 0 || Renderer::euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = Renderer::euclidicNorm(&distanceVector);
+            if(smallestDistance == 0 || euclidicNorm(&distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(&distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
 
@@ -1858,8 +1863,8 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
             distanceVector.y = (float)searchPosition.y - (float)currentNode->position.y;
             distanceVector.z = (float)searchPosition.z - (float)currentNode->position.z;
 
-            if(Renderer::euclidicNorm(&distanceVector) < smallestDistance) {
-                smallestDistance = Renderer::euclidicNorm(&distanceVector);
+            if(euclidicNorm(&distanceVector) < smallestDistance) {
+                smallestDistance = euclidicNorm(&distanceVector);
                 nodeWithCurrentlySmallestDistance = currentNode;
             }
             currentNode = currentNode->next;
@@ -2006,7 +2011,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
             lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
             lockVector.z = (float)position->z - (float)state->skeletonState->lockedPosition.z;
 
-            lockDistance = Renderer::euclidicNorm(&lockVector);
+            lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
                 LOG("Node is too far away from lock point (%d), not adding.", lockDistance);
                 Knossos::unlockSkeleton(false);
@@ -3482,8 +3487,9 @@ bool Skeletonizer::popBranchNode(int32_t targetRevision) {
         branchNode->isBranchNode--;
         state->skeletonState->skeletonChanged = true;
 
+        /* @todo change to Signal
         Viewer::updatePosition(TELL_COORDINATE_CHANGE);
-
+        */
         state->skeletonState->branchpointUnresolved = true;
     }
 
@@ -3589,7 +3595,9 @@ bool Skeletonizer::jumpToActiveNode() {
         tempConfig->viewerState->currentPosition.z =
             state->skeletonState->activeNode->position.z;
 
+        /* @todo change to Signal
         Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+        */
     }
 
     return true;

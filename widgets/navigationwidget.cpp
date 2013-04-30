@@ -32,7 +32,7 @@
 #include <QGroupBox>
 #include <QSpacerItem>
 #include "knossos-global.h"
-#include "mainwindow.h"
+
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -194,6 +194,6 @@ void NavigationWidget::numberOfStepsChanged(int value) {
 
 void NavigationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckNavigationAction();
+    emit uncheckSignal();
+
 }

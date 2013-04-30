@@ -44,6 +44,7 @@ public:
     
 signals:
     void finished();
+    void updateViewerStateSignal();
 public slots:
     void start();
 

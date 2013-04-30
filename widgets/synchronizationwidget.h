@@ -41,7 +41,7 @@ public:
     bool connected;
     void loadSettings();
 signals:
-    
+    void uncheckSignal();
 public slots:
     void connectButtonPushed();
 protected:

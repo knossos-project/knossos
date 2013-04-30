@@ -24,6 +24,7 @@
 
 #include "eventmodel.h"
 #include "mainwindow.h"
+#include "functions.h"
 
 
 extern struct stateInfo *state;
@@ -293,9 +294,9 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                                 walkingVector.z = movement.z;
 
                                 if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING){
-                                    clickedCoordinate->x += Renderer::roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / Renderer::euclidicNorm(&walkingVector));
-                                    clickedCoordinate->y += Renderer::roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / Renderer::euclidicNorm(&walkingVector));
-                                    clickedCoordinate->z += Renderer::roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / Renderer::euclidicNorm(&walkingVector));
+                                    clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                                    clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                                    clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
                                 }
                                 if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR){
                                 clickedCoordinate->x += walkingVector.x;
@@ -385,7 +386,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                                            clickedCoordinate->x,
                                            clickedCoordinate->y,
                                            clickedCoordinate->z);
-                            Viewer::updateViewerState();
+                            emit updateViewerStateSignal();
                             Knossos::sendRemoteSignal();
                         }
                     }
@@ -660,7 +661,10 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
             // Zoom when CTRL is pressed
             if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("again control and mouse wheel up");
-                emit zoomOrthogonalsSignal(-0.1);
+
+                emit zoomOrthoSignal(-0.1);
+
+
             }
             // Move otherwise
             else {
@@ -735,7 +739,10 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
             // Zoom when CTRL is pressed
             if(keyMod.testFlag(Qt::ControlModifier)) {
                 qDebug("control and mouse wheel down");
-                emit zoomOrthogonalsSignal(0.1);
+
+                emit zoomOrthoSignal(0.1);
+
+
             }
             // Move otherwise
             else {
@@ -1107,7 +1114,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_I) {
         qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
-            emit zoomOrthogonalsSignal(-0.1);
+            emit zoomOrthoSignal(-0.1);
+
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
@@ -1116,7 +1124,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_O) {
         qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
-            emit zoomOrthogonalsSignal(0.1);
+            emit zoomOrthoSignal(0.1);
+
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
@@ -1126,7 +1135,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_S) {
         if(control) {
             qDebug() << "S und control";
-            //saveSkelCallback(NULL);
+            //saveSkelCallback(NULL); /* @todo */
             return true;
         }
         qDebug() << "S pressed";
@@ -1137,7 +1146,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
                 state->skeletonState->activeNode->position.y;
             tempConfig->viewerState->currentPosition.z =
                 state->skeletonState->activeNode->position.z;
+
             emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+
+
         }
     } else if(event->key() == Qt::Key_A) {
         qDebug() << "A pressed";
@@ -1153,7 +1165,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
     } else if(event->key() == Qt::Key_V) {
        if(shift) {
            qDebug() << "V und shift";
-            //MainWindow::pasteClipboardCoordinates();
+           emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) {
         qDebug() << "1 pressed";

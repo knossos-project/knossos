@@ -34,7 +34,6 @@
 #include <QDebug>
 #include "knossos-global.h"
 #include "viewer.h"
-#include "mainwindow.h"
 
 extern struct stateInfo *state;
 
@@ -153,6 +152,7 @@ void ZoomAndMultiresWidget::skeletonSliderSlot(int value) {
     this->skeletonViewSpinBox->setValue(result);
     state->skeletonState->zoomLevel = result;
 
+
 }
 
 /**
@@ -162,6 +162,8 @@ void ZoomAndMultiresWidget::skeletonSpinBoxSlot(double value) {
    this->skeletonViewSlider->setValue(value * 200);
 
     state->skeletonState->zoomLevel = (float) value;
+
+
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
@@ -184,12 +186,14 @@ void ZoomAndMultiresWidget::zoomDefaultsSlot() {
     skeletonViewSpinBox->setValue(MIN_ZOOM);
 
     state->skeletonState->zoomLevel = 0.0;
+    emit refreshSignal();
+
     Viewer::refreshViewports();
 
 }
 
 void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckZoomAndMultiresAction();
+    emit uncheckSignal();
+
 }

@@ -48,7 +48,8 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-
+Knossos *knossos;
+Viewer *viewer;
 
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
@@ -151,13 +152,16 @@ int main(int argc, char *argv[])
     // built up threads. Do not follow instructions of qt documentation on QThread
     // as they are outdated since qt 4.4!
     // Instead of subclassing a QThread, normal QObjects are to be moved onto threads
-    Viewer *viewer = new Viewer();
+
+
+    knossos = new Knossos();
+    viewer = new Viewer();
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
 
-    QObject::connect(knossos, SIGNAL(loadDataSetColortableSignal(const char*,GLuint*,int32_t)), viewer, SLOT(loadDatasetColorTable(const char*,GLuint*,int32_t));
 
+    QObject::connect(knossos, SIGNAL(calcDisplayedEdgeLengthSignal()), viewer, SLOT(calcDisplayedEdgeLength()));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     //viewer->start();
     loader->start();
@@ -301,7 +305,10 @@ int32_t Knossos::initStates() {
        return false;
    }
 
-   Viewer::calcDisplayedEdgeLength();
+   /* @todo todo emitting signals out of class seems to be problematic
+   emit knossos->calcDisplayedEdgeLengthSignal();
+   */
+
 
    // For the GUI
    strncpy(state->viewerState->gui->settingsFile,

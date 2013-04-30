@@ -26,7 +26,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include "knossos-global.h"
-#include "mainwindow.h"
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -54,6 +53,5 @@ void TracingTimeWidget::loadSettings() {
 
 void TracingTimeWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckTracingTimeAction();
+    emit uncheckSignal();
 }

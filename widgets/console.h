@@ -35,7 +35,7 @@ public:
     explicit Console(QWidget *parent = 0);
 
 signals:
-    
+    void uncheckSignal();
 public slots:
     
 protected:

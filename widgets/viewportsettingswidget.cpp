@@ -26,7 +26,6 @@
 #include "viewportsettings/vpgeneraltabwidget.h"
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
 #include "viewportsettings/vpskeletonviewportwidget.h"
-#include "mainwindow.h"
 
 ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
     QDialog(parent)
@@ -46,6 +45,5 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
 
 void ViewportSettingsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckViewportSettingAction();
+    emit uncheckSignal();
 }

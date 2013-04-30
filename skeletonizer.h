@@ -35,15 +35,11 @@ class Skeletonizer : public QObject
 {
     Q_OBJECT
 public:
-    //methods
     explicit Skeletonizer(QObject *parent = 0);
-
-    bool initSkeletonizer();
-
+    bool updateSkeletonState();
 
     static bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
-    static bool updateSkeletonState();
     static bool nextCommentlessNode();
     static bool previousCommentlessNode();
 
@@ -126,8 +122,10 @@ public:
     static bool updateTreeColors();
 
 signals:
-public slots:
     void updatePositionSignal(int32_t serverMovement);
+    void refreshViewportsSignal();
+
+
 };
 
 #endif // SKELETONIZER_H

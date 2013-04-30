@@ -1282,9 +1282,9 @@ struct inputmap {
     struct inputmap *next;
 };
 
+/* global functions */
 
-
-//      Macros
+/* Macros */
 
 
 #define SET_COORDINATE(coordinate, a, b, c) \

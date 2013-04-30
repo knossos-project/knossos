@@ -31,7 +31,7 @@
 #include <QFormLayout>
 #include <QVariant>
 #include "knossos-global.h"
-#include "mainwindow.h"
+
 
 extern struct stateInfo *state;
 
@@ -86,8 +86,7 @@ void CommentsWidget::deleteComments() {
 
 void CommentsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckCommentShortcutsAction();
+    emit this->uncheckSignal();
 }
 
 /**

@@ -30,7 +30,7 @@
 #include <QLabel>
 #include <QSpinBox>
 #include "knossos-global.h"
-#include "mainwindow.h"
+
 
 extern struct stateInfo *state;
 
@@ -69,8 +69,7 @@ void DataSavingWidget::loadSettings() {
 
 void DataSavingWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckDataSavingAction();
+    emit uncheckSignal();
 }
 
 void DataSavingWidget::autosaveButtonPushed(bool on) {

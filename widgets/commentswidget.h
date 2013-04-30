@@ -41,7 +41,7 @@ public:
     void loadSettings();
 
 signals:
-    
+    void uncheckSignal();
 public slots:
     void deleteComments();
 

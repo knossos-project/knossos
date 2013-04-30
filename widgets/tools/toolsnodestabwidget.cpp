@@ -204,6 +204,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
         tempConfig->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
 
         emit updatePositionSignal();
+
     }
 
 }

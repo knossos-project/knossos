@@ -154,6 +154,15 @@ MainWindow::MainWindow(QWidget *parent) :
     setCentralWidget(mainWidget);
 
 
+    connect(toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
+    connect(viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
+    connect(commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
+    connect(console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
+    connect(tracingTimeWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckTracingTimeAction()));
+    connect(zoomAndMultiresWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckZoomAndMultiresAction()));
+    connect(dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
+    connect(navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
+    connect(synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     /*
     viewports = new Viewport*[NUM_VP];
 
@@ -191,8 +200,6 @@ MainWindow::MainWindow(QWidget *parent) :
     saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
 
     updateTitlebar(false);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -495,6 +502,7 @@ void MainWindow::loadSkeleton() {
     }
 }
 
+
 void MainWindow::zoomOrthogonals(float step){
     int32_t i = 0;
         int32_t triggerMagChange = false;
@@ -540,9 +548,12 @@ void MainWindow::zoomOrthogonals(float step){
         state->viewerState->gui->zoomOrthoVPs =
             state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
 
-        if(triggerMagChange) emit changeDatasetMagSignal(triggerMagChange);
+        if(triggerMagChange)
+            emit changeDatasetMagSignal(triggerMagChange);
 
-        emit recalcTextureOffsetsSignal();
+       emit recalcTextureOffsetsSignal();
+
+
 }
 
 /**
@@ -1146,8 +1157,10 @@ void MainWindow::pasteClipboardCoordinates(){
             this->zField->setValue(extractedCoords->z);
 
 
+
             emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-            Viewer::refreshViewports();
+
+            emit refreshViewportsSignal();
 
             free(extractedCoords);
 

@@ -24,7 +24,6 @@
 
 #include "console.h"
 #include <QPlainTextEdit>
-#include "mainwindow.h"
 
 Console::Console(QWidget *parent) :
     QDialog(parent)
@@ -43,6 +42,6 @@ Console::Console(QWidget *parent) :
 
 void Console::closeEvent(QCloseEvent *event) {
     this->hide();
-    MainWindow *parent = (MainWindow *) this->parentWidget();
-    parent->uncheckConsoleAction();
+    emit uncheckSignal();
+
 }

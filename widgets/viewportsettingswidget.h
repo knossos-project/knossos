@@ -41,7 +41,7 @@ public:
     VPSkeletonViewportWidget *skeletonViewportWidget;
     VPSlicePlaneViewportWidget *slicePlaneViewportWidget;
 signals:
-    
+    void uncheckSignal();
 public slots:
 
 protected:

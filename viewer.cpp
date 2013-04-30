@@ -53,10 +53,17 @@ Viewer::Viewer(QObject *parent) :
     vp3 = new Viewport(window, VIEWPORT_YZ);
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
+    vp->setGeometry(5, 40, 350 ,350);
+    vp2->setGeometry(355, 40, 350, 350);
+    vp3->setGeometry(5, 405, 350, 350);
+    vp4->setGeometry(355, 405, 350, 350);
+
+    /*
     vp->setGeometry(5, 40, 500, 500);
     vp2->setGeometry(510, 40, 500, 500);
     vp3->setGeometry(5, 545, 500, 500);
     vp4->setGeometry(510, 545, 500, 500);
+    */
 
     vp->show();
     vp2->show();
@@ -68,16 +75,43 @@ Viewer::Viewer(QObject *parent) :
     connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()));
     connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()));
 
-    // init the viewer thread and all subsystems handled by it
-    if(!Viewer::initViewer()) {
-       LOG("Error initializing the viewer.");
-       return;
-    }
+    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    /* what about vp4 */
 
-    if(Renderer::initRenderer() == false) {
-        qDebug("Error initializing the rendering system.");
+    connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    /* what about vp4 */
 
-    }
+    connect(window, SIGNAL(changeDatasetMagSignal(int32_t)), this, SLOT(changeDatasetMag(uint32_t)));
+    connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
+
+    connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+
+    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+
+    connect(vp->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp2->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+
+    /* order of the initialization of the rendering system is
+     * 1. initViewer
+     * 2. new Skeletonizer
+     * 3. new Renderer
+     */
+
+    initViewer();
+    skeletonizer = new Skeletonizer();
+    renderer = new Renderer();
+
 
     SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
 
@@ -883,18 +917,6 @@ bool Viewer::initViewer() {
         return false;
     }
 
-    // init the gui
-    /*
-    if(MainWindow::initGUI() == false) {
-        LOG("Error initializing the gui system");
-        return false;
-    }
-    */
-
-    // TDitem
-
-    // Load the color map for the overlay
-
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
         if(loadDatasetColorTable("stdOverlay.lut",
@@ -1296,7 +1318,7 @@ void Viewer::run() {
 
                 updateViewerState();
                 recalcTextureOffsets();
-                Skeletonizer::updateSkeletonState();
+                skeletonizer->updateSkeletonState();
                 Renderer::drawGUI();
 
                 // TODO Crashes because of SDL
@@ -1650,6 +1672,10 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
                                 NO_MAG_CHANGE);
     }
     Remote::checkIdleTime();
+    run();
+    qDebug() << state->currentPositionX.x;
+    qDebug() << state->currentPositionX.y;
+    qDebug() << state->currentPositionX.z;
 
     return true;
 }
@@ -1973,10 +1999,10 @@ bool Viewer::recalcTextureOffsets() {
 
 bool Viewer::refreshViewports() {
     /*
-    state->viewerState->gui->vpXyWin->updateGL();
-    state->viewerState->gui->vpXzWin->updateGL();
-    state->viewerState->gui->vpYzWin->updateGL();
-    state->viewerState->gui->vpSkelWin->updateGL();
+    vp->updateGL();
+    v2->updateGL();
+    vp3->updateGL();
+    vp4->updateGL();
     */
     return true;
 }
