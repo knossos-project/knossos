@@ -268,8 +268,6 @@
 #define AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE 3
 
 //Structures and custom types
-class Viewport;
-
 typedef uint8_t Byte;
 
 typedef struct {
@@ -783,10 +781,10 @@ struct guiConfig {
     //NavigationWidget *navigationWidget;
     //ToolsWidget *toolWidget;
 
-    Viewport *vpXyWin;
+    /*Viewport *vpXyWin;
     Viewport *vpXzWin;
     Viewport *vpYzWin;
-    Viewport *vpSkelWin;
+    Viewport *vpSkelWin; */
 
     //AG_FileDlg *fileDlg;
 

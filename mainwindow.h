@@ -101,7 +101,7 @@ public:
 
     void loadDefaultPrefs();
 signals:
-    void changeDatasetMagSignal(int32_t serverMovement);
+    bool changeDatasetMagSignal(int32_t serverMovement);
     void recalcTextureOffsetsSignal();
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();

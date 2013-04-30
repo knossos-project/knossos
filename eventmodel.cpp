@@ -24,7 +24,10 @@
 
 #include "eventmodel.h"
 #include "mainwindow.h"
+#include "remote.h"
 #include "functions.h"
+#include "knossos.h"
+#include "skeletonizer.h"
 
 
 extern struct stateInfo *state;
@@ -1297,7 +1300,6 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
 }
 
 int EventModel::xrel(int x) {
-
     return (x - this->mouseX);
 }
 

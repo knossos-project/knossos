@@ -76,7 +76,8 @@ private:
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
 signals:
-
+    void renderOrthogonalVPSignal(int32_t plane);
+    void renderSkeletonVPSignal(int32_t plane);
 public slots:
     
 };

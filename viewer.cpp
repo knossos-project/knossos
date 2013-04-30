@@ -28,7 +28,7 @@
 #include "client.h"
 #include "skeletonizer.h"
 #include "renderer.h"
-#include "eventmodel.h"
+
 #include "remote.h"
 #include "sleeper.h"
 #include "mainwindow.h"
@@ -101,6 +101,11 @@ Viewer::Viewer(QObject *parent) :
     connect(vp2->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+
+    /*
+    connect(vp, SIGNAL(renderOrthogonalVPSignal(int32_t)), renderer, SLOT(renderOrthogonalVP(uint32_t)));
+    connect(vp, SIGNAL(renderSkeletonVPSignal(int32_t)), renderer, SLOT(renderSkeletonVP(uint32_t)));
+    */
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -805,7 +810,7 @@ static bool upsampleVPTexture(vpConfig *vpConfig) {
 
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
-bool calcLeftUpperTexAbsPx() {
+bool Viewer::calcLeftUpperTexAbsPx() {
     uint32_t i = 0;
     Coordinate currentPosition_dc, currPosTrans;
     viewerState *viewerState = state->viewerState;
@@ -908,14 +913,6 @@ bool Viewer::initViewer() {
     qDebug() << "Viewer: initViewer begin";
     calcLeftUpperTexAbsPx();
 
-
-    // init the skeletonizer
-    Skeletonizer skeletonizer;
-
-    if(skeletonizer.initSkeletonizer() == false) {
-        LOG("Error initializing the skeletonizer.");
-        return false;
-    }
 
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));

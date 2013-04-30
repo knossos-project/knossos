@@ -48,13 +48,11 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-Knossos *knossos;
+//Knossos *knossos;
 Viewer *viewer;
 
 //static uint32_t isPathString(char *string);
 //static uint32_t printUsage();
-
-Knossos *knossos = new Knossos();
 
 
 int main(int argc, char *argv[])
@@ -154,14 +152,14 @@ int main(int argc, char *argv[])
     // Instead of subclassing a QThread, normal QObjects are to be moved onto threads
 
 
-    knossos = new Knossos();
+    //knossos = new Knossos();
     viewer = new Viewer();
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
 
 
-    QObject::connect(knossos, SIGNAL(calcDisplayedEdgeLengthSignal()), viewer, SLOT(calcDisplayedEdgeLength()));
+    //QObject::connect(knossos, SIGNAL(calcDisplayedEdgeLengthSignal()), viewer, SLOT(calcDisplayedEdgeLength()));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     //viewer->start();
     loader->start();
@@ -1095,7 +1093,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      tempConfig->M = (int32_t)atoi(rval);
                      break;
                  case 10:
-                     Viewer::loadDatasetColorTableSignal(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
+                     Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
                      break;
                  case 11:
                      Knossos::readConfigFile(rval);

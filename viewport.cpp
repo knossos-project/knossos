@@ -180,9 +180,12 @@ void Viewport::paintGL() {
 
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
-            drawViewport(this->plane);
+            drawViewport(plane);
+            //emit renderOrthogonalVPSignal(plane);
         }  else {
             drawSkeletonViewport();
+
+            //emit renderSkeletonVPSignal(plane);
         }
     }
 
@@ -200,8 +203,8 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-
     qDebug() << "mouse move Event";
+
 
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
@@ -211,9 +214,10 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     } else if(QApplication::mouseButtons() == Qt::RightArrow) {
         handleMouseMotionRightHold(event, plane);
     }
+
+    delegate->mouseX = event->x();
+    delegate->mouseY = event->y();
 }
-
-
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
 
@@ -292,11 +296,12 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
     return delegate->handleMouseButtonRight(event, VPfound);
 }
 
-bool Viewport::handleMouseMotion(QMouseEvent *event, int32_t VPfound) {}
+bool Viewport::handleMouseMotion(QMouseEvent *event, int32_t VPfound) {
+
+}
 
 bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
     return delegate->handleMouseMotionLeftHold(event, VPfound);
-
 }
 
 bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {

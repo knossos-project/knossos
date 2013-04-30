@@ -30,8 +30,6 @@
 #include <QDebug>
 #include <QCursor>
 #include "knossos-global.h"
-#include "knossos.h"
-#include "renderer.h"
 
 /**
  *
@@ -60,12 +58,8 @@ public:
     //from knossos-global.h
 
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
-    static bool calcDisplayedEdgeLength();
-
-       //Initializes the window with the parameter given in viewerState
-
+    //Initializes the window with the parameter given in viewerState
     static bool createScreen();
-
     //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
     //Calling makes only sense after full initialization of the SDL / OGL screen
     static bool initializeTextures(); // it now part of the initGL function of the viewport
@@ -73,8 +67,7 @@ public:
     static bool updateZoomCube();
     static int32_t findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen);
 
-
-
+    static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
 
     void run();
@@ -92,13 +85,9 @@ protected:
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
-    bool initViewer();
-
 public slots:
-    //bool userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
-    /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
     bool changeDatasetMag(uint32_t upOrDownFlag);
-    bool userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
+    bool userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
     bool updatePosition(int32_t serverMovement);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();

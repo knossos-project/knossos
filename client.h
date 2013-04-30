@@ -42,8 +42,6 @@ class Client : public QObject
 public:
     explicit Client(QObject *parent = 0);
 
-
-
     static bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
     static bool skeletonSyncBroken();
     static int32_t bytesToInt(Byte *source);

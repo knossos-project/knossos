@@ -48,8 +48,6 @@ public:
     explicit Renderer(QObject *parent = 0);
 
     static bool drawGUI();
-    static bool renderOrthogonalVP(uint32_t currentVP);
-    static bool renderSkeletonVP(uint32_t currentVP);
 
     //Some math helper functions
     static float radToDeg(float rad);
@@ -67,6 +65,8 @@ signals:
     
 public slots:
     static uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
+    static bool renderOrthogonalVP(uint32_t currentVP);
+    static bool renderSkeletonVP(uint32_t currentVP);
 };
 
 #endif // RENDERER_H

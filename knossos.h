@@ -29,6 +29,7 @@
 class Knossos : public QObject {
     Q_OBJECT
 public:
+    explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
     static bool printConfigValues();

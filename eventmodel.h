@@ -34,11 +34,6 @@
 
 #include "knossos-global.h"
 #include "renderer.h"
-#include "skeletonizer.h"
-#include "knossos.h"
-#include "viewer.h"
-#include "remote.h"
-#include "eventmodel.h"
 
 /**
   * @class EventModel
@@ -76,10 +71,9 @@ public:
 
     int xrel(int x);
     int yrel(int y);
-
-protected:
     int mouseX;
     int mouseY;
+protected:
 
 signals:
     void rerender();

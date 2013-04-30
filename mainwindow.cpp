@@ -51,10 +51,10 @@
 #include <dirent.h>
 */
 
-#include "loader.h"
-#include "viewer.h"
 #include "knossos-global.h"
+#include "knossos.h"
 #include "viewport.h"
+#include "skeletonizer.h"
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
 #include "widgets/commentswidget.h"
