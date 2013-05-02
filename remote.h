@@ -28,7 +28,7 @@
 #include <QObject>
 #include <QThread>
 
-class Remote : public QObject
+class Remote : public QThread
 {
     Q_OBJECT
 public:
@@ -41,12 +41,13 @@ public:
     static bool remoteWalk(int32_t x, int32_t y, int32_t z);
     static bool newTrajectory(char *trajName, char *trajectory);
     static bool cleanUpRemote();
-    
+    void run();
+
 signals:
     void finished();
     void updateViewerStateSignal();
 public slots:
-    void start();
+    //void start();
 
 
 

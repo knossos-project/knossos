@@ -164,6 +164,8 @@ int main(int argc, char *argv[])
     //viewer->start();
     loader->start();
     viewer->run();
+    remote = new Remote();
+    remote->start();
 
 
     /*

@@ -204,7 +204,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
         tempConfig->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
 
         /* @todo connect signal with the corresponding slot */
-        emit updatePositionSignal();
+        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
 
     }
 

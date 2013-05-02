@@ -54,13 +54,16 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void customEvent(QEvent *event);
+    void enterEvent(QEvent *event);
+    void leaveEvent(QEvent *event);
+    void paintEvent(QPaintEvent *event);
     int xrel(int x);
     int yrel(int y);
     int plane; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
     QPushButton *xy, *xz, *yz, *flip, *reset;
-
+    bool entered;
 
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);

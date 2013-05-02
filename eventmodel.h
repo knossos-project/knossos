@@ -84,7 +84,9 @@ signals:
     void updateViewerStateSignal();
     // SIGNAL MIT RÜCKGABEWERT?
     uint32_t retrieveVisibleObjectBeneathSquareSignal(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
-
+    void updateWidgetSignal();
+    void workModeAddSignal();
+    void workModeLinkSignal();
 public slots:
     
 };

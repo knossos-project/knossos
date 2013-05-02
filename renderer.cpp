@@ -490,7 +490,7 @@ static uint32_t renderViewportBorders(uint32_t currentVP) {
 
 
 bool Renderer::drawGUI() {
-
+     Renderer::updateDisplayListsSkeleton();
      return true;
 }
 
@@ -979,7 +979,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             glDisable(GL_TEXTURE_2D);
 
             glLoadName(1);
-            glColor4f(0.9, 0.9, 0.9, 1.);
+            glColor4f(0.9, 0.9, 0.9, 1.); // HERE
             // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
             glBegin(GL_QUADS);
                 glVertex3i(-state->skeletonState->volBoundary * 10, -state->skeletonState->volBoundary * 10, 0);
@@ -1337,7 +1337,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glLoadName(3);
-            glColor4f(0., 0., 0., 0.1);
+            glColor4f(0., 0., 0., 1); // HERE
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
                 glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
@@ -1382,7 +1382,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
                 glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
             glEnd();
 
-            glColor4f(0., 0., 0., 1.);
+            glColor4f(0., 0., 0.,1.); // HERE
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             glPushMatrix();
@@ -2313,7 +2313,7 @@ static GLuint renderWholeSkeleton(Byte callFlag) {
 }
 
 
-static uint32_t updateDisplayListsSkeleton() {
+bool Renderer::updateDisplayListsSkeleton() {
 
     if(state->skeletonState->skeletonChanged) {
         state->skeletonState->skeletonChanged = false;

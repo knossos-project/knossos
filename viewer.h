@@ -55,6 +55,7 @@ public:
     MainWindow *window;
 
     Viewport *vp, *vp2, *vp3, *vp4;
+    vpList *viewports;
     //from knossos-global.h
 
     static bool loadTreeColorTable(const char *path, float *table, int32_t type);
@@ -70,7 +71,7 @@ public:
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
 
-    void run();
+
 
 signals:
     void loadSignal();
@@ -79,7 +80,7 @@ signals:
     void updateGLSignal2();
     void updateGLSignal3();
     void updateGLSignal4();
-
+    void updateCoordinatesSignal(int x, int y, int z);
 protected:
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
@@ -93,7 +94,7 @@ public slots:
     bool calcDisplayedEdgeLength();
     static bool refreshViewports();
     static bool updateViewerState();
-
+    void run();
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

@@ -60,7 +60,7 @@ public:
     static bool setRotationState(uint32_t setTo);
     static bool rotateSkeletonViewport();
     static bool updateRotationStateMatrix(float M1[16], float M2[16]);
-
+    static bool updateDisplayListsSkeleton();
 signals:
     
 public slots:

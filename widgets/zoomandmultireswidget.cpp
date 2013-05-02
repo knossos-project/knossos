@@ -33,7 +33,10 @@
 #include <QCheckBox>
 #include <QDebug>
 #include "knossos-global.h"
-#include "viewer.h"
+
+#include <QListWidget>
+#include <QListWidgetItem>
+
 
 extern struct stateInfo *state;
 
@@ -50,6 +53,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent)
 {
     setWindowTitle("Zoom and Multiresolution Settings");
+
     // top layout
     QGridLayout *topLayout = new QGridLayout();
     this->orthogonalDataViewportLabel = new QLabel("Orthogonal Data Viewport");
@@ -113,8 +117,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     mainLayout->addWidget(highestActiveMagDatasetLabel);
     mainLayout->addWidget(lowestActiveMagDatasetLabel);
 
-
-    this->setLayout(mainLayout);
+    setLayout(mainLayout);
 
     connect(this->orthogonalDataViewportSlider, SIGNAL(valueChanged(int)), this, SLOT(orthogonalSliderSlot(int)));
     connect(this->orthogonalDataViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(orthogonalSpinBoxSlot(double)));
@@ -133,7 +136,7 @@ void ZoomAndMultiresWidget::orthogonalSliderSlot(int value) {
     float result = value / 100.0;
     this->orthogonalDataViewportSpinBox->setValue(result);
     state->viewerState->gui->zoomOrthoVPs = result;
-
+    emit refreshSignal();
 }
 
 /**
@@ -142,6 +145,8 @@ void ZoomAndMultiresWidget::orthogonalSliderSlot(int value) {
 void ZoomAndMultiresWidget::orthogonalSpinBoxSlot(double value) {
     this->orthogonalDataViewportSlider->setValue(value * 100);
     state->viewerState->gui->zoomOrthoVPs = value;
+
+    emit refreshSignal();
 }
 
 /**
@@ -152,7 +157,7 @@ void ZoomAndMultiresWidget::skeletonSliderSlot(int value) {
     this->skeletonViewSpinBox->setValue(result);
     state->skeletonState->zoomLevel = result;
 
-
+    emit refreshSignal();
 }
 
 /**
@@ -163,7 +168,7 @@ void ZoomAndMultiresWidget::skeletonSpinBoxSlot(double value) {
 
     state->skeletonState->zoomLevel = (float) value;
 
-
+    emit refreshSignal();
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
@@ -175,7 +180,7 @@ void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
 }
 
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
-    const int MIN_ZOOM = 0.02;
+    const float MIN_ZOOM = 0.02;
     state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MIN_ZOOM;
     state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MIN_ZOOM;
     state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MIN_ZOOM;
@@ -188,7 +193,6 @@ void ZoomAndMultiresWidget::zoomDefaultsSlot() {
     state->skeletonState->zoomLevel = 0.0;
     emit refreshSignal();
 
-    Viewer::refreshViewports();
 
 }
 
@@ -196,4 +200,8 @@ void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
 
+}
+
+void ZoomAndMultiresWidget::update() {
+    orthogonalDataViewportSpinBox->setValue(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
 }

@@ -37,9 +37,7 @@ class ZoomAndMultiresWidget : public QDialog
     Q_OBJECT
 public:
     explicit ZoomAndMultiresWidget(QWidget *parent = 0);
-    
-signals:
-    
+        
 public slots:
     void zoomDefaultsSlot();
     void lockDatasetMagSlot(bool on);
@@ -47,6 +45,7 @@ public slots:
     void skeletonSliderSlot(int value);
     void orthogonalSpinBoxSlot(double value);
     void skeletonSpinBoxSlot(double value);
+    void update();
 protected:
     void closeEvent(QCloseEvent *event);
 public:

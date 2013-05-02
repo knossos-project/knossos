@@ -52,7 +52,6 @@ public:
     static void setDefaultSkelFileName();
 
     static bool delActiveNode();
-    static bool delActiveTree();
 
     static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
     static bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
@@ -121,6 +120,7 @@ public:
     static void restoreDefaultTreeColor();
     static bool updateTreeColors();
 
+    static bool delActiveTree();
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();

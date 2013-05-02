@@ -45,12 +45,6 @@
 #include <QSettings>
 #include <QDir>
 #include <QThread>
-/*
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-*/
-
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
@@ -76,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 
     ui->setupUi(this);
+
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
@@ -552,7 +547,7 @@ void MainWindow::zoomOrthogonals(float step){
             emit changeDatasetMagSignal(triggerMagChange);
 
        emit recalcTextureOffsetsSignal();
-
+       emit runSignal();
 
 }
 
@@ -664,23 +659,6 @@ void MainWindow::datasetColorAdjustmentsChanged() {
         }
 
         state->viewerState->datasetAdjustmentOn = doAdjust;
-}
-
-
-void MainWindow::createXYViewport() {
-
-}
-
-void MainWindow::createXZViewport() {
-
-}
-
-void MainWindow::createYZViewport() {
-
-}
-
-void MainWindow::createSkeletonViewport() {
-
 }
 
 //-- private methods --//
@@ -1126,9 +1104,9 @@ void MainWindow::copyClipboardCoordinates() {
    snprintf(copyString,
                  8192,
                  "%d, %d, %d",
-                 this->xField->value(),
-                 this->yField->value(),
-                 this->zField->value());
+                 this->xField->value() + 1,
+                 this->yField->value() + 1,
+                 this->zField->value()) + 1;
    QString coords(copyString);
    QApplication::clipboard()->setText(coords);
 }
@@ -1160,7 +1138,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
             emit updatePositionSignal(TELL_COORDINATE_CHANGE);
 
-            emit refreshViewportsSignal();
+            emit runSignal();
 
             free(extractedCoords);
 
@@ -1176,6 +1154,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
 void MainWindow::xCoordinateChanged(int value) {
     state->viewerState->currentPosition.x = value;
+
 }
 
 void MainWindow::yCoordinateChanged(int value) {
@@ -1377,4 +1356,11 @@ void MainWindow::uncheckZoomAndMultiresAction() {
 
 void MainWindow::uncheckNavigationAction() {
     this->datasetNavigationAction->setChecked(false);
+}
+
+void MainWindow::updateCoordinateBar(int x, int y, int z) {
+    xField->setValue(x);
+    yField->setValue(y);
+    zField->setValue(z);
+
 }

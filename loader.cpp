@@ -31,7 +31,6 @@
 
 extern stateInfo *state;
 
-
 Loader::Loader(QObject *parent) :
     QThread(parent)
 {

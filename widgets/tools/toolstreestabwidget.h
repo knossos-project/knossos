@@ -39,7 +39,7 @@ public:
     explicit ToolsTreesTabWidget(QWidget *parent = 0);
     void loadSettings();
 signals:
-    
+
 public slots:
     void activeTreeIDChanged(int value);
     void commentChanged(QString comment);

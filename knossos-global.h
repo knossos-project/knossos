@@ -76,13 +76,6 @@
 #define PTRSIZEINT int64_t
 #endif
 
-/*
-#ifdef ARCH_64
-#define PTRSIZEINT int64_t
-#else
-#define PTRSIZEINT int32_t
-#endif
-*/
 // The edge length of a datacube is 2^N, which makes the size of a
 // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
 // So N cannot be larger than 10.
@@ -95,10 +88,7 @@
 // Bytes for an object ID.
 #define OBJID_BYTES  3
 
-
- //	For the hashtable.
-
-
+//	For the hashtable.
 #define HT_SUCCESS  1
 #define HT_FAILURE  0
 #define LL_SUCCESS  1
@@ -108,8 +98,6 @@
 
 
  //	For the viewer.
-
-
 #define	SLICE_XY	0
 #define SLICE_XZ	1
 #define	SLICE_YZ	2

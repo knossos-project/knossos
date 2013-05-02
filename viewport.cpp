@@ -46,9 +46,11 @@ Viewport::Viewport(QWidget *parent, int plane) :
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
-    setStyleSheet("background:black");
+
+
+
     this->setCursor(Qt::CrossCursor);
-    this->setFocusPolicy(Qt::StrongFocus);
+
 
     if(plane == VIEWPORT_SKELETON + 10) {
         this->xy = new QPushButton("xy");
@@ -203,20 +205,26 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    qDebug() << "mouse move Event";
 
-
+    //qDebug() << "mouse move Event";
+    bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
         handleMouseMotionLeftHold(event, plane);
+        clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
         handleMouseMotionMiddleHold(event, plane);
+        clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::RightArrow) {
         handleMouseMotionRightHold(event, plane);
+        clickEvent = true;
     }
 
-    delegate->mouseX = event->x();
-    delegate->mouseY = event->y();
+
+    if(true) {
+        delegate->mouseX = event->x();
+        delegate->mouseY = event->y();
+    }
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
@@ -233,9 +241,13 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
         handleMouseButtonRight(event, plane);
     }
 
+
+
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
+    delegate->mouseX = event->x();
+    delegate->mouseY = event->y();
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
@@ -324,8 +336,21 @@ bool Viewport::handleKeyboard(QKeyEvent *event) {
     return delegate->handleKeyboard(event);
 }
 
-Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
+void Viewport::enterEvent(QEvent *event) {
+    entered = true;
 
+}
+
+void Viewport::paintEvent(QPaintEvent *event) {
+
+
+}
+
+void Viewport::leaveEvent(QEvent *event) {
+    entered = false;
+}
+
+Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
     Coordinate *foundCoordinate;
     foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
     int32_t x, y, z;

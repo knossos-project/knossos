@@ -616,6 +616,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
         }
     }
 
+
     return true;
 }
 
@@ -1118,22 +1119,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(-0.1);
-
+            emit updateWidgetSignal();
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
             state->skeletonState->viewChanged = false;
+
         }
     } else if(event->key() == Qt::Key_O) {
         qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(0.1);
+            emit updateWidgetSignal();
 
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
             if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
             state->skeletonState->viewChanged = true;
+
+
         }
     } else if(event->key() == Qt::Key_S) {
         if(control) {
@@ -1156,10 +1161,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_A) {
         qDebug() << "A pressed";
-        //UI_workModeAdd(); TODO UI_workModeAdd
+        emit workModeAddSignal();
     } else if(event->key() == Qt::Key_W) {
         qDebug() << "W pressed";
-        // UI_workModeLink(); TODO UI_workModeLink
+        emit workModeLinkSignal();
     } else if(event->key() == Qt::Key_C) {
         qDebug() << "C pressed";
         treeCol.r = -1.;

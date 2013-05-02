@@ -33,7 +33,8 @@
 #include "sleeper.h"
 #include "mainwindow.h"
 #include "viewport.h"
-#include <QGLContext>
+#include "widgets/zoomandmultireswidget.h"
+
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -55,8 +56,8 @@ Viewer::Viewer(QObject *parent) :
 
     vp->setGeometry(5, 40, 350 ,350);
     vp2->setGeometry(355, 40, 350, 350);
-    vp3->setGeometry(5, 405, 350, 350);
-    vp4->setGeometry(355, 405, 350, 350);
+    vp3->setGeometry(5, 400, 350, 350);
+    vp4->setGeometry(355, 400, 350, 350);
 
     /*
     vp->setGeometry(5, 40, 500, 500);
@@ -78,19 +79,27 @@ Viewer::Viewer(QObject *parent) :
     connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
     connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
     connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    /* what about vp4 */
     /* what about vp4 */
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp4->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+
     /* what about vp4 */
 
-    connect(window, SIGNAL(changeDatasetMagSignal(int32_t)), this, SLOT(changeDatasetMag(uint32_t)));
+    connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
 
     connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp3->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp4->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
     connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
@@ -102,6 +111,8 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
+    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
+
     /*
     connect(vp, SIGNAL(renderOrthogonalVPSignal(int32_t)), renderer, SLOT(renderOrthogonalVP(uint32_t)));
     connect(vp, SIGNAL(renderSkeletonVPSignal(int32_t)), renderer, SLOT(renderSkeletonVP(uint32_t)));
@@ -112,7 +123,6 @@ Viewer::Viewer(QObject *parent) :
      * 2. new Skeletonizer
      * 3. new Renderer
      */
-
     initViewer();
     skeletonizer = new Skeletonizer();
     renderer = new Renderer();
@@ -120,14 +130,43 @@ Viewer::Viewer(QObject *parent) :
 
     SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
 
-    connect(vp->delegate, SIGNAL(zoomOrthogonalsSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
     connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
+    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
 
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+
     connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp4->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+
+    connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
+    connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
+
+    connect(vp->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp2->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp3->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp4->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
+
+    connect(vp->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp2->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp2->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp3->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp3->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp4->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp4->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+
+    //connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
 
 
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -988,26 +1027,7 @@ bool Viewer::initViewer() {
                                                              * 4);
     }
 
-    /* temporarily moved to the run() Method */
-    /*
-    Viewer::initializeTextures();
-    // init the rendering system
 
-    if(Renderer::initRenderer() == false) {
-        qDebug("Error initializing the rendering system.");
-        return false;
-    }
-
-    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
-    //viewerEventObj->sendLoadSignal(830, 1000, 830, NO_MAG_CHANGE);
-
-    viewerEventObj->sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z,
-                   NO_MAG_CHANGE);
-
-    qDebug() << "Viewer: initViewer completed";
-    */
     return true;
 }
 
@@ -1317,7 +1337,7 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 Renderer::drawGUI();
-
+                emit updateGLSignal4();
                 // TODO Crashes because of SDL
                 //while(SDL_PollEvent(&event)) {
                 //   if(EventModel::handleEvent(event) == false) {
@@ -1341,37 +1361,21 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
+
             emit updateGLSignal();
-            emit updateGLSignal();
+            emit updateGLSignal2();
             emit updateGLSignal3();
+
 
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
 
-        emit updateGLSignal4();
-        //TODO Crashes because of SDL
-        //if(viewerState->userMove == false) {
-        //    if(SDL_WaitEvent(&event)) {
-        //        if(EventModel::handleEvent(event) != true) {
-        //            state->viewerState->viewerReady = false;
-        //            //return true;
-        //        }
-        //    }
-        //}
+
         viewerState->userMove = false;
-
-
-
-    //QThread::currentThread()->quit();
-    //emit finished();
-
-
-    qDebug() << "Viewer: start ended";
-
-
-
 }
+
+
 
 //Initializes the window with the parameter given in viewerState
 bool Viewer::createScreen() {
@@ -1643,18 +1647,6 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
                                   viewerState->currentPosition.z);
     }
 
-    /* TDitem
-    printf("temp x: %d\n", tempConfig->viewerState->currentPosition.x);
-    printf("temp x: %d\n", state->viewerState->currentPosition.x);
-    */
-
-    /*
-    printf("temp y: %d\n", tempConfig->viewerState->currentPosition.y);
-    printf("temp y: %d\n", state->viewerState->currentPosition.y);
-
-    printf("temp z: %d\n", tempConfig->viewerState->currentPosition.z);
-    printf("temp z: %d\n", state->viewerState->currentPosition.z);
-    */
 
     tempConfig->viewerState->currentPosition.x = viewerState->currentPosition.x;
     tempConfig->viewerState->currentPosition.y = viewerState->currentPosition.y;
@@ -1668,11 +1660,10 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
                                 viewerState->currentPosition.z,
                                 NO_MAG_CHANGE);
     }
+    emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     Remote::checkIdleTime();
     run();
-    qDebug() << state->currentPositionX.x;
-    qDebug() << state->currentPositionX.y;
-    qDebug() << state->currentPositionX.z;
+
 
     return true;
 }

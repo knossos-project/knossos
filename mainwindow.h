@@ -92,24 +92,21 @@ public:
     void createToolWidget();
     void createDataSavingWidget();
     void createSychronizationWidget();
-
-    void createXYViewport();
-    void createXZViewport();
-    void createYZViewport();
-    void createSkeletonViewport();
     bool eventFilter(QObject *obj, QEvent *event);
 
     void loadDefaultPrefs();
 signals:
-    bool changeDatasetMagSignal(int32_t serverMovement);
+    bool changeDatasetMagSignal(uint32_t serverMovement);
     void recalcTextureOffsetsSignal();
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();
+    void runSignal();
+
 
 protected:
 
 
-private:
+public:
     Ui::MainWindow *ui;
 
     QToolBar *toolBar;
@@ -198,7 +195,7 @@ private:
     void saveSettings();
     void loadSettings();
 
-private slots:
+public slots:
     /* file menu */
     void openSlot();
     void recentFilesSlot(int index);
@@ -254,6 +251,7 @@ private slots:
 
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
+    void updateCoordinateBar(int x, int y, int z);
 
 };
 

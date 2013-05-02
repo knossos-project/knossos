@@ -34,7 +34,7 @@ extern stateInfo *state;
 extern stateInfo *tempConfig;
 
 Remote::Remote(QObject *parent) :
-    QObject(parent)
+    QThread(parent)
 {
 }
 
@@ -45,7 +45,7 @@ bool Remote::cleanUpRemote() {
     return true;
 }
 
-void Remote::start() {
+void Remote::run() {
 
     struct remoteState *remoteState = state->remoteState;
 
