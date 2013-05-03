@@ -35,13 +35,32 @@ class Loader : public QThread
 public:
     explicit Loader(QObject *parent = 0);
     void run();
+
+    Hashtable *Dcoi;
+
+    CubeSlotList *freeDcSlots;
+    CubeSlotList *freeOcSlots;
+    Byte *DcSetChunk;
+    Byte *OcSetChunk;
+    Byte *bogusDc;
+    Byte *bogusOc;
 signals:
     void finished();
 public slots:
     void load();
 protected:
     bool initialized;
-    
+    bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target);
+    bool DcoiFromPos(Hashtable *Dcoi);
+    CubeSlot *slotListGetElement(CubeSlotList *slotList);
+    bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot);
+    int32_t slotListDelElement(CubeSlotList *slotList, CubeSlot *element);
+    bool slotListDel(CubeSlotList *delList);
+    int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube);
+    CubeSlotList *slotListNew();
+    bool initLoader();
+    bool removeLoadedCubes(int32_t magChange);
+    bool loadCubes();
 };
 
 #endif // LOADER_H
