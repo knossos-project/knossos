@@ -96,7 +96,7 @@ static float bytesToFloat(Byte *source) {
 
 #define FLOATS 16
 #define INTS 16
-static uint32_t parseInBuffer() {
+uint32_t Client::parseInBuffer() {
     int32_t messageLen = 0;
     clientState *clientState = state->clientState;
 
@@ -230,8 +230,8 @@ static uint32_t parseInBuffer() {
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
-                Skeletonizer::updateSkeletonFileName(d[0], d[1], (char *)s);
 
+                emit updateSkeletonFileNameSignal(d[0], d[1], (char *)s);
                 break;
 
             case KIKI_WITHDRAW:
@@ -256,7 +256,8 @@ static uint32_t parseInBuffer() {
                 else if(messageLen == 0)
                         goto loopExit;
 
-                Skeletonizer::addTreeComment(d[0], d[1], (char *)s);
+                emit addTreeCommentSignal(d[0], d[1], (char *)s);
+                //Skeletonizer::addTreeComment(d[0], d[1], (char *)s);
 
                 break;
 
@@ -474,7 +475,8 @@ static uint32_t parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::setActiveNode(d[0], NULL, d[1]);
+                emit setActiveNodeSignal(d[0], NULL, d[1]);
+                //Skeletonizer::setActiveNode(d[0], NULL, d[1]);
 
                 break;
 
@@ -552,7 +554,7 @@ static bool cleanUpClient() {
  * @todo pushEvent
  * @test byte buffer is temporarily converted to char *(because of the socket read method) and backwards
  */
-static bool clientRun() {
+bool Client::clientRun() {
     clientState *clientState = state->clientState;
     Byte *message = NULL;
     uint32_t messageLen = 0, nameLen = 0, readLen = 0;

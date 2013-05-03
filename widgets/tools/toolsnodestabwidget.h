@@ -41,6 +41,7 @@ public:
     void loadSettings();
 signals:
     void updatePositionSignal(int32_t serverMovement);
+    void deleteActiveNodeSignal();
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

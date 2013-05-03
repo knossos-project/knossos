@@ -87,6 +87,12 @@ signals:
     void updateWidgetSignal();
     void workModeAddSignal();
     void workModeLinkSignal();
+    void deleteActiveNodeSignal();
+    void genTestNodesSignal(uint32_t number);
+    void addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
+    // SIGNAL WITH RETURN VALUE ???
+    void addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
+    void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
 public slots:
     
 };

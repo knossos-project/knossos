@@ -211,7 +211,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
 }
 
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
-    Skeletonizer::delActiveNode();
+    emit deleteActiveNodeSignal();
 }
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {

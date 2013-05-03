@@ -73,9 +73,7 @@ void Remote::run() {
             break;
         }
 
-
         Remote::updateRemoteState();
-
 
         switch(remoteState->type) {
 
@@ -249,7 +247,7 @@ bool Remote::remoteWalkTo(int32_t x, int32_t y, int32_t z) {
     y_moves = y - state->viewerState->currentPosition.y;
     z_moves = z - state->viewerState->currentPosition.z;
 
-    retval = Remote::remoteWalk(x_moves, y_moves, z_moves);
+    retval = remoteWalk(x_moves, y_moves, z_moves);
 
 
     return true;
@@ -334,6 +332,7 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
 
     SET_COORDINATE(residuals, 0., 0., 0.);
 
+    //emit user
     //moveEvent.type = SDL_USEREVENT;
     //moveEvent.user.code = USEREVENT_MOVE; /** @todo a replacement for this user_event
 
@@ -409,6 +408,8 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
             sendMove->x = doMove.x;
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
+
+            emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 
             /** @todo replacement for this here
             moveEvent.user.data1 = sendMove;

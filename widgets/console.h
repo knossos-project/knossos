@@ -33,7 +33,7 @@ class Console : public QDialog
     Q_OBJECT
 public:
     explicit Console(QWidget *parent = 0);
-
+    void resizeEvent(QResizeEvent *event);
 signals:
     void uncheckSignal();
 public slots:

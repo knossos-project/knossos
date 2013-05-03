@@ -56,8 +56,6 @@
 #include <QtNetwork>
 #include <QSet>
 
-
-
 #define KVERSION "3.2"
 
 #define FAIL    -1
@@ -95,7 +93,6 @@
 #define LL_FAILURE  0
 #define LL_BEFORE   0
 #define LL_AFTER    2
-
 
  //	For the viewer.
 #define	SLICE_XY	0
@@ -142,20 +139,17 @@
 #define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
-
 //  For the Lookup tables
 
  #define RGB_LUTSIZE  768
  #define RGBA_LUTSIZE 1024
  #define MAX_COLORVAL  255.
 
-
 //  For the GUI.
 
 #define MAX_RECENT_FILES 10
 
 // 	For the remote.
-
 
 #define MAX_BUFFER_SIZE 52428800 // 50 MiB
 
@@ -171,9 +165,7 @@
 #define REMOTE_SYNCHRONIZE 7
 #define REMOTE_RECENTERING 8
 
-
 //  For the client / server protocol
-
 
 // CHANGE_MANUAL is the revision count used to signal a skeleton change on behalf of the
 // user to lockSkeleton().
@@ -210,16 +202,11 @@
 #define KIKI_SKELETONFILENAME 27
 #define KIKI_ADDTREECOMMENT 28
 
-
-
 //  For custom key bindings
-
 
 #define ACTION_NONE 0
 
-
 //  For the skeletonizer
-
 
 #define SKELETONIZER_ON_CLICK_ADD_NODE 0
 #define SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE 1
@@ -228,7 +215,6 @@
 #define SEGMENT_FORWARD 1
 #define SEGMENT_BACKWARD 2
 
-
 //#define DISPLAY_WHOLE_SKELETON 0
 //#define DISPLAY_CURRENTCUBE_SKELETON 1
 //#define DISPLAY_ACTIVETREE_SKELETON 2
@@ -236,7 +222,6 @@
 //#define DISPLAY_ONLYSLICEPLANE_SKELETON 4
 //#define DISPLAY_SEGS_AS_LINES 5
 //#define DISPLAY_LINES_POINTS_ONLY 6
-
 
 #define NODE_VISITED 1
 #define NODE_PRISTINE 0
@@ -274,7 +259,6 @@ struct Coordinate{
     static Coordinate *parseRawCoordinateString(char *string);
 
 };
-
 
 typedef struct {
         float r;
@@ -570,7 +554,6 @@ struct stateInfo {
 
  //---  Info about the state of KNOSSOS in general. --------
 
-
     // This gives the current position ONLY when the reload
     // boundary has been crossed. Change it through
     // sendLoadSignal() exclusively. It has to be locked by
@@ -588,8 +571,7 @@ struct stateInfo {
 
     struct viewerState *viewerState;
     struct remoteState *remoteState;
-    struct clientState *clientState;
-    struct loaderState *loaderState;
+    struct clientState *clientState;    
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
 };
@@ -597,21 +579,6 @@ struct stateInfo {
 struct trajectory {
 		char name[64];
 		char *source;
-};
-
-/**
-  * @struct loaderState
-  * @brief TODO
-  */
-
-struct loaderState {
-	Hashtable *Dcoi;
-	CubeSlotList *freeDcSlots;
-    CubeSlotList *freeOcSlots;
-	Byte *DcSetChunk;
-    Byte *OcSetChunk;
-    Byte *bogusDc;
-    Byte *bogusOc;
 };
 
 /**
@@ -651,8 +618,6 @@ struct viewportTexture {
 	float zoomLevel;
 };
 
-//forward declaration needed until every struct moves into its own .h-file
-class Viewport;
 /**
   * @struct guiConfig
   * @brief TODO
@@ -682,7 +647,6 @@ struct guiConfig {
     char *commentBuffer;
     char *commentSearchBuffer;
     char *treeCommentBuffer;
-
 
     int32_t mergeTreesID1;
     int32_t mergeTreesID2;
@@ -725,7 +689,6 @@ struct guiConfig {
     // skeleton statistics win buffer variables
 
     int agInputWdgtFocused;
-
 
    // AG_Window *agWin;
 
@@ -1094,13 +1057,11 @@ struct IOBuffer {
 struct skeletonState {
     uint32_t skeletonRevision;
 
-
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
     //    skeletonTimeCorrection is the time that has to be subtracted from
     //    SDL_GetTicks() to yield the number of milliseconds the current skeleton
     //    was loaded in the current knossos instance.
-
 
     bool unsavedChanges;
     int32_t skeletonTime;

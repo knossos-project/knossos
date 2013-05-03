@@ -47,7 +47,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
 
-    //updateSkeletonState();
+    updateSkeletonState();
 
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
@@ -125,7 +125,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->datasetChanged = true;
     state->skeletonState->skeletonSliceVPchanged = true;
     state->skeletonState->unsavedChanges = false;
-
     state->skeletonState->askingPopBranchConfirmation = false;
 
 }
@@ -612,7 +611,7 @@ bool Skeletonizer::updateSkeletonState() {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
     }
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
-        //setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
+        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
     }
     return true;
 }

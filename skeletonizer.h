@@ -36,22 +36,18 @@ class Skeletonizer : public QObject
     Q_OBJECT
 public:
     explicit Skeletonizer(QObject *parent = 0);
-    bool updateSkeletonState();
 
-    static bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
+
     static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
     static bool nextCommentlessNode();
     static bool previousCommentlessNode();
 
-    static bool updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
     //uint32_t saveNMLSkeleton();
     static int32_t saveSkeleton();
     //uint32_t loadNMLSkeleton();
     bool loadSkeleton();
 
     static void setDefaultSkelFileName();
-
-    static bool delActiveNode();
 
     static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
     static bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
@@ -61,7 +57,7 @@ public:
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
     static bool setActiveTreeByID(int32_t treeID);
-    static bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
+
     static int32_t addNode(int32_t targetRevision,
                     int32_t nodeID,
                     float radius,
@@ -84,9 +80,9 @@ public:
     static treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
     static treeListElement* getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement* getTreeWithNextID(treeListElement *currentTree);
-    static bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
+
     static segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
-    static bool genTestNodes(uint32_t number);
+
     static bool editNode(int32_t targetRevision,
                      int32_t nodeID,
                      nodeListElement *node,
@@ -124,8 +120,14 @@ public:
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();
-
-
+public slots:
+    bool delActiveNode();
+    bool updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
+    bool updateSkeletonState();
+    bool genTestNodes(uint32_t number);
+    bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
+    static bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
+    bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
 };
 
 #endif // SKELETONIZER_H

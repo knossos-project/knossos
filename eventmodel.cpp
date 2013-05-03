@@ -54,7 +54,8 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
                                                 (state->viewerState->screenSizeY - event->y()),
                                                 10);
         if(clickedNode) {
-            Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
+            emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
+            //Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
             return true;
         }
 
@@ -69,7 +70,8 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
             if(clickedCoordinate) {
                 newActiveNode = Skeletonizer::findNodeInRadius(*clickedCoordinate);
                 if(newActiveNode != NULL) {
-                    Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                    //Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                     return true;
                 }
             }
@@ -239,13 +241,15 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
         switch(state->skeletonState->workMode) {
             case SKELETONIZER_ON_CLICK_DROP_NODE:
                 // function is inside skeletonizer.c
-                Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->vpConfigs[VPfound].type);
+                emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+                //Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
+                //                   state->viewerState->vpConfigs[VPfound].type);
                 break;
             case SKELETONIZER_ON_CLICK_ADD_NODE:
                 // function is inside skeletonizer.c
-                Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                   state->viewerState->vpConfigs[VPfound].type);
+                emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+                //Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
+                  //                 state->viewerState->vpConfigs[VPfound].type);
                 tempConfig->skeletonState->workMode =
                     SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
                 break;
@@ -395,8 +399,9 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
                     }
                 }
                 else {
-                    Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                                       state->viewerState->vpConfigs[VPfound].type);
+                    emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+                    //Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
+                    //                   state->viewerState->vpConfigs[VPfound].type);
                 }
 
         }
@@ -653,7 +658,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
     }
     else {
         // Skeleton VP
-        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
+        if(VPfound == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
                 state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
@@ -672,7 +677,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
             }
             // Move otherwise
             else {
-                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
+                switch(VPfound) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, state->viewerState->dropFrames
                             * state->magnification,
@@ -730,7 +735,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
         //drawGUI();
     } else {
         // Skeleton VP
-        if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
+        if(VPfound == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
                 state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
@@ -750,7 +755,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
             }
             // Move otherwise
             else {
-                switch(state->viewerState->vpConfigs[state->viewerState->activeVP].type) {
+                switch(VPfound) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, -state->viewerState->dropFrames
                             * state->magnification,
@@ -1023,7 +1028,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             }
         }
     } else if(event->key() == Qt::Key_G) {
-
+        emit genTestNodesSignal(1000);
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             qDebug() << "N und shift";
@@ -1048,6 +1053,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
+
     } else if(event->key() == Qt::Key_J) {
         qDebug() << "J pressed";
         Skeletonizer::UI_popBranchNode();
@@ -1059,7 +1065,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             qDebug() << "X und shift";
             prevNode = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode);
             if(prevNode) {
-                Skeletonizer::setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+                emit setActiveNodeSignal(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+                //Skeletonizer::setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
                 tempConfig->remoteState->type = REMOTE_RECENTERING;
                 SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                prevNode->position.x,
@@ -1084,7 +1091,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             prevTree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
             if(prevTree) {
                 if(Skeletonizer::setActiveTreeByID(prevTree->treeID)) {
-                    Skeletonizer::setActiveNode(CHANGE_MANUAL, prevTree->firstNode, prevTree->firstNode->nodeID);
+                    emit setActiveNodeSignal(CHANGE_MANUAL, prevTree->firstNode, prevTree->firstNode->nodeID);
+                    //Skeletonizer::setActiveNode(CHANGE_MANUAL, prevTree->firstNode, prevTree->firstNode->nodeID);
                     SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                prevTree->firstNode->position.x,
                                prevTree->firstNode->position.y,
@@ -1102,7 +1110,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
             nextTree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
             if(nextTree) {
                 if(Skeletonizer::setActiveTreeByID(nextTree->treeID)) {
-                    Skeletonizer::setActiveNode(CHANGE_MANUAL, nextTree->firstNode, nextTree->firstNode->nodeID);
+                    emit setActiveNodeSignal(CHANGE_MANUAL, nextTree->firstNode, nextTree->firstNode->nodeID);
+                    //Skeletonizer::setActiveNode(CHANGE_MANUAL, nextTree->firstNode, nextTree->firstNode->nodeID);
                     SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
                                    nextTree->firstNode->position.x,
                                    nextTree->firstNode->position.y,
@@ -1189,7 +1198,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event) {
         Renderer::drawGUI();
     } else if(event->key() == Qt::Key_Delete) {
         qDebug() << "Delete Key pressed";
-        Skeletonizer::delActiveNode();
+        emit deleteActiveNodeSignal();
     } else if(event->key() == Qt::Key_F1) {
         qDebug() << "F1 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){

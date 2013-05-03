@@ -55,9 +55,14 @@ public:
     static bool syncMessage(const char *fmt, ...);
     static int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
-    
+
+    uint32_t parseInBuffer();
+    bool clientRun();
 signals:
     void finished();
+    void updateSkeletonFileNameSignal(int32_t targetRevision, int32_t increment, char *filename);
+    void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
+    void addTreeCommentSignal(int32_t targetRevision, int32_t treeID, char *comment);
 public slots:
     void start();
     void socketConnectionSucceeded();

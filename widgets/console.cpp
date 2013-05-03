@@ -31,13 +31,26 @@ Console::Console(QWidget *parent) :
     this->setWindowTitle("Console");
     this->editor = new QPlainTextEdit(this);
     this->editor->setReadOnly(true);
-    this->editor->appendPlainText("Knossos QT");
+    this->editor->insertPlainText("Knossos QT\n");
+    this->editor->setFont(QFont("Courier", 12, QFont::Normal));
 
     QPalette palette = this->palette();
     palette.setColor(QPalette::Base, Qt::black);
     palette.setColor(QPalette::Text, Qt::white);
     this->setPalette(palette);
 
+    for(int i = 0; i < 20; i++) {
+        this->editor->insertPlainText("Foo\n");
+    }
+
+}
+
+void Console::resizeEvent(QResizeEvent *event) {
+    this->editor->resize(event->size());
+    QPalette palette = this->palette();
+    palette.setColor(QPalette::Base, Qt::black);
+    palette.setColor(QPalette::Text, Qt::white);
+    this->setPalette(palette);
 }
 
 void Console::closeEvent(QCloseEvent *event) {

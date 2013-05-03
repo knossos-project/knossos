@@ -34,6 +34,8 @@
 #include "mainwindow.h"
 #include "viewport.h"
 #include "widgets/zoomandmultireswidget.h"
+#include "widgets/toolswidget.h"
+#include "widgets/tools/toolsnodestabwidget.h"
 
 
 extern  stateInfo *tempConfig;
@@ -50,8 +52,8 @@ Viewer::Viewer(QObject *parent) :
     window->showMaximized();
 
     vp = new Viewport(window, VIEWPORT_XY);
-    vp2 = new Viewport(window, VIEWPORT_XZ);
-    vp3 = new Viewport(window, VIEWPORT_YZ);
+    vp2 = new Viewport(window, VIEWPORT_YZ);
+    vp3 = new Viewport(window, VIEWPORT_XZ);
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
     vp->setGeometry(5, 40, 350 ,350);
@@ -168,11 +170,39 @@ Viewer::Viewer(QObject *parent) :
 
     //connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
 
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp2->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp3->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp4->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+
+    connect(vp->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
+    connect(vp2->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
+    connect(vp3->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
+    connect(vp4->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
+
+    connect(vp->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp2->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp3->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp4->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+
+    connect(vp->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+    connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+    connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+    connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
+
+
+    QTimer *timer = new QTimer();
+    connect(timer, SIGNAL(timeout()), this, SLOT(run()));
+    timer->start(100);
+
+
 }
 
 static vpList* vpListNew() {
@@ -1249,6 +1279,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
 
+
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available. If they aren't, they are added to a backlog
@@ -1986,12 +2017,7 @@ bool Viewer::recalcTextureOffsets() {
 }
 
 bool Viewer::refreshViewports() {
-    /*
-    vp->updateGL();
-    v2->updateGL();
-    vp3->updateGL();
-    vp4->updateGL();
-    */
+
     return true;
 }
 

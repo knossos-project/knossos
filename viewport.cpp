@@ -215,13 +215,13 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
         handleMouseMotionMiddleHold(event, plane);
         clickEvent = true;
-    } else if(QApplication::mouseButtons() == Qt::RightArrow) {
+    } else if(QApplication::mouseButtons() == Qt::RightButton) {
         handleMouseMotionRightHold(event, plane);
         clickEvent = true;
     }
 
 
-    if(true) {
+    if(clickEvent) {
         delegate->mouseX = event->x();
         delegate->mouseY = event->y();
     }
@@ -251,12 +251,14 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
+
     if(event->delta() > 0) {
         handleMouseWheelForward(event, plane);
     }
     else {
         handleMouseWheelBackward(event, plane);
     }
+
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {

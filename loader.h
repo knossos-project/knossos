@@ -27,6 +27,7 @@
 
 #include <QObject>
 #include <QThread>
+#include "knossos-global.h"
 
 class Loader : public QThread
 {

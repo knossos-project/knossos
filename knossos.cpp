@@ -35,6 +35,7 @@
 #include "knossos-global.h"
 #include "sleeper.h"
 #include "viewer.h"
+#include "skeletonizer.h"
 #include "loader.h"
 #include "remote.h"
 #include "client.h"
@@ -167,6 +168,13 @@ int main(int argc, char *argv[])
     remote = new Remote();
     remote->start();
 
+
+    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int32_t, int32_t, char *)));
+    QObject::connect(client, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+    QObject::connect(client, SIGNAL(addTreeCommentSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(addTreeComment(int32_t,int32_t,char*)));
+
+
+    QObject::connect(remote, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), viewer, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
 
     /*
     for(int i = 0; i < 100; i++) {
@@ -620,7 +628,7 @@ struct stateInfo *Knossos::emptyState() {
     state->viewerState->gui = new guiConfig();
     state->remoteState = new remoteState();
     state->clientState = new clientState();
-    state->loaderState = new loaderState();
+
     state->skeletonState = new skeletonState();
 
     return state;
@@ -820,12 +828,10 @@ bool Knossos::cleanUpMain() {
     free(tempConfig->viewerState);
     free(tempConfig->remoteState);
     free(tempConfig->clientState);
-    free(tempConfig->loaderState);
     free(tempConfig);
     free(state->viewerState);
     free(state->remoteState);
     free(state->clientState);
-    free(state->loaderState);
     free(state);
 
     return true;

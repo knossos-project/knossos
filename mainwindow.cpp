@@ -35,7 +35,6 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QDir>
-#include <QDebug>
 #include <QStringList>
 #include <QToolBar>
 #include <QSpinbox>
@@ -247,55 +246,65 @@ void MainWindow:: createCoordBarWin() {
 
 // Dialogs
 void MainWindow::createConsoleWidget() {
-    console = new Console(this);
+    console = new Console();
+    console->setWindowFlags(Qt::WindowStaysOnTopHint);
     console->setGeometry(800, 500, 200, 120);
 
 }
 
 void MainWindow::createTracingTimeWidget() {
-    tracingTimeWidget = new TracingTimeWidget(this);
+    tracingTimeWidget = new TracingTimeWidget();
+    tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     tracingTimeWidget->setGeometry(800, 350, 200, 100);
+
 
 }
 
 void MainWindow::createCommentsWidget() {
-    commentsWidget = new CommentsWidget(this);
+    commentsWidget = new CommentsWidget();
+    commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     commentsWidget->setGeometry(800, 100, 200, 150);
 
 }
 
 void MainWindow::createZoomAndMultiresWidget() {
-    zoomAndMultiresWidget = new ZoomAndMultiresWidget(this);
+    zoomAndMultiresWidget = new ZoomAndMultiresWidget();
+    zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     zoomAndMultiresWidget->setGeometry(1024, 100, 380, 200);
 
 }
 
 void MainWindow::createNavigationWidget() {
-    navigationWidget = new NavigationWidget(this);
+    navigationWidget = new NavigationWidget();
+    navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     navigationWidget->setGeometry(1024, 350, 200, 200);
 
 }
 
 void MainWindow::createToolWidget() {
-    toolsWidget = new ToolsWidget(this);
+    toolsWidget = new ToolsWidget();
+    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     toolsWidget->setGeometry(500, 100, 430, 610);
 
 }
 
 void MainWindow::createViewportSettingsWidget() {
-    viewportSettingsWidget = new ViewportSettingsWidget(this);
+    viewportSettingsWidget = new ViewportSettingsWidget();
+    viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     viewportSettingsWidget->setGeometry(500, 500, 680, 400);
 
 }
 
 void MainWindow::createDataSavingWidget() {
-    dataSavingWidget = new DataSavingWidget(this);
+    dataSavingWidget = new DataSavingWidget();
+    dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     dataSavingWidget->setGeometry(100, 100, 100, 90);
 
 }
 
 void MainWindow::createSychronizationWidget() {
-    synchronizationWidget = new SynchronizationWidget(this);
+    synchronizationWidget = new SynchronizationWidget();
+    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     synchronizationWidget->setGeometry(100, 350, 150, 100);
 
 }
@@ -737,9 +746,8 @@ void MainWindow::createActions()
 
     /* Help actions */
     aboutAction = new QAction(tr("&About"), this);
-
-
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutSlot()));
+
 }
 
 void MainWindow::createMenus()
@@ -1039,7 +1047,6 @@ void MainWindow::defaultPreferencesSlot()
 
            break;
     }
-
 
 }
 

@@ -37,8 +37,8 @@ public:
     static bool remoteJump(int32_t x, int32_t y, int32_t z);
     static bool updateRemoteState();
     static bool remoteTrajectory(int32_t trajNumber);
-    static bool remoteWalkTo(int32_t x, int32_t y, int32_t z);
-    static bool remoteWalk(int32_t x, int32_t y, int32_t z);
+    bool remoteWalkTo(int32_t x, int32_t y, int32_t z);
+    bool remoteWalk(int32_t x, int32_t y, int32_t z);
     static bool newTrajectory(char *trajName, char *trajectory);
     static bool cleanUpRemote();
     void run();
@@ -46,6 +46,7 @@ public:
 signals:
     void finished();
     void updateViewerStateSignal();
+    void userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
 public slots:
     //void start();
 
