@@ -53,8 +53,11 @@ class RunKnossos(RunKnossosUI):
             for dataset in kukuConf["datasets"]:
                 if dataset:
                     #dataset = os.path.abspath(dataset)
-                    if os.path.isdir(dataset):
-                        self.addDataset(dataset)
+                    try:
+                        if os.path.isdir(dataset):
+                            self.addDataset(dataset)
+                    except TypeError:
+                        pass
         except ValueError: #kuku.conf not in json format yet
             try:
                 with open(kukupath, "r") as kuku:
@@ -62,8 +65,11 @@ class RunKnossos(RunKnossosUI):
                 for dataset in kukuConf.split('\n'):
                     if dataset:
                         #dataset = os.path.abspath(dataset)
-                        if os.path.isdir(dataset):
-                            self.addDataset(dataset)
+                        try:
+                            if os.path.isdir(dataset):
+                                self.addDataset(dataset)
+                        except TypeError:
+                            pass
             except IOError:
                 pass
         except IOError:
@@ -74,14 +80,20 @@ class RunKnossos(RunKnossosUI):
     #
     def add_button_command(self, *args):
         kukupath = self.configFilePath()
-
+        if(os.path.exists(kukupath)):
+            flag = "r+"
+        else:
+            flag = "w+"
         try:
-            with open(kukupath, "w+") as kuku:
+            with open(kukupath, flag) as kuku:
                 kukuConf = json.load(kuku)
                 lastDir = kukuConf["lastDir"]
 
                 if(lastDir): # start in last opened folder
-                    path = filedialog.askdirectory(initialdir=lastDir)
+                    if(os.path.exists(lastDir)):
+                        path = filedialog.askdirectory(initialdir=lastDir)
+                    else:
+                        path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir))
                 else: # use Knossos folder as default initialdir
                     path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir)) 
                 if not path:
@@ -275,8 +287,12 @@ class RunKnossos(RunKnossosUI):
                 pathListString = pathListString + currentPath + '\n'
 
         kukupath = self.configFilePath()
+        if(os.path.exists(kukupath)):
+            flag = "r+"
+        else:
+            flag = "w+"
         try:
-            with open(kukupath, "r+") as kuku:
+            with open(kukupath, flag) as kuku:
                 kukuConf = json.load(kuku)
                 if pathListString:
                     kukuConf["datasets"] = []
