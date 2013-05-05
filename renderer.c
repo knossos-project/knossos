@@ -3095,7 +3095,12 @@ static void renderWholeSkeleton2(uint32_t viewportType) {
 
     }
 
-    glPointSize(2.f);
+
+    if(state->skeletonState->overrideNodeRadiusBool)
+        glPointSize(state->skeletonState->overrideNodeRadiusVal);
+    else
+        glPointSize(4.f);
+
     /* Render point geometry batch if it contains data */
     if(state->skeletonState->pointVertBuffer.vertsIndex > 0) {
         glEnableClientState(GL_VERTEX_ARRAY);
