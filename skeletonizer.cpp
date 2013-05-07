@@ -25,9 +25,6 @@
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
-/**
-#include <GL/gl.h>
-*/
 #include <time.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
@@ -3650,3 +3647,9 @@ bool Skeletonizer::updateTreeColors() {
     return true;
 }
 
+void Skeletonizer::setViewportReferences(Viewport *vp, Viewport *vp2, Viewport *vp3, Viewport *vp4) {
+    this->vp = vp;
+    this->vp2 = vp2;
+    this->vp3 = vp3;
+    this->vp4 = vp4;
+}

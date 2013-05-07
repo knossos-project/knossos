@@ -34,10 +34,6 @@
 #include <QDebug>
 #include "knossos-global.h"
 
-#include <QListWidget>
-#include <QListWidgetItem>
-
-
 extern struct stateInfo *state;
 
 /**

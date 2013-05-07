@@ -153,10 +153,8 @@ uint32_t Client::parseInBuffer() {
 
                 // printf("Coordinate after translation: (%d, %d, %d)\n",
                 //        pPosition->x, pPosition->y, pPosition->z);
+                emit remoteJumpSignal(pPosition->x, pPosition->y, pPosition->z);
 
-                Remote::remoteJump(pPosition->x,
-                           pPosition->y,
-                           pPosition->z);
                 free(pPosition);
                 pPosition = NULL;
 

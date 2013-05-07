@@ -46,7 +46,7 @@ class Renderer : public QObject
     Q_OBJECT
 public:
     explicit Renderer(QObject *parent = 0);
-
+    static void renderDot(int x, int y);
     static bool drawGUI();
 
     //Some math helper functions

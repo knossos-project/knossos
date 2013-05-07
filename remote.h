@@ -27,6 +27,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <knossos-global.h>
 
 class Remote : public QThread
 {
@@ -34,25 +35,27 @@ class Remote : public QThread
 public:
     explicit Remote(QObject *parent = 0);
     static void checkIdleTime();
-    static bool remoteJump(int32_t x, int32_t y, int32_t z);
-    static bool updateRemoteState();
-    static bool remoteTrajectory(int32_t trajNumber);
+
+    bool remoteTrajectory(int32_t trajNumber);
+    bool newTrajectory(char *trajName, char *trajectory);
     bool remoteWalkTo(int32_t x, int32_t y, int32_t z);
     bool remoteWalk(int32_t x, int32_t y, int32_t z);
-    static bool newTrajectory(char *trajName, char *trajectory);
-    static bool cleanUpRemote();
     void run();
+    bool updateRemoteState();
+
+    int32_t type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
+    int32_t maxTrajectories;
+    int32_t activeTrajectory;
+    Coordinate recenteringPosition;
 
 signals:
     void finished();
     void updateViewerStateSignal();
     void userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
 public slots:
-    //void start();
-
-
-
-    
+    void setRemoteStateType(int32_t type);
+    void setRecenteringPosition(int32_t x, int32_t y, int32_t z);
+    bool remoteJump(int32_t x, int32_t y, int32_t z);
 };
 
 #endif // REMOTE_H

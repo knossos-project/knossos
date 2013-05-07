@@ -26,9 +26,9 @@
  */
 
 #include <QtOpenGL>
-//#include<GL/glut.h>
 #include <QObject>
-#include"knossos-global.h"
+#include "knossos-global.h"
+#include "viewport.h"
 
 
 class Skeletonizer : public QObject
@@ -37,6 +37,9 @@ class Skeletonizer : public QObject
 public:
     explicit Skeletonizer(QObject *parent = 0);
 
+    void setViewportReferences(Viewport *vp, Viewport*vp2, Viewport*vp3, Viewport*vp4);
+
+    Viewport *vp, *vp2, *vp3, *vp4;
 
     static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
     static bool nextCommentlessNode();
@@ -45,7 +48,7 @@ public:
     //uint32_t saveNMLSkeleton();
     static int32_t saveSkeleton();
     //uint32_t loadNMLSkeleton();
-    bool loadSkeleton();
+
 
     static void setDefaultSkelFileName();
 
@@ -116,7 +119,9 @@ public:
     static void restoreDefaultTreeColor();
     static bool updateTreeColors();
 
+
     static bool delActiveTree();
+    bool loadSkeleton();
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();

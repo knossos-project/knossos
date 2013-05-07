@@ -570,8 +570,7 @@ struct stateInfo {
     Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
 
     struct viewerState *viewerState;
-    struct remoteState *remoteState;
-    struct clientState *clientState;    
+    struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
 };
@@ -1184,15 +1183,6 @@ struct skeletonState {
 
     QString skeletonFileAsQString;
 };
-
-struct remoteState {
-		// type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
-        int32_t type;
-		int32_t maxTrajectories;
-		int32_t activeTrajectory;
-        Coordinate recenteringPosition;
-};
-
 
 struct clientState {
     bool connectAsap;

@@ -58,11 +58,31 @@ public:
 
     uint32_t parseInBuffer();
     bool clientRun();
+
+    bool connectAsap;
+    int32_t remotePort;
+    bool connected;
+    Byte synchronizePosition;
+    Byte synchronizeSkeleton;
+    int32_t connectionTimeout;
+    bool connectionTried;
+    char serverAddress[1024];
+
+    QHostAddress *remoteServer;
+    QTcpSocket *remoteSocket;
+    QSet<QTcpSocket *> *socketSet;
+    uint32_t myId;
+    bool saveMaster;
+
+    struct peerListElement *firstPeer;
+    struct IOBuffer *inBuffer;
+    struct IOBuffer *outBuffer;
 signals:
     void finished();
     void updateSkeletonFileNameSignal(int32_t targetRevision, int32_t increment, char *filename);
     void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
     void addTreeCommentSignal(int32_t targetRevision, int32_t treeID, char *comment);
+    void remoteJumpSignal(int32_t x, int32_t y, int32_t z);
 public slots:
     void start();
     void socketConnectionSucceeded();

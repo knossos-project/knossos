@@ -30,26 +30,8 @@
 #include <math.h>
 
 #include <QtOpenGL>
-#if QT_VERSION < 5
-    #ifdef Q_WS_MACX
-        #include <OpenGL.h>
-        #include <glu.h>
-    #else
-        #include <GL/gl.h>
-        #include <GL/glext.h>
-        #include <GL/glu.h>
-    #endif
-#elif QT_VERSION >= 5
-    #ifdef Q_OS_MACX
-        #include <OpenGL.h>
-        #include <glu.h>
-    #else
-        #include <GL/gl.h>
-        #include <GL/glext.h>
-        #include <GL/glu.h>
-    #endif
-#endif
-
+#include <gl.h>
+#include <glu.h>
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -2336,7 +2318,7 @@ bool Renderer::updateDisplayListsSkeleton() {
                 renderWholeSkeleton(false);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(0);
+
                     renderWholeSkeleton(false);
 
         }
@@ -2344,7 +2326,7 @@ bool Renderer::updateDisplayListsSkeleton() {
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(false);
+
                     renderWholeSkeleton(false);
 
         }
@@ -2355,7 +2337,7 @@ bool Renderer::updateDisplayListsSkeleton() {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
                 if(state->skeletonState->showIntersections)
                     state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        //renderSuperCubeSkeleton(false);
+
                         renderWholeSkeleton(false);
 
                 else state->skeletonState->displayListSkeletonSlicePlaneVP =
@@ -2391,7 +2373,7 @@ bool Renderer::updateDisplayListsSkeleton() {
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    //renderSuperCubeSkeleton(0);
+
                     renderWholeSkeleton(false);
 
             }
@@ -2411,11 +2393,20 @@ bool Renderer::updateDisplayListsSkeleton() {
             else {
                 state->skeletonState->displayListSkeletonSlicePlaneVP =
                     renderWholeSkeleton(0);
-                    //renderSuperCubeSkeleton(0);
+
             }
         }
     }
 
     return true;
+}
+
+void Renderer::renderDot(int x, int y) {
+    glBegin(GL_POINTS);
+        glPointSize(1);
+        glColor3f(1, 0, 0);
+        glVertex2f(x, y);
+    glEnd();
+
 }
 

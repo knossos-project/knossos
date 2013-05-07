@@ -285,5 +285,3 @@ void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
 void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
     state->viewerState->showVPLabels = on;
 }
-
-

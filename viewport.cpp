@@ -183,10 +183,16 @@ void Viewport::paintGL() {
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
             drawViewport(plane);
+            for(int i = 0; i < 50; i++) {
+               Renderer::renderDot(10*i, 10*i );
+            }
+
             //emit renderOrthogonalVPSignal(plane);
         }  else {
             drawSkeletonViewport();
-
+            for(int i = 0; i < 50; i++) {
+               Renderer::renderDot(10*i, 10*i );
+            }
             //emit renderSkeletonVPSignal(plane);
         }
     }
@@ -205,7 +211,6 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-
     //qDebug() << "mouse move Event";
     bool clickEvent = false;
 
@@ -239,6 +244,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     }
     else if(event->button() == Qt::RightButton) {
         handleMouseButtonRight(event, plane);
+        this->updateGL();
     }
 
 
@@ -335,7 +341,7 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
 }
 
 bool Viewport::handleKeyboard(QKeyEvent *event) {
-    return delegate->handleKeyboard(event);
+    return delegate->handleKeyboard(event, plane);
 }
 
 void Viewport::enterEvent(QEvent *event) {

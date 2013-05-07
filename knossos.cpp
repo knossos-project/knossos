@@ -40,6 +40,8 @@
 #include "remote.h"
 #include "client.h"
 #include "knossos.h"
+#include "eventmodel.h"
+#include "viewport.h"
 
 //#include "y.tab.h"
 //#include "lex.yy.h"
@@ -61,7 +63,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
-
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -175,6 +176,18 @@ int main(int argc, char *argv[])
 
 
     QObject::connect(remote, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), viewer, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
+    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
+    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
+    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
+
+    QObject::connect(viewer->vp->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
+    QObject::connect(viewer->vp2->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
+    QObject::connect(viewer->vp3->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
+    QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
+
+    QObject::connect(client, SIGNAL(remoteJumpSignal(int32_t,int32_t,int32_t)), remote, SLOT(remoteJump(int32_t,int32_t,int32_t)));
+
 
     /*
     for(int i = 0; i < 100; i++) {
@@ -388,11 +401,6 @@ int32_t Knossos::initStates() {
    state->skeletonState->idleTime = 0;
    state->skeletonState->idleTimeNow = 0;
    state->skeletonState->idleTimeLast = 0;
-
-   // For the remote
-   state->remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
-   state->remoteState->maxTrajectories = tempConfig->remoteState->maxTrajectories;
-   state->remoteState->type = tempConfig->remoteState->type;
 
    // Those values can be calculated from given parameters
    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
@@ -626,7 +634,6 @@ struct stateInfo *Knossos::emptyState() {
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
-    state->remoteState = new remoteState();
     state->clientState = new clientState();
 
     state->skeletonState = new skeletonState();
@@ -824,13 +831,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
 bool Knossos::cleanUpMain() {
 
-
     free(tempConfig->viewerState);
-    free(tempConfig->remoteState);
     free(tempConfig->clientState);
     free(tempConfig);
     free(state->viewerState);
-    free(state->remoteState);
     free(state->clientState);
     free(state);
 
@@ -955,10 +959,6 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->clientState->synchronizePosition = true;
     tempConfig->clientState->saveMaster = false;
 
-    // For the remote
-    tempConfig->remoteState->activeTrajectory = 0;
-    tempConfig->remoteState->maxTrajectories = 16;
-    tempConfig->remoteState->type = false;
 
     // For the skeletonizer
     tempConfig->skeletonState->lockRadius = 100;

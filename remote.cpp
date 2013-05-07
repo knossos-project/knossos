@@ -36,18 +36,13 @@ extern stateInfo *tempConfig;
 Remote::Remote(QObject *parent) :
     QThread(parent)
 {
+    //activeTrajectory = 0;
+    maxTrajectories = 16;
+    //type = false;
 }
 
-bool Remote::cleanUpRemote() {
-    free(state->remoteState);
-    state->remoteState = NULL;
-
-    return true;
-}
 
 void Remote::run() {
-
-    struct remoteState *remoteState = state->remoteState;
 
     // remoteSignal is != false as long as the remote is active.
     // Checking for remoteSignal is therefore a way of seeing if the remote
@@ -56,7 +51,6 @@ void Remote::run() {
     // Depending on the contents of remoteState, this thread will either go
     // on to listen to a socket and get its instructions from there or it
     // will follow the trajectory given in a file.
-
 
     while(true) {
         //qDebug("remote says hello %i", ++i);
@@ -73,21 +67,21 @@ void Remote::run() {
             break;
         }
 
-        Remote::updateRemoteState();
+        updateRemoteState();
 
-        switch(remoteState->type) {
+        switch(this->type) {
 
             case REMOTE_TRAJECTORY:
-                Remote::remoteTrajectory(remoteState->activeTrajectory);
+                remoteTrajectory(this->activeTrajectory);
                 break;
 
             case REMOTE_RECENTERING:
-                //remoteRecentering();
-                Remote::remoteWalkTo(state->remoteState->recenteringPosition.x, state->remoteState->recenteringPosition.y, state->remoteState->recenteringPosition.z);
+
+                remoteWalkTo(this->recenteringPosition.x, this->recenteringPosition.y, this->recenteringPosition.z);
                 break;
 
             default:
-                qDebug("No such remote type (%d)\n", remoteState->type);
+                qDebug("No such remote type (%d)\n", this->type);
 
         }
 
@@ -96,12 +90,6 @@ void Remote::run() {
         }
 
     }
-
-    Remote::cleanUpRemote();
-
-    QThread::currentThread()->quit();
-    emit finished();
-
 
 }
 
@@ -113,14 +101,14 @@ bool Remote::newTrajectory(char *trajName, char *trajectory) {
         return false;
 
     if(state->trajectories == NULL) {
-        state->trajectories = (struct trajectory*) malloc(state->remoteState->maxTrajectories * sizeof(struct trajectory));
+        state->trajectories = (struct trajectory*) malloc(this->maxTrajectories * sizeof(struct trajectory));
         if(state->trajectories == NULL) {
             printf("Out of memory.\n");
             return false;
         }
-        memset(state->trajectories, '\0', sizeof(struct trajectory) * state->remoteState->maxTrajectories);
+        memset(state->trajectories, '\0', sizeof(struct trajectory) * this->maxTrajectories);
 
-        state->maxTrajectories = state->remoteState->maxTrajectories;
+        state->maxTrajectories = this->maxTrajectories;
     }
 
     for(i = 0; i < state->maxTrajectories; i++) {
@@ -164,11 +152,7 @@ bool Remote::remoteTrajectory(int32_t trajNumber) {
 
 bool Remote::updateRemoteState() {
 
-    struct remoteState *remoteState = state->remoteState;
     int32_t i = 0;
-
-    remoteState->type = tempConfig->remoteState->type;
-    remoteState->recenteringPosition = tempConfig->remoteState->recenteringPosition;
 
     if(state->trajectories != NULL) {
         free(state->trajectories);
@@ -181,8 +165,6 @@ bool Remote::updateRemoteState() {
             newTrajectory(tempConfig->trajectories[i].name, tempConfig->trajectories[i].source);
     }
 
-    remoteState->activeTrajectory = tempConfig->remoteState->activeTrajectory;
-
     return true;
 }
 
@@ -194,6 +176,8 @@ bool Remote::remoteJump(int32_t x, int32_t y, int32_t z) {
     tempConfig->viewerState->currentPosition.x = x;
     tempConfig->viewerState->currentPosition.y = y;
     tempConfig->viewerState->currentPosition.z = z;
+
+    /* @todo jumpEvent */
 
     return true;
 }
@@ -341,7 +325,7 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     else
         eventDelay = 50;
 
-    if(state->remoteState->type == REMOTE_RECENTERING)
+    if(this->type == REMOTE_RECENTERING)
         eventDelay = timePerStep;
 
     if(abs(x) >= abs(y) && abs(x) >= abs(z)) {
@@ -458,4 +442,14 @@ void Remote::checkIdleTime() {
     int secondsTracingTime = (int)((time - state->skeletonState->idleTime)*0.001 - hoursTracingTime * 3600 - minutesTracingTime * 60);
     //AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
 
+}
+
+void Remote::setRemoteStateType(int32_t type) {
+    this->type = type;
+}
+
+void Remote::setRecenteringPosition(int32_t x, int32_t y, int32_t z) {
+    this->recenteringPosition.x = x;
+    this->recenteringPosition.y = y;
+    this->recenteringPosition.z = z;
 }

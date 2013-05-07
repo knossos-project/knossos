@@ -121,6 +121,8 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
 
     connect(this->delayTimePerStepSpinBox, SIGNAL(valueChanged(int)), this, SLOT(delayTimePerStepChanged(int)));
     connect(this->numberOfStepsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(numberOfStepsChanged(int)));
+
+    loadSettings();
 }
 
 

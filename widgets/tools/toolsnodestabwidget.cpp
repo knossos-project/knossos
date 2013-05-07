@@ -129,7 +129,6 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     gridLayout4->addWidget(lockToActiveNodeButton, 5, 1);
     gridLayout4->addWidget(disableLockingButton, 5, 2);
 
-
     mainLayout->addLayout(formLayout);
     mainLayout->addLayout(gridLayout);
     mainLayout->addLayout(formLayout2);

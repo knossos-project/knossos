@@ -1041,10 +1041,8 @@ void MainWindow::defaultPreferencesSlot()
 
     switch(ret) {
         case QMessageBox::Yes:
-
             break;
     case QMessageBox::No:
-
            break;
     }
 
@@ -1248,7 +1246,6 @@ void MainWindow::saveSettings() {
     settings->setValue("viewport_settings_widget.position.y", this->viewportSettingsWidget->y());
     settings->setValue("viewport_settings_widget.visible", this->viewportSettingsWidget->isVisible());
     //settings->setValue("viewport_settings_widget.selected_tab", this->viewportSettingsWidget->);
-
 
     settings->setValue("zoom_and_multires_widget.width", this->zoomAndMultiresWidget->width());
     settings->setValue("zoom_and_multires_widget.height", this->zoomAndMultiresWidget->height());

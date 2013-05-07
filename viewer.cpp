@@ -61,17 +61,19 @@ Viewer::Viewer(QObject *parent) :
     vp3->setGeometry(5, 400, 350, 350);
     vp4->setGeometry(355, 400, 350, 350);
 
+    vp->show();
+    vp2->show();
+    vp3->show();
+    vp4->show();
+
+
+
     /*
     vp->setGeometry(5, 40, 500, 500);
     vp2->setGeometry(510, 40, 500, 500);
     vp3->setGeometry(5, 545, 500, 500);
     vp4->setGeometry(510, 545, 500, 500);
     */
-
-    vp->show();
-    vp2->show();
-    vp3->show();
-    vp4->show();
 
     connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()));
     connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()));
@@ -82,15 +84,11 @@ Viewer::Viewer(QObject *parent) :
     connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
     connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
     connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    /* what about vp4 */
-    /* what about vp4 */
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
     connect(vp4->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-
-    /* what about vp4 */
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
@@ -101,7 +99,6 @@ Viewer::Viewer(QObject *parent) :
     connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp3->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp4->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
-
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
     connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
@@ -124,13 +121,16 @@ Viewer::Viewer(QObject *parent) :
      * 1. initViewer
      * 2. new Skeletonizer
      * 3. new Renderer
-     */
+    */
+
+    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+
     initViewer();
     skeletonizer = new Skeletonizer();
+    skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
     renderer = new Renderer();
 
 
-    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
     connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
@@ -198,10 +198,10 @@ Viewer::Viewer(QObject *parent) :
                    NO_MAG_CHANGE);
 
 
+
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(100);
-
 
 }
 
@@ -1057,6 +1057,9 @@ bool Viewer::initViewer() {
                                                              * 4);
     }
 
+    updateViewerState();
+    recalcTextureOffsets();
+    viewports = vpListGenerate(state->viewerState);
 
     return true;
 }
@@ -1279,7 +1282,6 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
 
-
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available. If they aren't, they are added to a backlog
@@ -1289,14 +1291,13 @@ void Viewer::run() {
     // have been processed, we go into an idle state, in which we wait for events.
     qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
-    struct vpList *viewports = NULL;
+    //struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
     uint32_t drawCounter = 0;
 
     state->viewerState->viewerReady = true;
 
-    updateViewerState();
-    recalcTextureOffsets();
+
 
     // Display info about skeleton save path here TODO
     // This creates a circular doubly linked list of
@@ -1368,7 +1369,7 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 Renderer::drawGUI();
-                emit updateGLSignal4();
+                vp4->updateGL();
                 // TODO Crashes because of SDL
                 //while(SDL_PollEvent(&event)) {
                 //   if(EventModel::handleEvent(event) == false) {
@@ -1393,9 +1394,9 @@ void Viewer::run() {
             currentVp = nextVp;
 
 
-            emit updateGLSignal();
-            emit updateGLSignal2();
-            emit updateGLSignal3();
+            vp->updateGL();
+            vp2->updateGL();
+            vp3->updateGL();
 
 
         }//end while(viewports->elements > 0)
@@ -2017,6 +2018,7 @@ bool Viewer::recalcTextureOffsets() {
 }
 
 bool Viewer::refreshViewports() {
+
 
     return true;
 }

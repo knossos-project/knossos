@@ -99,6 +99,7 @@ protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
 
+
 };
 
 #endif // VIEWER_H

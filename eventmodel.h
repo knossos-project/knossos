@@ -66,7 +66,7 @@ public:
     bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound);
-    bool handleKeyboard(QKeyEvent *event);
+    bool handleKeyboard(QKeyEvent *event, int32_t VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
 
     int xrel(int x);
@@ -93,6 +93,8 @@ signals:
     // SIGNAL WITH RETURN VALUE ???
     void addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
     void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
+    void setRemoteStateTypeSignal(int32_t type);
+    void setRecenteringPositionSignal(int32_t x, int32_t y, int32_t z);
 public slots:
     
 };

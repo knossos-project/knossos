@@ -763,15 +763,6 @@ void Loader::run() {
        load();
     }
 
-    /*
-    // Free the structures in loaderState and loaderState itself.
-    if(cleanUpLoader(state->loaderState) == false) {
-        LOG("Error cleaning up loading thread.");
-        return;
-    } */
-
-    QThread::currentThread()->quit();
-    emit finished();
     qDebug() << "Loader: start ended";
 }
 
