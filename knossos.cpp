@@ -169,17 +169,15 @@ int main(int argc, char *argv[])
     remote = new Remote();
     remote->start();
 
-
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int32_t, int32_t, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
     QObject::connect(client, SIGNAL(addTreeCommentSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(addTreeComment(int32_t,int32_t,char*)));
 
-
     QObject::connect(remote, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), viewer, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
-    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
-    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
-    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteState(int32_t)));
+    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
+    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
+    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
+    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
 
     QObject::connect(viewer->vp->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
     QObject::connect(viewer->vp2->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
@@ -187,7 +185,8 @@ int main(int argc, char *argv[])
     QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
 
     QObject::connect(client, SIGNAL(remoteJumpSignal(int32_t,int32_t,int32_t)), remote, SLOT(remoteJump(int32_t,int32_t,int32_t)));
-
+    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int32_t,uint32_t)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int32_t,uint32_t)));
+    QObject::connect(client, SIGNAL(clearSkeletonSignal(int32_t,int)), viewer->skeletonizer, SLOT(clearSkeleton(int32_t,int)));
 
     /*
     for(int i = 0; i < 100; i++) {

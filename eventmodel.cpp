@@ -54,7 +54,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
                                                 10);
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
-            //Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, clickedNode);
             return true;
         }
 
@@ -70,7 +69,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
                 newActiveNode = Skeletonizer::findNodeInRadius(*clickedCoordinate);
                 if(newActiveNode != NULL) {
                     emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-                    //Skeletonizer::setActiveNode(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                     return true;
                 }
             }
@@ -240,14 +238,12 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
             case SKELETONIZER_ON_CLICK_DROP_NODE:
                 // function is inside skeletonizer.c
                 emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-                //Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                //                   state->viewerState->vpConfigs[VPfound].type);
+
                 break;
             case SKELETONIZER_ON_CLICK_ADD_NODE:
                 // function is inside skeletonizer.c
                 emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-                //Skeletonizer::UI_addSkeletonNode(clickedCoordinate,
-                  //                 state->viewerState->vpConfigs[VPfound].type);
+
                 tempConfig->skeletonState->workMode =
                     SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
                 break;
@@ -1032,18 +1028,18 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             qDebug() << "N und shift";
-            Skeletonizer::nextCommentlessNode();
+            emit nextCommentlessNodeSignal();
         } else {
             qDebug() << "N pressed";
-            Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
+            emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_P) {
         if(shift) {
             qDebug() << "P und shift";
-            Skeletonizer::previousCommentlessNode();
+            emit previousCommentlessNodeSignal();
         } else {
             qDebug() << "P pressed";
-            Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
+            emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
         }
     } else if(event->key() == Qt::Key_3) {
         qDebug() << "3 pressed";

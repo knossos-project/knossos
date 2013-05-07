@@ -38,7 +38,8 @@ public:
     explicit ToolsQuickTabWidget(QWidget *parent = 0);
     void loadSettings();
 signals:
-    
+    void nextCommentSignal(char *searchString);
+    void previousCommentSignal(char *searchString);
 public slots:
     void activeTreeIdChanged(int value);
     void commentChanged(QString comment);

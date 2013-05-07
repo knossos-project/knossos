@@ -83,6 +83,8 @@ signals:
     void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
     void addTreeCommentSignal(int32_t targetRevision, int32_t treeID, char *comment);
     void remoteJumpSignal(int32_t x, int32_t y, int32_t z);
+    void skeletonWorkModeSignal(int32_t targetRevision, uint32_t workMode);
+    void clearSkeletonSignal(int32_t targetRevision, int loadingSkeleton);
 public slots:
     void start();
     void socketConnectionSucceeded();

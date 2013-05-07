@@ -173,14 +173,14 @@ void ToolsQuickTabWidget::searchForChanged(QString comment) {
   */
 void ToolsQuickTabWidget::findNextButtonClicked() {
     qDebug() << state->viewerState->gui->commentSearchBuffer;
-    Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
+    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }
 
 /**
   * @bug the application crashes while invoking nextComment
   */
 void ToolsQuickTabWidget::findPreviousButtonClicked() {
-    Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
+    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }
 
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {

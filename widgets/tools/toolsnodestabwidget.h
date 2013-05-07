@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include "knossos-global.h"
 
 class QLabel;
 class QSpinBox;
@@ -42,6 +43,10 @@ public:
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void deleteActiveNodeSignal();
+    void lockPositionSignal(Coordinate coordinate);
+    void unlockPositionSignal();
+    void nextCommentSignal(char *searchString);
+    void previousCommentSignal(char *searchString);
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

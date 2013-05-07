@@ -101,6 +101,7 @@ signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();
     void runSignal();
+    void clearSkeletonSignal(int32_t targetRevision, int loadingSkeleton);
 
 
 protected:

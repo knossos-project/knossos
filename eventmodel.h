@@ -95,6 +95,10 @@ signals:
     void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
     void setRemoteStateTypeSignal(int32_t type);
     void setRecenteringPositionSignal(int32_t x, int32_t y, int32_t z);
+    void nextCommentSignal(char *searchString);
+    void previousCommentSignal(char *searchString);
+    void nextCommentlessNodeSignal();
+    void previousCommentlessNodeSignal();
 public slots:
     
 };

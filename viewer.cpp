@@ -36,6 +36,8 @@
 #include "widgets/zoomandmultireswidget.h"
 #include "widgets/toolswidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"
+#include "widgets/tools/toolsquicktabwidget.h"
+#include "widgets/tools/toolstreestabwidget.h"
 
 
 extern  stateInfo *tempConfig;
@@ -110,12 +112,8 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
-    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
+    //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
 
-    /*
-    connect(vp, SIGNAL(renderOrthogonalVPSignal(int32_t)), renderer, SLOT(renderOrthogonalVP(uint32_t)));
-    connect(vp, SIGNAL(renderSkeletonVPSignal(int32_t)), renderer, SLOT(renderSkeletonVP(uint32_t)));
-    */
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -129,8 +127,6 @@ Viewer::Viewer(QObject *parent) :
     skeletonizer = new Skeletonizer();
     skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
     renderer = new Renderer();
-
-
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
     connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
@@ -190,6 +186,42 @@ Viewer::Viewer(QObject *parent) :
     connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
     connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
     connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+
+
+    connect(vp->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp2->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp3->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp4->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+
+    connect(vp->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp2->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp3->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp4->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+
+    connect(vp->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp2->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp3->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp4->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+
+    connect(vp->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp2->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp3->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp4->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+
+    connect(window->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(window->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
+
+    connect(window, SIGNAL(clearSkeletonSignal(int32_t,int)), skeletonizer, SLOT(clearSkeleton(int32_t,int)));
+
+    connect(vp, SIGNAL(renderOrthogonalVPSignal(int32_t)), renderer, SLOT(renderOrthogonalVP(uint32_t)));
+    connect(vp, SIGNAL(renderSkeletonVPSignal(int32_t)), renderer, SLOT(renderSkeletonVP(uint32_t)));
+
+    connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
 
 
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -782,7 +814,7 @@ static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState
                                 viewerState->defaultTexData);
             } else {
                 correct_cubes += 1;
-                qDebug() << "vpGenerateTexture" <<correct_cubes;
+                //qDebug() << "vpGenerateTexture" <<correct_cubes;
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
                                dcOffset,
@@ -1289,7 +1321,7 @@ void Viewer::run() {
     // While we are loading the textures, we check for events. Some events
     // might cancel the current loading process. When all textures / backlogs
     // have been processed, we go into an idle state, in which we wait for events.
-    qDebug() << "Viewer: start begin";
+    //qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
     //struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
@@ -1734,21 +1766,7 @@ bool Viewer::recalcTextureOffsets() {
         /* Do this only for orthogonal VPs... */
         if (state->viewerState->vpConfigs[i].type == VIEWPORT_XY
             || state->viewerState->vpConfigs[i].type == VIEWPORT_XZ
-            || state->viewerState->vpConfigs[i].type == VIEWPORT_YZ) {
-            /*Don't remove /2 *2, integer division! */
-
-            // old code for smaller FOV
-            //state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
-            //state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
-            //    ((float)(((state->M / 2) * 2 - 1) * state->cubeEdgeLength))
-            //    / ((float)state->viewerState->vpConfigs[i].texture.edgeLengthPx);
-
-
-            // new code for larger FOV
-            // displayedEdgeLength is in texture pixels, independent from the
-            // currently active mag!
-
-
+            || state->viewerState->vpConfigs[i].type == VIEWPORT_YZ) {         
 
             //Multiply the zoom factor. (only truncation possible! 1 stands for minimal zoom)
             state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX *=

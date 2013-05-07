@@ -461,7 +461,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::clearSkeleton(d[0], false);
+                emit clearSkeletonSignal(d[0], false);
 
                 break;
 
@@ -474,7 +474,6 @@ uint32_t Client::parseInBuffer() {
                     goto loopExit;
 
                 emit setActiveNodeSignal(d[0], NULL, d[1]);
-                //Skeletonizer::setActiveNode(d[0], NULL, d[1]);
 
                 break;
 
@@ -487,7 +486,7 @@ uint32_t Client::parseInBuffer() {
                     goto loopExit;
 
                 printf("SETSKELETONMODE: Received revision %d / mode %d\n", d[0], d[1]);
-                Skeletonizer::setSkeletonWorkMode(d[0], d[1]);
+                emit skeletonWorkModeSignal(d[0], d[1]);
 
                 break;
 

@@ -185,7 +185,8 @@ void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
     int retValue = QMessageBox::warning(this, "Warning", "Do you really want to delete the active tree", QMessageBox::Yes, QMessageBox::No);
     switch(retValue) {
         case QMessageBox::Yes:
-        Skeletonizer::delActiveTree();
+        emit delActiveTreeSignal();
+
     }
 }
 

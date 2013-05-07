@@ -34,7 +34,6 @@
 #include <QLineEdit>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
-#include "knossos-global.h"
 #include "skeletonizer.h"
 
 extern struct stateInfo *state;
@@ -223,14 +222,14 @@ void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
   * @attention the invovation of nextComment does not lead to a crash, interesting!
   */
 void ToolsNodesTabWidget::findNextButtonClicked() {
-    Skeletonizer::nextComment(state->viewerState->gui->commentSearchBuffer);
+    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }
 
 /**
   * @attention the invovation of nextComment does not lead to a crash, interesting!
   */
 void ToolsNodesTabWidget::findPreviousButtonClicked() {
-    Skeletonizer::previousComment(state->viewerState->gui->commentSearchBuffer);
+    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }
 
 void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {
@@ -267,12 +266,13 @@ void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
         activeNodePosition.y = state->skeletonState->activeNode->position.y;
         activeNodePosition.z = state->skeletonState->activeNode->position.z;
 
-        Skeletonizer::lockPosition(activeNodePosition);
+        emit lockPositionSignal(activeNodePosition);
+
     } else {
         LOG("There is not active node to lock");
     }
 }
 
 void ToolsNodesTabWidget::disableLockingButtonClicked() {
-    Skeletonizer::unlockPosition();
+    emit unlockPositionSignal();
 }

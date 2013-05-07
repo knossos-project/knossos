@@ -968,7 +968,7 @@ void MainWindow::clearSkeletonSlot()
 
     switch(ret) {
         case QMessageBox::Ok:
-            Skeletonizer::clearSkeleton(CHANGE_MANUAL, false);
+            emit clearSkeletonSignal(CHANGE_MANUAL, false);
             updateTitlebar(false);
     }
 }

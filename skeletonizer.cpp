@@ -613,9 +613,20 @@ bool Skeletonizer::updateSkeletonState() {
     return true;
 }
 
-bool Skeletonizer::nextCommentlessNode() { return false;}
+bool Skeletonizer::nextCommentlessNode() { return true; }
 
-bool Skeletonizer::previousCommentlessNode() { return false; }
+bool Skeletonizer::previousCommentlessNode() {
+    struct nodeListElement *currNode;
+    currNode = state->skeletonState->activeNode->previous;
+    if(currNode && (!currNode->comment)) {
+        LOG("yes");
+        setActiveNode(CHANGE_MANUAL,
+                          currNode,
+                          0);
+        jumpToActiveNode();
+    }
+    return true;
+}
 
 bool Skeletonizer::updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
    int32_t extensionDelim = -1, countDelim = -1;

@@ -38,29 +38,20 @@ public:
     explicit Skeletonizer(QObject *parent = 0);
 
     void setViewportReferences(Viewport *vp, Viewport*vp2, Viewport*vp3, Viewport*vp4);
-
     Viewport *vp, *vp2, *vp3, *vp4;
-
     static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
-    static bool nextCommentlessNode();
-    static bool previousCommentlessNode();
 
     //uint32_t saveNMLSkeleton();
     static int32_t saveSkeleton();
     //uint32_t loadNMLSkeleton();
 
 
-    static void setDefaultSkelFileName();
-
     static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
     static bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
     static bool delTree(int32_t targetRevision, int32_t treeID);
-
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
-
     static bool setActiveTreeByID(int32_t treeID);
-
     static int32_t addNode(int32_t targetRevision,
                     int32_t nodeID,
                     float radius,
@@ -71,9 +62,6 @@ public:
                     int32_t time,
                     int32_t respectLocks);
     static bool addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
-
-    static bool clearSkeleton(int32_t targetRevision, int loadingSkeleton);
-
     static bool mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
 
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
@@ -106,26 +94,25 @@ public:
     static bool addComment(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
     static bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
     static bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
-    static commentListElement *nextComment(char *searchString);
-    static commentListElement *previousComment(char *searchString);
-    static bool searchInComment(char *searchString, commentListElement *comment);
-    static bool unlockPosition();
-    static bool lockPosition(Coordinate lockCoordinate);
+
     static bool popBranchNode(int32_t targetRevision);
     static bool pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID);
-    static bool setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
-    static bool jumpToActiveNode();
+
     static void UI_popBranchNode();
     static void restoreDefaultTreeColor();
     static bool updateTreeColors();
 
-
-    static bool delActiveTree();
+    void setDefaultSkelFileName();
+    bool searchInComment(char *searchString, commentListElement *comment);
+    bool jumpToActiveNode();
     bool loadSkeleton();
+
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();
 public slots:
+    bool delActiveTree();
+    bool clearSkeleton(int32_t targetRevision, int loadingSkeleton);
     bool delActiveNode();
     bool updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
     bool updateSkeletonState();
@@ -133,6 +120,13 @@ public slots:
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
     bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
+    bool setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
+    bool unlockPosition();
+    bool lockPosition(Coordinate lockCoordinate);
+    commentListElement *nextComment(char *searchString);
+    commentListElement *previousComment(char *searchString);
+    bool previousCommentlessNode();
+    bool nextCommentlessNode();
 };
 
 #endif // SKELETONIZER_H
