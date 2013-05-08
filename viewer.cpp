@@ -68,8 +68,6 @@ Viewer::Viewer(QObject *parent) :
     vp3->show();
     vp4->show();
 
-
-
     /*
     vp->setGeometry(5, 40, 500, 500);
     vp2->setGeometry(510, 40, 500, 500);
@@ -77,20 +75,16 @@ Viewer::Viewer(QObject *parent) :
     vp4->setGeometry(510, 545, 500, 500);
     */
 
-    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()));
-    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()));
-    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()));
-    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()));
+    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);
 
-    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
 
-    connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp4->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
@@ -128,15 +122,14 @@ Viewer::Viewer(QObject *parent) :
     skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
     renderer = new Renderer();
 
-    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-
+    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    //connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    //connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    //connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    //connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
@@ -187,7 +180,6 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
     connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
 
-
     connect(vp->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(vp2->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(vp3->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
@@ -223,6 +215,31 @@ Viewer::Viewer(QObject *parent) :
 
     connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
 
+    connect(vp->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+    connect(vp2->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+    connect(vp3->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+    connect(vp4->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+
+    connect(vp->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+    connect(vp2->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+    connect(vp3->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+    connect(vp4->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+
+    connect(vp->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+    connect(vp2->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+    connect(vp3->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+    connect(vp4->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+
+    connect(vp->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+    connect(vp2->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+    connect(vp3->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+    connect(vp4->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+
+    connect(vp->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp2->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp3->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
@@ -234,7 +251,6 @@ Viewer::Viewer(QObject *parent) :
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(100);
-
 }
 
 static vpList* vpListNew() {
@@ -1400,8 +1416,11 @@ void Viewer::run() {
                 updateViewerState();
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
-                Renderer::drawGUI();
+                renderer->drawGUI();
+                /*
                 vp4->updateGL();
+                */
+
                 // TODO Crashes because of SDL
                 //while(SDL_PollEvent(&event)) {
                 //   if(EventModel::handleEvent(event) == false) {
@@ -1426,9 +1445,12 @@ void Viewer::run() {
             currentVp = nextVp;
 
 
+            /*
             vp->updateGL();
             vp2->updateGL();
             vp3->updateGL();
+            */
+
 
 
         }//end while(viewports->elements > 0)
@@ -1726,7 +1748,11 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
     }
     emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     Remote::checkIdleTime();
-    run();
+
+    vp->updateGL();
+    vp2->updateGL();
+    vp3->updateGL();
+    vp4->updateGL();
 
 
     return true;

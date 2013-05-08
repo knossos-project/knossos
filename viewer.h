@@ -70,8 +70,7 @@ public:
 
     static bool loadDatasetColorTable(const char *path, GLuint *table, int32_t type);
     bool sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged);
-
-
+    bool initialized;
 
 signals:
     void loadSignal();
@@ -98,7 +97,6 @@ public slots:
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
-
 
 };
 

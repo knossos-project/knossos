@@ -45,28 +45,28 @@ class Renderer : public QObject
 {
     Q_OBJECT
 public:
-    explicit Renderer(QObject *parent = 0);
-    static void renderDot(int x, int y);
-    static bool drawGUI();
-
-    //Some math helper functions
-    static float radToDeg(float rad);
-    static float degToRad(float deg);
-    static floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
-    static float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
-
-    static int32_t sgn(float number);
+    explicit Renderer(QObject *parent = 0);    
 
     static bool setRotationState(uint32_t setTo);
     static bool rotateSkeletonViewport();
     static bool updateRotationStateMatrix(float M1[16], float M2[16]);
-    static bool updateDisplayListsSkeleton();
+    static uint32_t renderViewportBorders(uint32_t currentVP);
+
+    uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
+    uint32_t renderText(Coordinate *pos, char *string);
+    uint32_t renderSphere(Coordinate *pos, float radius);
+    uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius);
+    GLuint renderWholeSkeleton(Byte callFlag);
+    GLuint renderSuperCubeSkeleton(Byte callFlag);
+    GLuint renderActiveTreeSkeleton(Byte callFlag);
+    bool updateDisplayListsSkeleton();
 signals:
     
 public slots:
     static uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
     static bool renderOrthogonalVP(uint32_t currentVP);
     static bool renderSkeletonVP(uint32_t currentVP);
+    bool drawGUI();
 };
 
 #endif // RENDERER_H

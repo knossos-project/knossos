@@ -29,7 +29,7 @@
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
 #include <QDebug>
-
+#include "renderer.h"
 #include "eventmodel.h"
 
 class QPushButton;
@@ -82,7 +82,7 @@ signals:
     void renderOrthogonalVPSignal(int32_t plane);
     void renderSkeletonVPSignal(int32_t plane);
 public slots:
-    
+
 };
 
 #endif // VIEWPORT_H

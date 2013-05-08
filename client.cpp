@@ -268,7 +268,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::addComment(d[0], (char *)s, NULL, d[1]);
+                emit addCommentSignal(d[0], (char *)s, NULL, d[1]);
 
                 break;
 
@@ -281,7 +281,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::editComment(d[0], NULL, d[1], (char *)s, NULL, d[2]);
+                emit editCommentSignal(d[0], NULL, d[1], (char *)s, NULL, d[2]);
 
                 break;
 
@@ -292,7 +292,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::delComment(d[0], NULL, d[1]);
+                emit delCommentSignal(d[0], NULL, d[1]);
 
                 break;
 
@@ -339,7 +339,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::editNode(d[0], d[2], NULL, f[0], d[4], d[5], d[6], d[3]);
+                emit editNodeSignal(d[0], d[2], NULL, f[0], d[4], d[5], d[6], d[3]);
 
                 break;
 
@@ -353,7 +353,7 @@ uint32_t Client::parseInBuffer() {
 
                 LOG("DELNODE: Received revision %d", d[0]);
 
-                Skeletonizer::delNode(d[0], d[1], NULL);
+                emit delNodeSignal(d[0], d[1], NULL);
 
                 break;
 
@@ -377,7 +377,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::delSegment(d[0], d[1], d[2], NULL);
+                emit delSegmentSignal(d[0], d[1], d[2], NULL);
 
                 break;
 
@@ -404,7 +404,7 @@ uint32_t Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::delTree(d[0], d[1]);
+                emit delTreeSignal(d[0], d[1]);
 
                 break;
 

@@ -150,14 +150,14 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
                 if(state->skeletonState->activeNode) {
                     if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
                                             clickedNode)) {
-                        Skeletonizer::delSegment(CHANGE_MANUAL,
+                        emit delSegmentSignal(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
                                    NULL);
                     }
                     if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
-                        Skeletonizer::delSegment(CHANGE_MANUAL,
+                        emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
                                    NULL);
@@ -202,14 +202,14 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
             if(state->skeletonState->activeNode) {
                 if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
                                     clickedNode)) {
-                Skeletonizer::delSegment(CHANGE_MANUAL,
+                emit delSegmentSignal(CHANGE_MANUAL,
                            state->skeletonState->activeNode->nodeID,
                            clickedNode,
                            NULL);
                 }
                 if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
                                         state->skeletonState->activeNode->nodeID)) {
-                    Skeletonizer::delSegment(CHANGE_MANUAL,
+                    emit delSegmentSignal(CHANGE_MANUAL,
                                clickedNode,
                                state->skeletonState->activeNode->nodeID,
                                NULL);
@@ -529,7 +529,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                             - newDraggedNodePos.z;
 
-                    Skeletonizer::editNode(CHANGE_MANUAL,
+                    emit editNodeSignal(CHANGE_MANUAL,
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -564,7 +564,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                     newDraggedNodePos.z =
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
-                    Skeletonizer::editNode(CHANGE_MANUAL,
+                    emit editNodeSignal(CHANGE_MANUAL,
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -599,7 +599,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
                     newDraggedNodePos.z =
                         state->viewerState->vpConfigs[i].draggedNode->position.z
                         - newDraggedNodePos.z;
-                    Skeletonizer::editNode(CHANGE_MANUAL,
+                    emit editNodeSignal(CHANGE_MANUAL,
                              0,
                              state->viewerState->vpConfigs[i].draggedNode,
                              0.,
@@ -634,7 +634,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
         qDebug("shift and mouse wheel up and activeNode");
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
-        Skeletonizer::editNode(CHANGE_MANUAL,
+        emit editNodeSignal(CHANGE_MANUAL,
                  0,
                  state->skeletonState->activeNode,
                  radius,
@@ -709,7 +709,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
         qDebug("shift and mouse wheel down");
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
-        Skeletonizer::editNode(CHANGE_MANUAL,
+        emit editNodeSignal(CHANGE_MANUAL,
                  0,
                  state->skeletonState->activeNode,
                  radius,
@@ -1185,33 +1185,33 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
             state->viewerState->gui->enableOrthoSkelOverlay = 0;
         }
         state->skeletonState->skeletonChanged = true;
-        Renderer::drawGUI();
+        emit drawGUISignal();
     } else if(event->key() == Qt::Key_Delete) {
         qDebug() << "Delete Key pressed";
         emit deleteActiveNodeSignal();
     } else if(event->key() == Qt::Key_F1) {
         qDebug() << "F1 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F2) {
         qDebug() << "F2 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F3) {
         qDebug() << "F3 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F4) {
         if(alt) {
@@ -1225,19 +1225,19 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
         } else {
             qDebug() << "F4 pressed";
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-                Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
+                emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
             else{
-                Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
         }
     } else if(event->key() == Qt::Key_F5) {
         qDebug() << "F5 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-            Skeletonizer::addComment(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
         else{
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
     }
 

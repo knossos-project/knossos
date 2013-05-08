@@ -63,7 +63,7 @@ Renderer::Renderer(QObject *parent) :
     glLoadIdentity();
 }
 
-static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius) {
+uint32_t Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius) {
     float currentAngle = 0.;
     //int32_t transFactor = 1;
     //Coordinate transBase, transTop;
@@ -100,8 +100,8 @@ static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *t
         segDirection.z = (float)(top->z - base->z);
 
         //temVec2 defines the rotation axis
-        tempVec2 = Renderer::crossProduct(&tempVec, &segDirection);
-        currentAngle = Renderer::radToDeg(Renderer::vectorAngle(&tempVec, &segDirection));
+        tempVec2 = crossProduct(&tempVec, &segDirection);
+        currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
 
         //some gl implementations have problems with the params occuring for
         //segs in straight directions. we need a fix here.
@@ -123,7 +123,7 @@ static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *t
     return true;
 }
 
-static uint32_t renderSphere(Coordinate *pos, float radius) {
+uint32_t Renderer::renderSphere(Coordinate *pos, float radius) {
     GLUquadricObj *gluSphereObj = NULL;
     //Coordinate transPos;
     int32_t transFactor = 1;
@@ -161,7 +161,8 @@ static uint32_t renderSphere(Coordinate *pos, float radius) {
     return true;
 }
 
-static uint32_t renderText(Coordinate *pos, char *string) {
+
+uint32_t Renderer::renderText(Coordinate *pos, char *string) {
 
     char *c;
     //int32_t transFactor = 1;
@@ -185,7 +186,7 @@ static uint32_t renderText(Coordinate *pos, char *string) {
 }
 
 
-static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
+uint32_t Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
     if(!state->skeletonState->showIntersections) return true;
     if(state->skeletonState->displayMode & DSP_LINES_POINTS) return true;
@@ -227,7 +228,7 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
     //i represents the current orthogonal plane
     for(i = 0; i<=2; i++) {
         //There is an intersection and the segment doesn't lie in the plane
-        if(Renderer::sgn(p[0][i])*Renderer::sgn(p[1][i]) == -1) {
+        if(sgn(p[0][i])*sgn(p[1][i]) == -1) {
             //Calculate intersection point
             segDir.x = sTp_local.x - sSp_local.x;
             segDir.y = sTp_local.y - sSp_local.y;
@@ -281,8 +282,8 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
                 tempVec.z = 1.;
 
                 //temVec2 defines the rotation axis
-                tempVec2 = Renderer::crossProduct(&tempVec, &segDir);
-                currentAngle = Renderer::radToDeg(Renderer::vectorAngle(&tempVec, &segDir));
+                tempVec2 = crossProduct(&tempVec, &segDir);
+                currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
                 glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
                 free(tempVec2);
 
@@ -310,7 +311,7 @@ static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment) {
 
 }
 
-static uint32_t renderViewportBorders(uint32_t currentVP) {
+uint32_t Renderer::renderViewportBorders(uint32_t currentVP) {
     /*
     char *description;
     char *c;
@@ -537,7 +538,7 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             * 0.5;
 //            * (float)state->magnification;
 
-    switch(state->viewerState->vpConfigs[currentVP].type) {
+    switch(currentVP/*state->viewerState->vpConfigs[currentVP].type*/) {
         case VIEWPORT_XY:
             if(!state->viewerState->selectModeFlag) {
                 glMatrixMode(GL_PROJECTION);
@@ -1571,35 +1572,6 @@ uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32
     }
 }
 
-//Some math helper functions
-float Renderer::radToDeg(float rad) {
-    return ((180. * rad) / PI);
-}
-
-float Renderer::degToRad(float deg) {
-    return ((deg / 180.) * PI);
-}
-
-floatCoordinate* Renderer::crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
-    floatCoordinate *result = NULL;
-    result = (floatCoordinate*)malloc(sizeof(floatCoordinate));
-    result->x = v1->y * v2->z - v1->z * v2->y;
-    result->y = v1->z * v2->x - v1->x * v2->z;
-    result->z = v1->x * v2->y - v1->y * v2->x;
-    return result;
-}
-
-float Renderer::vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
-    return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
-}
-
-int32_t Renderer::sgn(float number) {
-    if(number > 0.) return 1;
-    else if(number == 0.) return 0;
-    else return -1;
-}
-
-
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
     //multiply matrix m2 to matrix m1 and save result in rotationState matrix
     int i;
@@ -1778,7 +1750,7 @@ bool Renderer::setRotationState(uint32_t setTo) {
 }
 
 
-static GLuint renderActiveTreeSkeleton(Byte callFlag) {
+GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -1915,7 +1887,7 @@ static GLuint renderActiveTreeSkeleton(Byte callFlag) {
     return tempList;
 }
 
-static GLuint renderSuperCubeSkeleton(Byte callFlag) {
+GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -2147,7 +2119,7 @@ static GLuint renderSuperCubeSkeleton(Byte callFlag) {
     return tempList;
 }
 
-static GLuint renderWholeSkeleton(Byte callFlag) {
+GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -2399,14 +2371,5 @@ bool Renderer::updateDisplayListsSkeleton() {
     }
 
     return true;
-}
-
-void Renderer::renderDot(int x, int y) {
-    glBegin(GL_POINTS);
-        glPointSize(1);
-        glColor3f(1, 0, 0);
-        glVertex2f(x, y);
-    glEnd();
-
 }
 

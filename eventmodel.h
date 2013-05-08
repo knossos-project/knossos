@@ -99,6 +99,11 @@ signals:
     void previousCommentSignal(char *searchString);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();
+    void delSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
+    void addCommentSignal(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
+    bool editCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
+    void drawGUISignal();
 public slots:
     
 };

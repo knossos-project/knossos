@@ -24,11 +24,13 @@
 
 #include "knossos-global.h"
 #include "viewport.h"
-#include "renderer.h"
+
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include "sleeper.h"
+#include "functions.h"
+
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -39,6 +41,7 @@ extern stateInfo *tempConfig;
   */
 Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
+    setAttribute(Qt::WA_KeyCompression, true);
     delegate = new EventModel();
     connect(delegate, SIGNAL(rerender()), this, SLOT(updateGL()));
 
@@ -46,8 +49,6 @@ Viewport::Viewport(QWidget *parent, int plane) :
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
-
-
 
     this->setCursor(Qt::CrossCursor);
 
@@ -179,20 +180,34 @@ void Viewport::resizeGL(int w, int h) {
 
 void Viewport::paintGL() {
 
-
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
-            drawViewport(plane);
+
+           this->drawViewport(plane);
+
+            /*
             for(int i = 0; i < 50; i++) {
-               Renderer::renderDot(10*i, 10*i );
-            }
+                Coordinate c;
+                c.x = 10 * i;
+                c.y = 10 * i;
+                c.z = 10 * i;
+               Renderer::renderOrb(&c, 3);
+             } */
 
             //emit renderOrthogonalVPSignal(plane);
         }  else {
-            drawSkeletonViewport();
+            this->drawSkeletonViewport();
+            /*
             for(int i = 0; i < 50; i++) {
-               Renderer::renderDot(10*i, 10*i );
-            }
+                Coordinate c;
+                c.x = 10 * i;
+                c.y = 10 * i;
+                c.z = 10 * i;
+               Renderer::renderOrb(&c, 3);
+
+            } */
+
+
             //emit renderSkeletonVPSignal(plane);
         }
     }
@@ -246,9 +261,6 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
         handleMouseButtonRight(event, plane);
         this->updateGL();
     }
-
-
-
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {

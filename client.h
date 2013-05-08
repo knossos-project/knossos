@@ -85,6 +85,13 @@ signals:
     void remoteJumpSignal(int32_t x, int32_t y, int32_t z);
     void skeletonWorkModeSignal(int32_t targetRevision, uint32_t workMode);
     void clearSkeletonSignal(int32_t targetRevision, int loadingSkeleton);
+    void delSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
+    void delNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
+    void delTreeSignal(int32_t targetRevision, int32_t treeID);
+    void addCommentSignal(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
+    bool editCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
+    bool delCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
 public slots:
     void start();
     void socketConnectionSucceeded();

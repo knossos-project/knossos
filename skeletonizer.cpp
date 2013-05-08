@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <time.h>
@@ -126,7 +125,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
 }
 
-static nodeListElement *addNodeListElement(
+nodeListElement *Skeletonizer::addNodeListElement(
               int32_t nodeID,
               float radius,
               nodeListElement **currentNode,
@@ -175,7 +174,7 @@ static nodeListElement *addNodeListElement(
     return newElement;
 }
 
-static segmentListElement* addSegmentListElement (segmentListElement **currentSegment,
+segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **currentSegment,
     nodeListElement *sourceNode,
     nodeListElement *targetNode) {
     segmentListElement *newElement = NULL;
@@ -213,7 +212,7 @@ static segmentListElement* addSegmentListElement (segmentListElement **currentSe
 }
 
 
-static treeListElement* findTreeByTreeID(int32_t treeID) {
+treeListElement* Skeletonizer::findTreeByTreeID(int32_t treeID) {
     treeListElement *currentTree;
 
     currentTree = state->skeletonState->firstTree;
@@ -227,7 +226,7 @@ static treeListElement* findTreeByTreeID(int32_t treeID) {
     return NULL;
 }
 
-static bool addNodeToSkeletonStruct(nodeListElement *node) {
+bool Skeletonizer::addNodeToSkeletonStruct(nodeListElement *node) {
     skeletonDC *currentSkeletonDC;
     skeletonDCnode *currentNewSkeletonDCnode;
     Coordinate currentMagPos;
@@ -261,7 +260,7 @@ static bool addNodeToSkeletonStruct(nodeListElement *node) {
     return true;
 }
 
-static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
+bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
     int32_t i;
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *currentNewSkeletonDCsegment;
@@ -350,7 +349,7 @@ static bool addSegmentToSkeletonStruct(segmentListElement *segment) {
     return true;
 }
 
-static bool delNodeFromSkeletonStruct(nodeListElement *node) {
+bool Skeletonizer::delNodeFromSkeletonStruct(nodeListElement *node) {
     skeletonDC *currentSkeletonDC;
     skeletonDCnode *currentSkeletonDCnode, *lastSkeletonDCnode = NULL;
     Coordinate curMagPos;
@@ -389,7 +388,7 @@ static bool delNodeFromSkeletonStruct(nodeListElement *node) {
     return true;
 }
 
-static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
+bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
     int32_t i;
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *lastSkeletonDCsegment, *currentSkeletonDCsegment;
@@ -499,12 +498,12 @@ static bool delSegmentFromSkeletonStruct(segmentListElement *segment) {
     return true;
 }
 
-static void WRAP_popBranchNode() {
+void Skeletonizer::WRAP_popBranchNode() {
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
     state->skeletonState->askingPopBranchConfirmation = false;
 }
 
-static void popBranchNodeCanceled() {
+void Skeletonizer::popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = false;
 }
 
@@ -3362,7 +3361,7 @@ commentListElement* Skeletonizer::nextComment(char *searchString) {
 
     }
 
-    Renderer::drawGUI();
+    emit drawGUISignal();
 
     return state->skeletonState->currentComment;
 }
@@ -3416,7 +3415,7 @@ commentListElement* Skeletonizer::previousComment(char *searchString) {
             }
         }
     }
-    Renderer::drawGUI();
+    emit drawGUISignal();
     return state->skeletonState->currentComment;
 }
 

@@ -61,6 +61,7 @@ Viewer *viewer;
 int main(int argc, char *argv[])
 { 
     QApplication a(argc, argv);
+    QApplication::setKeyboardInputInterval(5);
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
 
@@ -187,6 +188,13 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(remoteJumpSignal(int32_t,int32_t,int32_t)), remote, SLOT(remoteJump(int32_t,int32_t,int32_t)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int32_t,uint32_t)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int32_t,uint32_t)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int32_t,int)), viewer->skeletonizer, SLOT(clearSkeleton(int32_t,int)));
+    QObject::connect(client, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), viewer->skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+    QObject::connect(client, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), viewer->skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+    QObject::connect(client, SIGNAL(delNodeSignal(int32_t,int32_t,nodeListElement*)), viewer->skeletonizer, SLOT(delNode(int32_t,int32_t,nodeListElement*)));
+    QObject::connect(client, SIGNAL(delTreeSignal(int32_t,int32_t)), viewer->skeletonizer, SLOT(delTree(int32_t,int32_t)));
+    QObject::connect(client, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+    QObject::connect(client, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+    QObject::connect(client, SIGNAL(delCommentSignal(int32_t,commentListElement*,int32_t)), viewer->skeletonizer, SLOT(delComment(int32_t,commentListElement*,int32_t)));
 
     /*
     for(int i = 0; i < 100; i++) {

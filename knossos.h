@@ -25,6 +25,7 @@
  */
 
 #include <QObject>
+#include <QtOpenGL>
 
 class Knossos : public QObject {
     Q_OBJECT
@@ -57,8 +58,6 @@ public:
 
 signals:
     void calcDisplayedEdgeLengthSignal();
-
-
 
 };
 

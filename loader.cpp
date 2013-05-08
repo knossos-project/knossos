@@ -646,14 +646,17 @@ bool Loader::loadCubes() {
             if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification],
                                  currentCube->coordinate, currentDcSlot->cube)
                           != HT_SUCCESS) {
+
                 qDebug("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
                     currentDcSlot->cube,
                     state->loaderMagnification);
+
                 return false;
             }
+
             qDebug("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
