@@ -2373,3 +2373,15 @@ bool Renderer::updateDisplayListsSkeleton() {
     return true;
 }
 
+bool Renderer::drawViewportProperties(uint32_t currentVP) {
+
+}
+
+bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+
+}
+
+bool Renderer::initMesh(mesh *meshToInit, uint32_t initialSize) {
+
+}
+

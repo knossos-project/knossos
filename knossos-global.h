@@ -1,8 +1,3 @@
-//agConfig is guiConfig now. and viewerState->ag is viewerState->gui now
-//AG_ stuff is commented out at the moment and will be replaced in time
-//IMPORTANT: struct viewPort is vpConfig now to avoid confusion, because we now have a Viewport class.
-//members of vpConfig should be placed into Viewport, eventually
-
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -33,22 +28,8 @@
   * The elements are used in almost all other files.
   */
 
-/*
- *	Very general stuff.
- */
-
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
-
-
-/**
-* temporarily uncommented
-* #include <GL/gl.h>
-* #include <libxml/parser.h>
-* include <libxml/xmlmemory.h>
-* #include <agar/core.h>
-*#include <agar/gui.h>
-*/
 
 #include <QtOpenGL>
 #include <QWaitCondition>
@@ -56,7 +37,7 @@
 #include <QtNetwork>
 #include <QSet>
 
-#define KVERSION "3.2"
+#define KVERSION "3.4"
 
 #define FAIL    -1
 
@@ -105,6 +86,10 @@
 #define VIEWPORT_YZ	2
 #define VIEWPORT_SKELETON 3
 #define VIEWPORT_UNDEFINED 4
+/* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
+This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
+values. The XY vp always used. */
+#define VIEWPORT_ORTHO 0
 
 #define X_AXIS 0
 #define Y_AXIS 1
@@ -138,6 +123,9 @@
 #define VPZOOMMIN   1.0
 #define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
+
+#define NUM_COMMSHORTCUTS 5 //number of shortcut places for comments
+#define NUM_COMMSUBSTR 5 //number of comment substrings for conditional comment node coloring/radii
 
 //  For the Lookup tables
 
@@ -234,11 +222,49 @@
 #define DSP_LINES_POINTS        32
 
 #define CATCH_RADIUS            10
+#define JMP_THRESHOLD           500 //for moving to next/prev node
+
+#define CURRENT_MAG_COORDINATES     0
+#define ORIGINAL_MAG_COORDINATES    1
+
+#define AUTOTRACING_NORMAL  0
+#define AUTOTRACING_VIEWPORT    1
+#define AUTOTRACING_TRACING 2
+#define AUTOTRACING_MIRROR  3
+
+#define ROTATIONSTATERESET 0
+#define ROTATIONSTATEXY 1
+#define ROTATIONSTATEXZ 3
+#define ROTATIONSTATEYZ 2
 
 #define AUTOTRACING_MODE_NORMAL 0
 #define AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE 1
 #define AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE 2
 #define AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE 3
+
+/* command types */
+
+//next line should be changeable for user later...
+#define CMD_MAXSTEPS 10 // Must not be 0!!
+
+#define CMD_DELTREE 1 //delete tree
+#define CMD_ADDTREE 2 //add tree
+#define CMD_SPLITTREE 3 //split tree
+#define CMD_MERGETREE 4 //merge tree
+#define CMD_CHGTREECOL 5 //change tree color
+#define CMD_CHGACTIVETREE 6 //change active tree
+
+#define CMD_DELNODE 7 //delete node
+#define CMD_ADDNODE 8 //add node
+#define CMD_LINKNODE 9 //add segment
+#define CMD_UNLINKNODE 10 //delete segment
+#define CMD_PUSHBRANCH 11 //add branchpoint
+#define CMD_POPBRANCH 12 //pop branchpoint
+#define CMD_CHGACTIVENODE 13 //change active node
+
+#define CMD_ADDCOMMENT 14 //add comment
+#define CMD_CHGCOMMENT 15 //change comment
+#define CMD_DELCOMMENT 16 //delete comment
 
 //Structures and custom types
 typedef uint8_t Byte;
@@ -261,10 +287,10 @@ struct Coordinate{
 };
 
 typedef struct {
-        float r;
-        float g;
-        float b;
-        float a;
+        GLfloat r;
+        GLfloat g;
+        GLfloat b;
+        GLfloat a;
 } color4F;
 
 struct _CubeSlot {
@@ -317,12 +343,10 @@ typedef struct _C2D_Element C2D_Element;
 //   list. Its Datacube-pointer is set to NULL and its Coordinates to (-1, -1,
 //   -1). As the coordinate system begins at (0, 0, 0), that's invalid.
 // * tablesize stores the size of the table and is always a power of two.
-// * lasthash stores the last value the hash function evaluated to and plays a
-//   role in computing the next hash value.
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
 
-struct Hashtable{
+typedef struct Hashtable{
     C2D_Element *listEntry;
     uint32_t tablesize;
     C2D_Element **table;
@@ -354,7 +378,7 @@ struct Hashtable{
 
     static uint32_t nextpow2(uint32_t a);
     static uint32_t lastpow2(uint32_t a);
-};
+} Hashtable;
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
@@ -826,6 +850,9 @@ struct vpConfig {
 
     struct nodeListElement *draggedNode;
 
+    /* Stores the current view frustum planes */
+    float frustum[6][4];
+
     GLuint displayList;
 
     //Variables that store the mouse "move path length". This is necessary, because not every mouse move pixel
@@ -949,6 +976,18 @@ struct viewerState {
     int autoTracingMode;
     int autoTracingDelay;
     int autoTracingSteps;
+
+    // flags for changing vp position or size. Can be
+    // VIEWPORT_XY, ...,
+    // -1 for default position and size,
+    // 10 for knossos start
+    int moveVP;
+    int resizeVP;
+    int saveCoords;
+    Coordinate clickedCoordinate;
+
+    int showPosSizButtons;
+    int viewportOrder[4];
 };
 
 struct commentListElement {
@@ -990,6 +1029,13 @@ struct nodeListElement {
 
     struct commentListElement *comment;
 
+    // counts forward AND backward segments!!!
+    int32_t numSegs;
+
+   // circumsphere radius - max. of length of all segments and node radius.
+   //Used for frustum culling
+   float circRadius;
+
     uint32_t nodeID;
     Coordinate position;
     int32_t isBranchNode;
@@ -1006,6 +1052,8 @@ struct segmentListElement {
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
     int32_t flag;
+
+    float length;
 
     char *comment;
 
@@ -1050,6 +1098,28 @@ struct IOBuffer {
     Byte *data;
 };
 
+typedef struct {
+    floatCoordinate *vertices;
+    floatCoordinate *normals;
+    color4F *colors;
+
+    /* useful for flexible mesh manipulations */
+    uint32_t vertsBuffSize;
+    uint32_t normsBuffSize;
+    uint32_t colsBuffSize;
+    /* indicates last used element in corresponding buffer */
+    uint32_t vertsIndex;
+    uint32_t normsIndex;
+    uint32_t colsIndex;
+} mesh;
+
+typedef struct {
+        GLbyte r;
+        GLbyte g;
+        GLbyte b;
+        GLbyte a;
+} color4B;
+
 /**
   * @struct skeletonState
   */
@@ -1092,6 +1162,9 @@ struct skeletonState {
     uint32_t volBoundary;
 
     uint32_t numberComments;
+
+    unsigned int userCommentColoringOn;
+    unsigned int commentNodeRadiusOn;
 
     bool lockPositions;
     bool positionLocked;
@@ -1158,6 +1231,9 @@ struct skeletonState {
     int32_t greatestNodeID;
     int32_t greatestTreeID;
 
+    color4F commentColors[NUM_COMMSUBSTR];
+    float commentNodeRadii[NUM_COMMSUBSTR];
+
     //If TRUE, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
 
@@ -1175,11 +1251,19 @@ struct skeletonState {
     // Current zoom level. 0: no zoom; near 1: maximum zoom.
     float zoomLevel;
 
+    // temporary vertex buffers that are available for rendering, get cleared
+    // every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
+
     bool branchpointUnresolved;
 
     // This is for a workaround around agar bug #171
     bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
+
+    struct cmdList *undoList;
+    struct cmdList *redoList;
 
     QString skeletonFileAsQString;
 };
@@ -1219,10 +1303,113 @@ struct inputmap {
     struct inputmap *next;
 };
 
+/*
+ *
+ * Commands for undo and redo
+ *
+ */
+
+struct cmdList {
+    int cmdCount;
+    struct cmdListElement *firstCmd;
+    struct cmdListElement *lastCmd;
+};
+
+struct cmdListElement {
+    void *cmd;
+    int cmdType; //see command type constants
+    struct cmdListElement *prev;
+    struct cmdListElement *next;
+};
+
+typedef struct {
+    struct nodeListElement *deletedNode;
+} cmdDelNode;
+
+typedef struct {
+    int prevActiveNodeID;
+    struct nodeListElement *newNode;
+    int oldWorkMode;
+    int newWorkMode;
+} cmdAddNode;
+
+typedef struct {
+    int NodeID1;
+    int NodeID2;
+} cmdLinkNode;
+
+typedef struct {
+    int NodeID1;
+    int NodeID2;
+} cmdUnlinkNode;
+
+typedef struct {
+    int popNodeID;
+    int oldActiveNodeID;
+} cmdPopBranch;
+
+typedef struct {
+    int NodeID;
+} cmdPushBranchNode;
+
+typedef struct {
+    int oldActiveNodeID;
+    int newActiveNodeID;
+} cmdChangeActiveNode;
+
+typedef struct {
+    int oldActiveTreeID;
+    int newActiveTreeID;
+} cmdChangeActiveTree;
+
+typedef struct {
+    int treeID;
+} cmdAddTree;
+
+
+typedef struct {
+
+} cmdDelTree;
+
+typedef struct {
+    struct skeletonState *skelState;
+} cmdSplitTree;
+
+typedef struct {
+
+} cmdMergeTree;
+
+typedef struct {
+    int treeID;
+    color4F oldColor;
+} cmdChangeTreeColor;
+
+typedef struct {
+    int nodeID;
+    char* oldComment;
+    char* newComment;
+} cmdChangeComment;
+
+typedef struct {
+    int nodeID;
+    char* comment;
+} cmdDelComment;
+
+typedef struct {
+    int nodeID;
+    char* comment;
+} cmdAddComment;
+
 /* global functions */
 
 /* Macros */
-
+#define SET_COLOR(color, rc, gc, bc, ac) \
+        { \
+        color.r = rc; \
+        color.g = gc; \
+        color.b = bc; \
+        color.a = ac; \
+        }
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \

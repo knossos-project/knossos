@@ -42,6 +42,7 @@ public:
     bool remoteWalk(int32_t x, int32_t y, int32_t z);
     void run();
     bool updateRemoteState();
+    bool remoteDelay(int32_t s);
 
     int32_t type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
     int32_t maxTrajectories;

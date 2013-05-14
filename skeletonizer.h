@@ -98,6 +98,7 @@ protected:
     bool loadSkeleton();
     void popBranchNodeCanceled();
     bool delNodeFromSkeletonStruct(nodeListElement *node);
+    bool updateCircRadius(struct nodeListElement *node);
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();

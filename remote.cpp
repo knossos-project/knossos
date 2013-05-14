@@ -453,3 +453,7 @@ void Remote::setRecenteringPosition(int32_t x, int32_t y, int32_t z) {
     this->recenteringPosition.y = y;
     this->recenteringPosition.z = z;
 }
+
+bool Remote::remoteDelay(int32_t s) {
+
+}

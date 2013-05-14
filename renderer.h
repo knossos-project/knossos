@@ -25,19 +25,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#define CURRENT_MAG_COORDINATES     0
-#define ORIGINAL_MAG_COORDINATES    1
-
-#define AUTOTRACING_NORMAL  0
-#define AUTOTRACING_VIEWPORT    1
-#define AUTOTRACING_TRACING 2
-#define AUTOTRACING_MIRROR  3
-
-#define ROTATIONSTATERESET 0
-#define ROTATIONSTATEXY 1
-#define ROTATIONSTATEXZ 3
-#define ROTATIONSTATEYZ 2
-
 #include <QObject>
 #include "knossos-global.h"
 
@@ -60,6 +47,10 @@ public:
     GLuint renderSuperCubeSkeleton(Byte callFlag);
     GLuint renderActiveTreeSkeleton(Byte callFlag);
     bool updateDisplayListsSkeleton();
+    bool drawViewportProperties(uint32_t currentVP);
+    bool doubleMeshCapacity(mesh *toDouble);
+    bool initMesh(mesh *meshToInit, uint32_t initialSize);
+
 signals:
     
 public slots:
