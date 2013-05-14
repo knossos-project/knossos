@@ -895,6 +895,34 @@ void createToolsWin() {
 
             state->viewerState->ag->actNodeIDWdgt2 = numerical;
         }
+        // node coordinates
+        box = AG_BoxNew(nodesTab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+            AG_BoxSetPadding(box, 0);
+            AG_BoxSetSpacing(box, 0);
+
+            numerical = AG_NumericalNewIntR(box, 0, NULL, " x ", &state->viewerState->ag->activeNodeCoord.x, 1, INT_MAX);
+            {
+                AG_SetEvent(numerical, "numerical-changed", currNodePosWdgtModified, NULL);
+                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                AG_WidgetSetSize(numerical, 100, 15);
+            }
+            numerical = AG_NumericalNewIntR(box, 0, NULL, " y ", &state->viewerState->ag->activeNodeCoord.y, 1, INT_MAX);
+            {
+                AG_SetEvent(numerical, "numerical-changed", currNodePosWdgtModified, NULL);
+                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+
+            numerical = AG_NumericalNewIntR(box, 0, NULL, " z ", &state->viewerState->ag->activeNodeCoord.z, 1, INT_MAX);
+            {
+                AG_SetEvent(numerical, "numerical-changed", currNodePosWdgtModified, NULL);
+                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
         box = AG_BoxNew(nodesTab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
         {
             AG_ExpandHoriz(box);
@@ -3000,6 +3028,13 @@ static void currPosWdgtModified(AG_Event *event) {
         state->viewerState->ag->oneShiftedCurrPos.z - 1;
 
     updatePosition(TELL_COORDINATE_CHANGE);
+}
+
+static void currNodePosWdgtModified(AG_Event *event) {
+    setNodeCoordinates(state->skeletonState->activeNode,
+                       state->viewerState->ag->activeNodeCoord.x - 1,
+                       state->viewerState->ag->activeNodeCoord.y - 1,
+                       state->viewerState->ag->activeNodeCoord.z - 1);
 }
 
 static void actNodeIDWdgtModified(AG_Event *event) {

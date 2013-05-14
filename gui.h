@@ -53,6 +53,7 @@ static void commentColorSelected(AG_Event *event);
 static void commentColorRemoved(AG_Event *event);
 
 static void currPosWdgtModified(AG_Event *event);
+static void currNodePosWdgtModified(AG_Event *event);
 static void actNodeIDWdgtModified(AG_Event *event);
 static void actTreeIDWdgtModified(AG_Event *event);
 static void actTreeColorWdgtModified(AG_Event *event);

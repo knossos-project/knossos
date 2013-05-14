@@ -2530,6 +2530,7 @@ struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree) {
     }
     return nextTree;
 }
+
 int32_t moveToPrevNode() {
     struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
 
@@ -3924,6 +3925,19 @@ void setRadiusFromNode(struct nodeListElement *node, float *radius) {
     return;
 }
 
+void setNodeCoordinates(struct nodeListElement *node, int32_t x, int32_t y, int32_t z) {
+    if(node == NULL) {
+        return;
+    }
+    if(x  >= 0 && x <= state->boundary.x
+        && y >= 0 && y <= state->boundary.y
+        && z >= 0 && z <= state->boundary.z) {
+        SET_COORDINATE(node->position, x, y, z);
+    }
+    else {
+        LOG("Entered coordinate out of bounds.");
+    }
+}
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
 // If -1, all substrings are compared against the comment.
