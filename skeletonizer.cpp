@@ -3663,3 +3663,7 @@ void Skeletonizer::setViewportReferences(Viewport *vp, Viewport *vp2, Viewport *
     this->vp3 = vp3;
     this->vp4 = vp4;
 }
+
+bool Skeletonizer::updateCircRadius(nodeListElement *node) {
+
+}
