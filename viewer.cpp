@@ -1429,6 +1429,8 @@ void Viewer::run() {
                 //   }
                 //}
 
+
+
                 if(viewerState->userMove == true) {
                     break;
                 }

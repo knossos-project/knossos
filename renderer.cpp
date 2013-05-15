@@ -30,8 +30,10 @@
 #include <math.h>
 
 #include <QtOpenGL>
-#include <gl.h>
+#include <OpenGL.h>
 #include <glu.h>
+#include "skeletonizer.h"
+#include "viewer.h"
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -39,126 +41,168 @@ extern stateInfo *tempConfig;
 Renderer::Renderer(QObject *parent) :
     QObject(parent)
 {
-    /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    /* Initialize the basic model view matrix for the skeleton VP
-    Perform basic coordinate system rotations */
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    uint32_t i;
+        /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
+        Viewer::initializeTextures();
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        /* Initialize the basic model view matrix for the skeleton VP
+        Perform basic coordinate system rotations */
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
 
-    glTranslatef((float)state->skeletonState->volBoundary / 2.,
-        (float)state->skeletonState->volBoundary / 2.,
-        -((float)state->skeletonState->volBoundary / 2.));
+        glTranslatef((float)state->skeletonState->volBoundary / 2.,
+            (float)state->skeletonState->volBoundary / 2.,
+            -((float)state->skeletonState->volBoundary / 2.));
 
-    glScalef(-1., 1., 1.);
-    //);
-    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
-    glRotatef(235., 1., 0., 0.);
-    glRotatef(210., 0., 0., 1.);
-    setRotationState(ROTATIONSTATERESET);
-    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-    /* save the matrix for further use... */
-    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+        glScalef(-1., 1., 1.);
+        //);
+        //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
+        glRotatef(235., 1., 0., 0.);
+        glRotatef(210., 0., 0., 1.);
+        setRotationState(ROTATIONSTATERESET);
+     //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+        /* save the matrix for further use... */
+        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-    glLoadIdentity();
+        glLoadIdentity();
+
+        // get a unique display list identifier for each viewport
+        for(i = 0; i < state->viewerState->numberViewports; i++) {
+            state->viewerState->vpConfigs[i].displayList = glGenLists(1);
+        }
+
+        initMesh(&(state->skeletonState->lineVertBuffer), 1024);
+        initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+
 }
 
-uint32_t Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius) {
+uint32_t Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint32_t viewportType) {
     float currentAngle = 0.;
-    //int32_t transFactor = 1;
-    //Coordinate transBase, transTop;
-    floatCoordinate segDirection, tempVec, *tempVec2;
-    GLUquadricObj *gluCylObj = NULL;
+        floatCoordinate segDirection, tempVec, *tempVec2;
+        GLUquadricObj *gluCylObj = NULL;
 
-    //if(coordinateMag == ORIGINAL_MAG_COORDINATES) {
-    //    transFactor = 1.f;
-    //}
 
-    /*transBase.x = base->x / transFactor;
-    transBase.y = base->y / transFactor;
-    transBase.z = base->z / transFactor;
-    transTop.x = top->x / transFactor;
-    transTop.y = top->y / transFactor;
-    transTop.z = top->z / transFactor;
-    topRadius = topRadius / transFactor;
-    baseRadius = baseRadius / transFactor;
-*/
-    if(!(state->skeletonState->displayMode & DSP_LINES_POINTS)) {
-        glPushMatrix();
-        gluCylObj = gluNewQuadric();
-        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        if(((state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx
+            * baseRadius < 1.f)
+           && (state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx
+            * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
-        glTranslatef((float)base->x, (float)base->y, (float)base->z);
+            if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
+                doubleMeshCapacity(&(state->skeletonState->lineVertBuffer));
 
-        //Some calculations for the correct direction of the cylinder.
-        tempVec.x = 0.;
-        tempVec.y = 0.;
-        tempVec.z = 1.;
-        segDirection.x = (float)(top->x - base->x);
-        segDirection.y = (float)(top->y - base->y);
-        segDirection.z = (float)(top->z - base->z);
+            SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex], (float)base->x, (float)base->y, (float)base->z);
+            SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1], (float)top->x, (float)top->y, (float)top->z);
 
-        //temVec2 defines the rotation axis
-        tempVec2 = crossProduct(&tempVec, &segDirection);
-        currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
+            state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex] = color;
+            state->skeletonState->lineVertBuffer.colors[state->skeletonState->lineVertBuffer.vertsIndex + 1] = color;
 
-        //some gl implementations have problems with the params occuring for
-        //segs in straight directions. we need a fix here.
-        glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
+            state->skeletonState->lineVertBuffer.vertsIndex += 2;
 
-        free(tempVec2);
+        } else {
 
-        gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 4, 1);
-        gluDeleteQuadric(gluCylObj);
-        glPopMatrix();
-    }
-    else {
-        glBegin(GL_LINES);
-            glVertex3f((float)base->x, (float)base->y, (float)base->z);
-            glVertex3f((float)top->x, (float)top->y, (float)top->z);
-        glEnd();
-    }
+            GLfloat a[] = {color.r, color.g, color.b, color.a};
 
-    return true;
+
+            glColor4fv(a);
+            //glColor4fv(&color);
+
+            glPushMatrix();
+            gluCylObj = gluNewQuadric();
+            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+
+            glTranslatef((float)base->x, (float)base->y, (float)base->z);
+
+            //Some calculations for the correct direction of the cylinder.
+            tempVec.x = 0.;
+            tempVec.y = 0.;
+            tempVec.z = 1.;
+            segDirection.x = (float)(top->x - base->x);
+            segDirection.y = (float)(top->y - base->y);
+            segDirection.z = (float)(top->z - base->z);
+
+            //temVec2 defines the rotation axis
+            tempVec2 = crossProduct(&tempVec, &segDirection);
+            currentAngle = radToDeg(vectorAngle(&tempVec, &segDirection));
+
+            //some gl implementations have problems with the params occuring for
+            //segs in straight directions. we need a fix here.
+            glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
+
+            free(tempVec2);
+
+            //tdItem use state->viewerState->viewPorts[viewportType].screenPxXPerDataPx for proper LOD
+            //the same values have to be used in rendersegplaneintersections to avoid ugly graphics
+            if((baseRadius > 100.f) || topRadius > 100.f) {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 10, 1);
+            }
+            else if((baseRadius > 15.f) || topRadius > 15.f) {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 6, 1);
+            }
+            else {
+                gluCylinder(gluCylObj, baseRadius, topRadius, euclidicNorm(&segDirection), 3, 1);
+            }
+
+            gluDeleteQuadric(gluCylObj);
+            glPopMatrix();
+        }
+
+        return true;
 }
 
-uint32_t Renderer::renderSphere(Coordinate *pos, float radius) {
+uint32_t Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint32_t viewportType) {
     GLUquadricObj *gluSphereObj = NULL;
-    //Coordinate transPos;
-    int32_t transFactor = 1;
 
-    //if(coordinateMag == ORIGINAL_MAG_COORDINATES)
-    //    transFactor = state->magnification;
+        /* Render only a point if the sphere wouldn't be visible anyway */
 
-    //transPos.x = pos->x / transFactor;
-    //transPos.y = pos->y / transFactor;
-    //transPos.z = pos->z / transFactor;
+        if((state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx
+           * radius > 0.0f) && (state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx
+           * radius < 2.0f) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
-    radius = radius / (float)transFactor;
+            /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
+            Color buffer picking brings its own issues on the other hand, so we
+            stick with SELECT mode for the time being. */
+            if(state->viewerState->selectModeFlag) {
+                glPointSize(radius * 2.);
+                glBegin(GL_POINTS);
+                    glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
+                glEnd();
+                glPointSize(1.);
+            }
+            else {
+                if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
+                    doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
 
-    /* Render point instead of sphere if user has chosen mode */
-    if(!(state->skeletonState->displayMode & DSP_LINES_POINTS)) {
-        glPushMatrix();
-        glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
-        gluSphereObj = gluNewQuadric();
-        gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
-        gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
+                SET_COORDINATE(state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex], (float)pos->x, (float)pos->y, (float)pos->z);
+                state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
+                state->skeletonState->pointVertBuffer.vertsIndex++;
+            }
+        }
+        else {
+            GLfloat tmp[] = {color.r, color.g, color.b, color.a};
+            glColor4fv(tmp);
+            glPushMatrix();
+            glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
+            glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
+            gluSphereObj = gluNewQuadric();
+            gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
+            gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
-        gluSphere(gluSphereObj, radius, 5, 5);
+            if(radius * state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx  > 20.) {
+                gluSphere(gluSphereObj, radius, 14, 14);
+            }
+            else if(radius * state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx  > 5.) {
+                gluSphere(gluSphereObj, radius, 8, 8);
+            }
+            else {
+                gluSphere(gluSphereObj, radius, 5, 5);
+            }
+            //glScalef(1.f, 1.f, 1.f/state->viewerState->voxelXYtoZRatio);
+            gluDeleteQuadric(gluSphereObj);
+            glPopMatrix();
+        }
 
-        gluDeleteQuadric(gluSphereObj);
-        glPopMatrix();
-    }
-    else {
-        glPointSize(radius*3.);
-        glBegin(GL_POINTS);
-            glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
-        glEnd();
-        glPointSize(1.);
-    }
-
-    return true;
+        return true;
 }
 
 
@@ -187,125 +231,127 @@ uint32_t Renderer::renderText(Coordinate *pos, char *string) {
 
 
 uint32_t Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
-
     if(!state->skeletonState->showIntersections) return true;
-    if(state->skeletonState->displayMode & DSP_LINES_POINTS) return true;
 
-    float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
-    int32_t i, distToCurrPos;
-    floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
-    GLUquadricObj *gluCylObj = NULL;
+        float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
+        int32_t i, distToCurrPos;
+        floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
+        GLUquadricObj *gluCylObj = NULL;
 
-    sSp_local.x = (float)segment->source->position.x;// / state->magnification;
-    sSp_local.y = (float)segment->source->position.y;// / state->magnification;
-    sSp_local.z = (float)segment->source->position.z;// / state->magnification;
+        sSp_local.x = (float)segment->source->position.x;
+        sSp_local.y = (float)segment->source->position.y;
+        sSp_local.z = (float)segment->source->position.z;
 
-    sTp_local.x = (float)segment->target->position.x;// / state->magnification;
-    sTp_local.y = (float)segment->target->position.y;// / state->magnification;
-    sTp_local.z = (float)segment->target->position.z;// / state->magnification;
+        sTp_local.x = (float)segment->target->position.x;
+        sTp_local.y = (float)segment->target->position.y;
+        sTp_local.z = (float)segment->target->position.z;
 
-    sSr_local = (float)segment->source->radius;// / state->magnification;
-    sTr_local = (float)segment->target->radius;// / state->magnification;
+        sSr_local = (float)segment->source->radius;
+        sTr_local = (float)segment->target->radius;
 
-    //n contains the normal vectors of the 3 orthogonal planes
-    float n[3][3] = {{1.,0.,0.},
-                    {0.,1.,0.},
-                    {0.,0.,1.}};
+        //n contains the normal vectors of the 3 orthogonal planes
+        float n[3][3] = {{1.,0.,0.},
+                        {0.,1.,0.},
+                        {0.,0.,1.}};
 
-    distToCurrPos = state->viewerState->zoomCube + 1 * state->cubeEdgeLength;
+        distToCurrPos = ((state->M/2)+1)
+            + 1 * state->cubeEdgeLength;
 
-    //Check if there is an intersection between the given segment and one
-    //of the slice planes.
-    p[0][0] = sSp_local.x - (float)state->viewerState->currentPosition.x;
-    p[0][1] = sSp_local.y - (float)state->viewerState->currentPosition.y;
-    p[0][2] = sSp_local.z - (float)state->viewerState->currentPosition.z;
+        //Check if there is an intersection between the given segment and one
+        //of the slice planes.
+        p[0][0] = sSp_local.x - (float)state->viewerState->currentPosition.x;
+        p[0][1] = sSp_local.y - (float)state->viewerState->currentPosition.y;
+        p[0][2] = sSp_local.z - (float)state->viewerState->currentPosition.z;
 
-    p[1][0] = sTp_local.x - (float)state->viewerState->currentPosition.x;
-    p[1][1] = sTp_local.y - (float)state->viewerState->currentPosition.y;
-    p[1][2] = sTp_local.z - (float)state->viewerState->currentPosition.z;
+        p[1][0] = sTp_local.x - (float)state->viewerState->currentPosition.x;
+        p[1][1] = sTp_local.y - (float)state->viewerState->currentPosition.y;
+        p[1][2] = sTp_local.z - (float)state->viewerState->currentPosition.z;
 
 
-    //i represents the current orthogonal plane
-    for(i = 0; i<=2; i++) {
-        //There is an intersection and the segment doesn't lie in the plane
-        if(sgn(p[0][i])*sgn(p[1][i]) == -1) {
-            //Calculate intersection point
-            segDir.x = sTp_local.x - sSp_local.x;
-            segDir.y = sTp_local.y - sSp_local.y;
-            segDir.z = sTp_local.z - sSp_local.z;
+        //i represents the current orthogonal plane
+        for(i = 0; i<=2; i++) {
+            //There is an intersection and the segment doesn't lie in the plane
+            if(sgn(p[0][i])*sgn(p[1][i]) == -1) {
+                //Calculate intersection point
+                segDir.x = sTp_local.x - sSp_local.x;
+                segDir.y = sTp_local.y - sSp_local.y;
+                segDir.z = sTp_local.z - sSp_local.z;
 
-            //a is the scaling factor for the straight line equation: g:=segDir*a+v0
-            a = (n[i][0] * (((float)state->viewerState->currentPosition.x - sSp_local.x))
-                    + n[i][1] * (((float)state->viewerState->currentPosition.y - sSp_local.y))
-                    + n[i][2] * (((float)state->viewerState->currentPosition.z - sSp_local.z)))
-                / (segDir.x*n[i][0] + segDir.y*n[i][1] + segDir.z*n[i][2]);
+                //a is the scaling factor for the straight line equation: g:=segDir*a+v0
+                a = (n[i][0] * (((float)state->viewerState->currentPosition.x - sSp_local.x))
+                        + n[i][1] * (((float)state->viewerState->currentPosition.y - sSp_local.y))
+                        + n[i][2] * (((float)state->viewerState->currentPosition.z - sSp_local.z)))
+                    / (segDir.x*n[i][0] + segDir.y*n[i][1] + segDir.z*n[i][2]);
 
-            tempVec3.x = segDir.x * a;
-            tempVec3.y = segDir.y * a;
-            tempVec3.z = segDir.z * a;
+                tempVec3.x = segDir.x * a;
+                tempVec3.y = segDir.y * a;
+                tempVec3.z = segDir.z * a;
 
-            intPoint.x = tempVec3.x + sSp_local.x;
-            intPoint.y = tempVec3.y + sSp_local.y;
-            intPoint.z = tempVec3.z + sSp_local.z;
+                intPoint.x = tempVec3.x + sSp_local.x;
+                intPoint.y = tempVec3.y + sSp_local.y;
+                intPoint.z = tempVec3.z + sSp_local.z;
 
-            //Check wether the intersection point lies outside the current zoom cube
-            if(abs((int32_t)intPoint.x - state->viewerState->currentPosition.x) <= distToCurrPos
-                && abs((int32_t)intPoint.y - state->viewerState->currentPosition.y) <= distToCurrPos
-                && abs((int32_t)intPoint.z - state->viewerState->currentPosition.z) <= distToCurrPos) {
+                //Check wether the intersection point lies outside the current zoom cube
+                if(abs((int32_t)intPoint.x - state->viewerState->currentPosition.x) <= distToCurrPos
+                    && abs((int32_t)intPoint.y - state->viewerState->currentPosition.y) <= distToCurrPos
+                    && abs((int32_t)intPoint.z - state->viewerState->currentPosition.z) <= distToCurrPos) {
 
-                //Render a cylinder to highlight the intersection
-                glPushMatrix();
-                gluCylObj = gluNewQuadric();
-                gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-                gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+                    //Render a cylinder to highlight the intersection
+                    glPushMatrix();
+                    gluCylObj = gluNewQuadric();
+                    gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+                    gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
 
-                length = euclidicNorm(&segDir);
-                distSourceInter = euclidicNorm(&tempVec3);
+                    length = euclidicNorm(&segDir);
+                    distSourceInter = euclidicNorm(&tempVec3);
 
-                if(sSr_local < sTr_local)
-                    radius = sTr_local + sSr_local * (1. - distSourceInter / length);
-                else if(sSr_local == sTr_local)
-                    radius = sSr_local;
-                else
-                    radius = sSr_local - (sSr_local - sTr_local) * distSourceInter / length;
+                    if(sSr_local < sTr_local)
+                        radius = sTr_local + sSr_local * (1. - distSourceInter / length);
+                    else if(sSr_local == sTr_local)
+                        radius = sSr_local;
+                    else
+                        radius = sSr_local - (sSr_local - sTr_local) * distSourceInter / length;
 
-                segDir.x /= length;
-                segDir.y /= length;
-                segDir.z /= length;
+                    segDir.x /= length;
+                    segDir.y /= length;
+                    segDir.z /= length;
 
-                glTranslatef(intPoint.x - 0.75 * segDir.x, intPoint.y - 0.75 * segDir.y, intPoint.z - 0.75 * segDir.z);
-                //glTranslatef(intPoint.x, intPoint.y, intPoint.z);
+                    glTranslatef(intPoint.x - 0.75 * segDir.x, intPoint.y - 0.75 * segDir.y, intPoint.z - 0.75 * segDir.z);
+                    //glTranslatef(intPoint.x, intPoint.y, intPoint.z);
 
-                //Some calculations for the correct direction of the cylinder.
-                tempVec.x = 0.;
-                tempVec.y = 0.;
-                tempVec.z = 1.;
+                    //Some calculations for the correct direction of the cylinder.
+                    tempVec.x = 0.;
+                    tempVec.y = 0.;
+                    tempVec.z = 1.;
 
-                //temVec2 defines the rotation axis
-                tempVec2 = crossProduct(&tempVec, &segDir);
-                currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
-                glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
-                free(tempVec2);
+                    //temVec2 defines the rotation axis
+                    tempVec2 = crossProduct(&tempVec, &segDir);
+                    currentAngle = radToDeg(vectorAngle(&tempVec, &segDir));
+                    glRotatef(currentAngle, tempVec2->x, tempVec2->y, tempVec2->z);
+                    free(tempVec2);
 
-                glColor4f(0.,0.,0.,1.);
+                    glColor4f(0.,0.,0.,1.);
 
-                if(state->skeletonState->overrideNodeRadiusBool)
-                    gluCylinder(gluCylObj,
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        1.5, 4, 1);
+                    if(state->skeletonState->overrideNodeRadiusBool)
+                        gluCylinder(gluCylObj,
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            1.5, 3, 1);
 
-                else gluCylinder(gluCylObj,
-                        radius * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        radius * state->skeletonState->segRadiusToNodeRadius*1.2,
-                        1.5, 4, 1);
+                    else gluCylinder(gluCylObj,
+                            radius * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            radius * state->skeletonState->segRadiusToNodeRadius*1.2,
+                            1.5, 3, 1);
 
-                gluDeleteQuadric(gluCylObj);
-                glPopMatrix();
+                    gluDeleteQuadric(gluCylObj);
+                    glPopMatrix();
+                }
+
             }
-
         }
-    }
+
+
+
 
     return true;
 
@@ -471,9 +517,15 @@ uint32_t Renderer::renderViewportBorders(uint32_t currentVP) {
 }
 
 
+// Currently not used
+/* @todo update from trunk */
+static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color)  {
+
+}
 
 bool Renderer::drawGUI() {
-     Renderer::updateDisplayListsSkeleton();
+
+
      return true;
 }
 
@@ -538,7 +590,7 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             * 0.5;
 //            * (float)state->magnification;
 
-    switch(currentVP/*state->viewerState->vpConfigs[currentVP].type*/) {
+    switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
             if(!state->viewerState->selectModeFlag) {
                 glMatrixMode(GL_PROJECTION);
@@ -561,13 +613,16 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
                         -((float)state->boundary.y / 2.),
                         -((float)state->boundary.z / 2.));
 
+            updateFrustumClippingPlanes(VIEWPORT_XY);
+
             glTranslatef((float)state->viewerState->currentPosition.x,
                         (float)state->viewerState->currentPosition.y,
                         (float)state->viewerState->currentPosition.z);
 
             glRotatef(180., 1.,0.,0.);
 
-            glLoadName(3);
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
 
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_DEPTH_TEST);
@@ -594,11 +649,13 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
+            renderSkeleton(VIEWPORT_XY);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
-            glLoadName(3);
+
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
 
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -685,7 +742,19 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
 
             glRotatef(90., 1., 0., 0.);
 
-            glLoadName(3);
+
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                            -(float)state->viewerState->currentPosition.y,
+                            -(float)state->viewerState->currentPosition.z);
+
+            updateFrustumClippingPlanes(VIEWPORT_XZ);
+
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                        (float)state->viewerState->currentPosition.y,
+                        (float)state->viewerState->currentPosition.z);
+
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
 
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_DEPTH_TEST);
@@ -713,11 +782,15 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
-            if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
+            renderSkeleton(VIEWPORT_XZ);
+
+
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
-            glLoadName(3);
+
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
 
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -795,7 +868,19 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             glRotatef(90., 0., 1., 0.);
             glScalef(1., -1., 1.);
 
-            glLoadName(3);
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                        -(float)state->viewerState->currentPosition.y,
+                        -(float)state->viewerState->currentPosition.z);
+
+            updateFrustumClippingPlanes(VIEWPORT_YZ);
+
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                        (float)state->viewerState->currentPosition.y,
+                        (float)state->viewerState->currentPosition.z);
+
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
+
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -820,11 +905,13 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
-            if(state->skeletonState->displayListSkeletonSlicePlaneVP) glCallList(state->skeletonState->displayListSkeletonSlicePlaneVP);
+            renderSkeleton(VIEWPORT_YZ);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
-            glLoadName(3);
+
+            if(state->viewerState->selectModeFlag)
+                glLoadName(3);
 
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -905,8 +992,11 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
         glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
+        if(!state->viewerState->selectModeFlag) {
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+        }
+
 
         // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
     //LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);
@@ -914,6 +1004,11 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
             state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
             state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY, -1000, 10 *state->skeletonState->volBoundary);
+
+        state->viewerState->vpConfigs[VIEWPORT_SKELETON].screenPxXPerDataPx =
+                (float)state->viewerState->vpConfigs[VIEWPORT_SKELETON].edgeLength / ((
+                (float)state->skeletonState->volBoundary - 2.f * ((float)state->skeletonState->volBoundary * state->skeletonState->zoomLevel))/2.f);
+
 
         if(state->viewerState->lightOnOff) {
             // Configure light
@@ -938,14 +1033,6 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
 
 
          // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
-
-        state->skeletonState->viewChanged = true;
-        if(state->skeletonState->viewChanged) {
-            state->skeletonState->viewChanged = false;
-            if(state->skeletonState->displayListView) glDeleteLists(state->skeletonState->displayListView, 1);
-            state->skeletonState->displayListView = glGenLists(1);
-            // COMPILE_AND_EXECUTE because we grab the rotation matrix inside!
-            glNewList(state->skeletonState->displayListView, GL_COMPILE_AND_EXECUTE);
 
             glEnable(GL_DEPTH_TEST);
 
@@ -1105,6 +1192,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
                         state->skeletonState->definedSkeletonVpView = 0;
                         state->skeletonState->rotationcounter = 0;
                     }
+                    Viewer::refreshViewports();
                     break;
 
                 case 5:
@@ -1116,6 +1204,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
                         state->skeletonState->definedSkeletonVpView = 0;
                         state->skeletonState->rotationcounter = 0;
                     }
+                    Viewer::refreshViewports();
                     break;
                 case 6:
                     // Resetting
@@ -1145,7 +1234,10 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             // single operation! TDitem
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef(0.5,0.5,0.5);
+
+            updateFrustumClippingPlanes(VIEWPORT_SKELETON);
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
+
 
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1217,7 +1309,7 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             }
 
             glDisable(GL_TEXTURE_2D);
-            glLoadName(3);
+
             for(i = 0; i < state->viewerState->numberViewports; i++) {
                 dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
@@ -1290,185 +1382,156 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
             }
 
             glPopMatrix();
-            glEndList();
-        }
-        else {
-            glCallList(state->skeletonState->displayListView);
-        }
-
-
-         // Now we draw the skeleton structure (Changes of it are adressed inside updateSkeletonDisplayList())
-
-        if(state->skeletonState->displayListSkeletonSkeletonizerVP)
-            glCallList(state->skeletonState->displayListSkeletonSkeletonizerVP);
+            glEnable(GL_TEXTURE_2D);
 
 
          // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
+        glEnable(GL_BLEND);
+
+        // Now we draw the data volume box. use display list for that...very static TDitem
 
 
-        if(state->skeletonState->datasetChanged) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLoadName(3);
+        glColor4f(0., 0., 0., 1); // HERE
+        glBegin(GL_QUADS);
+            glNormal3i(0,0,1);
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
 
-            state->skeletonState->datasetChanged = false;
-            if(state->skeletonState->displayListDataset) glDeleteLists(state->skeletonState->displayListDataset, 1);
-            state->skeletonState->displayListDataset = glGenLists(1);
-            glNewList(state->skeletonState->displayListDataset, GL_COMPILE);
-            glEnable(GL_BLEND);
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
 
+            glNormal3i(0,0,1);
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
 
-             // Now we draw the data volume box. use display list for that...very static TDitem
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
 
+            glNormal3i(0,1,0);
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
 
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glLoadName(3);
-            glColor4f(0., 0., 0., 1); // HERE
-            glBegin(GL_QUADS);
-                glNormal3i(0,0,1);
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
 
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+            glNormal3i(0,1,0);
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
 
-                glNormal3i(0,0,1);
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
 
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+            glNormal3i(1,0,0);
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
 
-                glNormal3i(0,1,0);
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
 
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glNormal3i(1,0,0);
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
 
-                glNormal3i(0,1,0);
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
+            glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+        glEnd();
 
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
+        glColor4f(0., 0., 0.,1.); // HERE
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-                glNormal3i(1,0,0);
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), (state->boundary.z / 2));
+        glPushMatrix();
+        glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        gluCylinder(gluCylObj, 3., 3. , state->boundary.z, 5, 5);
+        gluDeleteQuadric(gluCylObj);
 
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(-(state->boundary.x / 2), (state->boundary.y / 2), -(state->boundary.z / 2));
+        glPushMatrix();
+        glTranslatef(0.,0., state->boundary.z);
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
+        gluDeleteQuadric(gluCylObj);
+        glPopMatrix();
 
-                glNormal3i(1,0,0);
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), -(state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, -(state->boundary.y / 2), (state->boundary.z / 2));
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        glRotatef(90., 0., 1., 0.);
+        gluCylinder(gluCylObj, 3., 3. , state->boundary.x, 5, 5);
+        gluDeleteQuadric(gluCylObj);
 
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), (state->boundary.z / 2));
-                glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
-            glEnd();
+        glPushMatrix();
+        glTranslatef(0.,0., state->boundary.x);
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
+        gluDeleteQuadric(gluCylObj);
+        glPopMatrix();
 
-            glColor4f(0., 0., 0.,1.); // HERE
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        glRotatef(-90., 1., 0., 0.);
+        gluCylinder(gluCylObj, 3., 3. , state->boundary.y, 5, 5);
+        gluDeleteQuadric(gluCylObj);
 
-            glPushMatrix();
-            glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, 3., 3. , state->boundary.z, 5, 5);
-            gluDeleteQuadric(gluCylObj);
+        glPushMatrix();
+        glTranslatef(0.,0., state->boundary.y);
+        gluCylObj = gluNewQuadric();
+        gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+        gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
+        gluDeleteQuadric(gluCylObj);
+        glPopMatrix();
 
-            glPushMatrix();
-            glTranslatef(0.,0., state->boundary.z);
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-            gluDeleteQuadric(gluCylObj);
-            glPopMatrix();
-
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            glRotatef(90., 0., 1., 0.);
-            gluCylinder(gluCylObj, 3., 3. , state->boundary.x, 5, 5);
-            gluDeleteQuadric(gluCylObj);
-
-            glPushMatrix();
-            glTranslatef(0.,0., state->boundary.x);
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-            gluDeleteQuadric(gluCylObj);
-            glPopMatrix();
-
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            glRotatef(-90., 1., 0., 0.);
-            gluCylinder(gluCylObj, 3., 3. , state->boundary.y, 5, 5);
-            gluDeleteQuadric(gluCylObj);
-
-            glPushMatrix();
-            glTranslatef(0.,0., state->boundary.y);
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
-            gluDeleteQuadric(gluCylObj);
-            glPopMatrix();
-
-            glPopMatrix();
+        glPopMatrix();
 
 
-             // Draw axis description
+         // Draw axis description
 
 
-            glColor4f(0., 0., 0., 1.);
-            memset(textBuffer, '\0', 32);
-            glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
-            sprintf(textBuffer, "1, 1, 1");
-            for (c=textBuffer; *c != '\0'; c++) {
-           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-            }
-            memset(textBuffer, '\0', 32);
-            glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
-            sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
-            for (c=textBuffer; *c != '\0'; c++) {
-           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-            }
-
-            memset(textBuffer, '\0', 32);
-            glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
-            sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
-            for (c=textBuffer; *c != '\0'; c++) {
-           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-            }
-            memset(textBuffer, '\0', 32);
-            glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
-            sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
-            for (c=textBuffer; *c != '\0'; c++) {
-           //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-            }
-            glEnable(GL_TEXTURE_2D);
-            glDisable(GL_BLEND);
-            glEndList();
-            glCallList(state->skeletonState->displayListDataset);
-
+        glColor4f(0., 0., 0., 1.);
+        memset(textBuffer, '\0', 32);
+        glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
+        sprintf(textBuffer, "1, 1, 1");
+        for (c=textBuffer; *c != '\0'; c++) {
+       //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
         }
-        else {
-            glCallList(state->skeletonState->displayListDataset);
+        memset(textBuffer, '\0', 32);
+        glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
+        sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
+        for (c=textBuffer; *c != '\0'; c++) {
+       //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
         }
 
+        memset(textBuffer, '\0', 32);
+        glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
+        sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
+        for (c=textBuffer; *c != '\0'; c++) {
+       //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+        }
+        memset(textBuffer, '\0', 32);
+        glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
+        sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
+        for (c=textBuffer; *c != '\0'; c++) {
+       //     glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+        }
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
 
          // Reset previously changed OGL parameters
-
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         //glDisable(GL_BLEND);
         glDisable(GL_LIGHTING);
         glDisable(GL_DEPTH_TEST);
 
-        glDisable(GL_MULTISAMPLE);
         glLoadIdentity();
 
         free(textBuffer);
@@ -1512,32 +1575,8 @@ uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32
     gluPickMatrix(x, y, (float)width, (float)width, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
-        glOrtho(state->skeletonState->volBoundary
-            * state->skeletonState->zoomLevel
-            + state->skeletonState->translateX,
-            state->skeletonState->volBoundary
-            - (state->skeletonState->volBoundary
-            * state->skeletonState->zoomLevel)
-            + state->skeletonState->translateX,
-            state->skeletonState->volBoundary
-            - (state->skeletonState->volBoundary
-            * state->skeletonState->zoomLevel)
-            + state->skeletonState->translateY,
-              state->skeletonState->volBoundary
-            * state->skeletonState->zoomLevel
-            + state->skeletonState->translateY,
-            -10000, 10 * state->skeletonState->volBoundary);
-        glCallList(state->skeletonState->displayListView);
-        glCallList(state->skeletonState->displayListSkeletonSkeletonizerVP);
-        glCallList(state->skeletonState->displayListDataset); //TDitem fix that display list !!
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDisable(GL_BLEND);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_MULTISAMPLE);
-    }
-    else {
+        renderSkeletonVP(currentVP);
+    } else {
         //glEnable(GL_DEPTH_TEST);
         //glCallList(state->viewerState->vpConfigs[currentVP].displayList);
         glDisable(GL_DEPTH_TEST);
@@ -1749,23 +1788,34 @@ bool Renderer::setRotationState(uint32_t setTo) {
     return true;
 }
 
-
-GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
+/*
+void Renderer::renderActiveTreeSkeleton(uint32_t viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
+
+    color4F currentColor;
 
     char *textBuffer;
     textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
-    if(callFlag) glEnable(GL_CULL_FACE);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP))
+        return;
+
+    if(viewportType == VIEWPORT_SKELETON)
+        glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+    else
+        glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
+
+    if(viewportType == VIEWPORT_ORTHO)
+        glEnable(GL_CULL_FACE);
+
     glEnable(GL_BLEND);
-    //Save current matrix stack (modelview!!)
+    // save current matrix stack (model view!!)
     glPushMatrix();
+
+
 
     //Rendering of objects has to start always at the origin of our data pixel coordinate system.
     //Thus, we have to translate there.
@@ -1797,15 +1847,17 @@ GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
             glLoadName(currentNode->nodeID + 50);
             if(state->skeletonState->overrideNodeRadiusBool) {
                 renderSphere(&(currentNode->position),
-                             state->skeletonState->overrideNodeRadiusVal);
+                             state->skeletonState->overrideNodeRadiusVal, currentColor, viewportType);
             }
             else {
                 renderSphere(&(currentNode->position),
-                             currentNode->radius);
+                             currentNode->radius, currentColor, viewportType);
             }
 
-            if(state->skeletonState->highlightActiveTree) glColor4f(1., 0., 0., 1.);
-            else glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
+            if(state->skeletonState->highlightActiveTree)
+                glColor4f(1., 0., 0., 1.);
+            else
+                glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
 
             currentSegment = currentNode->firstSegment;
             while(currentSegment) {
@@ -1821,16 +1873,16 @@ GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
                                    * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentSegment->target->position),
                                    state->skeletonState->overrideNodeRadiusVal
-                                   * state->skeletonState->segRadiusToNodeRadius);
+                                   * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
                 else
                     renderCylinder(&(currentSegment->source->position),
                                    currentSegment->source->radius
                                    * state->skeletonState->segRadiusToNodeRadius,
                                    &(currentSegment->target->position),
                                    currentSegment->target->radius
-                                   * state->skeletonState->segRadiusToNodeRadius);
+                                   * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
                     //Gets true, if called for slice plane VP
-                    if(!callFlag) {
+                    if(viewportType == VIEWPORT_ORTHO) {
                         if(state->skeletonState->showIntersections)
                             renderSegPlaneIntersection(currentSegment);
                     }
@@ -1863,10 +1915,10 @@ GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
                 glLoadName(state->skeletonState->activeNode->nodeID + 50);
                 if(state->skeletonState->overrideNodeRadiusBool)
                     renderSphere(&(state->skeletonState->activeNode->position),
-                                 state->skeletonState->overrideNodeRadiusVal * 1.5);
+                                 state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, viewportType);
                 else
                     renderSphere(&(state->skeletonState->activeNode->position),
-                                 state->skeletonState->activeNode->radius * 1.5);
+                                 state->skeletonState->activeNode->radius * 1.5, currentColor, viewportType);
                 glDisable(GL_BLEND);
                 //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
                 glColor4f(0., 0., 0., 1.);
@@ -1884,10 +1936,27 @@ GLuint Renderer::renderActiveTreeSkeleton(Byte callFlag) {
     //Stop display list recording
     glEndList();
     free(textBuffer);
-    return tempList;
+    return;
 }
+*/
 
-GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
+// viewportType: VIEWPORT_SKELETON or VIEWPORT_ORTHO
+/* This became dangerous with the introduction of multires... the HT
+could be queried too often for highly downsampled data sets -- O(N^3) comlexity
+here. It should be ok until mag 8 data sets, then we switch to a different
+rendering mode (knossos then uses the whole skeleton display list for the ortho VPs). */
+/*
+void Renderer::renderSuperCubeSkeleton(uint32_t viewportType) {
+
+    // This prevents the O(n^3) time complexity problem - it is just heuristic
+    //however, could cause problems when Knossos is used with very high data cube
+    // edge lengths
+
+    if(state->magnification > 8) {
+        renderWholeSkeleton(viewportType);
+        return;
+    }
+    uint32_t magSupercube;
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -1896,6 +1965,7 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
     struct skeletonDCsegment *firstRenderedSkeletonDCsegment;
     struct skeletonDCsegment *currentSkeletonDCsegmentSearch;
 
+    color4F currentColor;
     Byte rendered = false;
 
     firstRenderedSkeletonDCsegment = (skeletonDCsegment*)malloc(sizeof(struct skeletonDCsegment));
@@ -1907,11 +1977,14 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
     textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP))
+        return;
+    if(viewportType == VIEWPORT_SKELETON)
+            glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+        else
+            glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
 
-    if(callFlag) glEnable(GL_CULL_FACE);
+
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -1920,6 +1993,7 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
     //Thus, we have to translate there.
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
 
+    magSupercube = ((state->M/2)+1) * state->magnification;
 
     //We take all skeletonDCs out of our current SC
     for(currentPosDCCounter.x = currentPosDC.x - state->viewerState->zoomCube; currentPosDCCounter.x <= currentPosDC.x + state->viewerState->zoomCube; currentPosDCCounter.x++) {
@@ -1956,15 +2030,15 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                                                     state->skeletonState->segRadiusToNodeRadius,
                                                    &currentSkeletonDCsegment->segment->target->position,
                                                    state->skeletonState->overrideNodeRadiusVal *
-                                                    state->skeletonState->segRadiusToNodeRadius);
+                                                    state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
                                 else
                                     renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                         currentSkeletonDCsegment->segment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                                         &(currentSkeletonDCsegment->segment->target->position),
-                                        currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                                        currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
 
                                 //Gets true, if called for slice plane VP
-                                if(!callFlag) {
+                                if(viewportType == VIEWPORT_ORTHO) {
                                     if(state->skeletonState->showIntersections)
                                         renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                 }
@@ -1976,8 +2050,8 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                                 rendered = false;
                                 currentSkeletonDCsegmentSearch = firstRenderedSkeletonDCsegment;
                                 //Check all segments in the current SC if they were rendered...
-                                /* this adds O(n^2) :( ) */
-                                /*while(currentSkeletonDCsegmentSearch) {
+                                // this adds O(n^2) :( )
+                                while(currentSkeletonDCsegmentSearch) {
                                     //Already rendered, skip this
                                     if(((struct skeletonDCsegment *)currentSkeletonDCsegmentSearch->segment) == currentSkeletonDCsegment) {
                                         //currentSkeletonDCsegmentSearch = currentSkeletonDCsegmentSearch->next;
@@ -1985,7 +2059,7 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                                         break;
                                     }
                                     currentSkeletonDCsegmentSearch = currentSkeletonDCsegmentSearch->next;
-                                }*/
+                                }
                                 //So render it and add a new element to the list of rendered segments
                                 if(rendered == false) {
                                     //Set color
@@ -2002,15 +2076,15 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                                         renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                             state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
                                             &(currentSkeletonDCsegment->segment->target->position),
-                                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius);
+                                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
                                     else
                                         renderCylinder(&(currentSkeletonDCsegment->segment->source->position),
                                             currentSkeletonDCsegment->segment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                                             &(currentSkeletonDCsegment->segment->target->position),
-                                            currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                                            currentSkeletonDCsegment->segment->target->radius * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
 
                                     //Gets true, if called for slice plane VP
-                                    if(!callFlag) {
+                                    if(viewportType == VIEWPORT_ORTHO) {
                                         if(state->skeletonState->showIntersections)
                                             renderSegPlaneIntersection(currentSkeletonDCsegment->segment);
                                     }
@@ -2053,9 +2127,9 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                             glLoadName(currentSkeletonDCnode->node->nodeID + 50);
                             //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius);
                             if(state->skeletonState->overrideNodeRadiusBool)
-                                renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal);
+                                renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal, currentColor, viewportType);
                             else
-                                renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius);
+                                renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius, currentColor, viewportType);
 
                             //Check if this node is an active node and highlight if true
                             if(state->skeletonState->activeNode) {
@@ -2073,9 +2147,9 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
                                     glEnable(GL_BLEND);
                                     //renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
                                     if(state->skeletonState->overrideNodeRadiusBool)
-                                        renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal);
+                                        renderSphere(&(currentSkeletonDCnode->node->position), state->skeletonState->overrideNodeRadiusVal, currentColor, viewportType);
                                     else
-                                        renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5);
+                                        renderSphere(&(currentSkeletonDCnode->node->position), currentSkeletonDCnode->node->radius * 1.5, currentColor, viewportType);
                                     glDisable(GL_BLEND);
                                     //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
                                     glColor4f(0., 0., 0., 1.);
@@ -2116,22 +2190,30 @@ GLuint Renderer::renderSuperCubeSkeleton(Byte callFlag) {
 
     free(textBuffer);
 
-    return tempList;
+    return;
 }
+ */
 
-GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
+/*
+void Renderer::renderWholeSkeleton(uint32_t viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
+    color4F currentColor;
 
     char *textBuffer;
     textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
-    GLuint tempList;
-    tempList = glGenLists(1);
-    glNewList(tempList, GL_COMPILE);
-    if(callFlag) glEnable(GL_CULL_FACE);
+    if(!(state->skeletonState->displayListSkeletonSkeletonizerVP || state->skeletonState->displayListSkeletonSlicePlaneVP)) {
+        return;
+    }
+
+    if(viewportType == VIEWPORT_SKELETON)
+           glNewList(state->skeletonState->displayListSkeletonSkeletonizerVP, GL_COMPILE);
+       else
+           glNewList(state->skeletonState->displayListSkeletonSlicePlaneVP, GL_COMPILE);
+
     glEnable(GL_BLEND);
     //Save current matrix stack (modelview!!)
     glPushMatrix();
@@ -2167,9 +2249,9 @@ GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
             //The first 50 entries of the openGL namespace are reserved for static objects (like slice plane quads...)
             glLoadName(currentNode->nodeID + 50);
             if(state->skeletonState->overrideNodeRadiusBool)
-                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal);
+                renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal, currentColor, viewportType);
             else
-                renderSphere(&(currentNode->position), currentNode->radius);
+                renderSphere(&(currentNode->position), currentNode->radius, currentColor, viewportType);
 
             if((currentTree->treeID == state->skeletonState->activeTree->treeID)
                 && (state->skeletonState->highlightActiveTree)) {
@@ -2192,15 +2274,15 @@ GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
                     renderCylinder(&(currentSegment->source->position),
                         state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
                         &(currentSegment->target->position),
-                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius);
+                        state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
                 else
                     renderCylinder(&(currentSegment->source->position),
                         currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
                         &(currentSegment->target->position),
-                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius);
+                        currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius, currentColor, viewportType);
 
                 //Gets true, if called for slice plane VP
-                if(!callFlag) {
+                if(viewportType == VIEWPORT_ORTHO) {
                     if(state->skeletonState->showIntersections)
                         renderSegPlaneIntersection(currentSegment);
                 }
@@ -2237,21 +2319,21 @@ GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
         glLoadName(state->skeletonState->activeNode->nodeID + 50);
         glEnable(GL_BLEND);
         if(state->skeletonState->overrideNodeRadiusBool)
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5);
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, viewportType);
         else
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5);
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, currentColor, viewportType);
         glDisable(GL_BLEND);
         //Description of active node is always rendered, ignoring state->skeletonState->showNodeIDs
         glColor4f(0., 0., 0., 1.);
         memset(textBuffer, '\0', 32);
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
         renderText(&(state->skeletonState->activeNode->position), textBuffer);
-        /*if(state->skeletonState->activeNode->comment) {
+        /if(state->skeletonState->activeNode->comment) {
             glPushMatrix();
             glTranslated(10,10, 10);
             renderText(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->comment);
             glPopMatrix();
-        }*/
+        }
 
     }
     //Restore modelview matrix
@@ -2263,10 +2345,351 @@ GLuint Renderer::renderWholeSkeleton(Byte callFlag) {
 
     free(textBuffer);
 
-    return tempList;
+
+}
+*/
+
+/*
+ * Fast and simplified tree rendering that uses frustum culling and
+ * a heuristic level-of-detail implementation that exploits the implicit
+ * sorting of the tree node list to avoid a depth first search for the compilation
+ * of a spatial graph that is similar to the true skeleton, but without nodes /
+ * vertices that would not be visible anyway. It uses large vertex batches for
+ * line and point geometry (most data) drawn with vertex arrays, since the geometry is highly
+ * dynamic (can change each frame). VBOs would make a lot of sense if we had a
+ * smart spatial organization of the skeleton.
+ * Ugly code, not nice to read, should be simplified...
+ */
+
+void Renderer::renderSkeleton(uint32_t viewportType) {
+    struct treeListElement *currentTree;
+    struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
+    struct segmentListElement *currentSegment;
+    float cumDistToLastRenderedNode;
+    floatCoordinate currNodePos;
+    uint32_t virtualSegRendered, allowHeuristic;
+    uint32_t skippedCnt = 0;
+    uint32_t renderNode;
+    float currentRadius;
+
+
+    state->skeletonState->lineVertBuffer.vertsIndex = 0;
+    state->skeletonState->lineVertBuffer.normsIndex = 0;
+    state->skeletonState->lineVertBuffer.colsIndex = 0;
+
+    state->skeletonState->pointVertBuffer.vertsIndex = 0;
+    state->skeletonState->pointVertBuffer.normsIndex = 0;
+    state->skeletonState->pointVertBuffer.colsIndex = 0;
+    color4F currentColor;
+
+    char *textBuffer;
+    textBuffer = (char *)malloc(32);
+    memset(textBuffer, '\0', 32);
+
+    if((state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
+        if(viewportType != VIEWPORT_SKELETON) {
+            return;
+        }
+    }
+
+    if((state->skeletonState->displayMode & DSP_SKEL_VP_HIDE)) {
+        if(viewportType == VIEWPORT_SKELETON) {
+            return;
+        }
+    }
+
+    //tdItem: test culling under different conditions!
+    //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
+
+    /* Enable blending just once, since we never disable it? */
+    glEnable(GL_BLEND);
+
+    glPushMatrix();
+
+    /* Rendering of objects starts always at the origin of our data pixel
+    coordinate system. Thus, we have to translate there. */
+    glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
+
+    /* We iterate over the whole tree structure. */
+    currentTree = state->skeletonState->firstTree;
+
+    while(currentTree) {
+
+        lastNode = NULL;
+        lastRenderedNode = NULL;
+        cumDistToLastRenderedNode = 0.f;
+
+        if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
+            if(currentTree != state->skeletonState->activeTree) {
+                currentTree = currentTree->next;
+                continue;
+            }
+        }
+
+        currentNode = currentTree->firstNode;
+        while(currentNode) {
+
+            /* We start with frustum culling:
+             * all nodes that are not in the current viewing frustum for the
+             * currently rendered viewports are discarded. This is very fast. */
+
+            /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
+            currNodePos.x = (float)currentNode->position.x;
+            currNodePos.y = (float)currentNode->position.y;
+            currNodePos.z = (float)currentNode->position.z;
+
+            /* Every node is tested based on a precomputed circumsphere
+            that includes its segments. */
+            if(!sphereInFrustum(currNodePos, currentNode->circRadius, viewportType)) {
+                currentNode = currentNode->next;
+                lastNode = lastRenderedNode = NULL;
+                //skippedCnt++;
+                continue;
+            }
+
+            virtualSegRendered = false;
+            renderNode = true;
+
+            /* First test whether this node is actually connected to the next,
+            i.e. whether the implicit sorting is not broken here. */
+            allowHeuristic = false;
+            if(currentNode->next && (!(currentNode->numSegs > 2))) {
+                currentSegment = currentNode->next->firstSegment;
+                while(currentSegment) {
+                    if((currentSegment->target == currentNode) ||
+                       (currentSegment->source == currentNode)) {
+                        /* Connected, heuristic is allowed */
+                        allowHeuristic = true;
+                        break;
+                    }
+                    currentSegment = currentSegment->next;
+                }
+            }
+
+
+            currentSegment = currentNode->firstSegment;
+            while(currentSegment && allowHeuristic) {
+                /* isBranchNode tells you only whether the node is on the branch point stack,
+                 * not whether it is actually a node connected to more than two other nodes! */
+                if((currentSegment->target == lastNode)
+                    || ((currentSegment->source == lastNode)
+                    &&
+                    (!(
+                       (currentNode->comment)
+                       || (currentNode->isBranchNode)
+                       || (currentNode->numSegs > 2)
+                       || (currentNode->radius * state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx > 5.f))))) {
+
+                    /* Node is a candidate for LOD culling */
+
+                    /* Do we really skip this node? Test cum dist. to last rendered node! */
+                    cumDistToLastRenderedNode += currentSegment->length
+                        * state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx;
+
+                    if(cumDistToLastRenderedNode > state->viewerState->cumDistRenderThres) {
+                        break;
+                    }
+                    else {
+                        renderNode = false;
+                        break;
+                    }
+                }
+                currentSegment = currentSegment->next;
+            }
+
+            if(renderNode) {
+
+                /* This sets the current color for the segment rendering */
+                if((currentTree->treeID == state->skeletonState->activeTree->treeID)
+                    && (state->skeletonState->highlightActiveTree)) {
+                        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 1.f);
+                }
+                else {
+                    currentColor = currentTree->color;
+                }
+
+                cumDistToLastRenderedNode = 0.f;
+
+                if(lastNode != lastRenderedNode) {
+                    virtualSegRendered = true;
+                    /* We need a "virtual" segment now */
+
+                    if(state->viewerState->selectModeFlag)
+                        glLoadName(3);
+
+                    renderCylinder(&(lastRenderedNode->position),
+                                   lastRenderedNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   &(currentNode->position),
+                                   currentNode->radius * state->skeletonState->segRadiusToNodeRadius,
+                                   currentColor,
+                                   viewportType);
+                }
+
+                /* Second pass over segments needed... But only if node is actually rendered! */
+                currentSegment = currentNode->firstSegment;
+                while(currentSegment) {
+
+                    //2 indicates a backward connection, which should not be rendered.
+                    if(currentSegment->flag == 2){
+                        currentSegment = currentSegment->next;
+                        continue;
+                    }
+
+                    if(virtualSegRendered
+                       && ((currentSegment->source == lastNode)
+                       || (currentSegment->target == lastNode))) {
+                        currentSegment = currentSegment->next;
+                        continue;
+                    }
+
+                    if(state->viewerState->selectModeFlag)
+                        glLoadName(3);
+
+                    if(state->skeletonState->overrideNodeRadiusBool)
+                        renderCylinder(&(currentSegment->source->position),
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                            &(currentSegment->target->position),
+                            state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
+                            currentColor,
+                            viewportType);
+                    else
+                        renderCylinder(&(currentSegment->source->position),
+                            currentSegment->source->radius * state->skeletonState->segRadiusToNodeRadius,
+                            &(currentSegment->target->position),
+                            currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
+                            currentColor,
+                            viewportType);
+
+                    if(viewportType != VIEWPORT_SKELETON) {
+                        if(state->skeletonState->showIntersections)
+                            renderSegPlaneIntersection(currentSegment);
+                    }
+
+                    currentSegment = currentSegment->next;
+
+                }
+
+
+                /* The first 50 entries of the openGL namespace are reserved
+                for static objects (like slice plane quads...) */
+                if(state->viewerState->selectModeFlag)
+                    glLoadName(currentNode->nodeID + 50);
+
+                /* Changes the current color & radius if the node has a comment */
+                /* This is a bit hackish, but does the job */
+                Skeletonizer::setColorFromNode(currentNode, &currentColor);
+                Skeletonizer::setRadiusFromNode(currentNode, &currentRadius);
+
+                renderSphere(&(currentNode->position), currentRadius, currentColor, viewportType);
+
+                /* Render the node description only when option is set. */
+                if(state->skeletonState->showNodeIDs) {
+                    glColor4f(0.f, 0.f, 0.f, 1.f);
+                    memset(textBuffer, '\0', 32);
+                    sprintf(textBuffer, "%d", currentNode->nodeID);
+                    renderText(&(currentNode->position), textBuffer);
+                }
+                lastRenderedNode = currentNode;
+            }
+            //else skippedCnt++;
+
+            lastNode = currentNode;
+
+            currentNode = currentNode->next;
+        }
+
+        currentTree = currentTree->next;
+    }
+
+    if(state->viewerState->selectModeFlag)
+        glLoadName(3);
+
+    /* Render line geometry batch if it contains data */
+    if(state->skeletonState->lineVertBuffer.vertsIndex > 0) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+
+        /* draw all segments */
+        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->lineVertBuffer.colors);
+
+        glDrawArrays(GL_LINES, 0, state->skeletonState->lineVertBuffer.vertsIndex);
+
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+    }
+
+
+    if(state->skeletonState->overrideNodeRadiusBool)
+        glPointSize(state->skeletonState->overrideNodeRadiusVal);
+    else
+        glPointSize(3.f);
+
+    /* Render point geometry batch if it contains data */
+    if(state->skeletonState->pointVertBuffer.vertsIndex > 0) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+
+        /* draw all segments */
+        glVertexPointer(3, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.vertices);
+        glColorPointer(4, GL_FLOAT, 0, state->skeletonState->pointVertBuffer.colors);
+
+        glDrawArrays(GL_POINTS, 0, state->skeletonState->pointVertBuffer.vertsIndex);
+
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+    }
+    glPointSize(1.f);
+
+    //LOG("verts lines: %d", state->skeletonState->lineVertBuffer.vertsIndex);
+    //LOG("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex);
+
+    /* Highlight active node */
+    if(state->skeletonState->activeNode) {
+
+        /* Set the default color for the active node */
+        SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
+
+        /* Color gets changes in case there is a comment & conditional comment
+        highlighting */
+        Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
+        currentColor.a = 0.2f;
+
+        if(state->viewerState->selectModeFlag)
+            glLoadName(state->skeletonState->activeNode->nodeID + 50);
+
+        if(state->skeletonState->overrideNodeRadiusBool)
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, viewportType);
+        else
+            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, currentColor, viewportType);
+
+        /* Description of active node is always rendered,
+        ignoring state->skeletonState->showNodeIDs */
+
+        glColor4f(0., 0., 0., 1.);
+        memset(textBuffer, '\0', 32);
+        sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
+        renderText(&(state->skeletonState->activeNode->position), textBuffer);
+
+    }
+    /* Restore modelview matrix */
+    glPopMatrix();
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+
+    free(textBuffer);
+    //float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
+    //LOG("percent nodes skipped in this DL: %f", tmp);
+
+    return;
+
+
+
 }
 
-
+/*
 bool Renderer::updateDisplayListsSkeleton() {
 
     if(state->skeletonState->skeletonChanged) {
@@ -2274,59 +2697,33 @@ bool Renderer::updateDisplayListsSkeleton() {
         state->viewerState->superCubeChanged = false;
         state->skeletonState->skeletonSliceVPchanged = false;
 
-        /* clean up the old display lists */
-        if(state->skeletonState->displayListSkeletonSkeletonizerVP) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
-            state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-        }
-        if(state->skeletonState->displayListSkeletonSlicePlaneVP) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
-            state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
-        }
 
-        /* create new display lists that are up-to-date */
+        // create new display lists that are up-to-date
         if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderWholeSkeleton(false);
+                renderSkeleton(VIEWPORT_SKELETON);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-
-                    renderWholeSkeleton(false);
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE))
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-
-                    renderWholeSkeleton(false);
+               renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
         }
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(true);
+            renderSuperCubeSkeleton(VIEWPORT_SKELETON);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-                if(state->skeletonState->showIntersections)
-                    state->skeletonState->displayListSkeletonSlicePlaneVP =
+                 renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
-                        renderWholeSkeleton(false);
-
-                else state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    state->skeletonState->displayListSkeletonSkeletonizerVP;
             }
         }
-        /* TDitem active tree should be limited to current cube in this case */
+        // TDitem active tree should be limited to current cube in this case
         if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
-
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderActiveTreeSkeleton(1);
+                renderActiveTreeSkeleton(VIEWPORT_SKELETON);
             if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
-                if(state->skeletonState->showIntersections)
-                    state->skeletonState->displayListSkeletonSlicePlaneVP =
-                        renderActiveTreeSkeleton(0);
-                else state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    state->skeletonState->displayListSkeletonSkeletonizerVP;
+                renderActiveTreeSkeleton(VIEWPORT_ORTHO);
             }
         }
     }
@@ -2335,18 +2732,12 @@ bool Renderer::updateDisplayListsSkeleton() {
         state->viewerState->superCubeChanged = false;
 
         if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE) {
-            glDeleteLists(state->skeletonState->displayListSkeletonSkeletonizerVP, 1);
-            state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
-
-            state->skeletonState->displayListSkeletonSkeletonizerVP =
-                renderSuperCubeSkeleton(1);
+            renderSuperCubeSkeleton(VIEWPORT_SKELETON);
         }
 
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(!(state->skeletonState->displayMode & DSP_ACTIVETREE)) {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-
-                    renderWholeSkeleton(false);
+                renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
             }
         }
@@ -2354,17 +2745,12 @@ bool Renderer::updateDisplayListsSkeleton() {
 
     if(state->skeletonState->skeletonSliceVPchanged) {
         state->skeletonState->skeletonSliceVPchanged = false;
-        glDeleteLists(state->skeletonState->displayListSkeletonSlicePlaneVP, 1);
-        state->skeletonState->displayListSkeletonSlicePlaneVP = 0;
 
         if(!(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
             if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderActiveTreeSkeleton(0);
-            }
-            else {
-                state->skeletonState->displayListSkeletonSlicePlaneVP =
-                    renderWholeSkeleton(0);
+               renderActiveTreeSkeleton(VIEWPORT_ORTHO);
+            } else {
+               renderSuperCubeSkeleton(VIEWPORT_ORTHO);
 
             }
         }
@@ -2372,16 +2758,176 @@ bool Renderer::updateDisplayListsSkeleton() {
 
     return true;
 }
+*/
 
-bool Renderer::drawViewportProperties(uint32_t currentVP) {
 
-}
 
 bool Renderer::doubleMeshCapacity(mesh *toDouble) {
 
+    (*toDouble).vertices = (floatCoordinate *)realloc((*toDouble).vertices, 2 * (*toDouble).vertsBuffSize * sizeof(floatCoordinate));
+    (*toDouble).normals = (floatCoordinate *)realloc((*toDouble).normals, 2 * (*toDouble).normsBuffSize * sizeof(floatCoordinate));
+    (*toDouble).colors = (color4F *)realloc((*toDouble).colors, 2 * (*toDouble).colsBuffSize * sizeof(color4F));
+
+    (*toDouble).vertsBuffSize = 2 * (*toDouble).vertsBuffSize;
+    (*toDouble).normsBuffSize = 2 * (*toDouble).normsBuffSize;
+    (*toDouble).colsBuffSize = 2 * (*toDouble).colsBuffSize;
+
+
+    return true;
 }
 
-bool Renderer::initMesh(mesh *meshToInit, uint32_t initialSize) {
+bool Renderer::initMesh(mesh *toInit, uint32_t initialSize) {
 
+
+    (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
+    (*toInit).normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
+    (*toInit).colors = (color4F *)malloc(initialSize * sizeof(color4F));
+
+    (*toInit).vertsBuffSize = initialSize;
+    (*toInit).normsBuffSize = initialSize;
+    (*toInit).colsBuffSize = initialSize;
+
+    (*toInit).vertsIndex = 0;
+    (*toInit).normsIndex = 0;
+    (*toInit).colsIndex = 0;
+
+
+    return true;
 }
 
+
+bool Renderer::updateFrustumClippingPlanes(uint32_t viewportType) {
+   float   frustum[6][4];
+   float   proj[16];
+   float   modl[16];
+   float   clip[16];
+   float   t;
+
+   /* Get the current PROJECTION matrix from OpenGL */
+   glGetFloatv( GL_PROJECTION_MATRIX, proj );
+
+   /* Get the current MODELVIEW matrix from OpenGL */
+   glGetFloatv( GL_MODELVIEW_MATRIX, modl );
+
+   /* Combine the two matrices (multiply projection by modelview) */
+   clip[ 0] = modl[ 0] * proj[ 0] + modl[ 1] * proj[ 4] + modl[ 2] * proj[ 8] + modl[ 3] * proj[12];
+   clip[ 1] = modl[ 0] * proj[ 1] + modl[ 1] * proj[ 5] + modl[ 2] * proj[ 9] + modl[ 3] * proj[13];
+   clip[ 2] = modl[ 0] * proj[ 2] + modl[ 1] * proj[ 6] + modl[ 2] * proj[10] + modl[ 3] * proj[14];
+   clip[ 3] = modl[ 0] * proj[ 3] + modl[ 1] * proj[ 7] + modl[ 2] * proj[11] + modl[ 3] * proj[15];
+
+   clip[ 4] = modl[ 4] * proj[ 0] + modl[ 5] * proj[ 4] + modl[ 6] * proj[ 8] + modl[ 7] * proj[12];
+   clip[ 5] = modl[ 4] * proj[ 1] + modl[ 5] * proj[ 5] + modl[ 6] * proj[ 9] + modl[ 7] * proj[13];
+   clip[ 6] = modl[ 4] * proj[ 2] + modl[ 5] * proj[ 6] + modl[ 6] * proj[10] + modl[ 7] * proj[14];
+   clip[ 7] = modl[ 4] * proj[ 3] + modl[ 5] * proj[ 7] + modl[ 6] * proj[11] + modl[ 7] * proj[15];
+
+   clip[ 8] = modl[ 8] * proj[ 0] + modl[ 9] * proj[ 4] + modl[10] * proj[ 8] + modl[11] * proj[12];
+   clip[ 9] = modl[ 8] * proj[ 1] + modl[ 9] * proj[ 5] + modl[10] * proj[ 9] + modl[11] * proj[13];
+   clip[10] = modl[ 8] * proj[ 2] + modl[ 9] * proj[ 6] + modl[10] * proj[10] + modl[11] * proj[14];
+   clip[11] = modl[ 8] * proj[ 3] + modl[ 9] * proj[ 7] + modl[10] * proj[11] + modl[11] * proj[15];
+
+   clip[12] = modl[12] * proj[ 0] + modl[13] * proj[ 4] + modl[14] * proj[ 8] + modl[15] * proj[12];
+   clip[13] = modl[12] * proj[ 1] + modl[13] * proj[ 5] + modl[14] * proj[ 9] + modl[15] * proj[13];
+   clip[14] = modl[12] * proj[ 2] + modl[13] * proj[ 6] + modl[14] * proj[10] + modl[15] * proj[14];
+   clip[15] = modl[12] * proj[ 3] + modl[13] * proj[ 7] + modl[14] * proj[11] + modl[15] * proj[15];
+
+   /* Extract the numbers for the RIGHT plane */
+   frustum[0][0] = clip[ 3] - clip[ 0];
+   frustum[0][1] = clip[ 7] - clip[ 4];
+   frustum[0][2] = clip[11] - clip[ 8];
+   frustum[0][3] = clip[15] - clip[12];
+
+   /* Normalize the result */
+   t = sqrt( frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2] );
+   frustum[0][0] /= t;
+   frustum[0][1] /= t;
+   frustum[0][2] /= t;
+   frustum[0][3] /= t;
+
+   /* Extract the numbers for the LEFT plane */
+   frustum[1][0] = clip[ 3] + clip[ 0];
+   frustum[1][1] = clip[ 7] + clip[ 4];
+   frustum[1][2] = clip[11] + clip[ 8];
+   frustum[1][3] = clip[15] + clip[12];
+
+   /* Normalize the result */
+   t = sqrt( frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2] * frustum[1][2] );
+   frustum[1][0] /= t;
+   frustum[1][1] /= t;
+   frustum[1][2] /= t;
+   frustum[1][3] /= t;
+
+   /* Extract the BOTTOM plane */
+   frustum[2][0] = clip[ 3] + clip[ 1];
+   frustum[2][1] = clip[ 7] + clip[ 5];
+   frustum[2][2] = clip[11] + clip[ 9];
+   frustum[2][3] = clip[15] + clip[13];
+
+   /* Normalize the result */
+   t = sqrt( frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2] * frustum[2][2] );
+   frustum[2][0] /= t;
+   frustum[2][1] /= t;
+   frustum[2][2] /= t;
+   frustum[2][3] /= t;
+
+   /* Extract the TOP plane */
+   frustum[3][0] = clip[ 3] - clip[ 1];
+   frustum[3][1] = clip[ 7] - clip[ 5];
+   frustum[3][2] = clip[11] - clip[ 9];
+   frustum[3][3] = clip[15] - clip[13];
+
+   /* Normalize the result */
+   t = sqrt( frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2] );
+   frustum[3][0] /= t;
+   frustum[3][1] /= t;
+   frustum[3][2] /= t;
+   frustum[3][3] /= t;
+
+   /* Extract the FAR plane */
+   frustum[4][0] = clip[ 3] - clip[ 2];
+   frustum[4][1] = clip[ 7] - clip[ 6];
+   frustum[4][2] = clip[11] - clip[10];
+   frustum[4][3] = clip[15] - clip[14];
+
+   /* Normalize the result */
+   t = sqrt( frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2] );
+   frustum[4][0] /= t;
+   frustum[4][1] /= t;
+   frustum[4][2] /= t;
+   frustum[4][3] /= t;
+
+   /* Extract the NEAR plane */
+   frustum[5][0] = clip[ 3] + clip[ 2];
+   frustum[5][1] = clip[ 7] + clip[ 6];
+   frustum[5][2] = clip[11] + clip[10];
+   frustum[5][3] = clip[15] + clip[14];
+
+   /* Normalize the result */
+   t = sqrt( frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2] );
+   frustum[5][0] /= t;
+   frustum[5][1] /= t;
+   frustum[5][2] /= t;
+   frustum[5][3] /= t;
+
+
+   memcpy(state->viewerState->vpConfigs[viewportType].frustum,
+          frustum, sizeof(frustum));
+    return true;
+}
+
+/* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
+bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType) {
+    int p;
+
+    /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */
+    if(state->viewerState->selectModeFlag) radius += 900.f;
+
+    for( p = 0; p < 6; p++ )
+        if( state->viewerState->vpConfigs[viewportType].frustum[p][0]
+           * pos.x + state->viewerState->vpConfigs[viewportType].frustum[p][1]
+           * pos.y + state->viewerState->vpConfigs[viewportType].frustum[p][2]
+           * pos.z + state->viewerState->vpConfigs[viewportType].frustum[p][3]
+           <= -radius )
+           return false;
+
+       return true;
+}

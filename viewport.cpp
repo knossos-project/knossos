@@ -110,17 +110,31 @@ void Viewport::initializeGL() {
 
     }
 
-    //glEnable(GL_TEXTURE_2D);
     /*
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_COLOR_MATERIAL);
-    glEnable(GL_BLEND);
-    glEnable(GL_POLYGON_SMOOTH);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); */
+    // The following code configures openGL to draw into the current VP
+    //set the drawing area in the window to our actually processed view port.
+    glViewport(state->viewerState->vpConfigs[plane].upperLeftCorner.x,
+               state->viewerState->vpConfigs[plane].upperLeftCorner.y,
+               state->viewerState->vpConfigs[plane].edgeLength,
+               state->viewerState->vpConfigs[plane].edgeLength);
+    //select the projection matrix
+    glMatrixMode(GL_PROJECTION);
+    //reset it
+    glLoadIdentity();
+    //define coordinate system for our viewport: left right bottom top near far
+    //coordinate values
+    glOrtho(0, state->viewerState->vpConfigs[plane].edgeLength,
+            state->viewerState->vpConfigs[plane].edgeLength, 0, 25, -25);
+    //select the modelview matrix for modification
+    glMatrixMode(GL_MODELVIEW);
+    //reset it
+    glLoadIdentity();
+    //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
 
-    /* display some basic openGL driver statistics
-    qDebug("OpenGL v%s on %s from %s\n", glGetString(GL_VERSION),
-    glGetString(GL_RENDERER), glGetString(GL_VENDOR));
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     */
 
 }

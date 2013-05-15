@@ -784,7 +784,6 @@ struct guiConfig {
     char *comment5;
 
     //Zoom for Skeleton Viewport
-
     float zoomSkeletonViewport;
     float zoomOrthoVPs;
 
@@ -793,6 +792,11 @@ struct guiConfig {
     //AG_Checkbox *showAllNodeIDsBox;
     //AG_Checkbox *datasetLinearFilteringBox;
     //AG_Checkbox *AutoTracingBox;
+
+    // substrings for comment node preferences
+    char *commentSubstr[NUM_COMMSUBSTR];
+    // colors of color-dropdown in comment node preferences
+    char* commentColors[NUM_COMMSUBSTR];
 
 };
 
@@ -985,6 +989,8 @@ struct viewerState {
     int resizeVP;
     int saveCoords;
     Coordinate clickedCoordinate;
+
+    float cumDistRenderThres;
 
     int showPosSizButtons;
     int viewportOrder[4];

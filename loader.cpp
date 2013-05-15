@@ -290,10 +290,6 @@ loadcube_fail:
     return true;
 }
 
-// ALWAYS give the slotList*Element functions an element that
-//      1) really is in slotList.
-//      2) really exists.
-// The functions don't check for that and things will break if it's not the case.
 int32_t Loader::slotListDelElement(CubeSlotList *slotList, CubeSlot *element) {
     if(element->next != NULL) {
         element->next->previous = element->previous;

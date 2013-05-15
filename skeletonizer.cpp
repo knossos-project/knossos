@@ -56,9 +56,9 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->skeletonRevision = 0;
 
-    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(2048);
+    state->skeletonState->branchStack = newStack(1048576);
 
     // Generate empty tree structures
     state->skeletonState->firstTree = NULL;
@@ -106,6 +106,18 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
+
+    state->skeletonState->undoList = (cmdList *)malloc(sizeof(struct cmdList));
+    memset(state->skeletonState->undoList, '\0', sizeof(struct cmdList));
+    state->skeletonState->undoList->cmdCount = 0;
+    state->skeletonState->undoList->firstCmd = NULL;
+    state->skeletonState->undoList->lastCmd = NULL;
+
+    state->skeletonState->redoList = (cmdList *)malloc(sizeof(struct cmdList));
+    memset(state->skeletonState->redoList, '\0', sizeof(struct cmdList));
+    state->skeletonState->redoList->cmdCount = 0;
+    state->skeletonState->redoList->firstCmd = NULL;
+    state->skeletonState->redoList->lastCmd = NULL;
 
     state->skeletonState->saveCnt = 0;
 
@@ -167,6 +179,8 @@ nodeListElement *Skeletonizer::addNodeListElement(
     newElement->radius = radius;
     //Set node ID. This ID is unique in every tree list (there should only exist 1 tree list, see initSkeletonizer()).
     //Take the provided nodeID.
+
+    newElement->numSegs = 0;
     newElement->nodeID = nodeID;
     newElement->isBranchNode = false;
     newElement->createdInMag = inMag;
@@ -276,12 +290,12 @@ bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
     else
         return false;
 
-    curMagTargetPos.x = segment->target->position.x / state->magnification;
-    curMagTargetPos.y = segment->target->position.y / state->magnification;
-    curMagTargetPos.z = segment->target->position.z / state->magnification;
-    curMagSourcePos.x = segment->source->position.x / state->magnification;
-    curMagSourcePos.y = segment->source->position.y / state->magnification;
-    curMagSourcePos.z = segment->source->position.z / state->magnification;
+    curMagTargetPos.x = segment->target->position.x;
+    curMagTargetPos.y = segment->target->position.y;
+    curMagTargetPos.z = segment->target->position.z;
+    curMagSourcePos.x = segment->source->position.x;
+    curMagSourcePos.y = segment->source->position.y;
+    curMagSourcePos.z = segment->source->position.z;
 
     segVector.x = (float)(curMagTargetPos.x - curMagSourcePos.x);
     segVector.y = (float)(curMagTargetPos.y - curMagSourcePos.y);
@@ -723,6 +737,7 @@ int32_t Skeletonizer::saveSkeleton() {
     commentListElement *currentComment = NULL;
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     int32_t r;
+    int32_t time;
     xmlChar attrString[128];
 
     xmlDocPtr xmlDocument;
@@ -799,7 +814,8 @@ int32_t Skeletonizer::saveSkeleton() {
     xmlStrPrintf(attrString,
                  128,
                  BAD_CAST"%d",
-                 state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
+                 state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed(),
+                 xorInt(time));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -856,7 +872,7 @@ int32_t Skeletonizer::saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%i", state->skeletonState->idleTime);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", xorInt(state->skeletonState->idleTime));
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
 
@@ -1060,6 +1076,8 @@ bool Skeletonizer::loadSkeleton() {
         return false;
     }
 
+    LOG("Document parsed successfully.");
+
     thingsXMLNode = xmlDocGetRootElement(xmlDocument);
     if(thingsXMLNode == NULL) {
         LOG("Empty document.");
@@ -1130,14 +1148,23 @@ bool Skeletonizer::loadSkeleton() {
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"time")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute)
-                        skeletonTime = atoi((char *)attribute);
+                    if(attribute) {
+                        if(hasObfuscatedTime()) {
+                            skeletonTime = xorInt(atoi((char *) attribute));
+                        }
+                        else {
+                            skeletonTime = atoi((char *)attribute);
+                        }
+                    }
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"activeNode")) {
-                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
-                    if(attribute)
-                        activeNodeID = atoi((char *)attribute);
+                    if(!merge) {
+                        attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
+                        if(attribute) {
+                            activeNodeID = atoi((char *)attribute);
+                        }
+                    }
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"scale")) {
@@ -1205,12 +1232,16 @@ bool Skeletonizer::loadSkeleton() {
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
 
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute)
-                        state->skeletonState->idleTime = atof((char *)attribute);
-                    state->skeletonState->idleTimeNow = state->time.elapsed();
-                    state->skeletonState->idleTimeLoadOffset =atof((char *)attribute);
+                    if(attribute) {
+                        if(hasObfuscatedTime()) {
+                            state->skeletonState->idleTime = xorInt(atoi((char*)attribute));
+                        } else {
+                            state->skeletonState->idleTime = atoi((char*)attribute);
+                        }
+                    }
+                    state->skeletonState->idleTimeTicksOffset = state->time.elapsed();
                 }
-                state->skeletonState->idleTimeTicksOffset = state->time.elapsed();
+
                 currentXMLNode = currentXMLNode->next;
             }
         }
@@ -1586,6 +1617,23 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
         return false;
     }
 
+    if(!segToDel) {
+        segToDel = findSegmentByNodeIDs(sourceNodeID, targetNodeID);
+    } else {
+        sourceNodeID = segToDel->source->nodeID;
+        targetNodeID = segToDel->target->nodeID;
+    }
+
+    if(!segToDel) {
+        LOG("Cannot delete segment, no segment with corresponding node IDs available!");
+        Knossos::unlockSkeleton(false);
+        return false;
+
+    }
+
+    /* numSegs counts forward AND backward segments!!! */
+    segToDel->source->numSegs--;
+    segToDel->target->numSegs--;
 
     //Out of skeleton structure
     delSegmentFromSkeletonStruct(segToDel);
@@ -1609,6 +1657,10 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
             segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
     }
 
+    /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
+    segToDel->length = 0.f;
+    updateCircRadius(segToDel->source);
+
     free(segToDel);
     state->skeletonState->totalSegmentElements--;
 
@@ -1629,6 +1681,10 @@ bool Skeletonizer::delSegment(int32_t targetRevision, int32_t sourceNodeID, int3
     return true;
 }
 
+/*
+ * We have to delete the node from 2 structures: the skeleton's nested linked list structure
+ * and the skeleton visualization structure (hashtable with skeletonDCs).
+ */
 bool Skeletonizer::delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
@@ -2068,8 +2124,10 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
         tempTree->firstNode = tempNode;
     }
 
+    updateCircRadius(tempNode);
+
     if(time == -1) {
-//        time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks(); SDL TODO
+        time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
     }
 
     tempNode->timestamp = time;
@@ -2080,7 +2138,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
     //        tempNode->correspondingTree);
 
     //Add a pointer to the node in the skeleton DC structure
-    addNodeToSkeletonStruct(tempNode);
+   // addNodeToSkeletonStruct(tempNode);
     state->skeletonState->skeletonChanged = true;
 
     if(nodeID > state->skeletonState->greatestNodeID) {
@@ -2116,7 +2174,7 @@ int32_t Skeletonizer::addNode(int32_t targetRevision,
 bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
-
+    floatCoordinate node1, node2;
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -2158,8 +2216,23 @@ bool Skeletonizer::addSegment(int32_t targetRevision, int32_t sourceNodeID, int3
 
     sourceSeg->reverseSegment->reverseSegment = sourceSeg;
 
+    /* numSegs counts forward AND backward segments!!! */
+   sourceNode->numSegs++;
+   targetNode->numSegs++;
 
-     // Add the segment to the skeleton DC structure
+   /* Do we really skip this node? Test cum dist. to last rendered node! */
+   node1.x = (float)sourceNode->position.x;
+   node1.y = (float)sourceNode->position.y;
+   node1.z = (float)sourceNode->position.z;
+
+   node2.x = (float)targetNode->position.x - node1.x;
+   node2.y = (float)targetNode->position.y - node1.y;
+   node2.z = (float)targetNode->position.z - node1.z;
+
+   sourceSeg->length = sourceSeg->reverseSegment->length
+       = sqrtf(scalarProduct(&node2, &node2));
+
+    // Add the segment to the skeleton DC structure
 
 
     addSegmentToSkeletonStruct(sourceSeg);
@@ -2231,9 +2304,9 @@ bool Skeletonizer::clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
         setDefaultSkelFileName();
     }
 
-    state->skeletonState->nodeCounter = newDynArray(128);
+    state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
-    state->skeletonState->branchStack = newStack(2048);
+    state->skeletonState->branchStack = newStack(1048576);
 
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 
@@ -2535,9 +2608,10 @@ treeListElement* Skeletonizer::addTreeListElement(int32_t sync, int32_t targetRe
     state->skeletonState->activeTree = newElement;
     LOG("Added new tree with ID: %d.", newElement->treeID);
 
-    if(treeID > state->skeletonState->greatestTreeID) {
-        state->skeletonState->greatestTreeID = treeID;
+    if(newElement->treeID > state->skeletonState->greatestTreeID) {
+        state->skeletonState->greatestTreeID = newElement->treeID;
     }
+
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
@@ -2703,12 +2777,13 @@ bool Skeletonizer::editNode(int32_t targetRevision,
     nodeID = node->nodeID;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
+    /*
     delNodeFromSkeletonStruct(node);
     currentSegment = node->firstSegment;
     while(currentSegment) {
         delSegmentFromSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
-    }
+    }*/
 
     if(!((newXPos < 0) || (newXPos > state->boundary.x)
        || (newYPos < 0) || (newYPos > state->boundary.y)
@@ -2722,13 +2797,15 @@ bool Skeletonizer::editNode(int32_t targetRevision,
     node->createdInMag = inMag;
 
     //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
+    /*
     addNodeToSkeletonStruct(node);
     currentSegment = node->firstSegment;
     while(currentSegment) {
         addSegmentToSkeletonStruct(currentSegment);
         currentSegment = currentSegment->next;
-    }
+    }*/
 
+    updateCircRadius(node);
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
@@ -2794,21 +2871,21 @@ bool Skeletonizer::pushStack(stack *stack, void *element) {
 }
 
 stack* Skeletonizer::newStack(int32_t size) {
-    stack *newStack = NULL;
+    struct stack *newStack = NULL;
 
     if(size <= 0) {
         LOG("That doesn't really make any sense, right? Cannot create stack with size <= 0.");
         return NULL;
     }
 
-    newStack = (stack*) malloc(sizeof(struct stack));
+    newStack = (stack *)malloc(sizeof(struct stack));
     if(newStack == NULL) {
         LOG("Out of memory.");
         _Exit(false);
     }
     memset(newStack, '\0', sizeof(struct stack));
 
-    newStack->elements = (void**)malloc(sizeof(void *) * size);
+    newStack->elements = (void **)malloc(sizeof(void *) * size);
     if(newStack->elements == NULL) {
         LOG("Out of memory.");
         _Exit(false);
@@ -2820,6 +2897,7 @@ stack* Skeletonizer::newStack(int32_t size) {
     newStack->elementsOnStack = 0;
 
     return newStack;
+
 }
 
 bool Skeletonizer::delStack(stack *stack) {
@@ -3666,4 +3744,656 @@ void Skeletonizer::setViewportReferences(Viewport *vp, Viewport *vp2, Viewport *
 
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
 
+    struct segmentListElement *currentSegment = NULL;
+      node->circRadius = node->radius;
+
+      /* Any segment longer than the current circ radius?*/
+      currentSegment = node->firstSegment;
+      while(currentSegment) {
+          if(currentSegment->length > node->circRadius)
+              node->circRadius = currentSegment->length;
+          currentSegment = currentSegment->next;
+      }
+
+      return true;
+
 }
+
+int32_t Skeletonizer::xorInt(int32_t xorMe) {
+    return xorMe ^ (int32_t) 5642179165;
+}
+
+void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
+    int nr;
+
+        if(node->isBranchNode) { //branch nodes are always blue
+            SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
+            return;
+        }
+
+        if(node->comment != NULL) {
+            // default color for comment nodes
+            SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
+
+            if(state->skeletonState->userCommentColoringOn == false) {
+                // conditional node coloring is disabled
+                // comment nodes have default color, return
+                return;
+            }
+
+            if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
+                //no substring match => keep default color and return
+                return;
+            }
+            if(state->skeletonState->commentColors[nr].a > 0.f) {
+                //substring match, change color
+                *color = state->skeletonState->commentColors[nr];
+            }
+        }
+        return;
+}
+
+void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
+    int nr;
+
+        if(state->skeletonState->overrideNodeRadiusBool)
+            *radius = state->skeletonState->overrideNodeRadiusVal;
+        else
+            *radius = node->radius;
+
+        if(node->comment != NULL) {
+            if(state->skeletonState->commentNodeRadiusOn == false) {
+                // conditional node radius is disabled
+                // return
+                return;
+            }
+
+            if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
+                //no substring match => keep default radius and return
+                return;
+            }
+
+            if(state->skeletonState->commentNodeRadii[nr] > 0.f) {
+                //substring match, change radius
+                *radius = state->skeletonState->commentNodeRadii[nr];
+            }
+        }
+
+}
+
+bool Skeletonizer::delSkelState(struct skeletonState *skelState) {
+    if(skelState == NULL) {
+        return false;
+    }
+    delTreesFromState(skelState);
+    Hashtable::ht_rmtable(skelState->skeletonDCs);
+    free(skelState->searchStrBuffer);
+    free(skelState->prevSkeletonFile);
+    free(skelState->skeletonFile);
+    free(skelState);
+    skelState = NULL;
+
+    return true;
+}
+
+bool Skeletonizer::delTreesFromState(struct skeletonState *skelState) {
+    struct treeListElement *current;
+    struct treeListElement *treeToDel;
+
+    if(skelState->firstTree == NULL) {
+        return false;
+    }
+    current = skelState->firstTree;
+    while(current) {
+        treeToDel = current;
+        current = current->next;
+        delTreeFromState(treeToDel, skelState);
+    }
+    skelState->treeElements = 0;
+    skelState->firstTree = NULL;
+    skelState->activeTree = NULL;
+    skelState->activeNode = NULL;
+    skelState->greatestTreeID = 0;
+    skelState->greatestNodeID = 0;
+    delStack(skelState->branchStack);
+    skelState->branchStack = NULL;
+    delDynArray(skelState->nodeCounter);
+    skelState->nodeCounter = NULL;
+    delDynArray(skelState->nodesByNodeID);
+    skelState->nodesByNodeID = NULL;
+    free(skelState->commentBuffer);
+    skelState->commentBuffer = NULL;
+    free(skelState->currentComment);
+    skelState->currentComment = NULL;
+
+    return true;
+}
+
+bool Skeletonizer::delTreeFromState(treeListElement *treeToDel, skeletonState *skelState) {
+    nodeListElement *currentNode = NULL;
+    nodeListElement *nodeToDel = NULL;
+
+    if(treeToDel == NULL) {
+        return false;
+    }
+
+    currentNode = treeToDel->firstNode;
+    while(currentNode) {
+        nodeToDel = currentNode;
+        currentNode = nodeToDel->next;
+        delNodeFromState(nodeToDel, skelState);
+    }
+    treeToDel->firstNode = NULL;
+
+    if(treeToDel->previous) {
+        treeToDel->previous->next = treeToDel->next;
+    }
+    if(treeToDel->next) {
+        treeToDel->next->previous = treeToDel->previous;
+    }
+    free(treeToDel);
+    return true;
+}
+
+bool Skeletonizer::hasObfuscatedTime() {
+    int major = 0, minor = 0;
+    char point;
+
+    sscanf(state->skeletonState->skeletonCreatedInVersion, "%d%c%d", &major, &point, &minor);
+
+    if(major > 3) {
+        return true;
+    }
+    if(major == 3 && minor >= 4) {
+        return true;
+    }
+    return false;
+}
+
+bool Skeletonizer::delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState) {
+    struct segmentListElement *currentSegment;
+    struct segmentListElement *tempNext;
+
+    if(nodeToDel == NULL) {
+        return false;
+    }
+
+    if(nodeToDel->comment) {
+        delCommentFromState(nodeToDel->comment, skelState);
+    }
+
+    /*
+     * First, delete all segments pointing towards and away of the nodeToDelhas
+     * been */
+
+    currentSegment = nodeToDel->firstSegment;
+    while(currentSegment) {
+        tempNext = currentSegment->next;
+        if(currentSegment->flag == SEGMENT_FORWARD) {
+            delSegmentFromCmd(currentSegment);
+        }
+        else if(currentSegment->flag == SEGMENT_BACKWARD) {
+            delSegmentFromCmd(currentSegment->reverseSegment);
+        }
+        currentSegment = tempNext;
+    }
+    nodeToDel->firstSegment = NULL;
+
+    //TDitem: is this necessary for undo?
+    if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
+        nodeToDel->correspondingTree->firstNode = nodeToDel->next;
+    }
+    else {
+        if(nodeToDel->previous) {
+            nodeToDel->previous->next = nodeToDel->next;
+        }
+        if(nodeToDel->next) {
+            nodeToDel->next->previous = nodeToDel->previous;
+        }
+    }
+    free(nodeToDel);
+    return true;
+}
+
+bool Skeletonizer::delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState) {
+    int32_t nodeID = 0;
+
+    if(commentToDel == NULL) {
+        return false;
+    }
+    if(commentToDel->content) {
+        free(commentToDel->content);
+    }
+    if(commentToDel->node) {
+        nodeID = commentToDel->node->nodeID;
+        commentToDel->node->comment = NULL;
+    }
+
+    if(commentToDel->next == commentToDel) { //only comment in list
+        skelState->currentComment = NULL;
+    }
+    else {
+        commentToDel->next->previous = commentToDel->previous;
+        commentToDel->previous->next = commentToDel->next;
+        if(skelState->currentComment == commentToDel) {
+            skelState->currentComment = commentToDel->next;
+        }
+    }
+    free(commentToDel);
+    return true;
+}
+
+bool Skeletonizer::delSegmentFromCmd(struct segmentListElement *segToDel) {
+    if(!segToDel) {
+        return false;
+    }
+    /* numSegs counts forward AND backward segments!!! */
+    segToDel->source->numSegs--;
+    segToDel->target->numSegs--;
+
+    if(segToDel == segToDel->source->firstSegment)
+        segToDel->source->firstSegment = segToDel->next;
+    else {
+        //if(segToDel->previous) //Why??? Previous EXISTS if its not the first seg...
+            segToDel->previous->next = segToDel->next;
+        if(segToDel->next) {
+            segToDel->next->previous = segToDel->previous;
+        }
+    }
+
+    //Delete reverse segment in target node
+    if(segToDel->reverseSegment == segToDel->target->firstSegment) {
+        segToDel->target->firstSegment = segToDel->reverseSegment->next;
+    }
+    else {
+        //if(segToDel->reverseSegment->previous)
+            segToDel->reverseSegment->previous->next = segToDel->reverseSegment->next;
+        if(segToDel->reverseSegment->next)
+            segToDel->reverseSegment->next->previous = segToDel->reverseSegment->previous;
+    }
+    /* A bit cumbersome, but we cannot delete the segment and then find its source node.. */
+    segToDel->length = 0.f;
+    updateCircRadius(segToDel->source);
+
+    free(segToDel);
+    return true;
+}
+
+bool Skeletonizer::moveToPrevTree() {
+    /*
+    struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
+    struct nodeListElement *node;
+    if(state->skeletonState->activeTree == NULL) {
+        return false;
+    }
+    if(prevTree) {
+        setActiveTreeByID(prevTree->treeID);
+        //set tree's first node to active node if existent
+        node = state->skeletonState->activeTree->firstNode;
+        if(node == NULL) {
+            return true;
+        }
+        else {
+            setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+
+            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                           node->position.x,
+                           node->position.y,
+                           node->position.z);
+            Knossos::sendRemoteSignal();
+        }
+        return true;
+    }
+    LOG("Reached first tree.");
+    */
+    return false;
+}
+
+bool Skeletonizer::moveToNextTree() {
+    /*
+    struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
+    struct nodeListElement *node;
+
+    if(state->skeletonState->activeTree == NULL) {
+        return false;
+    }
+    if(nextTree) {
+        setActiveTreeByID(nextTree->treeID);
+        //set tree's first node to active node if existent
+        node = state->skeletonState->activeTree->firstNode;
+        if(node == NULL) {
+            return true;
+        }
+        else {
+            setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                           node->position.x,
+                           node->position.y,
+                           node->position.z);
+            sendRemoteSignal();
+        }
+        return true;
+    }
+    LOG("Reached last tree.");
+    */
+    return false;
+
+}
+
+bool Skeletonizer::moveToPrevNode() {
+    /*
+    struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
+
+    if(state->skeletonState->activeNode == NULL) {
+        return FALSE;
+    }
+    if(prevNode) {
+        setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
+        tempConfig->remoteState->type = REMOTE_RECENTERING;
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                       prevNode->position.x,
+                       prevNode->position.y,
+                       prevNode->position.z);
+        sendRemoteSignal();
+        return TRUE;
+    }
+    */
+    return false;
+}
+
+bool Skeletonizer::moveToNextNode() {
+    /*
+    struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode);
+
+    if(state->skeletonState->activeNode == NULL) {
+        return FALSE;
+    }
+    if(nextNode) {
+        setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
+        tempConfig->remoteState->type = REMOTE_RECENTERING;
+        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
+                       nextNode->position.x,
+                       nextNode->position.y,
+                       nextNode->position.z);
+        sendRemoteSignal();
+        return TRUE;
+    }
+    */
+    return false;
+
+}
+
+// index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
+// If -1, all substrings are compared against the comment.
+unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comment, int index) {
+    int i;
+
+    if(!comment) {
+        return -1;
+    }
+    if(index == -1) { //no index specified
+        for(i = 0; i < NUM_COMMSUBSTR; i++) {
+            if(strlen(state->viewerState->gui->commentSubstr[i]) > 0
+                && strstr(comment->content, state->viewerState->gui->commentSubstr[i]) != NULL) {
+                return i;
+            }
+        }
+    }
+    else if(index > -1 && index < NUM_COMMSUBSTR) {
+        if(strlen(state->viewerState->gui->commentSubstr[index]) > 0
+           && strstr(comment->content, state->viewerState->gui->commentSubstr[index]) != NULL) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+void Skeletonizer::refreshUndoRedoBuffers() {
+    struct treeListElement *testingTree;
+    struct treeListElement *copy = state->skeletonState->activeTree;
+    state->skeletonState->undoList->lastCmd->cmd = testingTree;
+    state->skeletonState->undoList->lastCmd->next;
+}
+
+void Skeletonizer::undo() {
+    struct cmdListElement *redoCmdEl = NULL;
+    struct cmdListElement *cmdEl = NULL;
+
+    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree, *redoSplitTree; cmdMergeTree *mergeTree;
+    cmdChangeTreeColor *chgTreeColor; cmdChangeActiveTree *chgActiveTree;
+    cmdDelNode *delNode; cmdAddNode *addNode; cmdLinkNode *linkNode; cmdUnlinkNode *unlinkNode;
+    cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
+    cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
+
+    cmdEl = popCmd(state->skeletonState->undoList);
+    if(cmdEl == NULL) {
+        return; //nothing to undo
+    }
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        //first add to redo-list cmd holding current skeletonState
+        redoSplitTree = (cmdSplitTree *)malloc(sizeof(cmdSplitTree));
+        //redoSplitTree->skelState = copySkelState(state->skeletonState);
+        redoCmdEl = (cmdListElement *)malloc(sizeof(struct cmdListElement));
+        redoCmdEl->cmdType = CMD_SPLITTREE;
+        redoCmdEl->cmd = redoSplitTree;
+        pushCmd(state->skeletonState->redoList, redoCmdEl);
+
+        //then undo
+        delSkelState(state->skeletonState);
+        splitTree = (cmdSplitTree*) cmdEl->cmd;
+        //state->skeletonState = copySkelState(splitTree->skelState);
+        delCmdListElement(cmdEl);
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
+}
+
+void Skeletonizer::redo() {
+    struct cmdListElement *cmdEl = state->skeletonState->redoList->lastCmd;
+
+    if(cmdEl == NULL) {
+        return; //nothing to redo
+    }
+
+    cmdDelTree *delTree; cmdAddTree *addTree; cmdSplitTree *splitTree; cmdMergeTree *mergeTree;
+    cmdChangeTreeColor *chgTreeColor; cmdChangeActiveTree *chgActiveTree;
+    cmdDelNode *delNode; cmdAddNode *addNode; cmdLinkNode *linkNode; cmdUnlinkNode *unlinkNode;
+    cmdPushBranchNode *pushBranch; cmdPopBranch *popBranch; cmdChangeActiveNode *chgActiveNode;
+    cmdDelComment *delComment; cmdAddComment *addComment; cmdChangeComment *chgComment;
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        splitTree = (cmdSplitTree*) cmdEl->cmd;
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
+    //remove cmd from redo-list and add to undo-list
+    state->skeletonState->redoList->lastCmd = cmdEl->prev;
+    if(cmdEl->prev) {
+        cmdEl->prev->next = NULL;
+    }
+    cmdEl->prev = state->skeletonState->undoList->lastCmd;
+    state->skeletonState->undoList->lastCmd->next = cmdEl;
+    state->skeletonState->undoList->lastCmd = cmdEl;
+}
+
+//get last command
+struct cmdListElement *Skeletonizer::popCmd(struct cmdList *cmdList) {
+    struct cmdListElement *returnCmd = cmdList->lastCmd;
+
+    if(returnCmd == NULL) {
+        return NULL;
+    }
+
+    cmdList->lastCmd = returnCmd->prev;
+    if(returnCmd->prev) {
+        returnCmd->prev->next = NULL;
+    }
+    else { //was first in list
+        cmdList->firstCmd = NULL;
+    }
+    cmdList->cmdCount--;
+
+    return returnCmd;
+}
+
+void Skeletonizer::pushCmd(struct cmdList *cmdList, struct cmdListElement *cmdListEl) {
+    struct cmdListElement *cmdToDel = NULL;
+
+    if(cmdList->firstCmd == NULL) { //list empty
+        cmdList->firstCmd = cmdListEl;
+        cmdList->lastCmd = cmdListEl;
+        cmdListEl->next = NULL;
+        cmdListEl->prev = NULL;
+        cmdList->cmdCount = 1;
+    }
+    else {
+        cmdList->lastCmd->next = cmdListEl;
+        cmdListEl->prev = cmdList->lastCmd;
+        cmdListEl->next = NULL;
+        cmdList->lastCmd = cmdListEl;
+        if(cmdList->cmdCount < CMD_MAXSTEPS) {  //list not full
+            cmdList->cmdCount++;
+        }
+        else { //list is full, remove oldest cmd (only happens for undo list)
+            cmdToDel = cmdList->firstCmd;
+            cmdList->firstCmd = cmdToDel->next;
+            cmdList->firstCmd->prev = NULL;
+            delCmdListElement(cmdToDel);
+        }
+    }
+}
+
+void Skeletonizer::flushCmdList(struct cmdList *cmdList) {
+    struct cmdListElement *elToDel = NULL;
+    struct cmdListElement *nextEl = NULL;
+
+    if(cmdList->firstCmd == NULL) {
+        return;
+    }
+
+    elToDel = cmdList->lastCmd;
+    while(elToDel) {
+        nextEl = elToDel->prev;
+        delCmdListElement(elToDel);
+        elToDel = nextEl;
+    }
+
+    cmdList->cmdCount = 0;
+    cmdList->firstCmd = NULL;
+    cmdList->lastCmd = NULL;
+}
+
+// also sets pointer to NULL for you
+void Skeletonizer::delCmdListElement(struct cmdListElement *cmdEl) {
+    cmdSplitTree *splitTreeCMD;
+
+    switch(cmdEl->cmdType) {
+    case CMD_DELTREE:
+        break;
+    case CMD_ADDTREE:
+        break;
+    case CMD_SPLITTREE:
+        splitTreeCMD = (cmdSplitTree*) cmdEl->cmd;
+        delSkelState(splitTreeCMD->skelState);
+        free(splitTreeCMD);
+        free(cmdEl);
+        cmdEl = NULL;
+        break;
+    case CMD_MERGETREE:
+        break;
+    case CMD_CHGTREECOL:
+        break;
+    case CMD_CHGACTIVETREE:
+        break;
+    case CMD_DELNODE:
+        break;
+    case CMD_ADDNODE:
+        break;
+    case CMD_LINKNODE:
+        break;
+    case CMD_UNLINKNODE:
+        break;
+    case CMD_PUSHBRANCH:
+        break;
+    case CMD_POPBRANCH:
+        break;
+    case CMD_CHGACTIVENODE:
+        break;
+    case CMD_ADDCOMMENT:
+        break;
+    case CMD_CHGCOMMENT:
+        break;
+    case CMD_DELCOMMENT:
+        break;
+    default:
+        LOG("no matching command");
+    }
+}
+
+
+

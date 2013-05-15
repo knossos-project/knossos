@@ -30,7 +30,6 @@
 #include "knossos-global.h"
 #include "viewport.h"
 
-
 class Skeletonizer : public QObject
 {
     Q_OBJECT
@@ -89,7 +88,27 @@ public:
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
     static void WRAP_popBranchNode();
-
+    static void setColorFromNode(struct nodeListElement *node, color4F *color);
+    static void setRadiusFromNode(struct nodeListElement *node, float *radius);
+    bool delSkelState(skeletonState *skelState);
+    bool delTreesFromState(skeletonState *skelState);
+    bool delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
+    static bool hasObfuscatedTime();
+    bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
+    bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
+    bool delSegmentFromCmd(struct segmentListElement *segToDel);
+    bool moveToNextTree();
+    bool moveToPrevTree();
+    bool moveToPrevNode();
+    bool moveToNextNode();
+    static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
+    void refreshUndoRedoBuffers();
+    void undo();
+    void redo();
+    cmdListElement *popCmd(struct cmdList *cmdList);
+    void pushCmd(struct cmdList *cmdList, struct cmdListElement *cmdListEl);
+    void flushCmdList(struct cmdList *cmdList);
+    void delCmdListElement(struct cmdListElement *cmdEl);
 protected:
     int32_t saveSkeleton();
     void setDefaultSkelFileName();
@@ -98,11 +117,13 @@ protected:
     bool loadSkeleton();
     void popBranchNodeCanceled();
     bool delNodeFromSkeletonStruct(nodeListElement *node);
-    bool updateCircRadius(struct nodeListElement *node);
+    static bool updateCircRadius(struct nodeListElement *node);
+    int32_t xorInt(int32_t xorMe);
+
 signals:
     void updatePositionSignal(int32_t serverMovement);
     void refreshViewportsSignal();
-   void drawGUISignal();
+    void drawGUISignal();
 public slots:
     bool delTree(int32_t targetRevision, int32_t treeID);
     bool delActiveTree();

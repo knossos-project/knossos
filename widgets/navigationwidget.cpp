@@ -33,7 +33,6 @@
 #include <QSpacerItem>
 #include "knossos-global.h"
 
-
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 

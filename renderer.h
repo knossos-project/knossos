@@ -39,18 +39,19 @@ public:
     static bool updateRotationStateMatrix(float M1[16], float M2[16]);
     static uint32_t renderViewportBorders(uint32_t currentVP);
 
-    uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
-    uint32_t renderText(Coordinate *pos, char *string);
-    uint32_t renderSphere(Coordinate *pos, float radius);
-    uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius);
-    GLuint renderWholeSkeleton(Byte callFlag);
-    GLuint renderSuperCubeSkeleton(Byte callFlag);
-    GLuint renderActiveTreeSkeleton(Byte callFlag);
-    bool updateDisplayListsSkeleton();
-    bool drawViewportProperties(uint32_t currentVP);
-    bool doubleMeshCapacity(mesh *toDouble);
+    static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
+    static uint32_t renderText(Coordinate *pos, char *string);
+    static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint32_t viewportType);
+    static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint32_t viewportType);
+    // void renderWholeSkeleton(uint32_t viewportType);
+    static void renderSkeleton(uint32_t viewportType);
+    // void renderSuperCubeSkeleton(uint32_t viewportType);
+    // void renderActiveTreeSkeleton(uint32_t viewportType);
+    //bool updateDisplayListsSkeleton();
+    static bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint32_t initialSize);
-
+    static bool sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType);
+    static bool updateFrustumClippingPlanes(uint32_t viewportType);
 signals:
     
 public slots:
