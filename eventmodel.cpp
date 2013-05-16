@@ -113,12 +113,16 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
                                                      (state->viewerState->screenSizeY - event->y()),
-                                                     1);
+                                                     10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
-                Skeletonizer::addSegment(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode);
+                if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
+                    emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
+                } else if(Skeletonizer::findSegmentByNodeIDs(clickedNode, state->skeletonState->activeNode->nodeID)) {
+                    emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+                } else{
+                    emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                }
             }
         }
     }
@@ -154,27 +158,18 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
                                    NULL);
-                    }
-                    if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
+                    } else if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
                                    NULL);
+                    } else {
+                        emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
                     }
                 }
             }
-        }
-        else if(keyMod.testFlag(Qt::ControlModifier)) {
-            qDebug("control and mouse middle");
-            // Pressed CTRL only.
-            if(state->skeletonState->activeNode) {
-                Skeletonizer::addSegment(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode);
-            }
-        }
-        else {
+        } else {
             // No modifier pressed
             state->viewerState->vpConfigs[VPfound].draggedNode =
                 Skeletonizer::findNodeByNodeID(clickedNode);
@@ -187,215 +182,141 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
 
 bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
 
-    // Delete Connection between Active Node and Clicked Node
-
-    qDebug() << state->viewerState->screenSizeX << " " << state->viewerState->screenSizeY;
-
-    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        qDebug("control and mouse right");
-        int32_t clickedNode;
-        clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound, event->x()
-                                                     ,
-                                                         (state->viewerState->screenSizeY - event->y()),
-                                                     1);
-        if(clickedNode) {
-            if(state->skeletonState->activeNode) {
-                if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
-                                    clickedNode)) {
-                emit delSegmentSignal(CHANGE_MANUAL,
-                           state->skeletonState->activeNode->nodeID,
-                           clickedNode,
-                           NULL);
-                }
-                if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
-                                        state->skeletonState->activeNode->nodeID)) {
-                    emit delSegmentSignal(CHANGE_MANUAL,
-                               clickedNode,
-                               state->skeletonState->activeNode->nodeID,
-                               NULL);
-                }
-            }
-        }
-        return false;
-    }
     int32_t newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
-    // We have to activate motion tracking only for the skeleton VP for a right click
-    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)
+    /* We have to activate motion tracking only for the skeleton VP for a right click */
+    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
         state->viewerState->vpConfigs[VPfound].motionTracking = true;
+    }
+    /* If not, we look up which skeletonizer work mode is
+    active and do the appropriate operation */
+    clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
 
-    // If not, we look up which skeletonizer work mode is
-    // active and do the appropriate operation
-        clickedCoordinate =
-            getCoordinateFromOrthogonalClick(event, VPfound);
+    /* could not find any coordinate... */
+    if(clickedCoordinate == NULL) {
+        return true;
+    }
 
-        // could not find any coordinate...
-        if(clickedCoordinate == NULL)
-            return true;
-
-        switch(state->skeletonState->workMode) {
-            case SKELETONIZER_ON_CLICK_DROP_NODE:
-                // function is inside skeletonizer.c
-                emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-
-                break;
-            case SKELETONIZER_ON_CLICK_ADD_NODE:
-                // function is inside skeletonizer.c
-                emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-
-                tempConfig->skeletonState->workMode =
-                    SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-                break;
-            case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
-                // function is inside skeletonizer.c
-                if(state->skeletonState->activeNode) {
-                    if(event->modifiers() == Qt::ControlModifier) {
-                        qDebug("again control and mouse right");
-                        // Add a "stump", a branch node to which we don't automatically move.
-                        if((newNodeID = Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                                            state->viewerState->vpConfigs[VPfound].type,
-                                                                            false))) {
-                            Skeletonizer::pushBranchNode(CHANGE_MANUAL,
-                                           true,
-                                           true,
-                                           NULL,
-                                           newNodeID);
-                        }
-                    }
-                    else {
-                        lastPos.x = state->skeletonState->activeNode->position.x;
-                        lastPos.y = state->skeletonState->activeNode->position.y;
-                        lastPos.z = state->skeletonState->activeNode->position.z;
-
-                        if(Skeletonizer::UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
-                                                               state->viewerState->vpConfigs[VPfound].type,
-                                                               true)) {
-
-
-                            // Highlight the viewport with the biggest movement component and set
-                            //  behavior of f / d keys accordingly.
-                            movement.x = clickedCoordinate->x - lastPos.x;
-                            movement.y = clickedCoordinate->y - lastPos.y;
-                            movement.z = clickedCoordinate->z - lastPos.z;
-
-
-                            if (state->viewerState->autoTracingDelay < 10) state->viewerState->autoTracingDelay = 10;
-                            if (state->viewerState->autoTracingDelay > 500) state->viewerState->autoTracingDelay = 500;
-                                if (state->viewerState->autoTracingSteps < 1) state->viewerState->autoTracingSteps = 1;
-                            if (state->viewerState->autoTracingSteps > 50) state->viewerState->autoTracingSteps = 50;
-
-                            //AutoTracingModes 2 and 3
-                            if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING) || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR))
-                            {
-                                floatCoordinate walkingVector;
-
-                                walkingVector.x = movement.x;
-                                walkingVector.y = movement.y;
-                                walkingVector.z = movement.z;
-
-                                if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING){
-                                    clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                    clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                    clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
-                                }
-                                if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR){
-                                clickedCoordinate->x += walkingVector.x;
-                                clickedCoordinate->y += walkingVector.y;
-                                clickedCoordinate->z += walkingVector.z;
-                                }
-                            }
-
-                            // Determine which viewport to highlight based on which movement component is biggest.
-                            if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_YZ;
-                            }
-                            if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
-                                state->viewerState->highlightVp = VIEWPORT_XZ;
-                            }
-                            if((abs(movement.z) >= abs(movement.x)) && (abs(movement.z) >= abs(movement.y))) {
-                                state->viewerState->highlightVp = VIEWPORT_XY;
-                            }
-
-                            // Determine the directions for the f and d keys based on the signs of the movement
-                            //   components along the three dimensions.
-                            if(movement.x >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_YZ] = -1;
-                            }
-                            if(movement.y >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XZ] = -1;
-                            }
-                            if(movement.z >= 0) {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
-                            }
-                            else {
-                                state->viewerState->vpKeyDirection[VIEWPORT_XY] = -1;
-                            }
-
-                            //AutoTracingMode 1
-                            if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT){
-                                if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_XY){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1){
-                                        clickedCoordinate->z += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XY] == -1){
-                                        clickedCoordinate->z -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_XZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1){
-                                        clickedCoordinate->y += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == -1){
-                                        clickedCoordinate->y -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                                else if (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_YZ){
-                                    if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1){
-                                        clickedCoordinate->x += state->viewerState->autoTracingSteps;
-                                    }
-                                    else if (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == -1){
-                                        clickedCoordinate->x -= state->viewerState->autoTracingSteps;
-                                    }
-                                }
-                            }
-
-                            if (clickedCoordinate->x < 0) clickedCoordinate->x = 0;
-                            if (clickedCoordinate->y < 0) clickedCoordinate->y = 0;
-                            if (clickedCoordinate->z < 0) clickedCoordinate->z = 0;
-
-                            // Do not allow clicks outside the dataset/
-                            if (clickedCoordinate->x
-                                > state->boundary.x)
-                                clickedCoordinate->x = state->boundary.x;
-                            if (clickedCoordinate->y
-                                > state->boundary.y)
-                                clickedCoordinate->y = state->boundary.y;
-                            if (clickedCoordinate->z
-                                > state->boundary.z)
-                                clickedCoordinate->z = state->boundary.z;
-
-                            // Move to the new node position
-                            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                            emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
-                            emit updateViewerStateSignal();
-
-                            Knossos::sendRemoteSignal();
-                        }
-                    }
-                }
-                else {
-                    emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-
-                }
-
+    switch(state->skeletonState->workMode) {
+    case SKELETONIZER_ON_CLICK_DROP_NODE:
+        emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        break;
+    case SKELETONIZER_ON_CLICK_ADD_NODE:
+        emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+        break;
+    case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
+        if(state->skeletonState->activeNode == NULL) {
+            //1. no node to link with
+            emit addSkeletonNodeSignal(clickedCoordinate,
+                               state->viewerState->vpConfigs[VPfound].type);
+            break;
         }
+
+
+        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+
+        if(keyMod.testFlag(Qt::ControlModifier)) {
+            //2. Add a "stump", a branch node to which we don't automatically move.
+            if((newNodeID = Skeletonizer::addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+                                                                state->viewerState->vpConfigs[VPfound].type,
+                                                                false))) {
+                Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, NULL, newNodeID);
+            }
+            break;
+        }
+        //3. Add a node and apply tracing modes
+        lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
+
+        if(Skeletonizer::addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+                                               state->viewerState->vpConfigs[VPfound].type,
+                                               true) == false) { //could not add node
+            break;
+        }
+
+        /* Highlight the viewport with the biggest movement component and set
+           behavior of f / d keys accordingly. */
+        movement.x = clickedCoordinate->x - lastPos.x;
+        movement.y = clickedCoordinate->y - lastPos.y;
+        movement.z = clickedCoordinate->z - lastPos.z;
+        /* Determine which viewport to highlight based on which movement component is biggest. */
+        if((abs(movement.x) >= abs(movement.y)) && (abs(movement.x) >= abs(movement.z))) {
+            state->viewerState->highlightVp = VIEWPORT_YZ;
+        }
+        else if((abs(movement.y) >= abs(movement.x)) && (abs(movement.y) >= abs(movement.z))) {
+            state->viewerState->highlightVp = VIEWPORT_XZ;
+        }
+        else {
+            state->viewerState->highlightVp = VIEWPORT_XY;
+        }
+        /* Determine the directions for the f and d keys based on the signs of the movement
+           components along the three dimensions. */
+        state->viewerState->vpKeyDirection[VIEWPORT_YZ] = (movement.x >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0)? 1 : -1;
+
+        //Auto tracing adjustments
+
+        if (state->viewerState->autoTracingDelay < 10) { state->viewerState->autoTracingDelay = 10; }
+        else if (state->viewerState->autoTracingDelay > 500) { state->viewerState->autoTracingDelay = 500; }
+        if (state->viewerState->autoTracingSteps < 1) { state->viewerState->autoTracingSteps = 1; }
+        else if (state->viewerState->autoTracingSteps > 50) { state->viewerState->autoTracingSteps = 50; }
+
+
+        //Additional move of specified steps along clicked viewport
+        if (state->viewerState->autoTracingMode == AUTOTRACING_VIEWPORT) {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                clickedCoordinate->z += (state->viewerState->vpKeyDirection[VIEWPORT_XY] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            case VIEWPORT_XZ:
+                clickedCoordinate->y += (state->viewerState->vpKeyDirection[VIEWPORT_XZ] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            case VIEWPORT_YZ:
+                clickedCoordinate->x += (state->viewerState->vpKeyDirection[VIEWPORT_YZ] == 1)?
+                                     state->viewerState->autoTracingSteps : -state->viewerState->autoTracingSteps;
+                break;
+            }
+        }
+
+        if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING)
+            || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR)) {
+            floatCoordinate walkingVector;
+            walkingVector.x = movement.x;
+            walkingVector.y = movement.y;
+            walkingVector.z = movement.z;
+            //Additional move of specified steps along tracing direction
+            if (state->viewerState->autoTracingMode == AUTOTRACING_TRACING) {
+                clickedCoordinate->x += roundFloat(walkingVector.x * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate->y += roundFloat(walkingVector.y * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+                clickedCoordinate->z += roundFloat(walkingVector.z * state->viewerState->autoTracingSteps / euclidicNorm(&walkingVector));
+            }
+            //Additional move of steps equal to distance between last and new node along tracing direction.
+            if (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR) {
+                clickedCoordinate->x += walkingVector.x;
+                clickedCoordinate->y += walkingVector.y;
+                clickedCoordinate->z += walkingVector.z;
+            }
+        }
+
+        /* Do not allow clicks outside the dataset */
+        if (clickedCoordinate->x < 0) { clickedCoordinate->x = 0; }
+        else if (clickedCoordinate->x > state->boundary.x) { clickedCoordinate->x = state->boundary.x; }
+        if (clickedCoordinate->y < 0) { clickedCoordinate->y = 0; }
+        else if (clickedCoordinate->y > state->boundary.y) { clickedCoordinate->y = state->boundary.y; }
+        if (clickedCoordinate->z < 0) { clickedCoordinate->z = 0; }
+        else if (clickedCoordinate->z > state->boundary.z) { clickedCoordinate->z = state->boundary.z; }
+
+        /* Move to the new node position */
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+        emit updateViewerStateSignal();
+        Knossos::sendRemoteSignal();
+        break;
+    }
 
     return true;
 }
@@ -406,7 +327,14 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
 
     uint32_t i;
 
+
+
     for(i = 0; i < state->viewerState->numberViewports; i++) {
+        /*
+        if(state->viewerState->moveVP != -1
+                   || state->viewerState->resizeVP != -1) {
+               moveOrResizeVP(event);
+           } */ /*@todo */
 
         // motion tracking mode is active for viewport i
         if(state->viewerState->vpConfigs[i].motionTracking == true) {
@@ -482,137 +410,134 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
 }
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
-    /* TODO skeletonState rotateZ rotateX ???
-    if(state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) {
-        if(fabs(xrel(event->x()))  >= fabs(yrel(event->y())))
-            state->skeletonState->rotateZ += xrel(event->x());
-        else state->skeletonState->rotateX += yrel(event->y());
-            state->skeletonState->viewChanged = true;
-        Remote::checkIdleTime();
+    int32_t i = 0;
+        Coordinate newDraggedNodePos;
 
-    }
-    */
+        for(i = 0; i < state->viewerState->numberViewports; i++) {
+            switch(state->viewerState->vpConfigs[i].type) {
+                case VIEWPORT_XY:
+                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                        ((float)xrel(event->x())
+                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                        ((float)yrel(event->y())
+                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+
+                        SET_COORDINATE(newDraggedNodePos,
+                            state->viewerState->vpConfigs[i].userMouseSlideX,
+                            state->viewerState->vpConfigs[i].userMouseSlideY, 0);
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                        newDraggedNodePos.x =
+                            state->viewerState->vpConfigs[i].draggedNode->position.x
+                            - newDraggedNodePos.x;
+                        newDraggedNodePos.y =
+                            state->viewerState->vpConfigs[i].draggedNode->position.y
+                            - newDraggedNodePos.y;
+                        newDraggedNodePos.z =
+                            state->viewerState->vpConfigs[i].draggedNode->position.z
+                                - newDraggedNodePos.z;
+
+                        emit editNodeSignal(CHANGE_MANUAL,
+                                 0,
+                                 state->viewerState->vpConfigs[i].draggedNode,
+                                 0.,
+                                 newDraggedNodePos.x,
+                                 newDraggedNodePos.y,
+                                 newDraggedNodePos.z,
+                                 state->magnification);
+                    }
+                    break;
+                case VIEWPORT_XZ:
+                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                            ((float)xrel(event->x())
+                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                            ((float)yrel(event->y())
+                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+
+                        SET_COORDINATE(newDraggedNodePos,
+                            state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                            state->viewerState->vpConfigs[i].userMouseSlideY);
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                        newDraggedNodePos.x =
+                            state->viewerState->vpConfigs[i].draggedNode->position.x
+                            - newDraggedNodePos.x;
+                        newDraggedNodePos.y =
+                            state->viewerState->vpConfigs[i].draggedNode->position.y
+                            - newDraggedNodePos.y;
+                        newDraggedNodePos.z =
+                            state->viewerState->vpConfigs[i].draggedNode->position.z
+                            - newDraggedNodePos.z;
+                        emit editNodeSignal(CHANGE_MANUAL,
+                                 0,
+                                 state->viewerState->vpConfigs[i].draggedNode,
+                                 0.,
+                                 newDraggedNodePos.x,
+                                 newDraggedNodePos.y,
+                                 newDraggedNodePos.z,
+                                 state->magnification);
+                    }
+                    break;
+                case VIEWPORT_YZ:
+                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                            ((float)xrel(event->x())
+                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                            ((float)yrel(event->y())
+                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+                        SET_COORDINATE(newDraggedNodePos,
+                            0, state->viewerState->vpConfigs[i].userMouseSlideY,
+                            state->viewerState->vpConfigs[i].userMouseSlideX);
+
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                        newDraggedNodePos.x =
+                            state->viewerState->vpConfigs[i].draggedNode->position.x
+                            - newDraggedNodePos.x;
+                        newDraggedNodePos.y =
+                            state->viewerState->vpConfigs[i].draggedNode->position.y
+                            - newDraggedNodePos.y;
+                        newDraggedNodePos.z =
+                            state->viewerState->vpConfigs[i].draggedNode->position.z
+                            - newDraggedNodePos.z;
+                        emit editNodeSignal(CHANGE_MANUAL,
+                                 0,
+                                 state->viewerState->vpConfigs[i].draggedNode,
+                                 0.,
+                                 newDraggedNodePos.x,
+                                 newDraggedNodePos.y,
+                                 newDraggedNodePos.z,
+                                 state->magnification);
+                    }
+                    break;
+            }
+        }
+
     return true;
 }
 
 bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
 
-    uint32_t i = 0;
-    Coordinate newDraggedNodePos;
+    if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
+           state->skeletonState->rotdx += xrel(event->x());
+           state->skeletonState->rotdy += yrel(event->y());
+           state->skeletonState->viewChanged = true;
+           /* @todo checkIdleTime(); */
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        switch(state->viewerState->vpConfigs[i].type) {
-            case VIEWPORT_XY:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                        ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
 
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                        ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                    SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->vpConfigs[i].userMouseSlideX,
-                        state->viewerState->vpConfigs[i].userMouseSlideY, 0);
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                            - newDraggedNodePos.z;
-
-                    emit editNodeSignal(CHANGE_MANUAL,
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
-            case VIEWPORT_XZ:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                        ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                        ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                    SET_COORDINATE(newDraggedNodePos,
-                        state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                        state->viewerState->vpConfigs[i].userMouseSlideY);
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                        - newDraggedNodePos.z;
-                    emit editNodeSignal(CHANGE_MANUAL,
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
-            case VIEWPORT_YZ:
-                if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                state->viewerState->vpConfigs[i].userMouseSlideX -=
-                        ((float)xrel(event->x())
-                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                state->viewerState->vpConfigs[i].userMouseSlideY -=
-                        ((float)yrel(event->y())
-                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-                    SET_COORDINATE(newDraggedNodePos,
-                        0, state->viewerState->vpConfigs[i].userMouseSlideY,
-                        state->viewerState->vpConfigs[i].userMouseSlideX);
-
-                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                    newDraggedNodePos.x =
-                        state->viewerState->vpConfigs[i].draggedNode->position.x
-                        - newDraggedNodePos.x;
-                    newDraggedNodePos.y =
-                        state->viewerState->vpConfigs[i].draggedNode->position.y
-                        - newDraggedNodePos.y;
-                    newDraggedNodePos.z =
-                        state->viewerState->vpConfigs[i].draggedNode->position.z
-                        - newDraggedNodePos.z;
-                    emit editNodeSignal(CHANGE_MANUAL,
-                             0,
-                             state->viewerState->vpConfigs[i].draggedNode,
-                             0.,
-                             newDraggedNodePos.x,
-                             newDraggedNodePos.y,
-                             newDraggedNodePos.z,
-                             state->magnification);
-                }
-                break;
-        }
-    }
-
-    emit userMoveSignal(newDraggedNodePos.x, newDraggedNodePos.y, newDraggedNodePos.z, TELL_COORDINATE_CHANGE);
+       }
 
 
     return true;
@@ -643,19 +568,19 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
-        // !! AG
-        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
-        //    state->skeletonState->defaultNodeRadius = radius;
 
-        //drawGUI();
-    }
-    else {
+        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+            state->skeletonState->defaultNodeRadius = radius;
+
+
+    } else {
         // Skeleton VP
         if(VPfound == VIEWPORT_SKELETON) {
 
             if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
                 state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
                 state->skeletonState->viewChanged = true;
+                state->skeletonState->skeletonChanged = true;
             }
         }
         // Orthogonal VP or outside VP
@@ -667,9 +592,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
                 emit zoomOrthoSignal(-0.1);
 
 
-            }
-            // Move otherwise
-            else {
+            } else { // move otherwiese
                 switch(VPfound) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, state->viewerState->dropFrames
@@ -718,13 +641,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
-        //
-        //  !! AG
-        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
-       //     state->skeletonState->defaultNodeRadius = radius;
-
-
-        //drawGUI();
+        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+           state->skeletonState->defaultNodeRadius = radius;
     } else {
         // Skeleton VP
         if(VPfound == VIEWPORT_SKELETON) {
@@ -733,6 +651,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
                 state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
                 if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
                 state->skeletonState->viewChanged = true;
+                state->skeletonState->skeletonChanged = true;
             }
         }
         // Orthogonal VP or outside VP
@@ -912,7 +831,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
                 emit setRecenteringPositionSignal(tempConfig->viewerState->currentPosition.x,
                                                   tempConfig->viewerState->currentPosition.y,
-                                                  tempConfig->viewerState->currentPosition.z += 10  * state->magnification);
+                                                  tempConfig->viewerState->currentPosition.z += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                 Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
@@ -920,7 +839,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
 
                 emit setRecenteringPositionSignal(
                                tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y += 10 * state->magnification,
+                        tempConfig->viewerState->currentPosition.y += state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
                                tempConfig->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
@@ -928,7 +847,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x += 10 * state->magnification,
+                        tempConfig->viewerState->currentPosition.x += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
@@ -944,7 +863,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
                 emit setRecenteringPositionSignal(
                                tempConfig->viewerState->currentPosition.x,
                                tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z -= 10 * state->magnification);
+                               tempConfig->viewerState->currentPosition.z -= state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                                Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
@@ -952,7 +871,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
 
                 emit setRecenteringPositionSignal(
                                tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y -= 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.y -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
                                tempConfig->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
@@ -960,7 +879,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
                  emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x -= 10 * state->magnification,
+                               tempConfig->viewerState->currentPosition.x -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
                                tempConfig->viewerState->currentPosition.y,
                                tempConfig->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
@@ -1057,82 +976,43 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
         qDebug() << "B pressed";
         Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     } else if(event->key() == Qt::Key_X) {
+
         if(shift) {
-            qDebug() << "X und shift";
-            prevNode = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode);
-            if(prevNode) {
-                emit setActiveNodeSignal(CHANGE_MANUAL, prevNode, prevNode->nodeID);
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-
-                emit setRecenteringPositionSignal(
-                               prevNode->position.x,
-                               prevNode->position.y,
-                               prevNode->position.z);
-                Knossos::sendRemoteSignal();
-            }
-            else {
-                qDebug() << "x pressed";
-                LOG("Reached first node.");
-            }
-        }
-    } else if(event->key() == Qt::Key_Z) {
-
-        if(state->skeletonState->activeTree == NULL) {
+            Skeletonizer::moveToPrevNode();
             return true;
         }
 
-        //get tree with previous ID
+        Skeletonizer::moveToNextNode();
+        return true;
+
+
+    } else if(event->key() == Qt::Key_Z) {
+
         if(shift) {
-            qDebug() << "Z und shift";
-            prevTree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
-            if(prevTree) {
-                if(Skeletonizer::setActiveTreeByID(prevTree->treeID)) {
-                    emit setActiveNodeSignal(CHANGE_MANUAL, prevTree->firstNode, prevTree->firstNode->nodeID);
-                    emit setRecenteringPositionSignal(prevTree->firstNode->position.x, prevTree->firstNode->position.y, prevTree->firstNode->position.z);
-
-                    Knossos::sendRemoteSignal();
-                }
-            } else {
-                qDebug() << "Z pressed";
-                LOG("Reached first tree.");
-            }
-
-        } else {
-            qDebug() << "Z pressed";
-            //get tree with next ID
-            nextTree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
-            if(nextTree) {
-                if(Skeletonizer::setActiveTreeByID(nextTree->treeID)) {
-                    emit setActiveNodeSignal(CHANGE_MANUAL, nextTree->firstNode, nextTree->firstNode->nodeID);
-                    emit setRecenteringPositionSignal(nextTree->firstNode->position.x, nextTree->firstNode->position.y, nextTree->firstNode->position.z);
-
-                    Knossos::sendRemoteSignal();
-                }
-            }
-            else {
-                LOG("Reached last tree.");
-            }
+            Skeletonizer::moveToPrevTree();
+            return true;
         }
+
+        Skeletonizer::moveToNextTree();
+        return true;
 
     } else if(event->key() == Qt::Key_I) {
         qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(-0.1);
-            emit updateWidgetSignal();
+
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-            state->skeletonState->viewChanged = false;
-
+            state->skeletonState->viewChanged = true;
         }
+
     } else if(event->key() == Qt::Key_O) {
         qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(0.1);
-            emit updateWidgetSignal();
 
-        }
-        else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+        } else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
             if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
             state->skeletonState->viewChanged = true;
@@ -1145,19 +1025,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
             //saveSkelCallback(NULL); /* @todo */
             return true;
         }
-        qDebug() << "S pressed";
-        if(state->skeletonState->activeNode) {
-            tempConfig->viewerState->currentPosition.x =
-                state->skeletonState->activeNode->position.x;
-            tempConfig->viewerState->currentPosition.y =
-                state->skeletonState->activeNode->position.y;
-            tempConfig->viewerState->currentPosition.z =
-                state->skeletonState->activeNode->position.z;
 
-            emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+        emit jumpToActiveNodeSignal();
 
 
-        }
     } else if(event->key() == Qt::Key_A) {
         qDebug() << "A pressed";
         emit workModeAddSignal();
@@ -1170,7 +1041,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
-       if(shift) {
+       if(control) {
            qDebug() << "V und shift";
            emit pasteCoordinateSignal();
        }
@@ -1193,9 +1064,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
         qDebug() << "F1 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
-        }
-        else{
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+        } else{
+            if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+            }
         }
     } else if(event->key() == Qt::Key_F2) {
         qDebug() << "F2 pressed";
@@ -1203,7 +1075,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
         else{
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+            if (strncmp(state->viewerState->gui->comment2, "", 1) != 0)
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F3) {
         qDebug() << "F3 pressed";
@@ -1211,7 +1084,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
         else{
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+           if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
         }
     } else if(event->key() == Qt::Key_F4) {
         if(alt) {
@@ -1228,6 +1102,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
                 emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
             else{
+               if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
                 emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
             }
         }
@@ -1237,6 +1112,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
         else{
+            if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
         }
     }

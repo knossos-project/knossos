@@ -43,7 +43,7 @@ Remote::Remote(QObject *parent) :
 
 
 void Remote::run() {
-
+    floatCoordinate currToNext; //distance vector
     // remoteSignal is != false as long as the remote is active.
     // Checking for remoteSignal is therefore a way of seeing if the remote
     // is available for doing something.
@@ -76,7 +76,16 @@ void Remote::run() {
                 break;
 
             case REMOTE_RECENTERING:
-
+            SET_COORDINATE (currToNext,
+                state->viewerState->currentPosition.x - this->recenteringPosition.x,
+                state->viewerState->currentPosition.y - this->recenteringPosition.y,
+                state->viewerState->currentPosition.z - this->recenteringPosition.z);
+                if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
+                    remoteJump(this->recenteringPosition.x,
+                                          this->recenteringPosition.y,
+                                          this->recenteringPosition.z);
+                               break;
+                }
                 remoteWalkTo(this->recenteringPosition.x, this->recenteringPosition.y, this->recenteringPosition.z);
                 break;
 
@@ -243,19 +252,20 @@ bool Remote::remoteWalkTo(int32_t x, int32_t y, int32_t z) {
 bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     /*
     * This function breaks the big walk distance into many small movements
-    * where the maximum length of the movement along any single axis is 1.
-    * As we cannot move by fractions of 1, this function keeps tracks of
-    * residuals that add up to make a movement of 1 along an axis every
-    * once in a while.
+    * where the maximum length of the movement along any single axis is
+    * equal to the magnification, i.e. in mag4 it is 4.
+    * As we cannot move by fractions, this function keeps track of
+    * residuals that add up to make a movement of an integer along an
+    * axis every once in a while.
     * An alternative would be to store the currentPosition as a float or
     * double but that has its own problems. We might do it in the future,
     * though.
     * Possible improvement to this function: Make the length of a complete
-    * singleMove 1, not the length of the movement on one axis.
+    * singleMove to match mag, not the length of the movement on one axis.
     *
     */
 
-   /*
+    /*
     * BUG: For some reason, events to the viewer seem to become lost under
     * some circumstances, resulting in incorrect paths when calling
     * remoteWalk(). The remoteWalkTo() wrapper takes care of that, but the
@@ -263,6 +273,7 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     * how, yet.
     *
     */
+
     //SDL_Event moveEvent;
 
     floatCoordinate singleMove;
@@ -273,6 +284,8 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     int32_t eventDelay = 0;
     floatCoordinate walkVector;
     float walkLength = 0.;
+    uint32_t timePerStep = 0;
+    uint32_t recenteringTime = 0;
 
     walkVector.x = (float) x;
     walkVector.y = (float) y;
@@ -293,7 +306,6 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
         Viewer::updateViewerState();
     }
 
-    uint32_t recenteringTime = 0;
     if (state->viewerState->walkOrth == false){
         recenteringTime = state->viewerState->recenteringTime;
     }
@@ -304,17 +316,14 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     if ((state->viewerState->autoTracingMode != 0) && (state->viewerState->walkOrth == false)){
         recenteringTime = state->viewerState->autoTracingSteps * state->viewerState->autoTracingDelay;
     }
-    uint32_t timePerStep;
 
     walkLength = euclidicNorm(&walkVector);
 
-    if(walkLength < 1.) walkLength = 10.;
+    if(walkLength < 10.) walkLength = 10.;
 
     timePerStep = recenteringTime / ((uint32_t)walkLength);
 
     if(timePerStep < 10) timePerStep = 10;
-
-    SET_COORDINATE(residuals, 0., 0., 0.);
 
     //emit user
     //moveEvent.type = SDL_USEREVENT;
@@ -329,56 +338,51 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
         eventDelay = timePerStep;
 
     if(abs(x) >= abs(y) && abs(x) >= abs(z)) {
-        totalMoves = abs(x);
-        singleMove.x = (float)x / (float)totalMoves;
-        singleMove.y = (float)y / (float)totalMoves;
-        singleMove.z = (float)z / (float)totalMoves;
+        totalMoves = abs(x) / state->magnification;
     }
     if(abs(y) >= abs(x) && abs(y) >= abs(z)) {
-        totalMoves = abs(y);
-        singleMove.x = (float)x / (float)totalMoves;
-        singleMove.y = (float)y / (float)totalMoves;
-        singleMove.z = (float)z / (float)totalMoves;
+        totalMoves = abs(y) / state->magnification;
+
     }
     if(abs(z) >= abs(x) && abs(z) >= abs(y)) {
-        totalMoves = abs(z);
-        singleMove.x = (float)x / (float)totalMoves;
-        singleMove.y = (float)y / (float)totalMoves;
-        singleMove.z = (float)z / (float)totalMoves;
+        totalMoves = abs(z) / state->magnification;
     }
 
+    singleMove.x = (float)x / (float)totalMoves;
+    singleMove.y = (float)y / (float)totalMoves;
+    singleMove.z = (float)z / (float)totalMoves;
+
+    SET_COORDINATE(residuals, 0, 0, 0);
     for(i = 0; i < totalMoves; i++) {
-        doMove.x = 0.;
-        doMove.y = 0.;
-        doMove.z = 0.;
+        SET_COORDINATE(doMove, 0, 0, 0);
 
         residuals.x += singleMove.x;
         residuals.y += singleMove.y;
         residuals.z += singleMove.z;
 
-        if(residuals.x >= 1.) {
-            doMove.x = 1;
-            residuals.x--;
+        if(residuals.x >= state->magnification) {
+            doMove.x = state->magnification;
+            residuals.x -= state->magnification;
         }
-        if(residuals.x <= -1.) {
-            doMove.x = -1;
-            residuals.x++;
+        else if(residuals.x <= -state->magnification) {
+            doMove.x = -state->magnification;
+            residuals.x += state->magnification;
         }
-        if(residuals.y >= 1.) {
-            doMove.y = 1;
-            residuals.y--;
+        if(residuals.y >= state->magnification) {
+            doMove.y = state->magnification;
+            residuals.y -= state->magnification;
         }
-        if(residuals.y <= -1.) {
-            doMove.y = -1;
-            residuals.y++;
+        else if(residuals.y <= -state->magnification) {
+            doMove.y = -state->magnification;
+            residuals.y += state->magnification;
         }
-        if(residuals.z >= 1.) {
-            doMove.z = 1;
-            residuals.z--;
+        if(residuals.z >= state->magnification) {
+            doMove.z = state->magnification;
+            residuals.z -= state->magnification;
         }
-        if(residuals.z <= -1.) {
-            doMove.z = -1;
-            residuals.z++;
+        else if(residuals.z <= -state->magnification) {
+            doMove.z = -state->magnification;
+            residuals.z += state->magnification;
         }
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
@@ -424,22 +428,18 @@ void Remote::checkIdleTime() {
 
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = time;
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 60000){
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000) { //tolerance of 15 minutes
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
+        state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
-    int hoursRunningTime = (int)(time*0.001/3600.0);
-    int minutesRunningTime = (int)(time*0.001/60.0 - hoursRunningTime * 60);
-    int secondsRunningTime = (int)(time*0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
-    //AG_LabelText(state->viewerState->ag->runningTime, "Running Time: %02i:%02i:%02i", hoursRunningTime, minutesRunningTime, secondsRunningTime);
-
-    int hoursIdleTime = (int)(state->skeletonState->idleTime*0.001/3600.0);
-    int minutesIdleTime = (int)(state->skeletonState->idleTime*0.001/60.0 - hoursIdleTime * 60);
-    int secondsIdleTime = (int)(state->skeletonState->idleTime*0.001 - hoursIdleTime * 3600 - minutesIdleTime * 60);
+    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/3600.0);
+    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/60.0 - hoursIdleTime * 60);
+    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
     //AG_LabelText(state->viewerState->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
 
-    int hoursTracingTime = (int)((time - state->skeletonState->idleTime)*0.001/3600.0);
-    int minutesTracingTime = (int)((time - state->skeletonState->idleTime)*0.001/60.0 - hoursTracingTime * 60);
-    int secondsTracingTime = (int)((time - state->skeletonState->idleTime)*0.001 - hoursTracingTime * 3600 - minutesTracingTime * 60);
+    int hoursTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/3600.0);
+    int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
+    int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
     //AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
 
 }

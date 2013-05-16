@@ -932,6 +932,7 @@ struct viewerState {
     bool selectModeFlag;
 
     uint32_t dropFrames;
+    uint32_t walkFrames;
 
     float voxelDimX;
     float voxelDimY;

@@ -48,7 +48,7 @@ public:
 
     void setViewportReferences(Viewport *vp, Viewport*vp2, Viewport*vp3, Viewport*vp4);
     Viewport *vp, *vp2, *vp3, *vp4;
-    static uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
+    static uint32_t addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
 
     static bool setActiveTreeByID(int32_t treeID);
     static int32_t addNode(int32_t targetRevision,
@@ -97,10 +97,10 @@ public:
     bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
     bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
-    bool moveToNextTree();
-    bool moveToPrevTree();
-    bool moveToPrevNode();
-    bool moveToNextNode();
+    static bool moveToNextTree();
+    static bool moveToPrevTree();
+    static bool moveToPrevNode();
+    static bool moveToNextNode();
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
     void refreshUndoRedoBuffers();
     void undo();
@@ -113,7 +113,6 @@ protected:
     int32_t saveSkeleton();
     void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
-    bool jumpToActiveNode();
     bool loadSkeleton();
     void popBranchNodeCanceled();
     bool delNodeFromSkeletonStruct(nodeListElement *node);
@@ -142,13 +141,13 @@ public slots:
     commentListElement *previousComment(char *searchString);
     bool previousCommentlessNode();
     bool nextCommentlessNode();
-    bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
+    static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
     bool editNode(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
     bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
     static bool addComment(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
     bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
     bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
-
+    bool jumpToActiveNode();
 };
 
 #endif // SKELETONIZER_H

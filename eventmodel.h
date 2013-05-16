@@ -104,6 +104,8 @@ signals:
     void addCommentSignal(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
     bool editCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
     void drawGUISignal();
+    void addSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
+    void jumpToActiveNodeSignal();
 public slots:
     
 };

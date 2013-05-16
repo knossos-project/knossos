@@ -278,6 +278,7 @@ int32_t Knossos::initStates() {
    state->viewerState->numberViewports = tempConfig->viewerState->numberViewports;
    state->viewerState->inputmap = tempConfig->viewerState->inputmap;
    state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
+   state->viewerState->walkFrames = tempConfig->viewerState->walkFrames;
    state->viewerState->userMove = tempConfig->viewerState->userMove;
    state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
    state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
@@ -290,6 +291,10 @@ int32_t Knossos::initStates() {
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;
+   state->skeletonState->idleTimeSession = 0;
+   state->viewerState->moveVP = tempConfig->viewerState->moveVP;
+   state->viewerState->resizeVP = tempConfig->viewerState->resizeVP;
+   state->viewerState->showPosSizButtons = tempConfig->viewerState->showPosSizButtons;
    // the voxel dim stuff needs an cleanup. this is such a mess. fuck
    state->viewerState->voxelDimX = state->scale.x;
    state->viewerState->voxelDimY = state->scale.y;
@@ -299,6 +304,7 @@ int32_t Knossos::initStates() {
    state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
    state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
    state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
+   state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
    Knossos::loadTreeLUTFallback();
 
@@ -888,6 +894,7 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->viewerState->numberViewports = 4;
     tempConfig->viewerState->inputmap = NULL;
     tempConfig->viewerState->dropFrames = 1;
+    tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->userMove = false;
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
@@ -903,11 +910,13 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->viewerState->depthCutOff = 5.;
     tempConfig->viewerState->luminanceBias = 0;
     tempConfig->viewerState->luminanceRangeDelta = 255;
-    tempConfig->viewerState->autoTracingEnabled = false;
     tempConfig->viewerState->autoTracingDelay = 50;
     tempConfig->viewerState->autoTracingSteps = 10;
     tempConfig->viewerState->recenteringTimeOrth = 500;
     tempConfig->viewerState->walkOrth = false;
+    tempConfig->viewerState->moveVP = 10;
+    tempConfig->viewerState->resizeVP = 10;
+    tempConfig->viewerState->showPosSizButtons = true;
 
     tempConfig->viewerState->vpConfigs = (vpConfig *) malloc(tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
     if(tempConfig->viewerState->vpConfigs == NULL) {
