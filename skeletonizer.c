@@ -44,6 +44,7 @@
 
 #include "knossos-global.h"
 #include "skeletonizer.h"
+#include "sha256.h"
 
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
@@ -1035,6 +1036,7 @@ int32_t saveSkeleton() {
     int32_t r;
     int32_t time;
     xmlChar attrString[128];
+    char *checksum;
 
     xmlDocPtr xmlDocument;
     xmlNodePtr thingsXMLNode, nodesXMLNode, edgesXMLNode, currentXMLNode,
@@ -1116,9 +1118,13 @@ int32_t saveSkeleton() {
     xmlStrPrintf(attrString,
                  128,
                  BAD_CAST"%d",
-                 xorInt(time));
+                 time);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
+
+    checksum = integerChecksum(time);
+    xmlNewProp(currentXMLNode, BAD_CAST"checksum", checksum);
+    free(checksum);
 
     if(state->skeletonState->activeNode) {
         currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"activeNode", NULL);
@@ -1173,9 +1179,12 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%d", xorInt(state->skeletonState->idleTime));
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->idleTime);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
+    checksum = integerChecksum(state->skeletonState->idleTime);
+    xmlNewProp(currentXMLNode, BAD_CAST"checksum", checksum);
+    free(checksum);
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
@@ -1461,7 +1470,6 @@ uint32_t loadSkeleton() {
     Coordinate offset;
     floatCoordinate scale;
     int32_t time, activeNodeID = 0;
-    int32_t skeletonTime = 0;
     color4F neuronColor;
 
     LOG("Starting to load skeleton...");
@@ -1526,6 +1534,11 @@ uint32_t loadSkeleton() {
     /* If "createdin"-node does not exist, skeleton was created in a version
      * before 3.2 */
     strcpy(state->skeletonState->skeletonCreatedInVersion, "pre-3.2");
+    strcpy(state->skeletonState->skeletonLastSavedInVersion, "pre-3.2");
+
+    /* Default for skeletons created in very old versions that don't have that
+       attribute */
+    state->skeletonState->skeletonTime = 0;
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
@@ -1534,8 +1547,13 @@ uint32_t loadSkeleton() {
             while(currentXMLNode) {
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"createdin")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"version");
-                    if(attribute){
-                        strcpy(state->skeletonState->skeletonCreatedInVersion, (char *)attribute);
+                    if(attribute) {
+                        strncpy(state->skeletonState->skeletonCreatedInVersion, (char *)attribute, 31);
+                    }
+                }
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"lastsavedin")) {
+                    if(attribute) {
+                        strncpy(state->skeletonState->skeletonLastSavedInVersion, (char *)attribute, 31);
                     }
                 }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"magnification")) {
@@ -1571,12 +1589,9 @@ uint32_t loadSkeleton() {
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"time")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
+                        state->skeletonState->skeletonTime = atoi((char *)attribute);
                         if(hasObfuscatedTime()) {
-                            skeletonTime = xorInt(atoi((char*)attribute));
-                            //LOG("loaded time: %d", skeletonTime);
-                        }
-                        else {
-                            skeletonTime = atoi((char *)attribute);
+                            state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
                     }
                 }
@@ -1656,11 +1671,10 @@ uint32_t loadSkeleton() {
 
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
+                        state->skeletonState->idleTime = atoi((char*)attribute);
                         if(hasObfuscatedTime()) {
-                            state->skeletonState->idleTime = xorInt(atoi((char*)attribute));
-                        }
-                        else {
-                            state->skeletonState->idleTime = atoi((char*)attribute);
+                            state->skeletonState->idleTime = xorInt(
+                                    state->skeletonState->idleTime);
                         }
                     }
                     state->skeletonState->idleTimeNow = SDL_GetTicks();
@@ -1863,7 +1877,7 @@ uint32_t loadSkeleton() {
                                 free(attribute);
                             }
                             else
-                                time = skeletonTime; /* For legacy skeleton files */
+                                time = state->skeletonState->skeletonTime; /* For legacy skeleton files */
 
                             if(!merge)
                                 addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
@@ -1937,7 +1951,6 @@ uint32_t loadSkeleton() {
         updatePosition(TELL_COORDINATE_CHANGE);
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-    state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
     return TRUE;
 }
@@ -4438,17 +4451,57 @@ static int asciiArrayToInt(char *asciiArray) {
     return result;
 }
 
-static int hasObfuscatedTime() { //3.4 and later
-    int major = 0, minor = 0;
-    char point;
+static int hasObfuscatedTime() {
+    /* Sad detour in version 3.4 */
 
-    sscanf(state->skeletonState->skeletonCreatedInVersion, "%d%c%d", &major, &point, &minor);
-
-    if(major > 3) {
-        return TRUE;
-    }
-    if(major == 3 && minor >= 4) {
+    /* The check for whether skeletonTime is bigger than some magic
+       number is a workaround for the bug where skeletons saved in
+       a version prior to 3.4 and edited them in 3.4 sometimes had
+       un-obfuscated times. Assuming the time is below ca. 15 days,
+       this successfully checks for obfuscation. */
+    
+    if((strcmp(state->skeletonState->skeletonLastSavedInVersion, "3.4") == 0) &&
+              (state->skeletonState->skeletonTime > 1300000000)) {
         return TRUE;
     }
     return FALSE;
+}
+
+static char *integerChecksum(int32_t in) {
+    unsigned char hash[32];
+    char *checksum;
+    unsigned char h[32];
+    int i;
+    unsigned char *p;
+    sha256_context ctx;
+
+    memset(h, '\0', strlen(h));
+
+    checksum = malloc(65 * sizeof(char));
+    if(checksum == NULL) {
+        LOG("Out of memory");
+        _Exit(FALSE);
+    }
+    memset(checksum, '\0', 65);
+
+    sha256_starts(&ctx);
+    sha256_update(&ctx, (uint8 *)&in, 4);
+    sha256_finish(&ctx, hash);
+
+    LOG("checksumming %d", in);
+    p = (unsigned char*)&in;
+    for(i = 0; i < 4; i++) {
+        sprintf(&h[i*2], "%02x", p[i]);
+    }
+    LOG("byte array: %s", h);
+
+   for(i=0; i < 32; i++)
+      printf("%02x", hash[i]);
+   printf("\n");
+
+    for(i = 0; i < 32; i++) {
+        sprintf(&checksum[i * 2], "%02x", hash[i]);
+    }
+
+    return checksum;
 }

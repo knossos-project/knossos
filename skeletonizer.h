@@ -34,6 +34,7 @@ static int asciiArrayToInt(char *asciiArray);
 static int hasObfuscatedTime();
 static void xorIt(char* buffer, char *text);
 static int32_t xorInt(int32_t xorMe);
+static char *integerChecksum(int32_t in);
 
 //undo stuff
 static void refreshUndoRedoBuffers();

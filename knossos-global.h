@@ -339,7 +339,7 @@ typedef struct _CubeSlotList CubeSlotList;
 // * previous should behave in analogy to next
 // * ht_next either is the same as next or is NULL. It is used to manage the
 //   chains to resolve collisions in the hash table. ht_next only points to the
-//   next element if that element has the same key as the current element and is
+//   next element if that element has the same hash as the current element and is
 //   NULL else.
 
 struct _C2D_Element {
@@ -1246,6 +1246,7 @@ struct skeletonState {
     /* This is for a workaround around agar bug #171*/
     int askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
+    char skeletonLastSavedInVersion[32];
 
     struct cmdList *undoList;
     struct cmdList *redoList;

@@ -4,13 +4,16 @@ CFLAGS = -DARCH_64 -ggdb `xml2-config --cflags` `agar-config --cflags`  -I/usr/i
 LOCALPATH=/usr/local
 LFLAGS = -lglut  -lSDL -lSDL_net -lSDL_Clipboard -lm -lGL -lGLU `xml2-config --libs` `agar-config --libs` -L${LOCALPATH}/lib -L${LOCALPATH}/lib64
 
-knossos: y.tab.o lex.yy.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o renderer.o skeletonizer.o eventHandler.o client.o customStyle.o gui.o treeLUT_fallback.o refreshTime.o
-	$(CC) $(LFLAGS) refreshTime.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o lex.yy.o y.tab.o renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o treeLUT_fallback.o -o $@
+knossos: y.tab.o lex.yy.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o renderer.o skeletonizer.o eventHandler.o client.o customStyle.o gui.o treeLUT_fallback.o refreshTime.o sha256.o
+	$(CC) $(LFLAGS) refreshTime.o hash.o loader.o knossos.o coordinate.o viewer.o remote.o lex.yy.o y.tab.o renderer.o skeletonizer.o eventHandler.o client.o gui.o customStyle.o treeLUT_fallback.o sha256.o -o $@
 
 viewer.o: viewer.c
 	$(CC) $(CFLAGS) -Wall -c $< -o $@
 
 refreshTime.o: refreshTime.c
+	$(CC) $(CFLAGS) -Wall -c $< -o $@
+
+sha256.o: sha256.c
 	$(CC) $(CFLAGS) -Wall -c $< -o $@
 
 hash.o: hash.c
