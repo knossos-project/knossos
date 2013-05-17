@@ -1552,6 +1552,7 @@ uint32_t loadSkeleton() {
                     }
                 }
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"lastsavedin")) {
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"version");
                     if(attribute) {
                         strncpy(state->skeletonState->skeletonLastSavedInVersion, (char *)attribute, 31);
                     }
@@ -1590,7 +1591,7 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         state->skeletonState->skeletonTime = atoi((char *)attribute);
-                        if(hasObfuscatedTime()) {
+                        if(isObfuscatedTime(state->skeletonState->skeletonTime)) {
                             state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
                     }
@@ -1668,11 +1669,10 @@ uint32_t loadSkeleton() {
                 }
 
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
-
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                     if(attribute) {
                         state->skeletonState->idleTime = atoi((char*)attribute);
-                        if(hasObfuscatedTime()) {
+                        if(isObfuscatedTime(state->skeletonState->idleTime)) {
                             state->skeletonState->idleTime = xorInt(
                                     state->skeletonState->idleTime);
                         }
@@ -4451,7 +4451,7 @@ static int asciiArrayToInt(char *asciiArray) {
     return result;
 }
 
-static int hasObfuscatedTime() {
+static int isObfuscatedTime(int32_t time) {
     /* Sad detour in version 3.4 */
 
     /* The check for whether skeletonTime is bigger than some magic
@@ -4461,7 +4461,7 @@ static int hasObfuscatedTime() {
        this successfully checks for obfuscation. */
     
     if((strcmp(state->skeletonState->skeletonLastSavedInVersion, "3.4") == 0) &&
-              (state->skeletonState->skeletonTime > 1300000000)) {
+              (time > 1300000000)) {
         return TRUE;
     }
     return FALSE;
@@ -4470,12 +4470,8 @@ static int hasObfuscatedTime() {
 static char *integerChecksum(int32_t in) {
     unsigned char hash[32];
     char *checksum;
-    unsigned char h[32];
     int i;
-    unsigned char *p;
     sha256_context ctx;
-
-    memset(h, '\0', strlen(h));
 
     checksum = malloc(65 * sizeof(char));
     if(checksum == NULL) {
@@ -4487,17 +4483,6 @@ static char *integerChecksum(int32_t in) {
     sha256_starts(&ctx);
     sha256_update(&ctx, (uint8 *)&in, 4);
     sha256_finish(&ctx, hash);
-
-    LOG("checksumming %d", in);
-    p = (unsigned char*)&in;
-    for(i = 0; i < 4; i++) {
-        sprintf(&h[i*2], "%02x", p[i]);
-    }
-    LOG("byte array: %s", h);
-
-   for(i=0; i < 32; i++)
-      printf("%02x", hash[i]);
-   printf("\n");
 
     for(i = 0; i < 32; i++) {
         sprintf(&checksum[i * 2], "%02x", hash[i]);

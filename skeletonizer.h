@@ -31,7 +31,7 @@ static void WRAP_popBranchNode();
 static void popBranchNodeCanceled();
 
 static int asciiArrayToInt(char *asciiArray);
-static int hasObfuscatedTime();
+static int isObfuscatedTime(int32_t time);
 static void xorIt(char* buffer, char *text);
 static int32_t xorInt(int32_t xorMe);
 static char *integerChecksum(int32_t in);
