@@ -41,9 +41,7 @@ extern stateInfo *tempConfig;
 Renderer::Renderer(QObject *parent) :
     QObject(parent)
 {
-    uint32_t i;
-        /* initialize the textures used to display the SBFSEM data TDitem: return val check*/
-        Viewer::initializeTextures();
+    uint i;
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         /* Initialize the basic model view matrix for the skeleton VP
         Perform basic coordinate system rotations */
@@ -76,7 +74,7 @@ Renderer::Renderer(QObject *parent) :
 
 }
 
-uint32_t Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint32_t viewportType) {
+uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType) {
     float currentAngle = 0.;
         floatCoordinate segDirection, tempVec, *tempVec2;
         GLUquadricObj *gluCylObj = NULL;
@@ -150,7 +148,7 @@ uint32_t Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate
         return true;
 }
 
-uint32_t Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint32_t viewportType) {
+uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType) {
     GLUquadricObj *gluSphereObj = NULL;
 
         /* Render only a point if the sphere wouldn't be visible anyway */
@@ -206,10 +204,10 @@ uint32_t Renderer::renderSphere(Coordinate *pos, float radius, color4F color, ui
 }
 
 
-uint32_t Renderer::renderText(Coordinate *pos, char *string) {
+uint Renderer::renderText(Coordinate *pos, char *string) {
 
     char *c;
-    //int32_t transFactor = 1;
+    //int transFactor = 1;
     //Coordinate transPos;
 
     //if(coordinateMag == ORIGINAL_MAG_COORDINATES)
@@ -230,11 +228,11 @@ uint32_t Renderer::renderText(Coordinate *pos, char *string) {
 }
 
 
-uint32_t Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
+uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
     if(!state->skeletonState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
-        int32_t i, distToCurrPos;
+        int i, distToCurrPos;
         floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
         GLUquadricObj *gluCylObj = NULL;
 
@@ -292,9 +290,9 @@ uint32_t Renderer::renderSegPlaneIntersection(struct segmentListElement *segment
                 intPoint.z = tempVec3.z + sSp_local.z;
 
                 //Check wether the intersection point lies outside the current zoom cube
-                if(abs((int32_t)intPoint.x - state->viewerState->currentPosition.x) <= distToCurrPos
-                    && abs((int32_t)intPoint.y - state->viewerState->currentPosition.y) <= distToCurrPos
-                    && abs((int32_t)intPoint.z - state->viewerState->currentPosition.z) <= distToCurrPos) {
+                if(abs((int)intPoint.x - state->viewerState->currentPosition.x) <= distToCurrPos
+                    && abs((int)intPoint.y - state->viewerState->currentPosition.y) <= distToCurrPos
+                    && abs((int)intPoint.z - state->viewerState->currentPosition.z) <= distToCurrPos) {
 
                     //Render a cylinder to highlight the intersection
                     glPushMatrix();
@@ -357,7 +355,7 @@ uint32_t Renderer::renderSegPlaneIntersection(struct segmentListElement *segment
 
 }
 
-uint32_t Renderer::renderViewportBorders(uint32_t currentVP) {
+uint Renderer::renderViewportBorders(uint currentVP) {
     /*
     char *description;
     char *c;
@@ -519,7 +517,7 @@ uint32_t Renderer::renderViewportBorders(uint32_t currentVP) {
 
 // Currently not used
 /* @todo update from trunk */
-static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color)  {
+static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {
 
 }
 
@@ -529,7 +527,7 @@ bool Renderer::drawGUI() {
      return true;
 }
 
-bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
+bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
 
     if(!((state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XY)
@@ -977,10 +975,10 @@ bool Renderer::renderOrthogonalVP(uint32_t currentVP) {
     return true;
 }
 
-bool Renderer::renderSkeletonVP(uint32_t currentVP) {
+bool Renderer::renderSkeletonVP(uint currentVP) {
     char *textBuffer;
         char *c;
-        uint32_t i;
+        uint i;
 
         GLUquadricObj *gluCylObj = NULL;
 
@@ -1541,8 +1539,8 @@ bool Renderer::renderSkeletonVP(uint32_t currentVP) {
         return true;
 }
 
-uint32_t Renderer::retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width) {
-    int32_t i;
+uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
+    int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
     GLuint selectionBuffer[8192] = {0};
@@ -1708,7 +1706,7 @@ bool Renderer::rotateSkeletonViewport(){
 }
 
 
-bool Renderer::setRotationState(uint32_t setTo) {
+bool Renderer::setRotationState(uint setTo) {
     if (setTo == 0){
             //Reset Viewport
             state->skeletonState->rotationState[0] = 0.866025;
@@ -1789,7 +1787,7 @@ bool Renderer::setRotationState(uint32_t setTo) {
 }
 
 /*
-void Renderer::renderActiveTreeSkeleton(uint32_t viewportType) {
+void Renderer::renderActiveTreeSkeleton(uint viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -1946,7 +1944,7 @@ could be queried too often for highly downsampled data sets -- O(N^3) comlexity
 here. It should be ok until mag 8 data sets, then we switch to a different
 rendering mode (knossos then uses the whole skeleton display list for the ortho VPs). */
 /*
-void Renderer::renderSuperCubeSkeleton(uint32_t viewportType) {
+void Renderer::renderSuperCubeSkeleton(uint viewportType) {
 
     // This prevents the O(n^3) time complexity problem - it is just heuristic
     //however, could cause problems when Knossos is used with very high data cube
@@ -1956,7 +1954,7 @@ void Renderer::renderSuperCubeSkeleton(uint32_t viewportType) {
         renderWholeSkeleton(viewportType);
         return;
     }
-    uint32_t magSupercube;
+    uint magSupercube;
     Coordinate currentPosDC, currentPosDCCounter;
 
     struct skeletonDC *currentSkeletonDC;
@@ -2195,7 +2193,7 @@ void Renderer::renderSuperCubeSkeleton(uint32_t viewportType) {
  */
 
 /*
-void Renderer::renderWholeSkeleton(uint32_t viewportType) {
+void Renderer::renderWholeSkeleton(uint viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
@@ -2361,15 +2359,15 @@ void Renderer::renderWholeSkeleton(uint32_t viewportType) {
  * Ugly code, not nice to read, should be simplified...
  */
 
-void Renderer::renderSkeleton(uint32_t viewportType) {
+void Renderer::renderSkeleton(uint viewportType) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
     floatCoordinate currNodePos;
-    uint32_t virtualSegRendered, allowHeuristic;
-    uint32_t skippedCnt = 0;
-    uint32_t renderNode;
+    uint virtualSegRendered, allowHeuristic;
+    uint skippedCnt = 0;
+    uint renderNode;
     float currentRadius;
 
 
@@ -2776,7 +2774,7 @@ bool Renderer::doubleMeshCapacity(mesh *toDouble) {
     return true;
 }
 
-bool Renderer::initMesh(mesh *toInit, uint32_t initialSize) {
+bool Renderer::initMesh(mesh *toInit, uint initialSize) {
 
 
     (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
@@ -2796,7 +2794,7 @@ bool Renderer::initMesh(mesh *toInit, uint32_t initialSize) {
 }
 
 
-bool Renderer::updateFrustumClippingPlanes(uint32_t viewportType) {
+bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
    float   frustum[6][4];
    float   proj[16];
    float   modl[16];
@@ -2915,7 +2913,7 @@ bool Renderer::updateFrustumClippingPlanes(uint32_t viewportType) {
 }
 
 /* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
-bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType) {
+bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
     int p;
 
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */

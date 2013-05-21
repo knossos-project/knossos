@@ -21,7 +21,7 @@ bool normalizeVector(floatCoordinate *v) {
     return true;
 }
 
-int32_t sgn(float number) {
+int sgn(float number) {
     if(number > 0.) return 1;
     else if(number == 0.) return 0;
     else return -1;

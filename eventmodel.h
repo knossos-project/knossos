@@ -57,17 +57,17 @@ class EventModel : public QObject
 public:
 
     explicit EventModel(QObject *parent = 0);
-    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotion(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound);
-    bool handleKeyboard(QKeyEvent *event, int32_t VPfound);
-    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
+    bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
+    bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
+    bool handleMouseMotion(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
+    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
+    bool handleKeyboard(QKeyEvent *event, int VPfound);
+    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
     int xrel(int x);
     int yrel(int y);
@@ -77,35 +77,36 @@ protected:
 
 signals:
     void rerender();
-    void userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
-    void updatePositionSignal(int32_t serverMovement);
+    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void updatePositionSignal(int serverMovement);
     void pasteCoordinateSignal();
     void zoomOrthoSignal(float step);
     void updateViewerStateSignal();
     // SIGNAL MIT RÜCKGABEWERT?
-    uint32_t retrieveVisibleObjectBeneathSquareSignal(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
+    uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
     void updateWidgetSignal();
     void workModeAddSignal();
     void workModeLinkSignal();
     void deleteActiveNodeSignal();
-    void genTestNodesSignal(uint32_t number);
+    void genTestNodesSignal(uint number);
     void addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
     // SIGNAL WITH RETURN VALUE ???
-    void addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
-    void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
-    void setRemoteStateTypeSignal(int32_t type);
-    void setRecenteringPositionSignal(int32_t x, int32_t y, int32_t z);
+    void addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    void setRemoteStateTypeSignal(int type);
+    void setRecenteringPositionSignal(int x, int y, int z);
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();
-    void delSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
-    void editNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
-    void addCommentSignal(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
-    bool editCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     void drawGUISignal();
-    void addSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
+    void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
     void jumpToActiveNodeSignal();
+    void saveSkeletonSignal();
 public slots:
     
 };

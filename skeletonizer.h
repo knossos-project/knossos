@@ -40,51 +40,51 @@ public:
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
-    static nodeListElement *findNodeByNodeID(int32_t nodeID);
+    static nodeListElement *findNodeByNodeID(int nodeID);
     static nodeListElement *findNodeByCoordinate(Coordinate *position);
-    static treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
 
     void setViewportReferences(Viewport *vp, Viewport*vp2, Viewport*vp3, Viewport*vp4);
     Viewport *vp, *vp2, *vp3, *vp4;
-    static uint32_t addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive);
+    static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-    static bool setActiveTreeByID(int32_t treeID);
-    static int32_t addNode(int32_t targetRevision,
-                    int32_t nodeID,
+    static bool setActiveTreeByID(int treeID);
+    static int addNode(int targetRevision,
+                    int nodeID,
                     float radius,
-                    int32_t treeID,
+                    int treeID,
                     Coordinate *position,
                     Byte VPtype,
-                    int32_t inMag,
-                    int32_t time,
-                    int32_t respectLocks);
-    static bool addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
-    static bool mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
+                    int inMag,
+                    int time,
+                    int respectLocks);
+    static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID);
+    static bool mergeTrees(int targetRevision, int treeID1, int treeID2);
 
-    static segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
+    static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
-    static stack *newStack(int32_t size);
+    static stack *newStack(int size);
     static bool delStack(stack *stack);
     static bool delDynArray(dynArray *array);
-    static void *getDynArray(dynArray *array, int32_t pos);
-    static bool setDynArray(dynArray *array, int32_t pos, void *value);
-    static dynArray *newDynArray(int32_t size);
-    static int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
+    static void *getDynArray(dynArray *array, int pos);
+    static bool setDynArray(dynArray *array, int pos, void *value);
+    static dynArray *newDynArray(int size);
+    static int splitConnectedComponent(int targetRevision, int nodeID);
 
-    static bool popBranchNode(int32_t targetRevision);
-    static bool pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, nodeListElement *branchNode, int32_t branchNodeID);
+    static bool popBranchNode(int targetRevision);
+    static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
 
     static void UI_popBranchNode();
     static void restoreDefaultTreeColor();
     static bool updateTreeColors();
     static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
-    static nodeListElement *addNodeListElement(int32_t nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int32_t inMag);
+    static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
-    static treeListElement* findTreeByTreeID(int32_t treeID);
+    static treeListElement* findTreeByTreeID(int treeID);
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
     static void WRAP_popBranchNode();
@@ -110,43 +110,43 @@ public:
     void flushCmdList(struct cmdList *cmdList);
     void delCmdListElement(struct cmdListElement *cmdEl);
 protected:
-    int32_t saveSkeleton();
+    int saveSkeleton();
     void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     bool loadSkeleton();
     void popBranchNodeCanceled();
     bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
-    int32_t xorInt(int32_t xorMe);
+    int xorInt(int xorMe);
 
 signals:
-    void updatePositionSignal(int32_t serverMovement);
+    void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void drawGUISignal();
 public slots:
-    bool delTree(int32_t targetRevision, int32_t treeID);
+    bool delTree(int targetRevision, int treeID);
     bool delActiveTree();
-    bool clearSkeleton(int32_t targetRevision, int loadingSkeleton);
+    bool clearSkeleton(int targetRevision, int loadingSkeleton);
     bool delActiveNode();
-    bool updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename);
+    bool updateSkeletonFileName(int targetRevision, int increment, char *filename);
     bool updateSkeletonState();
-    bool genTestNodes(uint32_t number);
+    bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
-    static bool setActiveNode(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
-    bool addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
-    bool setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
+    static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);
+    bool addTreeComment(int targetRevision, int treeID, char *comment);
+    bool setSkeletonWorkMode(int targetRevision, uint workMode);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);
     commentListElement *nextComment(char *searchString);
     commentListElement *previousComment(char *searchString);
     bool previousCommentlessNode();
     bool nextCommentlessNode();
-    static bool delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
-    bool editNode(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
-    bool delNode(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
-    static bool addComment(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
-    bool editComment(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
-    bool delComment(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
+    static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel);
+    static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
 };
 

@@ -400,7 +400,7 @@ void MainWindow::showAboutScreen() {
 bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
     char *hit;
-        int32_t baseLen;
+        int baseLen;
 
     #ifdef Q_OS_UNIX
         hit = strrchr(path, '/');
@@ -413,7 +413,7 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
             return false;
         }
 
-        baseLen = (int32_t)(hit - path);
+        baseLen = (int)(hit - path);
         if(baseLen > 2047) {
             LOG("Path too long\n");
             return false;
@@ -427,7 +427,7 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 }
 
 
-bool MainWindow::addRecentFile(char *path, uint32_t pos){return false;}
+bool MainWindow::addRecentFile(char *path, uint pos){return false;}
 
 bool MainWindow::addRecentFile(QString fileName) {
     QQueue<QString>::iterator it;
@@ -448,7 +448,7 @@ bool MainWindow::addRecentFile(QString fileName) {
     return true;
 }
 
-void MainWindow::UI_saveSkeleton(int32_t increment){
+void MainWindow::UI_saveSkeleton(int increment){
     /*
     //create directory if it does not exist
     DIR *skelDir;
@@ -508,8 +508,8 @@ void MainWindow::loadSkeleton() {
 
 
 void MainWindow::zoomOrthogonals(float step){
-    int32_t i = 0;
-        int32_t triggerMagChange = false;
+    int i = 0;
+        int triggerMagChange = false;
 
         for(i = 0; i < state->viewerState->numberViewports; i++) {
             if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
@@ -621,8 +621,8 @@ void MainWindow::treeColorAdjustmentsChanged(){
 
 void MainWindow::datasetColorAdjustmentsChanged() {
     bool doAdjust = false;
-        int32_t i = 0;
-        int32_t dynIndex;
+        int i = 0;
+        int dynIndex;
         GLuint tempTable[3][256];
 
         if(state->viewerState->datasetColortableOn) {
@@ -645,7 +645,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
         if((state->viewerState->luminanceBias != 0) ||
            (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
             for(i = 0; i < 256; i++) {
-                dynIndex = (int32_t)((i - state->viewerState->luminanceBias) /
+                dynIndex = (int)((i - state->viewerState->luminanceBias) /
                                      (state->viewerState->luminanceRangeDelta / MAX_COLORVAL));
 
                 if(dynIndex < 0)

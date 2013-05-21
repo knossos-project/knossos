@@ -81,14 +81,14 @@ Viewer::Viewer(QObject *parent) :
     connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);
 
 
-    connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
-    connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
-    connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
-    connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)), Qt::DirectConnection);
+    connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
 
-    connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
+    connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
 
     connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
@@ -123,22 +123,22 @@ Viewer::Viewer(QObject *parent) :
     renderer = new Renderer();
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    //connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp2->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    //connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp3->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    //connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp4->delegate, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), this, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
+    //connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
 
-    connect(window, SIGNAL(changeDatasetMagSignal(uint32_t)), this, SLOT(changeDatasetMag(uint32_t)));
+    connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
-    connect(vp->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp2->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp3->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
-    connect(vp4->delegate, SIGNAL(updatePositionSignal(int32_t)), this, SLOT(updatePosition(int32_t)));
+    connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp3->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp4->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
     connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
@@ -165,20 +165,20 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(vp4->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
 
-    connect(vp->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
-    connect(vp2->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
-    connect(vp3->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
-    connect(vp4->delegate, SIGNAL(genTestNodesSignal(uint32_t)), skeletonizer, SLOT(genTestNodes(uint32_t)));
+    connect(vp->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp2->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp3->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp4->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
 
     connect(vp->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     connect(vp2->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     connect(vp3->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     connect(vp4->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
 
-    connect(vp->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
-    connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
-    connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
-    connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
+    connect(vp->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
     connect(vp->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(vp2->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
@@ -208,32 +208,32 @@ Viewer::Viewer(QObject *parent) :
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
 
-    connect(window, SIGNAL(clearSkeletonSignal(int32_t,int)), skeletonizer, SLOT(clearSkeleton(int32_t,int)));
+    connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
 
-    connect(vp, SIGNAL(renderOrthogonalVPSignal(int32_t)), renderer, SLOT(renderOrthogonalVP(uint32_t)));
-    connect(vp, SIGNAL(renderSkeletonVPSignal(int32_t)), renderer, SLOT(renderSkeletonVP(uint32_t)));
+    connect(vp, SIGNAL(renderOrthogonalVPSignal(int)), renderer, SLOT(renderOrthogonalVP(uint)));
+    connect(vp, SIGNAL(renderSkeletonVPSignal(int)), renderer, SLOT(renderSkeletonVP(uint)));
 
     connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
 
-    connect(vp->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
-    connect(vp2->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
-    connect(vp3->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
-    connect(vp4->delegate, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
+    connect(vp->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp2->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp3->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp4->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
 
-    connect(vp->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
-    connect(vp2->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
-    connect(vp3->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
-    connect(vp4->delegate, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
+    connect(vp->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp2->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp3->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp4->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
 
-    connect(vp->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
-    connect(vp2->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
-    connect(vp3->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
-    connect(vp4->delegate, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
+    connect(vp->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
 
-    connect(vp->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
-    connect(vp2->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
-    connect(vp3->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
-    connect(vp4->delegate, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
+    connect(vp->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
 
     connect(vp->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
     connect(vp2->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
@@ -250,7 +250,11 @@ Viewer::Viewer(QObject *parent) :
 
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(100);
+    connect(timer, SIGNAL(timeout()), this, SLOT(vp->updateGL();));
+    connect(timer, SIGNAL(timeout()), this, SLOT(vp2->updateGL();));
+    connect(timer, SIGNAL(timeout()), this, SLOT(vp3->updateGL();));
+    connect(timer, SIGNAL(timeout()), this, SLOT(vp4->updateGL();));
+    timer->start(50);
 }
 
 static vpList* vpListNew() {
@@ -267,7 +271,7 @@ static vpList* vpListNew() {
     return newVpList;
 }
 
-static int32_t vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
+static int vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
     vpListElement *newElement;
 
     newElement = (vpListElement *) malloc(sizeof(vpListElement));
@@ -315,7 +319,7 @@ static vpBacklog *backlogNew() {
 static vpList *vpListGenerate(viewerState *viewerState) {
     vpList *newVpList = NULL;
     vpBacklog *currentBacklog = NULL;
-    uint32_t i = 0;
+    uint i = 0;
 
     newVpList = vpListNew();
     if(newVpList == NULL) {
@@ -337,7 +341,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
     return newVpList;
 }
 
-static int32_t backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
+static int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         backlog->entry = NULL;
@@ -369,7 +373,7 @@ static bool backlogDel(vpBacklog *backlog) {
 }
 
 
-static int32_t vpListDelElement( vpList *list,  vpListElement *element) {
+static int vpListDelElement( vpList *list,  vpListElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         list->entry = NULL;
@@ -406,8 +410,8 @@ static bool vpListDel(vpList *list) {
     return true;
 }
 
-static int32_t backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32_t dcOffset,
-                                 Byte *slice, uint32_t x_px, uint32_t y_px, uint32_t cubeType) {
+static int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
+                                 Byte *slice, uint x_px, uint y_px, uint cubeType) {
     vpBacklogElement *newElement;
 
     newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
@@ -442,7 +446,7 @@ static int32_t backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint32
 bool sliceExtract_standard(Byte *datacube,
                                        Byte *slice,
                                        vpConfig *vpConfig) {
-    int32_t i, j;
+    int i, j;
 
     switch(vpConfig->type) {
     case SLICE_XY:
@@ -487,7 +491,7 @@ bool sliceExtract_standard(Byte *datacube,
 bool sliceExtract_adjust(Byte *datacube,
                                      Byte *slice,
                                      vpConfig *vpConfig) {
-    int32_t i, j;
+    int i, j;
 
     switch(vpConfig->type) {
     case SLICE_XY:
@@ -546,8 +550,8 @@ bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpCo
 }
 
 bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    int32_t i, j;
-    int32_t objId, *objIdP;
+    int i, j;
+    int objId, *objIdP;
 
     objIdP = &objId;
     datacube += dcOffset;
@@ -606,7 +610,7 @@ static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) 
     vpBacklogElement *currentElement = NULL,
                      *nextElement = NULL;
     Byte *cube = NULL;
-    uint32_t elements = 0,
+    uint elements = 0,
               i = 0;
 
     if(currentVp->backlog->entry == NULL) {
@@ -695,11 +699,11 @@ static bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) 
     }
 }
 
-static int32_t texIndex(uint32_t x,
-                        uint32_t y,
-                        uint32_t colorMultiplicationFactor,
+static int texIndex(uint x,
+                        uint y,
+                        uint colorMultiplicationFactor,
                         viewportTexture *texture) {
-    uint32_t index = 0;
+    uint index = 0;
 
     index = x * state->cubeSliceArea + y
             * (texture->edgeLengthDc * state->cubeSliceArea)
@@ -712,12 +716,12 @@ static bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
-    uint32_t x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
+    uint x_px = 0, x_dc = 0, y_px = 0, y_dc = 0;
     Coordinate upperLeftDc, currentDc, currentPosition_dc;
     Coordinate currPosTrans, leftUpperPxInAbsPxTrans;
 
     Byte *datacube = NULL, *overlayCube = NULL;
-    int32_t dcOffset = 0, index = 0;
+    int dcOffset = 0, index = 0;
 
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
@@ -928,7 +932,7 @@ static bool upsampleVPTexture(vpConfig *vpConfig) {
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
 bool Viewer::calcLeftUpperTexAbsPx() {
-    uint32_t i = 0;
+    uint i = 0;
     Coordinate currentPosition_dc, currPosTrans;
     viewerState *viewerState = state->viewerState;
 
@@ -1115,11 +1119,11 @@ bool Viewer::initViewer() {
 
 
 // from knossos-global.h
-bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type) {
+bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGBA_LUTSIZE];
-    uint32_t readBytes = 0, i = 0;
-    uint32_t size = RGB_LUTSIZE;
+    uint readBytes = 0, i = 0;
+    uint size = RGB_LUTSIZE;
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
@@ -1142,7 +1146,7 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type
         return false;
     }
 
-    readBytes = (uint32_t)fread(lutBuffer, 1, size, lutFile);
+    readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
         LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
         if(fclose(lutFile) != 0) {
@@ -1174,11 +1178,11 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int32_t type
     return true;
 }
 
-bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
+bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGB_LUTSIZE];
-    uint32_t readBytes = 0, i = 0;
-    uint32_t size = RGB_LUTSIZE;
+    uint readBytes = 0, i = 0;
+    uint size = RGB_LUTSIZE;
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
@@ -1195,7 +1199,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
         return false;
     }
 
-    readBytes = (uint32_t)fread(lutBuffer, 1, size, lutFile);
+    readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
         LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
         if(fclose(lutFile) != 0) {
@@ -1219,7 +1223,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int32_t type) {
     return true;
 }
 
-bool Viewer::updatePosition(int32_t serverMovement) {
+bool Viewer::updatePosition(int serverMovement) {
     Coordinate jump;
 
     if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
@@ -1232,7 +1236,7 @@ bool Viewer::updatePosition(int32_t serverMovement) {
 }
 
 bool Viewer::calcDisplayedEdgeLength() {
-    uint32_t i;
+    uint i;
     float FOVinDCs;
 
     FOVinDCs = ((float)state->M) - 1.f;
@@ -1252,8 +1256,8 @@ bool Viewer::calcDisplayedEdgeLength() {
 * the loader to change the dataset
 */
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
-    uint32_t i;
+bool Viewer::changeDatasetMag(uint upOrDownFlag) {
+    uint i;
 
     if(state->viewerState->datasetMagLock) {
         return false;
@@ -1264,7 +1268,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
         if(state->magnification > state->lowestAvailableMag) {
             state->magnification /= 2;
             for(i = 0; i < state->viewerState->numberViewports; i++) {
-                if(state->viewerState->vpConfigs[i].type != (uint32_t)VIEWPORT_SKELETON) {
+                if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                     state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
                     upsampleVPTexture(&state->viewerState->vpConfigs[i]);
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
@@ -1278,7 +1282,7 @@ bool Viewer::changeDatasetMag(uint32_t upOrDownFlag) {
         if(state->magnification < state->highestAvailableMag) {
             state->magnification *= 2;
             for(i = 0; i < state->viewerState->numberViewports; i++) {
-                if(state->viewerState->vpConfigs[i].type != (uint32_t)VIEWPORT_SKELETON) {
+                if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                     state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
                     downsampleVPTexture(&state->viewerState->vpConfigs[i]);
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
@@ -1341,7 +1345,7 @@ void Viewer::run() {
     struct viewerState *viewerState = state->viewerState;
     //struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
-    uint32_t drawCounter = 0;
+    uint drawCounter = 0;
 
     state->viewerState->viewerReady = true;
 
@@ -1509,7 +1513,7 @@ bool Viewer::createScreen() {
 * GLWidgets
 */
 bool Viewer::initializeTextures() {
-    uint32_t i = 0;
+    uint i = 0;
 
     /*problem of deleting textures when calling again after resize?! TDitem */
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
@@ -1587,7 +1591,7 @@ bool Viewer::initializeTextures() {
 
 bool Viewer::updateViewerState() {
 
-    uint32_t i;
+    uint i;
 
     /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
         state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x - 1;
@@ -1640,8 +1644,8 @@ bool Viewer::updateViewerState() {
 
 
 bool Viewer::updateZoomCube() {
-    uint32_t i;
-    int32_t residue, max, currentZoomCube, oldZoomCube;
+    uint i;
+    int residue, max, currentZoomCube, oldZoomCube;
 
     /* Notice int division! */
     max = ((state->M/2)*2-1);
@@ -1649,9 +1653,9 @@ bool Viewer::updateZoomCube() {
     state->viewerState->zoomCube = 0;
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != (uint32_t)VIEWPORT_SKELETON) {
+        if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
             residue = ((max*state->cubeEdgeLength)
-            - ((int32_t)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
+            - ((int)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx)))
             / state->cubeEdgeLength;
 
@@ -1666,7 +1670,7 @@ bool Viewer::updateZoomCube() {
                 state->viewerState->zoomCube = currentZoomCube;
             }
             residue = ((max*state->cubeEdgeLength)
-            - ((int32_t)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
+            - ((int)(state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx)))
             / state->cubeEdgeLength;
 
@@ -1688,7 +1692,7 @@ bool Viewer::updateZoomCube() {
     return true;
 }
 
-bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
+bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -1761,8 +1765,8 @@ bool Viewer::userMove(int32_t x, int32_t y, int32_t z, int32_t serverMovement) {
 }
 
 
-int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) {
-    uint32_t tempNum;
+int Viewer::findVPnumByWindowCoordinate(uint xScreen, uint yScreen) {
+    uint tempNum;
 
     tempNum = -1;
    /* TDitem
@@ -1780,7 +1784,7 @@ int32_t Viewer::findVPnumByWindowCoordinate(uint32_t xScreen, uint32_t yScreen) 
 }
 
 bool Viewer::recalcTextureOffsets() {
-    uint32_t i;
+    uint i;
     float midX, midY;
 
     midX = midY = 0.;
@@ -2069,7 +2073,7 @@ bool Viewer::refreshViewports() {
     return true;
 }
 
-bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
+bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     qDebug() << "Viewer: sendLoadSignal begin";
     state->protectLoadSignal->lock();
     state->loadSignal = true;  
@@ -2095,6 +2099,6 @@ bool Viewer::sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChang
     return true;
 }
 
-bool Viewer::moveVPonTop(uint32_t currentVP) {
+bool Viewer::moveVPonTop(uint currentVP) {
 
 }

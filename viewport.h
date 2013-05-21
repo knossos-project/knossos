@@ -66,21 +66,21 @@ protected:
     bool entered;
 
 private:
-    bool handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseButtonRight(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotion(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int32_t VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound);
+    bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
+    bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
+    bool handleMouseMotion(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
+    bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
+    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
     bool handleKeyboard(QKeyEvent *event);
-    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound);
+    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
 signals:
-    void renderOrthogonalVPSignal(int32_t plane);
-    void renderSkeletonVPSignal(int32_t plane);
+    void renderOrthogonalVPSignal(int plane);
+    void renderSkeletonVPSignal(int plane);
 public slots:
 
 };

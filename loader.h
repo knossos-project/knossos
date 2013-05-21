@@ -50,16 +50,16 @@ public slots:
     void load();
 protected:
     bool initialized;
-    bool addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target);
+    bool addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, Hashtable *target);
     bool DcoiFromPos(Hashtable *Dcoi);
     CubeSlot *slotListGetElement(CubeSlotList *slotList);
     bool loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot);
-    int32_t slotListDelElement(CubeSlotList *slotList, CubeSlot *element);
+    int slotListDelElement(CubeSlotList *slotList, CubeSlot *element);
     bool slotListDel(CubeSlotList *delList);
-    int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube);
+    int slotListAddElement(CubeSlotList *slotList, Byte *datacube);
     CubeSlotList *slotListNew();
     bool initLoader();
-    bool removeLoadedCubes(int32_t magChange);
+    bool removeLoadedCubes(int magChange);
     bool loadCubes();
 };
 

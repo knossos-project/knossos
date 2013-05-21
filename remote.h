@@ -36,27 +36,28 @@ public:
     explicit Remote(QObject *parent = 0);
     static void checkIdleTime();
 
-    bool remoteTrajectory(int32_t trajNumber);
+    bool remoteTrajectory(int trajNumber);
     bool newTrajectory(char *trajName, char *trajectory);
-    bool remoteWalkTo(int32_t x, int32_t y, int32_t z);
-    bool remoteWalk(int32_t x, int32_t y, int32_t z);
+    bool remoteWalkTo(int x, int y, int z);
+    bool remoteWalk(int x, int y, int z);
     void run();
     bool updateRemoteState();
-    bool remoteDelay(int32_t s);
+    bool remoteDelay(int s);
 
-    int32_t type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
-    int32_t maxTrajectories;
-    int32_t activeTrajectory;
+    int type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
+    int maxTrajectories;
+    int activeTrajectory;
     Coordinate recenteringPosition;
 
 signals:
     void finished();
     void updateViewerStateSignal();
-    void userMoveSignal(int32_t x, int32_t y, int32_t z, int32_t serverMovement);
+    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void updatePositionSignal(int serverMovement);
 public slots:
-    void setRemoteStateType(int32_t type);
-    void setRecenteringPosition(int32_t x, int32_t y, int32_t z);
-    bool remoteJump(int32_t x, int32_t y, int32_t z);
+    void setRemoteStateType(int type);
+    void setRecenteringPosition(int x, int y, int z);
+    bool remoteJump(int x, int y, int z);
 };
 
 #endif // REMOTE_H

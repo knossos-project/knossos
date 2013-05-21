@@ -24,7 +24,7 @@
 
 #include "knossos-global.h"
 
-static uint32_t ht_ll_rmlist(C2D_Element *delElement) {
+static uint ht_ll_rmlist(C2D_Element *delElement) {
     C2D_Element *baseElement, *forwardElement;
 
     baseElement = delElement;
@@ -41,7 +41,7 @@ static uint32_t ht_ll_rmlist(C2D_Element *delElement) {
     return LL_SUCCESS;
 }
 
-static uint32_t ht_hash(Hashtable *hashtable, Coordinate key) {
+static uint ht_hash(Hashtable *hashtable, Coordinate key) {
     // This is a hash function optimized for keys of multiples of 3 bytes.
     // It is adapted from code by Robert Oestling at <http://www.robos.org>
     // which is adapted from the original (public domain) implementation at
@@ -50,7 +50,7 @@ static uint32_t ht_hash(Hashtable *hashtable, Coordinate key) {
 
     /* Coordinate is int32 not uint32 not sure whether this is safe here...
      * JK August 2012 */
-    uint32_t a, b, c;
+    uint a, b, c;
 
     a = b = c = 0xC00FFEEE;
 
@@ -73,7 +73,7 @@ static uint32_t ht_hash(Hashtable *hashtable, Coordinate key) {
     return c;
 }
 
-static uint32_t ht_ll_put(uint32_t place, C2D_Element *destElement, C2D_Element *newElement, C2D_Element *ht_next) {
+static uint ht_ll_put(uint place, C2D_Element *destElement, C2D_Element *newElement, C2D_Element *ht_next) {
     if(place == LL_AFTER) {
         destElement->next->previous = newElement;
         newElement->next = destElement->next;
@@ -98,7 +98,7 @@ static uint32_t ht_ll_put(uint32_t place, C2D_Element *destElement, C2D_Element 
     return LL_SUCCESS;
 }
 
-static uint32_t ht_ll_del(C2D_Element *delElement) {
+static uint ht_ll_del(C2D_Element *delElement) {
     delElement->previous->next = delElement->next;
     delElement->next->previous = delElement->previous;
     if(delElement->previous->ht_next) {
@@ -114,7 +114,7 @@ static uint32_t ht_ll_del(C2D_Element *delElement) {
 }
 
 //new static functions
-Hashtable *Hashtable::ht_new(uint32_t tablesize) {
+Hashtable *Hashtable::ht_new(uint tablesize) {
     Hashtable *new_ht;
     // A Hashtable is defined by a struct of an array of pointers (Table,
     // the hashtable per se) and a pointer to an element (ListEntry, an
@@ -166,8 +166,8 @@ Hashtable *Hashtable::ht_new(uint32_t tablesize) {
     return new_ht;
 }
 
-uint32_t Hashtable::ht_del(Hashtable *hashtable, Coordinate key) {
-    uint32_t hashIndex;
+uint Hashtable::ht_del(Hashtable *hashtable, Coordinate key) {
+    uint hashIndex;
     C2D_Element *curElement = NULL;
 
     hashIndex = ht_hash(hashtable, key);
@@ -196,7 +196,7 @@ uint32_t Hashtable::ht_del(Hashtable *hashtable, Coordinate key) {
 }
 
 Byte *Hashtable::ht_get(Hashtable *hashtable, Coordinate key) {
-    uint32_t hashIndex;
+    uint hashIndex;
     C2D_Element *curElement;
 
     hashIndex = ht_hash(hashtable, key);
@@ -214,8 +214,8 @@ Byte *Hashtable::ht_get(Hashtable *hashtable, Coordinate key) {
     return HT_FAILURE;
 }
 
-uint32_t Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
-    uint32_t hashIndex;
+uint Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
+    uint hashIndex;
     C2D_Element *curElement, *chainElement, *putElement;
 
     putElement = (C2D_Element*) malloc(sizeof(C2D_Element));
@@ -272,7 +272,7 @@ uint32_t Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
     }
 }
 
-uint32_t Hashtable::ht_rmtable(Hashtable *hashtable) {
+uint Hashtable::ht_rmtable(Hashtable *hashtable) {
 
     // Free the entire linked list,
     // free the hash table itself,
@@ -284,7 +284,7 @@ uint32_t Hashtable::ht_rmtable(Hashtable *hashtable) {
 
     return HT_SUCCESS;
 }
-uint32_t Hashtable::ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2) {
+uint Hashtable::ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2) {
     C2D_Element *cur = NULL, *next = NULL;
 
     cur = h1->listEntry->next;
@@ -304,7 +304,7 @@ uint32_t Hashtable::ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2) {
     return HT_SUCCESS;
 }
 
-uint32_t Hashtable::nextpow2(uint32_t a) {
+uint Hashtable::nextpow2(uint a) {
     /*
      * Compute the next power of two by copying the highest set bit to all the
      * lower bits until 2^n - 1 is reached, then increment by one.
@@ -325,7 +325,7 @@ uint32_t Hashtable::nextpow2(uint32_t a) {
     return a;
 }
 
-uint32_t Hashtable::lastpow2(uint32_t a) {
+uint Hashtable::lastpow2(uint a) {
     /*
      * Works very similarly to nextpow2().
      */

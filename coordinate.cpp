@@ -41,9 +41,9 @@ Coordinate Coordinate::Px2DcCoord(Coordinate pxCoordinate) {
 }
 
 bool Coordinate::transCoordinate(Coordinate *outCoordinate,
-                                 int32_t x,
-                                 int32_t y,
-                                 int32_t z,
+                                 int x,
+                                 int y,
+                                 int z,
                                  floatCoordinate scale, Coordinate offset) {
 
     /*

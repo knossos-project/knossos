@@ -34,30 +34,30 @@ class Renderer : public QObject
 public:
     explicit Renderer(QObject *parent = 0);    
 
-    static bool setRotationState(uint32_t setTo);
+    static bool setRotationState(uint setTo);
     static bool rotateSkeletonViewport();
     static bool updateRotationStateMatrix(float M1[16], float M2[16]);
-    static uint32_t renderViewportBorders(uint32_t currentVP);
+    static uint renderViewportBorders(uint currentVP);
 
-    static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
-    static uint32_t renderText(Coordinate *pos, char *string);
-    static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint32_t viewportType);
-    static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint32_t viewportType);
-    // void renderWholeSkeleton(uint32_t viewportType);
-    static void renderSkeleton(uint32_t viewportType);
-    // void renderSuperCubeSkeleton(uint32_t viewportType);
-    // void renderActiveTreeSkeleton(uint32_t viewportType);
+    static uint renderSegPlaneIntersection(struct segmentListElement *segment);
+    static uint renderText(Coordinate *pos, char *string);
+    static uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
+    static uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
+    // void renderWholeSkeleton(uint viewportType);
+    static void renderSkeleton(uint viewportType);
+    // void renderSuperCubeSkeleton(uint viewportType);
+    // void renderActiveTreeSkeleton(uint viewportType);
     //bool updateDisplayListsSkeleton();
     static bool doubleMeshCapacity(mesh *toDouble);
-    bool initMesh(mesh *meshToInit, uint32_t initialSize);
-    static bool sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType);
-    static bool updateFrustumClippingPlanes(uint32_t viewportType);
+    bool initMesh(mesh *meshToInit, uint initialSize);
+    static bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
+    static bool updateFrustumClippingPlanes(uint viewportType);
 signals:
     
 public slots:
-    static uint32_t retrieveVisibleObjectBeneathSquare(uint32_t currentVP, uint32_t x, uint32_t y, uint32_t width);
-    static bool renderOrthogonalVP(uint32_t currentVP);
-    static bool renderSkeletonVP(uint32_t currentVP);
+    static uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    static bool renderOrthogonalVP(uint currentVP);
+    static bool renderSkeletonVP(uint currentVP);
     bool drawGUI();
 };
 

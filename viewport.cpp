@@ -329,40 +329,40 @@ void Viewport::drawSkeletonViewport() {
 }
 
 
-bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseButtonLeft(event, VPfound);
 }
 
-bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseButtonMiddle(event, VPfound);
 
 }
 
-bool Viewport::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseButtonRight(event, VPfound);
 }
 
-bool Viewport::handleMouseMotion(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseMotion(QMouseEvent *event, int VPfound) {
 
 }
 
-bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseMotionLeftHold(event, VPfound);
 }
 
-bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseMotionMiddleHold(event, VPfound);
 }
 
-bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseMotionRightHold(event, VPfound);
 }
 
-bool Viewport::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
     return delegate->handleMouseWheelForward(event, VPfound);
 }
 
-bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
+bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return delegate->handleMouseWheelBackward(event, VPfound);
 }
 
@@ -384,15 +384,15 @@ void Viewport::leaveEvent(QEvent *event) {
     entered = false;
 }
 
-Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
+Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
     Coordinate *foundCoordinate;
     foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
-    int32_t x, y, z;
+    int x, y, z;
     x = y = z = 0;
 
     // These variables store the distance in screen pixels from the left and
     // upper border from the user mouse click to the VP boundaries.
-    uint32_t xDistance, yDistance;
+    uint xDistance, yDistance;
 
     if((VPfound == -1)
         || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))

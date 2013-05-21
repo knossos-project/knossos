@@ -54,8 +54,8 @@ struct stateInfo *state = NULL;
 //Knossos *knossos;
 Viewer *viewer;
 
-//static uint32_t isPathString(char *string);
-//static uint32_t printUsage();
+//static uint isPathString(char *string);
+//static uint printUsage();
 
 
 int main(int argc, char *argv[])
@@ -170,31 +170,34 @@ int main(int argc, char *argv[])
     remote = new Remote();
     remote->start();
 
-    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int32_t, int32_t, char *)));
-    QObject::connect(client, SIGNAL(setActiveNodeSignal(int32_t,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(setActiveNode(int32_t,nodeListElement*,int32_t)));
-    QObject::connect(client, SIGNAL(addTreeCommentSignal(int32_t,int32_t,char*)), viewer->skeletonizer, SLOT(addTreeComment(int32_t,int32_t,char*)));
+    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
+    QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)), viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
 
-    QObject::connect(remote, SIGNAL(userMoveSignal(int32_t,int32_t,int32_t,int32_t)), viewer, SLOT(userMove(int32_t,int32_t,int32_t,int32_t)));
-    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
-    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
-    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
-    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int32_t)), remote, SLOT(setRemoteStateType(int32_t)));
+    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
 
-    QObject::connect(viewer->vp->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
-    QObject::connect(viewer->vp2->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
-    QObject::connect(viewer->vp3->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
-    QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int32_t,int32_t,int32_t)), remote, SLOT(setRecenteringPosition(int32_t,int32_t,int32_t)));
+    QObject::connect(viewer->vp->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vp2->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vp3->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
 
-    QObject::connect(client, SIGNAL(remoteJumpSignal(int32_t,int32_t,int32_t)), remote, SLOT(remoteJump(int32_t,int32_t,int32_t)));
-    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int32_t,uint32_t)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int32_t,uint32_t)));
-    QObject::connect(client, SIGNAL(clearSkeletonSignal(int32_t,int)), viewer->skeletonizer, SLOT(clearSkeleton(int32_t,int)));
-    QObject::connect(client, SIGNAL(delSegmentSignal(int32_t,int32_t,int32_t,segmentListElement*)), viewer->skeletonizer, SLOT(delSegment(int32_t,int32_t,int32_t,segmentListElement*)));
-    QObject::connect(client, SIGNAL(editNodeSignal(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)), viewer->skeletonizer, SLOT(editNode(int32_t,int32_t,nodeListElement*,float,int32_t,int32_t,int32_t,int32_t)));
-    QObject::connect(client, SIGNAL(delNodeSignal(int32_t,int32_t,nodeListElement*)), viewer->skeletonizer, SLOT(delNode(int32_t,int32_t,nodeListElement*)));
-    QObject::connect(client, SIGNAL(delTreeSignal(int32_t,int32_t)), viewer->skeletonizer, SLOT(delTree(int32_t,int32_t)));
-    QObject::connect(client, SIGNAL(addCommentSignal(int32_t,const char*,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(addComment(int32_t,const char*,nodeListElement*,int32_t)));
-    QObject::connect(client, SIGNAL(editCommentSignal(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)), viewer->skeletonizer, SLOT(editComment(int32_t,commentListElement*,int32_t,char*,nodeListElement*,int32_t)));
-    QObject::connect(client, SIGNAL(delCommentSignal(int32_t,commentListElement*,int32_t)), viewer->skeletonizer, SLOT(delComment(int32_t,commentListElement*,int32_t)));
+    QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
+    QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));
+    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*)), viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*)));
+    QObject::connect(client, SIGNAL(delTreeSignal(int,int)), viewer->skeletonizer, SLOT(delTree(int,int)));
+    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int)));
+
+    QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
+    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
 
     /*
     for(int i = 0; i < 100; i++) {
@@ -233,7 +236,7 @@ int main(int argc, char *argv[])
  * This function overwrites the values of state with the value of tempConfig
  * Beyond it allocates the dynamic data structures
  */
-int32_t Knossos::initStates() {
+int Knossos::initStates() {
    state->time.start();
 
    //General stuff
@@ -453,7 +456,7 @@ int32_t Knossos::initStates() {
 
 
 /* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
-uint32_t Knossos::ones32(register uint32_t x) {
+uint Knossos::ones32(register uint x) {
         /* 32-bit recursive reduction using SWAR...
        but first step is mapping 2-bit values
        into sum of 2 1-bit values in sneaky way
@@ -468,7 +471,7 @@ uint32_t Knossos::ones32(register uint32_t x) {
 
 
 /* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
-uint32_t Knossos::log2uint32(register uint32_t x) {
+uint Knossos::log2uint32(register uint x) {
 
     x |= (x >> 1);
     x |= (x >> 2);
@@ -479,7 +482,7 @@ uint32_t Knossos::log2uint32(register uint32_t x) {
     return(ones32(x >> 1));
 }
 
-bool Knossos::lockSkeleton(uint32_t targetRevision) {
+bool Knossos::lockSkeleton(uint targetRevision) {
     /*
      * If a skeleton modifying function is called on behalf of the network client,
      * targetRevision should be set to the appropriate remote value and lockSkeleton()
@@ -513,7 +516,7 @@ bool Knossos::lockSkeleton(uint32_t targetRevision) {
     }
     return true;
 }
-bool Knossos::unlockSkeleton(int32_t increment) {
+bool Knossos::unlockSkeleton(int increment) {
     /* We cannot increment the revision count if the skeleton change was
      * not successfully commited (i.e. the skeleton changing function encountered
      * an error). In that case, the connection has to be closed and the user
@@ -568,7 +571,7 @@ bool Knossos::sendQuitSignal() {
 
 /* Removes the new line symbols from a string */
 bool Knossos::stripNewlines(char *string) {
-    int32_t i = 0;
+    int i = 0;
 
     for(i = 0; string[i] != '\0'; i++) {
         if(string[i] == '\n') // ? os specific ?
@@ -628,7 +631,7 @@ bool Knossos::printConfigValues() {
 
 bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 
-    int32_t i;
+    int i;
 
     for(i = 0; i < 256; i++) {
         datasetLut[0 * 256 + i] = i;
@@ -663,14 +666,14 @@ struct stateInfo *Knossos::emptyState() {
  */
 bool Knossos::findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
-    uint32_t currMag, i;
+    uint currMag, i;
     char currPath[1024];
     char levelUpPath[1024];
     char currKconfPath[1024];
     char datasetBaseDirName[1024];
     char datasetBaseExpName[1024];
-    int32_t isPathSepTerminated = false;
-    uint32_t pathLen;
+    int isPathSepTerminated = false;
+    uint pathLen;
 
     memset(currPath, '\0', 1024);
     memset(levelUpPath, '\0', 1024);
@@ -999,7 +1002,7 @@ bool Knossos::tempConfigDefaults() {
 
 bool Knossos::readDataConfAndLocalConf() {
 
-    int32_t length;
+    int length;
     char configFile[1024];
 
     memset(configFile, '\0', 1024);
@@ -1030,7 +1033,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
  char *lval = NULL, *rval = NULL;
  char *equals = NULL;
- int32_t i = 0, j = 0, llen = 0;
+ int i = 0, j = 0, llen = 0;
  const char *lvals[NUM_PARAMS] = {
                              "--data-path",       // 0  Do not forget
                              "--connect-asap",    // 1  to also modify
@@ -1102,19 +1105,19 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      tempConfig->scale.z = (float)strtod(rval, NULL);
                      break;
                  case 5:
-                     tempConfig->boundary.x = (int32_t)atoi(rval);
+                     tempConfig->boundary.x = (int)atoi(rval);
                      break;
                  case 6:
-                     tempConfig->boundary.y = (int32_t)atoi(rval);
+                     tempConfig->boundary.y = (int)atoi(rval);
                      break;
                  case 7:
-                     tempConfig->boundary.z = (int32_t)atoi(rval);
+                     tempConfig->boundary.z = (int)atoi(rval);
                      break;
                  case 8:
                      strncpy(tempConfig->name, rval, 1023);
                      break;
                  case 9:
-                     tempConfig->M = (int32_t)atoi(rval);
+                     tempConfig->M = (int)atoi(rval);
                      break;
                  case 10:
                      Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
@@ -1123,7 +1126,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      Knossos::readConfigFile(rval);
                      break;
                  case 12:
-                     tempConfig->magnification = (int32_t)atoi(rval);
+                     tempConfig->magnification = (int)atoi(rval);
                      break;
                  case 13:
                      tempConfig->overlay = true;

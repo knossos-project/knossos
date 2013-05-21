@@ -42,36 +42,36 @@ class Client : public QObject
 public:
     explicit Client(QObject *parent = 0);
 
-    static bool broadcastPosition(uint32_t x, uint32_t y, uint32_t z);
+    static bool broadcastPosition(uint x, uint y, uint z);
     static bool skeletonSyncBroken();
-    static int32_t bytesToInt(Byte *source);
-    static bool integerToBytes(Byte *dest, int32_t source);
+    static int bytesToInt(Byte *source);
+    static bool integerToBytes(Byte *dest, int source);
     static bool floatToBytes(Byte *dest, float source);
     static int Wrapper_SDLNet_TCP_Open(void *params);
-    static bool IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t length, QMutex *mutex);
-    static bool addPeer(uint32_t id, char *name, float xScale, float yScale, float zScale, int32_t xOffset, int32_t yOffset, int32_t zOffset);
-    static bool delPeer(uint32_t id);
-    static bool broadcastCoordinate(uint32_t x, uint32_t y, uint32_t z);
+    static bool IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex);
+    static bool addPeer(uint id, char *name, float xScale, float yScale, float zScale, int xOffset, int yOffset, int zOffset);
+    static bool delPeer(uint id);
+    static bool broadcastCoordinate(uint x, uint y, uint z);
     static bool syncMessage(const char *fmt, ...);
-    static int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
+    static int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, struct IOBuffer *buffer);
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
 
-    uint32_t parseInBuffer();
+    uint parseInBuffer();
     bool clientRun();
 
     bool connectAsap;
-    int32_t remotePort;
+    int remotePort;
     bool connected;
     Byte synchronizePosition;
     Byte synchronizeSkeleton;
-    int32_t connectionTimeout;
+    int connectionTimeout;
     bool connectionTried;
     char serverAddress[1024];
 
     QHostAddress *remoteServer;
     QTcpSocket *remoteSocket;
     QSet<QTcpSocket *> *socketSet;
-    uint32_t myId;
+    uint myId;
     bool saveMaster;
 
     struct peerListElement *firstPeer;
@@ -79,19 +79,19 @@ public:
     struct IOBuffer *outBuffer;
 signals:
     void finished();
-    void updateSkeletonFileNameSignal(int32_t targetRevision, int32_t increment, char *filename);
-    void setActiveNodeSignal(int32_t targetRevision, nodeListElement *node, int32_t nodeID);
-    void addTreeCommentSignal(int32_t targetRevision, int32_t treeID, char *comment);
-    void remoteJumpSignal(int32_t x, int32_t y, int32_t z);
-    void skeletonWorkModeSignal(int32_t targetRevision, uint32_t workMode);
-    void clearSkeletonSignal(int32_t targetRevision, int loadingSkeleton);
-    void delSegmentSignal(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, segmentListElement *segToDel);
-    void editNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *node, float newRadius, int32_t newXPos, int32_t newYPos, int32_t newZPos, int32_t inMag);
-    void delNodeSignal(int32_t targetRevision, int32_t nodeID, nodeListElement *nodeToDel);
-    void delTreeSignal(int32_t targetRevision, int32_t treeID);
-    void addCommentSignal(int32_t targetRevision, const char *content, nodeListElement *node, int32_t nodeID);
-    bool editCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t nodeID, char *newContent, nodeListElement *newNode, int32_t newNodeID);
-    bool delCommentSignal(int32_t targetRevision, commentListElement *currentComment, int32_t commentNodeID);
+    void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    void addTreeCommentSignal(int targetRevision, int treeID, char *comment);
+    void remoteJumpSignal(int x, int y, int z);
+    void skeletonWorkModeSignal(int targetRevision, uint workMode);
+    void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel);
+    void delTreeSignal(int targetRevision, int treeID);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID);
 public slots:
     void start();
     void socketConnectionSucceeded();

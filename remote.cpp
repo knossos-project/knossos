@@ -104,7 +104,7 @@ void Remote::run() {
 
 bool Remote::newTrajectory(char *trajName, char *trajectory) {
 
-    int32_t i = 0;
+    int i = 0;
 
     if(*trajName == '\0')
         return false;
@@ -146,7 +146,7 @@ bool Remote::newTrajectory(char *trajName, char *trajectory) {
 /**
  * @todo lex parser
  */
-bool Remote::remoteTrajectory(int32_t trajNumber) {
+bool Remote::remoteTrajectory(int trajNumber) {
     /*
     YY_BUFFER_STATE trajBuffer;
 
@@ -161,7 +161,7 @@ bool Remote::remoteTrajectory(int32_t trajNumber) {
 
 bool Remote::updateRemoteState() {
 
-    int32_t i = 0;
+    int i = 0;
 
     if(state->trajectories != NULL) {
         free(state->trajectories);
@@ -178,28 +178,28 @@ bool Remote::updateRemoteState() {
 }
 
 /**
- * @todo JUMP EVENT
+ * @attention jump event is replaced with updatePositionSignal
  */
-bool Remote::remoteJump(int32_t x, int32_t y, int32_t z) {
+bool Remote::remoteJump(int x, int y, int z) {
     // is not threadsafe
     tempConfig->viewerState->currentPosition.x = x;
     tempConfig->viewerState->currentPosition.y = y;
     tempConfig->viewerState->currentPosition.z = z;
 
-    /* @todo jumpEvent */
+    emit updatePositionSignal(SILENT_COORDINATE_CHANGE);
 
     return true;
 }
 
-bool Remote::remoteWalkTo(int32_t x, int32_t y, int32_t z) {
+bool Remote::remoteWalkTo(int x, int y, int z) {
     /* This function is _not_ thread safe
      * Do not get confused!
      * remoteWalkTo walks us TO the coordinates (x, y, z) and remoteWalk
      * walks along the vector (x, y, z) from wherever we start.
      */
 
-    int32_t x_moves = 0, y_moves = 0, z_moves = 0;
-    int32_t retval = true;
+    int x_moves = 0, y_moves = 0, z_moves = 0;
+    int retval = true;
 
 
          /*  TDItem
@@ -247,9 +247,9 @@ bool Remote::remoteWalkTo(int32_t x, int32_t y, int32_t z) {
 }
 
 /**
- * @todo SDL moveEvent
+ * @attention moveEvent is replaced  by userMoveSignal
  */
-bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
+bool Remote::remoteWalk(int x, int y, int z) {
     /*
     * This function breaks the big walk distance into many small movements
     * where the maximum length of the movement along any single axis is
@@ -274,18 +274,17 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
     *
     */
 
-    //SDL_Event moveEvent;
 
     floatCoordinate singleMove;
     floatCoordinate residuals;
     Coordinate doMove;
     Coordinate *sendMove = NULL;
-    int32_t totalMoves = 0, i = 0;
-    int32_t eventDelay = 0;
+    int totalMoves = 0, i = 0;
+    int eventDelay = 0;
     floatCoordinate walkVector;
     float walkLength = 0.;
-    uint32_t timePerStep = 0;
-    uint32_t recenteringTime = 0;
+    uint timePerStep = 0;
+    uint recenteringTime = 0;
 
     walkVector.x = (float) x;
     walkVector.y = (float) y;
@@ -321,9 +320,11 @@ bool Remote::remoteWalk(int32_t x, int32_t y, int32_t z) {
 
     if(walkLength < 10.) walkLength = 10.;
 
-    timePerStep = recenteringTime / ((uint32_t)walkLength);
+    timePerStep = recenteringTime / ((uint)walkLength);
 
     if(timePerStep < 10) timePerStep = 10;
+
+    emit userMoveSignal(walkVector.x, walkVector.y, walkVector.z, TELL_COORDINATE_CHANGE);
 
     //emit user
     //moveEvent.type = SDL_USEREVENT;
@@ -444,16 +445,16 @@ void Remote::checkIdleTime() {
 
 }
 
-void Remote::setRemoteStateType(int32_t type) {
+void Remote::setRemoteStateType(int type) {
     this->type = type;
 }
 
-void Remote::setRecenteringPosition(int32_t x, int32_t y, int32_t z) {
+void Remote::setRecenteringPosition(int x, int y, int z) {
     this->recenteringPosition.x = x;
     this->recenteringPosition.y = y;
     this->recenteringPosition.z = z;
 }
 
-bool Remote::remoteDelay(int32_t s) {
+bool Remote::remoteDelay(int s) {
 
 }

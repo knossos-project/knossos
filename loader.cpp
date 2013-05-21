@@ -35,9 +35,9 @@ Loader::Loader(QObject *parent) :
 
 }
 
-bool Loader::addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target) {
+bool Loader::addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, Hashtable *target) {
     Coordinate currentDc;
-    int32_t x, y, z;
+    int x, y, z;
 
     for(x = xBase; x < xBase + edgeLen; x++) {
         for(y = yBase; y < yBase + edgeLen; y++) {
@@ -53,13 +53,13 @@ bool Loader::addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t 
 
 bool Loader::DcoiFromPos(Hashtable *Dcoi) {
     Coordinate currentDc, origin;
-    int32_t x = 0, y = 0, z = 0;
-    int32_t halfSc;
+    int x = 0, y = 0, z = 0;
+    int halfSc;
 
     origin = state->currentPositionX;
     origin = Coordinate::Px2DcCoord(origin);
 
-    halfSc = (int32_t)floorf((float)state->M / 2.);
+    halfSc = (int)floorf((float)state->M / 2.);
 
     /* We start off by adding the datacubes that contain the data
        for the orthogonal slice viewports */
@@ -129,7 +129,7 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
     char *filename = NULL;
     char typeExtension[8] = "";
     FILE *cubeFile = NULL;
-    uint32_t readBytes = 0;
+    uint readBytes = 0;
 
     /*
      * Specify either freeDcSlot or freeOcSlot.
@@ -242,7 +242,7 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
     }
 
     if(freeDcSlot) {
-        readBytes = (uint32_t)fread(freeDcSlot, 1, state->cubeBytes, cubeFile);
+        readBytes = (uint)fread(freeDcSlot, 1, state->cubeBytes, cubeFile);
         if(readBytes != state->cubeBytes) {
             LOG("Could read only %d / %d bytes from DC file %s.",
                 readBytes,
@@ -258,7 +258,7 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
 
     }
     else {
-        readBytes = (uint32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
+        readBytes = (uint)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
         if(readBytes != state->cubeBytes * OBJID_BYTES) {
             LOG("Could read only %d / %d bytes from OC file %s.",
                 readBytes,
@@ -290,7 +290,7 @@ loadcube_fail:
     return true;
 }
 
-int32_t Loader::slotListDelElement(CubeSlotList *slotList, CubeSlot *element) {
+int Loader::slotListDelElement(CubeSlotList *slotList, CubeSlot *element) {
     if(element->next != NULL) {
         element->next->previous = element->previous;
     }
@@ -322,7 +322,7 @@ bool Loader::slotListDel(CubeSlotList *delList){
     return true;
 }
 
-int32_t Loader::slotListAddElement(CubeSlotList *slotList, Byte *datacube) {
+int Loader::slotListAddElement(CubeSlotList *slotList, Byte *datacube) {
     CubeSlot *newElement;
 
     newElement = (CubeSlot*)malloc(sizeof(CubeSlot));
@@ -358,7 +358,7 @@ CubeSlotList *Loader::slotListNew() {
 
 bool Loader::initLoader() {
     FILE *bogusDc;
-    uint32_t i = 0;
+    uint i = 0;
 
     // DCOI, ie. Datacubes of interest, is a hashtable that will contain
     // the coordinates of the datacubes and overlay cubes we need to
@@ -446,7 +446,7 @@ bool Loader::initLoader() {
     return true;
 }
 
-bool Loader::removeLoadedCubes(int32_t magChange) {
+bool Loader::removeLoadedCubes(int magChange) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     Byte *delCubePtr = NULL;
     Hashtable *mergeCube2Pointer = NULL;
@@ -584,7 +584,7 @@ bool Loader::removeLoadedCubes(int32_t magChange) {
 bool Loader::loadCubes() {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     CubeSlot *currentDcSlot = NULL, *currentOcSlot = NULL;
-    uint32_t loadedDc = false, loadedOc = false;
+    uint loadedDc = false, loadedOc = false;
 
     nextCube = currentCube = this->Dcoi->listEntry->next;
     while(nextCube != this->Dcoi->listEntry) {
@@ -782,7 +782,7 @@ void Loader::load() {
     }
 
 
-    int32_t magChange = false;
+    int magChange = false;
 
     state->loadSignal = false;
     magChange = false;

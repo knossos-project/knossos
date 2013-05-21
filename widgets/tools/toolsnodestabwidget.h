@@ -41,7 +41,7 @@ public:
     explicit ToolsNodesTabWidget(QWidget *parent = 0);
     void loadSettings();
 signals:
-    void updatePositionSignal(int32_t serverMovement);
+    void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();

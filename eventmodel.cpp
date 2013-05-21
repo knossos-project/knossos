@@ -37,10 +37,10 @@ EventModel::EventModel(QObject *parent) :
 {
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
+bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 {
 
-    int32_t clickedNode;
+    int clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
@@ -109,7 +109,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::AltModifier) {
         qDebug("alt and mouseleft");
-        int32_t clickedNode;
+        int clickedNode;
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
                                                      (state->viewerState->screenSizeY - event->y()),
@@ -130,9 +130,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int32_t VPfound)
     return true;
 }
 
-bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
-    int32_t clickedNode;
+    int clickedNode;
 
     clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
@@ -180,9 +180,9 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int32_t VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
-    int32_t newNodeID;
+    int newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
     /* We have to activate motion tracking only for the skeleton VP for a right click */
@@ -321,11 +321,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int32_t VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
 
     qDebug() << "mouse motion with left button clicked";
 
-    uint32_t i;
+    uint i;
 
 
 
@@ -409,8 +409,8 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int32_t VPfound) 
     return true;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound) {
-    int32_t i = 0;
+bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
+    int i = 0;
         Coordinate newDraggedNodePos;
 
         for(i = 0; i < state->viewerState->numberViewports; i++) {
@@ -528,7 +528,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int32_t VPfound
     return true;
 }
 
-bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
            state->skeletonState->rotdx += xrel(event->x());
@@ -543,7 +543,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int32_t VPfound)
     return true;
 }
 
-bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
     qDebug() << "wheel up";
 
@@ -617,7 +617,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int32_t VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
+bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
     qDebug() << "mouseWheelDown";
 
@@ -690,7 +690,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int32_t VPfound) {
     return true;
 }
 
-bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
+bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     // This is a workaround for agars behavior of processing / labeling
     //events. Without it, input into a textbox would still trigger global
@@ -1120,16 +1120,16 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int32_t VPfound) {
     return true;
 }
 
-Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int32_t VPfound) {
+Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
 
     Coordinate *foundCoordinate;
     foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
-    int32_t x, y, z;
+    int x, y, z;
     x = y = z = 0;
 
     // These variables store the distance in screen pixels from the left and
     // upper border from the user mouse click to the VP boundaries.
-    uint32_t xDistance, yDistance;
+    uint xDistance, yDistance;
 
     if((VPfound == -1)
         || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))

@@ -50,7 +50,7 @@
 #define NUM_MAG_DATASETS 65536
 
 #if QT_POINTER_SIZE == 4
-#define PTRSIZEINT int32_t
+#define PTRSIZEINT int
 #elif QT_POINTER_SIZE == 8
 #define PTRSIZEINT int64_t
 #endif
@@ -276,12 +276,12 @@ typedef struct {
 } floatCoordinate;
 
 struct Coordinate{
-    int32_t x;
-    int32_t y;
-    int32_t z;
+    int x;
+    int y;
+    int z;
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
-    static bool transCoordinate(Coordinate *outCoordinate, int32_t x, int32_t y, int32_t z, floatCoordinate scale, Coordinate offset);
-    static Coordinate *transNetCoordinate(uint32_t id, uint32_t x, uint32_t y, uint32_t z);
+    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
+    static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
 
 };
@@ -303,7 +303,7 @@ typedef struct _CubeSlot CubeSlot;
 
 struct _CubeSlotList {
         CubeSlot *firstSlot;
-        int32_t elements;
+        int elements;
 };
 
 typedef struct _CubeSlotList CubeSlotList;
@@ -348,19 +348,19 @@ typedef struct _C2D_Element C2D_Element;
 
 typedef struct Hashtable{
     C2D_Element *listEntry;
-    uint32_t tablesize;
+    uint tablesize;
     C2D_Element **table;
 
     // Create a new hashtable.
     // tablesize specifies the size of the hash-to-data-table and should be 1.25
     // to 1.5 times the number of elements the table is expected to store.
     // If successful, the function returns a pointer to a Hashtable structure.
-    static Hashtable *ht_new(uint32_t tablesize);
+    static Hashtable *ht_new(uint tablesize);
 
     // Delete the whole hashtable and linked list and release all the memory
     // hashtable specifies which hashtable to delete.
     // The return value is LL_SUCCESS or LL_FAILURE
-    static uint32_t ht_rmtable(Hashtable *hashtable);
+    static uint ht_rmtable(Hashtable *hashtable);
 
     // Return the value associated with a key.
     // key is the key to look for.
@@ -369,15 +369,15 @@ typedef struct Hashtable{
     static Byte *ht_get(Hashtable *hashtable, Coordinate key);
 
     // Insert an element.
-    static uint32_t ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
+    static uint ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
 
     // Delete an element
-    static uint32_t ht_del(Hashtable *hashtable, Coordinate key);
+    static uint ht_del(Hashtable *hashtable, Coordinate key);
     // Compute the union of h1 and h2 and put it in target.
-    static uint32_t ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2);
+    static uint ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2);
 
-    static uint32_t nextpow2(uint32_t a);
-    static uint32_t lastpow2(uint32_t a);
+    static uint nextpow2(uint a);
+    static uint lastpow2(uint a);
 } Hashtable;
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
@@ -387,17 +387,17 @@ struct vpBacklogElement {
 	Byte *slice;
     Coordinate cube;
 	// I guess those aren't really necessary.
-	uint32_t x_px;
-	uint32_t y_px;
-    uint32_t dcOffset;
-    uint32_t cubeType;
+	uint x_px;
+	uint y_px;
+    uint dcOffset;
+    uint cubeType;
     struct vpBacklogElement *next;
     struct vpBacklogElement *previous;
 };
 
 struct vpBacklog {
     struct vpBacklogElement *entry;
-    uint32_t elements;
+    uint elements;
 };
 
 // This is used for a (counting) linked list of vpConfigs that have to be handled
@@ -411,20 +411,20 @@ struct vpListElement {
 
 struct vpList {
     struct vpListElement *entry;
-    uint32_t elements;
+    uint elements;
 };
 
 struct stack {
-    uint32_t elementsOnStack;
+    uint elementsOnStack;
     void **elements;
-    int32_t stackpointer;
-    int32_t size;
+    int stackpointer;
+    int size;
 };
 
 struct dynArray {
     void **elements;
-    int32_t end;
-    int32_t firstSize;
+    int end;
+    int firstSize;
 };
 
 struct assignment {
@@ -483,33 +483,33 @@ struct stateInfo {
     // state->magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
-    uint32_t magnification;
+    uint magnification;
 
-    uint32_t highestAvailableMag;
-    uint32_t lowestAvailableMag;
+    uint highestAvailableMag;
+    uint lowestAvailableMag;
 
     // This variable is used only by the loader.
     // It is filled by the viewer and contains
     // log2uint32(state->magnification)
-    uint32_t loaderMagnification;
+    uint loaderMagnification;
 
     // Bytes in one datacube: 2^3N
-    uint32_t cubeBytes;
+    uint cubeBytes;
 
     // Edge length of one cube in pixels: 2^N
-    int32_t cubeEdgeLength;
+    int cubeEdgeLength;
 
     // Area of a cube slice in pixels;
-    int32_t cubeSliceArea;
+    int cubeSliceArea;
 
     // Supercube edge length in datacubes.
-    int32_t M;
-    uint32_t cubeSetElements;
+    int M;
+    uint cubeSetElements;
 
 
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
-    uint32_t cubeSetBytes;
+    uint cubeSetBytes;
 
 
     // Edge length of the current data set in data pixels.
@@ -531,9 +531,9 @@ struct stateInfo {
 
     // Tells the loading thread, that state->path and or state->name changed
 
-    int32_t datasetChangeSignal;
+    int datasetChangeSignal;
 
-    int32_t maxTrajectories;
+    int maxTrajectories;
 
     // Tell the loading thread to wake up.
 
@@ -611,18 +611,18 @@ struct trajectory {
 
 struct viewportTexture {
     //Handles for OpenGl
-    uint32_t texHandle;
-    uint32_t overlayHandle;
+    uint texHandle;
+    uint overlayHandle;
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     Coordinate leftUpperPxInAbsPx;
-    uint32_t edgeLengthDc;
-    uint32_t edgeLengthPx;
+    uint edgeLengthDc;
+    uint edgeLengthPx;
 
     //These variables specifiy the area inside the textures which are used
     //for data storage. Storage always starts at texture pixels (0,0).
-    uint32_t usedTexLengthDc;
-    uint32_t usedTexLengthPx;
+    uint usedTexLengthDc;
+    uint usedTexLengthPx;
 
     //These variables specifiy the lengths inside the texture that are currently displayed.
     //Their values depend on the zoom level and the data voxel dimensions (because of aspect
@@ -659,23 +659,23 @@ struct guiConfig {
     Coordinate oneShiftedCurrPos;
     Coordinate activeNodeCoord;
 
-    int32_t yesNoReturn;
+    int yesNoReturn;
 
     // tools win buffer variables
-    int32_t activeNodeID;
-    int32_t activeTreeID;
-    int32_t totalNodes;
-    int32_t totalTrees;
-    int32_t numBranchPoints;
+    int activeNodeID;
+    int activeTreeID;
+    int totalNodes;
+    int totalTrees;
+    int numBranchPoints;
     char *commentBuffer;
     char *commentSearchBuffer;
     char *treeCommentBuffer;
 
-    int32_t mergeTreesID1;
-    int32_t mergeTreesID2;
+    int mergeTreesID1;
+    int mergeTreesID2;
 
-    int32_t linkActiveWithNode;
-    int32_t useLastActNodeRadiusAsDefault;
+    int linkActiveWithNode;
+    int useLastActNodeRadiusAsDefault;
     float actNodeRadius;
 
     color4F actTreeColor;
@@ -693,7 +693,7 @@ struct guiConfig {
     char datasetLUTFile[2048];
 
     // file saving settings win buffer variables
-    uint32_t autoSaveInterval; // in minutes
+    uint autoSaveInterval; // in minutes
     int onSaveAutoIncrement;
 
     // viewport pref window
@@ -705,9 +705,9 @@ struct guiConfig {
     // synchronization settings win buffer variables
 
     // dataset navigation settings win buffer variables
-    uint32_t stepsPerSec;
-    uint32_t recenteringTime;
-    uint32_t dropFrames;
+    uint stepsPerSec;
+    uint recenteringTime;
+    uint dropFrames;
 
     // skeleton statistics win buffer variables
 
@@ -840,7 +840,7 @@ struct vpConfig {
     Coordinate upperLeftCorner;
     //edge length in screen pixel coordinates; only squarish VPs are allowed
 
-    uint32_t edgeLength;
+    uint edgeLength;
 
     //Flag that indicates that the user is moving the VP inside the window. 0: off, 1: moving
     Byte VPmoves;
@@ -876,24 +876,24 @@ struct viewerState {
     Byte *overlayData;
     Byte *defaultTexData;
     Byte *defaultOverlayData;
-    uint32_t numberViewports;
-    uint32_t splash;
+    uint numberViewports;
+    uint splash;
     bool viewerReady;
     GLuint splashTexture;
     //Flag to indicate user movement
     bool userMove;
-    int32_t highlightVp;
-    int32_t vpKeyDirection[3];
+    int highlightVp;
+    int vpKeyDirection[3];
 
     //Min distance to currently centered data cube for rendering of spatial skeleton structure.
     //Unit: data cubes.
-    int32_t zoomCube;
+    int zoomCube;
 
     // don't jump between mags on zooming
     bool datasetMagLock;
 
     //Flag to indicate user repositioning
-	uint32_t userRepositioning;
+	uint userRepositioning;
 
 	float depthCutOff;
 
@@ -901,24 +901,24 @@ struct viewerState {
     int motionTracking;
 
 	//Stores the current window size in screen pixels
-    uint32_t screenSizeX;
-    uint32_t screenSizeY;
+    uint screenSizeX;
+    uint screenSizeY;
 
-    uint32_t activeVP;
+    uint activeVP;
 
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
 	Coordinate currentPosition;
 
-    uint32_t recenteringTime;
-    uint32_t recenteringTimeOrth;
+    uint recenteringTime;
+    uint recenteringTimeOrth;
     bool walkOrth;
 
     //SDL_Surface *screen;
 
     //Keyboard repeat rate
-    uint32_t stepsPerSec;
+    uint stepsPerSec;
 	GLint filterType;
     int multisamplingOnOff;
     int lightOnOff;
@@ -931,8 +931,8 @@ struct viewerState {
 
     bool selectModeFlag;
 
-    uint32_t dropFrames;
-    uint32_t walkFrames;
+    uint dropFrames;
+    uint walkFrames;
 
     float voxelDimX;
     float voxelDimY;
@@ -942,14 +942,14 @@ struct viewerState {
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
-    uint32_t workMode;
+    uint workMode;
     bool superCubeChanged;
 
     struct guiConfig *gui;
     struct inputmap *inputmap;
 
-    int32_t luminanceBias;
-    int32_t luminanceRangeDelta;
+    int luminanceBias;
+    int luminanceRangeDelta;
 
     GLuint datasetColortable[3][256];
     GLuint datasetAdjustmentTable[3][256];
@@ -1012,9 +1012,9 @@ struct treeListElement {
 
     struct nodeListElement *firstNode;
 
-    int32_t treeID;
+    int treeID;
     color4F color;
-    int32_t colorSetManually;
+    int colorSetManually;
 
     char comment[8192];
 };
@@ -1031,21 +1031,21 @@ struct nodeListElement {
 
     //can be VIEWPORT_XY, ...
     Byte createdInVp;
-    int32_t createdInMag;
-    int32_t timestamp;
+    int createdInMag;
+    int timestamp;
 
     struct commentListElement *comment;
 
     // counts forward AND backward segments!!!
-    int32_t numSegs;
+    int numSegs;
 
    // circumsphere radius - max. of length of all segments and node radius.
    //Used for frustum culling
    float circRadius;
 
-    uint32_t nodeID;
+    uint nodeID;
     Coordinate position;
-    int32_t isBranchNode;
+    int isBranchNode;
 };
 
 
@@ -1058,7 +1058,7 @@ struct segmentListElement {
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
-    int32_t flag;
+    int flag;
 
     float length;
 
@@ -1091,7 +1091,7 @@ struct skeletonDCsegment {
 };
 
 struct peerListElement {
-    uint32_t id;
+    uint id;
     char *name;
     floatCoordinate scale;
     Coordinate offset;
@@ -1100,8 +1100,8 @@ struct peerListElement {
 };
 
 struct IOBuffer {
-    uint32_t size;      // The current maximum size
-    uint32_t length;    // The current amount of data in the buffer
+    uint size;      // The current maximum size
+    uint length;    // The current amount of data in the buffer
     Byte *data;
 };
 
@@ -1111,13 +1111,13 @@ typedef struct {
     color4F *colors;
 
     /* useful for flexible mesh manipulations */
-    uint32_t vertsBuffSize;
-    uint32_t normsBuffSize;
-    uint32_t colsBuffSize;
+    uint vertsBuffSize;
+    uint normsBuffSize;
+    uint colsBuffSize;
     /* indicates last used element in corresponding buffer */
-    uint32_t vertsIndex;
-    uint32_t normsIndex;
-    uint32_t colsIndex;
+    uint vertsIndex;
+    uint normsIndex;
+    uint colsIndex;
 } mesh;
 
 typedef struct {
@@ -1131,7 +1131,7 @@ typedef struct {
   * @struct skeletonState
   */
 struct skeletonState {
-    uint32_t skeletonRevision;
+    uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
@@ -1140,15 +1140,15 @@ struct skeletonState {
     //    was loaded in the current knossos instance.
 
     bool unsavedChanges;
-    int32_t skeletonTime;
-    int32_t skeletonTimeCorrection;
+    int skeletonTime;
+    int skeletonTimeCorrection;
 
-    int32_t idleTimeTicksOffset;
-    int32_t idleTimeLoadOffset;
-    int32_t idleTimeSession;
-    int32_t idleTime;
-    int32_t idleTimeNow;
-    int32_t idleTimeLast;
+    int idleTimeTicksOffset;
+    int idleTimeLoadOffset;
+    int idleTimeSession;
+    int idleTime;
+    int idleTimeNow;
+    int idleTimeLast;
 
     Hashtable *skeletonDCs;
     struct treeListElement *firstTree;
@@ -1164,11 +1164,11 @@ struct skeletonState {
     struct dynArray *nodeCounter;
     struct dynArray *nodesByNodeID;
 
-    uint32_t skeletonDCnumber;
-    uint32_t workMode;
-    uint32_t volBoundary;
+    uint skeletonDCnumber;
+    uint workMode;
+    uint volBoundary;
 
-    uint32_t numberComments;
+    uint numberComments;
 
     unsigned int userCommentColoringOn;
     unsigned int commentNodeRadiusOn;
@@ -1181,9 +1181,9 @@ struct skeletonState {
 
     float rotdx;
     float rotdy;
-    int32_t rotationcounter;
+    int rotationcounter;
 
-    int32_t definedSkeletonVpView;
+    int definedSkeletonVpView;
 
     float translateX, translateY;
 
@@ -1215,11 +1215,11 @@ struct skeletonState {
     //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
     bool skeletonSliceVPchanged;
 
-    //uint32_t skeletonDisplayMode;
-    uint32_t displayMode;
+    //uint skeletonDisplayMode;
+    uint displayMode;
 
     float segRadiusToNodeRadius;
-    int32_t overrideNodeRadiusBool;
+    int overrideNodeRadiusBool;
     float overrideNodeRadiusVal;
 
     int highlightActiveTree;
@@ -1231,12 +1231,12 @@ struct skeletonState {
     int showNodeIDs;
     bool autoFilenameIncrementBool;
 
-    int32_t treeElements;
-    int32_t totalNodeElements;
-    int32_t totalSegmentElements;
+    int treeElements;
+    int totalNodeElements;
+    int totalSegmentElements;
 
-    int32_t greatestNodeID;
-    int32_t greatestTreeID;
+    int greatestNodeID;
+    int greatestTreeID;
 
     color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
@@ -1244,10 +1244,10 @@ struct skeletonState {
     //If TRUE, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
 
-    uint32_t lastSaveTicks;
+    uint lastSaveTicks;
     bool autoSaveBool;
-    uint32_t autoSaveInterval;
-    uint32_t saveCnt;
+    uint autoSaveInterval;
+    uint saveCnt;
     char *skeletonFile;
     char * prevSkeletonFile;
 
@@ -1277,18 +1277,18 @@ struct skeletonState {
 
 struct clientState {
     bool connectAsap;
-    int32_t remotePort;
+    int remotePort;
     bool connected;
     Byte synchronizePosition;
     Byte synchronizeSkeleton;
-    int32_t connectionTimeout;
+    int connectionTimeout;
     bool connectionTried;
     char serverAddress[1024];
 
     QHostAddress *remoteServer;
     QTcpSocket *remoteSocket;
     QSet<QTcpSocket *> *socketSet;
-    uint32_t myId;
+    uint myId;
     bool saveMaster;
 
     struct peerListElement *firstPeer;
@@ -1301,11 +1301,11 @@ struct clientState {
   * Maybe obsolet in QT
   */
 struct inputmap {
-    int32_t mouse;
-    int32_t modkey;
-    int32_t key;
+    int mouse;
+    int modkey;
+    int key;
 
-    int32_t action;
+    int action;
 
     struct inputmap *next;
 };

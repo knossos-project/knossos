@@ -68,11 +68,11 @@ public:
     void updateTitlebar(bool useFilename);
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    static bool addRecentFile(char *path, uint32_t pos);
+    static bool addRecentFile(char *path, uint pos);
     bool addRecentFile(QString fileName);
 
     //static void saveSkelCallback(AG_Event *event);
-    static void UI_saveSkeleton(int32_t increment);
+    static void UI_saveSkeleton(int increment);
     static void UI_saveSettings();
     void loadSkeleton();
 
@@ -96,12 +96,12 @@ public:
 
     void loadDefaultPrefs();
 signals:
-    bool changeDatasetMagSignal(uint32_t serverMovement);
+    bool changeDatasetMagSignal(uint serverMovement);
     void recalcTextureOffsetsSignal();
-    void updatePositionSignal(int32_t serverMovement);
+    void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void runSignal();
-    void clearSkeletonSignal(int32_t targetRevision, int loadingSkeleton);
+    void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
 
 
 protected:

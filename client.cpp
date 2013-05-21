@@ -96,14 +96,14 @@ static float bytesToFloat(Byte *source) {
 
 #define FLOATS 16
 #define INTS 16
-uint32_t Client::parseInBuffer() {
-    int32_t messageLen = 0;
+uint Client::parseInBuffer() {
+    int messageLen = 0;
     clientState *clientState = state->clientState;
 
     Coordinate *pPosition = NULL;
 
     float f[FLOATS];
-    int32_t d[INTS];
+    int d[INTS];
     Byte s[2048];
 
     memset(s, '\0', 2048 * sizeof(char));
@@ -204,7 +204,7 @@ uint32_t Client::parseInBuffer() {
                 if(d[0] < 0) {//client Id should be positive
                     break; //ignore this message if invalid
                 }
-                if(state->clientState->myId == (uint32_t)d[0]) {
+                if(state->clientState->myId == (uint)d[0]) {
                     state->clientState->saveMaster = true;
                     LOG("Instance id %d (%s) now autosaving.",
                         state->clientState->myId,
@@ -554,7 +554,7 @@ static bool cleanUpClient() {
 bool Client::clientRun() {
     clientState *clientState = state->clientState;
     Byte *message = NULL;
-    uint32_t messageLen = 0, nameLen = 0, readLen = 0;
+    uint messageLen = 0, nameLen = 0, readLen = 0;
     //SDL_Event autoSaveOffEvent;
 
     message = (Byte*)malloc(8192 * sizeof(Byte));
@@ -720,10 +720,10 @@ void Client::start() {
 }
 
 
-bool Client::broadcastPosition(uint32_t x, uint32_t y, uint32_t z) {
+bool Client::broadcastPosition(uint x, uint y, uint z) {
     clientState *clientState = state->clientState;
     Byte *data = NULL;
-    uint32_t messageLen;
+    uint messageLen;
 
     data = (Byte*)malloc(128 * sizeof(Byte));
     if(data == NULL) {
@@ -755,14 +755,14 @@ bool Client::skeletonSyncBroken() {
     return true;
 }
 
-int32_t Client::bytesToInt(Byte *source) {
-    int32_t dest = 0;
-    memcpy(&dest, source, sizeof(int32_t));
+int Client::bytesToInt(Byte *source) {
+    int dest = 0;
+    memcpy(&dest, source, sizeof(int));
     return dest;
 }
 
-bool Client::integerToBytes(Byte *dest, int32_t source) {
-    memcpy(dest, &source, sizeof(int32_t));
+bool Client::integerToBytes(Byte *dest, int source) {
+    memcpy(dest, &source, sizeof(int));
     return true;
 }
 
@@ -778,8 +778,8 @@ int Client::Wrapper_SDLNet_TCP_Open(void *params) {
     return true;
 }
 
-bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t length, QMutex *mutex) {
-    uint32_t newSize = 0, minBufferSize = 0;
+bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex) {
+    uint newSize = 0, minBufferSize = 0;
     Byte *newDataPtr = NULL;
 
     if(mutex != NULL) {
@@ -850,9 +850,9 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint32_t leng
     return true;
 }
 
-bool Client::addPeer(uint32_t id, char *name,
+bool Client::addPeer(uint id, char *name,
                      float xScale, float yScale, float zScale,
-                     int32_t xOffset, int32_t yOffset, int32_t zOffset) {
+                     int xOffset, int yOffset, int zOffset) {
     struct clientState *clientState = state->clientState;
     struct peerListElement *oldPeer = NULL, *newPeer = NULL;
 
@@ -887,7 +887,7 @@ bool Client::addPeer(uint32_t id, char *name,
 }
 
 
-bool Client::delPeer(uint32_t id) {
+bool Client::delPeer(uint id) {
     qDebug() << "delPeer() is not implemented.\n";
     return true;
 }
@@ -916,13 +916,13 @@ bool Client::syncMessage(const char *fmt, ...) {
 
     va_list ap;
     Byte *packedBytes = NULL;
-    int32_t len = 5;  // This is where the message part after KIKI_REPEAT and
+    int len = 5;  // This is where the message part after KIKI_REPEAT and
                       // the message length field begins.
     int d;
     Byte b;
     char *s;
     float f;
-    int32_t peerLenField = -1;
+    int peerLenField = -1;
 
     if(!state->clientState->synchronizeSkeleton ||
        !state->clientState->connected) {
@@ -947,7 +947,7 @@ bool Client::syncMessage(const char *fmt, ...) {
                 if(len >= PACKLEN) {
                     goto lenoverflow;
                 }
-                d = va_arg(ap, int32_t);
+                d = va_arg(ap, int);
 
                 Client::integerToBytes(&packedBytes[len - 4], d);
                 break;
@@ -957,7 +957,7 @@ bool Client::syncMessage(const char *fmt, ...) {
                 if(len >= PACKLEN) {
                     goto lenoverflow;
                 }
-                b = (Byte)va_arg(ap, int32_t);
+                b = (Byte)va_arg(ap, int);
 
                 packedBytes[len - 1] = b;
                 break;
@@ -1031,13 +1031,13 @@ lenoverflow:
     return false;
 }
 
-int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
-                                   float *f, Byte *s, int32_t *d,
+int Client::parseInBufferByFmt(int len, const char *fmt,
+                                   float *f, Byte *s, int *d,
                                    struct IOBuffer *buffer) {
-    int32_t fIndex = -1;
-    int32_t dIndex = -1;
-    int32_t pos = 0;
-    int32_t stringLen = 0;
+    int fIndex = -1;
+    int dIndex = -1;
+    int pos = 0;
+    int stringLen = 0;
 
     memset(s, '\0', 2048 * sizeof(Byte));
 
@@ -1060,7 +1060,7 @@ int32_t Client::parseInBufferByFmt(int32_t len, const char *fmt,
         return FAIL;
     }
 
-    else if(buffer->length < (uint32_t)len) {
+    else if(buffer->length < (uint)len) {
 
         return false;
     }
@@ -1110,7 +1110,7 @@ overflow:
     return FAIL;
 }
 
-Coordinate* Client::transNetCoordinate(uint32_t id, int32_t x, uint32_t y, int32_t z) {
+Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {
     clientState *clientState = state->clientState;
     peerListElement *peer = clientState->firstPeer;
     Coordinate *outCoordinate = NULL;

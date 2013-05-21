@@ -40,7 +40,9 @@ SOURCES +=\
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
-    functions.cpp
+    functions.cpp \
+    texturizer.cpp \
+    slicer.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -70,7 +72,9 @@ HEADERS  += mainwindow.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
-    functions.h
+    functions.h \
+    texturizer.h \
+    slicer.h
 
 
 FORMS    += mainwindow.ui

@@ -8,7 +8,7 @@ bool normalizeVector(floatCoordinate *v);
 float euclidicNorm(floatCoordinate *v);
 bool normalizeVector(floatCoordinate *v);
 float scalarProduct(floatCoordinate *v1, floatCoordinate *v2);
-int32_t sgn(float number);
+int sgn(float number);
 
 float radToDeg(float rad);
 float degToRad(float deg);
