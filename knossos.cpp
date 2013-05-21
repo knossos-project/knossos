@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)), viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
 
-    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+
     QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
     QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
     QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
@@ -198,6 +198,7 @@ int main(int argc, char *argv[])
 
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+    QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
 
     /*
     for(int i = 0; i < 100; i++) {

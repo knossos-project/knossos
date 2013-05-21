@@ -48,6 +48,7 @@ class MainWindow;
 class Viewer : public QThread
 {
     Q_OBJECT
+
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
@@ -65,7 +66,7 @@ public:
     //Calling makes only sense after full initialization of the SDL / OGL screen
     static bool initializeTextures(); // it now part of the initGL function of the viewport
 
-    static bool updateZoomCube();
+    bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
 
     static bool loadDatasetColorTable(const char *path, GLuint *table, int type);
@@ -92,7 +93,7 @@ public slots:
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     static bool refreshViewports();
-    static bool updateViewerState();
+    bool updateViewerState();
     void run();
 protected:
     bool calcLeftUpperTexAbsPx();

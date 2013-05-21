@@ -188,14 +188,14 @@ void Viewport::resizeGL(int w, int h) {
 
 }
 
-/**
-  * @Todo the case decision in paintGL is crap I know, it is just an adhoc test for rendering.
-  */
-
 void Viewport::paintGL() {
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
+
+
 
            this->drawViewport(plane);
 

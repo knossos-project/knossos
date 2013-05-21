@@ -523,8 +523,7 @@ static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4
 
 bool Renderer::drawGUI() {
 
-
-     return true;
+    return true;
 }
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
@@ -642,6 +641,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glBindTexture (GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
             glEnable(GL_DEPTH_TEST);
+
+
 
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
@@ -1307,6 +1308,8 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             }
 
             glDisable(GL_TEXTURE_2D);
+
+            renderSkeleton(VIEWPORT_SKELETON);
 
             for(i = 0; i < state->viewerState->numberViewports; i++) {
                 dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX

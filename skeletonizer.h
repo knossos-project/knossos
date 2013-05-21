@@ -30,9 +30,12 @@
 #include "knossos-global.h"
 #include "viewport.h"
 
+
 class Skeletonizer : public QObject
 {
     Q_OBJECT
+    //friend class Viewer;
+    //friend class Remote;
 public:
     explicit Skeletonizer(QObject *parent = 0);
 
@@ -109,20 +112,164 @@ public:
     void pushCmd(struct cmdList *cmdList, struct cmdListElement *cmdListEl);
     void flushCmdList(struct cmdList *cmdList);
     void delCmdListElement(struct cmdListElement *cmdEl);
-protected:
-    int saveSkeleton();
+
+public:
     void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     bool loadSkeleton();
     void popBranchNodeCanceled();
     bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
-    int xorInt(int xorMe);
+    static int xorInt(int xorMe);
+
+    uint skeletonRevision;
+
+    //    skeletonTime is the time spent on the current skeleton in all previous
+    //    instances of knossos that worked with the skeleton.
+    //    skeletonTimeCorrection is the time that has to be subtracted from
+    //    SDL_GetTicks() to yield the number of milliseconds the current skeleton
+    //    was loaded in the current knossos instance.
+
+    bool unsavedChanges;
+    int skeletonTime;
+    int skeletonTimeCorrection;
+
+    int idleTimeTicksOffset;
+    int idleTimeLoadOffset;
+    int idleTimeSession;
+    int idleTime;
+    int idleTimeNow;
+    int idleTimeLast;
+
+    Hashtable *skeletonDCs;
+    struct treeListElement *firstTree;
+    struct treeListElement *activeTree;
+    struct nodeListElement *activeNode;
+
+    struct commentListElement *currentComment;
+    char *commentBuffer;
+    char *searchStrBuffer;
+
+    struct stack *branchStack;
+
+    struct dynArray *nodeCounter;
+    struct dynArray *nodesByNodeID;
+
+    uint skeletonDCnumber;
+    uint workMode;
+    uint volBoundary;
+
+    uint numberComments;
+
+    unsigned int userCommentColoringOn;
+    unsigned int commentNodeRadiusOn;
+
+    bool lockPositions;
+    bool positionLocked;
+    char onCommentLock[1024];
+    Coordinate lockedPosition;
+    long unsigned int lockRadius;
+
+    float rotdx;
+    float rotdy;
+    int rotationcounter;
+
+    int definedSkeletonVpView;
+
+    float translateX, translateY;
+
+    // Display list,
+    //which renders the skeleton defined in skeletonDisplayMode
+    //(may be same as in displayListSkeletonSkeletonizerVPSlicePlaneVPs
+    GLuint displayListSkeletonSkeletonizerVP;
+    // Display list, which renders the skeleton of the slice plane VPs
+    GLuint displayListSkeletonSlicePlaneVP;
+    // Display list, which applies the basic openGL operations before the skeleton is rendered.
+    //(Light settings, view rotations, translations...)
+    GLuint displayListView;
+    // Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on
+    GLuint displayListDataset;
+
+    // Stores the model view matrix for user performed VP rotations.
+    float skeletonVpModelView[16];
+
+    // Stores the angles of the cube in the SkeletonVP
+    float rotationState[16];
+    // The next three flags cause recompilation of the above specified display lists.
+
+    //TRUE, if all display lists must be updated
+    bool skeletonChanged;
+    //TRUE, if the view on the skeleton changed
+    bool viewChanged;
+    //TRUE, if dataset parameters (size, ...) changed
+    bool datasetChanged;
+    //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
+    bool skeletonSliceVPchanged;
+
+    //uint skeletonDisplayMode;
+    uint displayMode;
+
+    float segRadiusToNodeRadius;
+    int overrideNodeRadiusBool;
+    float overrideNodeRadiusVal;
+
+    int highlightActiveTree;
+    int showIntersections;
+    int rotateAroundActiveNode;
+    int showXYplane;
+    int showXZplane;
+    int showYZplane;
+    int showNodeIDs;
+    bool autoFilenameIncrementBool;
+
+    int treeElements;
+    int totalNodeElements;
+    int totalSegmentElements;
+
+    int greatestNodeID;
+    int greatestTreeID;
+
+    color4F commentColors[NUM_COMMSUBSTR];
+    float commentNodeRadii[NUM_COMMSUBSTR];
+
+    //If TRUE, loadSkeleton merges the current skeleton with the provided
+    int mergeOnLoadFlag;
+
+    uint lastSaveTicks;
+    bool autoSaveBool;
+    uint autoSaveInterval;
+    uint saveCnt;
+    char *skeletonFile;
+    char * prevSkeletonFile;
+
+    char *deleteSegment;
+
+    float defaultNodeRadius;
+
+    // Current zoom level. 0: no zoom; near 1: maximum zoom.
+    float zoomLevel;
+
+    // temporary vertex buffers that are available for rendering, get cleared
+    // every frame */
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
+
+    bool branchpointUnresolved;
+
+    // This is for a workaround around agar bug #171
+    bool askingPopBranchConfirmation;
+    char skeletonCreatedInVersion[32];
+
+    struct cmdList *undoList;
+    struct cmdList *redoList;
+
+    QString skeletonFileAsQString;
 
 signals:
     void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void drawGUISignal();
+    void UI_saveSkeletonSignal(int increment);
 public slots:
     bool delTree(int targetRevision, int treeID);
     bool delActiveTree();
@@ -148,6 +295,8 @@ public slots:
     bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
+    static int saveSkeleton();
+
 };
 
 #endif // SKELETONIZER_H

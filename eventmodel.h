@@ -107,6 +107,7 @@ signals:
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
+    void saveSkelCallbackSignal();
 public slots:
     
 };

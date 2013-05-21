@@ -72,7 +72,7 @@ public:
     bool addRecentFile(QString fileName);
 
     //static void saveSkelCallback(AG_Event *event);
-    static void UI_saveSkeleton(int increment);
+
     static void UI_saveSettings();
     void loadSkeleton();
 
@@ -102,10 +102,8 @@ signals:
     void refreshViewportsSignal();
     void runSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
-
-
+    void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
 protected:
-
 
 public:
     Ui::MainWindow *ui;
@@ -164,7 +162,6 @@ public:
 
     /* window actions */
     QAction *toolsAction;
-
     QAction *logAction;
     QAction *commentShortcutsAction;
 
@@ -253,6 +250,8 @@ public slots:
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);
+    void UI_saveSkeleton(int increment);
+    void saveSkelCallback();
 
 };
 

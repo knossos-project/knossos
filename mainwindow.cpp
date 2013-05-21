@@ -44,6 +44,10 @@
 #include <QSettings>
 #include <QDir>
 #include <QThread>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
@@ -448,8 +452,8 @@ bool MainWindow::addRecentFile(QString fileName) {
     return true;
 }
 
-void MainWindow::UI_saveSkeleton(int increment){
-    /*
+void MainWindow::UI_saveSkeleton(int increment) {
+
     //create directory if it does not exist
     DIR *skelDir;
     cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
@@ -458,7 +462,8 @@ void MainWindow::UI_saveSkeleton(int increment){
         #ifdef LINUX
             mkdir(state->viewerState->gui->skeletonDirectory, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
         #else
-            mkdir(state->viewerState->gui->skeletonDirectory);
+            int phantom_statement;
+            /* @todo mkdir(state->viewerState->gui->skeletonDirectory) */;
         #endif
     }
 
@@ -467,24 +472,46 @@ void MainWindow::UI_saveSkeleton(int increment){
         increment = state->skeletonState->autoFilenameIncrementBool;
     }
 
-    Skeletonizer::updateSkeletonFileName(CHANGE_MANUAL,
+    emit updateSkeletonFileNameSignal(CHANGE_MANUAL,
                            increment,
                            state->skeletonState->skeletonFile);
 
     saveFile = fopen(state->skeletonState->skeletonFile, "r");
     if(saveFile) {
+
+        int saved = Skeletonizer::saveSkeleton();
+        if(saved == FAIL) {
+            /*
+            AG_TextError("The skeleton was not saved successfully.\n"
+                         "Check disk space and access rights.\n"
+                         "Attempted to write to: %s", state->skeletonState->skeletonFile); */
+            qDebug("Save to %s failed.", state->skeletonState->skeletonFile);
+        }
+        else if (saved == false) {
+            qDebug("No skeleton was found. Not saving.");
+        }
+        else {
+            updateTitlebar(true);
+            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
+            state->skeletonState->unsavedChanges = false;
+            addRecentFile(state->skeletonState->skeletonFile, false);
+        }
+
         //yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
         fclose(saveFile);
         return;
+    } else {
+        qDebug() << "Nö";
     }
 
-    //WRAP_saveSkeleton();
-    */
+
+
 
 }
 
-void MainWindow::UI_saveSettings(){
 
+
+void MainWindow::UI_saveSettings(){
 }
 
 /**
@@ -497,6 +524,7 @@ void MainWindow::loadSkeleton() {
 
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, path, 8192);
+
 
     if(state->skeletonState->totalNodeElements != 0) {
         //yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
@@ -843,7 +871,6 @@ void MainWindow::openSlot()
 {
 
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-    int decision;
 
     if(!fileName.isNull()) {
         char *fileNameAsCharArray = const_cast<char *>(fileName.toStdString().c_str());
@@ -851,7 +878,12 @@ void MainWindow::openSlot()
 
         int ret = QMessageBox::question(this, "", "Should the loaded skeleton be merged with the current skeleton?", QMessageBox::Yes | QMessageBox::No);
 
+        if(ret == QMessageBox::Yes) {
 
+
+        } else {
+
+        }
 
         loadedFile = new QFile(fileName);
 
@@ -903,6 +935,7 @@ void MainWindow::saveAsSlot()
         QMessageBox box(this);
     } else {
         // Save as logic
+        UI_saveSkeleton(false);
         file.close();
     }
 
@@ -1367,4 +1400,17 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     yField->setValue(y);
     zField->setValue(z);
 
+}
+
+void MainWindow::saveSkelCallback() {
+    if(state->skeletonState->firstTree != NULL) {
+        if(state->skeletonState->unsavedChanges) {
+            UI_saveSkeleton(true);
+        } else {
+            qDebug("No changes since last save event. Not saving.");
+            return;
+        }
+    } else {
+        qDebug("No skeleton was found. Not saving.");
+    }
 }

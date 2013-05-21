@@ -58,10 +58,14 @@ Viewer::Viewer(QObject *parent) :
     vp3 = new Viewport(window, VIEWPORT_XZ);
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
-    vp->setGeometry(5, 40, 350 ,350);
+    vp->setGeometry(5, 40, 350,350);
+    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_XY].upperLeftCorner, 0, 0, 0);
     vp2->setGeometry(355, 40, 350, 350);
+    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_XZ].upperLeftCorner, 0, 0, 0);
     vp3->setGeometry(5, 400, 350, 350);
+    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_YZ].upperLeftCorner, 0, 0, 0);
     vp4->setGeometry(355, 400, 350, 350);
+    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_SKELETON].upperLeftCorner, 0, 0, 0);
 
     vp->show();
     vp2->show();
@@ -85,11 +89,6 @@ Viewer::Viewer(QObject *parent) :
     connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-
-    connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
-    connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
 
     connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
@@ -134,6 +133,7 @@ Viewer::Viewer(QObject *parent) :
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
@@ -141,7 +141,8 @@ Viewer::Viewer(QObject *parent) :
     connect(vp4->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
-    connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
+
+
 
     connect(vp->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
     connect(vp2->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
@@ -157,9 +158,6 @@ Viewer::Viewer(QObject *parent) :
     connect(vp4->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
     connect(vp4->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
 
-    //connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), this, SLOT(refreshViewports()));
-
-    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(vp->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(vp2->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(vp3->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
@@ -200,6 +198,8 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(vp4->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
 
+    connect(skeletonizer, SIGNAL(UI_saveSkeletonSignal(int)), window, SLOT(UI_saveSkeleton(int)));
+
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
 
@@ -209,11 +209,23 @@ Viewer::Viewer(QObject *parent) :
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
 
+    /*
     connect(vp, SIGNAL(renderOrthogonalVPSignal(int)), renderer, SLOT(renderOrthogonalVP(uint)));
     connect(vp, SIGNAL(renderSkeletonVPSignal(int)), renderer, SLOT(renderSkeletonVP(uint)));
+    */
 
+    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
+    connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
     connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
+
+    connect(vp->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
+    connect(vp2->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
+    connect(vp3->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
+    connect(vp4->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
+
 
     connect(vp->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
     connect(vp2->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
@@ -250,10 +262,10 @@ Viewer::Viewer(QObject *parent) :
 
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    connect(timer, SIGNAL(timeout()), this, SLOT(vp->updateGL();));
+    /*connect(timer, SIGNAL(timeout()), this, SLOT(vp->updateGL();));
     connect(timer, SIGNAL(timeout()), this, SLOT(vp2->updateGL();));
     connect(timer, SIGNAL(timeout()), this, SLOT(vp3->updateGL();));
-    connect(timer, SIGNAL(timeout()), this, SLOT(vp4->updateGL();));
+    connect(timer, SIGNAL(timeout()), this, SLOT(vp4->updateGL();));*/
     timer->start(50);
 }
 
@@ -1312,7 +1324,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     //refreshViewports();
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
-
+    skeletonizer->skeletonChanged = true;
     return true;
 }
 
@@ -1421,9 +1433,9 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 renderer->drawGUI();
-                /*
+
                 vp4->updateGL();
-                */
+
 
                 // TODO Crashes because of SDL
                 //while(SDL_PollEvent(&event)) {
@@ -1451,11 +1463,11 @@ void Viewer::run() {
             currentVp = nextVp;
 
 
-            /*
+
             vp->updateGL();
             vp2->updateGL();
             vp3->updateGL();
-            */
+
 
 
 
@@ -1688,6 +1700,7 @@ bool Viewer::updateZoomCube() {
     }
     if(oldZoomCube != state->viewerState->zoomCube) {
         state->skeletonState->skeletonChanged = true;
+        skeletonizer->skeletonChanged = true;
     }
     return true;
 }
@@ -1700,6 +1713,8 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
 
     //The skeleton VP view has to be updated after a current pos change
     state->skeletonState->viewChanged = true;
+    skeletonizer->viewChanged = true;
+    /* @todo case decision for skeletonizer */
     if(state->skeletonState->showIntersections) {
         state->skeletonState->skeletonSliceVPchanged = true;
     }
@@ -1792,6 +1807,7 @@ bool Viewer::recalcTextureOffsets() {
     /* Every time the texture offset coords change,
     the skeleton VP must be updated. */
     state->skeletonState->viewChanged = true;
+    //skeletonizer->viewChanged = true;
     calcDisplayedEdgeLength();
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {

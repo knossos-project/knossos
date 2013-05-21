@@ -294,15 +294,17 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     if (tempConfig->viewerState->recenteringTime > 5000){
         tempConfig->viewerState->recenteringTime = 5000;
-        Viewer::updateViewerState();
+        emit updateViewerStateSignal();
+
     }
     if (tempConfig->viewerState->recenteringTimeOrth < 10){
         tempConfig->viewerState->recenteringTimeOrth = 10;
-        Viewer::updateViewerState();
+        emit updateViewerStateSignal();
+
     }
     if (tempConfig->viewerState->recenteringTimeOrth > 5000){
         tempConfig->viewerState->recenteringTimeOrth = 5000;
-        Viewer::updateViewerState();
+        emit updateViewerStateSignal();
     }
 
     if (state->viewerState->walkOrth == false){

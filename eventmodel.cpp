@@ -198,6 +198,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return true;
     }
 
+    qDebug() << clickedCoordinate->x << " " << clickedCoordinate->y << " " << clickedCoordinate->z;
+
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -1022,7 +1024,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_S) {
         if(control) {
             qDebug() << "S und control";
-            //saveSkelCallback(NULL); /* @todo */
+            emit saveSkelCallbackSignal();
             return true;
         }
 
@@ -1135,10 +1137,11 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
         || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))
             return NULL;
 
-    xDistance = event->x()
-        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.x;
-    yDistance = event->y()
-        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.y;
+    qDebug() << event->x() << "_" << event->y();
+    qDebug() << state->viewerState->vpConfigs[VPfound].upperLeftCorner.x << "_" << state->viewerState->vpConfigs[VPfound].upperLeftCorner.y;
+
+    xDistance = event->x() /*- state->viewerState->vpConfigs[VPfound].upperLeftCorner.x */;
+    yDistance = event->y() /* - state->viewerState->vpConfigs[VPfound].upperLeftCorner.y */;
 
     switch(state->viewerState->vpConfigs[VPfound].type) {
         case VIEWPORT_XY:

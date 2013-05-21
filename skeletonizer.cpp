@@ -40,6 +40,22 @@ extern stateInfo *tempConfig;
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
+    idleTimeSession = 0;
+    lockRadius = 100;
+    lockPositions = false;
+    strncpy(onCommentLock, "seed", 1024);
+    branchpointUnresolved = false;
+    autoFilenameIncrementBool = true;
+    autoSaveBool = true;
+    autoSaveInterval = 5;
+    skeletonTime = 0;
+    skeletonTimeCorrection = state->time.elapsed();
+    definedSkeletonVpView = 0;
+
+    //This number is currently arbitrary, but high values ensure a good performance
+    tempConfig->skeletonState->skeletonDCnumber = 8000;
+    tempConfig->skeletonState->workMode = ON_CLICK_DRAG;
+
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
 
@@ -93,6 +109,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->lastSaveTicks = 0;
     state->skeletonState->autoSaveInterval = 5;
+
 
     state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
     memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
@@ -612,7 +629,8 @@ bool Skeletonizer::updateSkeletonState() {
         if(state->skeletonState->autoSaveInterval) {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();
-                MainWindow::UI_saveSkeleton(true);
+
+                emit UI_saveSkeletonSignal(true);
             }
         }
     }
@@ -3679,9 +3697,9 @@ bool Skeletonizer::jumpToActiveNode() {
         tempConfig->viewerState->currentPosition.z =
             state->skeletonState->activeNode->position.z;
 
-        /* @todo change to Signal
-        Viewer::updatePosition(TELL_COORDINATE_CHANGE);
-        */
+
+        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+
     }
 
     return true;
