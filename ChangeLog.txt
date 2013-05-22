@@ -1,5 +1,5 @@
 ==================================
-=  KNOSSOS V3.3 - Change Log     =
+=  KNOSSOS V3.4.1 - Change Log   =
 ==================================
 
 KNOSSOS is a software tool for the visualization and annotation of 3D image
@@ -16,29 +16,56 @@ Release Date: February 22, 2013
 Homepage: http://www.knossostool.org/ and
 http://code.google.com/p/knossos-skeletonizer/
 
+----------------------------------
+- Known Issues                   -
+----------------------------------
+
+- Delay after launching the installer
+	
+	Windows only:
+	There are reports that the installer sometimes requires several minutes to launch. Please
+	just wait a few minutes or restart Windows in case nothing happens after double clicking it.
+	We are investigating the problem.
 
 ----------------------------------
 -  Bugfixes                     -
 ----------------------------------
 
-- Removed many memory leaks
-- Fixed OpenGL display list problems that lead to unstable behavior on many computers
-- Fixed defective recentering on node
-- Fixed incorrect incrementation/decrementation in the "Active Tree ID"-widget 
+- Fixed issue of Knossos not launching if a configuration file was corrupted
+
+- Fixed incorrect incrementation/decrementation in the "Active Node ID"-widget
+
+- Fixed crashes of synchronised Knossos instances
 
 ----------------------------------
 -  New Features / Enhancements   -
 ----------------------------------
 
-- Massive performance improvements and better visual quality while handling
-  large skeletons (5k-500k nodes) through a completely reworked rendering
-  engine (view frustum culling, dynamic level-of-detail algorithm, large vertex batches).
-  The user has direct GUI control over the rendering quality with the new option: "Rendering quality".
-- Adjustable position and size of viewports
-- Conditional radii and highlighting (coloring) of nodes based on a set of definable comment strings
-- Python starter now remembers the last opened folder or starts in the Knossos folder
-- Improvement of Skeleton Viewport rotation, behaves now as expected.
-- Added Buttons to rotate Skeleton Viewport by 90 and 180 degrees.
-- Recentering on a very distant node is performed by a jump instead of a smooth move.
+- New Rendering Engine
+
+    Skeletons are displayed in KNOSSOS V3.4 with a new rendering engine that allows the fluent
+	handling of skeletons with several 100k nodes. It is based on a heuristic level-of-detail
+	algorithm that downsamples the spatial skeleton graph dynamically, dependent on the current
+	zoom level applied by the user. The new rendering engine should also make KNOSSOS much more
+	stable on older graphics cards (esp. compared to 3.2).
+
+- Better Rotation in Skeleton Viewport
+
+	Rotating the 3D skeleton with the mouse is now based on a rolling-ball rotation model.
+
+- New shortcuts for "walking" and "jumping" through the dataset:
+
+	[d]/[f]: move x steps backwards/forwards in the direction of the active viewport.
+		x can be specified in the walkframes widget under "Navigation Settings"
+	[d]/[f]+[SHIFT]: move 10 steps backwards/forwards in the direction of the active viewport 
+	[e]/[r]: move walkframes*y steps backwards/forwards in the direction of the active viewport.
+		 y can be specified in the jumpframes widget under "Navigation Settings" 
+
+- Added SHA-2 checksums for skeleton time and idle time
+
+- Added widgets to the nodes tab for modifying the active node's coordinates
+
+- Adjusted idle time tolerance.
+
 
 

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Knossos"
-#define MyAppVersion "3.4"
+#define MyAppVersion "3.4.1"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
@@ -60,7 +60,7 @@ Source: "{#KNOSSOS_SRC_PATH}SDL.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}SDL_net.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}splash"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "skeletonFiles\"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#KNOSSOS_SRC_PATH}ChangeLog.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 [UninstallDelete]

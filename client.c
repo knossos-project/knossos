@@ -1056,6 +1056,34 @@ uint32_t broadcastPosition(
 }
 
 int32_t syncMessage(char *fmt, ...) {
+    /*
+     * This function calls serialize to write passed data into a byte array.
+     * The properly packed data will be appended to the outgoing network data
+     * buffer. Proper locking is ensured through IOBufferAppend().
+     */
+
+    /*
+     * Returning FALSE from this function means that synchronized skeletons have
+     * gone out of sync and this should be handled accordingly (usually by
+     * closing the connection).
+     */
+    va_list ap;
+    Byte *packedBytes = NULL;
+
+    va_start(ap, fmt);
+    packedBytes = serialize(fmt, ap);
+    va_end(ap);
+
+    if(!IOBufferAppend(state->clientState->outBuffer,
+                       packedBytes,
+                       bytesToInt(&packedBytes[1]), //holds the msg length
+                       state->protectOutBuffer)) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+Byte *serialize(char *fmt, va_list ap) {
     /* Many thanks to the va_start(3) manpage. */
 
     /*
@@ -1064,20 +1092,8 @@ int32_t syncMessage(char *fmt, ...) {
      * not be aligned to a specific multiple of a byte as in single-type
      * arrays.
      */
+    #define PACKLEN 512
 
-    /*
-     * The properly packed data will be appended to the outgoing network data
-     * buffer. Proper locking is ensured through IOBufferAppend().
-     */
-
-    /* Returning FALSE from this function means that synchronized skeletons have
-     * gone out of sync and this should be handled accordingly (usually by
-     * closing the connection).
-     */
-
-#define PACKLEN 512
-
-    va_list ap;
     Byte *packedBytes = NULL;
     int32_t len = 5;  // This is where the message part after KIKI_REPEAT and
                       // the message length field begins.
@@ -1087,21 +1103,15 @@ int32_t syncMessage(char *fmt, ...) {
     float f;
     int32_t peerLenField = -1;
 
-    if(!state->clientState->synchronizeSkeleton ||
-       !state->clientState->connected)
-        return TRUE;
-
     packedBytes = malloc(PACKLEN * sizeof(Byte));
     if(packedBytes == NULL) {
-        printf("5Out of memory\n");
+        printf("Out of memory\n");
         _Exit(FALSE);
     }
 
     memset(packedBytes, '\0', PACKLEN * sizeof(Byte));
 
     packedBytes[0] = KIKI_REPEAT;
-
-    va_start(ap, fmt);
 
     while(*fmt) {
         switch(*fmt++) {
@@ -1169,26 +1179,17 @@ int32_t syncMessage(char *fmt, ...) {
         }
     }
 
-    va_end(ap);
-
     integerToBytes(&packedBytes[1], len);
-    if(peerLenField >= 0)
+    if(peerLenField >= 0) {
         integerToBytes(&packedBytes[peerLenField], len - 5);
-
-    if(!IOBufferAppend(state->clientState->outBuffer,
-                       packedBytes,
-                       len,
-                       state->protectOutBuffer))
-        return FALSE;
-
-    return TRUE;
+    }
+    return packedBytes;
 
 lenoverflow:
 
     va_end(ap);
-    LOG("Length overflow in client.c, syncMessage(). Tell the programmers to find the bug or increase PACKLEN.");
-    return FALSE;
-
+    LOG("Length overflow in client.c, serialize(). Tell the programmers to find the bug or increase PACKLEN.");
+    return NULL;
 }
 
 int32_t skeletonSyncBroken() {

@@ -106,11 +106,11 @@ class RunKnossos(RunKnossosUI):
             path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir))      
             if not path:
                 return
-            kukuConf='{ "lastDir": "' + path + '/..' + '", "datasets": []}' 
-            kukuConf=kukuConf.encode('utf-8')
+            kukuConf["lastDir"] = path + '/..'
+            kukuConf["datasets"] = []
             try:
                 with open(kukupath, "w+") as kuku:
-                    kuku.write(kukuConf)
+                    json.dump(kukuConf, kuku, indent=2)
             except IOError:
                 pass
         except IOError:
@@ -306,14 +306,12 @@ class RunKnossos(RunKnossosUI):
         except ValueError: #kuku.conf not in json format yet
             try:
                 with open(kukupath, "w+") as kuku:
-                    kukuConf = '{"lastDir": "' + os.path.dirname( __file__ ) + '/..' + '", "datasets": ['
+                    kukuConf["lastDir"] = os.path.dirname( __file__ ) + '/..'
+                    kukuConf["datasets"] = []
                     if pathListString:
                         for dataset in pathListString.split('\n'):
-                            kukuConf += '"' + dataset + '",'
-                        kukuConf = kukuConf[:-1]
-                    kukuConf += ']}'
-                    kukuConf = kukuConf.encode("utf-8")
-                    kuku.write(kukuConf)
+                            kukuConf["datasets"].append(dataset)
+                    json.dump(kukuConf, kuku, indent=2)
             except IOError:
                 pass
         except IOError:
