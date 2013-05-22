@@ -1377,7 +1377,6 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     int32_t i;
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
-
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);
         return FALSE;
@@ -1389,13 +1388,12 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     strncpy(origFilename, filename, 8192 - 1);
 
     if(increment) { // search first dot from right
-        for(i = 8192 - 1; i >= 0; i--) {
+        for(i = sizeof(filename) - 1; i >= 0; i--) {
             if(filename[i] == '.') {
                 extensionDelim = i;
                 break;
             }
         }
-
         for(i--; i >= 0; i--) {
             if(filename[i] == '.') {
                 strncpy(betweenDots, &filename[i+1], extensionDelim - i - 1);
@@ -1436,9 +1434,9 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
         if(!syncMessage("blrds", KIKI_SKELETONFILENAME, increment, origFilename))
             skeletonSyncBroken();
     }
-    else
+    else {
         refreshViewports();
-
+    }
     unlockSkeleton(TRUE);
 
     return TRUE;
