@@ -1389,6 +1389,11 @@ typedef struct {
 	char* comment;
 } cmdAddComment;
 
+struct cmd {
+    // an array of messages to reconstruct a skeletonState
+    Byte **msgs;
+};
+
 /*
  *
  *      Macros
@@ -1661,6 +1666,7 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
 uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
 
+void setNodeCoordinates(struct nodeListElement *node, int32_t x, int32_t y, int32_t z);
 int32_t moveToPrevNode();
 int32_t moveToNextNode();
 struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode);
@@ -1738,6 +1744,8 @@ uint32_t broadcastCoordinate(uint32_t x, uint32_t y, uint32_t z);
 int32_t syncMessage(char *fmt, ...);
 int32_t clientSyncBroken();
 int32_t parseInBufferByFmt(int32_t len, const char *fmt, float *f, Byte *s, int32_t *d, struct IOBuffer *buffer);
+
+Byte *serialize(char *fmt, va_list args);
 
 /*
  * For gui.c

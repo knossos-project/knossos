@@ -3038,9 +3038,39 @@ static void currNodePosWdgtModified(AG_Event *event) {
 }
 
 static void actNodeIDWdgtModified(AG_Event *event) {
+    int32_t nodeID = state->viewerState->ag->activeNodeID;
+    struct nodeListElement *node;
+
+    if(state->skeletonState->activeNode == NULL) {
+        state->viewerState->ag->activeNodeID = 1;
+        return;
+    }
+    //check if node exists. First find out, if user incremented or decremented ID in widget
+    if(nodeID > state->skeletonState->activeNode->nodeID) { //case incremented: find node with next id
+        while((node = findNodeByNodeID(nodeID)) == NULL && nodeID <= state->skeletonState->greatestNodeID) {
+            nodeID++;
+        }
+        if(node == NULL) { //there exists no node with higher nodeID. Do nothing.
+            state->viewerState->ag->activeNodeID = state->skeletonState->activeNode->nodeID;
+            return;
+        }
+    }
+    else { //case decremented: find node with previous id
+        while((node = findNodeByNodeID(nodeID)) == NULL && nodeID > 0) {
+            nodeID--;
+        }
+        if(node == NULL) { //there exists no node with lower nodeID. Do nothing.
+            state->viewerState->ag->activeNodeID = state->skeletonState->activeNode->nodeID;
+            return;
+        }
+    }
+
+    //found node with higher/lower id. Make it the active node
+    state->viewerState->ag->activeNodeID = nodeID;
     setActiveNode(CHANGE_MANUAL,
                   NULL,
                   state->viewerState->ag->activeNodeID);
+
 }
 
 

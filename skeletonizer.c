@@ -1371,9 +1371,10 @@ void setDefaultSkelFileName() {
 uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char *filename) {
     int32_t extensionDelim = -1, countDelim = -1;
     char betweenDots[8192];
-    char count[8192];
+    char *endPtr;
+    int counter;
     char origFilename[8192], skeletonFileBase[8192];
-    int32_t i, j;
+    int32_t i;
 
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
@@ -1384,9 +1385,10 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
 
     memset(skeletonFileBase, '\0', 8192);
     memset(origFilename, '\0', 8192);
+    memset(betweenDots, '\0', 8192);
     strncpy(origFilename, filename, 8192 - 1);
 
-    if(increment) {
+    if(increment) { // search first dot from right
         for(i = 8192 - 1; i >= 0; i--) {
             if(filename[i] == '.') {
                 extensionDelim = i;
@@ -1396,39 +1398,27 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
 
         for(i--; i >= 0; i--) {
             if(filename[i] == '.') {
-                //check if string between dots represents a number
-                strncpy(betweenDots, &filename[i+1], extensionDelim - i-1);
-                for(j = 0; j < extensionDelim - i - 1; j++) {
-                    if(atoi(&betweenDots[j]) == 0 && betweenDots[j] != '0') {
-                        goto noCounter;
-                    }
+                strncpy(betweenDots, &filename[i+1], extensionDelim - i - 1);
+                counter = strtol(betweenDots, &endPtr, 10);
+                if(endPtr != betweenDots) {
+                    countDelim = i;
                 }
-                //string between dots is a number
-                countDelim = i;
                 break;
             }
         }
 
-        noCounter:
         if(countDelim > -1) {
-            strncpy(skeletonFileBase,
-                    filename,
-                    countDelim);
+            strncpy(skeletonFileBase, filename, countDelim);
         }
-        else if(extensionDelim > -1){
-            strncpy(skeletonFileBase,
-                    filename,
-                    extensionDelim);
+        else if(extensionDelim > -1) {
+            strncpy(skeletonFileBase, filename, extensionDelim);
         }
         else {
-            strncpy(skeletonFileBase,
-                    filename,
-                    8192 - 1);
+            strncpy(skeletonFileBase, filename, 8192 - 1);
         }
 
-        if(countDelim && extensionDelim) {
-            strncpy(count, &filename[countDelim + 1], extensionDelim - countDelim);
-            state->skeletonState->saveCnt = atoi(count);
+        if(countDelim > -1 && extensionDelim > -1) {
+            state->skeletonState->saveCnt = counter;
             state->skeletonState->saveCnt++;
         }
         else {
@@ -4459,7 +4449,7 @@ static int isObfuscatedTime(int32_t time) {
        a version prior to 3.4 and edited them in 3.4 sometimes had
        un-obfuscated times. Assuming the time is below ca. 15 days,
        this successfully checks for obfuscation. */
-    
+
     if((strcmp(state->skeletonState->skeletonLastSavedInVersion, "3.4") == 0) &&
               (time > 1300000000)) {
         return TRUE;
@@ -4490,3 +4480,22 @@ static char *integerChecksum(int32_t in) {
 
     return checksum;
 }
+/*
+void serializeSkeleton() {
+    struct skeletonState *skelState = state->skeletonState;
+    struct treeListElement *tree = NULL;
+    struct nodeListElement *node = NULL;
+    struct segmentListElement *seg = NULL;
+    struct commentListElement *comment = NULL;
+
+    struct cmd *cmd = malloc(sizeof(struct cmd));
+
+    Byte *msg;
+    tree = skelState->firstTree;
+    while(tree) {
+        msg = serialize("brdfff", KIKI_ADDTREE, tree->treeID,
+                        tree->color.r, tree->color.g, tree->color.b)
+        cmd->msgs = malloc() //TODO: how much??
+    }
+}
+*/
