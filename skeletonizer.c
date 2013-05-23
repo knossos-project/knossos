@@ -1445,6 +1445,7 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
 uint32_t loadSkeleton() {
     xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
+    xmlNodePtr commentXMLNode = NULL;
     int32_t neuronID = 0, nodeID = 0, merge = FALSE;
     int32_t nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
@@ -1673,33 +1674,8 @@ uint32_t loadSkeleton() {
 
         if(xmlStrEqual(thingOrParamXMLNode->name,
                        (const xmlChar *)"comments")) {
-
-            currentXMLNode = thingOrParamXMLNode->children;
-            while(currentXMLNode) {
-                if(xmlStrEqual(currentXMLNode->name,
-                               (const xmlChar *)"comment")) {
-
-                    attribute = xmlGetProp(currentXMLNode,
-                                           (const xmlChar *)"node");
-                    if(attribute) {
-                        if(!merge)
-                            nodeID = atoi((char *)attribute);
-                        else
-                            nodeID = atoi((char *)attribute) + greatestNodeIDbeforeLoading;
-
-                        currentNode = findNodeByNodeID(nodeID);
-                    }
-                    attribute = xmlGetProp(currentXMLNode,
-                                           (const xmlChar *)"content");
-                    if(attribute && currentNode) {
-                        addComment(CHANGE_MANUAL, (char *)attribute, currentNode, 0);
-                    }
-                }
-
-                currentXMLNode = currentXMLNode->next;
-            }
+            commentXMLNode = thingOrParamXMLNode;
         }
-
 
         if(xmlStrEqual(thingOrParamXMLNode->name,
                        (const xmlChar *)"branchpoints")) {
@@ -1915,6 +1891,39 @@ uint32_t loadSkeleton() {
         }
 
         thingOrParamXMLNode = thingOrParamXMLNode->next;
+    }
+
+    if(commentXMLNode) {
+        currentXMLNode = commentXMLNode->children;
+        while(currentXMLNode) {
+            if(xmlStrEqual(currentXMLNode->name,
+                           (const xmlChar *)"comment")) {
+
+                attribute = xmlGetProp(currentXMLNode,
+                                       (const xmlChar *)"node");
+                if(attribute) {
+                    if(!merge) {
+                        nodeID = atoi((char *)attribute);
+                    }
+                    else {
+                        nodeID = atoi((char *)attribute) +
+                            greatestNodeIDbeforeLoading;
+                    }
+                    currentNode = findNodeByNodeID(nodeID);
+                }
+
+                attribute = xmlGetProp(currentXMLNode,
+                                       (const xmlChar *)"content");
+
+                if(attribute && currentNode) {
+                    addComment(CHANGE_MANUAL,
+                        (char *)attribute,
+                        currentNode,
+                        0);
+                }
+            }
+            currentXMLNode = currentXMLNode->next;
+        }
     }
 
     free(currentCoordinate);
