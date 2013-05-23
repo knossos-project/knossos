@@ -2425,13 +2425,7 @@ static void fileOpenSkelFile(AG_Event *event) {
 
 void saveSkelCallback(AG_Event *event) {
     if(state->skeletonState->firstTree != NULL) {
-        if(state->skeletonState->unsavedChanges) {
-            UI_saveSkeleton(TRUE);
-        }
-        else {
-            LOG("No changes since last save event. Not saving.");
-            return;
-        }
+        UI_saveSkeleton(TRUE);
     }
     else {
         LOG("No skeleton was found. Not saving.");
