@@ -1388,7 +1388,7 @@ uint32_t updateSkeletonFileName(int32_t targetRevision, int32_t increment, char 
     strncpy(origFilename, filename, 8192 - 1);
 
     if(increment) { // search first dot from right
-        for(i = sizeof(filename) - 1; i >= 0; i--) {
+        for(i = strlen(filename); i >= 0; i--) {
             if(filename[i] == '.') {
                 extensionDelim = i;
                 break;
