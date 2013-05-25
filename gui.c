@@ -4621,7 +4621,7 @@ static void WRAP_loadSkeleton() {
     }
 }
 
-static void updateTitlebar(int32_t useFilename) {
+void updateTitlebar(int32_t useFilename) {
     char *filename;
 
     #ifdef LINUX

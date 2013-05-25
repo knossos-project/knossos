@@ -423,7 +423,7 @@ static uint32_t parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
                 updateSkeletonFileName(d[0], d[1], (char *)s);
-
+                updateTitlebar(TRUE);
                 break;
 
             case KIKI_WITHDRAW:
@@ -626,13 +626,13 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_PUSHBRANCH:
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(17, "xdddd", f, s, d, clientState->inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
-                pushBranchNode(d[0], TRUE, TRUE, NULL, d[1]);
+                pushBranchNode(d[0], d[2], d[3], NULL, d[1]);
 
                 break;
 

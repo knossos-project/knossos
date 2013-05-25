@@ -115,7 +115,7 @@ static void createSaveCustomPrefsAsDlgWin();
 
 static void WRAP_loadSkeleton();
 static void WRAP_saveSkeleton();
-static void updateTitlebar(int32_t useFilename);
+
 static void UI_clearSkeleton();
 static void WRAP_clearSkeleton();
 static void UI_setViewModeDrag();

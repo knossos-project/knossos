@@ -1771,6 +1771,7 @@ void UI_resizeVP(int foundVP);
 void createToolsWin();
 void createViewPortPrefWin();
 void reloadDataSizeWin();
+void updateTitlebar(int32_t useFilename);
 
  void createMenuBar();
  void createCoordBarWin();

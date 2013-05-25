@@ -392,8 +392,9 @@ int32_t addNode(int32_t targetRevision,
                                               -1,
                                               position->x,
                                               position->y,
-                                              position->z))
+                                              position->z)) {
             skeletonSyncBroken();
+            }
     }
 
     else {
@@ -3982,7 +3983,7 @@ uint32_t searchInComment(char *searchString, struct commentListElement *comment)
 
 int32_t pushBranchNode(int32_t targetRevision,
                        int32_t setBranchNodeFlag,
-		       int32_t checkDoubleBranchpoint,
+                       int32_t checkDoubleBranchpoint,
                        struct nodeListElement *branchNode,
                        int32_t branchNodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
@@ -4020,7 +4021,7 @@ int32_t pushBranchNode(int32_t targetRevision,
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!syncMessage("brd", KIKI_PUSHBRANCH, branchNode->nodeID))
+        if(!syncMessage("brddd", KIKI_PUSHBRANCH, branchNode->nodeID, setBranchNodeFlag, checkDoubleBranchpoint))
             skeletonSyncBroken();
     }
     else
