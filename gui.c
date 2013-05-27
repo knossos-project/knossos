@@ -3867,9 +3867,14 @@ remote port
 
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"dataSavingOptions", NULL);
     {
+        /*
+         * Auto-saving should be on by default to prevent data loss
+         */
+        /*
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->autoSaveBool);
         xmlNewProp(currentXMLNode, BAD_CAST"autoSaving", attrString);
+        */
 
         memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->autoSaveInterval);
@@ -4326,9 +4331,15 @@ static void UI_loadSettings() {
             }
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"dataSavingOptions")) {
+            /*
+             * Auto-saving should be on by default to prevent data loss.
+             */
+
+            /*
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"autoSaving");
             if(attribute)
                 state->skeletonState->autoSaveBool = atoi((char *)attribute);
+            */
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"savingInterval");
             if(attribute)
                 state->skeletonState->autoSaveInterval = atoi((char *)attribute);
@@ -4967,7 +4978,7 @@ void prefDefaultPrefs(){
     state->skeletonState->rotateAroundActiveNode = 1;
     state->skeletonState->lockPositions = 0;
     state->skeletonState->lockRadius = 100;
-    state->skeletonState->autoSaveBool = 1;
+    state->skeletonState->autoSaveBool = TRUE;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->highlightActiveTree = 1;
     state->skeletonState->showNodeIDs = 0;
