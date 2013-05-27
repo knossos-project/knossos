@@ -3017,6 +3017,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
         }
 
     resizeWindows(); //adjust window sizes, because AGAR sucks at it.
+    resetVpPosSize(); // workaround for misplaced position and size buttons and vps. TODO: Fix the bug (issue 121)
     setVPPosSizWinPositions();
     setDataSizeWinPositions();
     drawGUI();

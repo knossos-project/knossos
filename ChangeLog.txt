@@ -67,5 +67,7 @@ http://code.google.com/p/knossos-skeletonizer/
 
 - Adjusted idle time tolerance.
 
+- Enhanced viewport behaviour on resizing Knossos.
+
 
 
