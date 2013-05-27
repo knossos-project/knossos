@@ -433,7 +433,7 @@ static int32_t remoteTrajectory(int32_t trajNumber) {
 }
 
 void checkIdleTime() {
-    int time =SDL_GetTicks();
+    int time = SDL_GetTicks();
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = time;
     if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 600000) {

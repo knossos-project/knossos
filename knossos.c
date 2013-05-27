@@ -314,7 +314,7 @@ static int32_t tempConfigDefaults() {
     tempConfig->skeletonState->autoSaveBool = TRUE;
     tempConfig->skeletonState->autoSaveInterval = 5;
     tempConfig->skeletonState->skeletonTime = 0;
-    tempConfig->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
+    tempConfig->skeletonState->skeletonTimeCorrection = 0;
     tempConfig->skeletonState->definedSkeletonVpView = 0;
 
     //This number is currently arbitrary, but high values ensure a good performance

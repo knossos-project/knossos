@@ -2553,6 +2553,8 @@ void UI_saveSkeleton(int32_t increment) {
         return;
     }
 
+    checkIdleTime();
+
     WRAP_saveSkeleton();
 }
 
@@ -2632,6 +2634,13 @@ void OkfileDlgOpenSkel(AG_Event *event) {
                      "%s,%s",
                      filename,
                      "This will overwrite the currently loaded skeleton. Are you sure?");
+    }
+
+    if(state->skeletonState->mergeOnLoadFlag) {
+        /* Auto-saving with merged skeletons would save under
+         * the file name sequence of one of the skeletons. This
+         * is almost never what you want.  */
+        state->skeletonState->autoSaveBool = FALSE;
     }
 
     UI_loadSkeleton(&ev);

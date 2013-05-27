@@ -1180,7 +1180,7 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->idleTime);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->idleTime - state->skeletonState->skeletonTimeCorrection);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
     checksum = integerChecksum(state->skeletonState->idleTime);
