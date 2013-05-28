@@ -1062,7 +1062,7 @@ bool Skeletonizer::loadSkeleton() {
     int skeletonTime = 0;
     color4F neuronColor;
 
-    LOG("Starting to load skeleton...");
+    qDebug("Starting to load skeleton...");
 
      //  This function should always be called through UI_loadSkeleton for
      //  proper error and file name display to the user.

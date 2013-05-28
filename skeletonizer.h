@@ -114,11 +114,11 @@ public:
     void delCmdListElement(struct cmdListElement *cmdEl);
 
 public:
-    void setDefaultSkelFileName();
+    static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
-    bool loadSkeleton();
+    static bool loadSkeleton();
     void popBranchNodeCanceled();
-    bool delNodeFromSkeletonStruct(nodeListElement *node);
+    static bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
     static int xorInt(int xorMe);
 
@@ -271,16 +271,16 @@ signals:
     void drawGUISignal();
     void UI_saveSkeletonSignal(int increment);
 public slots:
-    bool delTree(int targetRevision, int treeID);
+    static bool delTree(int targetRevision, int treeID);
     bool delActiveTree();
-    bool clearSkeleton(int targetRevision, int loadingSkeleton);
+    static bool clearSkeleton(int targetRevision, int loadingSkeleton);
     bool delActiveNode();
     bool updateSkeletonFileName(int targetRevision, int increment, char *filename);
     bool updateSkeletonState();
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);
-    bool addTreeComment(int targetRevision, int treeID, char *comment);
+    static bool addTreeComment(int targetRevision, int treeID, char *comment);
     bool setSkeletonWorkMode(int targetRevision, uint workMode);
     bool unlockPosition();
     bool lockPosition(Coordinate lockCoordinate);
@@ -290,10 +290,10 @@ public slots:
     bool nextCommentlessNode();
     static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
     bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel);
+    static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel);
     static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID);
     bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
+    static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
     static int saveSkeleton();
 

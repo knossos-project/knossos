@@ -122,13 +122,10 @@ Viewer::Viewer(QObject *parent) :
     renderer = new Renderer();
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    //connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
+
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
@@ -141,7 +138,6 @@ Viewer::Viewer(QObject *parent) :
     connect(vp4->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
-
 
 
     connect(vp->delegate, SIGNAL(updateWidgetSignal()), window->zoomAndMultiresWidget, SLOT(update()));
@@ -202,14 +198,15 @@ Viewer::Viewer(QObject *parent) :
 
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
 
     connect(window->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
-    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
 
-    connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
-    connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
     connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
 
     /*
@@ -217,9 +214,10 @@ Viewer::Viewer(QObject *parent) :
     connect(vp, SIGNAL(renderSkeletonVPSignal(int)), renderer, SLOT(renderSkeletonVP(uint)));
     */
 
+    connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(runSignal()), this, SLOT(run()));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
-    connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
+
 
     connect(vp->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
     connect(vp2->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
@@ -257,7 +255,6 @@ Viewer::Viewer(QObject *parent) :
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
-
 
 
     QTimer *timer = new QTimer();

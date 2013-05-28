@@ -74,7 +74,7 @@ public:
     //static void saveSkelCallback(AG_Event *event);
 
     static void UI_saveSettings();
-    void loadSkeleton();
+    void loadSkeleton(char *fileName);
 
     static void reloadDataSizeWin();
 
@@ -103,6 +103,7 @@ signals:
     void runSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
+    bool loadSkeletonSignal();
 protected:
 
 public:
@@ -252,6 +253,7 @@ public slots:
     void updateCoordinateBar(int x, int y, int z);
     void UI_saveSkeleton(int increment);
     void saveSkelCallback();
+    void saveSkel(QString fileName, int increment);
 
 };
 

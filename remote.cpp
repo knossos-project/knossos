@@ -330,7 +330,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     //emit user
     //moveEvent.type = SDL_USEREVENT;
-    //moveEvent.user.code = USEREVENT_MOVE; /** @todo a replacement for this user_event
+    //moveEvent.user.code = USEREVENT_MOVE; /** @attention a replacement for this user_event is userMoveSignal
 
     if(state->viewerState->stepsPerSec > 0)
         eventDelay = 1000 / state->viewerState->stepsPerSec;
@@ -399,6 +399,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->x = doMove.x;
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
+
+
 
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 

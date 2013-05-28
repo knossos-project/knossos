@@ -194,35 +194,11 @@ void Viewport::paintGL() {
 
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
-
-
-
            this->drawViewport(plane);
 
-            /*
-            for(int i = 0; i < 50; i++) {
-                Coordinate c;
-                c.x = 10 * i;
-                c.y = 10 * i;
-                c.z = 10 * i;
-               Renderer::renderOrb(&c, 3);
-             } */
-
-            //emit renderOrthogonalVPSignal(plane);
         }  else {
             this->drawSkeletonViewport();
-            /*
-            for(int i = 0; i < 50; i++) {
-                Coordinate c;
-                c.x = 10 * i;
-                c.y = 10 * i;
-                c.z = 10 * i;
-               Renderer::renderOrb(&c, 3);
 
-            } */
-
-
-            //emit renderSkeletonVPSignal(plane);
         }
     }
 
@@ -236,7 +212,6 @@ int Viewport::xrel(int x) {
 int Viewport::yrel(int y) {
     return (y - this->lastY);
 }
-
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {

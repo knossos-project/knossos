@@ -42,8 +42,6 @@
   * The class adopts the core functionality from EventHandler with the exception that
   * SDL Events are replaced through the corresponding QT-Events
   *
-  * @todo The calculation in which viewport the event occured can be removed, since Viewport events know their corresponding Viewport.
-  *
   * @warning The api documentation for event-handlig in QT 5 seems to be outdated :
   * Keyboard modifier like SHIFT, ALT and CONTROl has to be requested from QApplication
   * If two modifier are pressed at the same time the method is to use the testFlag method

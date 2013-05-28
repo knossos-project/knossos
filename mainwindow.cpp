@@ -452,7 +452,53 @@ bool MainWindow::addRecentFile(QString fileName) {
     return true;
 }
 
+void MainWindow::saveSkel(QString fileName, int increment) {
+    QFileInfo info(fileName);
+    qDebug() << info.canonicalPath();
+    char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
+    cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
+    QDir dir(QString(state->viewerState->gui->skeletonDirectory));
+    if(!dir.exists()) {
+        dir.mkdir(QString(state->viewerState->gui->skeletonDirectory));
+    }
+
+    QFile saveFile(fileName);
+    if(increment) {
+        increment = state->skeletonState->autoFilenameIncrementBool;
+    }
+
+    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, state->skeletonState->skeletonFile); /* @woher */
+
+    if(!saveFile.open(QIODevice::ReadOnly)) {
+        int saved = Skeletonizer::saveSkeleton();
+        if(saved == FAIL) {
+            /*
+            AG_TextError("The skeleton was not saved successfully.\n"
+                         "Check disk space and access rights.\n"
+                         "Attempted to write to: %s", state->skeletonState->skeletonFile); */
+            qDebug("Save to %s failed.", state->skeletonState->skeletonFile);
+        } else if (saved == false) {
+            qDebug("No skeleton was found. Not saving.");
+        } else {
+            updateTitlebar(true);
+            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
+            state->skeletonState->unsavedChanges = false;
+            addRecentFile(state->skeletonState->skeletonFile, false);
+        }
+
+        //yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
+        saveFile.close();
+        return;
+
+
+    } else {
+        qDebug() << "ERROR";
+    }
+}
+
 void MainWindow::UI_saveSkeleton(int increment) {
+
+    qDebug() << state->skeletonState->skeletonFile;
 
     //create directory if it does not exist
     DIR *skelDir;
@@ -504,9 +550,6 @@ void MainWindow::UI_saveSkeleton(int increment) {
         qDebug() << "Nö";
     }
 
-
-
-
 }
 
 
@@ -515,22 +558,27 @@ void MainWindow::UI_saveSettings(){
 }
 
 /**
-  * @todo Replacement for AG_String(X)
-  * Prompt and Wrap_loadSkeleton
+  *
   */
-void MainWindow::loadSkeleton() {
-    char *path; // = AG_STRING(1);
-    char *msg; // = AG_STRING(2);
+void MainWindow::loadSkeleton(char *fileName) {
 
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
-    strncpy(state->skeletonState->skeletonFile, path, 8192);
+    strncpy(state->skeletonState->skeletonFile, fileName, 8192);
 
+    if(Skeletonizer::loadSkeleton()) {
+        updateTitlebar(true);
+        linkWithActiveNodeSlot();
+        qDebug() << "Successfully loded";
+    } else {
+        qDebug() << "Error";
+        strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
+    }
 
     if(state->skeletonState->totalNodeElements != 0) {
         //yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
-    }
-    else {
-        //WRAP_loadSkeleton(); /**@todo */
+    } else {
+
+
     }
 }
 
@@ -865,6 +913,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
   * This method opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
   * the skeletonFileHistory Queue is updated with the file name entry. The history entries are compared to the the
   * selected file names. If the file is already loaded it will not be put to the queue
+  * @todo lookup in skeleton directory, extend the file dialog with merge option
   *
   */
 void MainWindow::openSlot()
@@ -873,10 +922,14 @@ void MainWindow::openSlot()
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
 
     if(!fileName.isNull()) {
-        char *fileNameAsCharArray = const_cast<char *>(fileName.toStdString().c_str());
-        MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, fileNameAsCharArray, 2048);
+        QFileInfo info(fileName);
+        char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
+        MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
 
-        int ret = QMessageBox::question(this, "", "Should the loaded skeleton be merged with the current skeleton?", QMessageBox::Yes | QMessageBox::No);
+        loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
+
+        /*
+        int ret = QMessageBox::question(this, "", "Do you really want to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
 
         if(ret == QMessageBox::Yes) {
 
@@ -884,8 +937,7 @@ void MainWindow::openSlot()
         } else {
 
         }
-
-        loadedFile = new QFile(fileName);
+        */
 
     }
 }
@@ -920,8 +972,6 @@ void MainWindow::recentFilesSlot(int index)
 void MainWindow::saveSlot()
 {
 
-
-
 }
 
 /**
@@ -930,15 +980,23 @@ void MainWindow::saveSlot()
 void MainWindow::saveAsSlot()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-    QFile file(fileName);
-    if(!file.open(QIODevice::WriteOnly)) {
-        QMessageBox box(this);
-    } else {
-        // Save as logic
-        UI_saveSkeleton(false);
-        file.close();
-    }
 
+    if(!fileName.isEmpty()) {
+        QFileInfo info(fileName);
+        qDebug() << info.canonicalFilePath();
+
+        QFile file(fileName);
+        saveSkel(fileName, false);
+
+
+        if(!file.open(QIODevice::WriteOnly)) {
+            QMessageBox box(this);
+        } else {
+            // Save as logic
+            UI_saveSkeleton(false);
+            file.close();
+        }
+    }
 
 }
 

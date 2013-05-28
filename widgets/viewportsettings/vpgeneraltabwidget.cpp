@@ -146,9 +146,7 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
     }
 }
 
-/**
-  * @todo for what is overrideNodeRadiusVal ?
-  */
+
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
     state->skeletonState->segRadiusToNodeRadius = value;
 }

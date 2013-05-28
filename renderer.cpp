@@ -1391,7 +1391,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
         // Now we draw the data volume box. use display list for that...very static TDitem
 
-
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glLoadName(3);
         glColor4f(0., 0., 0., 1); // HERE
@@ -2685,8 +2684,6 @@ void Renderer::renderSkeleton(uint viewportType) {
     //LOG("percent nodes skipped in this DL: %f", tmp);
 
     return;
-
-
 
 }
 
