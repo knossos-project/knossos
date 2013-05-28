@@ -1180,7 +1180,7 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"idleTime", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->idleTime - state->skeletonState->skeletonTimeCorrection);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->idleTime);
     xmlNewProp(currentXMLNode, BAD_CAST"ms", attrString);
     memset(attrString, '\0', 128);
     checksum = integerChecksum(state->skeletonState->idleTime);
@@ -1666,6 +1666,9 @@ uint32_t loadSkeleton() {
                             state->skeletonState->idleTime = xorInt(
                                     state->skeletonState->idleTime);
                         }
+                    }
+                    else {
+                        state->skeletonState->idleTime = 0;
                     }
                     state->skeletonState->idleTimeNow = SDL_GetTicks();
                 }
@@ -2732,6 +2735,8 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->activeTree = NULL;
 
     state->skeletonState->skeletonTime = 0;
+    state->skeletonState->idleTime = 0;
+    state->skeletonState->idleTimeNow = SDL_GetTicks();
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
 
     ht_rmtable(state->skeletonState->skeletonDCs);
