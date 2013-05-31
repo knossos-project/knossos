@@ -30,8 +30,13 @@
 #include <math.h>
 
 #include <QtOpenGL>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#ifdef Q_OS_MACX
+    #include <glu.h>
+#endif
+#ifdef Q_OS_LINUX
+    #include <GL/gl.h>
+    #include <GL/glu.h>
+#endif
 #include "skeletonizer.h"
 #include "viewer.h"
 
