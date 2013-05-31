@@ -449,6 +449,7 @@ bool MainWindow::addRecentFile(QString fileName) {
         skeletonFileHistory->enqueue(fileName);
     }
 
+    updateFileHistoryMenu();
     return true;
 }
 
@@ -833,11 +834,11 @@ void MainWindow::createMenus()
     recentFileMenu = fileMenu->addMenu("Recent File(s)");
 
     /* History Entries */
-    for(int i = 0; i < skeletonFileHistory->size(); i++) {
-
-        historyEntryActions[i]->setText(skeletonFileHistory->at(i));
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        ////historyEntryActions[i]->setText(skeletonFileHistory->at(i));
         historyEntryActions[i]->installEventFilter(this);
-        recentFileMenu->addAction(historyEntryActions[i]);
+        //recentFileMenu->addAction(historyEntryActions[i]);
+
     }
 
     fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
@@ -919,26 +920,26 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::openSlot()
 {
 
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", state->viewerState->gui->skeletonDirectory, "KNOSSOS Skeleton file(*.nml)");
 
     if(!fileName.isNull()) {
         QFileInfo info(fileName);
         char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
         MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
 
-        loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
 
-        /*
-        int ret = QMessageBox::question(this, "", "Do you really want to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
+        int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
 
         if(ret == QMessageBox::Yes) {
-
+            state->skeletonState->mergeOnLoadFlag = true;
 
         } else {
-
+            state->skeletonState->mergeOnLoadFlag = false;
         }
-        */
 
+
+        loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
+        addRecentFile(fileName);
     }
 }
 
@@ -949,9 +950,11 @@ void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
     int i = 0;
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-        QString path = *it;
-        historyEntryActions[i++]->setText(path);
 
+        QString path = *it;
+        historyEntryActions[i]->setText(path);
+        recentFileMenu->addAction(historyEntryActions[i]);
+        i++;
     }
 }
 
@@ -987,8 +990,6 @@ void MainWindow::saveAsSlot()
 
         QFile file(fileName);
         saveSkel(fileName, false);
-
-
         if(!file.open(QIODevice::WriteOnly)) {
             QMessageBox box(this);
         } else {
@@ -1038,6 +1039,7 @@ void MainWindow::dropNodesSlot()
     if(addNodeAction->isChecked()) {
         addNodeAction->setChecked(false);
     }
+
     if(linkWithActiveNodeAction->isChecked()) {
         linkWithActiveNodeAction->setChecked(false);
     }

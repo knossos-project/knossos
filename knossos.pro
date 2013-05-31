@@ -108,7 +108,7 @@ macx {
     LIBS += -lxml2
 }
 
-unix {
+linux {
     LIBS += -lxml2 \
             -lGL \
             -lGLU \

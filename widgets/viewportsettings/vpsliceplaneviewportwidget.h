@@ -26,7 +26,12 @@
  */
 
 #include <QWidget>
+#ifdef Q_OS_LINUX
 #include <GL/gl.h>
+#endif
+#ifdef Q_OS_MACX
+    #include <OpenGL.h>
+#endif
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;

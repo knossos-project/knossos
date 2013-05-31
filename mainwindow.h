@@ -25,7 +25,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 #include <QMainWindow>
 #include <QQueue>
