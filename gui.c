@@ -204,9 +204,8 @@ void updateAGconfig() {
     state->viewerState->ag->totalTrees = state->skeletonState->treeElements;
     state->viewerState->ag->totalNodes = state->skeletonState->totalNodeElements;
     if(state->skeletonState->totalNodeElements == 0) {
-        if(!strcmp (state->skeletonState->skeletonCreatedInVersion, "pre-3.2")){
-            strcpy(state->skeletonState->skeletonCreatedInVersion, "3.4");
-        }
+        resetSkeletonMeta();
+
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt1, FALSE);
         AG_NumericalSetWriteable(state->viewerState->ag->actNodeIDWdgt2, FALSE);
         state->viewerState->ag->activeNodeID = 0;
@@ -1096,7 +1095,7 @@ void createConsoleWin() {
     AG_ConsoleSetFont (state->viewerState->ag->agConsole, monospace);
 
     AG_Expand(state->viewerState->ag->agConsole);
-    AG_ConsoleAppendLine(state->viewerState->ag->agConsole , "Welcome to KNOSSOS 3.4");
+    AG_ConsoleAppendLine(state->viewerState->ag->agConsole, "Welcome to KNOSSOS " KVERSION);
     AG_WindowSetCloseAction(state->viewerState->ag->consoleWin, AG_WINDOW_HIDE);
 	AG_WindowHide(state->viewerState->ag->consoleWin);
 }

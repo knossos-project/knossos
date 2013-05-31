@@ -1717,6 +1717,7 @@ void UI_popBranchNode();
 void restoreDefaultTreeColor();
 void checkIdleTime();
 uint32_t genTestNodes(uint32_t number);
+void resetSkeletonMeta();
 //undo stuff
 void undo();
 int delSkelState(struct skeletonState *skelState);

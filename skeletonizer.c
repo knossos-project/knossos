@@ -1670,7 +1670,6 @@ uint32_t loadSkeleton() {
                     else {
                         state->skeletonState->idleTime = 0;
                     }
-                    state->skeletonState->idleTimeNow = SDL_GetTicks();
                 }
                 currentXMLNode = currentXMLNode->next;
             }
@@ -2734,11 +2733,6 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     state->skeletonState->activeNode = NULL;
     state->skeletonState->activeTree = NULL;
 
-    state->skeletonState->skeletonTime = 0;
-    state->skeletonState->idleTime = 0;
-    state->skeletonState->idleTimeNow = SDL_GetTicks();
-    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
-
     ht_rmtable(state->skeletonState->skeletonDCs);
     delDynArray(state->skeletonState->nodeCounter);
     delDynArray(state->skeletonState->nodesByNodeID);
@@ -2772,6 +2766,8 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
 
     state->skeletonState->skeletonRevision++;
     state->skeletonState->unsavedChanges = TRUE;
+
+    resetSkeletonMeta();
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("br", KIKI_CLEARSKELETON))
@@ -4492,6 +4488,18 @@ static char *integerChecksum(int32_t in) {
     }
 
     return checksum;
+}
+
+void resetSkeletonMeta() {
+    /* Whenever the user arrives at a 'clean slate',
+     * by clearing the skeleton or by deleting all nodes,
+     * skeleton meta information that is either set during
+     * tracing or loaded with the skeleton should be reset. */
+
+    state->skeletonState->skeletonTime = 0;
+    state->skeletonState->idleTime = 0;
+    state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
+    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION); 
 }
 /*
 void serializeSkeleton() {
