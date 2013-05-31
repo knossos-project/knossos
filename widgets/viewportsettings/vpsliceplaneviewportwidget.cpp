@@ -23,7 +23,7 @@
  */
 
 #include "vpsliceplaneviewportwidget.h"
-#include <Qlabel>
+#include <QLabel>
 #include <QFrame>
 #include <QDoubleSpinBox>
 #include <QSpinBox>

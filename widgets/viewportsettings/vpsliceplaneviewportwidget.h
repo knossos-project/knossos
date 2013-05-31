@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include <GL/gl.h>
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;

@@ -30,8 +30,8 @@
 #include <math.h>
 
 #include <QtOpenGL>
-#include <OpenGL.h>
-#include <glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include "skeletonizer.h"
 #include "viewer.h"
 

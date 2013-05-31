@@ -37,7 +37,7 @@
 #include <QDir>
 #include <QStringList>
 #include <QToolBar>
-#include <QSpinbox>
+#include <QSpinBox>
 #include <QLabel>
 #include <QQueue>
 #include <QKeySequence>

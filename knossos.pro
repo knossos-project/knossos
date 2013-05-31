@@ -104,9 +104,26 @@ OTHER_FILES += \
     customCursor.xpm \
     config.y \
 
-LIBS += -lxml2
+macx {
+    LIBS += -lxml2
+}
 
-INCLUDEPATH += ../../MinGW/include/libxml \
-               ../../MinGW/include/GL
+unix {
+    LIBS += -lxml2 \
+            -lGL \
+            -lGLU \
+            -L/usr/lib/i386-linux-gnu/mesa/lGL \
+
+
+
+    INCLUDEPATH += /home/knossos/Dokumente/libxml \
+                   /usr/include/GL/
+}
+
+
+win {
+
+}
+
 RESOURCES += \
     Resources.qrc

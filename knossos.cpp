@@ -123,7 +123,13 @@ int main(int argc, char *argv[])
     }
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
+
+#ifdef Q_OS_UNIX
+    strncpy(tempConfig->path, "../../e1088_mag1/", 1024);
+#endif
+#ifdef Q_OS_MACX
     strncpy(tempConfig->path, "../../../../../e1088_mag1/", 1024);
+#endif
     strncpy(tempConfig->name, "070317_e1088", 1024);
     tempConfig->boundary.x = 2048;
     tempConfig->boundary.y = 1792;
