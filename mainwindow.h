@@ -67,8 +67,7 @@ public:
     void updateTitlebar(bool useFilename);
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    static bool addRecentFile(char *path, uint pos);
-    bool addRecentFile(QString fileName);
+
 
     //static void saveSkelCallback(AG_Event *event);
 
@@ -92,7 +91,6 @@ public:
     void createDataSavingWidget();
     void createSychronizationWidget();
     bool eventFilter(QObject *obj, QEvent *event);
-
     void loadDefaultPrefs();
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
@@ -192,6 +190,8 @@ public:
     QSettings *settings;
     void saveSettings();
     void loadSettings();
+    bool alreadyInMenu(const QString &path);
+    bool addRecentFile(const QString &fileName);
 
 public slots:
     /* file menu */
@@ -234,9 +234,8 @@ public slots:
     /* toolbar slots */
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
-    void xCoordinateChanged(int value);
-    void yCoordinateChanged(int value);
-    void zCoordinateChanged(int value);
+    void coordinateEditingFinished();
+
 
     void zoomOrthogonals(float step);
     void uncheckToolsAction();
@@ -252,7 +251,7 @@ public slots:
     void updateCoordinateBar(int x, int y, int z);
     void UI_saveSkeleton(int increment);
     void saveSkelCallback();
-    void saveSkel(QString fileName, int increment);
+    void saveSkeleton(QString fileName, int increment);
 
 };
 

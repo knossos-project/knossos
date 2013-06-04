@@ -43,6 +43,7 @@
 #include <QKeySequence>
 #include <QSettings>
 #include <QDir>
+#include <QAction>
 #include <QThread>
 #include <dirent.h>
 #include <unistd.h>
@@ -71,7 +72,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-
     ui->setupUi(this);
 
     setWindowTitle("KnossosQT");
@@ -161,29 +161,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    /*
-    viewports = new Viewport*[NUM_VP];
-
-    for(int i = 0; i < NUM_VP; i++) {
-        viewports[i] = new Viewport(this, i);
-    }
-
-    */
-    /*
-    viewports[0]->setGeometry(5, 40, 500, 500);
-    viewports[1]->setGeometry(510, 40, 500, 500);
-    viewports[2]->setGeometry(5, 545, 500, 500);
-    viewports[3]->setGeometry(510, 545, 500, 500);
-
-
-
-    for(int i = 0; i < NUM_VP; i++) {
-        SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner,
-                       viewports[i]->geometry().topLeft().x(),
-                       viewports[i]->geometry().topLeft().y(),
-                       0);
-        state->viewerState->vpConfigs[i].edgeLength = viewports[i]->width();
-    } */
 
 
     this->skeletonFileDialog = new QFileDialog(this);
@@ -198,6 +175,7 @@ MainWindow::MainWindow(QWidget *parent) :
     saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
 
     updateTitlebar(false);
+
 }
 
 MainWindow::~MainWindow()
@@ -218,6 +196,7 @@ void MainWindow:: createCoordBarWin() {
     xField = new QSpinBox();
     xField->setMaximum(10000);
     xField->setMinimumWidth(75);
+
     xField->setValue(state->viewerState->currentPosition.x);
     yField = new QSpinBox();
     yField->setMaximum(10000);
@@ -242,10 +221,9 @@ void MainWindow:: createCoordBarWin() {
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
-
-    connect(xField, SIGNAL(valueChanged(int)), this, SLOT(xCoordinateChanged(int)));
-    connect(yField, SIGNAL(valueChanged(int)), this, SLOT(yCoordinateChanged(int)));
-    connect(zField, SIGNAL(valueChanged(int)), this, SLOT(zCoordinateChanged(int)));
+    connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
 
 // Dialogs
@@ -385,6 +363,7 @@ void MainWindow::updateTitlebar(bool useFilename) {
 
     QString title(state->viewerState->gui->titleString);
     setWindowTitle(title);
+    historyEntryActions[0]->setText(settings->value("history_entry_actions_one").toString());
 }
 
 void MainWindow::showSplashScreen() {
@@ -431,16 +410,7 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 }
 
 
-bool MainWindow::addRecentFile(char *path, uint pos){return false;}
-
-bool MainWindow::addRecentFile(QString fileName) {
-    QQueue<QString>::iterator it;
-    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-        QString path = *it;
-        if(path.compare(fileName), Qt::CaseInsensitive == 0) {
-            return false;
-        }
-    }
+bool MainWindow::addRecentFile(const QString &fileName) {
 
     if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
         skeletonFileHistory->enqueue(fileName);
@@ -453,103 +423,47 @@ bool MainWindow::addRecentFile(QString fileName) {
     return true;
 }
 
-void MainWindow::saveSkel(QString fileName, int increment) {
-    QFileInfo info(fileName);
-    qDebug() << info.canonicalPath();
-    char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
-    cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
-    QDir dir(QString(state->viewerState->gui->skeletonDirectory));
-    if(!dir.exists()) {
-        dir.mkdir(QString(state->viewerState->gui->skeletonDirectory));
+
+void MainWindow::saveSkeleton(QString fileName, int increment) {
+
+    if(fileName.isNull()) {
+
+
+        return;
     }
 
     QFile saveFile(fileName);
-    if(increment) {
-        increment = state->skeletonState->autoFilenameIncrementBool;
-    }
+    char *cpath = const_cast<char *>(fileName.toStdString().c_str());
 
-    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, state->skeletonState->skeletonFile); /* @woher */
-
-    if(!saveFile.open(QIODevice::ReadOnly)) {
+    if(saveFile.open(QIODevice::ReadWrite)) {
+        emit updateSkeletonFileNameSignal(CHANGE_MANUAL, state->skeletonState->autoFilenameIncrementBool, cpath);
         int saved = Skeletonizer::saveSkeleton();
+
         if(saved == FAIL) {
-            /*
-            AG_TextError("The skeleton was not saved successfully.\n"
-                         "Check disk space and access rights.\n"
-                         "Attempted to write to: %s", state->skeletonState->skeletonFile); */
-            qDebug("Save to %s failed.", state->skeletonState->skeletonFile);
-        } else if (saved == false) {
-            qDebug("No skeleton was found. Not saving.");
+            QMessageBox box;
+            box.setText("The skeleton was not saved successfully. Check disk space and access rights");
+            box.show();
+        } else if(!saved) {
+            qDebug() << "No skeleton was found. Not saving";
         } else {
             updateTitlebar(true);
             qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
             state->skeletonState->unsavedChanges = false;
-            addRecentFile(state->skeletonState->skeletonFile, false);
-        }
+            addRecentFile(fileName);
 
-        //yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
-        saveFile.close();
-        return;
+        }
 
 
     } else {
-        qDebug() << "ERROR";
+
     }
+
 }
 
+/* */
 void MainWindow::UI_saveSkeleton(int increment) {
 
-    qDebug() << state->skeletonState->skeletonFile;
 
-    //create directory if it does not exist
-    DIR *skelDir;
-    cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
-    skelDir = opendir(state->viewerState->gui->skeletonDirectory);
-    if(!skelDir) {
-        #ifdef LINUX
-            mkdir(state->viewerState->gui->skeletonDirectory, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP);
-        #else
-            int phantom_statement;
-            /* @todo mkdir(state->viewerState->gui->skeletonDirectory) */;
-        #endif
-    }
-
-    FILE *saveFile;
-    if(increment) {
-        increment = state->skeletonState->autoFilenameIncrementBool;
-    }
-
-    emit updateSkeletonFileNameSignal(CHANGE_MANUAL,
-                           increment,
-                           state->skeletonState->skeletonFile);
-
-    saveFile = fopen(state->skeletonState->skeletonFile, "r");
-    if(saveFile) {
-
-        int saved = Skeletonizer::saveSkeleton();
-        if(saved == FAIL) {
-            /*
-            AG_TextError("The skeleton was not saved successfully.\n"
-                         "Check disk space and access rights.\n"
-                         "Attempted to write to: %s", state->skeletonState->skeletonFile); */
-            qDebug("Save to %s failed.", state->skeletonState->skeletonFile);
-        }
-        else if (saved == false) {
-            qDebug("No skeleton was found. Not saving.");
-        }
-        else {
-            updateTitlebar(true);
-            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
-            state->skeletonState->unsavedChanges = false;
-            addRecentFile(state->skeletonState->skeletonFile, false);
-        }
-
-        //yesNoPrompt(NULL, "Overwrite existing skeleton file?", WRAP_saveSkeleton, NULL);
-        fclose(saveFile);
-        return;
-    } else {
-        qDebug() << "Nö";
-    }
 
 }
 
@@ -566,6 +480,7 @@ void MainWindow::loadSkeleton(char *fileName) {
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, fileName, 8192);
 
+
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
         linkWithActiveNodeSlot();
@@ -575,12 +490,6 @@ void MainWindow::loadSkeleton(char *fileName) {
         strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
     }
 
-    if(state->skeletonState->totalNodeElements != 0) {
-        //yesNoPrompt(NULL, msg, WRAP_loadSkeleton, NULL);
-    } else {
-
-
-    }
 }
 
 
@@ -919,11 +828,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
   */
 void MainWindow::openSlot()
 {
-
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", state->viewerState->gui->skeletonDirectory, "KNOSSOS Skeleton file(*.nml)");
 
     if(!fileName.isNull()) {
         QFileInfo info(fileName);
+        QString path = info.canonicalPath();
+
         char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
         MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
 
@@ -939,9 +849,22 @@ void MainWindow::openSlot()
 
 
         loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
-        addRecentFile(fileName);
+        if(!alreadyInMenu(path)) {
+            addRecentFile(fileName);
+        }
     }
 }
+
+bool MainWindow::alreadyInMenu(const QString &path) {
+    for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
+        if(QString::compare(skeletonFileHistory->at(i), path, Qt::CaseInsensitive)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 /**
   * This method puts the history entries of the loaded skeleton files to the recent file menu section
@@ -950,7 +873,6 @@ void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
     int i = 0;
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-
         QString path = *it;
         historyEntryActions[i]->setText(path);
         recentFileMenu->addAction(historyEntryActions[i]);
@@ -977,26 +899,22 @@ void MainWindow::saveSlot()
 
 }
 
-/**
-  * @todo message box other parameter, save as logic
-  */
 void MainWindow::saveAsSlot()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-
     if(!fileName.isEmpty()) {
         QFileInfo info(fileName);
-        qDebug() << info.canonicalFilePath();
+
+        // override the skeletonDirectory
+        memset(state->viewerState->gui->skeletonDirectory, '\0', 8192);
+        strcpy(state->viewerState->gui->skeletonDirectory, const_cast<char *>(info.canonicalPath().toStdString().c_str()));
 
         QFile file(fileName);
-        saveSkel(fileName, false);
-        if(!file.open(QIODevice::WriteOnly)) {
-            QMessageBox box(this);
-        } else {
-            // Save as logic
-            UI_saveSkeleton(false);
-            file.close();
+        if(file.open(QIODevice::ReadWrite)) {
+            saveSkeleton(fileName, false);
         }
+
+        file.close();
     }
 
 }
@@ -1004,6 +922,7 @@ void MainWindow::saveAsSlot()
 void MainWindow::quitSlot()
 {
    QApplication::closeAllWindows();
+
 }
 
 /* edit skeleton functionality */
@@ -1232,10 +1151,7 @@ void MainWindow::pasteClipboardCoordinates(){
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
 
-
-
             emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-
             emit runSignal();
 
             free(extractedCoords);
@@ -1250,18 +1166,24 @@ void MainWindow::pasteClipboardCoordinates(){
 
 }
 
-void MainWindow::xCoordinateChanged(int value) {
-    state->viewerState->currentPosition.x = value;
+#include "viewer.h"
+void MainWindow::coordinateEditingFinished() {
+    qDebug() << xField->value();
+    qDebug() << yField->value();
+    qDebug() << zField->value();
 
+    state->viewerState->currentPosition.x = xField->value();
+    state->viewerState->currentPosition.y = yField->value();
+    state->viewerState->currentPosition.z = zField->value();
+
+    state->currentPositionX.x = xField->value();
+    state->currentPositionX.y = yField->value();
+    state->currentPositionX.z = zField->value();
+    state->loadSignal = true;
+
+    //emit updatePositionSignal(TELL_COORDINATE_CHANGE);
 }
 
-void MainWindow::yCoordinateChanged(int value) {
-    state->viewerState->currentPosition.y = value;
-}
-
-void MainWindow::zCoordinateChanged(int value) {
-    state->viewerState->currentPosition.z = value;
-}
 
 void MainWindow::saveSettings() {
     settings->setValue("main_window.width", this->width());
@@ -1402,6 +1324,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(historyEntryActions[i] == obj) {
            QString fileName = historyEntryActions[i]->text();
+           qDebug() << fileName;
         }
     }
 
@@ -1459,7 +1382,6 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     xField->setValue(x);
     yField->setValue(y);
     zField->setValue(z);
-
 }
 
 void MainWindow::saveSkelCallback() {

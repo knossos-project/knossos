@@ -1513,8 +1513,6 @@ bool Skeletonizer::loadSkeleton() {
     free(currentCoordinate);
     xmlFreeDoc(xmlDocument);
 
-    MainWindow::addRecentFile(state->skeletonState->skeletonFile, false);
-
     if(activeNodeID) {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
     }

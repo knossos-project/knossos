@@ -194,7 +194,7 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(vp4->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
 
-    connect(skeletonizer, SIGNAL(UI_saveSkeletonSignal(int)), window, SLOT(UI_saveSkeleton(int)));
+    connect(skeletonizer, SIGNAL(UI_saveSkeletonSignal(int)), window, SLOT(saveSkeleton(int)));
 
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
