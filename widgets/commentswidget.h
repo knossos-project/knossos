@@ -27,29 +27,26 @@
 
 #include <QDialog>
 
-class QLineEdit;
-class QLabel;
-class QPushButton;
 class QEvent;
+class QTabWidget;
+class CommentShortCutsTab;
+class CommentsPreferencesTab;
 class CommentsWidget : public QDialog
 {
     Q_OBJECT
 public:
-    explicit CommentsWidget(QWidget *parent = 0);
-    QLineEdit **textFields;
-    bool eventFilter(QObject *obj, QEvent *event);
+    explicit CommentsWidget(QWidget *parent = 0);    
     void loadSettings();
     void saveSettings();
 signals:
     void uncheckSignal();
 public slots:
-    void deleteComments();
 
 protected:
     void closeEvent(QCloseEvent *event);
-    static const int NUM = 5;
-    QLabel **labels;
-    QPushButton *button;
+    QTabWidget *tabs;
+    CommentShortCutsTab *shortcutTab;
+    CommentsPreferencesTab *preferencesTab;
 };
 
 #endif // COMMENTSWIDGET_H

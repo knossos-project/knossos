@@ -37,23 +37,13 @@ public:
     explicit NavigationWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
-    QSpinBox *movementSpeedSpinBox;
-    QSpinBox *jumpFramesSpinBox;
-    QSpinBox *recenterTimeParallelSpinBox;
-    QSpinBox *recenterTimeOrthoSpinBox;
-
-    QRadioButton *normalModeButton;
-    QRadioButton *additionalViewportDirectionMoveButton;
-    QRadioButton *additionalTracingDirectionMoveButton;
-    QRadioButton *additionalMirroredMoveButton;
-    QSpinBox *delayTimePerStepSpinBox;
-    QSpinBox *numberOfStepsSpinBox;
 
 signals:
     void uncheckSignal();
 public slots:
     void movementSpeedChanged(int value);
     void jumpFramesChanged(int value);
+    void walkFramesChanged(int value);
     void recenterTimeParallelChanged(int value);
     void recenterTimeOrthoChanged(int value);
     void normalModeButtonClicked(bool on);
@@ -68,17 +58,25 @@ protected:
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;
     QLabel *jumpFramesLabel;
+    QLabel *walkFramesLabel;
     QLabel *recenterTimeParallelLabel;
     QLabel *recenterTimeOrthoLabel;
-
-
-
     QLabel *advanceTracingModesLabel;
-
-
     QLabel *delayTimePerStepLabel;
     QLabel *numberOfStepsLabel;
 
+    QSpinBox *movementSpeedSpinBox;
+    QSpinBox *jumpFramesSpinBox;
+    QSpinBox *walkFramesSpinBox;
+    QSpinBox *recenterTimeParallelSpinBox;
+    QSpinBox *recenterTimeOrthoSpinBox;
+
+    QRadioButton *normalModeButton;
+    QRadioButton *additionalViewportDirectionMoveButton;
+    QRadioButton *additionalTracingDirectionMoveButton;
+    QRadioButton *additionalMirroredMoveButton;
+    QSpinBox *delayTimePerStepSpinBox;
+    QSpinBox *numberOfStepsSpinBox;
 
 };
 

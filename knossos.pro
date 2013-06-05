@@ -27,6 +27,8 @@ SOURCES +=\
     widgets/console.cpp \
     widgets/tracingtimewidget.cpp \
     widgets/commentswidget.cpp \
+    widgets/commentshortcuts/commentshortcutstab.cpp \
+    widgets/commentshortcuts/commentspreferencestab.cpp \
     widgets/zoomandmultireswidget.cpp \
     widgets/datasavingwidget.cpp \
     widgets/navigationwidget.cpp \
@@ -42,7 +44,7 @@ SOURCES +=\
     widgets/splashscreenwidget.cpp \
     functions.cpp \
     texturizer.cpp \
-    slicer.cpp
+    slicer.cpp \
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -59,6 +61,8 @@ HEADERS  += mainwindow.h \
     widgets/console.h \
     widgets/tracingtimewidget.h \
     widgets/commentswidget.h \
+    widgets/commentshortcuts/commentshortcutstab.h \
+    widgets/commentshortcuts/commentspreferencestab.h \
     widgets/zoomandmultireswidget.h \
     widgets/datasavingwidget.h \
     widgets/navigationwidget.h \
@@ -76,7 +80,7 @@ HEADERS  += mainwindow.h \
     texturizer.h \
     slicer.h \
     GUIConstants.h \
-    Plattform.h
+    Plattform.h \
 
 
 FORMS    += mainwindow.ui
