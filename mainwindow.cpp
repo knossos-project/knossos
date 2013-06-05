@@ -24,7 +24,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+#include "GUIConstants.h"
 #include <QEvent>
 #include <QMenu>
 #include <QAction>
@@ -73,12 +73,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    //loadSettings();
 
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
-    settings = new QSettings();
-    settings->beginGroup("MainWindow");
     skeletonFileHistory = new QQueue<QString>();
 
     state->viewerState->gui->oneShiftedCurrPos.x =
@@ -151,7 +150,6 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
-
     connect(toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
     connect(viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
     connect(commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
@@ -162,25 +160,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
 
-
-    this->skeletonFileDialog = new QFileDialog(this);
-    skeletonFileDialog->setWindowTitle(tr("Open Skeleton File"));
-    skeletonFileDialog->setDirectory(QDir::home());
-    skeletonFileDialog->setNameFilter(tr("KNOSSOS Skeleton File(*.nml)"));
-
-    this->saveFileDialog = new QFileDialog(this);
-    saveFileDialog->setWindowTitle(tr("Save Skeleton File"));
-    saveFileDialog->setDirectory(QDir::home());
-    saveFileDialog->setFileMode(QFileDialog::AnyFile);
-    saveFileDialog->setNameFilter(tr("Knossos Skeleton File(*.nml)"));
-
     updateTitlebar(false);
 
+
+}
+
+void MainWindow::createViewports() {
+    viewports = new Viewport*[4];
+    viewports[0] = new Viewport(this, VIEWPORT_XY);
+    viewports[1] = new Viewport(this, VIEWPORT_YZ);
+    viewports[2] = new Viewport(this, VIEWPORT_XZ);
+    viewports[3] = new Viewport(this, VIEWPORT_SKELETON);
+
+    viewports[0]->setGeometry(5, 40, 350,350);
+    viewports[1]->setGeometry(355, 40, 350, 350);
+    viewports[2]->setGeometry(5, 400, 350, 350);
+    viewports[3]->setGeometry(355, 400, 350, 350);
 }
 
 MainWindow::~MainWindow()
 {
-    settings->endGroup();
     delete ui;
 }
 
@@ -221,9 +220,9 @@ void MainWindow:: createCoordBarWin() {
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
-    connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
-    connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
-    connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    //connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    //connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    //connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
 
 // Dialogs
@@ -363,7 +362,6 @@ void MainWindow::updateTitlebar(bool useFilename) {
 
     QString title(state->viewerState->gui->titleString);
     setWindowTitle(title);
-    historyEntryActions[0]->setText(settings->value("history_entry_actions_one").toString());
 }
 
 void MainWindow::showSplashScreen() {
@@ -792,6 +790,8 @@ void MainWindow::createMenus()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    saveSettings();
+
     if(state->skeletonState->unsavedChanges) {
 
         prompt = new QMessageBox(this);
@@ -921,6 +921,7 @@ void MainWindow::saveAsSlot()
 
 void MainWindow::quitSlot()
 {
+   saveSettings();
    QApplication::closeAllWindows();
 
 }
@@ -1186,52 +1187,24 @@ void MainWindow::coordinateEditingFinished() {
 
 
 void MainWindow::saveSettings() {
-    settings->setValue("main_window.width", this->width());
-    settings->setValue("main_indow.height", this->height());
-    settings->setValue("main_window.position.x", this->x());
-    settings->setValue("main_window.position.y", this->y());
+    QSettings settings;
+    settings.beginGroup(MAIN_WINDOW);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.endGroup();
 
-    settings->setValue("comments_widget.width", this->commentsWidget->width());
-    settings->setValue("comments_widget.height", this->commentsWidget->height());
-    settings->setValue("comment_widget.position.x", this->commentsWidget->x());
-    settings->setValue("comments_widget.position.y", this->commentsWidget->y());
-    settings->setValue("comments_widget.visible", this->commentsWidget->isVisible());
-    settings->setValue("comments_widget.comment1", commentsWidget->textFields[0]->text());
-    settings->setValue("comments_widget.comment2", this->commentsWidget->textFields[1]->text());
-    settings->setValue("comments_widget.comment3", this->commentsWidget->textFields[2]->text());
-    settings->setValue("comments_widget.comment4", this->commentsWidget->textFields[3]->text());
-    settings->setValue("comments_widget.comment5", this->commentsWidget->textFields[4]->text());
+    commentsWidget->saveSettings();
+    console->saveSettings();
+    dataSavingWidget->saveSettings();
+    zoomAndMultiresWidget->saveSettings();
+    viewportSettingsWidget->saveSettings();
+    navigationWidget->saveSettings();
+    toolsWidget->saveSettings();
 
-    settings->setValue("console_widget.width", this->console->width());
-    settings->setValue("console_widget.height", this->console->height());
-    settings->setValue("console_widget.position.x", this->console->x());
-    settings->setValue("console_widget.position.y", this->console->y());
-    settings->setValue("console_widget.visible", this->console->isVisible());
+    /*
 
-    settings->setValue("data_saving_widget.width", this->dataSavingWidget->width());
-    settings->setValue("data_saving_widget.height", this->dataSavingWidget->height());
-    settings->setValue("data_saving_widget.position.x", this->dataSavingWidget->x());
-    settings->setValue("data_saving_widget.position.y", this->dataSavingWidget->y());
-    settings->setValue("data_saving_widget.visible", this->dataSavingWidget->isVisible());
-    settings->setValue("data_saving_widget.auto_saving", this->dataSavingWidget->autosaveButton->isChecked());
-    settings->setValue("data_saving_widget.autosave_interval", this->dataSavingWidget->autosaveIntervalSpinBox->value());
-    settings->setValue("data_saving_widget.autoincrement_filename", this->dataSavingWidget->autoincrementFileNameButton->isChecked());
-
-    settings->setValue("navigation_widget.width", this->navigationWidget->width());
-    settings->setValue("navigation_widget.height", this->navigationWidget->height());
-    settings->setValue("navigation_widget.position.x", this->navigationWidget->x());
-    settings->setValue("navigation_widget.position.y", this->navigationWidget->y());
-    settings->setValue("navigation_widget.visible", this->navigationWidget->isVisible());
-    settings->setValue("navigation_widget.general.movement_speed", this->navigationWidget->movementSpeedSpinBox->value());
-    settings->setValue("navigation_widget.general.jump_frames", this->navigationWidget->jumpFramesSpinBox->value());
-    settings->setValue("navigation_widget.general.recenter_parallel", this->navigationWidget->recenterTimeParallelSpinBox->value());
-    settings->setValue("navigation_widget.general.recenter_ortho", this->navigationWidget->recenterTimeOrthoSpinBox->value());
-    settings->setValue("navigation_widget.advanced.normal_mode", this->navigationWidget->normalModeButton->isChecked());
-    settings->setValue("navigation_widget.advanced.additional_viewport_direction_move", this->navigationWidget->additionalViewportDirectionMoveButton->isChecked());
-    settings->setValue("navigation_widget.advanced.additional_tracing_direction_move", this->navigationWidget->additionalTracingDirectionMoveButton->isChecked());
-    settings->setValue("navigation_widget.advanced.additional_mirrored_move", this->navigationWidget->additionalMirroredMoveButton->isChecked());
-    settings->setValue("navigation_widget.advanced.delay_time_per_step", this->navigationWidget->delayTimePerStepSpinBox->value());
-    settings->setValue("navigation_widget.advanced.number_of_steps", this->navigationWidget->numberOfStepsSpinBox->value());
 
     settings->setValue("synchronization_widget.width", this->synchronizationWidget->width());
     settings->setValue("synchronization_widget.height", this->synchronizationWidget->height());
@@ -1255,64 +1228,34 @@ void MainWindow::saveSettings() {
     settings->setValue("tracing_time_widget.position.y", this->tracingTimeWidget->y());
     settings->setValue("tracing_time_widget.visible", this->tracingTimeWidget->isVisible());
 
-    settings->setValue("viewport_settings_widget.width", this->viewportSettingsWidget->width());
-    settings->setValue("viewport_settings_widget.height", this->viewportSettingsWidget->height());
-    settings->setValue("viewport_settings_widget.position.x", this->viewportSettingsWidget->x());
-    settings->setValue("viewport_settings_widget.position.y", this->viewportSettingsWidget->y());
-    settings->setValue("viewport_settings_widget.visible", this->viewportSettingsWidget->isVisible());
+
     //settings->setValue("viewport_settings_widget.selected_tab", this->viewportSettingsWidget->);
 
-    settings->setValue("zoom_and_multires_widget.width", this->zoomAndMultiresWidget->width());
-    settings->setValue("zoom_and_multires_widget.height", this->zoomAndMultiresWidget->height());
-    settings->setValue("zoom_and_multires_widget.position.x", this->zoomAndMultiresWidget->x());
-    settings->setValue("zoom_and_multires_widget.position.y", this->zoomAndMultiresWidget->y());
-    settings->setValue("zoom_and_multires_widget.visible", this->zoomAndMultiresWidget->isVisible());
-    settings->setValue("zoom_and_multires_widget.orthogonal_data_viewport", this->zoomAndMultiresWidget->orthogonalDataViewportSpinBox->value());
-    settings->setValue("zoom_and_multires_widget.skeleton_view_data_viewport", this->zoomAndMultiresWidget->orthogonalDataViewportSpinBox->value());
-    settings->setValue("zoom_and_multires_widget.lock_dataset_to_current_mag", this->zoomAndMultiresWidget->lockDatasetCheckBox->isChecked());
-
+   */
 }
 
 /**
  * this method is a proposal for the qsettings variant
  */
 void MainWindow::loadSettings() {
-    int width = settings->value("main_window.width").toInt();
-    int height = settings->value("main_window.height").toInt();
-    int x = settings->value("main_window.position.x").toInt();
-    int y = settings->value("main_window.position.y").toInt();
-    bool visible;
+    QSettings settings;
+    settings.beginGroup("MainWindow");
+    int width = settings.value(WIDTH).toInt();
+    int height = settings.value(HEIGHT).toInt();
+    int x = settings.value(POS_X).toInt();
+    int y = settings.value(POS_Y).toInt();
+    settings.endGroup();
 
+    bool visible;
     this->setGeometry(x, y, width, height);
 
-    width = settings->value("comments_widget.width").toInt();
-    height = settings->value("comments_widget.height").toInt();
-    x = settings->value("comments_widget.position.x").toInt();
-    y = settings->value("comments_widget.position.y").toInt();
-    visible = settings->value("comments_widget.visible").toBool();
-
-    this->commentsWidget->setGeometry(x, y, width, height);
-    this->commentsWidget->setVisible(visible);
-
-    width = settings->value("console_widget.width").toInt();
-    height = settings->value("console_widget.width").toInt();
-    x = settings->value("console_widget.position.x").toInt();
-    y = settings->value("console_widget.position.y").toInt();
-    visible = settings->value("console_widget.visible").toBool();
-
-    this->console->setGeometry(x, y, width, height);
-    this->console->setVisible(visible);
-
-    width = settings->value("data_saving_widget.width").toInt();
-    height = settings->value("data_saving_widget.height").toInt();
-    x = settings->value("data_saving_widget.position.x").toInt();
-    y = settings->value("data_saving_widget.position.y").toInt();
-    visible = settings->value("data_saving_widget.visible").toBool();
-
-    this->dataSavingWidget->setGeometry(x, y, width, height);
-    this->dataSavingWidget->setVisible(visible);
-
-    width = settings->value("navigation_widget").toInt();
+    commentsWidget->loadSettings();
+    console->loadSettings();
+    dataSavingWidget->loadSettings();
+    zoomAndMultiresWidget->loadSettings();
+    viewportSettingsWidget->loadSettings();
+    navigationWidget->loadSettings();
+    toolsWidget->loadSettings();
 
 }
 

@@ -32,15 +32,19 @@ class QLabel;
 class QSpinBox;
 class DataSavingWidget : public QDialog
 {
+
     Q_OBJECT
 public:
     explicit DataSavingWidget(QWidget *parent = 0);
+    void loadSettings();
+    void saveSettings();
+protected:
     QCheckBox *autosaveButton;
     QLabel *autosaveIntervalLabel;
     QSpinBox *autosaveIntervalSpinBox;
     QLabel *autoincrementFileNameLabel;
     QCheckBox *autoincrementFileNameButton;
-    void loadSettings();
+
 signals:
     void uncheckSignal();
 public slots:

@@ -36,10 +36,10 @@ class QLineEdit;
 class QCheckBox;
 class ToolsNodesTabWidget : public QWidget
 {
+    friend class ToolsWidget;
     Q_OBJECT
 public:
     explicit ToolsNodesTabWidget(QWidget *parent = 0);
-    void loadSettings();
 signals:
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();

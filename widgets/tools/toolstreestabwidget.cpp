@@ -163,19 +163,9 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
 
-    loadSettings();
+
 }
 
-void ToolsTreesTabWidget::loadSettings() {
-    activeTreeSpinBox->setValue(state->viewerState->gui->activeTreeID);
-    commentField->setText(QString(state->viewerState->gui->treeCommentBuffer));
-    id1SpinBox->setValue(state->viewerState->gui->mergeTreesID1);
-    id2SpinBox->setValue(state->viewerState->gui->mergeTreesID2);
-    rSpinBox->setValue(state->viewerState->gui->actTreeColor.r);
-    gSpinBox->setValue(state->viewerState->gui->actTreeColor.g);
-    bSpinBox->setValue(state->viewerState->gui->actTreeColor.b);
-    aSpinBox->setValue(state->viewerState->gui->actTreeColor.a);
-}
 
 void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
     state->viewerState->gui->activeTreeID = value;

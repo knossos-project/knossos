@@ -81,7 +81,6 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     gridLayout->addWidget(line3, 8, 0);
     gridLayout->addWidget(rotateAroundActiveNodeCheckBox, 9, 0);
 
-
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
     mainLayout->addStretch(50);
@@ -94,24 +93,6 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     connect(onlyActiveTreeButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
     connect(hideSkeletonButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
     connect(rotateAroundActiveNodeCheckBox, SIGNAL(clicked(bool)), SLOT(rotateAroundActiveNodeChecked(bool)));
-}
-
-void VPSkeletonViewportWidget::loadSettings() {
-    showXYPlaneCheckBox->setChecked(state->skeletonState->showXYplane);
-    showYZPlaneCheckBox->setChecked(state->skeletonState->showYZplane);
-    showXZPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
-
-    if(state->viewerState->gui->radioSkeletonDisplayMode == DSP_SKEL_VP_WHOLE) {
-        wholeSkeletonButton->setChecked(true);
-    } else if(state->viewerState->gui->radioSkeletonDisplayMode == DSP_SKEL_VP_CURRENTCUBE) {
-        onlyCurrentCubeButton->setChecked(true);
-    } else if(state->viewerState->gui->radioSkeletonDisplayMode == DSP_ACTIVETREE) {
-        onlyActiveTreeButton->setChecked(true);
-    } else if(state->viewerState->gui->radioSkeletonDisplayMode == DSP_SKEL_VP_HIDE) {
-        hideSkeletonButton->setChecked(true);
-    }
-
-    rotateAroundActiveNodeCheckBox->setChecked(state->skeletonState->rotateAroundActiveNode);
 }
 
 void VPSkeletonViewportWidget::showXYPlaneChecked(bool on) {

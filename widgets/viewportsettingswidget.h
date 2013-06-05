@@ -40,6 +40,8 @@ public:
     VPGeneralTabWidget *generalTabWidget;
     VPSkeletonViewportWidget *skeletonViewportWidget;
     VPSlicePlaneViewportWidget *slicePlaneViewportWidget;
+    void loadSettings();
+    void saveSettings();
 signals:
     void uncheckSignal();
 public slots:

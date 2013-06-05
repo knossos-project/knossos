@@ -143,17 +143,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeButtonClicked()));
     connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));
 
-    loadSettings();
-}
-
-void ToolsQuickTabWidget::loadSettings() {
-    treeCountLabel->setText(QString("Tree Count: %1").arg(state->viewerState->gui->totalTrees));
-    nodeCountLabel->setText(QString("Node Count: %1").arg(state->viewerState->gui->totalNodes));
-    activeTreeSpinBox->setValue(state->viewerState->gui->activeTreeID);
-    xLabel->setText(QString("x: %1").arg(state->viewerState->gui->activeNodeCoord.x));
-    yLabel->setText(QString("y: %1").arg(state->viewerState->gui->activeNodeCoord.y));
-    zLabel->setText(QString("z: %1").arg(state->viewerState->gui->activeNodeCoord.z));
-
 }
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {

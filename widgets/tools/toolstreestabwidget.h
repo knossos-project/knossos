@@ -34,10 +34,11 @@ class QDoubleSpinBox;
 class QPushButton;
 class ToolsTreesTabWidget : public QWidget
 {
+    friend class ToolsWidget;
     Q_OBJECT
 public:
     explicit ToolsTreesTabWidget(QWidget *parent = 0);
-    void loadSettings();
+
 signals:
     void delActiveTreeSignal();
 public slots:

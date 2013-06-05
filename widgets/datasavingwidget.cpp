@@ -23,12 +23,14 @@
  */
 
 #include "datasavingwidget.h"
+#include "GUIConstants.h"
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QCheckBox>
 #include <QLabel>
 #include <QSpinBox>
+#include <QSettings>
 #include "knossos-global.h"
 
 
@@ -62,9 +64,41 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
 }
 
 void DataSavingWidget::loadSettings() {
+   int width, height, x, y;
+   bool visible;
+
+   QSettings settings;
+   settings.beginGroup(CONSOLE_WIDGET);
+   width = settings.value(WIDTH).toInt();
+   height = settings.value(HEIGHT).toInt();
+   x = settings.value(POS_X).toInt();
+   y = settings.value(POS_Y).toInt();
+   visible = settings.value(VISIBLE).toBool();
+   this->autosaveButton->setChecked(settings.value(AUTO_SAVING).toBool());
+   this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
+   this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
+   settings.endGroup();
+
+   setGeometry(x, y, width, height);
+
+
    autosaveButton->setChecked(state->skeletonState->autoSaveBool);
    autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
    autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
+}
+
+void DataSavingWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(CONSOLE_WIDGET);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(AUTO_SAVING, this->autosaveButton->isChecked());
+    settings.setValue(SAVING_INTERVAL, this->autosaveIntervalSpinBox->value());
+    settings.setValue(AUTOINC_FILENAME, this->autoincrementFileNameButton->isChecked());
+    settings.endGroup();
 }
 
 void DataSavingWidget::closeEvent(QCloseEvent *event) {

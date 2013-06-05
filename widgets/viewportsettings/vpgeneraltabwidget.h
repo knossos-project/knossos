@@ -33,10 +33,11 @@ class QDoubleSpinBox;
 class QRadioButton;
 class VPGeneralTabWidget : public QWidget
 {
+    friend class ViewportSettingsWidget;
     Q_OBJECT
 public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
-    void loadSettings();
+
 signals:
     
 public slots:

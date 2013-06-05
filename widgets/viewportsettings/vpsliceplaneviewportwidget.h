@@ -40,6 +40,7 @@ class QSpinBox;
 class QSlider;
 class VPSlicePlaneViewportWidget : public QWidget
 {
+    friend class ViewportSettingsWidget;
     Q_OBJECT
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);

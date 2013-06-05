@@ -32,10 +32,10 @@ class QCheckBox;
 class QRadioButton;
 class VPSkeletonViewportWidget : public QWidget
 {
+    friend class ViewportSettingsWidget;
     Q_OBJECT
 public:
     explicit VPSkeletonViewportWidget(QWidget *parent = 0);
-    void loadSettings();
 signals:
     
 public slots:

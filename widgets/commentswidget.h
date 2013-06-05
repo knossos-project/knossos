@@ -39,7 +39,7 @@ public:
     QLineEdit **textFields;
     bool eventFilter(QObject *obj, QEvent *event);
     void loadSettings();
-
+    void saveSettings();
 signals:
     void uncheckSignal();
 public slots:

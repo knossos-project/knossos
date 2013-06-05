@@ -39,6 +39,8 @@ public:
     ToolsQuickTabWidget *toolsQuickTabWidget;
     ToolsNodesTabWidget *toolsNodesTabWidget;
     ToolsTreesTabWidget *toolsTreesTabWidget;
+    void loadSettings();
+    void saveSettings();
 signals:
     void uncheckSignal();
 public slots:

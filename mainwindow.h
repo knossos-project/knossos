@@ -35,14 +35,11 @@ class MainWindow;
 
 class QLabel;
 class QToolBar;
-class QSettings;
 class QPushButton;
 class QSpinBox;
 class QMessageBox;
 class QGridLayout;
-class QFileDialog;
 class QFile;
-
 class Console;
 class TracingTimeWidget;
 class CommentsWidget;
@@ -67,15 +64,9 @@ public:
     void updateTitlebar(bool useFilename);
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-
-
-    //static void saveSkelCallback(AG_Event *event);
-
     static void UI_saveSettings();
     void loadSkeleton(char *fileName);
-
     static void reloadDataSizeWin();
-
     static void treeColorAdjustmentsChanged();
     static void datasetColorAdjustmentsChanged();
 
@@ -177,17 +168,15 @@ public:
     QMenu *windowMenu;
     QMenu *helpMenu;
 
-    QFileDialog *skeletonFileDialog;
     QQueue<QString> *skeletonFileHistory;
-    QFileDialog *saveFileDialog;
     QFile *loadedFile;
     void updateFileHistoryMenu();
 
     void createActions();
     void createMenus();
     void createCoordBarWin();
+    void createViewports();
 
-    QSettings *settings;
     void saveSettings();
     void loadSettings();
     bool alreadyInMenu(const QString &path);
@@ -235,7 +224,6 @@ public slots:
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
-
 
     void zoomOrthogonals(float step);
     void uncheckToolsAction();

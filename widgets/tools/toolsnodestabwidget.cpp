@@ -158,23 +158,9 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     connect(lockToActiveNodeButton, SIGNAL(clicked()), this, SLOT(lockToActiveNodeButtonClicked()));
     connect(disableLockingButton, SIGNAL(clicked()), this, SLOT(disableLockingButtonClicked()));
 
-
-    loadSettings();
 }
 
-void ToolsNodesTabWidget::loadSettings() {
-    activeNodeIdSpinBox->setValue(state->viewerState->gui->activeNodeID);
-    idSpinBox->setValue(state->viewerState->gui->activeNodeID); // see todo below
-    commentField->setText(QString(state->viewerState->gui->commentBuffer));
-    searchForField->setText(QString(state->viewerState->gui->commentSearchBuffer));
-    useLastRadiusBox->setChecked(state->viewerState->gui->useLastActNodeRadiusAsDefault);
-    activeNodeRadiusSpinBox->setValue(state->viewerState->gui->actNodeRadius);
-    defaultNodeRadiusSpinBox->setValue(state->skeletonState->defaultNodeRadius);
-    enableCommentLockingCheckBox->setChecked(state->skeletonState->lockPositions);
-    lockingRadiusSpinBox->setValue(state->skeletonState->lockRadius);
-    lockingToNodesWithCommentField->setText(state->skeletonState->onCommentLock);
 
-}
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
     state->viewerState->gui->activeNodeID = value;

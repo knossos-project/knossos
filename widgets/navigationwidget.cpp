@@ -31,6 +31,8 @@
 #include <QRadioButton>
 #include <QGroupBox>
 #include <QSpacerItem>
+#include <QSettings>
+#include "GUIConstants.h"
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -124,27 +126,6 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     loadSettings();
 }
 
-
-void NavigationWidget::loadSettings() {
-    movementSpeedSpinBox->setValue(state->viewerState->stepsPerSec);
-    jumpFramesSpinBox->setValue(state->viewerState->dropFrames);
-    recenterTimeOrthoSpinBox->setValue(state->viewerState->recenteringTimeOrth);
-    recenterTimeParallelSpinBox->setValue(state->viewerState->recenteringTime);
-
-    if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_NORMAL) {
-        this->normalModeButton->setChecked(true);
-    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE) {
-        this->additionalTracingDirectionMoveButton->setChecked(true);
-    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE) {
-        this->additionalViewportDirectionMoveButton->setChecked(true);
-    } else if(state->viewerState->autoTracingMode == AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE) {
-        this->additionalMirroredMoveButton->setChecked(true);
-    }
-
-    delayTimePerStepSpinBox->setValue(state->viewerState->autoTracingDelay);
-    numberOfStepsSpinBox->setValue(state->viewerState->autoTracingSteps);
-}
-
 void NavigationWidget::movementSpeedChanged(int value) {
     tempConfig->viewerState->stepsPerSec = value;
 }
@@ -196,5 +177,57 @@ void NavigationWidget::numberOfStepsChanged(int value) {
 void NavigationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
+
+}
+
+void NavigationWidget::loadSettings() {
+    int width, height, x, y;
+    bool visible;
+
+    QSettings settings;
+    settings.beginGroup(NAVIGATION_WIDGET);
+    width = settings.value(WIDTH).toInt();
+    height = settings.value(HEIGHT).toInt();
+    x = settings.value(POS_X).toInt();
+    y = settings.value(POS_Y).toInt();
+    visible = settings.value(VISIBLE).toBool();
+
+    setGeometry(x, y, width, height);
+
+    this->movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED).toInt());
+    this->jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES).toInt());
+    this->recenterTimeParallelSpinBox->setValue(settings.value(RECENTERING_TIME_PARALLEL).toInt());
+    this->recenterTimeOrthoSpinBox->setValue(settings.value(RECENTERING_TIME_ORTHO).toInt());
+    this->normalModeButton->setChecked(settings.value(NORMAL_MODE).toBool());
+    this->additionalViewportDirectionMoveButton->setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).toBool());
+    this->additionalTracingDirectionMoveButton->setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).toBool());
+    this->additionalMirroredMoveButton->setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE).toBool());
+
+
+    settings.endGroup();
+
+}
+
+void NavigationWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(NAVIGATION_WIDGET);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+
+    settings.setValue(MOVEMENT_SPEED, this->movementSpeedSpinBox->value());
+    settings.setValue(JUMP_FRAMES, this->jumpFramesSpinBox->value());
+    settings.setValue(RECENTERING_TIME_PARALLEL, this->recenterTimeParallelSpinBox->value());
+    settings.setValue(RECENTERING_TIME_ORTHO, this->recenterTimeOrthoSpinBox->value());
+    settings.setValue(NORMAL_MODE, this->normalModeButton->isChecked());
+    settings.setValue(ADDITIONAL_VIEWPORT_DIRECTION_MOVE, this->additionalViewportDirectionMoveButton->isChecked());
+    settings.setValue(ADDITIONAL_TRACING_DIRECTION_MOVE, this->additionalTracingDirectionMoveButton->isChecked());
+    settings.setValue(ADDITIONAL_MIRRORED_MOVE, this->additionalMirroredMoveButton->isChecked());
+    settings.setValue(DELAY_TIME_PER_STEP, this->delayTimePerStepSpinBox->value());
+    settings.setValue(NUMBER_OF_STEPS, this->numberOfStepsSpinBox->value());
+    settings.endGroup();
+
 
 }

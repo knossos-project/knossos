@@ -74,7 +74,9 @@ HEADERS  += mainwindow.h \
     widgets/splashscreenwidget.h \
     functions.h \
     texturizer.h \
-    slicer.h
+    slicer.h \
+    GUIConstants.h \
+    Plattform.h
 
 
 FORMS    += mainwindow.ui

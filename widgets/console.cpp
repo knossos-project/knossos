@@ -23,7 +23,9 @@
  */
 
 #include "console.h"
+#include "GUIConstants.h"
 #include <QPlainTextEdit>
+#include <QSettings>
 
 Console::Console(QWidget *parent) :
     QDialog(parent)
@@ -56,5 +58,30 @@ void Console::resizeEvent(QResizeEvent *event) {
 void Console::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
+}
 
+void Console::loadSettings() {
+    int width, height, x, y;
+    int visible;
+
+    QSettings settings;
+    settings.beginGroup(CONSOLE_WIDGET);
+    width = settings.value(WIDTH).toInt();
+    height = settings.value(HEIGHT).toInt();
+    x = settings.value(POS_X).toInt();
+    y = settings.value(POS_Y).toInt();
+    visible = settings.value(VISIBLE).toBool();
+    settings.endGroup();
+
+}
+
+void Console::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(CONSOLE_WIDGET);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+    settings.endGroup();
 }

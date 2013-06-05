@@ -104,20 +104,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(skeleton3dChecked(bool)));
 }
 
-void VPGeneralTabWidget::loadSettings() {
-   lightEffectsButton->setChecked(state->viewerState->lightOnOff);
-   hightlightActiveTreeButton->setChecked(state->skeletonState->activeTree);
-   showAllNodeIdsButton->setChecked(state->skeletonState->showNodeIDs);
-   overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
-   edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
-
-   if(state->viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) {
-       linesAndPointsButton->setChecked(true);
-   } else if(state->viewerState->gui->radioRenderingModel == DSP_LINES_POINTS) { // should be 3D SKELETON see comment in skeleton3d slot
-       skeleton3dButton->setChecked(true);
-   }
-}
-
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
     state->viewerState->lightOnOff = on;
 }

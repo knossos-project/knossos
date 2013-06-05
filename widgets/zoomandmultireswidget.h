@@ -26,12 +26,14 @@
  */
 
 #include <QDialog>
+#include <QSettings>
 
 class QSlider;
 class QLabel;
 class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
+
 class ZoomAndMultiresWidget : public QDialog
 {
     Q_OBJECT
@@ -46,8 +48,11 @@ public slots:
     void orthogonalSpinBoxSlot(double value);
     void skeletonSpinBoxSlot(double value);
     void update();
+    void loadSettings();
+    void saveSettings();
 protected:
     void closeEvent(QCloseEvent *event);
+    QSettings *settings;
 public:
     // top layout
     QLabel *orthogonalDataViewportLabel;
@@ -56,7 +61,6 @@ public:
     QSlider *skeletonViewSlider;
     QDoubleSpinBox *orthogonalDataViewportSpinBox;
     QDoubleSpinBox *skeletonViewSpinBox;
-
     QPushButton *zoomDefaultsButton;
 
     // bottom layout

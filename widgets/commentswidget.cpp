@@ -23,6 +23,7 @@
  */
 
 #include "commentswidget.h"
+#include "GUIConstants.h"
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLabel>
@@ -65,11 +66,41 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
 }
 
 void CommentsWidget::loadSettings() {
-    textFields[0]->setText(QString(state->viewerState->gui->comment1));
-    textFields[1]->setText(QString(state->viewerState->gui->comment2));
-    textFields[2]->setText(QString(state->viewerState->gui->comment3));
-    textFields[3]->setText(QString(state->viewerState->gui->comment4));
-    textFields[4]->setText(QString(state->viewerState->gui->comment5));
+    int width, height, x, y;
+    bool visible;
+
+    QSettings settings;
+    settings.beginGroup(COMMENTS_WIDGET);
+    width = settings.value(WIDTH).toInt();
+    height = settings.value(HEIGHT).toInt();
+    x = settings.value(POS_X).toInt();
+    y = settings.value(POS_Y).toInt();
+    visible = settings.value(VISIBLE).toBool();
+    this->textFields[0]->setText(settings.value(COMMENT1).toString());
+    this->textFields[1]->setText(settings.value(COMMENT2).toString());
+    this->textFields[2]->setText(settings.value(COMMENT3).toString());
+    this->textFields[3]->setText(settings.value(COMMENT4).toString());
+    this->textFields[4]->setText(settings.value(COMMENT1).toString());
+    settings.endGroup();
+
+    this->setGeometry(x, y, width, height);
+
+}
+
+void CommentsWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(COMMENTS_WIDGET);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(COMMENT1, this->textFields[0]->text());
+    settings.setValue(COMMENT2, this->textFields[1]->text());
+    settings.setValue(COMMENT3, this->textFields[2]->text());
+    settings.setValue(COMMENT4, this->textFields[3]->text());
+    settings.setValue(COMMENT5, this->textFields[4]->text());
+    settings.endGroup();
 }
 
 void CommentsWidget::deleteComments() {

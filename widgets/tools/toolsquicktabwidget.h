@@ -33,10 +33,10 @@ class QPushButton;
 class QLineEdit;
 class ToolsQuickTabWidget : public QWidget
 {
+    friend class ToolsWidget;
     Q_OBJECT
 public:
     explicit ToolsQuickTabWidget(QWidget *parent = 0);
-    void loadSettings();
 signals:
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);

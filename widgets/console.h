@@ -30,10 +30,13 @@
 class QPlainTextEdit;
 class Console : public QDialog
 {
+    friend class MainWindow;
     Q_OBJECT
 public:
     explicit Console(QWidget *parent = 0);
     void resizeEvent(QResizeEvent *event);
+    void saveSettings();
+    void loadSettings();
 signals:
     void uncheckSignal();
 public slots:

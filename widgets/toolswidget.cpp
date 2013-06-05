@@ -26,6 +26,8 @@
 #include "widgets/tools/toolsquicktabwidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
+#include "GUIConstants.h"
+#include <QSettings>
 
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
@@ -46,4 +48,79 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
 void ToolsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
+}
+
+void ToolsWidget::loadSettings() {
+    int width, height, x, y;
+    bool visible;
+
+    QSettings settings;
+    settings.beginGroup(TOOLS_WIDGET);
+
+    width = settings.value(WIDTH).toInt();
+    height = settings.value(HEIGHT).toInt();
+    x = settings.value(POS_X).toInt();
+    y = settings.value(POS_Y).toInt();
+    visible = settings.value(VISIBLE).toBool();
+
+    this->toolsQuickTabWidget->activeTreeSpinBox->setValue(settings.value(ACTIVE_TREE_ID).toInt());
+    this->toolsQuickTabWidget->activeNodeSpinBox->setValue(settings.value(ACTIVE_NODE_ID).toInt());
+    this->toolsQuickTabWidget->commentField->setText(settings.value(COMMENT).toString());
+    this->toolsQuickTabWidget->searchForField->setText(settings.value(COMMENT).toString());
+
+    this->toolsTreesTabWidget->commentField->setText(settings.value(TREE_COMMENT).toString());
+    this->toolsTreesTabWidget->id1SpinBox->setValue(settings.value(ID1).toInt());
+    this->toolsTreesTabWidget->id2SpinBox->setValue(settings.value(ID2).toInt());
+    this->toolsTreesTabWidget->rSpinBox->setValue(settings.value(R).toDouble());
+    this->toolsTreesTabWidget->gSpinBox->setValue(settings.value(G).toDouble());
+    this->toolsTreesTabWidget->bSpinBox->setValue(settings.value(B).toDouble());
+    this->toolsTreesTabWidget->aSpinBox->setValue(settings.value(A).toDouble());
+
+
+    this->toolsNodesTabWidget->commentField->setText(settings.value(COMMENT).toString());
+    this->toolsNodesTabWidget->searchForField->setText(settings.value(SEARCH_FOR).toString());
+    this->toolsNodesTabWidget->useLastRadiusBox->setChecked(settings.value(USE_LAST_RADIUS_AS_DEFAULT).toBool());
+    this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(settings.value(ACTIVE_NODE_RADIUS).toDouble());
+    this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(settings.value(DEFAULT_NODE_RADIUS).toDouble());
+    this->toolsNodesTabWidget->enableCommentLockingCheckBox->setChecked(settings.value(ENABLE_COMMENT_LOCKING).toBool());
+    this->toolsNodesTabWidget->lockingRadiusSpinBox->setValue(settings.value(LOCKING_RADIUS).toInt());
+    this->toolsNodesTabWidget->lockingToNodesWithCommentField->setText(settings.value(LOCK_TO_NODES_WITH_COMMENT).toString());
+
+
+    settings.endGroup();
+
+    setGeometry(x, y, width, height);
+}
+
+void ToolsWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(TOOLS_WIDGET);
+
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+
+    settings.setValue(ACTIVE_TREE_ID, this->toolsQuickTabWidget->activeTreeSpinBox->value());
+    settings.setValue(ACTIVE_NODE_ID, this->toolsQuickTabWidget->activeNodeSpinBox->value());
+    settings.setValue(COMMENT, this->toolsQuickTabWidget->commentField->text());
+    settings.setValue(SEARCH_FOR, this->toolsQuickTabWidget->searchForField->text());
+
+    settings.setValue(TREE_COMMENT, this->toolsTreesTabWidget->commentField->text());
+    settings.setValue(ID1, this->toolsTreesTabWidget->id1SpinBox->value());
+    settings.setValue(ID2, this->toolsTreesTabWidget->id2SpinBox->value());
+    settings.setValue(R, this->toolsTreesTabWidget->rSpinBox->value());
+    settings.setValue(G, this->toolsTreesTabWidget->gSpinBox->value());
+    settings.setValue(B, this->toolsTreesTabWidget->bSpinBox->value());
+    settings.setValue(A, this->toolsTreesTabWidget->aSpinBox->value());
+
+    settings.setValue(USE_LAST_RADIUS_AS_DEFAULT, this->toolsNodesTabWidget->useLastRadiusBox->isChecked());
+    settings.setValue(ACTIVE_NODE_RADIUS, this->toolsNodesTabWidget->activeNodeRadiusSpinBox->value());
+    settings.setValue(DEFAULT_NODE_RADIUS, this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->value());
+    settings.setValue(ENABLE_COMMENT_LOCKING, this->toolsNodesTabWidget->enableCommentLockingCheckBox->isChecked());
+    settings.setValue(LOCKING_RADIUS, this->toolsNodesTabWidget->lockingRadiusSpinBox->value());
+    settings.setValue(LOCK_TO_NODES_WITH_COMMENT, this->toolsNodesTabWidget->lockingToNodesWithCommentField->text());
+
+    settings.endGroup();
 }

@@ -36,6 +36,7 @@ class NavigationWidget : public QDialog
 public:
     explicit NavigationWidget(QWidget *parent = 0);
     void loadSettings();
+    void saveSettings();
     QSpinBox *movementSpeedSpinBox;
     QSpinBox *jumpFramesSpinBox;
     QSpinBox *recenterTimeParallelSpinBox;
@@ -47,6 +48,7 @@ public:
     QRadioButton *additionalMirroredMoveButton;
     QSpinBox *delayTimePerStepSpinBox;
     QSpinBox *numberOfStepsSpinBox;
+
 signals:
     void uncheckSignal();
 public slots:

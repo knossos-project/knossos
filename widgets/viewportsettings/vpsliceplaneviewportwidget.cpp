@@ -162,25 +162,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }
 
-void VPSlicePlaneViewportWidget::loadSettings() {
-    enableOverlayCheckBox->setChecked(state->viewerState->gui->enableOrthoSkelOverlay);
-    if(state->viewerState->filterType == GL_LINEAR) {
-        datasetLinearFilteringCheckBox->setChecked(true);
-    }
-    highlightIntersectionsCheckBox->setChecked(state->skeletonState->showIntersections);
-    depthCutoffSpinBox->setValue(state->viewerState->depthCutOff);
-    useOwnDatasetColorsCheckBox->setChecked(state->viewerState->datasetColortableOn);
-    useOwnTreeColorsCheckBox->setChecked(state->viewerState->treeColortableOn);
-    biasSpinBox->setValue(state->viewerState->luminanceBias);
-    biasSlider->setValue(state->viewerState->luminanceBias);
-    rangeDeltaSpinBox->setValue(state->viewerState->luminanceRangeDelta);
-    rangeDeltaSlider->setValue(state->viewerState->luminanceRangeDelta);
-    enableColorOverlayCheckBox->setChecked(state->viewerState->overlayVisible);
-    drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
-    showViewPortsSizeCheckBox->setChecked(state->viewerState->showVPLabels);
-
-}
-
 void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
     state->viewerState->gui->enableOrthoSkelOverlay = on;
 }

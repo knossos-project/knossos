@@ -23,6 +23,7 @@
  */
 
 #include "zoomandmultireswidget.h"
+#include "GUIConstants.h"
 #include <QGridLayout>
 #include <QLabel>
 #include <QDoubleSpinBox>
@@ -32,6 +33,7 @@
 #include <QFrame>
 #include <QCheckBox>
 #include <QDebug>
+#include <QSettings>
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -49,6 +51,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent)
 {
     setWindowTitle("Zoom and Multiresolution Settings");
+    settings = new QSettings();
 
     // top layout
     QGridLayout *topLayout = new QGridLayout();
@@ -200,4 +203,35 @@ void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
 
 void ZoomAndMultiresWidget::update() {
     orthogonalDataViewportSpinBox->setValue(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
+}
+
+void ZoomAndMultiresWidget::loadSettings() {
+    int width, height, x, y;
+    bool visible;
+
+    QSettings settings;
+    settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
+    width = settings.value(WIDTH).toInt();
+    height = settings.value(HEIGHT).toInt();
+    x = settings.value(POS_X).toInt();
+    y = settings.value(POS_Y).toInt();
+    visible = settings.value(VISIBLE).toBool();
+    this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
+    this->skeletonViewSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
+    this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
+    settings.endGroup();
+}
+
+void ZoomAndMultiresWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
+    settings.setValue(WIDTH, this->width());
+    settings.setValue(HEIGHT, this->height());
+    settings.setValue(POS_X, this->x());
+    settings.setValue(POS_Y, this->y());
+    settings.setValue(VISIBLE, this->isVisible());
+    settings.setValue(ORTHO_DATA_VIEWPORTS, this->orthogonalDataViewportSpinBox->value());
+    settings.setValue(SKELETON_VIEW, this->skeletonViewSpinBox->value());
+    settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, this->lockDatasetCheckBox->isChecked());
+    settings.endGroup();
 }

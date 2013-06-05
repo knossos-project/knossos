@@ -51,7 +51,7 @@ Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
     window = new MainWindow();
-    window->showMaximized();
+    window->show();
 
     vp = new Viewport(window, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ);
@@ -59,31 +59,19 @@ Viewer::Viewer(QObject *parent) :
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
     vp->setGeometry(5, 40, 350,350);
-    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_XY].upperLeftCorner, 0, 0, 0);
     vp2->setGeometry(355, 40, 350, 350);
-    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_XZ].upperLeftCorner, 0, 0, 0);
     vp3->setGeometry(5, 400, 350, 350);
-    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_YZ].upperLeftCorner, 0, 0, 0);
     vp4->setGeometry(355, 400, 350, 350);
-    //SET_COORDINATE(tempConfig->viewerState->vpConfigs[VIEWPORT_SKELETON].upperLeftCorner, 0, 0, 0);
 
     vp->show();
     vp2->show();
     vp3->show();
     vp4->show();
 
-    /*
-    vp->setGeometry(5, 40, 500, 500);
-    vp2->setGeometry(510, 40, 500, 500);
-    vp3->setGeometry(5, 545, 500, 500);
-    vp4->setGeometry(510, 545, 500, 500);
-    */
-
     connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
     connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
     connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
     connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);
-
 
     connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
@@ -209,21 +197,14 @@ Viewer::Viewer(QObject *parent) :
     connect(window->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
     connect(window->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
 
-    /*
-    connect(vp, SIGNAL(renderOrthogonalVPSignal(int)), renderer, SLOT(renderOrthogonalVP(uint)));
-    connect(vp, SIGNAL(renderSkeletonVPSignal(int)), renderer, SLOT(renderSkeletonVP(uint)));
-    */
-
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(runSignal()), this, SLOT(run()));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
-
 
     connect(vp->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
     connect(vp2->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
     connect(vp3->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
     connect(vp4->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
-
 
     connect(vp->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
     connect(vp2->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
