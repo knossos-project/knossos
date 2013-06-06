@@ -475,8 +475,10 @@ void createSyncOptionsWin() {
         AG_ExpandHoriz(state->viewerState->ag->syncOptLabel);
     }
 
-    textbox = AG_TextboxNew(state->viewerState->ag->syncOptWin, AG_TEXTBOX_INT_ONLY|AG_TEXTBOX_ABANDON_FOCUS, "Remote Host: ");
+    textbox = AG_TextboxNew(state->viewerState->ag->syncOptWin, AG_TEXTBOX_ABANDON_FOCUS, "Remote Host: ");
     {
+        AG_TextboxSizeHintLines(textbox, 1);
+        AG_ExpandHoriz(textbox);
         AG_TextboxBindASCII(textbox, tempConfig->clientState->serverAddress, 1024);
         AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
         AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
