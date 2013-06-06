@@ -81,8 +81,11 @@ private:
 signals:
     void renderOrthogonalVPSignal(int plane);
     void renderSkeletonVPSignal(int plane);
+    void recalcTextureOffsetsSignal();
+    void runSignal();
+    void changeDatasetMagSignal(uint upOrDownFlag);
 public slots:
-
+    void zoomOrthogonals(float step);
 };
 
 #endif // VIEWPORT_H

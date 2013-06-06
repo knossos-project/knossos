@@ -92,6 +92,7 @@ signals:
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal();
+    void recentFileSelectSignal(int index);
 protected:
 
 public:
@@ -185,7 +186,6 @@ public:
 public slots:
     /* file menu */
     void openSlot();
-    void recentFilesSlot(int index);
     void saveSlot();
     void saveAsSlot();
     void quitSlot();
@@ -225,7 +225,6 @@ public slots:
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
 
-    void zoomOrthogonals(float step);
     void uncheckToolsAction();
     void uncheckViewportSettingAction();
     void uncheckCommentShortcutsAction();

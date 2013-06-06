@@ -65,16 +65,44 @@ void CommentsWidget::loadSettings() {
     x = settings.value(POS_X).toInt();
     y = settings.value(POS_Y).toInt();
     visible = settings.value(VISIBLE).toBool();
-    /*
-    this->textFields[0]->setText(settings.value(COMMENT1).toString());
-    this->textFields[1]->setText(settings.value(COMMENT2).toString());
-    this->textFields[2]->setText(settings.value(COMMENT3).toString());
-    this->textFields[3]->setText(settings.value(COMMENT4).toString());
-    this->textFields[4]->setText(settings.value(COMMENT1).toString());
-    */
+
+    if(!settings.value(COMMENT1).isNull())
+        this->shortcutTab->textFields[0]->setText(settings.value(COMMENT1).toString());
+    if(!settings.value(COMMENT2).isNull())
+        this->shortcutTab->textFields[1]->setText(settings.value(COMMENT2).toString());
+    if(!settings.value(COMMENT3).isNull())
+        this->shortcutTab->textFields[2]->setText(settings.value(COMMENT3).toString());
+    if(!settings.value(COMMENT4).isNull())
+        this->shortcutTab->textFields[3]->setText(settings.value(COMMENT4).toString());
+    if(!settings.value(COMMENT5).isNull())
+        this->shortcutTab->textFields[4]->setText(settings.value(COMMENT1).toString());
+
+    if(!settings.value(SUBSTR1).isNull())
+        this->preferencesTab->substringFields[0]->setText(settings.value(SUBSTR1).toString());
+    if(!settings.value(SUBSTR2).isNull())
+        this->preferencesTab->substringFields[1]->setText(settings.value(SUBSTR2).toString());
+    if(!settings.value(SUBSTR3).isNull())
+        this->preferencesTab->substringFields[2]->setText(settings.value(SUBSTR3).toString());
+    if(!settings.value(SUBSTR4).isNull())
+        this->preferencesTab->substringFields[3]->setText(settings.value(SUBSTR4).toString());
+    if(!settings.value(SUBSTR5).isNull())
+        this->preferencesTab->substringFields[4]->setText(settings.value(SUBSTR5).toString());
+
+    this->preferencesTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());
+    this->preferencesTab->colorComboBox[1]->setCurrentIndex(settings.value(COLOR2).toInt());
+    this->preferencesTab->colorComboBox[2]->setCurrentIndex(settings.value(COLOR3).toInt());
+    this->preferencesTab->colorComboBox[3]->setCurrentIndex(settings.value(COLOR4).toInt());
+    this->preferencesTab->colorComboBox[4]->setCurrentIndex(settings.value(COLOR5).toInt());
+
+    this->preferencesTab->radiusSpinBox[0]->setValue(settings.value(RADIUS1).toDouble());
+    this->preferencesTab->radiusSpinBox[1]->setValue(settings.value(RADIUS2).toDouble());
+    this->preferencesTab->radiusSpinBox[2]->setValue(settings.value(RADIUS3).toDouble());
+    this->preferencesTab->radiusSpinBox[3]->setValue(settings.value(RADIUS4).toDouble());
+    this->preferencesTab->radiusSpinBox[4]->setValue(settings.value(RADIUS5).toDouble());
+
     settings.endGroup();
 
-    this->setGeometry(x, y, width, height);
+    //this->setGeometry(x, y, width, height);
 
 }
 
@@ -86,13 +114,31 @@ void CommentsWidget::saveSettings() {
     settings.setValue(POS_X, this->x());
     settings.setValue(POS_Y, this->y());
     settings.setValue(VISIBLE, this->isVisible());
-    /*
-    settings.setValue(COMMENT1, this->textFields[0]->text());
-    settings.setValue(COMMENT2, this->textFields[1]->text());
-    settings.setValue(COMMENT3, this->textFields[2]->text());
-    settings.setValue(COMMENT4, this->textFields[3]->text());
-    settings.setValue(COMMENT5, this->textFields[4]->text());
-    */
+
+    settings.setValue(COMMENT1, this->shortcutTab->textFields[0]->text());
+    settings.setValue(COMMENT2, this->shortcutTab->textFields[1]->text());
+    settings.setValue(COMMENT3, this->shortcutTab->textFields[2]->text());
+    settings.setValue(COMMENT4, this->shortcutTab->textFields[3]->text());
+    settings.setValue(COMMENT5, this->shortcutTab->textFields[4]->text());
+
+    settings.setValue(SUBSTR1, this->preferencesTab->substringFields[0]->text());
+    settings.setValue(SUBSTR2, this->preferencesTab->substringFields[1]->text());
+    settings.setValue(SUBSTR3, this->preferencesTab->substringFields[2]->text());
+    settings.setValue(SUBSTR4, this->preferencesTab->substringFields[3]->text());
+    settings.setValue(SUBSTR5, this->preferencesTab->substringFields[4]->text());
+
+    settings.setValue(COLOR1, this->preferencesTab->colorComboBox[0]->currentIndex());
+    settings.setValue(COLOR2, this->preferencesTab->colorComboBox[1]->currentIndex());
+    settings.setValue(COLOR3, this->preferencesTab->colorComboBox[2]->currentIndex());
+    settings.setValue(COLOR4, this->preferencesTab->colorComboBox[3]->currentIndex());
+    settings.setValue(COLOR5, this->preferencesTab->colorComboBox[4]->currentIndex());
+
+    settings.setValue(RADIUS1, this->preferencesTab->radiusSpinBox[0]->value());
+    settings.setValue(RADIUS2, this->preferencesTab->radiusSpinBox[1]->value());
+    settings.setValue(RADIUS3, this->preferencesTab->radiusSpinBox[2]->value());
+    settings.setValue(RADIUS4, this->preferencesTab->radiusSpinBox[3]->value());
+    settings.setValue(RADIUS5, this->preferencesTab->radiusSpinBox[4]->value());
+
     settings.endGroup();
 }
 

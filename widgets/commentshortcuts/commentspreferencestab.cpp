@@ -33,10 +33,15 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include "GUIConstants.h"
 
 CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     QWidget(parent)
 {
+
+    QStringList list;
+    list << GREEN << ROSE << AZURE << PURPLE << BROWN;
+
     QVBoxLayout *layout = new QVBoxLayout();
 
     enableCondColoringCheckBox = new QCheckBox("Enable cond. coloring");
@@ -67,6 +72,8 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     for(int i = 0; i < 5; i++) {
         substringFields[i] = new QLineEdit();
         colorComboBox[i] = new QComboBox();
+        colorComboBox[i]->addItems(list);
+
         radiusSpinBox[i] = new QDoubleSpinBox();
         numLabel[i] = new QLabel(QString("%1").arg(i+1));
         colorLabel[i] = new QLabel("color");

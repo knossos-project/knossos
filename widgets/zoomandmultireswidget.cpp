@@ -216,9 +216,15 @@ void ZoomAndMultiresWidget::loadSettings() {
     x = settings.value(POS_X).toInt();
     y = settings.value(POS_Y).toInt();
     visible = settings.value(VISIBLE).toBool();
-    this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
-    this->skeletonViewSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
-    this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
+
+    setGeometry(x, y, width, height);
+
+    if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble())
+        this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
+    if(!settings.value(SKELETON_VIEW).toDouble())
+        this->skeletonViewSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
+    if(!settings.value(LOCK_DATASET_TO_CURRENT_MAG).toDouble())
+        this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
     settings.endGroup();
 }
 

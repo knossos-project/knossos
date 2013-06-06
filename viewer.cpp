@@ -78,20 +78,37 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
 
+    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), vp, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), vp2, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), vp3, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), vp4, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+
+    connect(vp, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp2, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp3, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp4, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+
+    connect(vp, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp2, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp3, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp4, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+
+    connect(vp, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp2, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp3, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp4, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+
     connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp3->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(vp4->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
 
-    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)));
-
     connect(vp->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp2->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+
+
 
     //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
 
@@ -108,11 +125,6 @@ Viewer::Viewer(QObject *parent) :
     skeletonizer = new Skeletonizer();
     skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
     renderer = new Renderer();
-
-    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), window, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
 
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
@@ -237,13 +249,8 @@ Viewer::Viewer(QObject *parent) :
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
-
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    /*connect(timer, SIGNAL(timeout()), this, SLOT(vp->updateGL();));
-    connect(timer, SIGNAL(timeout()), this, SLOT(vp2->updateGL();));
-    connect(timer, SIGNAL(timeout()), this, SLOT(vp3->updateGL();));
-    connect(timer, SIGNAL(timeout()), this, SLOT(vp4->updateGL();));*/
     timer->start(50);
 }
 

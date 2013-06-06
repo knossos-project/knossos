@@ -74,17 +74,21 @@ void DataSavingWidget::loadSettings() {
    x = settings.value(POS_X).toInt();
    y = settings.value(POS_Y).toInt();
    visible = settings.value(VISIBLE).toBool();
-   this->autosaveButton->setChecked(settings.value(AUTO_SAVING).toBool());
-   this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
-   this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
+   if(settings.value(AUTO_SAVING).toBool())
+    this->autosaveButton->setChecked(settings.value(AUTO_SAVING).toBool());
+   if(settings.value(SAVING_INTERVAL).toInt())
+    this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
+   if(settings.value(AUTOINC_FILENAME).toBool())
+    this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
    settings.endGroup();
 
-   setGeometry(x, y, width, height);
+   //setGeometry(x, y, width, height);
 
-
+   /*
    autosaveButton->setChecked(state->skeletonState->autoSaveBool);
    autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
    autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
+   */
 }
 
 void DataSavingWidget::saveSettings() {

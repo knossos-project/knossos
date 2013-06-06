@@ -78,13 +78,15 @@ void ToolsWidget::loadSettings() {
 
 
     this->toolsNodesTabWidget->commentField->setText(settings.value(COMMENT).toString());
-    this->toolsNodesTabWidget->searchForField->setText(settings.value(SEARCH_FOR).toString());
+    if(!settings.value(SEARCH_FOR).toString().isNull())
+        this->toolsNodesTabWidget->searchForField->setText(settings.value(SEARCH_FOR).toString());
     this->toolsNodesTabWidget->useLastRadiusBox->setChecked(settings.value(USE_LAST_RADIUS_AS_DEFAULT).toBool());
     this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(settings.value(ACTIVE_NODE_RADIUS).toDouble());
     this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(settings.value(DEFAULT_NODE_RADIUS).toDouble());
     this->toolsNodesTabWidget->enableCommentLockingCheckBox->setChecked(settings.value(ENABLE_COMMENT_LOCKING).toBool());
     this->toolsNodesTabWidget->lockingRadiusSpinBox->setValue(settings.value(LOCKING_RADIUS).toInt());
-    this->toolsNodesTabWidget->lockingToNodesWithCommentField->setText(settings.value(LOCK_TO_NODES_WITH_COMMENT).toString());
+    if(!settings.value(LOCK_TO_NODES_WITH_COMMENT).toString().isNull())
+        this->toolsNodesTabWidget->lockingToNodesWithCommentField->setText(settings.value(LOCK_TO_NODES_WITH_COMMENT).toString());
 
 
     settings.endGroup();

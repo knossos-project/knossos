@@ -73,12 +73,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //loadSettings();
 
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
     skeletonFileHistory = new QQueue<QString>();
+    skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
     state->viewerState->gui->oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
@@ -128,7 +128,6 @@ MainWindow::MainWindow(QWidget *parent) :
     state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
 
-
     createActions();
     createMenus();
 
@@ -140,10 +139,8 @@ MainWindow::MainWindow(QWidget *parent) :
     createZoomAndMultiresWidget();
     createNavigationWidget();
     createToolWidget();
-
     createDataSavingWidget();
     createSychronizationWidget();
-
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
@@ -161,8 +158,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
 
     updateTitlebar(false);
-
-
+    loadSettings();
 }
 
 void MainWindow::createViewports() {
@@ -230,64 +226,54 @@ void MainWindow::createConsoleWidget() {
     console = new Console();
     console->setWindowFlags(Qt::WindowStaysOnTopHint);
     console->setGeometry(800, 500, 200, 120);
-
 }
 
 void MainWindow::createTracingTimeWidget() {
     tracingTimeWidget = new TracingTimeWidget();
     tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     tracingTimeWidget->setGeometry(800, 350, 200, 100);
-
-
 }
 
 void MainWindow::createCommentsWidget() {
     commentsWidget = new CommentsWidget();
     commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    commentsWidget->setGeometry(800, 100, 200, 150);
-
+    commentsWidget->setGeometry(800, 100, 470, 300);
 }
 
 void MainWindow::createZoomAndMultiresWidget() {
     zoomAndMultiresWidget = new ZoomAndMultiresWidget();
     zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     zoomAndMultiresWidget->setGeometry(1024, 100, 380, 200);
-
 }
 
 void MainWindow::createNavigationWidget() {
     navigationWidget = new NavigationWidget();
     navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     navigationWidget->setGeometry(1024, 350, 200, 200);
-
 }
 
 void MainWindow::createToolWidget() {
     toolsWidget = new ToolsWidget();
     toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     toolsWidget->setGeometry(500, 100, 430, 610);
-
 }
 
 void MainWindow::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget();
     viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     viewportSettingsWidget->setGeometry(500, 500, 680, 400);
-
 }
 
 void MainWindow::createDataSavingWidget() {
     dataSavingWidget = new DataSavingWidget();
     dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     dataSavingWidget->setGeometry(100, 100, 100, 90);
-
 }
 
 void MainWindow::createSychronizationWidget() {
     synchronizationWidget = new SynchronizationWidget();
     synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     synchronizationWidget->setGeometry(100, 350, 150, 100);
-
 }
 
 
@@ -409,7 +395,6 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
 
 bool MainWindow::addRecentFile(const QString &fileName) {
-
     if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
         skeletonFileHistory->enqueue(fileName);
     } else {
@@ -423,10 +408,7 @@ bool MainWindow::addRecentFile(const QString &fileName) {
 
 
 void MainWindow::saveSkeleton(QString fileName, int increment) {
-
     if(fileName.isNull()) {
-
-
         return;
     }
 
@@ -448,36 +430,21 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
             qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
             state->skeletonState->unsavedChanges = false;
             addRecentFile(fileName);
-
         }
-
 
     } else {
 
     }
-
 }
 
 /* */
-void MainWindow::UI_saveSkeleton(int increment) {
+void MainWindow::UI_saveSkeleton(int increment) { }
+void MainWindow::UI_saveSettings(){ }
 
 
-
-}
-
-
-
-void MainWindow::UI_saveSettings(){
-}
-
-/**
-  *
-  */
 void MainWindow::loadSkeleton(char *fileName) {
-
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, fileName, 8192);
-
 
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
@@ -487,61 +454,6 @@ void MainWindow::loadSkeleton(char *fileName) {
         qDebug() << "Error";
         strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
     }
-
-}
-
-
-void MainWindow::zoomOrthogonals(float step){
-    int i = 0;
-        int triggerMagChange = false;
-
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-
-                /* check if mag is locked */
-                if(state->viewerState->datasetMagLock) {
-                    if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
-                       !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    }
-                }
-                else {
-                    /* trigger a mag change when possible */
-                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
-                        && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
-                        && (state->magnification != state->lowestAvailableMag)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        triggerMagChange = MAG_DOWN;
-                    }
-                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
-                        && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
-                        && (state->magnification != state->highestAvailableMag)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        triggerMagChange = MAG_UP;
-                    }
-                    /* performe normal zooming otherwise. This case also covers
-                    * the special case of zooming in further than 0.5 on mag1 */
-                    if(!triggerMagChange) {
-                        if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.09999) &&
-                           !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0000)) {
-                            state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        }
-                    }
-
-                }
-            }
-        }
-
-        /* keep the agar slider / numerical widget informed */
-        state->viewerState->gui->zoomOrthoVPs =
-            state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
-
-        if(triggerMagChange)
-            emit changeDatasetMagSignal(triggerMagChange);
-
-       emit recalcTextureOffsetsSignal();
-       emit runSignal();
-
 }
 
 /**
@@ -625,7 +537,6 @@ void MainWindow::datasetColorAdjustmentsChanged() {
          * Apply the dynamic range settings to the adjustment table
          *
          */
-
         if((state->viewerState->luminanceBias != 0) ||
            (state->viewerState->luminanceRangeDelta != MAX_COLORVAL)) {
             for(i = 0; i < 256; i++) {
@@ -650,8 +561,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
 
             doAdjust = true;
         }
-
-        state->viewerState->datasetAdjustmentOn = doAdjust;
+       state->viewerState->datasetAdjustmentOn = doAdjust;
 }
 
 //-- private methods --//
@@ -662,6 +572,7 @@ void MainWindow::createActions()
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
+        historyEntryActions[i]->installEventFilter(this);
     }
 
     /* edit skeleton actions */
@@ -745,7 +656,6 @@ void MainWindow::createMenus()
         ////historyEntryActions[i]->setText(skeletonFileHistory->at(i));
         historyEntryActions[i]->installEventFilter(this);
         //recentFileMenu->addAction(historyEntryActions[i]);
-
     }
 
     fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
@@ -784,12 +694,9 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(aboutAction);
-
-
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
+void MainWindow::closeEvent(QCloseEvent *event) {
     saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
@@ -826,8 +733,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
   * @todo lookup in skeleton directory, extend the file dialog with merge option
   *
   */
-void MainWindow::openSlot()
-{
+void MainWindow::openSlot() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", state->viewerState->gui->skeletonDirectory, "KNOSSOS Skeleton file(*.nml)");
 
     if(!fileName.isNull()) {
@@ -836,7 +742,6 @@ void MainWindow::openSlot()
 
         char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
         MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
-
 
         int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
 
@@ -861,7 +766,6 @@ bool MainWindow::alreadyInMenu(const QString &path) {
             return true;
         }
     }
-
     return false;
 }
 
@@ -878,17 +782,6 @@ void MainWindow::updateFileHistoryMenu() {
         recentFileMenu->addAction(historyEntryActions[i]);
         i++;
     }
-}
-
-/**
- * @todo
- *
- */
-void MainWindow::recentFilesSlot(int index)
-{
-    QString fileName = skeletonFileHistory->at(index - 1);
-
-
 }
 
 /**
@@ -963,7 +856,6 @@ void MainWindow::dropNodesSlot()
     if(linkWithActiveNodeAction->isChecked()) {
         linkWithActiveNodeAction->setChecked(false);
     }
-
 }
 
 
@@ -1047,9 +939,7 @@ void MainWindow::saveCustomPreferencesSlot()
 /**
   * @todo the implementation for defaultPreferences
   */
-void MainWindow::defaultPreferencesSlot()
-{
-
+void MainWindow::defaultPreferencesSlot() {
     int ret = QMessageBox::question(this, "", "Do you really want to load the default preferences ?", QMessageBox::Yes | QMessageBox::No);
 
     switch(ret) {
@@ -1193,6 +1083,18 @@ void MainWindow::saveSettings() {
     settings.setValue(HEIGHT, this->height());
     settings.setValue(POS_X, this->x());
     settings.setValue(POS_Y, this->y());
+
+    settings.setValue(LOADED_FILE1, this->skeletonFileHistory->at(0));
+    settings.setValue(LOADED_FILE2, this->skeletonFileHistory->at(1));
+    settings.setValue(LOADED_FILE3, this->skeletonFileHistory->at(2));
+    settings.setValue(LOADED_FILE4, this->skeletonFileHistory->at(3));
+    settings.setValue(LOADED_FILE5, this->skeletonFileHistory->at(4));
+    settings.setValue(LOADED_FILE6, this->skeletonFileHistory->at(5));
+    settings.setValue(LOADED_FILE7, this->skeletonFileHistory->at(6));
+    settings.setValue(LOADED_FILE8, this->skeletonFileHistory->at(7));
+    settings.setValue(LOADED_FILE9, this->skeletonFileHistory->at(8));
+    settings.setValue(LOADED_FILE10, this->skeletonFileHistory->at(9);
+
     settings.endGroup();
 
     commentsWidget->saveSettings();
@@ -1203,35 +1105,8 @@ void MainWindow::saveSettings() {
     navigationWidget->saveSettings();
     toolsWidget->saveSettings();
 
-    /*
 
 
-    settings->setValue("synchronization_widget.width", this->synchronizationWidget->width());
-    settings->setValue("synchronization_widget.height", this->synchronizationWidget->height());
-    settings->setValue("synchronization_widget.position.x", this->synchronizationWidget->x());
-    settings->setValue("synchronization_widget.position.y", this->synchronizationWidget->y());
-    settings->setValue("synchronization_widget.visible", this->synchronizationWidget->isVisible());
-    settings->setValue("synchronization_widget.remote_port", this->synchronizationWidget->remotePortSpinBox->value());
-    settings->setValue("synchronization-widget.connected", this->synchronizationWidget->connected);
-
-    settings->setValue("tools_widget.width", this->toolsWidget->width());
-    settings->setValue("tools_widget.height", this->toolsWidget->height());
-    settings->setValue("tools_widget.position.x", this->toolsWidget->x());
-    settings->setValue("tools_widget.position.y", this->toolsWidget->y());
-    settings->setValue("tools_widget.visible", this->toolsWidget->isVisible());
-    //settings->setValue("tools_widget.selected_tab", this->toolsWidget->);
-    //settings->setValue("tools_widget.quick.active_tree_id", this->toolsWidget->q TODO
-
-    settings->setValue("tracing_time_widget.width", this->tracingTimeWidget->width());
-    settings->setValue("tracing_time_widget.height", this->tracingTimeWidget->height());
-    settings->setValue("tracing_time_widget.position.x", this->tracingTimeWidget->x());
-    settings->setValue("tracing_time_widget.position.y", this->tracingTimeWidget->y());
-    settings->setValue("tracing_time_widget.visible", this->tracingTimeWidget->isVisible());
-
-
-    //settings->setValue("viewport_settings_widget.selected_tab", this->viewportSettingsWidget->);
-
-   */
 }
 
 /**
@@ -1244,6 +1119,30 @@ void MainWindow::loadSettings() {
     int height = settings.value(HEIGHT).toInt();
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
+
+    if(!settings.value(LOADED_FILE1).isNull() and !settings.value(LOADED_FILE1).toString().isEmpty())
+        this->skeletonFileHistory->at(0)->setText(settings.value(LOADED_FILE1));
+    if(!settings.value(LOADED_FILE2).isNull() and !settings.value(LOADED_FILE2).toString().isEmpty())
+        this->skeletonFileHistory->at(1)->setText(settings.value(LOADED_FILE2));
+    if(!settings.value(LOADED_FILE3).isNull() and !settings.value(LOADED_FILE3).toString().isEmpty())
+        this->skeletonFileHistory->at(2)->setText(settings.value(LOADED_FILE3));
+    if(!settings.value(LOADED_FILE4).isNull() and !settings.value(LOADED_FILE4).toString().isEmpty())
+        this->skeletonFileHistory->at(3)->setText(settings.value(LOADED_FILE4));
+    if(!settings.value(LOADED_FILE5).isNull() and !settings.value(LOADED_FILE5).toString().isEmpty())
+        this->skeletonFileHistory->at(4)->setText(settings.value(LOADED_FILE5));
+    if(!settings.value(LOADED_FILE6).isNull() and !settings.value(LOADED_FILE).toString().isEmpty())
+        this->skeletonFileHistory->at(5)->setText(settings.value(LOADED_FILE6));
+    if(!settings.value(LOADED_FILE7).isNull() and !settings.value(LOADED_FILE7).toString().isEmpty())
+        this->skeletonFileHistory->at(6)->setText(settings.value(LOADED_FILE7));
+    if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty())
+        this->skeletonFileHistory->at(7)->setText(settings.value(LOADED_FILE8));
+    if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty())
+        this->skeletonFileHistory->at(8)->setText(settings.value(LOADED_FILE9));
+    if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty())
+        this->skeletonFileHistory->at(9)->setText(settings.value(LOADED_FILE10));
+
+    this->updateFileHistoryMenu();
+
     settings.endGroup();
 
     bool visible;
@@ -1256,18 +1155,18 @@ void MainWindow::loadSettings() {
     viewportSettingsWidget->loadSettings();
     navigationWidget->loadSettings();
     toolsWidget->loadSettings();
-
 }
 
 /**
   * This Event Filter is used to find out which of the elements of the 2d array historyEntryAction is clicked
-  * @todo load the corresponding skeleton
   */
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(historyEntryActions[i] == obj) {
            QString fileName = historyEntryActions[i]->text();
-           qDebug() << fileName;
+           char *cname = const_cast<char *>(fileName.toStdString().c_str());
+           loadSkeleton(cname);
+           event->accept();
         }
     }
 
