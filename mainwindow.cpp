@@ -1084,16 +1084,9 @@ void MainWindow::saveSettings() {
     settings.setValue(POS_X, this->x());
     settings.setValue(POS_Y, this->y());
 
-    settings.setValue(LOADED_FILE1, this->skeletonFileHistory->at(0));
-    settings.setValue(LOADED_FILE2, this->skeletonFileHistory->at(1));
-    settings.setValue(LOADED_FILE3, this->skeletonFileHistory->at(2));
-    settings.setValue(LOADED_FILE4, this->skeletonFileHistory->at(3));
-    settings.setValue(LOADED_FILE5, this->skeletonFileHistory->at(4));
-    settings.setValue(LOADED_FILE6, this->skeletonFileHistory->at(5));
-    settings.setValue(LOADED_FILE7, this->skeletonFileHistory->at(6));
-    settings.setValue(LOADED_FILE8, this->skeletonFileHistory->at(7));
-    settings.setValue(LOADED_FILE9, this->skeletonFileHistory->at(8));
-    settings.setValue(LOADED_FILE10, this->skeletonFileHistory->at(9);
+    for(int i = 0; i < skeletonFileHistory->size(); i++) {
+        settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
+    }
 
     settings.endGroup();
 
@@ -1104,8 +1097,6 @@ void MainWindow::saveSettings() {
     viewportSettingsWidget->saveSettings();
     navigationWidget->saveSettings();
     toolsWidget->saveSettings();
-
-
 
 }
 
@@ -1120,27 +1111,46 @@ void MainWindow::loadSettings() {
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
 
-    if(!settings.value(LOADED_FILE1).isNull() and !settings.value(LOADED_FILE1).toString().isEmpty())
-        this->skeletonFileHistory->at(0)->setText(settings.value(LOADED_FILE1));
-    if(!settings.value(LOADED_FILE2).isNull() and !settings.value(LOADED_FILE2).toString().isEmpty())
-        this->skeletonFileHistory->at(1)->setText(settings.value(LOADED_FILE2));
-    if(!settings.value(LOADED_FILE3).isNull() and !settings.value(LOADED_FILE3).toString().isEmpty())
-        this->skeletonFileHistory->at(2)->setText(settings.value(LOADED_FILE3));
-    if(!settings.value(LOADED_FILE4).isNull() and !settings.value(LOADED_FILE4).toString().isEmpty())
-        this->skeletonFileHistory->at(3)->setText(settings.value(LOADED_FILE4));
-    if(!settings.value(LOADED_FILE5).isNull() and !settings.value(LOADED_FILE5).toString().isEmpty())
-        this->skeletonFileHistory->at(4)->setText(settings.value(LOADED_FILE5));
-    if(!settings.value(LOADED_FILE6).isNull() and !settings.value(LOADED_FILE).toString().isEmpty())
-        this->skeletonFileHistory->at(5)->setText(settings.value(LOADED_FILE6));
-    if(!settings.value(LOADED_FILE7).isNull() and !settings.value(LOADED_FILE7).toString().isEmpty())
-        this->skeletonFileHistory->at(6)->setText(settings.value(LOADED_FILE7));
-    if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty())
-        this->skeletonFileHistory->at(7)->setText(settings.value(LOADED_FILE8));
-    if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty())
-        this->skeletonFileHistory->at(8)->setText(settings.value(LOADED_FILE9));
-    if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty())
-        this->skeletonFileHistory->at(9)->setText(settings.value(LOADED_FILE10));
-
+    if(!settings.value(LOADED_FILE1).isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE2).isNull() and !settings.value(LOADED_FILE2).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE2).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE3).isNull() and !settings.value(LOADED_FILE3).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE3).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE4).isNull() and !settings.value(LOADED_FILE4).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE4).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE5).isNull() and !settings.value(LOADED_FILE5).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE5).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE6).isNull() and !settings.value(LOADED_FILE6).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE6).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE7).isNull() and !settings.value(LOADED_FILE7).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE7).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE9).toString());
+        this->skeletonFileHistory->dequeue();
+    }
+    if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty()) {
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());
+        this->skeletonFileHistory->dequeue();
+    }
     this->updateFileHistoryMenu();
 
     settings.endGroup();
