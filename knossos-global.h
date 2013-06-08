@@ -1531,6 +1531,7 @@ uint32_t ones32(register uint32_t x);
 
 int refreshTime();
 void refreshTimeLabel();
+void checkIdleTime();
 
 /*
  *	For loader.c
@@ -1715,7 +1716,6 @@ uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
 void restoreDefaultTreeColor();
-void checkIdleTime();
 uint32_t genTestNodes(uint32_t number);
 void resetSkeletonMeta();
 //undo stuff

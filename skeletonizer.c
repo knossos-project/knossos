@@ -1511,7 +1511,7 @@ uint32_t loadSkeleton() {
         return FALSE;
     }
 
-    if(!state->skeletonState->mergeOnLoadFlag) {
+    if(state->skeletonState->mergeOnLoadFlag == FALSE) {
         merge = FALSE;
         clearSkeleton(CHANGE_MANUAL, TRUE);
     }
@@ -1576,19 +1576,19 @@ uint32_t loadSkeleton() {
                     if(attribute)
                         offset.z = atoi((char *)attribute);
                 }
-
-                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"time")) {
-                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute) {
-                        state->skeletonState->skeletonTime = atoi((char *)attribute);
-                        if(isObfuscatedTime(state->skeletonState->skeletonTime)) {
-                            state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
+                if(merge == FALSE) {
+                    if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"time")) {
+                        attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
+                        if(attribute) {
+                            state->skeletonState->skeletonTime = atoi((char *)attribute);
+                            if (isObfuscatedTime(state->skeletonState->skeletonTime)) {
+                                state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
+                            }
                         }
                     }
                 }
-
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"activeNode")) {
-                    if(!merge) {
+                    if(merge == FALSE) {
                         attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"id");
                         if(attribute) {
                             activeNodeID = atoi((char *)attribute);
@@ -1657,14 +1657,14 @@ uint32_t loadSkeleton() {
                     if(attribute)
                         state->skeletonState->zoomLevel = atof((char *)attribute);
                 }
-
-                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
-                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
-                    if(attribute) {
-                        state->skeletonState->idleTime = atoi((char*)attribute);
-                        if(isObfuscatedTime(state->skeletonState->idleTime)) {
-                            state->skeletonState->idleTime = xorInt(
-                                    state->skeletonState->idleTime);
+                if(merge == FALSE) {
+                    if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
+                        attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
+                        if(attribute) {
+                            state->skeletonState->idleTime = atoi((char*)attribute);
+                            if(isObfuscatedTime(state->skeletonState->idleTime)) {
+                                state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
+                            }
                         }
                     }
                     else {
@@ -4455,7 +4455,7 @@ static int isObfuscatedTime(int32_t time) {
 
     /* The check for whether skeletonTime is bigger than some magic
        number is a workaround for the bug where skeletons saved in
-       a version prior to 3.4 and edited them in 3.4 sometimes had
+       a version prior to 3.4 and edited in 3.4 sometimes had
        un-obfuscated times. Assuming the time is below ca. 15 days,
        this successfully checks for obfuscation. */
 

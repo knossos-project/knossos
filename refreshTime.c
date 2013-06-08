@@ -45,3 +45,29 @@ void refreshTimeLabel() {
                  "Running Time: %02i:%02i:%02i",
                  hoursRunningTime, minutesRunningTime, secondsRunningTime);
 }
+
+
+void checkIdleTime() {
+    int time = SDL_GetTicks();
+    state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
+    state->skeletonState->idleTimeNow = time;
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 600000) {
+        //tolerance of 10 minutes
+        state->skeletonState->idleTime +=
+            state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
+        state->skeletonState->idleTimeSession +=
+            state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
+    }
+
+    state->skeletonState->unsavedChanges = TRUE;
+
+    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/3600.0);
+    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/60.0 - hoursIdleTime * 60);
+    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
+    AG_LabelText(state->viewerState->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
+
+    int hoursTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/3600.0);
+    int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
+    int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
+    AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
+}
