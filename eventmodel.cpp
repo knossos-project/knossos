@@ -29,6 +29,7 @@
 #include "skeletonizer.h"
 
 
+
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 
@@ -225,6 +226,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, NULL, newNodeID);
+                emit idleTimeSignal();
             }
             break;
         }
@@ -235,6 +237,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                                                state->viewerState->vpConfigs[VPfound].type,
                                                true) == false) { //could not add node
             break;
+        } else {
+             emit idleTimeSignal();
         }
 
         /* Highlight the viewport with the biggest movement component and set
@@ -351,7 +355,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->vpConfigs[i].edgeLength);
-                        /* @todo Remote::checkIdleTime();*/
+                    emit idleTimeSignal();
                     break;
                 case VIEWPORT_XY:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
@@ -536,9 +540,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
            state->skeletonState->rotdx += xrel(event->x());
            state->skeletonState->rotdy += yrel(event->y());
            state->skeletonState->viewChanged = true;
-           /* @todo checkIdleTime(); */
-
-
+           emit idleTimeSignal();
        }
 
 

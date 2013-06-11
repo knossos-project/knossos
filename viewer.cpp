@@ -38,6 +38,7 @@
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolsquicktabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
+#include "widgets/tracingtimewidget.h"
 
 
 extern  stateInfo *tempConfig;
@@ -108,6 +109,7 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
+    connect(this, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
 
 
     //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
@@ -248,6 +250,12 @@ Viewer::Viewer(QObject *parent) :
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
+
+    connect(skeletonizer, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp->delegate, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp2->delegate, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp3->delegate, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp4->delegate, SIGNAL(idleTimeSignal()), window->tracingTimeWidget, SLOT(checkIdleTime()));
 
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
@@ -1753,14 +1761,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 NO_MAG_CHANGE);
     }
     emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
-    Remote::checkIdleTime();
-
-    vp->updateGL();
-    vp2->updateGL();
-    vp3->updateGL();
-    vp4->updateGL();
-
-
+    emit idleTimeSignal();
     return true;
 }
 

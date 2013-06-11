@@ -106,6 +106,7 @@ signals:
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
     void saveSkelCallbackSignal();
+    void idleTimeSignal();
 public slots:
     
 };

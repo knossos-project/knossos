@@ -37,13 +37,16 @@ public:
 signals:
     void uncheckSignal();
 public slots:
-
+    void refreshTime();
+    void checkIdleTime();
 protected:
     QLabel *runningTimeLabel;
     QLabel *tracingTimeLabel;
     QLabel *idleTimeLabel;
-
+    QTimer *timer;
     void closeEvent(QCloseEvent *event);
 };
+
+
 
 #endif // TRACINGTIMEWIDGET_H

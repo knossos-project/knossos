@@ -266,6 +266,7 @@ public:
     QString skeletonFileAsQString;
 
 signals:
+    void idleTimeSignal();
     void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void drawGUISignal();

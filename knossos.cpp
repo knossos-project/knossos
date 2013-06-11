@@ -42,6 +42,7 @@
 #include "knossos.h"
 #include "eventmodel.h"
 #include "viewport.h"
+#include "widgets/tracingtimewidget.h"
 
 //#include "y.tab.h"
 //#include "lex.yy.h"
@@ -205,6 +206,8 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
+
+    QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->tracingTimeWidget, SLOT(checkIdleTime()));
 
     return a.exec();
 }

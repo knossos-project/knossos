@@ -418,7 +418,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         Sleeper::sleep(eventDelay);
     }
 
-    Remote::checkIdleTime();
+    emit idleTimeSignal();
     return true;
 }
 
@@ -446,6 +446,8 @@ void Remote::checkIdleTime() {
     int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
     int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
     //AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
+
+    //emit idleTimeSignal(hoursIdleTime, minutesIdleTime, secondsIdleTime);
 
 }
 

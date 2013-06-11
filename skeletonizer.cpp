@@ -28,7 +28,6 @@
 #include "skeletonizer.h"
 #include "knossos-global.h"
 #include "renderer.h"
-#include "remote.h"
 #include "knossos.h"
 #include "client.h"
 #include "viewer.h"
@@ -576,7 +575,9 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
         addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
     }
 
-    Remote::checkIdleTime();
+    emit idleTimeSignal();
+
+    //Remote::checkIdleTime();
 
     return true;
 }
@@ -617,7 +618,6 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
         pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID);
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
 
-        Remote::checkIdleTime();
     }
 
     return targetNodeID;

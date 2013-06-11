@@ -81,6 +81,7 @@ signals:
     void updateGLSignal3();
     void updateGLSignal4();
     void updateCoordinatesSignal(int x, int y, int z);
+    void idleTimeSignal();
 protected:
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
