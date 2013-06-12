@@ -40,18 +40,8 @@ class QSpinBox;
 class QMessageBox;
 class QGridLayout;
 class QFile;
-class Console;
-class TracingTimeWidget;
-class CommentsWidget;
-class DataSavingWidget;
-class SplashScreenWidget;
-class SynchronizationWidget;
-class ToolsWidget;
-class ViewportSettingsWidget;
-class ZoomAndMultiresWidget;
 class Viewport;
-class NavigationWidget;
-
+class WidgetContainer;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -110,18 +100,8 @@ public:
     QGridLayout *gridLayout;
     Viewport **viewports;
 
-    /* Dialogs */
-    Console *console;
-    TracingTimeWidget *tracingTimeWidget;
-    CommentsWidget *commentsWidget;
-    ZoomAndMultiresWidget *zoomAndMultiresWidget;
-    NavigationWidget *navigationWidget;
-    ToolsWidget *toolsWidget;
-    ViewportSettingsWidget *viewportSettingsWidget;
-
-    DataSavingWidget *dataSavingWidget;
-    SynchronizationWidget *synchronizationWidget;
-    SplashScreenWidget *splashWidget;
+    // contains all widgets
+    WidgetContainer *widgetContainer;
 
     /* file actions */
     QAction *recentFileAction;

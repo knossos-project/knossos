@@ -422,35 +422,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
     return true;
 }
 
-
-
-/**
- * @todo Label for tracing time widget
- */
-void Remote::checkIdleTime() {
-
-    int time = state->time.elapsed();
-
-    state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
-    state->skeletonState->idleTimeNow = time;
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000) { //tolerance of 15 minutes
-        state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
-        state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
-    }
-    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/3600.0);
-    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/60.0 - hoursIdleTime * 60);
-    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
-    //AG_LabelText(state->viewerState->ag->idleTime, "Idle Time: %02i:%02i:%02i", hoursIdleTime, minutesIdleTime, secondsIdleTime);
-
-    int hoursTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/3600.0);
-    int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
-    int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
-    //AG_LabelText(state->viewerState->ag->tracingTime, "Tracing Time: %02i:%02i:%02i", hoursTracingTime, minutesTracingTime, secondsTracingTime);
-
-    //emit idleTimeSignal(hoursIdleTime, minutesIdleTime, secondsIdleTime);
-
-}
-
 void Remote::setRemoteStateType(int type) {
     this->type = type;
 }

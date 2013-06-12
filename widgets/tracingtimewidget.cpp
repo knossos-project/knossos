@@ -90,7 +90,6 @@ void TracingTimeWidget::checkIdleTime() {
     QString idleString = QString().sprintf("IdleTime: %02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
     this->idleTimeLabel->setText(idleString);
 
-
     int hoursTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/3600.0);
     int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
     int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);

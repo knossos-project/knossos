@@ -42,9 +42,11 @@ SOURCES +=\
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
+    widgets/coordinatebarwidget.cpp \
     functions.cpp \
     texturizer.cpp \
     slicer.cpp \
+    widgetcontainer.cpp \
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -76,12 +78,13 @@ HEADERS  += mainwindow.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
+    widgets/coordinatebarwidget.h \
     functions.h \
     texturizer.h \
     slicer.h \
     GUIConstants.h \
     Plattform.h \
-
+    widgetcontainer.h \    
 
 FORMS    += mainwindow.ui
 

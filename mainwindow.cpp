@@ -53,6 +53,8 @@
 #include "knossos.h"
 #include "viewport.h"
 #include "skeletonizer.h"
+
+#include "widgetcontainer.h"
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
 #include "widgets/commentswidget.h"
@@ -131,32 +133,25 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
 
-    createCoordBarWin();
-    createConsoleWidget();
-    createTracingTimeWidget();
-    createCommentsWidget();
-    createViewportSettingsWidget();
-    createZoomAndMultiresWidget();
-    createNavigationWidget();
-    createToolWidget();
-    createDataSavingWidget();
-    createSychronizationWidget();
+    widgetContainer = new WidgetContainer(this);
+    widgetContainer->createWidgets();
+    createCoordBarWin(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
+
 
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
     mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
-    connect(toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
-    connect(viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
-    connect(commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
-    connect(console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
-    connect(tracingTimeWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckTracingTimeAction()));
-    connect(zoomAndMultiresWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckZoomAndMultiresAction()));
-    connect(dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
-    connect(navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
-    connect(synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-
+    connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
+    connect(widgetContainer->viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
+    connect(widgetContainer->commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
+    connect(widgetContainer->console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
+    connect(widgetContainer->tracingTimeWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckTracingTimeAction()));
+    connect(widgetContainer->zoomAndMultiresWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckZoomAndMultiresAction()));
+    connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
+    connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
+    connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
     loadSettings();
 }
@@ -220,62 +215,6 @@ void MainWindow:: createCoordBarWin() {
     //connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     //connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
-
-// Dialogs
-void MainWindow::createConsoleWidget() {
-    console = new Console();
-    console->setWindowFlags(Qt::WindowStaysOnTopHint);
-    console->setGeometry(800, 500, 200, 120);
-}
-
-void MainWindow::createTracingTimeWidget() {
-    tracingTimeWidget = new TracingTimeWidget();
-    tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    tracingTimeWidget->setGeometry(800, 350, 200, 100);
-}
-
-void MainWindow::createCommentsWidget() {
-    commentsWidget = new CommentsWidget();
-    commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    commentsWidget->setGeometry(800, 100, 470, 300);
-}
-
-void MainWindow::createZoomAndMultiresWidget() {
-    zoomAndMultiresWidget = new ZoomAndMultiresWidget();
-    zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    zoomAndMultiresWidget->setGeometry(1024, 100, 380, 200);
-}
-
-void MainWindow::createNavigationWidget() {
-    navigationWidget = new NavigationWidget();
-    navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    navigationWidget->setGeometry(1024, 350, 200, 200);
-}
-
-void MainWindow::createToolWidget() {
-    toolsWidget = new ToolsWidget();
-    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    toolsWidget->setGeometry(500, 100, 430, 610);
-}
-
-void MainWindow::createViewportSettingsWidget() {
-    viewportSettingsWidget = new ViewportSettingsWidget();
-    viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    viewportSettingsWidget->setGeometry(500, 500, 680, 400);
-}
-
-void MainWindow::createDataSavingWidget() {
-    dataSavingWidget = new DataSavingWidget();
-    dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    dataSavingWidget->setGeometry(100, 100, 100, 90);
-}
-
-void MainWindow::createSychronizationWidget() {
-    synchronizationWidget = new SynchronizationWidget();
-    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    synchronizationWidget->setGeometry(100, 350, 150, 100);
-}
-
 
 /**
   * This function is a replacement for the updateAgConfig() function in KNOSSOS 3.2
@@ -354,12 +293,6 @@ void MainWindow::showSplashScreen() {
     QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
 
-}
-
-void MainWindow::showAboutScreen() {
-    this->splashWidget = new SplashScreenWidget(this);
-    splashWidget->setGeometry(400, 400, 500, 500);
-    splashWidget->show();
 }
 
 // -- static methods -- //
@@ -898,13 +831,13 @@ void MainWindow::recenterOnClickSlot()
 
 void MainWindow::zoomAndMultiresSlot()
 {
-    this->zoomAndMultiresWidget->show();
+    this->widgetContainer->zoomAndMultiresWidget->show();
     zoomAndMultiresAction->setChecked(true);
 }
 
 void MainWindow::tracingTimeSlot()
 {
-    this->tracingTimeWidget->show();
+    this->widgetContainer->tracingTimeWidget->show();
     tracingTimeAction->setChecked(true);
 }
 
@@ -953,25 +886,25 @@ void MainWindow::defaultPreferencesSlot() {
 
 void MainWindow::datatasetNavigationSlot()
 {
-    this->navigationWidget->show();
+    this->widgetContainer->navigationWidget->show();
     datasetNavigationAction->setChecked(true);
 }
 
 void MainWindow::synchronizationSlot()
 {
-    this->synchronizationWidget->show();
+    this->widgetContainer->synchronizationWidget->show();
     synchronizationAction->setChecked(true);
 }
 
 void MainWindow::dataSavingOptionsSlot()
 {
-    this->dataSavingWidget->show();
+    this->widgetContainer->dataSavingWidget->show();
     dataSavingOptionsAction->setChecked(true);
 }
 
 void MainWindow::viewportSettingsSlot()
 {
-    this->viewportSettingsWidget->show();
+    this->widgetContainer->viewportSettingsWidget->show();
     viewportSettingsAction->setChecked(true);
 }
 
@@ -979,19 +912,19 @@ void MainWindow::viewportSettingsSlot()
 
 void MainWindow::toolsSlot()
 {
-    this->toolsWidget->show();
+    this->widgetContainer->toolsWidget->show();
     toolsAction->setChecked(true);
 }
 
 void MainWindow::logSlot()
 {
-    this->console->show();
+    this->widgetContainer->console->show();
     logAction->setChecked(true);
 }
 
 void MainWindow::commentShortcutsSlots()
 {
-    this->commentsWidget->show();
+    this->widgetContainer->commentsWidget->show();
     commentShortcutsAction->setChecked(true);
 }
 
@@ -999,7 +932,7 @@ void MainWindow::commentShortcutsSlots()
 
 void MainWindow::aboutSlot()
 {
-    this->showAboutScreen();
+    this->widgetContainer->showSplashScreenWidget();
 }
 
 /* toolbar slots */
@@ -1075,7 +1008,6 @@ void MainWindow::coordinateEditingFinished() {
     //emit updatePositionSignal(TELL_COORDINATE_CHANGE);
 }
 
-
 void MainWindow::saveSettings() {
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
@@ -1090,14 +1022,13 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    commentsWidget->saveSettings();
-    console->saveSettings();
-    dataSavingWidget->saveSettings();
-    zoomAndMultiresWidget->saveSettings();
-    viewportSettingsWidget->saveSettings();
-    navigationWidget->saveSettings();
-    toolsWidget->saveSettings();
-
+    widgetContainer->commentsWidget->saveSettings();
+    widgetContainer->console->saveSettings();
+    widgetContainer->dataSavingWidget->saveSettings();
+    widgetContainer->zoomAndMultiresWidget->saveSettings();
+    widgetContainer->viewportSettingsWidget->saveSettings();
+    widgetContainer->navigationWidget->saveSettings();
+    widgetContainer->toolsWidget->saveSettings();
 }
 
 /**
@@ -1158,13 +1089,13 @@ void MainWindow::loadSettings() {
     bool visible;
     this->setGeometry(x, y, width, height);
 
-    commentsWidget->loadSettings();
-    console->loadSettings();
-    dataSavingWidget->loadSettings();
-    zoomAndMultiresWidget->loadSettings();
-    viewportSettingsWidget->loadSettings();
-    navigationWidget->loadSettings();
-    toolsWidget->loadSettings();
+    widgetContainer->commentsWidget->loadSettings();
+    widgetContainer->console->loadSettings();
+    widgetContainer->dataSavingWidget->loadSettings();
+    widgetContainer->zoomAndMultiresWidget->loadSettings();
+    widgetContainer->viewportSettingsWidget->loadSettings();
+    widgetContainer->navigationWidget->loadSettings();
+    widgetContainer->toolsWidget->loadSettings();
 }
 
 /**

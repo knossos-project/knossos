@@ -806,7 +806,6 @@ void Loader::load() {
         return;
     }
 
-
     state->protectLoadSignal->unlock();
     // DCOI now contains the coordinates of all cubes we want, based
     // on our current position. However, some of those might already be
