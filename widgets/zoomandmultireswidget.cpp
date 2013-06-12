@@ -135,6 +135,10 @@ void ZoomAndMultiresWidget::orthogonalSliderSlot(int value) {
     float result = value / 100.0;
     this->orthogonalDataViewportSpinBox->setValue(result);
     state->viewerState->gui->zoomOrthoVPs = result;
+
+    for(int i = 0; i < 3; i++)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = result;
+
     emit refreshSignal();
 }
 
@@ -144,6 +148,9 @@ void ZoomAndMultiresWidget::orthogonalSliderSlot(int value) {
 void ZoomAndMultiresWidget::orthogonalSpinBoxSlot(double value) {
     this->orthogonalDataViewportSlider->setValue(value * 100);
     state->viewerState->gui->zoomOrthoVPs = value;
+
+    for(int i = 0; i < 3; i++)
+        state->viewerState->vpConfigs[i].texture.zoomLevel = value;
 
     emit refreshSignal();
 }

@@ -37,7 +37,6 @@
 #include <QTableWidget>
 #include "knossos-global.h"
 
-
 extern struct stateInfo *state;
 
 CommentsWidget::CommentsWidget(QWidget *parent) :

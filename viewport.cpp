@@ -24,13 +24,11 @@
 
 #include "knossos-global.h"
 #include "viewport.h"
-
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include "sleeper.h"
 #include "functions.h"
-
 
 extern stateInfo *state;
 extern stateInfo *tempConfig;
@@ -49,9 +47,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     this->setMouseTracking(true);
-
     this->setCursor(Qt::CrossCursor);
-
 
     if(plane == VIEWPORT_SKELETON + 10) {
         this->xy = new QPushButton("xy");
@@ -72,10 +68,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
         mainLayout->addLayout(hLayout);
         setLayout(mainLayout);
     }
-
 }
-
-
 
 void Viewport::initializeGL() {
     if(plane < VIEWPORT_SKELETON) {
@@ -462,12 +455,10 @@ void Viewport::zoomOrthogonals(float step){
         state->viewerState->gui->zoomOrthoVPs =
             state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
 
-
        if(triggerMagChange)
             emit changeDatasetMagSignal(triggerMagChange);
 
        emit recalcTextureOffsetsSignal();
        emit runSignal();
-
 
 }

@@ -518,6 +518,14 @@ void MainWindow::createActions()
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
     clearSkeletonAction =  new QAction(tr("&Clear Skeleton"), this);
 
+    if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {
+        addNodeAction->setChecked(true);
+    } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE) {
+        linkWithActiveNodeAction->setChecked(true);
+    } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_DROP_NODE) {
+        dropNodesAction->setChecked(true);
+    }
+
     connect(addNodeAction, SIGNAL(triggered()), this, SLOT(addNodeSlot()));
     connect(linkWithActiveNodeAction, SIGNAL(triggered()), this, SLOT(linkWithActiveNodeSlot()));
     connect(dropNodesAction, SIGNAL(triggered()), this, SLOT(dropNodesSlot()));
@@ -534,6 +542,12 @@ void MainWindow::createActions()
     zoomAndMultiresAction->setCheckable(true);
     tracingTimeAction = new QAction(tr("&Tracing Time"), this);
     tracingTimeAction->setCheckable(true);
+
+    if(state->viewerState->workMode == ON_CLICK_DRAG) {
+        dragDatasetAction->setChecked(true);
+    } else if(state->viewerState->workMode == ON_CLICK_RECENTER) {
+        recenterOnClickAction->setChecked(true);
+    }
 
     connect(dragDatasetAction, SIGNAL(triggered()), this, SLOT(dragDatasetSlot()));
     connect(recenterOnClickAction, SIGNAL(triggered()), this, SLOT(recenterOnClickSlot()));

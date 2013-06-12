@@ -274,7 +274,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
     *
     */
 
-
     floatCoordinate singleMove;
     floatCoordinate residuals;
     Coordinate doMove;
@@ -399,8 +398,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->x = doMove.x;
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
-
-
 
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 

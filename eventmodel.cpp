@@ -28,8 +28,6 @@
 #include "knossos.h"
 #include "skeletonizer.h"
 
-
-
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
 

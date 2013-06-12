@@ -37,10 +37,11 @@ public:
     void resizeEvent(QResizeEvent *event);
     void saveSettings();
     void loadSettings();
+    void log(const char *text);
 signals:
     void uncheckSignal();
 public slots:
-    
+
 protected:
     QPlainTextEdit *editor;
 

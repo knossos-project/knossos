@@ -40,10 +40,8 @@
 #include "widgets/tools/toolstreestabwidget.h"
 #include "widgets/tracingtimewidget.h"
 
-
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
-extern Viewer *viewerEventObj;
 
 int correct_cubes = 0;
 int cubes_in_backlog = 0;

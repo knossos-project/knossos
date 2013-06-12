@@ -26,6 +26,7 @@
 #include "GUIConstants.h"
 #include <QPlainTextEdit>
 #include <QSettings>
+#include <QDebug>
 
 Console::Console(QWidget *parent) :
     QDialog(parent)

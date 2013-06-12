@@ -238,5 +238,4 @@ void NavigationWidget::saveSettings() {
     settings.setValue(NUMBER_OF_STEPS, this->numberOfStepsSpinBox->value());
     settings.endGroup();
 
-
 }
