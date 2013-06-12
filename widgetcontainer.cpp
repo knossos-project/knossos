@@ -73,7 +73,7 @@ void WidgetContainer::createSychronizationWidget() {
 
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
-    splashWidget->setGeometry(400, 400, 500, 500);
+    splashWidget->setGeometry(400, 100, 500, 500);
     splashWidget->show();
 }
 

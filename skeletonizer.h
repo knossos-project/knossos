@@ -27,9 +27,9 @@
 
 #include <QtOpenGL>
 #include <QObject>
+#include <QMutex>
 #include "knossos-global.h"
 #include "viewport.h"
-
 
 class Skeletonizer : public QObject
 {
@@ -37,6 +37,7 @@ class Skeletonizer : public QObject
     //friend class Viewer;
     //friend class Remote;
 public:
+
     explicit Skeletonizer(QObject *parent = 0);
 
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);

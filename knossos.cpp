@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     state->conditionLoadSignal = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
     state->conditionClientSignal = new QWaitCondition();
-    state->protectSkeleton = new QMutex();
+    state->protectSkeleton = new QMutex(QMutex::Recursive);
     state->protectLoadSignal = new QMutex();
     state->protectRemoteSignal = new QMutex();
     state->protectClientSignal = new QMutex();
@@ -475,6 +475,8 @@ bool Knossos::lockSkeleton(uint targetRevision) {
      * set to CHANGE_MANUAL (== 0).
      *
      */
+
+
 
     state->protectSkeleton->lock();
 

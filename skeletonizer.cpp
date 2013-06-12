@@ -1804,6 +1804,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
 }
 
 bool Skeletonizer::delTree(int targetRevision, int treeID) {
+
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     struct treeListElement *currentTree;
