@@ -80,16 +80,14 @@ signals:
     void pasteCoordinateSignal();
     void zoomOrthoSignal(float step);
     void updateViewerStateSignal();
-    // SIGNAL MIT RÜCKGABEWERT?
-    uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
+
     void updateWidgetSignal();
     void workModeAddSignal();
     void workModeLinkSignal();
     void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
     void addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
-    // SIGNAL WITH RETURN VALUE ???
-    void addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
+
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);

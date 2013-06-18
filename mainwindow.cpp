@@ -53,18 +53,7 @@
 #include "knossos.h"
 #include "viewport.h"
 #include "skeletonizer.h"
-
 #include "widgetcontainer.h"
-#include "widgets/console.h"
-#include "widgets/tracingtimewidget.h"
-#include "widgets/commentswidget.h"
-#include "widgets/zoomandmultireswidget.h"
-#include "widgets/navigationwidget.h"
-#include "widgets/toolswidget.h"
-#include "widgets/viewportsettingswidget.h"
-#include "widgets/datasavingwidget.h"
-#include "widgets/synchronizationwidget.h"
-#include "widgets/splashscreenwidget.h"
 
 extern struct stateInfo *state;
 extern struct stateInfo *tempConfig;
@@ -1043,6 +1032,7 @@ void MainWindow::saveSettings() {
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->toolsWidget->saveSettings();
+    widgetContainer->tracingTimeWidget->saveSettings();
 }
 
 /**
@@ -1110,6 +1100,7 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->toolsWidget->loadSettings();
+    widgetContainer->tracingTimeWidget->loadSettings();
 }
 
 /**

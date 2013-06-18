@@ -25,6 +25,7 @@
 #include "tracingtimewidget.h"
 #include <QLabel>
 #include <QVBoxLayout>
+#include "GUIConstants.h"
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -52,6 +53,22 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
 }
 
 void TracingTimeWidget::loadSettings() {
+    QSettings settings;
+
+    settings.beginGroup(TRACING_TIME_WIDGET);
+    if(!settings.value(RUNNING_TIME).isNull())
+        this->runningTimeLabel->setText(settings.value(RUNNING_TIME).toString());
+
+    settings.endGroup();
+}
+
+void TracingTimeWidget::saveSettings() {
+    QSettings settings;
+
+    settings.beginGroup(TRACING_TIME_WIDGET);
+    settings.setValue(RUNNING_TIME, this->runningTimeLabel->text());
+
+    settings.endGroup();
 
 }
 

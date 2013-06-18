@@ -10,6 +10,7 @@ const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
 const QString VIEWPORT_SETTINGS_WIDGET = "viewport_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
 const QString TOOLS_WIDGET = "tools_widget";
+const QString TRACING_TIME_WIDGET = "tracing_time_widget";
 
 /* General attributes appropriate for most widgets */
 const QString WIDTH  = "width";
@@ -39,6 +40,11 @@ const QString LOCK_DATASET_TO_CURRENT_MAG = "lock_dataset_to_currentmag";
 const QString LIGHT_EFFECTS = "light_effects";
 const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString SHOW_ALL_NODE_ID = "show_all_node_id";
+const QString RENDERING_QUALITY = "rendering_quality";
+const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
+const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
+const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
+const QString SHOW_POS_AND_SIZE_CHECKED = "show_pos_and_size_checked";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";
@@ -120,6 +126,9 @@ const QString RADIUS2 = "radius2";
 const QString RADIUS3 = "radius3";
 const QString RADIUS4 = "radius4";
 const QString RADIUS5 = "radius5";
+
+/* Tracing Time Widget */
+const QString RUNNING_TIME = "running_time";
 
 /* MainWindow recent files */
 

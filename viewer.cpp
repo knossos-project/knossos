@@ -33,12 +33,6 @@
 #include "sleeper.h"
 #include "mainwindow.h"
 #include "viewport.h"
-#include "widgets/zoomandmultireswidget.h"
-#include "widgets/toolswidget.h"
-#include "widgets/tools/toolsnodestabwidget.h"
-#include "widgets/tools/toolsquicktabwidget.h"
-#include "widgets/tools/toolstreestabwidget.h"
-#include "widgets/tracingtimewidget.h"
 
 extern  stateInfo *tempConfig;
 extern  stateInfo *state;
@@ -255,6 +249,15 @@ Viewer::Viewer(QObject *parent) :
     connect(vp3->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(vp4->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
+    /* from x to skeletonizer´s setters */
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
+    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)), skeletonizer, SLOT(setOverrideNodeRadius(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(segRadiusToNodeRadiusSignal(float)), skeletonizer, SLOT(setSegRadiusToNodeRadius(float)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
     //connect(renderer, SIGNAL(renderTextSignal(int,int,int,QString)), vp4, SLOT(renderTextSlot(int,int,int,QString)));
 
     QTimer *timer = new QTimer();

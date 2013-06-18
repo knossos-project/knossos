@@ -2,20 +2,29 @@
 #define WIDGETCONTAINER_H
 
 #include <QObject>
+#include "widgets/console.h"
+#include "widgets/tracingtimewidget.h"
+#include "widgets/synchronizationwidget.h"
+#include "widgets/commentswidget.h"
+#include "widgets/datasavingwidget.h"
+#include "widgets/splashscreenwidget.h"
 
-class Console;
-class TracingTimeWidget;
-class CommentsWidget;
-class DataSavingWidget;
-class SplashScreenWidget;
-class SynchronizationWidget;
-class ToolsWidget;
-class ViewportSettingsWidget;
-class ZoomAndMultiresWidget;
+#include "widgets/toolswidget.h"
+#include "widgets/tools/toolsnodestabwidget.h"
+#include "widgets/tools/toolsquicktabwidget.h"
+#include "widgets/tools/toolstreestabwidget.h"
+
+#include "widgets/viewportsettingswidget.h"
+#include "widgets/viewportsettings/vpgeneraltabwidget.h"
+#include "widgets/viewportsettings/vpskeletonviewportwidget.h"
+#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
+
+#include "widgets/zoomandmultireswidget.h"
+#include "widgets/navigationwidget.h"
+#include "widgets/coordinatebarwidget.h"
+
 class Viewport;
-class NavigationWidget;
 class MainWindow;
-class CoordinateBarWidget;
 class WidgetContainer : public QObject
 {
     Q_OBJECT

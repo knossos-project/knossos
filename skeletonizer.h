@@ -299,6 +299,17 @@ public slots:
     bool jumpToActiveNode();
     static int saveSkeleton();
 
+    /* Slots which manipulates attributes */
+    void setZoomLevel(float value);
+    void setShowIntersections(bool on);
+    void setShowXyPlane(bool on);
+    void setRotateAroundActiveNode(bool on);
+
+    void setOverrideNodeRadius(bool on);
+    void setSegRadiusToNodeRadius(float value);
+    void setHighlightActiveTree(bool on);
+    void setSkeletonChanged(bool on);
+    void setShowNodeIDs(bool on);
 };
 
 #endif // SKELETONIZER_H

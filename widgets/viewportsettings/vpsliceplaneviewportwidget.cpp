@@ -59,6 +59,7 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     depthCutoffLabel = new QLabel("Depth Cutoff");
     depthCutoffSpinBox = new QDoubleSpinBox();
     depthCutoffSpinBox->setSingleStep(0.5);
+    depthCutoffSpinBox->setMinimum(0.5);
 
     useOwnDatasetColorsCheckBox = new QCheckBox("Use Own Dataset Colors");
     useOwnTreeColorsCheckBox = new QCheckBox("Use Own Tree Colors");
@@ -175,6 +176,7 @@ void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
 }
 
 void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
+    emit showIntersectionsSignal(on);
     state->skeletonState->showIntersections = on;
 }
 
@@ -266,3 +268,4 @@ void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
 void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
     state->viewerState->showVPLabels = on;
 }
+

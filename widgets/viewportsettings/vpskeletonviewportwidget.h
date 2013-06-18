@@ -37,7 +37,8 @@ class VPSkeletonViewportWidget : public QWidget
 public:
     explicit VPSkeletonViewportWidget(QWidget *parent = 0);
 signals:
-    
+    void showXYPlaneSignal(bool on);
+    void rotateAroundActiveNodeSignal(bool on);
 public slots:
     void showXYPlaneChecked(bool on);
     void showXZPlaneChecked(bool on);

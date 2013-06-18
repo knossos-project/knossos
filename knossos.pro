@@ -113,8 +113,10 @@ OTHER_FILES += \
     customCursor.xpm \
     config.y \
 
-macx {
-    LIBS += -lxml2
+mac {
+    LIBS += -lxml2 \
+            -framework GLUT \
+
 }
 
 linux {
@@ -122,8 +124,6 @@ linux {
             -lGL \
             -lGLU \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
-
-
 
     INCLUDEPATH += /home/knossos/Dokumente/libxml \
                    /usr/include/GL/

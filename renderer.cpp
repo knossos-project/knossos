@@ -32,6 +32,7 @@
 #include <QtOpenGL>
 #ifdef Q_OS_MACX
     #include <glu.h>
+    #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_LINUX
     #include <GL/gl.h>
@@ -212,26 +213,16 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint v
 uint Renderer::renderText(Coordinate *pos, char *string) {
 
     char *c;
-    //int transFactor = 1;
-    //Coordinate transPos;
-
-    //if(coordinateMag == ORIGINAL_MAG_COORDINATES)
-    //    transFactor = state->magnification;
-
-    //transPos.x = pos->x / transFactor;
-    //transPos.y = pos->y / transFactor;
-    //transPos.z = pos->z / transFactor;
 
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
     for (c = string; *c != '\0'; c++) {
-        //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c); // TODO Removed due to glut32 problems
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c); // TODO Removed due to glut32 problems
     }
     glEnable(GL_DEPTH_TEST);
 
     return true;
 }
-
 
 uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
     if(!state->skeletonState->showIntersections) return true;
@@ -527,7 +518,6 @@ static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4
 }
 
 bool Renderer::drawGUI() {
-
     return true;
 }
 

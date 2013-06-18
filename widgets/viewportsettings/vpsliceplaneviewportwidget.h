@@ -44,9 +44,9 @@ class VPSlicePlaneViewportWidget : public QWidget
     Q_OBJECT
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
-    void loadSettings();
 signals:
     bool loadDataSetColortableSignal(const char *path, GLuint *table, int32_t type);
+    void showIntersectionsSignal(bool value);
 public slots:
     void enableOverlayChecked(bool on);
     void datasetLinearFilteringChecked(bool on);

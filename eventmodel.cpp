@@ -67,6 +67,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
             if(clickedCoordinate) {
                 newActiveNode = Skeletonizer::findNodeInRadius(*clickedCoordinate);
                 if(newActiveNode != NULL) {
+                    qDebug() << "activeNode";
                     emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                     return true;
                 }
@@ -1063,7 +1064,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "Delete Key pressed";
         emit deleteActiveNodeSignal();
     } else if(event->key() == Qt::Key_F1) {
-        qDebug() << "F1 pressed";
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
         } else{

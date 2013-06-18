@@ -1,15 +1,4 @@
 #include "widgetcontainer.h"
-#include "widgets/console.h"
-#include "widgets/tracingtimewidget.h"
-#include "widgets/commentswidget.h"
-#include "widgets/zoomandmultireswidget.h"
-#include "widgets/navigationwidget.h"
-#include "widgets/toolswidget.h"
-#include "widgets/viewportsettingswidget.h"
-#include "widgets/datasavingwidget.h"
-#include "widgets/synchronizationwidget.h"
-#include "widgets/splashscreenwidget.h"
-#include "widgets/coordinatebarwidget.h"
 #include "mainwindow.h"
 
 WidgetContainer::WidgetContainer(MainWindow *parent) :

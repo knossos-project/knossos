@@ -28,10 +28,10 @@
 #include <QDialog>
 #include <QTabWidget>
 
-
 class VPGeneralTabWidget;
 class VPSlicePlaneViewportWidget;
 class VPSkeletonViewportWidget;
+
 class ViewportSettingsWidget : public QDialog
 {
     Q_OBJECT

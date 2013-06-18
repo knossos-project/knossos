@@ -155,16 +155,7 @@ int main(int argc, char *argv[])
     }
 
     Knossos::printConfigValues();
-    /*
-    MainWindow window;
-    window.showMaximized();
-    */
-    // built up threads. Do not follow instructions of qt documentation on QThread
-    // as they are outdated since qt 4.4!
-    // Instead of subclassing a QThread, normal QObjects are to be moved onto threads
 
-
-    //knossos = new Knossos();
     viewer = new Viewer();
     Loader *loader = new Loader();
     Remote *remote = new Remote();
@@ -176,8 +167,7 @@ int main(int argc, char *argv[])
     //viewer->start();
     loader->start();
     viewer->run();
-    remote = new Remote();
-    remote->start();
+
 
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -209,6 +199,8 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
 
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+
+    remote->start();
 
     return a.exec();
 }

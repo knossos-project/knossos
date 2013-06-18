@@ -72,6 +72,7 @@ public:
 signals:
     void refreshSignal();
     void uncheckSignal();
+    void zoomLevelSignal(float value);
 };
 
 #endif // ZOOMANDMULTIRESWIDGET_H

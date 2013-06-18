@@ -97,9 +97,7 @@ void Remote::run() {
         if(state->quitSignal == true) {
             break;
         }
-
     }
-
 }
 
 bool Remote::newTrajectory(char *trajName, char *trajectory) {

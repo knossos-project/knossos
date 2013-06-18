@@ -4412,5 +4412,39 @@ void Skeletonizer::delCmdListElement(struct cmdListElement *cmdEl) {
     }
 }
 
+void Skeletonizer::setZoomLevel(float value) {
+    this->zoomLevel = value;
+}
 
+void Skeletonizer::setShowIntersections(bool on) {
+    this->showIntersections = on;
+}
+
+void Skeletonizer::setShowXyPlane(bool on) {
+    this->showXYplane = on;
+}
+
+void Skeletonizer::setRotateAroundActiveNode(bool on) {
+    this->rotateAroundActiveNode = on;
+}
+
+void Skeletonizer::setOverrideNodeRadius(bool on) {
+    this->overrideNodeRadiusBool = on;
+}
+
+void Skeletonizer::setSegRadiusToNodeRadius(float value) {
+    this->segRadiusToNodeRadius = value;
+}
+
+void Skeletonizer::setHighlightActiveTree(bool on) {
+    this->highlightActiveTree = on;
+}
+
+void Skeletonizer::setSkeletonChanged(bool on) {
+    this->skeletonChanged = on;
+}
+
+void Skeletonizer::setShowNodeIDs(bool on) {
+    this->showNodeIDs = on;
+}
 

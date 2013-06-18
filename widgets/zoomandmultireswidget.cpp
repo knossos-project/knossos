@@ -38,6 +38,9 @@
 
 extern struct stateInfo *state;
 
+static const float MIN_ZOOM = 0.02;
+static const float MAX_ZOOM = 1;
+
 /**
   * In GUI.c some labels are changed:
   * highest Available Mag = lowest Avaible Mag and otherwise. Why ??
@@ -126,6 +129,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 
     connect(this->zoomDefaultsButton, SIGNAL(clicked()), this, SLOT(zoomDefaultsSlot()));
     connect(this->lockDatasetCheckBox, SIGNAL(toggled(bool)), this, SLOT(lockDatasetMagSlot(bool)));
+
 }
 
 /**
@@ -133,6 +137,8 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
   */
 void ZoomAndMultiresWidget::orthogonalSliderSlot(int value) {
     float result = value / 100.0;
+    if(result < MIN_ZOOM)
+        result = MIN_ZOOM;
     this->orthogonalDataViewportSpinBox->setValue(result);
     state->viewerState->gui->zoomOrthoVPs = result;
 
@@ -162,7 +168,7 @@ void ZoomAndMultiresWidget::skeletonSliderSlot(int value) {
     float result = value / 200.0;
     this->skeletonViewSpinBox->setValue(result);
     state->skeletonState->zoomLevel = result;
-
+    emit zoomLevelSignal(value);
     emit refreshSignal();
 }
 
@@ -173,6 +179,7 @@ void ZoomAndMultiresWidget::skeletonSpinBoxSlot(double value) {
    this->skeletonViewSlider->setValue(value * 200);
 
     state->skeletonState->zoomLevel = (float) value;
+    emit zoomLevelSignal(value);
 
     emit refreshSignal();
 }
@@ -186,7 +193,6 @@ void ZoomAndMultiresWidget::lockDatasetMagSlot(bool on) {
 }
 
 void ZoomAndMultiresWidget::zoomDefaultsSlot() {
-    const float MIN_ZOOM = 0.02;
     state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MIN_ZOOM;
     state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MIN_ZOOM;
     state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MIN_ZOOM;
@@ -197,6 +203,7 @@ void ZoomAndMultiresWidget::zoomDefaultsSlot() {
     skeletonViewSpinBox->setValue(MIN_ZOOM);
 
     state->skeletonState->zoomLevel = 0.0;
+    emit zoomLevelSignal(0.0);
     emit refreshSignal();
 
 
@@ -226,12 +233,21 @@ void ZoomAndMultiresWidget::loadSettings() {
 
     setGeometry(x, y, width, height);
 
-    if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble())
+    if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble()) {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
-    if(!settings.value(SKELETON_VIEW).toDouble())
+        state->viewerState->gui->zoomOrthoVPs = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
+        for(int i = 0; i < 3; i++)
+            state->viewerState->vpConfigs[i].texture.zoomLevel = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
+    }
+    if(!settings.value(SKELETON_VIEW).toDouble()) {
         this->skeletonViewSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
-    if(!settings.value(LOCK_DATASET_TO_CURRENT_MAG).toDouble())
+        state->skeletonState->zoomLevel = settings.value(SKELETON_VIEW).toDouble();
+    }
+
+    if(!settings.value(LOCK_DATASET_TO_CURRENT_MAG).toDouble()) {
         this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
+        state->viewerState->datasetMagLock = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
+    }
     settings.endGroup();
 }
 
@@ -248,3 +264,5 @@ void ZoomAndMultiresWidget::saveSettings() {
     settings.setValue(LOCK_DATASET_TO_CURRENT_MAG, this->lockDatasetCheckBox->isChecked());
     settings.endGroup();
 }
+
+

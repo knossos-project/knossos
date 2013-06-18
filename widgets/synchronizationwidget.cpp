@@ -63,6 +63,10 @@ void SynchronizationWidget::loadSettings() {
 
 }
 
+void SynchronizationWidget::saveSettings() {
+
+}
+
 void SynchronizationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();

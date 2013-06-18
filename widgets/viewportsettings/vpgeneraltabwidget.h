@@ -29,8 +29,10 @@
 
 class QLabel;
 class QCheckBox;
+class QSpinBox;
 class QDoubleSpinBox;
 class QRadioButton;
+class QPushButton;
 class VPGeneralTabWidget : public QWidget
 {
     friend class ViewportSettingsWidget;
@@ -39,28 +41,36 @@ public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
 
 signals:
-    
+    void overrideNodeRadiusSignal(bool on);
+    void highlightActiveTreeSignal(bool on);
+    void skeletonChangedSignal(bool on);
+    void showNodeID(bool on);
+    void segRadiusToNodeRadiusSignal(float value);
 public slots:
     void lightEffectsChecked(bool on);
     void hightlightActiveTreeChecked(bool on);
     void showAllNodeIdsChecked(bool on);
     void overrideNodeRadiusChecked(bool on);
+    void overrideNodeRadiusChanged(double value);
     void edgeNodeRadiusRatioChanged(double value);
-    void linesAndPointsChecked(bool on);
-    void skeleton3dChecked(bool on);
+    void renderingQualityChanged(int value);
+    void showPosAndSizeChecked(bool on);
+    void useStandardPosAndSizeClicked();
 protected:
     QLabel *skeletonVisualizationLabel;
-    QLabel *skeletonRenderingModelLabel;
+    QLabel *renderingQualityLabel;
+    QSpinBox *renderingQualitySpinBox;
     QCheckBox *lightEffectsButton;
     QCheckBox *hightlightActiveTreeButton;
     QCheckBox *showAllNodeIdsButton;
     QCheckBox *overrideNodeRadiusButton;
+    QDoubleSpinBox *overrideNodeRadiusSpinBox;
 
     QDoubleSpinBox *edgeNodeRadiusRatioSpinBox;
     QLabel *edgeNodeRadiusRatioLabel;
 
-    QRadioButton *linesAndPointsButton;
-    QRadioButton *skeleton3dButton;
+    QCheckBox *showPosAndResizeCheckBox;
+    QPushButton *useStandardPosAndSizeButton;
 };
 
 #endif // VPGENERALTABWIDGET_H

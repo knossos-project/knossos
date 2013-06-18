@@ -40,6 +40,7 @@ public:
     QPushButton *connectButton;
     bool connected;
     void loadSettings();
+    void saveSettings();
 signals:
     void uncheckSignal();
 public slots:

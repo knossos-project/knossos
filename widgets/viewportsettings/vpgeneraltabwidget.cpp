@@ -25,11 +25,13 @@
 #include "vpgeneraltabwidget.h"
 #include <QLabel>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFrame>
 #include "knossos-global.h"
+
 extern struct stateInfo *state;
 
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
@@ -38,7 +40,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     this->skeletonVisualizationLabel = new QLabel("Skeleton Visualization");
-    this->skeletonRenderingModelLabel = new QLabel("Skeleton Rendering Model");
 
     this->lightEffectsButton = new QCheckBox("Light Effects");
     this->lightEffectsButton->setChecked(state->viewerState->lightOnOff);
@@ -49,21 +50,26 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->showAllNodeIdsButton = new QCheckBox("Show All Node IDs");
     this->showAllNodeIdsButton->setChecked(state->viewerState->showVPLabels);
 
+    this->renderingQualityLabel = new QLabel("Rendering quality(1 best, 20 fastest):");
+    this->renderingQualitySpinBox = new QSpinBox();
+    this->renderingQualitySpinBox->setMinimum(1);
+    this->renderingQualitySpinBox->setMaximum(20);
+
     this->overrideNodeRadiusButton = new QCheckBox("Override Node Radius");
     this->overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
+    this->overrideNodeRadiusSpinBox = new QDoubleSpinBox();
 
     this->edgeNodeRadiusRatioSpinBox = new QDoubleSpinBox();
     this->edgeNodeRadiusRatioSpinBox->setSingleStep(0.1);
     this->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
     this->edgeNodeRadiusRatioLabel = new QLabel("Edge <-> Node Radius Ratio:");
 
-    this->linesAndPointsButton = new QRadioButton("Lines and Points(fast)");
-
-    this->skeleton3dButton = new QRadioButton("3D Skeleton");
-
     if(!state->skeletonState->overrideNodeRadiusBool) {
         this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
     }
+
+    this->showPosAndResizeCheckBox = new QCheckBox("Show Position and Resize Button");
+    this->useStandardPosAndSizeButton = new QPushButton("Use Standard Positions And Sizes");
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -73,35 +79,44 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     line2->setFrameShape(QFrame::HLine);
     line2->setFrameShadow(QFrame::Sunken);
 
-    QGridLayout *gridLayout = new QGridLayout();
 
-    gridLayout->addWidget(skeletonVisualizationLabel, 1, 1);
-    gridLayout->addWidget(skeletonRenderingModelLabel, 1, 2);
-    gridLayout->addWidget(line, 2, 1);
-    gridLayout->addWidget(line2, 2, 2);
+    mainLayout->addWidget(this->skeletonVisualizationLabel);
+    mainLayout->addWidget(line);
+    mainLayout->addWidget(this->lightEffectsButton);
+    mainLayout->addWidget(this->hightlightActiveTreeButton);
+    mainLayout->addWidget(this->showAllNodeIdsButton);
 
-    gridLayout->addWidget(this->lightEffectsButton, 3, 1);
-    gridLayout->addWidget(linesAndPointsButton, 3, 2);
-    gridLayout->addWidget(hightlightActiveTreeButton, 4, 1);
-    gridLayout->addWidget(skeleton3dButton, 4, 2);
+    QHBoxLayout *hLayout = new QHBoxLayout();
+    hLayout->addWidget(this->renderingQualityLabel);
+    hLayout->addWidget(this->renderingQualitySpinBox);
+    mainLayout->addLayout(hLayout);
 
-    gridLayout->addWidget(showAllNodeIdsButton, 5, 1);
-    gridLayout->addWidget(overrideNodeRadiusButton, 6, 1);
-    gridLayout->addWidget(edgeNodeRadiusRatioLabel, 7, 1);
-    gridLayout->addWidget(edgeNodeRadiusRatioSpinBox, 7, 2);
+    QHBoxLayout *hLayout2 = new QHBoxLayout();
+    hLayout2->addWidget(this->overrideNodeRadiusButton);
+    hLayout2->addWidget(this->overrideNodeRadiusSpinBox);
+    mainLayout->addLayout(hLayout2);
 
+    QHBoxLayout *hLayout3 = new QHBoxLayout();
+    hLayout3->addWidget(this->edgeNodeRadiusRatioLabel);
+    hLayout3->addWidget(this->edgeNodeRadiusRatioSpinBox);
+    mainLayout->addLayout(hLayout3);
 
-    mainLayout->addLayout(gridLayout);
+    mainLayout->addWidget(this->showPosAndResizeCheckBox);
+    mainLayout->addWidget(this->useStandardPosAndSizeButton);
+
     setLayout(mainLayout);
     mainLayout->addStretch(50);
 
     connect(lightEffectsButton, SIGNAL(clicked(bool)), this, SLOT(lightEffectsChecked(bool)));
     connect(showAllNodeIdsButton, SIGNAL(clicked(bool)), this, SLOT(showAllNodeIdsChecked(bool)));
     connect(hightlightActiveTreeButton, SIGNAL(clicked(bool)), this, SLOT(hightlightActiveTreeChecked(bool)));
+    connect(renderingQualitySpinBox, SIGNAL(valueChanged(int)), this, SLOT(renderingQualityChanged(int)));
     connect(overrideNodeRadiusButton, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
-    connect(linesAndPointsButton, SIGNAL(clicked(bool)), this, SLOT(linesAndPointsChecked(bool)));
-    connect(skeleton3dButton, SIGNAL(clicked(bool)), this, SLOT(skeleton3dChecked(bool)));
+    connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
+    connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));
+
+
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
@@ -110,6 +125,9 @@ void VPGeneralTabWidget::lightEffectsChecked(bool on) {
 
 
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
+    emit highlightActiveTreeSignal(on);
+    emit skeletonChangedSignal(true);
+
     state->skeletonState->highlightActiveTree = on;
 
     state->skeletonState->skeletonChanged = true;
@@ -117,12 +135,16 @@ void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
 
 
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
+    emit showNodeID(on);
+    emit skeletonChangedSignal(true);
+
     state->skeletonState->showNodeIDs = on;
 
     state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
+    emit overrideNodeRadiusSignal(on);
     state->skeletonState->overrideNodeRadiusBool = on;
 
     if(on) {
@@ -132,23 +154,36 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
     }
 }
 
+void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
+    state->skeletonState->overrideNodeRadiusVal = value;
+}
+
 
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
+    emit segRadiusToNodeRadiusSignal(value);
     state->skeletonState->segRadiusToNodeRadius = value;
 }
 
-
-void VPGeneralTabWidget::linesAndPointsChecked(bool on) {
-    if(on) {
-        state->viewerState->gui->radioRenderingModel = DSP_LINES_POINTS;
-    }
+void VPGeneralTabWidget::renderingQualityChanged(int value) {
+    state->viewerState->cumDistRenderThres = value;
 }
 
-/**
-  * @todo what is the constant for 3D Skeleton ?
-  */
-void VPGeneralTabWidget::skeleton3dChecked(bool on) {
+/* @todo */
+void VPGeneralTabWidget::showPosAndSizeChecked(bool on) {
     if(on) {
-        state->viewerState->gui->radioRenderingModel;
+        for(int i = 0; i < state->viewerState->numberViewports; i++) {
+
+        }
+    } else {
+        for(int i = 0; i < state->viewerState->numberViewports; i++) {
+
+        }
     }
+
+
+}
+
+/* @tood */
+void VPGeneralTabWidget::useStandardPosAndSizeClicked() {
+
 }
