@@ -293,7 +293,8 @@ void Viewport::drawViewport(int plane) {
 }
 
 void Viewport::drawSkeletonViewport() {
-    Renderer::renderSkeletonVP(3);
+    Renderer::renderSkeletonVP(VIEWPORT_SKELETON);
+
 }
 
 
