@@ -88,7 +88,6 @@ void ToolsWidget::loadSettings() {
     if(!settings.value(LOCK_TO_NODES_WITH_COMMENT).toString().isNull())
         this->toolsNodesTabWidget->lockingToNodesWithCommentField->setText(settings.value(LOCK_TO_NODES_WITH_COMMENT).toString());
 
-
     settings.endGroup();
 
     setGeometry(x, y, width, height);

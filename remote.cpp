@@ -238,8 +238,21 @@ bool Remote::remoteWalkTo(int x, int y, int z) {
     y_moves = y - state->viewerState->currentPosition.y;
     z_moves = z - state->viewerState->currentPosition.z;
 
-    retval = remoteWalk(x_moves, y_moves, z_moves);
+    floatCoordinate vec;
+    vec.x = x_moves;
+    vec.y = y_moves;
+    vec.z = z_moves;
 
+   /* @todo There seems to be a bug in remote Walk which does not lead to anything in the qt version */
+    /* this is an ad-hoc version which does not consider magnifications or other things */
+   for(int i = 1; i < 10; i++) {
+        emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, TELL_COORDINATE_CHANGE);
+        Sleeper::msleep(50);
+   }
+
+    /*
+    retval = remoteWalk(x_moves, y_moves, z_moves);
+    */
 
     return true;
 }
@@ -325,7 +338,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     emit userMoveSignal(walkVector.x, walkVector.y, walkVector.z, TELL_COORDINATE_CHANGE);
 
-    //emit user
     //moveEvent.type = SDL_USEREVENT;
     //moveEvent.user.code = USEREVENT_MOVE; /** @attention a replacement for this user_event is userMoveSignal
 

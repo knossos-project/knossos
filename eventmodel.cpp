@@ -44,7 +44,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     Coordinate *clickedCoordinate = NULL;
 
     //new active node selected
-    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+    if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         qDebug("control and mouseleft");
         //first assume that user managed to hit the node
         clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,

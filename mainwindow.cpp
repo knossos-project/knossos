@@ -353,7 +353,6 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
             state->skeletonState->unsavedChanges = false;
             addRecentFile(fileName);
         }
-
     } else {
 
     }
@@ -494,7 +493,8 @@ void MainWindow::createActions()
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
-        historyEntryActions[i]->installEventFilter(this);
+
+
     }
 
     /* edit skeleton actions */
@@ -588,10 +588,11 @@ void MainWindow::createMenus()
     recentFileMenu = fileMenu->addMenu("Recent File(s)");
 
     /* History Entries */
+
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         ////historyEntryActions[i]->setText(skeletonFileHistory->at(i));
+        recentFileMenu->addAction(historyEntryActions[i]);
         historyEntryActions[i]->installEventFilter(this);
-        //recentFileMenu->addAction(historyEntryActions[i]);
     }
 
     fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
@@ -1107,12 +1108,15 @@ void MainWindow::loadSettings() {
   * This Event Filter is used to find out which of the elements of the 2d array historyEntryAction is clicked
   */
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(historyEntryActions[i] == obj) {
+           qDebug() << "jepp";
            QString fileName = historyEntryActions[i]->text();
            char *cname = const_cast<char *>(fileName.toStdString().c_str());
            loadSkeleton(cname);
            event->accept();
+           return true;
         }
     }
 
@@ -1184,3 +1188,4 @@ void MainWindow::saveSkelCallback() {
         qDebug("No skeleton was found. Not saving.");
     }
 }
+
