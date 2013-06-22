@@ -203,7 +203,7 @@ static int32_t clientRun() {
             /*
              * Interpret what we have in the read buffer
              */
-            parseInBuffer();
+            parseInBuffer(clientState->inBuffer, state->skeletonState);
 
             SDL_LockMutex(state->protectClientSignal);
             if(state->clientSignal == TRUE) {
@@ -293,7 +293,7 @@ static int32_t closeConnection() {
 
 #define FLOATS 16
 #define INTS 16
-static uint32_t parseInBuffer() {
+static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *skeleton) {
     int32_t messageLen = 0;
     struct clientState *clientState = state->clientState;
 
@@ -315,10 +315,10 @@ static uint32_t parseInBuffer() {
      *  value so that the message can be correctly removed from the input buffer
      *  after parsing.
      */
-    while(clientState->inBuffer->length >= 5) {
-        switch(clientState->inBuffer->data[0]) {
+    while(buffer->length >= 5) {
+        switch(buffer->data[0]) {
             case KIKI_HIBACK:
-                messageLen = parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(5, "xd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -329,7 +329,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_POSITION:
-                messageLen = parseInBufferByFmt(17, "xdddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(17, "xdddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -365,7 +365,7 @@ static uint32_t parseInBuffer() {
                  *         s: name
                  */
 
-                messageLen = parseInBufferByFmt(-1, "xldfffddds", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(-1, "xldfffddds", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -392,7 +392,7 @@ static uint32_t parseInBuffer() {
                  * Format: save master's peer id: d0.
                  */
 
-                messageLen = parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(5, "xd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -417,7 +417,7 @@ static uint32_t parseInBuffer() {
                  *
                  */
 
-                messageLen = parseInBufferByFmt(-1, "xldds", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(-1, "xldds", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -427,7 +427,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_WITHDRAW:
-                messageLen = parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(5, "xd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -442,33 +442,33 @@ static uint32_t parseInBuffer() {
             case KIKI_ADDTREECOMMENT:
                 /* Format: revision, tree id, comment string */
 
-                messageLen = parseInBufferByFmt(-1, "xlds", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(-1, "xlds", f, s, d, buffer);
                 if(messageLen < 0)
                         goto critical;
                 else if(messageLen == 0)
                         goto loopExit;
 
-                addTreeComment(d[0], d[1], (char *)s);
+                addTreeComment(skeleton, d[0], d[1], (char *)s);
 
                 break;
 
             case KIKI_ADDCOMMENT:
                 /* Format: revision, node id, comment string */
 
-                messageLen = parseInBufferByFmt(-1, "xldds", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(-1, "xldds", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addComment(d[0], (char *)s, NULL, d[1]);
+                addComment(skeleton, d[0], (char *)s, NULL, d[1]);
 
                 break;
 
             case KIKI_EDITCOMMENT:
                 /* Format: revision, node id, new node id, new content */
 
-                messageLen = parseInBufferByFmt(-1, "xlddds", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(-1, "xlddds", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -479,7 +479,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_DELCOMMENT:
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -501,7 +501,7 @@ static uint32_t parseInBuffer() {
                            position x d7,
                            y d8,
                            z d9 */
-                messageLen = parseInBufferByFmt(45, "xdddfddddddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(45, "xdddfddddddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -517,7 +517,7 @@ static uint32_t parseInBuffer() {
                 pPosition->y = d[8];
                 pPosition->z = d[9];
 
-                addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE);
+                addNode(skeleton, d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE);
 
                 free(pPosition);
                 pPosition = NULL;
@@ -526,7 +526,7 @@ static uint32_t parseInBuffer() {
 
             case KIKI_EDITNODE:
                 /* Format: revision, peer id, nodeid, radius, from magnification, position x, y, z */
-                messageLen = parseInBufferByFmt(33, "xdddfdddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(33, "xdddfdddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -538,7 +538,7 @@ static uint32_t parseInBuffer() {
 
             case KIKI_DELNODE:
                 /* Format: revision, id */
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -552,19 +552,19 @@ static uint32_t parseInBuffer() {
 
             case KIKI_ADDSEGMENT:
                 /* Format: revision, source node, target node */
-                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addSegment(d[0], d[1], d[2]);
+                addSegment(skeleton, d[0], d[1], d[2]);
 
                 break;
 
             case KIKI_DELSEGMENT:
                 /* Format: Revision, source node, target node */
-                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -575,7 +575,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_ADDTREE:
-                messageLen = parseInBufferByFmt(21, "xddfff", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(21, "xddfff", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -586,12 +586,12 @@ static uint32_t parseInBuffer() {
                 treeCol.g = f[1];
                 treeCol.b = f[2];
                 treeCol.a = 1.;
-                addTreeListElement(TRUE, d[0], d[1], treeCol);
+                addTreeListElement(skeleton, TRUE, d[0], d[1], treeCol);
 
                 break;
 
             case KIKI_DELTREE:
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -602,7 +602,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_MERGETREE:
-                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(13, "xddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -613,7 +613,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_SPLIT_CC:
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -626,18 +626,18 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_PUSHBRANCH:
-                messageLen = parseInBufferByFmt(17, "xdddd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(17, "xdddd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
-                pushBranchNode(d[0], d[2], d[3], NULL, d[1]);
+                pushBranchNode(skeleton, d[0], d[2], d[3], NULL, d[1]);
 
                 break;
 
             case KIKI_POPBRANCH:
-                messageLen = parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(5, "xd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -648,7 +648,7 @@ static uint32_t parseInBuffer() {
                 break;
 
             case KIKI_CLEARSKELETON:
-                messageLen = parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(5, "xd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -660,7 +660,7 @@ static uint32_t parseInBuffer() {
 
             case KIKI_SETACTIVENODE:
                 /* Format: Revision, node id */
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -672,7 +672,7 @@ static uint32_t parseInBuffer() {
 
             case KIKI_SETSKELETONMODE:
                 /* Format: Revision, work mode */
-                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = parseInBufferByFmt(9, "xdd", f, s, d, buffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -696,9 +696,9 @@ static uint32_t parseInBuffer() {
         }
 
         /* Remove the message we just interpreted from the input buffer */
-        memmove(clientState->inBuffer->data, &clientState->inBuffer->data[messageLen], clientState->inBuffer->length - messageLen);
-        clientState->inBuffer->length = clientState->inBuffer->length - messageLen;
-        memset(&clientState->inBuffer->data[clientState->inBuffer->length], '\0', clientState->inBuffer->size - clientState->inBuffer->length);
+        memmove(buffer->data, &buffer->data[messageLen], buffer->length - messageLen);
+        buffer->length = buffer->length - messageLen;
+        memset(&buffer->data[buffer->length], '\0', buffer->size - buffer->length);
         messageLen = 0;
 
     }

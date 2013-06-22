@@ -928,7 +928,7 @@ void createToolsWin() {
         {
             AG_ExpandHoriz(box);
             AG_BoxSetPadding(box, 0);
-            button = AG_ButtonNewFn(box, 0, "Jump to node (s)", UI_jumpToNodeBtnPressed, NULL, NULL);
+            button = AG_ButtonNewFn(box, 0, "Jump to node (s)", UI_jumpToActiveNodeBtnPressed, NULL, NULL);
             {
                 AG_ExpandHoriz(button);
             }
@@ -1535,7 +1535,7 @@ void createCommentsWin() {
 
     AG_WindowSetSideBorders(win, 4);
     AG_WindowSetBottomBorder(win, 4);
-    AG_WindowSetCaption(win, "Comment Shortcuts");
+    AG_WindowSetCaption(win, "Comment Tools");
     AG_WindowSetGeometry(win, 628, 543, 389, 260);//250, 167);
     win->hMin = 167;
     win->wMin = 250;
@@ -1786,9 +1786,81 @@ void createCommentsWin() {
             }
         }
     }
+
+    state->viewerState->ag->commentNodesTab = AG_NotebookAddTab(commentTabs, "comment nodes", AG_BOX_HOMOGENOUS);
+    {
+        box = AG_BoxNew(state->viewerState->ag->commentNodesTab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            AG_ExpandHoriz(box);
+
+            chkBox = AG_CheckboxNewInt(box, 0, "Branch nodes only", &state->viewerState->ag->filterBranchNodesOnly);
+            AG_SetEvent(chkBox, "checkbox-changed", UI_filterBranchNodesOnlyModified, NULL);
+
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "Filter:");
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->skeletonState->filterCommentBuffer, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            AG_SetEvent(textbox, "textbox-postchg", agFilterTextboxModified, NULL);
+        }
+        state->viewerState->ag->table = AG_TableNew(state->viewerState->ag->commentNodesTab, AG_TABLE_EXPAND);
+        AG_TableAddCol(state->viewerState->ag->table, "Node", "<<<<<Branch Node>>>>>", NULL);
+        AG_TableAddCol(state->viewerState->ag->table, "Comment", NULL, NULL);
+    }
     state->viewerState->ag->commentsWin = win;
     AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
     AG_WindowShow(win);
+}
+
+// for updating the comment nodes tab
+void UI_updateCommentsWin() {
+    AG_Button *button;
+    AG_Textbox *textbox;
+    struct treeListElement *tree;
+    struct nodeListElement *node;
+    char nodeDisplay[512];
+
+    if(state->viewerState->ag->table) {
+        AG_ObjectDelete(state->viewerState->ag->table);
+    }
+
+
+    state->viewerState->ag->table = AG_TableNew(state->viewerState->ag->commentNodesTab, AG_TABLE_EXPAND);
+    AG_TableSetRowHeight(state->viewerState->ag->table, 20);
+    AG_TableAddCol(state->viewerState->ag->table, "Node", "<<<<<Branch Node>>>>>", NULL);
+    AG_TableAddCol(state->viewerState->ag->table, "Comment", NULL, NULL);
+    tree = state->skeletonState->firstTree;
+    while(tree) {
+        node = tree->firstNode;
+        while(node) {
+            if(node->comment != NULL) {
+                if((strlen(state->skeletonState->filterCommentBuffer) > 0
+                    && strstr(node->comment->content, state->skeletonState->filterCommentBuffer) != NULL)
+                    || strlen(state->skeletonState->filterCommentBuffer) == 0) {
+
+                    if (node->isBranchNode) {
+                        sprintf(nodeDisplay, "Branch Node ID %i", node->nodeID);
+                    }
+                    else {
+                        sprintf(nodeDisplay, "Node ID %i", node->nodeID);
+                    }
+                    if ((state->viewerState->ag->filterBranchNodesOnly && node->isBranchNode)
+                        || state->viewerState->ag->filterBranchNodesOnly == FALSE) {
+                        button = AG_ButtonNewFn(NULL, AG_WIDGET_TABLE_EMBEDDABLE, nodeDisplay, UI_jumpToNodeBtnPressed, "%i", node->nodeID);
+
+                        textbox = AG_TextboxNew(NULL, AG_TEXTBOX_ABANDON_FOCUS|AG_WIDGET_TABLE_EMBEDDABLE, NULL);
+                        AG_TextboxBindASCII(textbox, node->comment->content, 10240);
+                        AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                        AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                        AG_TableAddRow(state->viewerState->ag->table, "%[W]:%[W]", button, textbox);
+                    }
+
+                }
+            }
+            node = node->next;
+        }
+        tree = tree->next;
+    }
 }
 
 void UI_deleteCommentBoxesBtnPressed() {
@@ -2789,6 +2861,11 @@ static void  UI_lockCurrentMagModified(AG_Event *event) {
     }
 }
 
+static void UI_filterBranchNodesOnlyModified(AG_Event *event) {
+    state->viewerState->ag->filterBranchNodesOnly = AG_INT(1);
+    UI_updateCommentsWin();
+}
+
 void actNodeWdgtChanged(AG_Event *event)
 {
 	char *s = AG_STRING(1);    /* Given in AG_SetEvent() */
@@ -3148,7 +3225,8 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
     }
     if(state->skeletonState->activeNode) {
         if(!state->skeletonState->activeNode->comment)
-            addComment(CHANGE_MANUAL,
+            addComment(state->skeletonState,
+                       CHANGE_MANUAL,
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
                         0);
@@ -3165,10 +3243,15 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
 
 static void actTreeCommentWdgtModified(AG_Event *event) {
     if(state->skeletonState->activeTree) {
-        addTreeComment(CHANGE_MANUAL,
+        addTreeComment(state->skeletonState,
+                       CHANGE_MANUAL,
                        state->skeletonState->activeTree->treeID,
                        state->viewerState->ag->treeCommentBuffer);
     }
+}
+
+static void agFilterTextboxModified(AG_Event *event) {
+    UI_updateCommentsWin();
 }
 
 static void UI_findNextBtnPressed() {
@@ -3271,7 +3354,13 @@ static void UI_deleteNodeBtnPressed() {
     delActiveNode();
 }
 
-static void UI_jumpToNodeBtnPressed() {
+static void UI_jumpToActiveNodeBtnPressed() {
+    jumpToActiveNode();
+}
+
+static void UI_jumpToNodeBtnPressed(AG_Event *event) {
+    int32_t nodeID = AG_INT(1);
+    setActiveNode(CHANGE_MANUAL, NULL, nodeID);
     jumpToActiveNode();
 }
 
@@ -3280,9 +3369,10 @@ static void UI_linkActiveNodeWithBtnPressed() {
     if((state->skeletonState->activeNode)
         && findNodeByNodeID(state->viewerState->ag->linkActiveWithNode))
 
-        addSegment(CHANGE_MANUAL,
-                    state->skeletonState->activeNode->nodeID,
-                    state->viewerState->ag->linkActiveWithNode);
+        addSegment(state->skeletonState,
+                   CHANGE_MANUAL,
+                   state->skeletonState->activeNode->nodeID,
+                   state->viewerState->ag->linkActiveWithNode);
 }
 
 static void UI_actNodeRadiusWdgtModified() {
@@ -3313,7 +3403,7 @@ static void UI_newTreeBtnPressed() {
     treeCol.g = -1.;
     treeCol.b = -1.;
     treeCol.a = 1.;
-    addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
@@ -3432,7 +3522,7 @@ static void UI_enableSliceVPOverlayModified(AG_Event *event) {
 }
 
 static void UI_pushBranchBtnPressed() {
-    pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
+    pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
 }
 static void UI_popBranchBtnPressed() {
     UI_popBranchNode(CHANGE_MANUAL);

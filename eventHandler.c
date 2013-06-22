@@ -472,7 +472,7 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
                     delSegment(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
                 }
                 else{
-                    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
                 }
             }
         }
@@ -507,7 +507,8 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
                                NULL);
                 }
                 else{
-                    addSegment(CHANGE_MANUAL,
+                    addSegment(state->skeletonState,
+                               CHANGE_MANUAL,
                                state->skeletonState->activeNode->nodeID,
                                clickedNode);
                 }
@@ -561,7 +562,7 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
             if((newNodeID = UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                 state->viewerState->viewPorts[VPfound].type,
                                                                 FALSE))) {
-                pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID);
+                pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID);
             }
             break;
         }
@@ -1313,7 +1314,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         UI_popBranchNode();
         break;
     case SDLK_b:
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
         break;
     case SDLK_x:
         if(SDL_GetModState() & KMOD_SHIFT) {
@@ -1365,7 +1366,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
     case SDLK_c:
         treeCol.r = -1.;
-        addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
         break;
     case SDLK_v:
@@ -1426,7 +1427,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F1:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment1, "", 1) != 0)){
-                addComment(CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment1, "", 1) != 0){
@@ -1439,7 +1440,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F2:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment2, "", 1) != 0)){
-                addComment(CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment2, "", 1) != 0){
@@ -1452,7 +1453,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F3:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment3, "", 1) != 0)){
-                addComment(CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment3, "", 1) != 0){
@@ -1474,7 +1475,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment4, "", 1) != 0)){
-                addComment(CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment4, "", 1) != 0){
@@ -1487,7 +1488,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
      case SDLK_F5:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment5, "", 1) != 0)){
-                addComment(CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment5, "", 1) != 0){

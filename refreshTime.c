@@ -22,6 +22,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <math.h>
+
 #include "knossos-global.h"
 extern struct stateInfo *state;
 

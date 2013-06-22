@@ -111,9 +111,13 @@ uint32_t drawGUI() {
 
     /* Render GUI elements */
 
-
-
     AG_LockVFS(&agDrivers);
+
+    if(state->skeletonState->skeletonChanged == TRUE) {
+        state->skeletonState->skeletonChanged = FALSE;
+        UI_updateCommentsWin();
+    }
+
 
     AG_BeginRendering(agDriverSw); //AGAR14
     AG_FOREACH_WINDOW(win, agDriverSw) {

@@ -585,6 +585,7 @@ struct stateInfo {
         struct clientState *clientState;
 		struct loaderState *loaderState;
 		struct skeletonState *skeletonState;
+		struct skeletonCaretaker *skelCaretaker;
 		struct trajectory *trajectories;
 };
 
@@ -719,6 +720,8 @@ struct agConfig {
     AG_Window *zoomingWin;
     AG_Window *tracingTimeWin;
     AG_Window *commentsWin;
+    AG_NotebookTab *commentNodesTab;
+    AG_Table *table;
     AG_Window *setDynRangeWin;
 	AG_Window *coordBarWin;
     AG_Window *skeletonVpToolsWin;
@@ -782,6 +785,7 @@ struct agConfig {
     // colors of color-dropdown in comment node preferences
     char* commentColors[NUM_COMMSUBSTR];
 
+    int32_t filterBranchNodesOnly;
     //Zoom for Skeleton Viewport
 	float zoomSkeletonViewport;
     float zoomOrthoVPs;
@@ -1137,6 +1141,7 @@ struct skeletonState {
     struct commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
+    char *filterCommentBuffer;
 
     struct stack *branchStack;
 
@@ -1229,7 +1234,7 @@ struct skeletonState {
     char *skeletonFile;
     char * prevSkeletonFile;
 
-    char *deleteSegment;
+    // char *deleteSegment; TDItem: is this needed?
 
     float defaultNodeRadius;
 
@@ -1389,9 +1394,17 @@ typedef struct {
 	char* comment;
 } cmdAddComment;
 
-struct cmd {
+struct skeletonMemento {
     // an array of messages to reconstruct a skeletonState
-    Byte **msgs;
+    struct dynArray *msgs;
+
+	uint32_t skeletonRevision;
+	uint32_t positionLocked;
+	Coordinate lockedPosition;
+};
+
+struct skeletonCaretaker {
+    struct dynArray *mementos;
 };
 
 /*
@@ -1652,7 +1665,8 @@ struct nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
 uint32_t setActiveTreeByID(int32_t treeID);
 uint32_t setActiveNode(int32_t targetRevision, struct nodeListElement *node, int32_t nodeID);
-int32_t addNode(int32_t targetRevision,
+int32_t addNode(struct skeletonState *skeleton,
+                int32_t targetRevision,
                 int32_t nodeID,
                 float radius,
                 int32_t treeID,
@@ -1661,7 +1675,7 @@ int32_t addNode(int32_t targetRevision,
                 int32_t inMag,
                 int32_t time,
                 int32_t respectLocks);
-uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
+uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
 
 uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
@@ -1674,13 +1688,13 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode);
 struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID);
 struct nodeListElement *findNodeByCoordinate(Coordinate *position);
-struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
 int32_t moveToPrevTree();
 int32_t moveToNextTree();
 struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree);
 struct treeListElement* getTreeWithNextID(struct treeListElement *currentTree);
 struct treeListElement *findTreeByTreeID(int32_t treeID);
-int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment);
+int32_t addTreeComment(struct skeletonState *skeleton, int32_t targetRevision, int32_t treeID, char *comment);
 struct segmentListElement *findSegmentByNodeIDs(int32_t sourceNodeID, int32_t targetNodeID);
 int32_t editNode(int32_t targetRevision,
                  int32_t nodeID,
@@ -1699,7 +1713,7 @@ void *getDynArray(struct dynArray *array, int32_t pos);
 int32_t setDynArray(struct dynArray *array, int32_t pos, void *value);
 struct dynArray *newDynArray(int32_t size);
 int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
-uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID);
+uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID);
 uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID);
 uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID);
 struct commentListElement *nextComment(char *searchString);
@@ -1711,7 +1725,7 @@ uint32_t searchInComment(char *searchString, struct commentListElement *comment)
 int32_t unlockPosition();
 int32_t lockPosition(Coordinate lockCoordinate);
 int32_t popBranchNode(int32_t targetRevision);
-int32_t pushBranchNode(int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID);
+int32_t pushBranchNode(struct skeletonState *skeleton, int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID);
 uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();
@@ -1800,3 +1814,4 @@ void updateTitlebar(int32_t useFilename);
  void treeColorAdjustmentsChanged();
 
  void setVPPosSizWinPositions();
+ void UI_updateCommentsWin();

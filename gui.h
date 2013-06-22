@@ -59,6 +59,8 @@ static void actTreeIDWdgtModified(AG_Event *event);
 static void actTreeColorWdgtModified(AG_Event *event);
 static void actNodeCommentWdgtModified(AG_Event *event);
 static void actTreeCommentWdgtModified(AG_Event *event);
+static void agFilterTextboxModified(AG_Event *event);
+static void UI_filterBranchNodesOnlyModified(AG_Event *event);
 
 /* menu callbacks */
 static void fileOpenSkelFile(AG_Event *event);
@@ -130,7 +132,8 @@ static void UI_SyncDisconnect();
 static void UI_findNextBtnPressed();
 static void UI_findPrevBtnPressed();
 static void UI_deleteNodeBtnPressed();
-static void UI_jumpToNodeBtnPressed();
+static void UI_jumpToNodeBtnPressed(AG_Event *event);
+static void UI_jumpToActiveNodeBtnPressed();
 static void UI_linkActiveNodeWithBtnPressed();
 static void UI_actNodeRadiusWdgtModified();
 static void UI_deleteTreeBtnPressed();

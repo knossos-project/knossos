@@ -117,6 +117,8 @@ uint32_t initSkeletonizer() {
     state->skeletonState->searchStrBuffer = malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
 
+    state->skeletonState->filterCommentBuffer = calloc(1, 2048 * sizeof(char));
+
     state->skeletonState->undoList = malloc(sizeof(struct cmdList));
     memset(state->skeletonState->undoList, '\0', sizeof(struct cmdList));
     state->skeletonState->undoList->cmdCount = 0;
@@ -273,7 +275,8 @@ static struct nodeListElement *addNodeListElement(
     return newElement;
 }
 
-int32_t addNode(int32_t targetRevision,
+int32_t addNode(struct skeletonState *skeleton,
+                int32_t targetRevision,
                 int32_t nodeID,
                 float radius,
                 int32_t treeID,
@@ -293,7 +296,7 @@ int32_t addNode(int32_t targetRevision,
         return FALSE;
     }
 
-    state->skeletonState->branchpointUnresolved = FALSE;
+    skeleton->branchpointUnresolved = FALSE;
 
     /*
      * respectLocks refers to locking the position to a specific coordinate such as to
@@ -302,13 +305,13 @@ int32_t addNode(int32_t targetRevision,
      */
 
     if(respectLocks) {
-        if(state->skeletonState->positionLocked) {
-            lockVector.x = (float)position->x - (float)state->skeletonState->lockedPosition.x;
-            lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
-            lockVector.z = (float)position->z - (float)state->skeletonState->lockedPosition.z;
+        if(skeleton->positionLocked) {
+            lockVector.x = (float)position->x - (float)skeleton->lockedPosition.x;
+            lockVector.y = (float)position->y - (float)skeleton->lockedPosition.y;
+            lockVector.z = (float)position->z - (float)skeleton->lockedPosition.z;
 
             lockDistance = euclidicNorm(&lockVector);
-            if(lockDistance > state->skeletonState->lockRadius) {
+            if(lockDistance > skeleton->lockRadius) {
                 LOG("Node is too far away from lock point (%d), not adding.", lockDistance);
                 unlockSkeleton(FALSE);
                 return FALSE;
@@ -334,15 +337,15 @@ int32_t addNode(int32_t targetRevision,
     }
 
     // One node more in all trees
-    state->skeletonState->totalNodeElements++;
+    skeleton->totalNodeElements++;
 
     // One more node in this tree.
-    setDynArray(state->skeletonState->nodeCounter,
+    setDynArray(skeleton->nodeCounter,
                 treeID,
-                (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, treeID) + 1));
+                (void *)((PTRSIZEINT)getDynArray(skeleton->nodeCounter, treeID) + 1));
 
     if(nodeID == 0) {
-        nodeID = state->skeletonState->totalNodeElements;
+        nodeID = skeleton->totalNodeElements;
         //Test if node ID over node counter is available. If not, find a valid one.
         while(findNodeByNodeID(nodeID)) {
             nodeID++;
@@ -366,20 +369,20 @@ int32_t addNode(int32_t targetRevision,
 
     tempNode->timestamp = time;
 
-    setDynArray(state->skeletonState->nodesByNodeID, nodeID, (void *)tempNode);
+    setDynArray(skeleton->nodesByNodeID, nodeID, (void *)tempNode);
 
     //printf("Added node %p, id %d, tree %p\n", tempNode, tempNode->nodeID,
     //        tempNode->correspondingTree);
 
     //Add a pointer to the node in the skeleton DC structure
 //    addNodeToSkeletonStruct(tempNode);
-    state->skeletonState->skeletonChanged = TRUE;
+    skeleton->skeletonChanged = TRUE;
 
-    if(nodeID > state->skeletonState->greatestNodeID)
-        state->skeletonState->greatestNodeID = nodeID;
+    if(nodeID > skeleton->greatestNodeID)
+        skeleton->greatestNodeID = nodeID;
 
-    state->skeletonState->skeletonRevision++;
-    state->skeletonState->unsavedChanges = TRUE;
+    skeleton->skeletonRevision++;
+    skeleton->unsavedChanges = TRUE;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("brddfddddddd", KIKI_ADDNODE,
@@ -502,7 +505,7 @@ uint32_t updateCircRadius(struct nodeListElement *node) {
     return TRUE;
 }
 
-uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
+uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
     struct nodeListElement *targetNode, *sourceNode;
     struct segmentListElement *sourceSeg;
     floatCoordinate node1, node2;
@@ -537,7 +540,7 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     }
 
     //One segment more in all trees
-    state->skeletonState->totalSegmentElements++;
+    skeleton->totalSegmentElements++;
 
     /*
      * Add the segment to the tree structure
@@ -576,9 +579,9 @@ uint32_t addSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
 
     updateCircRadius(sourceNode);
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
-    state->skeletonState->skeletonRevision++;
+    skeleton->skeletonChanged = TRUE;
+    skeleton->unsavedChanges = TRUE;
+    skeleton->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("brdd", KIKI_ADDSEGMENT, sourceNodeID, targetNodeID))
@@ -670,7 +673,7 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     return TRUE;
 }
 
-struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) {
+struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     /* The variable sync is a workaround for the problem that this function
@@ -704,14 +707,14 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     }
     memset(newElement, '\0', sizeof(struct treeListElement));
 
-    state->skeletonState->treeElements++;
+    skeleton->treeElements++;
 
     //Tree ID is unique in tree list
     //Take the provided tree ID if there is one.
     if(treeID != 0)
         newElement->treeID = treeID;
     else {
-        newElement->treeID = state->skeletonState->treeElements;
+        newElement->treeID = skeleton->treeElements;
         //Test if tree ID over tree counter is available. If not, find a valid one.
         while(findTreeByTreeID(newElement->treeID)) {
             newElement->treeID++;
@@ -734,25 +737,25 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     memset(newElement->comment, '\0', 8192);
 
     //Insert the new tree at the beginning of the tree list
-    newElement->next = state->skeletonState->firstTree;
+    newElement->next = skeleton->firstTree;
     newElement->previous = NULL;
     //The old first element should have the new first element as previous element
-    if(state->skeletonState->firstTree)
-        state->skeletonState->firstTree->previous = newElement;
+    if(skeleton->firstTree)
+        skeleton->firstTree->previous = newElement;
     //We change the old and new first elements
-    state->skeletonState->firstTree = newElement;
+    skeleton->firstTree = newElement;
 
-    state->skeletonState->activeTree = newElement;
+    skeleton->activeTree = newElement;
 
-    if(newElement->treeID > state->skeletonState->greatestTreeID) {
-        state->skeletonState->greatestTreeID = newElement->treeID;
+    if(newElement->treeID > skeleton->greatestTreeID) {
+        skeleton->greatestTreeID = newElement->treeID;
     }
 
-    state->skeletonState->skeletonChanged = TRUE;
-    state->skeletonState->unsavedChanges = TRUE;
+    skeleton->skeletonChanged = TRUE;
+    skeleton->unsavedChanges = TRUE;
 
     if(sync != FALSE) {
-        state->skeletonState->skeletonRevision++;
+        skeleton->skeletonRevision++;
 
         if(targetRevision == CHANGE_MANUAL) {
             if(!syncMessage("brdfff", KIKI_ADDTREE, newElement->treeID,
@@ -768,7 +771,7 @@ struct treeListElement *addTreeListElement(int32_t sync, int32_t targetRevision,
     return newElement;
 }
 
-int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
+int32_t addTreeComment(struct skeletonState *skeleton, int32_t targetRevision, int32_t treeID, char *comment) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     struct treeListElement *tree = NULL;
 
@@ -784,8 +787,8 @@ int32_t addTreeComment(int32_t targetRevision, int32_t treeID, char *comment) {
         strncpy(tree->comment, comment, 8192);
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
-    state->skeletonState->skeletonRevision++;
+    skeleton->unsavedChanges = TRUE;
+    skeleton->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment))
@@ -852,9 +855,10 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     treeCol.a = 1.;
 
     if(!state->skeletonState->activeTree)
-        addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
 
-    addedNodeID = addNode(CHANGE_MANUAL,
+    addedNodeID = addNode(state->skeletonState,
+                          CHANGE_MANUAL,
                           0,
                           state->skeletonState->defaultNodeRadius,
                           state->skeletonState->activeTree->treeID,
@@ -874,8 +878,8 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
-        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
+        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, addedNodeID);
     }
     checkIdleTime();
 
@@ -892,7 +896,8 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
     }
 
     //Add a new node at the target position first.
-    targetNodeID = addNode(CHANGE_MANUAL,
+    targetNodeID = addNode(state->skeletonState,
+                           CHANGE_MANUAL,
                            0,
                            state->skeletonState->defaultNodeRadius,
                            state->skeletonState->activeTree->treeID,
@@ -906,7 +911,7 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
         return FALSE;
     }
 
-    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
+    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
 
     if(makeNodeActive)
         setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
@@ -915,8 +920,8 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
-        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
+        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, targetNodeID);
         checkIdleTime();
     }
 
@@ -1067,7 +1072,7 @@ int32_t saveSkeleton() {
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
     }
 
     xmlDocument = xmlNewDoc(BAD_CAST"1.0");
@@ -1698,7 +1703,7 @@ uint32_t loadSkeleton() {
 
                         currentNode = findNodeByNodeID(nodeID);
                         if(currentNode)
-                            pushBranchNode(CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
+                            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
                     }
                 }
 
@@ -1751,19 +1756,19 @@ uint32_t loadSkeleton() {
                 neuronColor.a = 1.;
 
             if(!merge) {
-                currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(neuronID);
             }
             else {
                 neuronID += greatestTreeIDbeforeLoading;
-                currentTree = addTreeListElement(TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             }
 
             attribute = xmlGetProp(thingOrParamXMLNode, (const xmlChar *)"comment");
             if(attribute) {
-                addTreeComment(CHANGE_MANUAL, currentTree->treeID, (char *)attribute);
+                addTreeComment(state->skeletonState, CHANGE_MANUAL, currentTree->treeID, (char *)attribute);
                 free(attribute);
             }
 
@@ -1847,10 +1852,10 @@ uint32_t loadSkeleton() {
                                 time = state->skeletonState->skeletonTime; /* For legacy skeleton files */
 
                             if(!merge)
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
                             }
                         }
 
@@ -1880,9 +1885,9 @@ uint32_t loadSkeleton() {
 
                             // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
                             if(!merge)
-                                addSegment(CHANGE_MANUAL, nodeID1, nodeID2);
+                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1, nodeID2);
                             else
-                                addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
+                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
 
                         }
                         currentXMLNode = currentXMLNode->next;
@@ -1919,7 +1924,8 @@ uint32_t loadSkeleton() {
                                        (const xmlChar *)"content");
 
                 if(attribute && currentNode) {
-                    addComment(CHANGE_MANUAL,
+                    addComment(state->skeletonState,
+                        CHANGE_MANUAL,
                         (char *)attribute,
                         currentNode,
                         0);
@@ -2268,6 +2274,7 @@ int delSkelState(struct skeletonState *skelState) {
     delTreesFromState(skelState);
     ht_rmtable(skelState->skeletonDCs);
     free(skelState->searchStrBuffer);
+    free(skelState->filterCommentBuffer);
     free(skelState->prevSkeletonFile);
     free(skelState->skeletonFile);
     free(skelState);
@@ -3461,7 +3468,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = addTreeListElement(FALSE, CHANGE_MANUAL, 0, treeCol);
+        newTree = addTreeListElement(state->skeletonState, FALSE, CHANGE_MANUAL, 0, treeCol);
         // Splitting the connected component.
 
         while((n = (struct nodeListElement *)popStack(componentNodes))) {
@@ -3529,7 +3536,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     return nodeCount;
 }
 
-uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID) {
+uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct commentListElement *newComment;
@@ -3555,32 +3562,32 @@ uint32_t addComment(int32_t targetRevision, char *content, struct nodeListElemen
 
     if(content) {
         strncpy(newComment->content, content, strlen(content));
-        state->skeletonState->skeletonChanged = TRUE;
+        skeleton->skeletonChanged = TRUE;
     }
 
-    if(!state->skeletonState->currentComment) {
-        state->skeletonState->currentComment = newComment;
+    if(!skeleton->currentComment) {
+        skeleton->currentComment = newComment;
         //We build a circular linked list
         newComment->next = newComment;
         newComment->previous = newComment;
     }
     else {
         //We insert into a circular linked list
-        state->skeletonState->currentComment->previous->next = newComment;
-        newComment->next = state->skeletonState->currentComment;
-        newComment->previous = state->skeletonState->currentComment->previous;
-        state->skeletonState->currentComment->previous = newComment;
+        skeleton->currentComment->previous->next = newComment;
+        newComment->next = skeleton->currentComment;
+        newComment->previous = skeleton->currentComment->previous;
+        skeleton->currentComment->previous = newComment;
 
-        state->skeletonState->currentComment = newComment;
+        skeleton->currentComment = newComment;
     }
     //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
-    memset(state->skeletonState->commentBuffer, '\0', 10240);
-    strncpy(state->skeletonState->commentBuffer,
-            state->skeletonState->currentComment->content,
-            strlen(state->skeletonState->currentComment->content));
+    memset(skeleton->commentBuffer, '\0', 10240);
+    strncpy(skeleton->commentBuffer,
+            skeleton->currentComment->content,
+            strlen(skeleton->currentComment->content));
 
-    state->skeletonState->unsavedChanges = TRUE;
-    state->skeletonState->skeletonRevision++;
+    skeleton->unsavedChanges = TRUE;
+    skeleton->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("blrds", KIKI_ADDCOMMENT, node->nodeID, content))
@@ -3982,7 +3989,8 @@ uint32_t searchInComment(char *searchString, struct commentListElement *comment)
 }
 
 
-int32_t pushBranchNode(int32_t targetRevision,
+int32_t pushBranchNode(struct skeletonState *skeleton,
+                       int32_t targetRevision,
                        int32_t setBranchNodeFlag,
                        int32_t checkDoubleBranchpoint,
                        struct nodeListElement *branchNode,
@@ -3999,11 +4007,11 @@ int32_t pushBranchNode(int32_t targetRevision,
 
     if(branchNode) {
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
-            pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
+            pushStack(skeleton->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = TRUE;
             }
-            state->skeletonState->skeletonChanged = TRUE;
+            skeleton->skeletonChanged = TRUE;
             LOG("Branch point (node ID %d) added.", branchNode->nodeID);
         }
         else {
@@ -4018,8 +4026,8 @@ int32_t pushBranchNode(int32_t targetRevision,
         return TRUE;
     }
 
-    state->skeletonState->unsavedChanges = TRUE;
-    state->skeletonState->skeletonRevision++;
+    skeleton->unsavedChanges = TRUE;
+    skeleton->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("brddd", KIKI_PUSHBRANCH, branchNode->nodeID, setBranchNodeFlag, checkDoubleBranchpoint))
@@ -4158,7 +4166,7 @@ uint32_t genTestNodes(uint32_t number) {
     color4F treeCol;
     //add new tree for test nodes
     treeCol.r = -1.;
-    addTreeListElement(TRUE, CHANGE_MANUAL, 0, treeCol);
+    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
 
     srand(time(NULL));
     pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
@@ -4499,7 +4507,7 @@ void resetSkeletonMeta() {
     state->skeletonState->skeletonTime = 0;
     state->skeletonState->idleTime = 0;
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
-    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION); 
+    strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
 }
 /*
 void serializeSkeleton() {
@@ -4508,15 +4516,121 @@ void serializeSkeleton() {
     struct nodeListElement *node = NULL;
     struct segmentListElement *seg = NULL;
     struct commentListElement *comment = NULL;
+    int index = 0;
+    struct skeletonMemento *memento = calloc(1, sizeof(struct skeletonMemento));
 
-    struct cmd *cmd = malloc(sizeof(struct cmd));
+    memento->skeletonRevision = skelState->skeletonRevision;
+    memento->positionLocked = skelState->positionLocked;
+    memento->lockedPosition = skelState->lockedPosition;
 
+    memento->msgs = newDynArray(1048576);
     Byte *msg;
     tree = skelState->firstTree;
     while(tree) {
         msg = serialize("brdfff", KIKI_ADDTREE, tree->treeID,
-                        tree->color.r, tree->color.g, tree->color.b)
-        cmd->msgs = malloc() //TODO: how much??
+                        tree->color.r, tree->color.g, tree->color.b);
+        setDynArray(memento->msgs, index++, (void*)msg);
+        if(tree->comment != NULL) {
+            msg = serialize("blrds", KIKI_ADDTREECOMMENT, tree->treeID, tree->comment);
+            setDynArray(memento->msgs, index++, (void*)msg);
+        }
+        node = tree->firstNode;
+        while(node) {
+            msg = serialize("bdfddddddd", KIKI_ADDNODE,
+                                          node->nodeID,
+                                          node->radius,
+                                          tree->treeID,
+                                          node->createdInVp,
+                                          node->createdInMag,
+                                          -1,
+                                          node->position->x,
+                                          node->position->y,
+                                          node->position->z);
+            setDynArray(memento->msgs, index++, (void*)msg);
+
+            if(node->comment != NULL) {
+                msg = serialize ("blrds", KIKI_ADDCOMMENT, node->nodeID, comment->content);
+                setDynArray(memento->msgs, index++, (void*)msg);
+            }
+
+            if(node->isBranchNode) {
+                msg = serialize("brddd", KIKI_PUSHBRANCH, node->nodeID, TRUE, TRUE);
+                setDynArray(memento->msgs, index++, (void*)msg);
+            }
+            if(skelState->activeNode == node) {
+                msg = serialize("brd", KIKI_SETACTIVENODE, node->nodeID);
+                setDynArray(memento->msgs, index++, (void*)msg);
+            }
+            seg = node->firstSegment;
+            while(seg) {
+                msg = serialize("brdd", KIKI_ADDSEGMENT, seg->source->nodeID, seg->target->nodeID);
+                setDynArray(memento->msgs, index++, (void*)msg);
+            }
+            node = node->next;
+        }
+        tree = tree->next
     }
+    setDynArray(state->skelCaretaker->mementos, state->skelCaretaker->mementos->end + 1, memento);
 }
-*/
+
+struct skeletonState *deserializeSkeleton() {
+    struct skeletonState *skeleton = calloc(1, sizeof(struct skeletonState));
+
+    // keep attributes, that do not describe the skeleton structure
+    strcpy(skeleton->currentComment, state->skeletonState->currentComment);
+    strcpy(skeleton->commentBuffer, state->skeletonState->commentBuffer);
+    strcpy(skeleton->searchStrBuffer, state->skeletonState->searchStrBuffer);
+    skeleton->skeletonDCnumber = state->skeletonState->skeletonDCnumber;
+    skeleton->workMode = state->skeletonState->workMode;
+    skeleton->volBoundary = state->skeletonState->volBoundary;
+    skeleton->userCommentColoringOn = state->skeletonState->userCommentColoringOn;
+    skeleton->commentNodeRadiusOn = state->skeletonState->commentNodeRadiusOn;
+    skeleton->lockPositions = state->skeletonState->lockPositions;
+    skeleton->onCommentLock = state->skeletonState->onCommentLock;
+    skeleton->lockRadius = state->skeletonState->lockRadius;
+    skeleton->rotdx = state->skeletonState->rotdx;
+    skeleton->rotdy = state->skeletonState->rotdy;
+    skeleton->rotationcounter = state->skeletonState->rotationcounter;
+    skeleton->definedSkeletonVpView = state->skeletonState->definedSkeletonVpView;
+    skeleton->translateX = state->skeletonState->translateX;
+    skeleton->translateY = state->skeletonState->translateY;
+    skeleton->displayMode = state->skeletonState->displayMode;
+    skeleton->segRadiusToNodeRadius = state->skeletonState->segRadiusToNodeRadius;
+    skeleton->overrideNodeRadiusBool = state->skeletonState->overrideNodeRadiusBool;
+    skeleton->overrideNodeRadiusVal = state->skeletonState->overrideNodeRadiusVal;
+    skeleton->highlightActiveTree = state->skeletonState->highlightActiveTree;
+    skeleton->showIntersections = state->skeletonState->showIntersections;
+    skeleton->rotateAroundActiveNode = state->skeletonState->rotateAroundActiveNode;
+    skeleton->showXYplane = state->skeletonState->showXYplane;
+    skeleton->showXZplane = state->skeletonState->showXZplane;
+    skeleton->showYZplane = state->skeletonState->showYZplane;
+    skeleton->autoFilenameIncrementBool = state->skeletonState->autoFilenameIncrementBool;
+    skeleton->commentColors = state->skeletonState->commentColors;
+    skeleton->commentNodeRadii = state->skeletonState->commentNodeRadii;
+    skeleton->autoSaveBool = state->skeletonState->autoSaveBool;
+    skeleton->autoSaveInterval = state->skeletonState->autoSaveInterval;
+    skeleton->saveCnt = state->skeletonState->saveCnt;
+    strcpy(skeleton->skeletonFile, state->skeletonState->skeletonFile;
+    strcpy(skeleton->prevSkeletonFile, state->skeletonState->prevSkeletonFile);
+    skeleton->defaultNodeRadius = state->skeletonState->defaultNodeRadius;
+    skeleton->zoomLevel = state->skeletonState->zoomLevel;
+    skeleton->skeletonCreatedInVersion = state->skeletonState->skeletonCreatedInVersion;
+    skeleton->skeletonLastSavedInVersion = state->skeletonState->skeletonLastSavedInVersion;
+
+    // reset status flag attributes
+    skeleton->unsavedChanges = TRUE;
+    /*
+    int32_t skeletonTime;
+    int32_t skeletonTimeCorrection;
+    int32_t idleTimeSession;
+    int32_t idleTime;
+    int32_t idleTimeNow;
+    int32_t idleTimeLast;
+
+    skeleton->skeletonChanged = TRUE;
+    skeleton->mergeOnLoadFlag = FALSE;
+    skeleton->branchpointUnresolved = FALSE;
+    skeleton->askingPopBranchConfirmation = FALSE;
+
+    return skeleton;
+}*/
