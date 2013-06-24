@@ -153,6 +153,9 @@ int32_t initGUI() {
         memset(state->viewerState->ag->commentColors[i], '\0', 1024 * sizeof(char));
     }
 
+    state->viewerState->ag->commentsTable = calloc(1, sizeof(AG_Table));
+    state->viewerState->ag->tableCommentBuffer = calloc(1, 10240 *sizeof(char));
+
     createMenuBar();
     createCoordBarWin();
 
@@ -723,10 +726,10 @@ void createToolsWin() {
             {
                 AG_TextboxSizeHintLines(comment, 1);
                 AG_ExpandHoriz(comment);
-                AG_TextboxBindASCII(comment, state->viewerState->ag->commentBuffer, 10240);
-                AG_SetEvent(comment, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_TextboxBindASCII(comment, state->skeletonState->commentBuffer, 10240);
                 AG_SetEvent(comment, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(comment, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+                AG_SetEvent(comment, "textbox-return", actNodeCommentWdgtModified, NULL);
             }
 
             comment = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "Search For: ");
@@ -962,8 +965,8 @@ void createToolsWin() {
             {
                 AG_TextboxSizeHintLines(comment, 1);
                 AG_ExpandHoriz(comment);
-                AG_TextboxBindASCII(comment, state->viewerState->ag->commentBuffer, 10240);
-                AG_SetEvent(comment, "textbox-postchg", actNodeCommentWdgtModified, NULL);
+                AG_TextboxBindASCII(comment, state->skeletonState->commentBuffer, 10240);
+                AG_SetEvent(comment, "textbox-return", actNodeCommentWdgtModified, NULL);
                 AG_SetEvent(comment, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
                 AG_SetEvent(comment, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             }
@@ -1803,64 +1806,94 @@ void createCommentsWin() {
             AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
             AG_SetEvent(textbox, "textbox-postchg", agFilterTextboxModified, NULL);
         }
-        state->viewerState->ag->table = AG_TableNew(state->viewerState->ag->commentNodesTab, AG_TABLE_EXPAND);
-        AG_TableAddCol(state->viewerState->ag->table, "Node", "<<<<<Branch Node>>>>>", NULL);
-        AG_TableAddCol(state->viewerState->ag->table, "Comment", NULL, NULL);
+        box = AG_BoxNew(state->viewerState->ag->commentNodesTab, AG_BOX_HORIZ, AG_BOX_HFILL);
+        {
+            textbox = AG_TextboxNew(box, AG_TEXTBOX_ABANDON_FOCUS, "edit comment:");
+            AG_ExpandHoriz(textbox);
+            AG_TextboxBindASCII(textbox, state->viewerState->ag->tableCommentBuffer, 10240);
+            AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+            AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            AG_SetEvent(textbox, "textbox-return", tableCommentBoxModified, NULL);
+            button = AG_ButtonNewFn(box, 0, "jump to node", UI_jumpToNodeBtnPressed, NULL, NULL);
+        }
+        state->viewerState->ag->commentsTable = AG_TableNew(state->viewerState->ag->commentNodesTab, AG_TABLE_EXPAND);
+        AG_TableAddCol(state->viewerState->ag->commentsTable, "Node ID", "<<<<<Branch Node>>>>>", NULL);
+        AG_TableAddCol(state->viewerState->ag->commentsTable, "Comment", NULL, NULL);
+        AG_TableSetSelectionMode(state->viewerState->ag->commentsTable, AG_TABLE_SEL_ROWS);
+        AG_TableSetRowClickFn(state->viewerState->ag->commentsTable, UI_commentTableRowClicked, NULL, NULL);
     }
     state->viewerState->ag->commentsWin = win;
     AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
     AG_WindowShow(win);
 }
 
-// for updating the comment nodes tab
+static void tableCommentBoxModified(AG_Event *event) {
+    if(state->skeletonState->selectedCommentNode == NULL) {
+        return;
+    }
+
+    if(strlen(state->viewerState->ag->tableCommentBuffer) == 0) {
+        delComment(CHANGE_MANUAL,
+                   state->skeletonState->selectedCommentNode->comment,
+                   state->skeletonState->selectedCommentNode->nodeID);
+        return;
+    }
+    if(state->skeletonState->selectedCommentNode->comment != NULL) {
+        editComment(CHANGE_MANUAL,
+                    state->skeletonState->selectedCommentNode->comment,
+                    0,
+                    state->viewerState->ag->tableCommentBuffer,
+                    NULL, 0);
+        return;
+    }
+}
+
+static void UI_commentTableRowClicked(AG_Event *event) {
+    int row = AG_INT(1);
+    char cellVal[100];
+
+    AG_TablePrintCell(AG_TableGetCell(state->viewerState->ag->commentsTable, row, 1), state->viewerState->ag->tableCommentBuffer, 100);
+    AG_TablePrintCell(AG_TableGetCell(state->viewerState->ag->commentsTable, row, 0), cellVal, 100);
+
+    state->skeletonState->selectedCommentNode = findNodeByNodeID(atoi(cellVal));
+}
+
 void UI_updateCommentsWin() {
-    AG_Button *button;
-    AG_Textbox *textbox;
     struct treeListElement *tree;
     struct nodeListElement *node;
     char nodeDisplay[512];
 
-    if(state->viewerState->ag->table) {
-        AG_ObjectDelete(state->viewerState->ag->table);
-    }
+    AG_TableBegin(state->viewerState->ag->commentsTable);
+    AG_TableSetRowHeight(state->viewerState->ag->commentsTable, 20);
 
-
-    state->viewerState->ag->table = AG_TableNew(state->viewerState->ag->commentNodesTab, AG_TABLE_EXPAND);
-    AG_TableSetRowHeight(state->viewerState->ag->table, 20);
-    AG_TableAddCol(state->viewerState->ag->table, "Node", "<<<<<Branch Node>>>>>", NULL);
-    AG_TableAddCol(state->viewerState->ag->table, "Comment", NULL, NULL);
     tree = state->skeletonState->firstTree;
     while(tree) {
         node = tree->firstNode;
         while(node) {
-            if(node->comment != NULL) {
-                if((strlen(state->skeletonState->filterCommentBuffer) > 0
-                    && strstr(node->comment->content, state->skeletonState->filterCommentBuffer) != NULL)
-                    || strlen(state->skeletonState->filterCommentBuffer) == 0) {
+            if(node->comment == NULL) {
+                node = node->next;
+                continue;
+            }
+            if((strlen(state->skeletonState->filterCommentBuffer) > 0
+                && strstr(node->comment->content, state->skeletonState->filterCommentBuffer) != NULL)
+                || strlen(state->skeletonState->filterCommentBuffer) == 0) {
 
-                    if (node->isBranchNode) {
-                        sprintf(nodeDisplay, "Branch Node ID %i", node->nodeID);
-                    }
-                    else {
-                        sprintf(nodeDisplay, "Node ID %i", node->nodeID);
-                    }
-                    if ((state->viewerState->ag->filterBranchNodesOnly && node->isBranchNode)
-                        || state->viewerState->ag->filterBranchNodesOnly == FALSE) {
-                        button = AG_ButtonNewFn(NULL, AG_WIDGET_TABLE_EMBEDDABLE, nodeDisplay, UI_jumpToNodeBtnPressed, "%i", node->nodeID);
-
-                        textbox = AG_TextboxNew(NULL, AG_TEXTBOX_ABANDON_FOCUS|AG_WIDGET_TABLE_EMBEDDABLE, NULL);
-                        AG_TextboxBindASCII(textbox, node->comment->content, 10240);
-                        AG_SetEvent(textbox, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
-                        AG_SetEvent(textbox, "widget-lostfocus", agInputWdgtLostFocus, NULL);
-                        AG_TableAddRow(state->viewerState->ag->table, "%[W]:%[W]", button, textbox);
-                    }
-
+                if (node->isBranchNode) {
+                    sprintf(nodeDisplay, "%i (Branch Point)", node->nodeID);
+                }
+                else {
+                    sprintf(nodeDisplay, "%i", node->nodeID);
+                }
+                if ((state->viewerState->ag->filterBranchNodesOnly && node->isBranchNode)
+                    || state->viewerState->ag->filterBranchNodesOnly == FALSE) {
+                    AG_TableAddRow(state->viewerState->ag->commentsTable, "%s:%s", nodeDisplay, node->comment->content);
                 }
             }
             node = node->next;
         }
         tree = tree->next;
     }
+    AG_TableEnd(state->viewerState->ag->commentsTable);
 }
 
 void UI_deleteCommentBoxesBtnPressed() {
@@ -3214,12 +3247,11 @@ static void actTreeColorWdgtModified(AG_Event *event) {
 
 
 static void actNodeCommentWdgtModified(AG_Event *event) {
-
-    strncpy(state->skeletonState->commentBuffer,
+  /*  strncpy(state->skeletonState->commentBuffer,
         state->viewerState->ag->commentBuffer,
         10240);
-
-    if(strlen(state->viewerState->ag->commentBuffer) == 0) {
+*/
+    if(strlen(state->skeletonState->commentBuffer) == 0) {
         delComment(CHANGE_MANUAL, state->skeletonState->currentComment, 0);
         return;
     }
@@ -3359,8 +3391,10 @@ static void UI_jumpToActiveNodeBtnPressed() {
 }
 
 static void UI_jumpToNodeBtnPressed(AG_Event *event) {
-    int32_t nodeID = AG_INT(1);
-    setActiveNode(CHANGE_MANUAL, NULL, nodeID);
+    if(state->skeletonState->selectedCommentNode == NULL) {
+        return;
+    }
+    setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->selectedCommentNode->nodeID);
     jumpToActiveNode();
 }
 

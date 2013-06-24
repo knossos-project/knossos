@@ -119,6 +119,8 @@ uint32_t initSkeletonizer() {
 
     state->skeletonState->filterCommentBuffer = calloc(1, 2048 * sizeof(char));
 
+    state->skeletonState->selectedCommentNode = NULL;
+
     state->skeletonState->undoList = malloc(sizeof(struct cmdList));
     memset(state->skeletonState->undoList, '\0', sizeof(struct cmdList));
     state->skeletonState->undoList->cmdCount = 0;
@@ -144,6 +146,7 @@ uint32_t initSkeletonizer() {
     state->skeletonState->skeletonChanged = TRUE;
     state->skeletonState->datasetChanged = TRUE;
     state->skeletonState->skeletonSliceVPchanged = TRUE;
+    state->skeletonState->commentsChanged = FALSE;
     state->skeletonState->unsavedChanges = FALSE;
 
     state->skeletonState->askingPopBranchConfirmation = FALSE;
@@ -883,7 +886,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     }
     checkIdleTime();
 
-    return TRUE;
+    return addedNodeID;
 }
 
 uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int32_t makeNodeActive) {
@@ -2164,6 +2167,10 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
     //delNodeFromSkeletonStruct(nodeToDel);
 
+    //remove from comments table of the comments window
+    if(state->skeletonState->selectedCommentNode == nodeToDel) {
+        state->skeletonState->selectedCommentNode = NULL;
+    }
     if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
     }
@@ -3563,6 +3570,7 @@ uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char
     if(content) {
         strncpy(newComment->content, content, strlen(content));
         skeleton->skeletonChanged = TRUE;
+        skeleton->commentsChanged = TRUE;
     }
 
     if(!skeleton->currentComment) {
@@ -3635,16 +3643,26 @@ uint32_t editComment(int32_t targetRevision,
         memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);
         strncpy(currentComment->content, newContent, strlen(newContent));
 
+
+        if(currentComment->node == state->skeletonState->activeNode) {
         //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
-        memset(state->skeletonState->commentBuffer, '\0', 10240);
-        strncpy(state->skeletonState->commentBuffer,
-                state->skeletonState->currentComment->content,
-                strlen(state->skeletonState->currentComment->content));
+            memset(state->skeletonState->commentBuffer, '\0', 10240);
+            strncpy(state->skeletonState->commentBuffer,
+                    state->skeletonState->currentComment->content,
+                    strlen(state->skeletonState->currentComment->content));
+        }
+
+        //write into comment table input field from comment nodes tab in comments win
+        if(currentComment->node == state->skeletonState->selectedCommentNode && currentComment->node == state->skeletonState->activeNode) {
+            memset(state->viewerState->ag->tableCommentBuffer, '\0', 10240);
+            strcpy(state->viewerState->ag->tableCommentBuffer, state->skeletonState->currentComment->content);
+        }
+
     }
 
-    if(newNodeID)
+    if(newNodeID) {
         newNode = findNodeByNodeID(newNodeID);
-
+    }
     if(newNode) {
         if(currentComment->node)
             currentComment->node->comment = NULL;
@@ -3655,6 +3673,7 @@ uint32_t editComment(int32_t targetRevision,
 
     state->skeletonState->unsavedChanges = TRUE;
     state->skeletonState->skeletonRevision++;
+    state->skeletonState->commentsChanged = TRUE;
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!syncMessage("blrdds",
@@ -3664,8 +3683,9 @@ uint32_t editComment(int32_t targetRevision,
                     newContent))
             skeletonSyncBroken();
     }
-    else
+    else {
         refreshViewports();
+    }
 
     unlockSkeleton(TRUE);
 
@@ -3703,10 +3723,15 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
         nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
         state->skeletonState->skeletonChanged = TRUE;
+        state->skeletonState->commentsChanged = TRUE;
     }
 
     if(state->skeletonState->currentComment == currentComment) {
         memset(state->skeletonState->commentBuffer, '\0', 10240);
+    }
+    // remove comment and corresponding node from comment table
+    if(state->skeletonState->selectedCommentNode == currentComment->node) {
+        memset(state->viewerState->ag->tableCommentBuffer, '\0', 10240);
     }
 
     if(currentComment->next == currentComment) {
@@ -4162,6 +4187,8 @@ int32_t jumpToActiveNode() {
 
 uint32_t genTestNodes(uint32_t number) {
     uint32_t i;
+    int nodeID;
+    struct nodeListElement *node;
     Coordinate pos;
     color4F treeCol;
     //add new tree for test nodes
@@ -4172,13 +4199,35 @@ uint32_t genTestNodes(uint32_t number) {
     pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
     pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
     pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-    UI_addSkeletonNode(&pos, rand()%4);
+    nodeID = UI_addSkeletonNode(&pos, rand()%4);
     for(i = 1; i < number; i++) {
         pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
         pos.y = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.y);
         pos.z = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.z);
-        UI_addSkeletonNodeAndLinkWithActive(&pos, rand()%4, TRUE);
+        nodeID = UI_addSkeletonNode(&pos, rand()%4);
+        node = findNodeByNodeID(nodeID);
+        node->comment = calloc(1, sizeof(struct commentListElement));
+        node->comment->content = calloc(1, 512);
+        strcpy(node->comment->content, "test");
+        node->comment->node = node;
+
+        if(!state->skeletonState->currentComment) {
+            state->skeletonState->currentComment = node->comment;
+            //We build a circular linked list
+            node->comment->next = node->comment;
+            node->comment->previous = node->comment;
+            }
+            else {
+                //We insert into a circular linked list
+                state->skeletonState->currentComment->previous->next = node->comment;
+                node->comment->next = state->skeletonState->currentComment;
+                node->comment->previous = state->skeletonState->currentComment->previous;
+                state->skeletonState->currentComment->previous = node->comment;
+
+                state->skeletonState->currentComment = node->comment;
+            }
     }
+    state->skeletonState->commentsChanged = TRUE;
     return TRUE;
 }
 

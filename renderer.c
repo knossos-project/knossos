@@ -113,8 +113,8 @@ uint32_t drawGUI() {
 
     AG_LockVFS(&agDrivers);
 
-    if(state->skeletonState->skeletonChanged == TRUE) {
-        state->skeletonState->skeletonChanged = FALSE;
+    if(state->skeletonState->commentsChanged == TRUE) {
+        state->skeletonState->commentsChanged = FALSE;
         UI_updateCommentsWin();
     }
 

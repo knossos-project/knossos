@@ -721,7 +721,7 @@ struct agConfig {
     AG_Window *tracingTimeWin;
     AG_Window *commentsWin;
     AG_NotebookTab *commentNodesTab;
-    AG_Table *table;
+    AG_Table *commentsTable;
     AG_Window *setDynRangeWin;
 	AG_Window *coordBarWin;
     AG_Window *skeletonVpToolsWin;
@@ -784,6 +784,7 @@ struct agConfig {
     char *commentSubstr[NUM_COMMSUBSTR];
     // colors of color-dropdown in comment node preferences
     char* commentColors[NUM_COMMSUBSTR];
+    char *tableCommentBuffer;
 
     int32_t filterBranchNodesOnly;
     //Zoom for Skeleton Viewport
@@ -1197,6 +1198,7 @@ struct skeletonState {
     int datasetChanged;
     //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
     int skeletonSliceVPchanged;
+    int commentsChanged;
 
     //uint32_t skeletonDisplayMode;
     uint32_t displayMode;
@@ -1223,6 +1225,7 @@ struct skeletonState {
 
     color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
+    struct nodeListElement *selectedCommentNode;
 
     //If TRUE, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
