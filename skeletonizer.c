@@ -1015,6 +1015,18 @@ uint32_t setActiveNode(int32_t targetRevision,
      */
     // drawGUI();
 
+   if(state->skeletonState->lockPositions){
+      if((node->comment!=NULL) && (state->skeletonState->onCommentLock != NULL) && (node->comment->content!=NULL)){
+                if(strcmp(state->skeletonState->onCommentLock, node->comment->content)==0){
+                Coordinate activeNodePosition;
+                activeNodePosition.x = state->skeletonState->activeNode->position.x;
+                activeNodePosition.y = state->skeletonState->activeNode->position.y;
+                activeNodePosition.z = state->skeletonState->activeNode->position.z;
+                lockPosition(activeNodePosition);
+            }
+        }
+    }
+
     return TRUE;
 }
 
@@ -1119,6 +1131,17 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
     xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->offset.z / state->magnification);
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
+    memset(attrString, '\0', 128);
+
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"RadiusLocking", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->lockPositions);
+    xmlNewProp(currentXMLNode, BAD_CAST"enableCommentLocking", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->lockRadius);
+    xmlNewProp(currentXMLNode, BAD_CAST"lockingRadius", attrString);
+    memset(attrString, '\0', 128);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%s", state->skeletonState->onCommentLock);
+    xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"time", NULL);
@@ -1665,6 +1688,22 @@ uint32_t loadSkeleton() {
                     if(attribute)
                         state->skeletonState->zoomLevel = atof((char *)attribute);
                 }
+
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"RadiusLocking")) {
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableCommentLocking");
+                    if(attribute){
+                        state->skeletonState->lockPositions = atoi((char *)attribute);
+                        state->viewerState->ag->commentLockCheckbox->state = TRUE;
+                    }
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockingRadius");
+                    if(attribute)
+                        state->skeletonState->lockRadius = atoi((char *)attribute);
+
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockToNodesWithComment");
+                    if(attribute)
+                        strcpy(state->skeletonState->onCommentLock, (char *)attribute);
+                }
+
                 if(merge == FALSE) {
                     if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"idleTime")) {
                         attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
@@ -2220,7 +2259,10 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
 uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
-
+    if(state->skeletonState->lockPositions){
+        state->skeletonState->lockPositions = FALSE;
+        unlockPosition();
+    }
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
 

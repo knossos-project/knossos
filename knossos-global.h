@@ -798,6 +798,8 @@ struct agConfig {
     AG_Checkbox *AutoTracingBox;
 
     AG_Checkbox *showPosSizButtonsCheckbox;
+
+    AG_Checkbox *commentLockCheckbox;
 };
 
 struct viewPort {

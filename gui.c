@@ -1019,9 +1019,8 @@ void createToolsWin() {
         }*/
         AG_SeparatorNewHoriz(nodesTab);
         chkBox = AG_CheckboxNewFn(nodesTab, 0, "Enable comment locking", UI_commentLockWdgtModified, NULL, NULL);
-        {
-            AG_BindInt(chkBox, "state", &state->skeletonState->lockPositions);
-        }
+        state->viewerState->ag->commentLockCheckbox = chkBox;
+
         numerical = AG_NumericalNewUint32(nodesTab, 0, NULL, "Locking Radius: ", &state->skeletonState->lockRadius);
         {
             AG_ExpandHoriz(numerical);
@@ -1044,7 +1043,7 @@ void createToolsWin() {
             {
                 AG_ExpandHoriz(button);
             }
-            button = AG_ButtonNewFn(box, 0, "Disable Locking", UI_disableLockingBtnPressed, NULL, NULL);
+            button = AG_ButtonNewFn(box, 0, "Disable current Locking", UI_disableLockingBtnPressed, NULL, NULL);
             {
                 AG_ExpandHoriz(button);
             }
@@ -2823,14 +2822,27 @@ void OkfileDlgSavePrefsAs(AG_Event *event) {
     AG_ObjectDetach(AG_WidgetParentWindow(dlg));
 }
 
-static void UI_commentLockWdgtModified(AG_Event *event) {
-    int lockOn = AG_INT(1);
-    if(lockOn) {
+static void UI_commentLockWdgtModified() {
+    if(state->skeletonState->lockPositions == FALSE) {
         state->skeletonState->lockPositions = TRUE;
+        if(state->skeletonState->activeNode != NULL){
+             if(state->skeletonState->activeNode->comment != NULL){
+                if((state->skeletonState->onCommentLock != NULL) && (state->skeletonState->activeNode->comment->content!=NULL)){
+                    if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
+                        Coordinate activeNodePosition;
+                        activeNodePosition.x = state->skeletonState->activeNode->position.x;
+                        activeNodePosition.y = state->skeletonState->activeNode->position.y;
+                        activeNodePosition.z = state->skeletonState->activeNode->position.z;
+                        lockPosition(activeNodePosition);
+                    }
+                }
+             }
+        }
     }
     else {
         state->skeletonState->lockPositions = FALSE;
         state->skeletonState->positionLocked = FALSE;
+        unlockPosition();
     }
 }
 
@@ -3269,6 +3281,19 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
                         0);
+    }
+
+    if((state->skeletonState->lockPositions) && (state->skeletonState->activeNode->comment!=NULL)){
+        if((state->skeletonState->onCommentLock != NULL) && (state->skeletonState->activeNode->comment->content!=NULL)){
+            if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
+                Coordinate activeNodePosition;
+                activeNodePosition.x = state->skeletonState->activeNode->position.x;
+                activeNodePosition.y = state->skeletonState->activeNode->position.y;
+                activeNodePosition.z = state->skeletonState->activeNode->position.z;
+                lockPosition(activeNodePosition);
+            }
+            else unlockPosition();
+        }
     }
     /*state->skeletonState->skeletonChanged = TRUE; needed? TDitem */
 }
@@ -4172,17 +4197,6 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%f", state->skeletonState->defaultNodeRadius);
         xmlNewProp(currentXMLNode, BAD_CAST"defaultRadius", attrString);
 
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%d",  state->skeletonState->lockPositions);
-        xmlNewProp(currentXMLNode, BAD_CAST"enableCommentLocking", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->lockRadius);
-        xmlNewProp(currentXMLNode, BAD_CAST"lockingRadius", attrString);
-
-        memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%s", state->skeletonState->onCommentLock);
-        xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"Advanced-Tracing-Modes", NULL);
     {
@@ -4625,15 +4639,6 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"defaultRadius");
             if(attribute)
                 state->skeletonState->defaultNodeRadius = atof((char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableCommentLocking");
-            if(attribute)
-                state->skeletonState->lockPositions = atoi((char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockingRadius");
-            if(attribute)
-                state->skeletonState->lockRadius = atoi((char *)attribute);
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockToNodesWithComment");
-            if(attribute)
-				strcpy(state->skeletonState->onCommentLock, (char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"FilePaths")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"skeletonPath");
