@@ -1542,6 +1542,7 @@ int32_t sendQuitSignal();
 int32_t sendServerSignal();
 uint32_t log2uint32(register uint32_t x);
 uint32_t ones32(register uint32_t x);
+char *toLower(char *string);
 
 /*
  *	For refreshTime.c

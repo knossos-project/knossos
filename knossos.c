@@ -1196,7 +1196,21 @@ uint32_t ones32(register uint32_t x) {
         return(x & 0x0000003f);
 }
 
+char *toLower(char *string) {
+    int i;
+    char *copy;
 
+    if(string == NULL) {
+        return NULL;
+    }
+
+    copy = calloc(1, strlen(string)+1);
+    for(i = 0; i < strlen(string); i++) {
+        copy[i] = tolower(string[i]);
+    }
+
+    return copy;
+}
 
 #ifdef LINUX
 static int32_t catchSegfault(int signum) {

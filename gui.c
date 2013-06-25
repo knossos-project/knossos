@@ -1861,6 +1861,7 @@ void UI_updateCommentsWin() {
     struct treeListElement *tree;
     struct nodeListElement *node;
     char nodeDisplay[512];
+    char *filterNoCase, *commentNoCase;
 
     AG_TableBegin(state->viewerState->ag->commentsTable);
     AG_TableSetRowHeight(state->viewerState->ag->commentsTable, 20);
@@ -1873,9 +1874,12 @@ void UI_updateCommentsWin() {
                 node = node->next;
                 continue;
             }
+            // case insensitive filtering
+            filterNoCase = toLower(node->comment->content);
+            commentNoCase = toLower(state->skeletonState->filterCommentBuffer);
             if((strlen(state->skeletonState->filterCommentBuffer) > 0
-                && strstr(node->comment->content, state->skeletonState->filterCommentBuffer) != NULL)
-                || strlen(state->skeletonState->filterCommentBuffer) == 0) {
+                && strstr(filterNoCase, commentNoCase) != NULL)
+                || strlen(state->skeletonState->filterCommentBuffer) == 0) { // add comment node, if filter matches or no filter applied
 
                 if (node->isBranchNode) {
                     sprintf(nodeDisplay, "%i (Branch Point)", node->nodeID);
@@ -1888,6 +1892,8 @@ void UI_updateCommentsWin() {
                     AG_TableAddRow(state->viewerState->ag->commentsTable, "%s:%s", nodeDisplay, node->comment->content);
                 }
             }
+            free(filterNoCase);
+            free(commentNoCase);
             node = node->next;
         }
         tree = tree->next;
@@ -2823,26 +2829,27 @@ void OkfileDlgSavePrefsAs(AG_Event *event) {
 }
 
 static void UI_commentLockWdgtModified() {
-    if(state->skeletonState->lockPositions == FALSE) {
-        state->skeletonState->lockPositions = TRUE;
-        if(state->skeletonState->activeNode != NULL){
-             if(state->skeletonState->activeNode->comment != NULL){
-                if((state->skeletonState->onCommentLock != NULL) && (state->skeletonState->activeNode->comment->content!=NULL)){
-                    if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
-                        Coordinate activeNodePosition;
-                        activeNodePosition.x = state->skeletonState->activeNode->position.x;
-                        activeNodePosition.y = state->skeletonState->activeNode->position.y;
-                        activeNodePosition.z = state->skeletonState->activeNode->position.z;
-                        lockPosition(activeNodePosition);
-                    }
-                }
-             }
-        }
-    }
-    else {
+    if(state->skeletonState->lockPositions == TRUE) {
         state->skeletonState->lockPositions = FALSE;
         state->skeletonState->positionLocked = FALSE;
         unlockPosition();
+        return;
+    }
+    state->skeletonState->lockPositions = TRUE;
+    if(state->skeletonState->activeNode == NULL) {
+        return;
+    }
+    if(state->skeletonState->activeNode->comment == NULL) {
+        return;
+    }
+    if((state->skeletonState->onCommentLock != NULL) && strlen(state->skeletonState->activeNode->comment->content) > 0){
+        if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
+            Coordinate activeNodePosition;
+            activeNodePosition.x = state->skeletonState->activeNode->position.x;
+            activeNodePosition.y = state->skeletonState->activeNode->position.y;
+            activeNodePosition.z = state->skeletonState->activeNode->position.z;
+            lockPosition(activeNodePosition);
+        }
     }
 }
 
@@ -3282,18 +3289,23 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
                         state->skeletonState->activeNode,
                         0);
     }
+    // lock position if flag is set and comment matches
+    if(state->skeletonState->lockPositions == FALSE) {
+        return;
+    }
+    if(state->skeletonState->activeNode->comment == NULL) {
+        return;
+    }
 
-    if((state->skeletonState->lockPositions) && (state->skeletonState->activeNode->comment!=NULL)){
-        if((state->skeletonState->onCommentLock != NULL) && (state->skeletonState->activeNode->comment->content!=NULL)){
-            if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
-                Coordinate activeNodePosition;
-                activeNodePosition.x = state->skeletonState->activeNode->position.x;
-                activeNodePosition.y = state->skeletonState->activeNode->position.y;
-                activeNodePosition.z = state->skeletonState->activeNode->position.z;
-                lockPosition(activeNodePosition);
-            }
-            else unlockPosition();
+    if((state->skeletonState->onCommentLock != NULL) && strlen(state->skeletonState->activeNode->comment->content) > 0){
+        if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
+            Coordinate activeNodePosition;
+            activeNodePosition.x = state->skeletonState->activeNode->position.x;
+            activeNodePosition.y = state->skeletonState->activeNode->position.y;
+            activeNodePosition.z = state->skeletonState->activeNode->position.z;
+            lockPosition(activeNodePosition);
         }
+        else unlockPosition();
     }
     /*state->skeletonState->skeletonChanged = TRUE; needed? TDitem */
 }
