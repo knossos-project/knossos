@@ -128,6 +128,7 @@ static void UI_unimplemented();
 static void UI_lockActiveNodeBtnPressed();
 static void UI_disableLockingBtnPressed();
 static void UI_commentLockWdgtModified();
+static void UI_lockToCommentWdgtModified(AG_Event *event);
 static void UI_setDefaultZoom();
 static void UI_SyncConnect();
 static void UI_SyncDisconnect();

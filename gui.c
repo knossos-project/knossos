@@ -1032,6 +1032,7 @@ void createToolsWin() {
         {
             AG_ExpandHoriz(comment);
             AG_TextboxBindASCII(comment, state->skeletonState->onCommentLock, 1024);
+            AG_SetEvent(comment, "textbox-return", UI_lockToCommentWdgtModified, NULL);
             AG_SetEvent(comment, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
             AG_SetEvent(comment, "widget-lostfocus", agInputWdgtLostFocus, NULL);
         }
@@ -2836,23 +2837,51 @@ static void UI_commentLockWdgtModified() {
         return;
     }
     state->skeletonState->lockPositions = TRUE;
+
     if(state->skeletonState->activeNode == NULL) {
         return;
     }
     if(state->skeletonState->activeNode->comment == NULL) {
         return;
     }
-    if((state->skeletonState->onCommentLock != NULL) && strlen(state->skeletonState->activeNode->comment->content) > 0){
-        if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
-            Coordinate activeNodePosition;
-            activeNodePosition.x = state->skeletonState->activeNode->position.x;
-            activeNodePosition.y = state->skeletonState->activeNode->position.y;
-            activeNodePosition.z = state->skeletonState->activeNode->position.z;
-            lockPosition(activeNodePosition);
-        }
+    if(strcmp(state->skeletonState->activeNode->comment->content, state->skeletonState->onCommentLock) == 0) {
+        lockPosition(state->skeletonState->activeNode->position);
+        return;
     }
 }
 
+static void UI_lockToCommentWdgtModified(AG_Event *event) {
+    if(state->skeletonState->lockPositions == FALSE) {
+        return;
+    }
+    // check if active node is locked and the comment still matches. Unlock it otherwise.
+    if(state->skeletonState->positionLocked) {
+        if(state->skeletonState->activeNode == NULL) {
+            unlockPosition();
+            return;
+        }
+        if(state->skeletonState->activeNode->comment == NULL) {
+            unlockPosition();
+            return;
+        }
+        if(strcmp(state->skeletonState->activeNode->comment->content, state->skeletonState->onCommentLock) != 0) {
+            unlockPosition();
+            return;
+        }
+    }
+    // else check if active node comment now matches and lock it.
+    if(state->skeletonState->activeNode == NULL) {
+        return;
+    }
+    if(state->skeletonState->activeNode->comment == NULL) {
+        return;
+    }
+    if(strcmp(state->skeletonState->activeNode->comment->content, state->skeletonState->onCommentLock) == 0) {
+        lockPosition(state->skeletonState->activeNode->position);
+        return;
+    }
+    unlockPosition();
+}
 static void commentColorWdgtSwitched(AG_Event *event) {
     //LOG("commentcoloring: %i", state->skeletonState->userCommentColoringOn);
 }
@@ -3290,23 +3319,17 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
                         0);
     }
     // lock position if flag is set and comment matches
-    if(state->skeletonState->lockPositions == FALSE) {
-        return;
-    }
-    if(state->skeletonState->activeNode->comment == NULL) {
-        return;
-    }
-
-    if((state->skeletonState->onCommentLock != NULL) && strlen(state->skeletonState->activeNode->comment->content) > 0){
-        if(strcmp(state->skeletonState->onCommentLock, state->skeletonState->activeNode->comment->content)==0){
-            Coordinate activeNodePosition;
-            activeNodePosition.x = state->skeletonState->activeNode->position.x;
-            activeNodePosition.y = state->skeletonState->activeNode->position.y;
-            activeNodePosition.z = state->skeletonState->activeNode->position.z;
-            lockPosition(activeNodePosition);
+    if(state->skeletonState->lockPositions && state->skeletonState->onCommentLock != NULL) {
+        if(state->skeletonState->activeNode->comment != NULL) {
+            if(strcmp(state->skeletonState->activeNode->comment->content, state->skeletonState->onCommentLock) == 0) {
+                lockPosition(state->skeletonState->activeNode->position);
+                return;
+            }
         }
-        else unlockPosition();
     }
+    // unlock otherwise
+    unlockPosition();
+
     /*state->skeletonState->skeletonChanged = TRUE; needed? TDitem */
 }
 
@@ -3464,6 +3487,9 @@ static void UI_deleteTreeBtnPressed() {
 }
 
 static void UI_helpDeleteTree(){
+    if(state->skeletonState->positionLocked) {
+        unlockPosition();
+    }
     delActiveTree();
 }
 

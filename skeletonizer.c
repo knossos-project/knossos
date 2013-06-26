@@ -94,7 +94,6 @@ uint32_t initSkeletonizer() {
     //state->skeletonState->displayListDataset = 0;
 
 
-
     state->skeletonState->defaultNodeRadius = 1.5;
     state->skeletonState->overrideNodeRadiusBool = FALSE;
     state->skeletonState->overrideNodeRadiusVal = 1.;
@@ -308,7 +307,7 @@ int32_t addNode(struct skeletonState *skeleton,
      */
 
     if(respectLocks) {
-        if(skeleton->positionLocked) {
+        if(skeleton->lockPositions && skeleton->positionLocked) {
             lockVector.x = (float)position->x - (float)skeleton->lockedPosition.x;
             lockVector.y = (float)position->y - (float)skeleton->lockedPosition.y;
             lockVector.z = (float)position->z - (float)skeleton->lockedPosition.z;
@@ -963,7 +962,6 @@ uint32_t setActiveNode(int32_t targetRevision,
         nodeID = node->nodeID;
     }
 
-
     state->skeletonState->activeNode = node;
     state->skeletonState->viewChanged = TRUE;
     state->skeletonState->skeletonChanged = TRUE;
@@ -1005,6 +1003,16 @@ uint32_t setActiveNode(int32_t targetRevision,
 
     if(node) {
         state->viewerState->ag->activeNodeID = node->nodeID;
+
+        // check if new node has a comment with lock
+        if(state->skeletonState->lockPositions) {
+            if(node->comment!=NULL && state->skeletonState->onCommentLock != NULL) {
+                if(strcmp(state->skeletonState->onCommentLock, node->comment->content) == 0) {
+                    state->skeletonState->positionLocked = TRUE;
+                    lockPosition(node->position);
+                }
+            }
+        }
     }
 
 
@@ -1014,18 +1022,6 @@ uint32_t setActiveNode(int32_t targetRevision,
      *
      */
     // drawGUI();
-
-   if(state->skeletonState->lockPositions){
-      if((node->comment!=NULL) && (state->skeletonState->onCommentLock != NULL) && (node->comment->content!=NULL)){
-                if(strcmp(state->skeletonState->onCommentLock, node->comment->content)==0){
-                Coordinate activeNodePosition;
-                activeNodePosition.x = state->skeletonState->activeNode->position.x;
-                activeNodePosition.y = state->skeletonState->activeNode->position.y;
-                activeNodePosition.z = state->skeletonState->activeNode->position.z;
-                lockPosition(activeNodePosition);
-            }
-        }
-    }
 
     return TRUE;
 }
@@ -1693,7 +1689,7 @@ uint32_t loadSkeleton() {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableCommentLocking");
                     if(attribute){
                         state->skeletonState->lockPositions = atoi((char *)attribute);
-                        state->viewerState->ag->commentLockCheckbox->state = TRUE;
+                        state->viewerState->ag->commentLockCheckbox->state = state->skeletonState->lockPositions;
                     }
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"lockingRadius");
                     if(attribute)
@@ -2224,7 +2220,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
     setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, NULL);
 
-    if(state->skeletonState->activeNode == nodeToDel) {
+   if(state->skeletonState->activeNode == nodeToDel) {
         newActiveNode = findNearbyNode(nodeToDel->correspondingTree,
                                        nodeToDel->position);
 
@@ -2259,10 +2255,6 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
 uint32_t delTree(int32_t targetRevision, int32_t treeID) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
-    if(state->skeletonState->lockPositions){
-        state->skeletonState->lockPositions = FALSE;
-        unlockPosition();
-    }
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
 
@@ -3636,6 +3628,16 @@ uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char
             skeleton->currentComment->content,
             strlen(skeleton->currentComment->content));
 
+    if(state->skeletonState->positionLocked == TRUE, state->skeletonState->onCommentLock != NULL) {
+        if(strcmp(newComment->content, state->skeletonState->onCommentLock) == 0
+           && newComment->node == state->skeletonState->activeNode) {
+            lockPosition(newComment->node->position);
+        }
+        else {
+            unlockPosition();
+        }
+    }
+
     skeleton->unsavedChanges = TRUE;
     skeleton->skeletonRevision++;
 
@@ -3713,6 +3715,16 @@ uint32_t editComment(int32_t targetRevision,
         newNode->comment = currentComment;
     }
 
+    if(state->skeletonState->positionLocked == TRUE, state->skeletonState->onCommentLock != NULL) {
+        if(strcmp(currentComment->content, state->skeletonState->onCommentLock) == 0
+           && currentComment->node == state->skeletonState->activeNode) {
+            lockPosition(currentComment->node->position);
+        }
+        else {
+            unlockPosition();
+        }
+    }
+
     state->skeletonState->unsavedChanges = TRUE;
     state->skeletonState->skeletonRevision++;
     state->skeletonState->commentsChanged = TRUE;
@@ -3762,6 +3774,10 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
         free(currentComment->content);
     }
     if(currentComment->node) {
+        //check if position was locked to this comment and unlock if so
+        if(state->skeletonState->positionLocked && currentComment->node == state->skeletonState->activeNode) {
+            unlockPosition();
+        }
         nodeID = currentComment->node->nodeID;
         currentComment->node->comment = NULL;
         state->skeletonState->skeletonChanged = TRUE;
@@ -3848,10 +3864,12 @@ struct commentListElement *nextComment(char *searchString) {
                 strlen(state->skeletonState->currentComment->content));
 
         if(state->skeletonState->lockPositions) {
-            if(strstr(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock))
+            if(strcmp(state->skeletonState->commentBuffer, state->skeletonState->onCommentLock) == 0) {
                 lockPosition(state->skeletonState->currentComment->node->position);
-            else
+            }
+            else {
                 unlockPosition();
+            }
         }
 
     }
