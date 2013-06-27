@@ -42,6 +42,7 @@ signals:
     void previousCommentSignal(char *searchString);
 public slots:
     void activeTreeIdChanged(int value);
+    void activeNodeIdChanged(int value);
     void commentChanged(QString comment);
     void searchForChanged(QString comment);
     void findNextButtonClicked();

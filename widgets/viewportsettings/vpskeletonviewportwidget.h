@@ -51,7 +51,7 @@ public slots:
 protected:
     QLabel *datasetVisualizationLabel, *skeletonDisplayModesLabel;
     QCheckBox *showXYPlaneCheckBox, *showXZPlaneCheckBox, *showYZPlaneCheckBox;
-    QRadioButton *wholeSkeletonButton, *onlyCurrentCubeButton, *onlyActiveTreeButton, *hideSkeletonButton;
+    QRadioButton *wholeSkeletonRadioButton, *onlyCurrentCubeRadioButton, *onlyActiveTreeRadioButton, *hideSkeletonRadioButton;
     QLabel *view3dlabel;
     QCheckBox *rotateAroundActiveNodeCheckBox;
     

@@ -27,7 +27,10 @@
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
 #include "GUIConstants.h"
+#include "knossos-global.h"
 #include <QSettings>
+
+extern stateInfo *state;
 
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
@@ -124,4 +127,16 @@ void ToolsWidget::saveSettings() {
     settings.setValue(LOCK_TO_NODES_WITH_COMMENT, this->toolsNodesTabWidget->lockingToNodesWithCommentField->text());
 
     settings.endGroup();
+}
+
+void ToolsWidget::updateDisplayedTree() {
+    this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
+    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->treeElements);
+    this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
+    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->activeNode->nodeID);
+    this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+    this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+    this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+    this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+    this->toolsQuickTabWidget->update();
 }

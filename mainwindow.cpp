@@ -56,7 +56,6 @@
 #include "widgetcontainer.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 // -- Constructor and destroyer -- //
 MainWindow::MainWindow(QWidget *parent) :
@@ -329,34 +328,6 @@ bool MainWindow::addRecentFile(const QString &fileName) {
 }
 
 
-void MainWindow::saveSkeleton(QString fileName, int increment) {
-    if(fileName.isNull()) {
-        return;
-    }
-
-    QFile saveFile(fileName);
-    char *cpath = const_cast<char *>(fileName.toStdString().c_str());
-
-    if(saveFile.open(QIODevice::ReadWrite)) {
-        emit updateSkeletonFileNameSignal(CHANGE_MANUAL, state->skeletonState->autoFilenameIncrementBool, cpath);
-        int saved = Skeletonizer::saveSkeleton();
-
-        if(saved == FAIL) {
-            QMessageBox box;
-            box.setText("The skeleton was not saved successfully. Check disk space and access rights");
-            box.show();
-        } else if(!saved) {
-            qDebug() << "No skeleton was found. Not saving";
-        } else {
-            updateTitlebar(true);
-            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
-            state->skeletonState->unsavedChanges = false;
-            addRecentFile(fileName);
-        }
-    } else {
-
-    }
-}
 
 /* */
 void MainWindow::UI_saveSkeleton(int increment) { }
@@ -721,12 +692,10 @@ void MainWindow::updateFileHistoryMenu() {
     }
 }
 
-/**
- * @todo
- */
 void MainWindow::saveSlot()
 {
 
+    saveSkeleton("test", true);
 }
 
 void MainWindow::saveAsSlot()
@@ -749,6 +718,48 @@ void MainWindow::saveAsSlot()
 
 }
 
+void MainWindow::saveSkelCallback() {
+    if(state->skeletonState->firstTree != NULL) {
+        if(state->skeletonState->unsavedChanges) {
+            UI_saveSkeleton(true);
+        } else {
+            qDebug("No changes since last save event. Not saving.");
+            return;
+        }
+    } else {
+        qDebug("No skeleton was found. Not saving.");
+    }
+}
+
+void MainWindow::saveSkeleton(QString fileName, int increment) {
+    if(fileName.isNull()) {
+        return;
+    }
+
+    QFile saveFile(fileName);
+    char *cpath = const_cast<char *>(fileName.toStdString().c_str());
+
+    if(saveFile.open(QIODevice::ReadWrite)) {
+        emit updateSkeletonFileNameSignal(CHANGE_MANUAL, state->skeletonState->autoFilenameIncrementBool, cpath);
+        int saved = Skeletonizer::saveSkeleton();
+
+        if(saved == FAIL) {
+            QMessageBox box;
+            box.setText("The skeleton was not saved successfully. Check disk space and access rights");
+            box.show();
+        } else if(!saved) {
+            qDebug() << "No skeleton was found. Not saving";
+        } else {
+            updateTitlebar(true);
+            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
+            state->skeletonState->unsavedChanges = false;
+            addRecentFile(fileName);
+        }
+    } else {
+
+    }
+}
+
 void MainWindow::quitSlot()
 {
    saveSettings();
@@ -760,7 +771,7 @@ void MainWindow::quitSlot()
 
 void MainWindow::addNodeSlot()
 {
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 
     if(linkWithActiveNodeAction->isChecked()) {
         linkWithActiveNodeAction->setChecked(false);
@@ -772,7 +783,7 @@ void MainWindow::addNodeSlot()
 
 void MainWindow::linkWithActiveNodeSlot()
 {
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
 
     if(addNodeAction->isChecked()) {
         addNodeAction->setChecked(false);
@@ -784,7 +795,7 @@ void MainWindow::linkWithActiveNodeSlot()
 
 void MainWindow::dropNodesSlot()
 {
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
 
     if(addNodeAction->isChecked()) {
         addNodeAction->setChecked(false);
@@ -819,7 +830,7 @@ void MainWindow::clearSkeletonSlot()
 
 void MainWindow::dragDatasetSlot()
 {
-   tempConfig->viewerState->workMode = ON_CLICK_DRAG;
+   state->viewerState->workMode = ON_CLICK_DRAG;
    if(recenterOnClickAction->isChecked()) {
        recenterOnClickAction->setChecked(false);
    }
@@ -827,7 +838,7 @@ void MainWindow::dragDatasetSlot()
 
 void MainWindow::recenterOnClickSlot()
 {
-   tempConfig->viewerState->workMode = ON_CLICK_RECENTER;
+   state->viewerState->workMode = ON_CLICK_RECENTER;
    if(dragDatasetAction->isChecked()) {
        dragDatasetAction->setChecked(true);
    }
@@ -1174,18 +1185,5 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     xField->setValue(x);
     yField->setValue(y);
     zField->setValue(z);
-}
-
-void MainWindow::saveSkelCallback() {
-    if(state->skeletonState->firstTree != NULL) {
-        if(state->skeletonState->unsavedChanges) {
-            UI_saveSkeleton(true);
-        } else {
-            qDebug("No changes since last save event. Not saving.");
-            return;
-        }
-    } else {
-        qDebug("No skeleton was found. Not saving.");
-    }
 }
 

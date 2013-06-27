@@ -26,7 +26,6 @@
  */
 
 #include <QDialog>
-#include <QSettings>
 
 class QSlider;
 class QLabel;
@@ -41,26 +40,25 @@ public:
     explicit ZoomAndMultiresWidget(QWidget *parent = 0);
         
 public slots:
-    void zoomDefaultsSlot();
-    void lockDatasetMagSlot(bool on);
-    void orthogonalSliderSlot(int value);
-    void skeletonSliderSlot(int value);
-    void orthogonalSpinBoxSlot(double value);
-    void skeletonSpinBoxSlot(double value);
+    void zoomDefaultsClicked();
+    void lockDatasetMagChecked(bool on);
+    void orthogonalSliderMoved(int value);
+    void skeletonSliderMoved(int value);
+    void orthogonalSpinBoxChanged(double value);
+    void skeletonSpinBoxChanged(double value);
     void update();
     void loadSettings();
     void saveSettings();
 protected:
     void closeEvent(QCloseEvent *event);
-    QSettings *settings;
 public:
     // top layout
     QLabel *orthogonalDataViewportLabel;
-    QLabel *skeletonViewLabel;
+    QLabel *skeletonViewportLabel;
     QSlider *orthogonalDataViewportSlider;
-    QSlider *skeletonViewSlider;
+    QSlider *skeletonViewportSlider;
     QDoubleSpinBox *orthogonalDataViewportSpinBox;
-    QDoubleSpinBox *skeletonViewSpinBox;
+    QDoubleSpinBox *skeletonViewportSpinBox;
     QPushButton *zoomDefaultsButton;
 
     // bottom layout

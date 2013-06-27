@@ -28,6 +28,7 @@
 #include <QObject>
 #include "knossos-global.h"
 
+
 class Renderer : public QObject
 {
     Q_OBJECT
@@ -43,11 +44,7 @@ public:
     static uint renderText(Coordinate *pos, char *string);
     static uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
     static uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
-    // void renderWholeSkeleton(uint viewportType);
-    static void renderSkeleton(uint viewportType);
-    // void renderSuperCubeSkeleton(uint viewportType);
-    // void renderActiveTreeSkeleton(uint viewportType);
-    //bool updateDisplayListsSkeleton();
+    static void renderSkeleton(uint viewportType);        
     static bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
     static bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);

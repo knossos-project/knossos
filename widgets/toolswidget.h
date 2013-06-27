@@ -44,6 +44,7 @@ public:
 signals:
     void uncheckSignal();
 public slots:
+    void updateDisplayedTree();
 protected:
     void closeEvent(QCloseEvent *event);
     QTabWidget *tabs;

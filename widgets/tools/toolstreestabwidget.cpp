@@ -37,7 +37,6 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
     QWidget(parent)
@@ -187,7 +186,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
     treeCol.b = -1;
     treeCol.a = 1;
     Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
 void ToolsTreesTabWidget::commentChanged(QString comment) {

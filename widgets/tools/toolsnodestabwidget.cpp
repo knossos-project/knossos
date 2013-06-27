@@ -37,7 +37,6 @@
 #include "skeletonizer.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
     QWidget(parent)
@@ -183,9 +182,9 @@ void ToolsNodesTabWidget::searchForChanged(QString comment) {
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
     if(state->skeletonState->activeNode) {
-        tempConfig->viewerState->currentPosition.x = state->skeletonState->activeNode->position.x / state->magnification;
-        tempConfig->viewerState->currentPosition.y = state->skeletonState->activeNode->position.y / state->magnification;
-        tempConfig->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
+        state->viewerState->currentPosition.x = state->skeletonState->activeNode->position.x / state->magnification;
+        state->viewerState->currentPosition.y = state->skeletonState->activeNode->position.y / state->magnification;
+        state->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
 
         emit updatePositionSignal(TELL_COORDINATE_CHANGE);
 

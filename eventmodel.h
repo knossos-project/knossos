@@ -105,6 +105,7 @@ signals:
     void saveSkeletonSignal();
     void saveSkelCallbackSignal();
     void idleTimeSignal();
+    void updateTools();
 public slots:
     
 };

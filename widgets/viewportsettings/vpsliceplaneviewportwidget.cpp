@@ -38,7 +38,7 @@
 #include "viewer.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
+
 
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QWidget(parent)
@@ -169,9 +169,9 @@ void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
     if(on) {
-        tempConfig->viewerState->filterType = GL_LINEAR;
+        state->viewerState->filterType = GL_LINEAR;
     } else {
-        tempConfig->viewerState->filterType = GL_NEAREST;
+        state->viewerState->filterType = GL_NEAREST;
     }
 }
 

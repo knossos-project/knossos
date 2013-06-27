@@ -34,7 +34,9 @@
 #include "mainwindow.h"
 #include "viewport.h"
 
-extern  stateInfo *tempConfig;
+#include <qopengl.h>
+
+
 extern  stateInfo *state;
 
 int correct_cubes = 0;
@@ -259,6 +261,11 @@ Viewer::Viewer(QObject *parent) :
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
     //connect(renderer, SIGNAL(renderTextSignal(int,int,int,QString)), vp4, SLOT(renderTextSlot(int,int,int,QString)));
+
+    connect(vp->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp3->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp4->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
 
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
@@ -1235,12 +1242,15 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
 bool Viewer::updatePosition(int serverMovement) {
     Coordinate jump;
 
-    if(COMPARE_COORDINATE(tempConfig->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
-        jump.x = tempConfig->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
-        jump.y = tempConfig->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
+    /* @CMP */
+    /*
+    if(COMPARE_COORDINATE(state->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
+        jump.x = state->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
+        jump.y = state->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
         jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
         userMove(jump.x, jump.y, jump.z, serverMovement);
     }
+    */
     return true;
 }
 
@@ -1254,7 +1264,7 @@ bool Viewer::calcDisplayedEdgeLength() {
         state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX =
         state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY =
             FOVinDCs * (float)state->cubeEdgeLength
-            / (float) tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx;
+            / (float) state->viewerState->vpConfigs[i].texture.edgeLengthPx;
     }
     return true;
 }
@@ -1612,23 +1622,24 @@ bool Viewer::updateViewerState() {
         state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z - 1;
     }*/
 
-    if(state->viewerState->filterType != tempConfig->viewerState->filterType) {
-        state->viewerState->filterType = tempConfig->viewerState->filterType;
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
-            // Set the parameters for the texture.
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.overlayHandle);
-            // Set the parameters for the texture.
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-        }
-        glBindTexture(GL_TEXTURE_2D, 0);
+    /* @CMP */
+
+    for(i = 0; i < state->viewerState->numberViewports; i++) {
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
+        // Set the parameters for the texture.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.overlayHandle);
+        // Set the parameters for the texture.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
     }
+    glBindTexture(GL_TEXTURE_2D, 0);
+
 
     updateZoomCube();
 
+    /* @CMP
     if(state->viewerState->workMode != tempConfig->viewerState->workMode) {
         state->viewerState->workMode = tempConfig->viewerState->workMode;
     }
@@ -1648,6 +1659,7 @@ bool Viewer::updateViewerState() {
     if(state->viewerState->recenteringTimeOrth != tempConfig->viewerState->recenteringTimeOrth) {
         state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
     }
+    */
     return true;
 }
 
@@ -1697,7 +1709,7 @@ bool Viewer::updateZoomCube() {
     }
     if(oldZoomCube != state->viewerState->zoomCube) {
         state->skeletonState->skeletonChanged = true;
-        skeletonizer->skeletonChanged = true;
+        //skeletonizer->skeletonChanged = true;
     }
     return true;
 }
@@ -1751,10 +1763,11 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                   viewerState->currentPosition.z);
     }
 
-
+    /* @CMP
     tempConfig->viewerState->currentPosition.x = viewerState->currentPosition.x;
     tempConfig->viewerState->currentPosition.y = viewerState->currentPosition.y;
     tempConfig->viewerState->currentPosition.z = viewerState->currentPosition.z;
+    */
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;

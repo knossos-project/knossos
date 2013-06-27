@@ -29,7 +29,6 @@
 #include "skeletonizer.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
@@ -203,10 +202,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+
         break;
     case SKELETONIZER_ON_CLICK_ADD_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
         break;
     case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
         if(state->skeletonState->activeNode == NULL) {
@@ -320,6 +320,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
         emit updateViewerStateSignal();
         Knossos::sendRemoteSignal();
+        emit updateTools();
         break;
     }
 
@@ -832,27 +833,27 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         switch(VPfound) {
             case VIEWPORT_XY:
                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(tempConfig->viewerState->currentPosition.x,
-                                                  tempConfig->viewerState->currentPosition.y,
-                                                  tempConfig->viewerState->currentPosition.z += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
+                emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
+                                                  state->viewerState->currentPosition.y,
+                                                  state->viewerState->currentPosition.z += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                 Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x,
-                        tempConfig->viewerState->currentPosition.y += state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
-                               tempConfig->viewerState->currentPosition.z);
+                               state->viewerState->currentPosition.x,
+                        state->viewerState->currentPosition.y += state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
+                               state->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                        tempConfig->viewerState->currentPosition.x += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
-                               tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z);
+                        state->viewerState->currentPosition.x += state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
+                               state->viewerState->currentPosition.y,
+                               state->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
         }
@@ -864,27 +865,27 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                  emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z -= state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
+                               state->viewerState->currentPosition.x,
+                               state->viewerState->currentPosition.y,
+                               state->viewerState->currentPosition.z -= state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
                                Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_XZ:
                  emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x,
-                               tempConfig->viewerState->currentPosition.y -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
-                               tempConfig->viewerState->currentPosition.z);
+                               state->viewerState->currentPosition.x,
+                               state->viewerState->currentPosition.y -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
+                               state->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
             case VIEWPORT_YZ:
                  emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
 
                 emit setRecenteringPositionSignal(
-                               tempConfig->viewerState->currentPosition.x -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
-                               tempConfig->viewerState->currentPosition.y,
-                               tempConfig->viewerState->currentPosition.z);
+                               state->viewerState->currentPosition.x -= state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
+                               state->viewerState->currentPosition.y,
+                               state->viewerState->currentPosition.z);
                                Knossos::sendRemoteSignal();
             break;
         }
@@ -978,6 +979,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_B) {
         qDebug() << "B pressed";
         Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+        emit updateTools();
     } else if(event->key() == Qt::Key_X) {
 
         if(shift) {
@@ -1042,7 +1044,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "C pressed";
         treeCol.r = -1.;
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
-        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+        emit updateTools();
+        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(control) {
            qDebug() << "V und shift";

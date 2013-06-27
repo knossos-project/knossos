@@ -45,10 +45,10 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     showYZPlaneCheckBox = new QCheckBox("Show YZ Plane");
 
     skeletonDisplayModesLabel = new QLabel("Skeleton Display Modes");
-    wholeSkeletonButton = new QRadioButton("Whole Skeleton");
-    onlyCurrentCubeButton = new QRadioButton("Only Current Cube");
-    onlyActiveTreeButton = new QRadioButton("Only Active Tree");
-    hideSkeletonButton = new QRadioButton("Hide Skeleton (fast)");
+    wholeSkeletonRadioButton = new QRadioButton("Whole Skeleton");
+    onlyCurrentCubeRadioButton = new QRadioButton("Only Current Cube");
+    onlyActiveTreeRadioButton = new QRadioButton("Only Active Tree");
+    hideSkeletonRadioButton = new QRadioButton("Hide Skeleton (fast)");
 
     view3dlabel = new QLabel("View 3D");
     rotateAroundActiveNodeCheckBox = new QCheckBox("Rotate Around Active Node");
@@ -70,12 +70,12 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     gridLayout->addWidget(line, 1, 0);
     gridLayout->addWidget(line2, 1, 1);
     gridLayout->addWidget(showXYPlaneCheckBox, 2, 0);
-    gridLayout->addWidget(wholeSkeletonButton, 2, 1);
+    gridLayout->addWidget(wholeSkeletonRadioButton, 2, 1);
     gridLayout->addWidget(showXZPlaneCheckBox, 3, 0);
-    gridLayout->addWidget(onlyCurrentCubeButton, 3, 1);
+    gridLayout->addWidget(onlyCurrentCubeRadioButton, 3, 1);
     gridLayout->addWidget(showYZPlaneCheckBox, 4, 0);
-    gridLayout->addWidget(onlyActiveTreeButton, 4, 1);
-    gridLayout->addWidget(hideSkeletonButton, 5, 1);
+    gridLayout->addWidget(onlyActiveTreeRadioButton, 4, 1);
+    gridLayout->addWidget(hideSkeletonRadioButton, 5, 1);
 
     gridLayout->addWidget(view3dlabel, 7, 0);
     gridLayout->addWidget(line3, 8, 0);
@@ -88,10 +88,10 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     connect(showXYPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXYPlaneChecked(bool)));
     connect(showYZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showYZPlaneChecked(bool)));
     connect(showXZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXZPlaneChecked(bool)));
-    connect(wholeSkeletonButton, SIGNAL(clicked()), this, SLOT(wholeSkeletonSelected()));
-    connect(onlyCurrentCubeButton, SIGNAL(clicked()), this, SLOT(onlyCurrentCubeSelected()));
-    connect(onlyActiveTreeButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
-    connect(hideSkeletonButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
+    connect(wholeSkeletonRadioButton, SIGNAL(clicked()), this, SLOT(wholeSkeletonSelected()));
+    connect(onlyCurrentCubeRadioButton, SIGNAL(clicked()), this, SLOT(onlyCurrentCubeSelected()));
+    connect(onlyActiveTreeRadioButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
+    connect(hideSkeletonRadioButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
     connect(rotateAroundActiveNodeCheckBox, SIGNAL(clicked(bool)), SLOT(rotateAroundActiveNodeChecked(bool)));
 }
 

@@ -29,7 +29,6 @@
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)

@@ -31,7 +31,7 @@
 
 
 extern stateInfo *state;
-extern stateInfo *tempConfig;
+
 
 Remote::Remote(QObject *parent) :
     QThread(parent)
@@ -161,6 +161,7 @@ bool Remote::updateRemoteState() {
 
     int i = 0;
 
+    /* @CMP
     if(state->trajectories != NULL) {
         free(state->trajectories);
         state->trajectories = NULL;
@@ -171,6 +172,10 @@ bool Remote::updateRemoteState() {
         for(i = 0; i < state->maxTrajectories; i++)
             newTrajectory(tempConfig->trajectories[i].name, tempConfig->trajectories[i].source);
     }
+    */
+
+    for(int i = 0; i < state->maxTrajectories; i++)
+        newTrajectory(state->trajectories[i].name, state->trajectories[i].source);
 
     return true;
 }
@@ -180,9 +185,9 @@ bool Remote::updateRemoteState() {
  */
 bool Remote::remoteJump(int x, int y, int z) {
     // is not threadsafe
-    tempConfig->viewerState->currentPosition.x = x;
-    tempConfig->viewerState->currentPosition.y = y;
-    tempConfig->viewerState->currentPosition.z = z;
+    state->viewerState->currentPosition.x = x;
+    state->viewerState->currentPosition.y = y;
+    state->viewerState->currentPosition.z = z;
 
     emit updatePositionSignal(SILENT_COORDINATE_CHANGE);
 
@@ -302,18 +307,18 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     //Not locked...
 
-    if (tempConfig->viewerState->recenteringTime > 5000){
-        tempConfig->viewerState->recenteringTime = 5000;
+    if (state->viewerState->recenteringTime > 5000){
+        state->viewerState->recenteringTime = 5000;
         emit updateViewerStateSignal();
 
     }
-    if (tempConfig->viewerState->recenteringTimeOrth < 10){
-        tempConfig->viewerState->recenteringTimeOrth = 10;
+    if (state->viewerState->recenteringTimeOrth < 10){
+        state->viewerState->recenteringTimeOrth = 10;
         emit updateViewerStateSignal();
 
     }
-    if (tempConfig->viewerState->recenteringTimeOrth > 5000){
-        tempConfig->viewerState->recenteringTimeOrth = 5000;
+    if (state->viewerState->recenteringTimeOrth > 5000){
+        state->viewerState->recenteringTimeOrth = 5000;
         emit updateViewerStateSignal();
     }
 

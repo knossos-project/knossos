@@ -31,7 +31,7 @@
 #include "functions.h"
 
 extern stateInfo *state;
-extern stateInfo *tempConfig;
+
 
 /**
   * @note The button group for skeleton viewport does not work as expected

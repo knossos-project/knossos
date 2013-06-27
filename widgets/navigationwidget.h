@@ -46,14 +46,15 @@ public slots:
     void walkFramesChanged(int value);
     void recenterTimeParallelChanged(int value);
     void recenterTimeOrthoChanged(int value);
-    void normalModeButtonClicked(bool on);
-    void additionalViewportDirectionMoveButtonClicked(bool on);
-    void additionalTracingDirectionMoveButtonClicked(bool on);
-    void additionalMirroredMoveButtonClicked(bool on);
+    void normalModeSelected(bool on);
+    void additionalViewportDirectionMoveSelected(bool on);
+    void additionalTracingDirectionMoveSelected(bool on);
+    void additionalMirroredMoveSelected(bool on);
     void delayTimePerStepChanged(int value);
     void numberOfStepsChanged(int value);
 protected:
     void closeEvent(QCloseEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;

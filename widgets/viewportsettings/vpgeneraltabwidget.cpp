@@ -41,22 +41,22 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
 
     this->skeletonVisualizationLabel = new QLabel("Skeleton Visualization");
 
-    this->lightEffectsButton = new QCheckBox("Light Effects");
-    this->lightEffectsButton->setChecked(state->viewerState->lightOnOff);
+    this->lightEffectsCheckBox = new QCheckBox("Light Effects");
+    this->lightEffectsCheckBox->setChecked(state->viewerState->lightOnOff);
 
-    this->hightlightActiveTreeButton = new QCheckBox("Hilight Active Tree");
-    this->hightlightActiveTreeButton->setChecked(state->viewerState->highlightVp);
+    this->hightlightActiveTreeCheckBox = new QCheckBox("Hilight Active Tree");
+    this->hightlightActiveTreeCheckBox->setChecked(state->viewerState->highlightVp);
 
-    this->showAllNodeIdsButton = new QCheckBox("Show All Node IDs");
-    this->showAllNodeIdsButton->setChecked(state->viewerState->showVPLabels);
+    this->showAllNodeIdsCheckBox = new QCheckBox("Show All Node IDs");
+    this->showAllNodeIdsCheckBox->setChecked(state->viewerState->showVPLabels);
 
     this->renderingQualityLabel = new QLabel("Rendering quality(1 best, 20 fastest):");
     this->renderingQualitySpinBox = new QSpinBox();
     this->renderingQualitySpinBox->setMinimum(1);
     this->renderingQualitySpinBox->setMaximum(20);
 
-    this->overrideNodeRadiusButton = new QCheckBox("Override Node Radius");
-    this->overrideNodeRadiusButton->setChecked(state->skeletonState->overrideNodeRadiusBool);
+    this->overrideNodeRadiusCheckBox = new QCheckBox("Override Node Radius");
+    this->overrideNodeRadiusCheckBox->setChecked(state->skeletonState->overrideNodeRadiusBool);
     this->overrideNodeRadiusSpinBox = new QDoubleSpinBox();
 
     this->edgeNodeRadiusRatioSpinBox = new QDoubleSpinBox();
@@ -82,9 +82,9 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
 
     mainLayout->addWidget(this->skeletonVisualizationLabel);
     mainLayout->addWidget(line);
-    mainLayout->addWidget(this->lightEffectsButton);
-    mainLayout->addWidget(this->hightlightActiveTreeButton);
-    mainLayout->addWidget(this->showAllNodeIdsButton);
+    mainLayout->addWidget(this->lightEffectsCheckBox);
+    mainLayout->addWidget(this->hightlightActiveTreeCheckBox);
+    mainLayout->addWidget(this->showAllNodeIdsCheckBox);
 
     QHBoxLayout *hLayout = new QHBoxLayout();
     hLayout->addWidget(this->renderingQualityLabel);
@@ -92,7 +92,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     mainLayout->addLayout(hLayout);
 
     QHBoxLayout *hLayout2 = new QHBoxLayout();
-    hLayout2->addWidget(this->overrideNodeRadiusButton);
+    hLayout2->addWidget(this->overrideNodeRadiusCheckBox);
     hLayout2->addWidget(this->overrideNodeRadiusSpinBox);
     mainLayout->addLayout(hLayout2);
 
@@ -107,11 +107,11 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     setLayout(mainLayout);
     mainLayout->addStretch(50);
 
-    connect(lightEffectsButton, SIGNAL(clicked(bool)), this, SLOT(lightEffectsChecked(bool)));
-    connect(showAllNodeIdsButton, SIGNAL(clicked(bool)), this, SLOT(showAllNodeIdsChecked(bool)));
-    connect(hightlightActiveTreeButton, SIGNAL(clicked(bool)), this, SLOT(hightlightActiveTreeChecked(bool)));
+    connect(lightEffectsCheckBox, SIGNAL(clicked(bool)), this, SLOT(lightEffectsChecked(bool)));
+    connect(showAllNodeIdsCheckBox, SIGNAL(clicked(bool)), this, SLOT(showAllNodeIdsChecked(bool)));
+    connect(hightlightActiveTreeCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightActiveTreeChecked(bool)));
     connect(renderingQualitySpinBox, SIGNAL(valueChanged(int)), this, SLOT(renderingQualityChanged(int)));
-    connect(overrideNodeRadiusButton, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
+    connect(overrideNodeRadiusCheckBox, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
     connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));

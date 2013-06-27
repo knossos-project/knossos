@@ -35,7 +35,6 @@
 #include "functions.h"
 
 extern stateInfo *state;
-extern stateInfo *tempConfig;
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
@@ -52,11 +51,13 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     definedSkeletonVpView = 0;
 
     //This number is currently arbitrary, but high values ensure a good performance
-    tempConfig->skeletonState->skeletonDCnumber = 8000;
-    tempConfig->skeletonState->workMode = ON_CLICK_DRAG;
+    state->skeletonState->skeletonDCnumber = 8000;
+    state->skeletonState->workMode = ON_CLICK_DRAG;
 
+    /* @CMP
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
+    */
 
     updateSkeletonState();
 
@@ -587,7 +588,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
     if(!state->skeletonState->activeNode) {
         LOG("Please create a node before trying to link nodes.");
-        tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
         return false;
     }
 
@@ -635,12 +636,15 @@ bool Skeletonizer::updateSkeletonState() {
         }
     }
 
+    /* @CMP
     if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber) {
         state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
     }
     if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
         setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
     }
+    */
+    setSkeletonWorkMode(CHANGE_MANUAL, state->skeletonState->workMode);
     return true;
 }
 
@@ -1524,17 +1528,18 @@ bool Skeletonizer::loadSkeleton() {
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&
        (loadedPosition.z != 0)) {
-        tempConfig->viewerState->currentPosition.x =
+        state->viewerState->currentPosition.x =
             loadedPosition.x - 1;
-        tempConfig->viewerState->currentPosition.y =
+        state->viewerState->currentPosition.y =
             loadedPosition.y - 1;
-        tempConfig->viewerState->currentPosition.z =
+        state->viewerState->currentPosition.z =
             loadedPosition.z - 1;
         /* @todo change to Signal loadSkeleton has to be non-static
         emit updatePositionSignal(TELL_COORDINATE_CHANGE);
         */
     }
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
@@ -1608,7 +1613,7 @@ bool Skeletonizer::delActiveTree() {
        return false;
     }
 
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
 
     return true;
 }
@@ -2329,7 +2334,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
 
-    tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 
     state->skeletonState->skeletonRevision++;
     state->skeletonState->unsavedChanges = true;
@@ -3580,11 +3585,11 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
         LOG("Branch point (node ID %d) deleted.", branchNodeID);
 #endif
 
-        tempConfig->viewerState->currentPosition.x
+        state->viewerState->currentPosition.x
             = branchNode->position.x;
-        tempConfig->viewerState->currentPosition.y
+        state->viewerState->currentPosition.y
             = branchNode->position.y;
-        tempConfig->viewerState->currentPosition.z
+        state->viewerState->currentPosition.z
             = branchNode->position.z;
 
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
@@ -3674,7 +3679,6 @@ bool Skeletonizer::setSkeletonWorkMode(int targetRevision, uint workMode) {
     }
 
     state->skeletonState->workMode = workMode;
-    tempConfig->skeletonState->workMode = workMode;
 
     state->skeletonState->skeletonRevision++;
 
@@ -3693,11 +3697,11 @@ bool Skeletonizer::setSkeletonWorkMode(int targetRevision, uint workMode) {
 
 bool Skeletonizer::jumpToActiveNode() {
     if(state->skeletonState->activeNode) {
-        tempConfig->viewerState->currentPosition.x =
+        state->viewerState->currentPosition.x =
             state->skeletonState->activeNode->position.x;
-        tempConfig->viewerState->currentPosition.y =
+        state->viewerState->currentPosition.y =
             state->skeletonState->activeNode->position.y;
-        tempConfig->viewerState->currentPosition.z =
+        state->viewerState->currentPosition.z =
             state->skeletonState->activeNode->position.z;
 
 

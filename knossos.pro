@@ -46,7 +46,7 @@ SOURCES +=\
     functions.cpp \
     texturizer.cpp \
     slicer.cpp \
-    widgetcontainer.cpp \
+    widgetcontainer.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -84,7 +84,7 @@ HEADERS  += mainwindow.h \
     slicer.h \
     GUIConstants.h \
     Plattform.h \
-    widgetcontainer.h \    
+    widgetcontainer.h     
 
 FORMS    += mainwindow.ui
 
@@ -116,7 +116,6 @@ OTHER_FILES += \
 mac {
     LIBS += -lxml2 \
             -framework GLUT \
-
 }
 
 linux {

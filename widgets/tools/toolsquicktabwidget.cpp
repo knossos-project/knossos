@@ -73,7 +73,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     activeNodeLabel = new QLabel("Active Node ID:");
     activeNodeSpinBox = new QSpinBox();
-    activeNodeSpinBox->setDisabled(true);
 
     QFormLayout *formLayout2 = new QFormLayout();
 
@@ -83,7 +82,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     xLabel = new QLabel("x: 0");
     yLabel = new QLabel("y: 0");
     zLabel = new QLabel("z: 0");
-
 
     QGridLayout *gridLayout2 = new QGridLayout();
     gridLayout2->addWidget(xLabel, 1, 1);
@@ -141,12 +139,19 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
     connect(findPreviousButton, SIGNAL(clicked()), this, SLOT(findPreviousButtonClicked()));
     connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeButtonClicked()));
-    connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));
-
+    connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));  
 }
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-    state->viewerState->gui->activeTreeID = value;
+    activeTreeSpinBox->setMaximum(value);
+}
+
+void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
+    /* @todo active node setzen */
+    state->skeletonState->activeNode->nodeID = value;
+    this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+    this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+    this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 }
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {
@@ -182,3 +187,5 @@ void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
 }
+
+

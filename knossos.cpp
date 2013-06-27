@@ -904,9 +904,6 @@ bool Knossos::tempConfigDefaults() {
 
     memset(tempConfig->viewerState->vpConfigs, '\0', tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
 
-    /**
-     * @todo the coordinates are likely wrong in our case
-     */
     for(int i = 0; i < tempConfig->viewerState->numberViewports; i++) {
         switch(i) {
         case VIEWPORT_XY:

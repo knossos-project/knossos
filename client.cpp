@@ -30,7 +30,7 @@
 #include "sleeper.h"
 
 extern stateInfo *state;
-extern stateInfo *tempConfig;
+
 
 Client::Client(QObject *parent) :
     QObject(parent)
@@ -704,10 +704,11 @@ void Client::start() {
             break;
         }
 
-        clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
-        clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
-        clientState->remotePort = tempConfig->clientState->remotePort;
-        strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+
+        clientState->synchronizeSkeleton = state->clientState->synchronizeSkeleton;
+        clientState->synchronizePosition = state->clientState->synchronizePosition;
+        clientState->remotePort = state->clientState->remotePort;
+        strncpy(clientState->serverAddress, state->clientState->serverAddress, 1024);
 
         clientRun();
 

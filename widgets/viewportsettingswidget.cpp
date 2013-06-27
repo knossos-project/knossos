@@ -69,17 +69,17 @@ void ViewportSettingsWidget::loadSettings() {
     visible = settings.value(VISIBLE).toBool();
 
     if(!settings.value(LIGHT_EFFECTS).isNull()) {
-        this->generalTabWidget->lightEffectsButton->setChecked(settings.value(LIGHT_EFFECTS).toBool());
+        this->generalTabWidget->lightEffectsCheckBox->setChecked(settings.value(LIGHT_EFFECTS).toBool());
         state->viewerState->lightOnOff = settings.value(LIGHT_EFFECTS).toBool();
     }
 
     if(!settings.value(HIGHLIGHT_ACTIVE_TREE).isNull()) {
-        this->generalTabWidget->hightlightActiveTreeButton->setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE).toBool());
+        this->generalTabWidget->hightlightActiveTreeCheckBox->setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE).toBool());
         state->skeletonState->highlightActiveTree = settings.value(HIGHLIGHT_ACTIVE_TREE).toBool();
     }
 
     if(!settings.value(SHOW_ALL_NODE_ID).isNull()) {
-        this->generalTabWidget->showAllNodeIdsButton->setChecked(settings.value(SHOW_ALL_NODE_ID).toBool());
+        this->generalTabWidget->showAllNodeIdsCheckBox->setChecked(settings.value(SHOW_ALL_NODE_ID).toBool());
         state->skeletonState->showNodeIDs = settings.value(SHOW_ALL_NODE_ID).toBool();
     }
 
@@ -95,7 +95,7 @@ void ViewportSettingsWidget::loadSettings() {
 
 
     if(!settings.value(OVERRIDE_NODES_RADIUS_CHECKED).isNull()) {
-        this->generalTabWidget->overrideNodeRadiusButton->setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool());
+        this->generalTabWidget->overrideNodeRadiusCheckBox->setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool());
         state->skeletonState->overrideNodeRadiusBool = settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool();
     }
 
@@ -183,7 +183,7 @@ void ViewportSettingsWidget::loadSettings() {
     }
 
     if(!settings.value(WHOLE_SKELETON).isNull()) {
-        this->skeletonViewportWidget->wholeSkeletonButton->setChecked(settings.value(WHOLE_SKELETON).toBool());
+        this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(settings.value(WHOLE_SKELETON).toBool());
         bool on = settings.value(WHOLE_SKELETON).toBool();
         if(on) {
             state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_WHOLE;
@@ -191,14 +191,14 @@ void ViewportSettingsWidget::loadSettings() {
     }
 
     if(!settings.value(ONLY_ACTIVE_TREE).isNull()) {
-        this->skeletonViewportWidget->onlyActiveTreeButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
+        this->skeletonViewportWidget->onlyActiveTreeRadioButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
         bool on = settings.value(ONLY_ACTIVE_TREE).toBool();
         if(on)
             state->viewerState->gui->radioRenderingModel = DSP_ACTIVETREE;
     }
 
     if(!settings.value(HIDE_SKELETON).isNull()) {
-        this->skeletonViewportWidget->hideSkeletonButton->setChecked(settings.value(HIDE_SKELETON).toBool());
+        this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(settings.value(HIDE_SKELETON).toBool());
         bool on = settings.value(HIDE_SKELETON).toBool();
         if(on)
             state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_HIDE;
@@ -220,12 +220,12 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(POS_Y, this->y());
     settings.setValue(VISIBLE, this->isVisible());
 
-    settings.setValue(LIGHT_EFFECTS, this->generalTabWidget->lightEffectsButton->isChecked());
-    settings.setValue(HIGHLIGHT_ACTIVE_TREE, this->generalTabWidget->hightlightActiveTreeButton->isChecked());
-    settings.setValue(SHOW_ALL_NODE_ID, this->generalTabWidget->showAllNodeIdsButton->isChecked());
+    settings.setValue(LIGHT_EFFECTS, this->generalTabWidget->lightEffectsCheckBox->isChecked());
+    settings.setValue(HIGHLIGHT_ACTIVE_TREE, this->generalTabWidget->hightlightActiveTreeCheckBox->isChecked());
+    settings.setValue(SHOW_ALL_NODE_ID, this->generalTabWidget->showAllNodeIdsCheckBox->isChecked());
     settings.setValue(EDGE_TO_NODE_RADIUS, this->generalTabWidget->edgeNodeRadiusRatioSpinBox->value());
     settings.setValue(RENDERING_QUALITY, this->generalTabWidget->renderingQualitySpinBox->value());
-    settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, this->generalTabWidget->overrideNodeRadiusButton->isChecked());
+    settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, this->generalTabWidget->overrideNodeRadiusCheckBox->isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, this->generalTabWidget->overrideNodeRadiusSpinBox->value());
     settings.setValue(SHOW_POS_AND_SIZE_CHECKED, this->generalTabWidget->showPosAndResizeCheckBox->isChecked());
 
@@ -243,9 +243,9 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(SHOW_XZ_PLANE, this->skeletonViewportWidget->showXZPlaneCheckBox->isChecked());
     settings.setValue(SHOW_YZ_PLANE, this->skeletonViewportWidget->showYZPlaneCheckBox->isChecked());
     settings.setValue(ROTATE_AROUND_ACTIVE_NODE, this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->isChecked());
-    settings.setValue(WHOLE_SKELETON, this->skeletonViewportWidget->wholeSkeletonButton->isChecked());
-    settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeButton->isChecked());
-    settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonButton->isChecked());
+    settings.setValue(WHOLE_SKELETON, this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
+    settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
+    settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
 
     settings.endGroup();
 }

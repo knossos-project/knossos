@@ -36,7 +36,6 @@
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
-extern struct stateInfo *tempConfig;
 
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)
@@ -119,10 +118,10 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     connect(recenterTimeParallelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(recenterTimeParallelChanged(int)));
     connect(recenterTimeOrthoSpinBox, SIGNAL(valueChanged(int)), this, SLOT(recenterTimeOrthoChanged(int)));
 
-    connect(normalModeButton, SIGNAL(clicked(bool)), this, SLOT(normalModeButtonClicked(bool)));
-    connect(additionalViewportDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalViewportDirectionMoveButtonClicked(bool)));
-    connect(additionalTracingDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalTracingDirectionMoveButtonClicked(bool)));
-    connect(additionalMirroredMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalMirroredMoveButtonClicked(bool)));
+    connect(normalModeButton, SIGNAL(clicked(bool)), this, SLOT(normalModeSelected(bool)));
+    connect(additionalViewportDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalViewportDirectionMoveSelected(bool)));
+    connect(additionalTracingDirectionMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalTracingDirectionMoveSelected(bool)));
+    connect(additionalMirroredMoveButton, SIGNAL(clicked(bool)), this, SLOT(additionalMirroredMoveSelected(bool)));
 
     connect(this->delayTimePerStepSpinBox, SIGNAL(valueChanged(int)), this, SLOT(delayTimePerStepChanged(int)));
     connect(this->numberOfStepsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(numberOfStepsChanged(int)));
@@ -131,44 +130,44 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
 }
 
 void NavigationWidget::movementSpeedChanged(int value) {
-    tempConfig->viewerState->stepsPerSec = value;
+    state->viewerState->stepsPerSec = value;
 }
 
 void NavigationWidget::jumpFramesChanged(int value) {
-    tempConfig->viewerState->recenteringTimeOrth = value;
+    state->viewerState->recenteringTimeOrth = value;
 }
 
 void NavigationWidget::walkFramesChanged(int value) {
-    tempConfig->viewerState->walkFrames = value;
+    state->viewerState->walkFrames = value;
 }
 
 void NavigationWidget::recenterTimeOrthoChanged(int value) {
-    tempConfig->viewerState->recenteringTimeOrth = value;
+    state->viewerState->recenteringTimeOrth = value;
 }
 
 void NavigationWidget::recenterTimeParallelChanged(int value) {
-    tempConfig->viewerState->recenteringTime = value;
+    state->viewerState->recenteringTime = value;
 }
 
-void NavigationWidget::normalModeButtonClicked(bool on) {
+void NavigationWidget::normalModeSelected(bool on) {
     if(on) {
         state->viewerState->autoTracingMode = AUTOTRACING_MODE_NORMAL;
     }
 }
 
-void NavigationWidget::additionalViewportDirectionMoveButtonClicked(bool on) {
+void NavigationWidget::additionalViewportDirectionMoveSelected(bool on) {
     if(on) {
         state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE;
     }
 }
 
-void NavigationWidget::additionalTracingDirectionMoveButtonClicked(bool on) {
+void NavigationWidget::additionalTracingDirectionMoveSelected(bool on) {
     if(on) {
         state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_TRACING_DIRECTION_MOVE;
     }
 }
 
-void NavigationWidget::additionalMirroredMoveButtonClicked(bool on) {
+void NavigationWidget::additionalMirroredMoveSelected(bool on) {
     if(on) {
         state->viewerState->autoTracingMode = AUTOTRACING_MODE_ADDITIONAL_MIRRORED_MOVE;
     }
@@ -185,6 +184,10 @@ void NavigationWidget::numberOfStepsChanged(int value) {
 void NavigationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
+
+}
+
+void NavigationWidget::resizeEvent(QResizeEvent *event) {
 
 }
 

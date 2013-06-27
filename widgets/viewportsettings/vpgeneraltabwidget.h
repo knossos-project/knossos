@@ -60,10 +60,10 @@ protected:
     QLabel *skeletonVisualizationLabel;
     QLabel *renderingQualityLabel;
     QSpinBox *renderingQualitySpinBox;
-    QCheckBox *lightEffectsButton;
-    QCheckBox *hightlightActiveTreeButton;
-    QCheckBox *showAllNodeIdsButton;
-    QCheckBox *overrideNodeRadiusButton;
+    QCheckBox *lightEffectsCheckBox;
+    QCheckBox *hightlightActiveTreeCheckBox;
+    QCheckBox *showAllNodeIdsCheckBox;
+    QCheckBox *overrideNodeRadiusCheckBox;
     QDoubleSpinBox *overrideNodeRadiusSpinBox;
 
     QDoubleSpinBox *edgeNodeRadiusRatioSpinBox;
