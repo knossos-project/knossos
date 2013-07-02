@@ -66,6 +66,7 @@ void ToolsWidget::loadSettings() {
     y = settings.value(POS_Y).toInt();
     visible = settings.value(VISIBLE).toBool();
 
+    /* Should n be saved */
     this->toolsQuickTabWidget->activeTreeSpinBox->setValue(settings.value(ACTIVE_TREE_ID).toInt());
     this->toolsQuickTabWidget->activeNodeSpinBox->setValue(settings.value(ACTIVE_NODE_ID).toInt());
     this->toolsQuickTabWidget->commentField->setText(settings.value(COMMENT).toString());
@@ -133,7 +134,9 @@ void ToolsWidget::updateDisplayedTree() {
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
     this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->treeElements);
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
-    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->activeNode->nodeID);
+    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->totalNodeElements);
+    this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->totalNodeElements);
+
     this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
     this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
     this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));

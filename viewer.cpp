@@ -253,6 +253,7 @@ Viewer::Viewer(QObject *parent) :
 
     /* from x to skeletonizer´s setters */
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
+
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
@@ -261,6 +262,9 @@ Viewer::Viewer(QObject *parent) :
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
     //connect(renderer, SIGNAL(renderTextSignal(int,int,int,QString)), vp4, SLOT(renderTextSlot(int,int,int,QString)));
+
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
     connect(vp->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));

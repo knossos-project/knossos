@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include "knossos-global.h"
 
 class QLabel;
 class QSpinBox;
@@ -40,6 +41,8 @@ public:
 signals:
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
+    void setActiveTreeSignal(int id);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

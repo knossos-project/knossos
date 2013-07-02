@@ -142,6 +142,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
     loadSettings();
+
+
 }
 
 void MainWindow::createViewports() {
@@ -465,8 +467,8 @@ void MainWindow::createActions()
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
 
-
     }
+
 
     /* edit skeleton actions */
     addNodeAction = new QAction(tr("&Add Node"), this);
@@ -552,6 +554,12 @@ void MainWindow::createActions()
 
 }
 
+void MainWindow::recentFileSelected(QAction *action) {
+    QString fileName = action->text();
+    char *cname = const_cast<char *>(fileName.toStdString().c_str());
+    loadSkeleton(cname);
+}
+
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu("&File");
@@ -562,9 +570,9 @@ void MainWindow::createMenus()
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         ////historyEntryActions[i]->setText(skeletonFileHistory->at(i));
-        recentFileMenu->addAction(historyEntryActions[i]);
-        historyEntryActions[i]->installEventFilter(this);
+        recentFileMenu->addAction(historyEntryActions[i]);   
     }
+    connect(recentFileMenu, SIGNAL(triggered(QAction*)), this, SLOT(recentFileSelected(QAction*)));
 
     fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
     fileMenu->addAction(QIcon("save_as"), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
@@ -662,7 +670,8 @@ void MainWindow::openSlot() {
 
 
         loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
-        if(!alreadyInMenu(path)) {
+
+        if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
         }
     }
@@ -670,7 +679,8 @@ void MainWindow::openSlot() {
 
 bool MainWindow::alreadyInMenu(const QString &path) {
     for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
-        if(QString::compare(skeletonFileHistory->at(i), path, Qt::CaseInsensitive)) {
+        qDebug() << skeletonFileHistory->at(i) << "_" << path;
+        if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseInsensitive)) {
             return true;
         }
     }
@@ -684,8 +694,10 @@ bool MainWindow::alreadyInMenu(const QString &path) {
 void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
     int i = 0;
+    qDebug() << "skel history size: " << skeletonFileHistory->size();
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
         QString path = *it;
+
         historyEntryActions[i]->setText(path);
         recentFileMenu->addAction(historyEntryActions[i]);
         i++;
@@ -694,7 +706,6 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-
     saveSkeleton("test", true);
 }
 
@@ -1025,6 +1036,8 @@ void MainWindow::coordinateEditingFinished() {
 
 void MainWindow::saveSettings() {
     QSettings settings;
+    qDebug() << settings.fileName();
+
     settings.beginGroup(MAIN_WINDOW);
     settings.setValue(WIDTH, this->width());
     settings.setValue(HEIGHT, this->height());
@@ -1032,6 +1045,8 @@ void MainWindow::saveSettings() {
     settings.setValue(POS_Y, this->y());
 
     for(int i = 0; i < skeletonFileHistory->size(); i++) {
+        qDebug() << skeletonFileHistory->at(i);
+        qDebug() << QString("loaded_file%1").arg(i+1);
         settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
     }
 
@@ -1051,52 +1066,54 @@ void MainWindow::saveSettings() {
  * this method is a proposal for the qsettings variant
  */
 void MainWindow::loadSettings() {
+    qDebug() << "load Settings";
     QSettings settings;
-    settings.beginGroup("MainWindow");
+    settings.beginGroup(MAIN_WINDOW);
     int width = settings.value(WIDTH).toInt();
     int height = settings.value(HEIGHT).toInt();
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
 
-    if(!settings.value(LOADED_FILE1).isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
+    qDebug() << settings.value(LOADED_FILE1).toString() << " loaded file 1";
+
+    if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
+        qDebug() << settings.value(LOADED_FILE1);
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
-    if(!settings.value(LOADED_FILE2).isNull() and !settings.value(LOADED_FILE2).toString().isEmpty()) {
+    if(!settings.value(LOADED_FILE2).toString().isNull() and !settings.value(LOADED_FILE2).toString().isEmpty()) {
+        qDebug() << settings.value(LOADED_FILE2);
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE2).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE3).isNull() and !settings.value(LOADED_FILE3).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE3).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE4).isNull() and !settings.value(LOADED_FILE4).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE4).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE5).isNull() and !settings.value(LOADED_FILE5).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE5).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE6).isNull() and !settings.value(LOADED_FILE6).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE6).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE7).isNull() and !settings.value(LOADED_FILE7).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE7).toString());
-        this->skeletonFileHistory->dequeue();
+
     }
     if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());
-        this->skeletonFileHistory->dequeue();
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());      
     }
     if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE9).toString());
-        this->skeletonFileHistory->dequeue();
     }
     if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());
-        this->skeletonFileHistory->dequeue();
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());      
     }
     this->updateFileHistoryMenu();
 
@@ -1113,25 +1130,6 @@ void MainWindow::loadSettings() {
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->toolsWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
-}
-
-/**
-  * This Event Filter is used to find out which of the elements of the 2d array historyEntryAction is clicked
-  */
-bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
-
-    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-        if(historyEntryActions[i] == obj) {
-           qDebug() << "jepp";
-           QString fileName = historyEntryActions[i]->text();
-           char *cname = const_cast<char *>(fileName.toStdString().c_str());
-           loadSkeleton(cname);
-           event->accept();
-           return true;
-        }
-    }
-
-    return false;
 }
 
 /**

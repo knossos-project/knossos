@@ -71,7 +71,6 @@ public:
     void createToolWidget();
     void createDataSavingWidget();
     void createSychronizationWidget();
-    bool eventFilter(QObject *obj, QEvent *event);
     void loadDefaultPrefs();
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
@@ -220,6 +219,7 @@ public slots:
     void saveSkelCallback();
     void saveSkeleton(QString fileName, int increment);
 
+    void recentFileSelected(QAction *action);
 };
 
 #endif // MAINWINDOW_H

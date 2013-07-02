@@ -1473,6 +1473,7 @@ typedef struct {
     printf("[%s:%d] ", __FILE__, __LINE__); \
     printf(__VA_ARGS__); \
     printf("\n"); \
+    fflush(stdout); \
     }
     /*if(state->viewerState->viewerReady) \
        AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/

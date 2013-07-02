@@ -1525,6 +1525,7 @@ bool Skeletonizer::loadSkeleton() {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
     }
 
+    /*
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&
        (loadedPosition.z != 0)) {
@@ -1534,10 +1535,10 @@ bool Skeletonizer::loadSkeleton() {
             loadedPosition.y - 1;
         state->viewerState->currentPosition.z =
             loadedPosition.z - 1;
-        /* @todo change to Signal loadSkeleton has to be non-static
+         @todo change to Signal loadSkeleton has to be non-static
         emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-        */
-    }
+
+} */
 
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     state->skeletonState->skeletonTime = skeletonTime;
@@ -2002,7 +2003,7 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
-            LOG("No node with id %d available.", nodeID);
+            qDebug("No node with id %d available.", nodeID);
             Knossos::unlockSkeleton(false);
             return false;
         }

@@ -54,7 +54,7 @@ public:
     Viewport *vp, *vp2, *vp3, *vp4;
     static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-    static bool setActiveTreeByID(int treeID);
+
     static int addNode(int targetRevision,
                     int nodeID,
                     float radius,
@@ -298,6 +298,7 @@ public slots:
     static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
     static int saveSkeleton();
+    static bool setActiveTreeByID(int treeID);
 
     /* Slots which manipulates attributes */
     void setZoomLevel(float value);

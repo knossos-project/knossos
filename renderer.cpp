@@ -38,6 +38,12 @@
     #include <GL/gl.h>
     #include <GL/glu.h>
 #endif
+#ifdef Q_OS_WIN
+    #include <GL/glu.h>
+    #include <windows.h>
+    #include <GL/glut.h>
+
+#endif
 #include "skeletonizer.h"
 #include "viewer.h"
 

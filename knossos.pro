@@ -129,7 +129,9 @@ linux {
 }
 
 
-win {
+win32 {
+    LIBS += -L$$PWD/../../mingw/lib/ -lglut32
+    INCLUDEPATH += $$PWD/../../mingw/include
 
 }
 

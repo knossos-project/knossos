@@ -143,12 +143,12 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 }
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-    activeTreeSpinBox->setMaximum(value);
+    emit setActiveTreeSignal(value);
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
-    /* @todo active node setzen */
-    state->skeletonState->activeNode->nodeID = value;
+    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, value);
+
     this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
     this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
     this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
