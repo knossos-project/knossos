@@ -1509,6 +1509,7 @@ uint32_t loadSkeleton() {
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
 
+
     currentCoordinate = malloc(sizeof(Coordinate));
     if(currentCoordinate == NULL) {
         LOG("Out of memory.");
@@ -1705,14 +1706,16 @@ uint32_t loadSkeleton() {
                         attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"ms");
                         if(attribute) {
                             state->skeletonState->idleTime = atoi((char*)attribute);
+                                LOG("non bfus idle time: %d", state->skeletonState->idleTime);
                             if(isObfuscatedTime(state->skeletonState->idleTime)) {
                                 state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
+
                             }
                         }
                     }
-                    else {
+                    /*else {
                         state->skeletonState->idleTime = 0;
-                    }
+                    }*/
                 }
                 currentXMLNode = currentXMLNode->next;
             }
@@ -1995,6 +1998,7 @@ uint32_t loadSkeleton() {
         updatePosition(TELL_COORDINATE_CHANGE);
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
     return TRUE;
 }
