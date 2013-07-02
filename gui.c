@@ -2768,7 +2768,8 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
 
     cpBaseDirectory(state->viewerState->ag->skeletonDirectory, filename, 2048);
 
-    shortFilename = malloc(2048);
+    shortFilename = malloc(8192);
+    memset(shortFilename, '\0', 8192);
     strncpy(shortFilename,
             filename + strlen(state->viewerState->ag->skeletonDirectory),
             strlen(filename) - strlen(state->viewerState->ag->skeletonDirectory));
