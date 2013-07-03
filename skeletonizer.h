@@ -25,9 +25,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <QtOpenGL>
+
 #include <QObject>
-#include <QMutex>
 #include "knossos-global.h"
 #include "viewport.h"
 

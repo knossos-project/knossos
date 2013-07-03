@@ -38,7 +38,7 @@ EventModel::EventModel(QObject *parent) :
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 {
 
-    int clickedNode;
+    uint clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
@@ -50,6 +50,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
                                                 event->x(),
                                                 (state->viewerState->screenSizeY - event->y()),
                                                 10);
+        qDebug() << clickedNode << " clicked node";
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
             return true;

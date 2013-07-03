@@ -2055,7 +2055,8 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     }
 
     if(node) {
-        state->viewerState->gui->activeNodeID = node->nodeID;
+        state->skeletonState->activeNode= node;
+        qDebug() << node->nodeID;
     }
 
 

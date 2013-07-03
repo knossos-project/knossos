@@ -59,6 +59,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     this->activeTreeLabel = new QLabel("Active Tree ID:");
     this->activeTreeSpinBox = new QSpinBox();
+    this->activeTreeSpinBox->setMinimum(1);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(activeTreeLabel, activeTreeSpinBox);
@@ -73,6 +74,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     activeNodeLabel = new QLabel("Active Node ID:");
     activeNodeSpinBox = new QSpinBox();
+    activeNodeSpinBox->setMinimum(1);
 
     QFormLayout *formLayout2 = new QFormLayout();
 
@@ -88,7 +90,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
     gridLayout2->addWidget(yLabel, 1, 2);
     gridLayout2->addWidget(zLabel, 1, 3);
     mainLayout->addLayout(gridLayout2);
-
 
     commentLabel = new QLabel("Comment:");
     commentField = new QLineEdit();
@@ -134,6 +135,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
 
     connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
+    connect(activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
     connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
     connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
@@ -147,11 +149,16 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
-    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, value);
 
-    this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-    this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-    this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+    qDebug() << " hier node changed";
+    emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
+
+
+    if(state->skeletonState->activeNode) {
+        this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+        this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+        this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+    }
 }
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {

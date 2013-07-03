@@ -1478,6 +1478,4 @@ typedef struct {
     /*if(state->viewerState->viewerReady) \
        AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/
 
-
-
 #endif

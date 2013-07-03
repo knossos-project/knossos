@@ -706,7 +706,8 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-    saveSkeleton("test", true);
+    saveSkeleton("test.001.nml", false);
+    updateTitlebar(false);
 }
 
 void MainWindow::saveAsSlot()
@@ -721,7 +722,7 @@ void MainWindow::saveAsSlot()
 
         QFile file(fileName);
         if(file.open(QIODevice::ReadWrite)) {
-            saveSkeleton(fileName, false);
+            saveSkeleton(fileName, true);
         }
 
         file.close();
@@ -732,7 +733,7 @@ void MainWindow::saveAsSlot()
 void MainWindow::saveSkelCallback() {
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
-            UI_saveSkeleton(true);
+            UI_saveSkeleton(false);
         } else {
             qDebug("No changes since last save event. Not saving.");
             return;

@@ -132,7 +132,7 @@ void ToolsWidget::saveSettings() {
 
 void ToolsWidget::updateDisplayedTree() {
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->treeElements);
+    this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
     this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->totalNodeElements);
     this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->totalNodeElements);
@@ -142,4 +142,7 @@ void ToolsWidget::updateDisplayedTree() {
     this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
     this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
     this->toolsQuickTabWidget->update();
+
 }
+
+
