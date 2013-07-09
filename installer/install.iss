@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Knossos"
-#define MyAppVersion "3.4.1"
+#define MyAppVersion "3.4.2"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
