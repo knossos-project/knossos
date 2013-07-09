@@ -26,10 +26,7 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
-#include <QLabel>
 #include <QFrame>
-#include <QSpinBox>
-#include <QLineEdit>
 #include <QPushButton>
 #include <QSpacerItem>
 #include "knossos-global.h"

@@ -33,7 +33,6 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QDoubleSpinBox>
-#include <QCheckBox>
 #include "skeletonizer.h"
 
 extern struct stateInfo *state;

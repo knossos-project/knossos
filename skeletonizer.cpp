@@ -677,10 +677,6 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
         return false;
     }
 
-    //
-        qDebug() << filename;
-    //
-
     memset(skeletonFileBase, '\0', 8192);
     memset(origFilename, '\0', 8192);
     strncpy(origFilename, filename, 8192 - 1);

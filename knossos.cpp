@@ -23,23 +23,13 @@
  */
 
 #include <QApplication>
-#include <QSplashScreen>
-#include <QPixmap>
-#include <QImage>
-#include <QRect>
-#include <QTimer>
 #include <QMutex>
 #include <QWaitCondition>
 
-#include "mainwindow.h"
 #include "knossos-global.h"
-#include "sleeper.h"
-#include "viewer.h"
-#include "skeletonizer.h"
-#include "loader.h"
-#include "remote.h"
-#include "client.h"
 #include "knossos.h"
+#include "mainwindow.h"
+#include "skeletonizer.h"
 #include "eventmodel.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
@@ -59,14 +49,25 @@ Viewer *viewer;
 //static uint isPathString(char *string);
 //static uint printUsage();
 
+Knossos::Knossos(QObject *parent) : QObject(parent) {
+    /*
+    this->loader = new Loader();
+
+    this->viewer = new Viewer();
+    this->remote = new Remote();
+    this->client = new Client();
+    */
+}
+
 
 int main(int argc, char *argv[])
 { 
     QApplication a(argc, argv);
-    QApplication::setKeyboardInputInterval(5);
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
+
+
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -291,6 +292,46 @@ int Knossos::initStates() {
        return false;
    memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
+   /* @arb
+   state->alpha = 0;
+
+    state->beta = 0;
+
+
+
+    floatCoordinate v1, v2, v3;
+
+    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
+
+
+
+    CPY_COORDINATE(state->viewerState->viewPorts[0].v1 , v1);
+
+    CPY_COORDINATE(state->viewerState->viewPorts[0].v2 , v2);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[0].n , v3);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[1].v1 , v1);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[1].v2 , v3);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[1].n , v2);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[2].v1 , v3);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[2].v2 , v2);
+
+   CPY_COORDINATE(state->viewerState->viewPorts[2].n , v1);
+
+
+
+   state->viewerState->viewPorts[0].type = VIEWPORT_ARBITRARY;
+
+   state->viewerState->viewPorts[1].type = VIEWPORT_ARBITRARY;
+
+   state->viewerState->viewPorts[2].type = VIEWPORT_ARBITRARY;
+    */
+
    for(int i = 0; i < state->viewerState->numberViewports; i++) {
        state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
        state->viewerState->vpConfigs[i].type = tempConfig->viewerState->vpConfigs[i].type;
@@ -374,10 +415,7 @@ int Knossos::initStates() {
    state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
    state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
    state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
-   SET_COORDINATE(state->skeletonState->lockedPosition,
-                  tempConfig->skeletonState->lockedPosition.x,
-                  tempConfig->skeletonState->lockedPosition.y,
-                  tempConfig->skeletonState->lockedPosition.y);
+   state->skeletonState->lockedPosition = tempConfig->skeletonState->lockedPosition;
    strcpy(state->skeletonState->onCommentLock, tempConfig->skeletonState->onCommentLock);
    state->skeletonState->branchpointUnresolved = tempConfig->skeletonState->branchpointUnresolved;
    state->skeletonState->autoFilenameIncrementBool = tempConfig->skeletonState->autoFilenameIncrementBool;
@@ -874,6 +912,21 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->viewerState->dropFrames = 1;
     tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->userMove = false;
+
+    /* @arb
+    tempConfig->viewerState->moveCache.x = 0.0;
+
+    tempConfig->viewerState->moveCache.y = 0.0;
+
+    tempConfig->viewerState->moveCache.z = 0.0;
+
+    tempConfig->viewerState->alphaCache = 0;
+
+    tempConfig->viewerState->betaCache = 0;
+
+    tempConfig->viewerState->modeArbitrary = 0;
+        */
+
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
     tempConfig->viewerState->filterType = GL_LINEAR;
@@ -1140,5 +1193,9 @@ void loadDefaultTreeLUT() {
         MainWindow::treeColorAdjustmentsChanged();
     }
 
+
+}
+
+void wire() {
 
 }

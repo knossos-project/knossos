@@ -116,4 +116,10 @@ fail:
 
 }
 
+void Coordinate::operator=(Coordinate const &rhs) {
+    x = rhs.x;
+    y = rhs.y;
+    z = rhs.z;
+
+}
 

@@ -26,12 +26,14 @@
  */
 
 #include <QWidget>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QLabel>
 #include "knossos-global.h"
 
 class QLabel;
-class QSpinBox;
 class QPushButton;
-class QLineEdit;
+
 class ToolsQuickTabWidget : public QWidget
 {
     friend class ToolsWidget;

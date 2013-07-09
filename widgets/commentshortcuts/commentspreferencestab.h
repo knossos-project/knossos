@@ -26,12 +26,11 @@
  */
 
 #include <QWidget>
-
+#include <QComboBox>
+#include <QDoubleSpinBox>
 class QLabel;
 class QCheckBox;
 class QLineEdit;
-class QComboBox;
-class QDoubleSpinBox;
 class CommentsPreferencesTab : public QWidget
 {
     friend class CommentsWidget;

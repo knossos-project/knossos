@@ -31,11 +31,15 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
-#include <QtOpenGL>
-#include <QWaitCondition>
-#include <QMutex>
-#include <QtNetwork>
-#include <QSet>
+/** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
+#include <QtOpenGL/qgl.h>
+#include <QtCore/QTime>
+#include <QtCore/qmutex.h>
+#include <QtCore/qwaitcondition.h>
+#include <QtNetwork/qhostinfo.h>
+#include <QtNetwork/qtcpsocket.h>
+#include <QtNetwork/qhostaddress.h>
+#include <QtCore/qset.h>
 
 #define KVERSION "3.4"
 
@@ -86,6 +90,7 @@
 #define VIEWPORT_YZ	2
 #define VIEWPORT_SKELETON 3
 #define VIEWPORT_UNDEFINED 4
+#define VIEWPORT_ARBITRARY 5
 /* VIEWPORT_ORTHO has the same value as the XY VP, this is a feature, not a bug.
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
 values. The XY vp always used. */
@@ -283,6 +288,7 @@ struct Coordinate{
     static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
+    void operator=(Coordinate const&rhs);
 
 };
 
@@ -383,9 +389,27 @@ typedef struct Hashtable{
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
 // is unavailable at that time.
+struct pxStripe{
+    uint32_t s;
+    uint32_t t1;
+    uint32_t t2;
+    floatCoordinate currentPxInDc_float;
+    struct pxStripe *next;
+};
+
+struct pxStripeList{
+    struct pxStripe *entry;
+    uint32_t elements;
+};
+
+
+// This is used for a linked list of datacube slices that have to be processed for a given viewport.
+// A backlog is generated when we want to retrieve a specific slice from a dc but that dc
+// is unavailable at that time.
 struct vpBacklogElement {
 	Byte *slice;
     Coordinate cube;
+    pxStripeList *stripes;
 	// I guess those aren't really necessary.
 	uint x_px;
 	uint y_px;
@@ -441,6 +465,7 @@ struct assignment {
 
 struct stateInfo {
 
+    float alpha, beta;
     //  Info about the data
     // Use overlay cubes to color the data.
     bool overlay;
@@ -806,6 +831,18 @@ struct guiConfig {
   *        as well as flags about user interaction with the widget
   */
 struct vpConfig {
+    floatCoordinate n;
+    floatCoordinate v1;
+    floatCoordinate v2;
+    floatCoordinate leftUpperPxInAbsPx_float;
+    floatCoordinate leftUpperDataPxOnScreen_float;
+    int s_max;
+    int t_max;
+    int x_offset;
+    int y_offset;
+
+    Byte* viewPortData;
+
     struct viewportTexture texture;
 
     //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
@@ -871,6 +908,14 @@ struct vpConfig {
   * @brief TODO
   */
 struct viewerState {
+
+    //Cache for Movements smaller than pixel coordinate
+    floatCoordinate moveCache;
+    //flag for arbitrarySlicing
+    uint modeArbitrary;
+    int alphaCache;
+    int betaCache;
+
     struct vpConfig *vpConfigs;
     Byte *texData;
     Byte *overlayData;
@@ -1427,12 +1472,21 @@ typedef struct {
 
 #define COMPARE_COORDINATE(c1, c2)  (((c1).x == (c2).x) && ((c1).y == (c2).y) && ((c1).z == (c2).z))
 
+#define CONTAINS_COORDINATE(c1, c2, c3) ( ((c2).x <= (c1).x)&&((c1).x <= (c3).x) && ((c2).y <= (c1).y)&&((c1).y <= (c3).y) && ((c2).z <= (c1).z)&&((c1).z <= (c3).z) )
+
 #define ADD_COORDINATE(c1, c2) \
 	{ \
 			(c1).x += (c2).x; \
 			(c1).y += (c2).y; \
 			(c1).z += (c2).z; \
 	}
+
+#define MUL_COORDINATE(c1, f) \
+    {\
+            (c1).x *= f;\
+            (c1).y *= f;\
+            (c1).z *= f;\
+    }
 
 #define SUB_COORDINATE(c1, c2) \
 	{ \

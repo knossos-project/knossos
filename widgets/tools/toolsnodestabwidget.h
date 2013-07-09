@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include <QCheckBox>
 #include "knossos-global.h"
 
 class QLabel;
@@ -33,7 +34,7 @@ class QSpinBox;
 class QDoubleSpinBox;
 class QPushButton;
 class QLineEdit;
-class QCheckBox;
+
 class ToolsNodesTabWidget : public QWidget
 {
     friend class ToolsWidget;

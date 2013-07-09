@@ -40,7 +40,6 @@
  *  event loop and routines that handle (extract slices, pack into openGL textures,...) the data coming
  *  from the loader thread.
  */
-
 class Skeletonizer;
 class Renderer;
 class Viewport;
@@ -83,13 +82,40 @@ signals:
     void updateCoordinatesSignal(int x, int y, int z);
     void idleTimeSignal();
 protected:
+    bool resetViewPortData(vpConfig *viewport);
+
+    pxStripeList *stripesNew();
+    bool pxStripeListDelElement(struct pxStripeList *stripes, struct pxStripe *stripe);
+    bool pxStripeListDel(struct pxStripeList *stripes);
+    bool addPxStripe(struct vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
+
+
+    bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
+    bool vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
+
+    bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState);
+    bool vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
+
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool sliceExtract_standard_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_standard_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
+
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool sliceExtract_adjust_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_adjust_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float,  int s, int t1, int t2);
+
     bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
+    bool dcSliceExtract_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool dcSliceExtract_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
+
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
+
+
+
 public slots:
     bool changeDatasetMag(uint upOrDownFlag);
     bool userMove(int x, int y, int z, int serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool userMove_arb(float x, float y, float z, int serverMovement);
     bool updatePosition(int serverMovement);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();

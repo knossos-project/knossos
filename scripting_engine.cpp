@@ -1,6 +1,14 @@
 #include "scripting_engine.h"
 #include "structmember.h"
 
+#include <QtCore/qbytearray.h>
+#include <QtCore/qmetatype.h>
+#include <QtCore/qobject.h>
+#include "knossos-global.h"
+
+extern stateInfo *state;
+
+
 typedef struct {
     PyObject_HEAD
     int skeletonRevision;
@@ -8,22 +16,39 @@ typedef struct {
 
 } SkeletonObject;
 
-static void dealloc(SkeletonObject *obj) {
-    Py_XDECREF(obj);
-    obj->ob_type->tp_free((PyObject *) obj);
+static void dealloc(SkeletonObject *self) {
+    Py_XDECREF(self);
+    self->ob_type->tp_free((PyObject *) self);
 }
 
 static int init(SkeletonObject *self, PyObject *args, PyObject *kwds) {
     return 0;
 }
 
+static PyObject *foo(PyObject *self, PyObject *args) {
+    int a;
+
+    PyArg_ParseTuple(args, "i", &a);
+
+    printf("%i", a);
+
+    Py_RETURN_NONE;
+}
+
+
 static PyMemberDef members[] = {
     { "skeletonRevision", T_INT, offsetof(SkeletonObject, skeletonRevision), 0, "the skeleton revision"},
-    { "unsavedChanges", T_BOOL, offsetof(SkeletonObject, unsavedChanges), 0, "are there any unsaved changes" },
+    { "unsavedChanges", T_BOOL, offsetof(SkeletonObject, unsavedChanges), READONLY, "are there any unsaved changes" },
     {NULL} /* sentinel(is always the last entry) */
 };
 
 static PyMethodDef methods[] = {
+    { "func", (PyCFunction) foo, METH_VARARGS, NULL},
+    {NULL} /* sentinel(is always the last entry) */
+};
+
+static PyGetSetDef getter_and_setter[] = {
+    { },
     {NULL} /* sentinel(is always the last entry) */
 };
 
@@ -83,7 +108,7 @@ static PyTypeObject SkeletonObjectType = {
 
 
 /** the PyMODINIT_FUNC is the entry point for any intialization.
-    the name of this function has to init + "name of the module" which is determined by convention
+    the name of this function has to be init + "name of the module" which is determined by convention
 */
 PyMODINIT_FUNC
 initknossos(void) {

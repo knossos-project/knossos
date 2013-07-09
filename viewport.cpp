@@ -39,7 +39,6 @@ extern stateInfo *state;
   */
 Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
-    setAttribute(Qt::WA_KeyCompression, true);
     delegate = new EventModel();
     connect(delegate, SIGNAL(rerender()), this, SLOT(updateGL()));
 

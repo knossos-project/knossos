@@ -24,12 +24,24 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <QObject>
+#include <qobject.h>
 #include <QtOpenGL>
+#include "mainwindow.h"
+#include "loader.h"
+#include "viewer.h"
+#include "remote.h"
+#include "client.h"
 
 class Knossos : public QObject {
     Q_OBJECT
 public:
+    MainWindow *window;
+    Loader *loader;
+    Viewer *viewer;
+    Remote *remote;
+    Client *client;
+
+
     explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
@@ -42,18 +54,18 @@ public:
     static bool tempConfigDefaults();
     static bool configFromCli(int argCount, char *arguments[]);
     static void catchSegfault(int signum);
-    static int32_t initStates();
+    static int initStates();
 
-    static bool unlockSkeleton(int32_t increment);
-    static bool lockSkeleton(uint32_t targetRevision);
+    static bool unlockSkeleton(int increment);
+    static bool lockSkeleton(uint targetRevision);
     static bool sendRemoteSignal();
     static bool sendClientSignal();
     static bool sendQuitSignal();
     static bool sendServerSignal();
-    static uint32_t log2uint32(register uint32_t x);
-    static uint32_t ones32(register uint32_t x);
+    static uint log2uint32(register uint x);
+    static uint ones32(register uint x);
     static void loadTreeLUTFallback();
-
+    void wire();
 
 
 signals:
@@ -61,12 +73,4 @@ signals:
 
 };
 
-
-/*
-2. Funktion zum durch-switchen von nodes ohne comment, auch branchpoints ohne comment sollen dabei gefunden werden (fuer offizielle Version nicht noetig)
-1. Menu schlieﬂen bei klick irgendwo rein
-2. cursor wechsel resize
-3. allg. cursor Fadenkreuz
-
-*/
 #endif

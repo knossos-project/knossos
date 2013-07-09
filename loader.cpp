@@ -35,6 +35,7 @@ Loader::Loader(QObject *parent) :
 
 }
 
+
 bool Loader::addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, Hashtable *target) {
     Coordinate currentDc;
     int x, y, z;

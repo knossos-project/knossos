@@ -30,8 +30,6 @@
 #include <QKeyEvent>
 #include <QWheelEvent>
 #include <stdint.h>
-#include <math.h>
-
 #include "knossos-global.h"
 #include "renderer.h"
 

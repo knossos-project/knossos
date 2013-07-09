@@ -157,8 +157,11 @@ public:
     void createCoordBarWin();
     void createViewports();
 
+
     void saveSettings();
     void loadSettings();
+    void clearSettings();
+
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);
 
@@ -218,7 +221,6 @@ public slots:
     void UI_saveSkeleton(int increment);
     void saveSkelCallback();
     void saveSkeleton(QString fileName, int increment);
-
     void recentFileSelected(QAction *action);
 };
 

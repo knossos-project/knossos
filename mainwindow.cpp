@@ -257,8 +257,9 @@ static void updateGuiconfig() {
 }
 
 
-
+/* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
+
     char *filename;
     if(state->skeletonState->skeletonFile) {
 #ifdef Q_OS_UNIX
@@ -316,7 +317,6 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
 
 }
 
-
 bool MainWindow::addRecentFile(const QString &fileName) {
     if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
         skeletonFileHistory->enqueue(fileName);
@@ -328,8 +328,6 @@ bool MainWindow::addRecentFile(const QString &fileName) {
     updateFileHistoryMenu();
     return true;
 }
-
-
 
 /* */
 void MainWindow::UI_saveSkeleton(int increment) { }
@@ -469,7 +467,6 @@ void MainWindow::createActions()
 
     }
 
-
     /* edit skeleton actions */
     addNodeAction = new QAction(tr("&Add Node"), this);
     addNodeAction->setCheckable(true);
@@ -563,7 +560,7 @@ void MainWindow::recentFileSelected(QAction *action) {
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu("&File");
-    fileMenu->addAction(QIcon("open"), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     recentFileMenu = fileMenu->addMenu("Recent File(s)");
 
     /* History Entries */
@@ -574,8 +571,8 @@ void MainWindow::createMenus()
     }
     connect(recentFileMenu, SIGNAL(triggered(QAction*)), this, SLOT(recentFileSelected(QAction*)));
 
-    fileMenu->addAction(QIcon("save"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon("save_as"), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
+    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon("quit"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
@@ -613,7 +610,6 @@ void MainWindow::createMenus()
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
 
@@ -706,26 +702,20 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-    saveSkeleton("test.001.nml", false);
-    updateTitlebar(false);
+
+    saveSkeleton(state->skeletonState->skeletonFile, false);
+    updateTitlebar(true);
+
 }
 
 void MainWindow::saveAsSlot()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(),"KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
-        QFileInfo info(fileName);
 
-        // override the skeletonDirectory
-        memset(state->viewerState->gui->skeletonDirectory, '\0', 8192);
-        strcpy(state->viewerState->gui->skeletonDirectory, const_cast<char *>(info.canonicalPath().toStdString().c_str()));
+        state->skeletonState->skeletonFile = const_cast<char *>(fileName.toStdString().c_str());
+        saveSkeleton(QString(state->skeletonState->skeletonFile), false);
 
-        QFile file(fileName);
-        if(file.open(QIODevice::ReadWrite)) {
-            saveSkeleton(fileName, true);
-        }
-
-        file.close();
     }
 
 }
@@ -748,11 +738,11 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
         return;
     }
 
-    QFile saveFile(fileName);
     char *cpath = const_cast<char *>(fileName.toStdString().c_str());
 
+    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, false, cpath);
+    QFile saveFile(cpath);
     if(saveFile.open(QIODevice::ReadWrite)) {
-        emit updateSkeletonFileNameSignal(CHANGE_MANUAL, state->skeletonState->autoFilenameIncrementBool, cpath);
         int saved = Skeletonizer::saveSkeleton();
 
         if(saved == FAIL) {
@@ -770,6 +760,7 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
     } else {
 
     }
+
 }
 
 void MainWindow::quitSlot()
@@ -852,7 +843,7 @@ void MainWindow::recenterOnClickSlot()
 {
    state->viewerState->workMode = ON_CLICK_RECENTER;
    if(dragDatasetAction->isChecked()) {
-       dragDatasetAction->setChecked(true);
+       dragDatasetAction->setChecked(false);
    }
 }
 
@@ -904,6 +895,7 @@ void MainWindow::defaultPreferencesSlot() {
 
     switch(ret) {
         case QMessageBox::Yes:
+            clearSettings();
             break;
     case QMessageBox::No:
            break;
@@ -1132,6 +1124,16 @@ void MainWindow::loadSettings() {
     widgetContainer->toolsWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
 }
+
+void MainWindow::clearSettings() {
+    QSettings settings;
+
+    QStringList keys = settings.allKeys();
+    for(int i = 0; i < keys.size(); i++) {
+        settings.remove(keys.at(i));
+    }
+}
+
 
 /**
   * @todo

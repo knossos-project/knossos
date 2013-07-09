@@ -32,6 +32,7 @@
 #include <QPushButton>
 #include <QFormLayout>
 #include <QVariant>
+#include <QMessageBox>
 #include "knossos-global.h"
 
 extern struct stateInfo *state;

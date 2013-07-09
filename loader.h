@@ -36,8 +36,8 @@ public:
     explicit Loader(QObject *parent = 0);
     void run();
 
-    Hashtable *Dcoi;
 
+    Hashtable *Dcoi;
     CubeSlotList *freeDcSlots;
     CubeSlotList *freeOcSlots;
     Byte *DcSetChunk;
@@ -48,7 +48,7 @@ signals:
     void finished();
 public slots:
     void load();
-protected:
+protected:    
     bool initialized;
     bool addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, Hashtable *target);
     bool DcoiFromPos(Hashtable *Dcoi);

@@ -25,6 +25,9 @@
 #include "tracingtimewidget.h"
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QTimer>
+#include <QSettings>
+#include <math.h>
 #include "GUIConstants.h"
 #include "knossos-global.h"
 

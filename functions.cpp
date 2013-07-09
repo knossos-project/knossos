@@ -1,4 +1,5 @@
 #include "functions.h"
+#include <math.h>
 
 int roundFloat(float number) {
     if(number >= 0) return (int)(number + 0.5);

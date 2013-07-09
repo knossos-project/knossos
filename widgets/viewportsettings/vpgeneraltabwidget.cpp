@@ -24,9 +24,11 @@
 
 #include "vpgeneraltabwidget.h"
 #include <QLabel>
+#include <QCheckBox>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QRadioButton>
+#include <QPushButton>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFrame>

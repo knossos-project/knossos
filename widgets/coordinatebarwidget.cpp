@@ -1,5 +1,8 @@
 #include "coordinatebarwidget.h"
 #include "knossos-global.h"
+#include <QPushButton>
+#include <QSpinBox>
+#include <QLabel>
 
 extern struct stateInfo *state;
 
