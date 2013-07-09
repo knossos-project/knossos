@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include "../toolswidget.h"
 
 class QLabel;
 class QSpinBox;
@@ -37,10 +38,12 @@ class ToolsTreesTabWidget : public QWidget
     friend class ToolsWidget;
     Q_OBJECT
 public:
-    explicit ToolsTreesTabWidget(QWidget *parent = 0);
-
+    explicit ToolsTreesTabWidget(ToolsWidget *parent = 0);
+    ToolsWidget *ref;
 signals:
+    void setActiveTreeSignal(int id);
     void delActiveTreeSignal();
+    void updateToolsSignal();
 public slots:
     void activeTreeIDChanged(int value);
     void commentChanged(QString comment);

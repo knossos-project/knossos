@@ -4,6 +4,12 @@
 WidgetContainer::WidgetContainer(MainWindow *parent) :
     QObject(parent)
 {
+
+}
+
+void WidgetContainer::rewire() {
+    connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
 }
 
 void WidgetContainer::createConsoleWidget() {
@@ -81,4 +87,5 @@ void WidgetContainer::createWidgets() {
     createDataSavingWidget();
     createSychronizationWidget();
     createCoordBarWidget();
+    rewire();
 }

@@ -45,7 +45,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
     this->plane = plane;
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
-    this->setMouseTracking(true);
+    //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
 
     if(plane == VIEWPORT_SKELETON + 10) {
@@ -231,8 +231,10 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
+    delegate->mouseX = event->x();
+    delegate->mouseY = event->y();
 
-    qDebug() << "pressEvent";
+    //qDebug() << "pressEvent";
 
     if(event->button() == Qt::LeftButton) {
         handleMouseButtonLeft(event, plane);
@@ -247,8 +249,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
-    delegate->mouseX = event->x();
-    delegate->mouseY = event->y();
+
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {

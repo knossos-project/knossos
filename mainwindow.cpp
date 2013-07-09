@@ -1111,8 +1111,6 @@ void MainWindow::loadSettings() {
     this->updateFileHistoryMenu();
 
     settings.endGroup();
-
-    bool visible;
     this->setGeometry(x, y, width, height);
 
     widgetContainer->commentsWidget->loadSettings();
@@ -1121,7 +1119,7 @@ void MainWindow::loadSettings() {
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
-    widgetContainer->toolsWidget->loadSettings();
+    //widgetContainer->toolsWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
 }
 

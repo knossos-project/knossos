@@ -27,12 +27,15 @@
 
 #include <QDialog>
 #include <QTabWidget>
+#include <QList>
+
 
 class ToolsQuickTabWidget;
 class ToolsTreesTabWidget;
 class ToolsNodesTabWidget;
 class ToolsWidget : public QDialog
 {
+
     Q_OBJECT
 public:
     explicit ToolsWidget(QWidget *parent = 0);
@@ -41,6 +44,10 @@ public:
     ToolsTreesTabWidget *toolsTreesTabWidget;
     void loadSettings();
     void saveSettings();
+    int findTreeIndex(int value);
+    int findNodeIndex(int value);
+    QList<int> *trees;
+    QList<int> *nodes;
 signals:
     void uncheckSignal();
 public slots:
@@ -48,7 +55,6 @@ public slots:
 protected:
     void closeEvent(QCloseEvent *event);
     QTabWidget *tabs;
-
 };
 
 #endif // TOOLSWIDGET_H

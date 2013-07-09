@@ -23,6 +23,7 @@
  */
 
 #include "toolsquicktabwidget.h"
+#include "../toolswidget.h"
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
@@ -32,11 +33,13 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 
+
 extern struct stateInfo *state;
 
-ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
+ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     QWidget(parent)
 {
+    ref = parent;
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     treeCountLabel = new QLabel("Tree Count: 0");
@@ -56,7 +59,8 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 
     this->activeTreeLabel = new QLabel("Active Tree ID:");
     this->activeTreeSpinBox = new QSpinBox();
-    this->activeTreeSpinBox->setMinimum(1);
+    this->activeTreeSpinBox->setMaximum(0);
+    this->activeTreeSpinBox->setMinimum(0);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(activeTreeLabel, activeTreeSpinBox);
@@ -142,7 +146,28 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(QWidget *parent) :
 }
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-    emit setActiveTreeSignal(value);
+    if(activeTreeSpinBox->minimum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->minimum())
+        return;
+
+    if(activeTreeSpinBox->maximum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->maximum())
+        return;
+
+    if(!state->skeletonState->activeTree)
+        return;
+
+    int currentIndex = state->skeletonState->activeTree->treeID;
+    int nextIndex = ref->findTreeIndex(value);
+
+    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
+        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex + 1));
+        emit setActiveTreeSignal(ref->trees->at(nextIndex + 1));
+    } else if(currentIndex > nextIndex and nextIndex > 0) {
+        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex - 1));
+        emit setActiveTreeSignal(ref->trees->at(nextIndex - 1));
+    }
+
+
+    emit updateToolsSignal();
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
@@ -183,13 +208,13 @@ void ToolsQuickTabWidget::findPreviousButtonClicked() {
 
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
     Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+    this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }
 
-/**
-  * @bug the application crashes while invoking popBranchNode
-  */
+
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
+    this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }
 
 

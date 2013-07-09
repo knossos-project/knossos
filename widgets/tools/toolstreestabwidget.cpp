@@ -38,11 +38,14 @@
 #include "skeletonizer.h"
 extern struct stateInfo *state;
 
-ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
+ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     QWidget(parent)
 {
+    ref = parent;
     activeTreeLabel = new QLabel("Active Tree ID:");
     activeTreeSpinBox = new QSpinBox();
+    this->activeTreeSpinBox->setMaximum(0);
+    this->activeTreeSpinBox->setMinimum(0);
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
@@ -66,12 +69,16 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
 
     rSpinBox = new QDoubleSpinBox();
     rSpinBox->setSingleStep(0.01);
+    rSpinBox->setMaximum(1);
     gSpinBox = new QDoubleSpinBox();
     gSpinBox->setSingleStep(0.01);
+    gSpinBox->setMaximum(1);
     bSpinBox = new QDoubleSpinBox();
     bSpinBox->setSingleStep(0.01);
+    bSpinBox->setMaximum(1);
     aSpinBox = new QDoubleSpinBox();
     aSpinBox->setSingleStep(0.01);
+    aSpinBox->setMaximum(1);
 
     mergeTreesButton = new QPushButton("Merge Trees");
     this->restoreDefaultColorButton = new QPushButton("Restore default color");
@@ -167,14 +174,33 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(QWidget *parent) :
 
 
 void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
-    state->viewerState->gui->activeTreeID = value;
+    if(activeTreeSpinBox->minimum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->minimum())
+        return;
+
+    if(activeTreeSpinBox->maximum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->maximum())
+        return;
+
+    if(!state->skeletonState->activeTree)
+        return;
+
+    int currentIndex = state->skeletonState->activeTree->treeID;
+    int nextIndex = ref->findTreeIndex(value);
+
+    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
+        emit setActiveTreeSignal(ref->trees->at(nextIndex + 1));
+    } else if(currentIndex > nextIndex and nextIndex > 0) {
+        emit setActiveTreeSignal(ref->trees->at(nextIndex - 1));
+    }
+
+    emit updateToolsSignal();
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
     int retValue = QMessageBox::warning(this, "Warning", "Do you really want to delete the active tree", QMessageBox::Yes, QMessageBox::No);
     switch(retValue) {
         case QMessageBox::Yes:
-        emit delActiveTreeSignal();
+            emit delActiveTreeSignal();
+            emit updateToolsSignal();
 
     }
 }
@@ -187,6 +213,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
     treeCol.a = 1;
     Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    emit updateToolsSignal();
 }
 
 void ToolsTreesTabWidget::commentChanged(QString comment) {
@@ -213,18 +240,23 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
 
 void ToolsTreesTabWidget::rChanged(double value) {
     state->viewerState->gui->actTreeColor.r = value;
+    state->skeletonState->activeTree->color.r = state->viewerState->gui->actTreeColor.r;
 }
 
 void ToolsTreesTabWidget::gChanged(double value) {
     state->viewerState->gui->actTreeColor.g = value;
+    state->skeletonState->activeTree->color.g = state->viewerState->gui->actTreeColor.g;
 }
 
 void ToolsTreesTabWidget::bChanged(double value) {
     state->viewerState->gui->actTreeColor.b = value;
+    state->skeletonState->activeTree->color.b = state->viewerState->gui->actTreeColor.b;
 }
 
 void ToolsTreesTabWidget::aChanged(double value) {
     state->viewerState->gui->actTreeColor.a = value;
+    state->skeletonState->activeTree->color.a = state->viewerState->gui->actTreeColor.a;
+
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {

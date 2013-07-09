@@ -332,7 +332,7 @@ int Knossos::initStates() {
    state->viewerState->viewPorts[2].type = VIEWPORT_ARBITRARY;
     */
 
-   for(int i = 0; i < state->viewerState->numberViewports; i++) {
+   for(uint i = 0; i < state->viewerState->numberViewports; i++) {
        state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
        state->viewerState->vpConfigs[i].type = tempConfig->viewerState->vpConfigs[i].type;
        state->viewerState->vpConfigs[i].draggedNode = tempConfig->viewerState->vpConfigs[i].draggedNode;
@@ -957,7 +957,7 @@ bool Knossos::tempConfigDefaults() {
 
     memset(tempConfig->viewerState->vpConfigs, '\0', tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
 
-    for(int i = 0; i < tempConfig->viewerState->numberViewports; i++) {
+    for(uint i = 0; i < tempConfig->viewerState->numberViewports; i++) {
         switch(i) {
         case VIEWPORT_XY:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);

@@ -30,6 +30,7 @@ class WidgetContainer : public QObject
     Q_OBJECT
 public:
     explicit WidgetContainer(MainWindow *parent = 0);
+    void rewire();
     void createConsoleWidget();
     void showConsoleWidget();
     void createTracingTimeWidget();

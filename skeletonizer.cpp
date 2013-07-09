@@ -252,6 +252,7 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
         if(currentTree->treeID == treeID) {
             return currentTree;
         }
+        qDebug() << currentTree->treeID << " id";
         currentTree = currentTree->next;
     }
     return NULL;
@@ -1972,6 +1973,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         LOG("There exists no tree with ID %d!", treeID);
         return false;
     }
+    qDebug() << state->skeletonState->activeTree->treeID << " new tid";
 
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = true;
@@ -3583,12 +3585,14 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
         LOG("Branch point (node ID %d) deleted.", branchNodeID);
 #endif
 
+        /*
         state->viewerState->currentPosition.x
             = branchNode->position.x;
         state->viewerState->currentPosition.y
             = branchNode->position.y;
         state->viewerState->currentPosition.z
             = branchNode->position.z;
+        */
 
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 

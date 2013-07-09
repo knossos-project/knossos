@@ -32,15 +32,19 @@
 
 extern stateInfo *state;
 
+
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Tools");
     tabs = new QTabWidget(this);
 
-    this->toolsQuickTabWidget = new ToolsQuickTabWidget();
-    this->toolsNodesTabWidget = new ToolsNodesTabWidget();
-    this->toolsTreesTabWidget = new ToolsTreesTabWidget();
+    this->trees = new QList<int>();
+    this->nodes = new QList<int>();
+
+    this->toolsQuickTabWidget = new ToolsQuickTabWidget(this);
+    this->toolsNodesTabWidget = new ToolsNodesTabWidget(this);
+    this->toolsTreesTabWidget = new ToolsTreesTabWidget(this);
 
     tabs->addTab(toolsQuickTabWidget, "Quick");
     tabs->addTab(toolsTreesTabWidget, "Trees");
@@ -131,18 +135,66 @@ void ToolsWidget::saveSettings() {
 }
 
 void ToolsWidget::updateDisplayedTree() {
+    if(!trees->contains(state->skeletonState->treeElements))
+        trees->append(state->skeletonState->treeElements);
+    if(!nodes->contains(state->skeletonState->totalNodeElements))
+        nodes->append(state->skeletonState->totalNodeElements);
+
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
     this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
+    if(state->skeletonState->activeTree) {
+
+        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+        this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(1);
+    } else {
+        //this->toolsQuickTabWidget->activeNodeSpinBox->setEnabled(false);
+        this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
+        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
+
+    }
+
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
     this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->totalNodeElements);
     this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->totalNodeElements);
 
-    this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-    this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-    this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+    if(state->skeletonState->activeNode) {
+        this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+        this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+        this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+    }
     this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
     this->toolsQuickTabWidget->update();
 
+
+    if(state->skeletonState->activeTree) {
+        this->toolsTreesTabWidget->activeTreeSpinBox->setEnabled(true);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(1);
+    } else {
+        //his->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
+        //this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setEnabled(false);
+    }
+
 }
 
+int ToolsWidget::findTreeIndex(int value) {
+    for(int index = 0; index < trees->size(); index++) {
+        if(trees->at(index) == value)
+            return index;
+    }
+
+    return 0;
+}
+
+int ToolsWidget::findNodeIndex(int value) {
+
+    for(int index = 0; index < nodes->size(); index++) {
+        if(trees->at(index) == value)
+            return index;
+    }
+
+    return 0;
+}
 

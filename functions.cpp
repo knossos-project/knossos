@@ -50,4 +50,3 @@ floatCoordinate* crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
-

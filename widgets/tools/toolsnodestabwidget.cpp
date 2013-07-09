@@ -37,7 +37,7 @@
 
 extern struct stateInfo *state;
 
-ToolsNodesTabWidget::ToolsNodesTabWidget(QWidget *parent) :
+ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     QWidget(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();

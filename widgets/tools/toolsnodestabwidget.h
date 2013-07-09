@@ -28,6 +28,7 @@
 #include <QWidget>
 #include <QCheckBox>
 #include "knossos-global.h"
+#include "../toolswidget.h"
 
 class QLabel;
 class QSpinBox;
@@ -40,7 +41,7 @@ class ToolsNodesTabWidget : public QWidget
     friend class ToolsWidget;
     Q_OBJECT
 public:
-    explicit ToolsNodesTabWidget(QWidget *parent = 0);
+    explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);
 signals:
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();
