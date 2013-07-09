@@ -1140,6 +1140,11 @@ int32_t saveSkeleton() {
     xmlNewProp(currentXMLNode, BAD_CAST"lockToNodesWithComment", attrString);
     memset(attrString, '\0', 128);
 
+    currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"skeletonDisplayMode", NULL);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%d", state->skeletonState->displayMode);
+    xmlNewProp(currentXMLNode, BAD_CAST"displayModeBitFlags", attrString);
+    memset(attrString, '\0', 128);
+
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"time", NULL);
     time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks();
     //LOG("saved time: %d", time);
@@ -1686,6 +1691,13 @@ uint32_t loadSkeleton() {
                         state->skeletonState->zoomLevel = atof((char *)attribute);
                 }
 
+                if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"skeletonDisplayMode")) {
+                    attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"displayModeBitFlags");
+                    if(attribute){
+                        state->skeletonState->displayMode = atoi((char *)attribute);
+                    }
+                }
+
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"RadiusLocking")) {
                     attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"enableCommentLocking");
                     if(attribute){
@@ -1998,6 +2010,19 @@ uint32_t loadSkeleton() {
         updatePosition(TELL_COORDINATE_CHANGE);
     }
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+
+    if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
+        state->viewerState->ag->enableOrthoSkelOverlay = 0;
+    }
+    else{
+        state->viewerState->ag->enableOrthoSkelOverlay = 1;
+    }
+    if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE)
+        state->viewerState->ag->radioSkeletonDisplayMode = 0;
+    if(state->skeletonState->displayMode & DSP_ACTIVETREE)
+        state->viewerState->ag->radioSkeletonDisplayMode = 1;
+    if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE)
+        state->viewerState->ag->radioSkeletonDisplayMode = 2;
 
     state->skeletonState->skeletonTimeCorrection = SDL_GetTicks();
     return TRUE;

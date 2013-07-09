@@ -4106,10 +4106,6 @@ remote port
         xmlNewProp(currentXMLNode, BAD_CAST"renderingQuality", attrString);
 
         memset(attrString, '\0', 1024);
-        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->displayMode);
-        xmlNewProp(currentXMLNode, BAD_CAST"displayModeBitFlags", attrString);
-
-        memset(attrString, '\0', 1024);
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->showPosSizButtons);
         xmlNewProp(currentXMLNode, BAD_CAST"showPosSizButtons", attrString);
 
@@ -4557,9 +4553,6 @@ static void UI_loadSettings() {
             if(attribute)
                 state->viewerState->cumDistRenderThres = atof((char *)attribute);
 
-            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"displayModeBitFlags");
-            if(attribute)
-                state->skeletonState->displayMode = atoi((char *)attribute);
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"showPosSizButtons");
             if(attribute){
                 state->viewerState->showPosSizButtons = atoi((char *)attribute);
@@ -4732,19 +4725,6 @@ static void UI_loadSettings() {
 
     xmlFreeDoc(xmlDocument);
     state->viewerState->ag->enableOrthoSkelOverlay = 1;
-    if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
-        state->viewerState->ag->enableOrthoSkelOverlay = 0;
-    }
-    if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE)
-        state->viewerState->ag->radioSkeletonDisplayMode = 0;
-    if(state->skeletonState->displayMode & DSP_SKEL_VP_CURRENTCUBE)
-        state->viewerState->ag->radioSkeletonDisplayMode = 1;
-    if(state->skeletonState->displayMode & DSP_ACTIVETREE)
-        state->viewerState->ag->radioSkeletonDisplayMode = 2;
-    if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE)
-        state->viewerState->ag->radioSkeletonDisplayMode = 3;
-    if(state->skeletonState->displayMode & DSP_LINES_POINTS)
-        state->viewerState->ag->radioRenderingModel = 0;
 
     LOG("loaded GUI settings from file %s.", state->viewerState->ag->settingsFile);
 
