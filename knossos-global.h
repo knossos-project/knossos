@@ -462,9 +462,10 @@ struct assignment {
   *
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern struct stateInfo
   */
-
+#include "widgets/console.h"
 struct stateInfo {
 
+    Console *console;
     float alpha, beta;
     //  Info about the data
     // Use overlay cubes to color the data.
@@ -1522,7 +1523,7 @@ typedef struct {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-#define LOG(...) \
+#define LOG(...) \ 
     { \
     printf("[%s:%d] ", __FILE__, __LINE__); \
     printf(__VA_ARGS__); \

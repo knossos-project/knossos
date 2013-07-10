@@ -27,6 +27,8 @@
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QDebug>
+#include <QMetaType>
+
 
 Console::Console(QWidget *parent) :
     QDialog(parent)
@@ -85,4 +87,23 @@ void Console::saveSettings() {
     settings.setValue(POS_Y, this->y());
     settings.setValue(VISIBLE, this->isVisible());
     settings.endGroup();
+}
+
+void Console::log(const char *fmt, ...) {
+    va_list args;
+    char fmtbuffer[1024];
+
+    va_start(args, fmt);
+    vsnprintf(fmtbuffer, sizeof fmtbuffer, fmt, args);
+    va_end(args);
+
+    editor->appendPlainText(QString(fmtbuffer));
+
+
+
+
+
+
+    va_end(args);
+
 }

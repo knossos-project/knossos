@@ -26,6 +26,7 @@
  */
 
 #include <QDialog>
+#include "stdarg.h"
 
 class QPlainTextEdit;
 class Console : public QDialog
@@ -37,7 +38,7 @@ public:
     void resizeEvent(QResizeEvent *event);
     void saveSettings();
     void loadSettings();
-    void log(const char *text);
+    void log(const char *fmt, ...);
 signals:
     void uncheckSignal();
 public slots:

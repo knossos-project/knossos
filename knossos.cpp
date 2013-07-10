@@ -203,6 +203,9 @@ int main(int argc, char *argv[])
 
     remote->start();
 
+    state->console->log("%d-%d", 5, 10);
+
+
     return a.exec();
 }
 

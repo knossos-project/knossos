@@ -37,6 +37,7 @@
 
 extern  stateInfo *state;
 
+
 int correct_cubes = 0;
 int cubes_in_backlog = 0;
 
@@ -45,6 +46,7 @@ Viewer::Viewer(QObject *parent) :
 {
     window = new MainWindow();
     window->show();
+    state->console = window->widgetContainer->console;
 
     vp = new Viewport(window, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ);
@@ -103,9 +105,7 @@ Viewer::Viewer(QObject *parent) :
 
     connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
-
     //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
-
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -275,6 +275,7 @@ Viewer::Viewer(QObject *parent) :
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(20);
+
 }
 
 static vpList* vpListNew() {
