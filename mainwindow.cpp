@@ -144,6 +144,8 @@ MainWindow::MainWindow(QWidget *parent) :
     loadSettings();
 
 
+
+
 }
 
 void MainWindow::createViewports() {

@@ -26,6 +26,8 @@
 #include <QMutex>
 #include <QWaitCondition>
 
+#include <PythonQT/PythonQt.h>
+#include <PythonQT/gui/PythonQtScriptingConsole.h>
 #include "knossos-global.h"
 #include "knossos.h"
 #include "mainwindow.h"
@@ -67,7 +69,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
 
+    /* */
 
+
+
+    /* */
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -204,6 +210,22 @@ int main(int argc, char *argv[])
     remote->start();
 
     state->console->log("%d-%d", 5, 10);
+
+    /* PYTHON QT INIT CODE */
+
+    PythonQt::init();
+    PythonQtObjectPtr  mainContext = PythonQt::self()->getMainModule();
+    PythonQtScriptingConsole console(NULL, mainContext);
+
+    StateClass *ptr = new StateClass();
+    PythonQt::self()->registerClass(&StateClass::staticMetaObject);
+    //PythonQt::self()->addDecorators(/* Your Decorator Class */);
+    mainContext.addObject("state", ptr);
+
+    mainContext.evalFile(":script.py");
+
+    console.appendCommandPrompt();
+    console.show();
 
 
     return a.exec();

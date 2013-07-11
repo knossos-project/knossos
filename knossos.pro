@@ -47,7 +47,8 @@ SOURCES +=\
     texturizer.cpp \
     slicer.cpp \
     widgetcontainer.cpp \
-    scripting_engine.cpp
+    scripting_engine.cpp \
+    decorators/skeletonizerdecorator.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -86,7 +87,8 @@ HEADERS  += mainwindow.h \
     GUIConstants.h \
     Plattform.h \
     widgetcontainer.h \     
-    scripting_engine.h
+    scripting_engine.h \
+    decorators/skeletonizerdecorator.h
 
 FORMS    += mainwindow.ui
 
@@ -116,11 +118,14 @@ OTHER_FILES += \
     config.y \
 
 mac {
+    INCLUDEPATH += /usr/include/Python2.7 \
+                   /usr/lib/
+                   /usr/include
     LIBS += -lxml2 \
             -framework GLUT \
             -framework Python \
+            -lPythonQt
 
-    INCLUDEPATH += /usr/include/Python2.7
 }
 
 linux {

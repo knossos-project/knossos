@@ -175,7 +175,6 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
     qDebug() << " hier node changed";
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
-
     if(state->skeletonState->activeNode) {
         this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));

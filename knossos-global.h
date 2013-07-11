@@ -463,6 +463,7 @@ struct assignment {
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern struct stateInfo
   */
 #include "widgets/console.h"
+
 struct stateInfo {
 
     Console *console;
@@ -623,6 +624,10 @@ struct stateInfo {
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
+};
+
+class StateClass : public QObject, public stateInfo {
+
 };
 
 struct trajectory {
