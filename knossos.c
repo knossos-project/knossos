@@ -61,10 +61,15 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
+char logFilename[MAX_PATH];
 
 int main(int argc, char *argv[]) {
     SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL, *refreshTimeThread = NULL;
     char consoleInput[1024];
+    char tempPath[MAX_PATH];
+
+    GetTempPath(MAX_PATH, tempPath);
+    GetTempFileName(tempPath, "KNL", 0, logFilename);
 
     memset(consoleInput, '\0', 1024);
 
@@ -172,6 +177,7 @@ static uint32_t cleanUpMain() {
     free(tempConfig->clientState);
     free(tempConfig->loaderState);
     free(tempConfig);
+
     free(state->viewerState);
     free(state->remoteState);
     free(state->clientState);
@@ -657,7 +663,24 @@ static int32_t initStates() {
     state->cubeSetElements = state->M * state->M * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
+    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
+    state->currentDirectionsIndex = 0;
+    SET_COORDINATE(state->previousPositionX, 0, 0, 0);
     SET_COORDINATE(state->currentPositionX, 0, 0, 0);
+
+    state->loadLocalSystem = LS_WINDOWS;
+    state->loadMode = LM_LOCAL;
+    if (LM_FTP == state->loadMode) {
+        state->loadFtpCachePath = malloc(MAX_PATH);
+        GetTempPath(MAX_PATH, state->loadFtpCachePath);
+        state->ftpBasePath = /* "BASE_PATH"; */ "/j0126_cubed/";
+        state->ftpHostName = /* "HOST"; */ "heidelbrain-ftp.mpimf-heidelberg.mpg.de";
+        state->ftpUsername = /* "USERNAME"; */ "knossos-rw";
+        state->ftpPassword = /* "PASSWORD"; */ "thissisanewwpasss";
+        state->ftpFileTimeout = 30*1000;
+        state->ftpConn = NULL;
+        FtpInit();
+    }
 
     // We're not doing stuff in parallel, yet. So we skip the locking
     // part.
@@ -730,6 +753,8 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
 
     state->loadSignal = TRUE;
     state->datasetChangeSignal = magChanged;
+
+    state->previousPositionX = state->currentPositionX;
 
     /* Convert the coordinate to the right mag. The loader
      * is agnostic to the different dataset magnifications.
@@ -993,45 +1018,63 @@ static int32_t findAndRegisterAvailableDatasets() {
         isPathSepTerminated = TRUE;
     }
 
-    if(isPathSepTerminated) {
-        if(strncmp(&state->path[strlen(state->path) - 5], "mag1", 4) == 0) {
-            isMultiresCompatible = TRUE;
-        }
+    if (LM_FTP == state->loadMode) {
+        isMultiresCompatible = TRUE;
     }
     else {
-        if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
-            isMultiresCompatible = TRUE;
+        if(isPathSepTerminated) {
+            if(strncmp(&state->path[strlen(state->path) - 5], "mag1", 4) == 0) {
+                isMultiresCompatible = TRUE;
+            }
+        }
+        else {
+            if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
+                isMultiresCompatible = TRUE;
+            }
         }
     }
 
     if(isMultiresCompatible && (state->magnification == 1)) {
-        /* take base path and go one level up */
-        pathLen = strlen(state->path);
+        if (LM_FTP == state->loadMode) {
+            if (!FtpConnect(state->ftpHostName,&state->ftpConn)) {
+                LOG("FTP Connection Error!");
+                _Exit(FALSE);
+            }
+            if (!FtpLogin(state->ftpUsername,state->ftpPassword,state->ftpConn))
+            {
+                LOG("FTP Login Failure: %s", FtpLastResponse(state->ftpConn));
+                _Exit(FALSE);
+            }
+        }
+        else {
+            /* take base path and go one level up */
+            pathLen = strlen(state->path);
 
-        for(i = 1; i < pathLen; i++) {
-            if((state->path[pathLen-i] == '\\')
-                || (state->path[pathLen-i] == '/')) {
-                if(i == 1) {
-                    /* This is the trailing path separator, ignore. */
-                    isPathSepTerminated = TRUE;
-                    continue;
-                }
-                /* this contains the path "one level up" */
-                strncpy(levelUpPath, state->path, pathLen - i + 1);
-                levelUpPath[pathLen - i + 1] = '\0';
-                /* this contains the dataset dir without "mag1"
-                 * K must be launched with state->path set to the
-                 * mag1 dataset for multires to work! This is by convention. */
-                if(isPathSepTerminated) {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
-                    datasetBaseDirName[i - 6] = '\0';
-                }
-                else {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
-                    datasetBaseDirName[i - 5] = '\0';
-                }
+            for(i = 1; i < pathLen; i++) {
+                if((state->path[pathLen-i] == '\\')
+                    || (state->path[pathLen-i] == '/')) {
+                    if(i == 1) {
+                        /* This is the trailing path separator, ignore. */
+                        isPathSepTerminated = TRUE;
+                        continue;
+                    }
+                    /* this contains the path "one level up" */
+                    strncpy(levelUpPath, state->path, pathLen - i + 1);
+                    levelUpPath[pathLen - i + 1] = '\0';
+                    /* this contains the dataset dir without "mag1"
+                     * K must be launched with state->path set to the
+                     * mag1 dataset for multires to work! This is by convention. */
+                    if(isPathSepTerminated) {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
+                        datasetBaseDirName[i - 6] = '\0';
+                    }
+                    else {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
+                        datasetBaseDirName[i - 5] = '\0';
+                    }
 
-                break;
+                    break;
+                }
             }
         }
 
@@ -1041,34 +1084,47 @@ static int32_t findAndRegisterAvailableDatasets() {
 
         /* iterate over all possible mags and test their availability */
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+            BOOL currMagExists = FALSE;
+            if (LM_FTP == state->loadMode) {
+                char *ftpDirDelim = "/";
+                int confSize = 0;
+                sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
+                if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) {
+                    currMagExists = TRUE;
+                }
+            }
+            else {
+                /* compile the path to the currently tested directory */
+                //if(i!=0) currMag *= 2;
+        #ifdef LINUX
+                sprintf(currPath,
+                    "%s%smag%d/",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #else
+                sprintf(currPath,
+                    "%s%smag%d\\",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #endif
+                FILE *testKconf;
+                sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
 
-            /* compile the path to the currently tested directory */
-            //if(i!=0) currMag *= 2;
-    #ifdef LINUX
-            sprintf(currPath,
-                "%s%smag%d/",
-                levelUpPath,
-                datasetBaseDirName,
-                currMag);
-    #else
-            sprintf(currPath,
-                "%s%smag%d\\",
-                levelUpPath,
-                datasetBaseDirName,
-                currMag);
-    #endif
-            FILE *testKconf;
-            sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
-
-            /* try fopen() on knossos.conf of currently tested dataset */
-            if ((testKconf = fopen(currKconfPath, "r"))) {
+                /* try fopen() on knossos.conf of currently tested dataset */
+                if ((testKconf = fopen(currKconfPath, "r"))) {
+                    fclose(testKconf);
+                    currMagExists = TRUE;
+                }
+            }
+            if (currMagExists) {
 
                 if(state->lowestAvailableMag > currMag) {
                     state->lowestAvailableMag = currMag;
                 }
                 state->highestAvailableMag = currMag;
 
-                fclose(testKconf);
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
                 strcpy(state->magPaths[log2uint32(currMag)], currPath);
@@ -1088,6 +1144,12 @@ static int32_t findAndRegisterAvailableDatasets() {
                 sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
+        if (LM_FTP == state->loadMode) {
+            FtpQuit(state->ftpConn);
+            state->ftpConn = NULL;
+        }
+
+        LOG("Highest Mag: %d", state->highestAvailableMag);
 
         if(state->lowestAvailableMag == INT_MAX) {
             /* This can happen if a bug in the string parsing above causes knossos to

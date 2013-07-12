@@ -26,6 +26,7 @@
  *	Very general stuff.
  */
 
+#include <windows.h>
 #include <SDL/SDL_net.h>
 #include <GL/gl.h>
 
@@ -35,6 +36,7 @@
 #include <agar/core.h>
 #include <agar/gui.h>
 
+#include "ftplib/ftplib.h"
 
 #define KVERSION "3.4.2"
 
@@ -78,6 +80,27 @@
 #define LL_FAILURE  0
 #define LL_BEFORE   0
 #define LL_AFTER    2
+
+/* Calculate movement trajectory for loading based on how many last single movements */
+#define LL_CURRENT_DIRECTIONS_SIZE (20)
+/* Max number of metrics allowed for sorting loading order */
+#define LL_METRIC_NUM (20)
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
+/*
+* For the loader ad-hoc linked list
+*/
+#define LLL_SUCCESS  1
+#define LLL_FAILURE  0
+
+/*
+For Loader file loader
+*/
+#define LS_UNIX     0
+#define LS_WINDOWS  1
+
+#define LM_LOCAL    0
+#define LM_FTP      1
 
 /*
  *	For the viewer.
@@ -352,6 +375,30 @@ struct _C2D_Element {
 
 typedef struct _C2D_Element C2D_Element;
 
+struct _C_Element {
+        Coordinate coordinate;
+
+        char *filename;
+        char *path;
+        char *fullpath_filename;
+        char *local_filename;
+        SDL_sem *ftpSem;
+        BOOL    hasError;
+
+        struct _C_Element *previous;
+        struct _C_Element *next;
+};
+
+typedef struct _C_Element C_Element;
+
+struct _LO_Element {
+        Coordinate coordinate;
+        Coordinate offset;
+        float loadOrderMetrics[LL_METRIC_NUM];
+};
+
+typedef struct _LO_Element LO_Element;
+
 // This structure defines a hash table. It is passed to various functions
 // along with some other parameters to perform actions on a specific hash
 // table.
@@ -430,7 +477,6 @@ struct stateInfo {
 /*
  * Info about the data
  */
-
         /* stores the currently active magnification;
         * it is set by magnification = 2^MAGx
         * state->magnification should only be used by the viewer,
@@ -565,11 +611,27 @@ struct stateInfo {
 		 * Info about the state of KNOSSOS in general.
 		 */
 
+        // This gives the current direction whenever userMove is called
+        Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
+        int32_t currentDirectionsIndex;
+
         // This gives the current position ONLY when the reload
         // boundary has been crossed. Change it through
         // sendLoadSignal() exclusively. It has to be locked by
         // protectLoadSignal.
         Coordinate currentPositionX;
+        Coordinate previousPositionX;
+
+        // Cube loader affairs
+        int32_t    loadMode;
+        int32_t    loadLocalSystem;
+        char       *loadFtpCachePath;
+        char       *ftpBasePath;
+        char       *ftpHostName;
+        char       *ftpUsername;
+        char       *ftpPassword;
+        netbuf     *ftpConn;
+        int32_t    ftpFileTimeout;
 
         // Dc2Pointer and Oc2Pointer provide a mappings from cube
         // coordinates to pointers to datacubes / overlay cubes loaded
@@ -595,7 +657,8 @@ struct trajectory {
 };
 
 struct loaderState {
-	Hashtable *Dcoi;
+	C_Element *Dcoi;
+	int32_t currentMaxMetric;
 
 	CubeSlotList *freeDcSlots;
     CubeSlotList *freeOcSlots;
@@ -1425,12 +1488,35 @@ struct skeletonCaretaker {
         color.a = ac; \
         }
 
+#define ABS(x) (((x) >= 0) ? (x) : -(x))
+#define SQR(x) ((x)*(x))
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
         coordinate.x = a; \
         coordinate.y = b; \
         coordinate.z = c; \
+        }
+
+#define CALC_VECTOR_NORM(v) (sqrt(SQR(v.x) + SQR(v.y) + SQR(v.z)))
+
+#define NORM_VECTOR(v, norm) \
+        { \
+        v.x /= (norm); \
+        v.y /= (norm); \
+        v.z /= (norm); \
+        }
+
+#define CALC_DOT_PRODUCT(a, b) ((a.x * b.x) + (a.y * b.y) + (a.z * b.z))
+#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) (ABS(CALC_DOT_PRODUCT(point, plane)) / CALC_VECTOR_NORM(plane))
+#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
+        { SET_COORDINATE(coordinate, ox + offset_array[0], oy + offset_array[1], oz + offset_array[2]); }
+
+#define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
+        { \
+            offset_array[direction_index] = k; \
+            offset_array[(direction_index + 1) % 3] = i; \
+            offset_array[(direction_index + 2) % 3] = j; \
         }
 
 #define COMPARE_COORDINATE(c1, c2)  (((c1).x == (c2).x) && ((c1).y == (c2).y) && ((c1).z == (c2).z))
@@ -1476,12 +1562,34 @@ struct skeletonCaretaker {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
+#define FPRINTF_STR_FILE(fh, str) \
+    { \
+    if (NULL != fh) {fprintf(fh, "%s", str);} \
+    }
+#define FILE_FLUSH(fh) \
+    { \
+    if (NULL != fh) { fflush(fh);} \
+    }
+#define FILE_CLOSE(fh) \
+    { \
+    if (NULL != fh) { fclose(fh); fh = NULL;} \
+    }
+extern char logFilename[];
 #define LOG(...) \
     { \
-    printf("[%s:%d] ", __FILE__, __LINE__); \
-    printf(__VA_ARGS__); \
-    printf("\n"); \
+    char msg[1024]; \
+    FILE *logFile = NULL; \
+    logFile = fopen(logFilename, "a+"); \
+    LARGE_INTEGER large; \
+    QueryPerformanceCounter(&large); \
+    sprintf(msg, "[%s:%d, %d:%08X] ", __FILE__, __LINE__, GetCurrentThreadId(), large.LowPart);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    FILE_FLUSH(stdout); \
+    FILE_CLOSE(logFile); \
     }
+
+#define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 
 /*       if(state->viewerState->viewerReady) \
         AG_ConsoleMsg(state->viewerState->ag->agConsole, __VA_ARGS__); \
@@ -1512,6 +1620,11 @@ Hashtable *ht_new(uint32_t tablesize);
 // hashtable specifies which hashtable to delete.
 // The return value is LL_SUCCESS or LL_FAILURE.
 uint32_t ht_rmtable(Hashtable *hashtable);
+
+// Internal implementation of ht_get, only return the hash element where data is stored.
+// This should also be used when you actually want to change something in the element
+// if it exists.
+C2D_Element *ht_get_element(Hashtable *hashtable, Coordinate key);
 
 // Return the value associated with a key.
 // key is the key to look for.
@@ -1557,6 +1670,7 @@ void checkIdleTime();
  */
 
 int loader();
+int ftpthreadfunc();
 
 /*
  * For remote.c
@@ -1582,7 +1696,6 @@ int32_t calcDisplayedEdgeLength();
 
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
 uint32_t changeDatasetMag(uint32_t upOrDownFlag);
-
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
 int viewer();

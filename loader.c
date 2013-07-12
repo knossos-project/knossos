@@ -42,11 +42,285 @@
 #include "knossos-global.h"
 #include "loader.h"
 
+#define SLEEP_FACTOR (5)
+
 extern struct stateInfo *state;
+
+C_Element *lll_new()
+{
+    C_Element *lll = NULL;
+
+    lll = malloc(sizeof(C_Element));
+    if (NULL == lll)
+    {
+        printf("Out of memory\n");
+        return HT_FAILURE;
+    }
+
+    lll->previous = lll;
+    lll->next = lll;
+
+    /* This is a dummy element used only for entry into the linked list. */
+
+    SET_COORDINATE(lll->coordinate, 0, 0, 0);
+
+    return lll;
+}
+
+void lll_del(C_Element *delElement) {
+    delElement->previous->next = delElement->next;
+    delElement->next->previous = delElement->previous;
+
+    SDL_DestroySemaphore(delElement->ftpSem);
+
+    free(delElement->filename);
+    free(delElement->local_filename);
+    free(delElement->path);
+    free(delElement->fullpath_filename);
+
+    free(delElement);
+}
+
+void lll_rmlist(C_Element *Dcoi) {
+    C_Element *currentCube = NULL, *prevCube = NULL;
+
+    for (currentCube = Dcoi->previous; currentCube != Dcoi; currentCube = prevCube) {
+        prevCube = currentCube->previous;
+        lll_del(currentCube);
+    }
+}
+
+uint32_t lll_calculate_filename(C_Element *elem) {
+    char *filename = NULL;
+    char *local_dir_delim = NULL;
+    char *file_dir_delim = NULL;
+    char *loader_path = NULL;
+    char *magnificationStr = NULL;
+    char typeExtension[8] = "";
+    char compressionExtension[8] = "";
+    FILE *cubeFile = NULL;
+    int32_t readBytes = 0;
+    int32_t compressionRatio = 6;
+    int32_t boergens_param_1 = 0, boergens_param_2 = 0, boergens_param_3 = 0;
+    char *boergens_param_1_name = "", *boergens_param_2_name = "", *boergens_param_3_name = "";
+    char *local_cache_path_builder = NULL, *local_cache_path_total = NULL;
+    int filenameSize = 1000;
+    Coordinate coordinate;
+
+    coordinate = elem->coordinate;
+
+        switch (state->loadLocalSystem) {
+        case LS_UNIX:
+            local_dir_delim = "/";
+            break;
+        case LS_WINDOWS:
+            local_dir_delim = "\\";
+            break;
+        default:
+            return LLL_FAILURE;
+    }
+
+    switch (state->loadMode) {
+        case LM_LOCAL:
+            file_dir_delim = local_dir_delim;
+            break;
+        case LM_FTP:
+            file_dir_delim = "/";
+            break;
+        default:
+            return LLL_FAILURE;
+    }
+
+
+    /*
+    To reverse into non-compression, normal raw file read, replace
+    typeExtension with "raw"
+    compressionExtension with ""
+    then everthing should be fine as before.
+    */
+    strncpy(typeExtension, "jp2", 4);
+    snprintf(compressionExtension, sizeof(compressionExtension), "%d.", compressionRatio);
+    /*
+    strncpy(typeExtension, "raw", 4);
+    compressionExtension[0] =  NULL;
+    */
+
+    elem->filename = malloc(filenameSize);
+    if(elem->filename == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(elem->filename, '\0', filenameSize);
+    elem->path = malloc(filenameSize);
+    if(elem->path == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(elem->path, '\0', filenameSize);
+    elem->fullpath_filename = malloc(filenameSize);
+    if(elem->fullpath_filename == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(elem->fullpath_filename, '\0', filenameSize);
+
+    boergens_param_2 = coordinate.y;
+    boergens_param_2_name = "y";
+    if(state->boergens) {
+        boergens_param_1 = coordinate.z;
+        boergens_param_1_name = "z";
+        boergens_param_3 = coordinate.x;
+        boergens_param_3_name = "x";
+    }
+    else {
+        boergens_param_1 = coordinate.x;
+        boergens_param_1_name = "x";
+        boergens_param_3 = coordinate.z;
+        boergens_param_3_name = "z";
+    }
+    magnificationStr = malloc(filenameSize);
+    magnificationStr[0] = '\0';
+    if (LM_FTP == state->loadMode) {
+        snprintf(magnificationStr, filenameSize, "mag%d%s", state->magnification, file_dir_delim);
+    }
+    snprintf(elem->path, filenameSize,
+         "%s%s%s%.4d%s%s%.4d%s%s%.4d",
+         (LM_FTP == state->loadMode) ? state->ftpBasePath : state->loaderPath,
+         magnificationStr,
+         boergens_param_1_name,
+         boergens_param_1,
+         file_dir_delim,
+         boergens_param_2_name,
+         boergens_param_2,
+         file_dir_delim,
+         boergens_param_3_name,
+         boergens_param_3
+         );
+    free(magnificationStr);
+    /* LOG("Path: %s", elem->path); */
+    snprintf(elem->filename, filenameSize,
+         "%s_x%.4d_y%.4d_z%.4d.%s%s",
+         state->loaderName,
+         coordinate.x,
+         coordinate.y,
+         coordinate.z,
+         compressionExtension,
+         typeExtension);
+    snprintf(elem->fullpath_filename, filenameSize,
+         "%s%s%s",
+         elem->path,
+         file_dir_delim,
+         elem->filename);
+    /* LOG("FullPath: %s", elem->fullpath_filename); */
+
+    if (LM_FTP != state->loadMode) {
+        return LLL_SUCCESS;
+    }
+
+    local_cache_path_builder = malloc(filenameSize);
+    if(local_cache_path_builder == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(local_cache_path_builder, '\0', filenameSize);
+    local_cache_path_total = malloc(filenameSize);
+    if(local_cache_path_total == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(local_cache_path_total, '\0', filenameSize);
+    snprintf(local_cache_path_builder, filenameSize, "%smag%d%s", state->loadFtpCachePath, state->magnification, local_dir_delim);
+    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total);
+    /* LOG("%s", local_cache_path_total); */
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_1_name, boergens_param_1);
+    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total);
+    /* LOG("%s", local_cache_path_total); */
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_2_name, boergens_param_2);
+    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total);
+    /* LOG("%s", local_cache_path_total); */
+    snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_3_name, boergens_param_3);
+    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total);
+    /* LOG("%s", local_cache_path_total); */
+    free(local_cache_path_builder);
+
+    elem->local_filename = malloc(filenameSize);
+    if(elem->local_filename == NULL) {
+        LOG("Out of memory.");
+        return LLL_FAILURE;
+    }
+    memset(elem->local_filename, '\0', filenameSize);
+    snprintf(elem->local_filename, filenameSize,
+         "%s%s%s",
+         local_cache_path_total,
+         local_dir_delim,
+         elem->filename);
+    free(local_cache_path_total);
+
+    return LLL_SUCCESS;
+}
+
+uint32_t lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate key) {
+    C_Element *putElement = NULL;
+    C2D_Element *loadedCubePtr = NULL;
+
+    if((key.x > 9999) ||
+       (key.y > 9999) ||
+       (key.z > 9999) ||
+       (key.x < 0) ||
+       (key.y < 0) ||
+       (key.z < 0)) {
+       /* LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
+            key.x,
+            key.y,
+            key.z); */
+
+        return LLL_SUCCESS;
+    }
+
+    /*
+    If cube to be loaded is already loaded, no need to load it now,
+    just mark this element as required, so we don't delete it later.
+    */
+    loadedCubePtr = ht_get_element(currentLoadedHash, key);
+    if (HT_FAILURE != loadedCubePtr) {
+        loadedCubePtr->datacube = (Byte*)(!NULL);
+        return LLL_SUCCESS;
+    }
+
+    putElement = (C_Element*)malloc(sizeof(C_Element));
+    if(putElement == NULL) {
+        printf("Out of memory\n");
+        return LLL_FAILURE;
+    }
+
+    putElement->coordinate = key;
+
+    putElement->filename = NULL;
+    putElement->path = NULL;
+    putElement->fullpath_filename = NULL;
+    putElement->local_filename = NULL;
+    putElement->ftpSem = SDL_CreateSemaphore(0);
+
+    if (LLL_SUCCESS != lll_calculate_filename(putElement)) {
+        return LLL_FAILURE;
+    }
+
+    putElement->next = destElement->next;
+    putElement->previous = destElement;
+    destElement->next->previous = putElement;
+    destElement->next = putElement;
+
+    destElement->coordinate.x++;
+
+    /* LOG("(%d, %d, %d)", key.x, key.y, key.z); */
+
+    return LLL_SUCCESS;
+}
 
 int loader() {
     struct loaderState *loaderState = state->loaderState;
     int32_t magChange = FALSE;
+    Hashtable *mergeCube2Pointer = NULL;
 
     SDL_LockMutex(state->protectLoadSignal);
 
@@ -72,30 +346,77 @@ int loader() {
             break;
         }
 
+        state->loaderMagnification = log2uint32(state->magnification);
+        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
+        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
+
+        /*
+        We create a hash that would later be assigned the union of Dc and Oc cubes already loaded by now.
+        For each cube element in the hash, the datacube field is automatically initialized to NULL
+        upon creation by ht_union.
+        When we finished calculating the cubes that need to be loaded now, their datacube field would
+        be different than NULL.
+        */
+        mergeCube2Pointer = ht_new(state->cubeSetElements * 20);
+        if(mergeCube2Pointer == HT_FAILURE) {
+            LOG("Unable to create the temporary cube2pointer table.");
+            break;
+        }
+        /*
+        If magnification is unchanged, we should be aware which cubes are already loaded - while calculating
+        cubes to be loaded next. We would not load again those cubes that are loaded. However, if magnification
+        changed, we need to load everything once more (from new magnification value dataset), therefore we leave
+        the hash empty for now (and fill it later, see below).
+        */
+        if (!magChange) {
+            SDL_LockMutex(state->protectCube2Pointer);
+            if(ht_union(mergeCube2Pointer,
+                    state->Dc2Pointer[state->loaderMagnification],
+                    state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
+                LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
+                break;
+            }
+            SDL_UnlockMutex(state->protectCube2Pointer);
+        }
+
         // currentPositionX is updated only when the boundary is
         // crossed. Access to currentPositionX is synchronized through
         // the protectLoadSignal mutex.
-        // DcoiFromPos fills the Dcoi hashtable with all datacubes that
+        // DcoiFromPos fills the Dcoi list with all datacubes that
         // we want to be in memory, given our current position.
-        if(DcoiFromPos(loaderState->Dcoi) != TRUE) {
+        if(DcoiFromPos(loaderState->Dcoi, mergeCube2Pointer) != TRUE) {
             LOG("Error computing DCOI from position.");
-            continue;
+            break;
+        }
+
+        /*
+        The hash of the currently loaded cubes has already been filled before in case magnification unchanged.
+        We therefore have to fill it here only if magnification changed.
+        */
+        if (magChange) {
+            SDL_LockMutex(state->protectCube2Pointer);
+            if(ht_union(mergeCube2Pointer,
+                    state->Dc2Pointer[state->loaderMagnification],
+                    state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
+                LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
+                break;
+            }
+            SDL_UnlockMutex(state->protectCube2Pointer);
         }
 
         SDL_UnlockMutex(state->protectLoadSignal);
 
-        // DCOI now contains the coordinates of all cubes we want, based
-        // on our current position. However, some of those might already be
-        // in memory. We remove them.
-
-        if(removeLoadedCubes(magChange) != TRUE) {
+        /*
+        We shall now remove from current loaded cubes those cubes that are not required by new coordinate,
+        or simply all cubes in case of magnification change
+        */
+        if(removeLoadedCubes(mergeCube2Pointer) != TRUE) {
             LOG("Error removing already loaded cubes from DCOI.");
-            continue;
+            break;
         }
-
-        state->loaderMagnification = log2uint32(state->magnification);
-        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
-        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
+        if (ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
+            LOG("Error removing temporary cube to pointer table. This is a memory leak.");
+        }
 
         // DCOI is now a list of all datacubes that we want in memory, given
         // our current position and that are not yet in memory. We go through
@@ -117,90 +438,140 @@ int loader() {
     return TRUE;
 }
 
-static uint32_t DcoiFromPos(Hashtable *Dcoi) {
-    Coordinate currentDc, origin;
-    int32_t x = 0, y = 0, z = 0;
-    int32_t halfSc;
-
-    origin = state->currentPositionX;
-    origin = Px2DcCoord(origin);
-
-    halfSc = (int32_t)floorf((float)state->M / 2.);
-
-    /* We start off by adding the datacubes that contain the data
-       for the orthogonal slice viewports */
-
-    /* YZ Viewport, keep x constant */
-    x = origin.x;
-    for(y = origin.y - halfSc; y <= origin.y + halfSc; y++) {
-        for(z = origin.z - halfSc; z <= origin.z + halfSc; z++) {
-            SET_COORDINATE(currentDc, x, y, z);
-            ht_put(Dcoi, currentDc, (Byte *)HT_SUCCESS);
-        }
+int calc_nonzero_sign(float x) {
+    if (x > 0) {
+        return 1;
     }
-
-    /* XZ Viewport, keep y constant */
-    y = origin.y;
-    for(x = origin.x - halfSc; x <= origin.x + halfSc; x++) {
-        for(z = origin.z - halfSc; z <= origin.z + halfSc; z++) {
-            SET_COORDINATE(currentDc, x, y, z);
-            ht_put(Dcoi, currentDc, (Byte *)HT_SUCCESS);
-        }
-    }
-
-    /* XY Viewport, keep z constant */
-    z = origin.z;
-    for(x = origin.x - halfSc; x <= origin.x + halfSc; x++) {
-        for(y = origin.y - halfSc; y <= origin.y + halfSc; y++) {
-            SET_COORDINATE(currentDc, x, y, z);
-            ht_put(Dcoi, currentDc, (Byte *)HT_SUCCESS);
-        }
-    }
-
-    /* Now, we add the datacubes that were not added yet. The missing datacubes
-       form 8 cubic "holes" at the corners of the supercube */
-
-    origin.x = origin.x - halfSc;
-    origin.y = origin.y - halfSc;
-    origin.z = origin.z - halfSc;
-
-    addCubicDcSet(origin.x, origin.y, origin.z, halfSc, Dcoi);
-    addCubicDcSet(origin.x + halfSc + 1, origin.y, origin.z, halfSc, Dcoi);
-    addCubicDcSet(origin.x, origin.y, origin.z + halfSc + 1, halfSc, Dcoi);
-    addCubicDcSet(origin.x + halfSc + 1, origin.y, origin.z + halfSc + 1, halfSc, Dcoi);
-    addCubicDcSet(origin.x, origin.y + halfSc + 1, origin.z, halfSc, Dcoi);
-    addCubicDcSet(origin.x + halfSc + 1, origin.y + halfSc + 1, origin.z, halfSc, Dcoi);
-    addCubicDcSet(origin.x, origin.y + halfSc + 1, origin.z + halfSc + 1, halfSc, Dcoi);
-    addCubicDcSet(origin.x + halfSc + 1, origin.y + halfSc + 1, origin.z + halfSc + 1, halfSc, Dcoi);
-
-    return TRUE;
+    return -1;
 }
 
-static int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, Hashtable *target) {
-    Coordinate currentDc;
-    int32_t x, y, z;
+void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
+    float distance_from_plane, distance_from_direction, distance_from_origin, dot_product;
+    int32_t i = 0;
 
-    for(x = xBase; x < xBase + edgeLen; x++) {
-        for(y = yBase; y < yBase + edgeLen; y++) {
-            for(z = zBase; z < zBase + edgeLen; z++) {
-                SET_COORDINATE(currentDc, x, y, z);
-                ht_put(target, currentDc, (Byte *)HT_SUCCESS);
+    distance_from_plane = CALC_POINT_DISTANCE_FROM_PLANE(currentMetricPos, direction);
+    distance_from_origin = CALC_VECTOR_NORM(currentMetricPos);
+    dot_product = CALC_DOT_PRODUCT(currentMetricPos, direction);
+
+    metrics[i++] = ( (distance_from_plane <= 1) || (distance_from_origin <= halfSc) ) ? -1.0 : 1.0;
+    metrics[i++] = distance_from_plane > 1 ? 1.0 : -1.0;
+    metrics[i++] = dot_product < 0 ?  1.0 : -1.0;
+    metrics[i++] = distance_from_plane;
+    metrics[i++] = distance_from_origin;
+
+    state->loaderState->currentMaxMetric = MAX(state->loaderState->currentMaxMetric, i);
+    /* LOG("%f\t%f\t%f\t%f\t%f\t%f",
+        currentMetricPos.x, currentMetricPos.y, currentMetricPos.z,
+        metrics[0], metrics[1], metrics[2]); */
+}
+
+int CompareLoadOrderMetric(const void * a, const void * b)
+{
+    LO_Element *elem_a, *elem_b;
+    float m_a, m_b;
+    int32_t metric_index;
+
+    elem_a = (LO_Element *)a;
+    elem_b = (LO_Element *)b;
+
+    for (metric_index = 0; metric_index < state->loaderState->currentMaxMetric; metric_index++) {
+        m_a = elem_a->loadOrderMetrics[metric_index];
+        m_b = elem_b->loadOrderMetrics[metric_index];
+        /* LOG("i %d\ta\t%d,%d,%d\t=\t%f\tb\t%d,%d,%d\t=\t%f", metric_index,
+            elem_a->offset.x, elem_a->offset.y, elem_a->offset.z, m_a,
+            elem_b->offset.x, elem_b->offset.y, elem_b->offset.z, m_b); */
+        if (m_a != m_b) {
+            return calc_nonzero_sign(m_a - m_b);
+        }
+        /* If equal just continue to next comparison level */
+    }
+
+    return 0;
+}
+
+static uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
+    Coordinate currentDc, currentOrigin;
+    floatCoordinate currentMetricPos, direction;
+    Coordinate debugCoor;
+    LO_Element *DcArray;
+    int32_t cubeElemCount;
+    int32_t i;
+    int32_t edgeLen, halfSc;
+    int32_t x, y, z;
+    float dx = 0, dy = 0, dz = 0;
+    float direction_norm;
+    float floatHalfSc;
+
+    edgeLen = state->M;
+    floatHalfSc = (float)edgeLen / 2.;
+    halfSc = (int32_t)floorf(floatHalfSc);
+
+    for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
+        /* LOG("%d\t%d\t%d", state->currentDirections[i].x, state->currentDirections[i].y, state->currentDirections[i].z); */
+        dx += (float)state->currentDirections[i].x;
+        dy += (float)state->currentDirections[i].y;
+        dz += (float)state->currentDirections[i].z;
+        /* LOG("Progress %f,%f,%f", dx, dy, dz); */
+    }
+    SET_COORDINATE(direction, dx, dy, dz);
+    direction_norm = CALC_VECTOR_NORM(direction);
+    if (0 == direction_norm) {
+        LOG("No average movement, fabricating x direction!");
+        dx = 1;
+        SET_COORDINATE(direction, dx, dy, dz);
+        direction_norm = CALC_VECTOR_NORM(direction);
+    }
+    NORM_VECTOR(direction, direction_norm);
+    /* LOG("Direction %f,%f,%f", direction.x, direction.y, direction.z); */
+
+    cubeElemCount = state->cubeSetElements;
+    DcArray = malloc(sizeof(DcArray[0]) * cubeElemCount);
+    if (NULL == DcArray) {
+        return FALSE;
+    }
+    memset(DcArray, 0, sizeof(DcArray[0]) * cubeElemCount);
+    currentOrigin = Px2DcCoord(state->currentPositionX);
+    i = 0;
+    state->loaderState->currentMaxMetric = 0;
+    for (x = -halfSc; x < halfSc + 1; x++) {
+        for (y = -halfSc; y < halfSc + 1; y++) {
+            for (z = -halfSc; z < halfSc + 1; z++) {
+                SET_COORDINATE(DcArray[i].coordinate, currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z);
+                SET_COORDINATE(DcArray[i].offset, x, y, z);
+                SET_COORDINATE(currentMetricPos, (float)x, (float)y, (float)z);
+                CalcLoadOrderMetric(floatHalfSc, currentMetricPos, direction, &DcArray[i].loadOrderMetrics[0]);
+                i++;
             }
         }
     }
+extern void
+_quicksort (
+     void *,
+     size_t,
+     size_t,
+     int (*)(const void*, const void*) );
+     _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric);
+    LOG("New Order (%f, %f, %f):", direction.x, direction.y, direction.z);
+    for (i = 0; i < cubeElemCount; i++) {
+        LOG("%d\t%d\t%d",
+            DcArray[i].coordinate.x - currentOrigin.x,
+            DcArray[i].coordinate.y - currentOrigin.y,
+            DcArray[i].coordinate.z - currentOrigin.z);
+        if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
+            return FALSE;
+        }
+    }
+    free(DcArray);
 
     return TRUE;
 }
 
-static uint32_t loadCube(Coordinate coordinate,
+static uint32_t loadCube(C_Element *elem,
                          Byte *freeDcSlot,
                          Byte *freeOcSlot) {
 
-    char *filename = NULL;
-    char typeExtension[8] = "";
-    FILE *cubeFile = NULL;
-    int32_t readBytes = 0;
-
+    int32_t sleepTime = 0;
+    FILE *fh_indicator = NULL;
     /*
      * Specify either freeDcSlot or freeOcSlot.
      *
@@ -215,135 +586,27 @@ static uint32_t loadCube(Coordinate coordinate,
        (!freeDcSlot && !freeOcSlot)) {
         return FALSE;
     }
-
-    if((coordinate.x > 9999) ||
-       (coordinate.y > 9999) ||
-       (coordinate.z > 9999) ||
-       (coordinate.x < 0) ||
-       (coordinate.y < 0) ||
-       (coordinate.z < 0)) {
-       // LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
-       //     coordinate.x,
-       //     coordinate.y,
-       //     coordinate.z);
-
+    if(!freeDcSlot) {
+        LOG("Overlay not supported with JPEG2000 compression");
         goto loadcube_fail;
     }
 
-    if(freeDcSlot) {
-        strncpy(typeExtension, "raw", 4);
-    }
-    else {
-        strncpy(typeExtension, "overlay", 8);
-    }
-    filename = malloc(strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
-    if(filename == NULL) {
-        LOG("Out of memory.");
-        goto loadcube_fail;
-    }
-    memset(filename, '\0', strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
-
-#ifdef LINUX
-    if(state->boergens) {
-        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
-                 "%sz%.4d/y%.4d/x%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->loaderPath,
-                 coordinate.z,
-                 coordinate.y,
-                 coordinate.x,
-                 state->loaderName,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 typeExtension);
-    }
-    else {
-        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
-                 "%sx%.4d/y%.4d/z%.4d/%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->loaderPath,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 state->loaderName,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 typeExtension);
-    }
-#else
-    //state->boergens= 1;
-    if(state->boergens) {
-        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
-                 "%sz%.4d\\y%.4d\\x%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->loaderPath,
-                 coordinate.z,
-                 coordinate.y,
-                 coordinate.x,
-                 state->loaderName,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 typeExtension);
-                 //LOG("filename: %s", filename);
-    }
-    else {
-        snprintf(filename, strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38,
-                 "%sx%.4d\\y%.4d\\z%.4d\\%s_x%.4d_y%.4d_z%.4d.%s",
-                 state->loaderPath,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 state->loaderName,
-                 coordinate.x,
-                 coordinate.y,
-                 coordinate.z,
-                 typeExtension);
-                 //LOG("filename: %s", filename);
-    }
-#endif
-
-
-    // The b is for compatibility with non-UNIX systems and denotes a
-    // binary file.
-    cubeFile = fopen(filename, "rb");
-    //LOG("succesfully loaded: %s", filename);
-    if(cubeFile == NULL) {
-        //LOG("failed to load %s", filename);
-        goto loadcube_fail;
-    }
-
-    if(freeDcSlot) {
-        readBytes = (int32_t)fread(freeDcSlot, 1, state->cubeBytes, cubeFile);
-        if(readBytes != state->cubeBytes) {
-            LOG("Could read only %d / %d bytes from DC file %s.",
-                readBytes,
-                state->cubeBytes,
-                filename);
-            if(fclose(cubeFile) != 0) {
-                LOG("Additionally, an error occured closing the file");
-            }
+    if (LM_FTP == state->loadMode) {
+        /* LOG("About to wait on %d", HASH_COOR(elem->coordinate)); */
+        if (SDL_MUTEX_TIMEDOUT == SDL_SemWaitTimeout(elem->ftpSem, state->ftpFileTimeout)) {
+            LOG("Failed wait on %d", HASH_COOR(elem->coordinate));
             goto loadcube_fail;
         }
-    }
-    else {
-        readBytes = (int32_t)fread(freeOcSlot, 1, state->cubeBytes * OBJID_BYTES, cubeFile);
-        if(readBytes != state->cubeBytes * OBJID_BYTES) {
-            LOG("Could read only %d / %d bytes from OC file %s.",
-                readBytes,
-                state->cubeBytes * OBJID_BYTES,
-                filename);
-            if(fclose(cubeFile) != 0) {
-                LOG("Additionally, an error occured closing the file");
-            }
+        /* LOG("Success wait on %d", HASH_COOR(elem->coordinate)); */
+        if (TRUE == elem->hasError) {
+            LOG("Error retrieving %d", HASH_COOR(elem->coordinate));
             goto loadcube_fail;
         }
     }
 
-    if(fclose(cubeFile) != 0) {
-        LOG("Error closing cube file %s.", filename);
+    if (EXIT_SUCCESS != jp2_decompress_main(((LM_FTP == state->loadMode) ? elem->local_filename : elem->fullpath_filename), freeDcSlot, state->cubeBytes)) {
+        goto loadcube_fail;
     }
-
-    free(filename);
     return TRUE;
 
 loadcube_fail:
@@ -355,7 +618,6 @@ loadcube_fail:
         memcpy(freeOcSlot, state->loaderState->bogusOc, state->cubeBytes * OBJID_BYTES);
     }
 
-    free(filename);
     return TRUE;
 }
 
@@ -437,7 +699,7 @@ static int32_t slotListDel(CubeSlotList *delList) {
 static uint32_t cleanUpLoader(struct loaderState *loaderState) {
     uint32_t returnValue = TRUE;
 
-    if(ht_rmtable(loaderState->Dcoi) == LL_FAILURE) returnValue = FALSE;
+    lll_rmlist(loaderState->Dcoi); free(loaderState->Dcoi);
     if(slotListDel(loaderState->freeDcSlots) == FALSE) returnValue = FALSE;
     if(slotListDel(loaderState->freeOcSlots) == FALSE) returnValue = FALSE;
     free(state->loaderState->bogusDc);
@@ -457,7 +719,7 @@ static int32_t initLoader() {
     // the coordinates of the datacubes and overlay cubes we need to
     // load given our current position.
     // See the comment about the ht_new() call in knossos.c
-    loaderState->Dcoi = ht_new(state->cubeSetElements * 10);
+    loaderState->Dcoi = lll_new();
     if(loaderState->Dcoi == HT_FAILURE) {
         LOG("Unable to create Dcoi.");
         return FALSE;
@@ -491,7 +753,7 @@ static int32_t initLoader() {
         LOG("Unable to allocate memory for the DC memory slots.");
         return FALSE;
     }
-
+    memset(loaderState->DcSetChunk, 0, state->cubeSetBytes);
     for(i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
         slotListAddElement(loaderState->freeDcSlots, loaderState->DcSetChunk + i);
     }
@@ -503,7 +765,7 @@ static int32_t initLoader() {
             LOG("Unable to allocate memory for the OC memory slots.");
             return FALSE;
         }
-
+        memset(loaderState->OcSetChunk, 0, state->cubeSetBytes * OBJID_BYTES);
         for(i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES) {
             slotListAddElement(loaderState->freeOcSlots, loaderState->OcSetChunk + i);
         }
@@ -539,51 +801,19 @@ static int32_t initLoader() {
     return TRUE;
 }
 
-static uint32_t removeLoadedCubes(int32_t magChange) {
+static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
+    C_Element *currentCCube = NULL;
     Byte *delCubePtr = NULL;
-    Hashtable *mergeCube2Pointer = NULL;
 
-    /*
-     * We merge the Dc2Pointer and Oc2Pointer tables to a new
-     * temporary table mergeCube2Pointer (using the standard
-     * set union).
-     * This table is used to remove the unneeded entries
-     * from Dcoi, Dc2Pointer and Oc2Pointer:
-     *
-     *  - If an element is in Dcoi and merge2Pointer, we remove it from
-     *    Dcoi.
-     *  - If an element is in merge2Pointer but not Dcoi, we attempt to
-     *    remove it from Oc2Pointer and Dc2Pointer.
-     *
-     */
-
-    mergeCube2Pointer = ht_new(state->cubeSetElements * 20);
-    if(mergeCube2Pointer == HT_FAILURE) {
-        LOG("Unable to create the temporary cube2pointer table.");
-        return FALSE;
-    }
-
-    SDL_LockMutex(state->protectCube2Pointer);
-    if(ht_union(mergeCube2Pointer,
-                state->Dc2Pointer[state->loaderMagnification],
-                state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
-        LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
-        return FALSE;
-    }
-    SDL_UnlockMutex(state->protectCube2Pointer);
-
-    currentCube = mergeCube2Pointer->listEntry->next;
-    while(currentCube != mergeCube2Pointer->listEntry) {
+    currentCube = currentLoadedHash->listEntry->next;
+    while(currentCube != currentLoadedHash->listEntry) {
         nextCube = currentCube->next;
 
-        if((ht_get(state->loaderState->Dcoi, currentCube->coordinate) == HT_FAILURE)
-           || magChange) {
+        if (NULL == currentCube->datacube) {
             /*
-             * This element is not in Dcoi, which means we can reuse its
+             * This element is not required, which means we can reuse its
              * slots for new DCs / OCs.
-             * A mag change means that all slot elements can be reused (i.e. their
-             * data content became useless).
              * As we are using the merged list as a proxy for the actual lists,
              * we need to get the pointers out of the actual lists before we can
              * add them back to the free slots lists.
@@ -606,6 +836,7 @@ static uint32_t removeLoadedCubes(int32_t magChange) {
                     return FALSE;
                 }
 
+
                 if(slotListAddElement(state->loaderState->freeDcSlots, delCubePtr) < 1) {
                     LOG("Error adding slot %p (formerly of Dc (%d, %d, %d)) into freeDcSlots.",
                         delCubePtr,
@@ -614,6 +845,13 @@ static uint32_t removeLoadedCubes(int32_t magChange) {
                         currentCube->coordinate.z);
                     return FALSE;
                 }
+                /*
+                LOG("Added %d, %d, %d => %d available",
+                        currentCube->coordinate.x,
+                        currentCube->coordinate.y,
+                        currentCube->coordinate.z,
+                        state->loaderState->freeDcSlots->elements);
+                */
             }
 
             /*
@@ -629,6 +867,7 @@ static uint32_t removeLoadedCubes(int32_t magChange) {
                     return FALSE;
                 }
 
+                memset(delCubePtr, 0, state->cubeSetBytes * OBJID_BYTES);
                 if(slotListAddElement(state->loaderState->freeOcSlots, delCubePtr) < 1) {
                     LOG("Error adding slot %p (formerly of Oc (%d, %d, %d)) into freeOcSlots.",
                         delCubePtr,
@@ -641,41 +880,29 @@ static uint32_t removeLoadedCubes(int32_t magChange) {
 
             SDL_UnlockMutex(state->protectCube2Pointer);
         }
-        else {
-            /*
-             * This element is both in Dcoi and at least one of the 2Pointer tables.
-             * This means we already loaded it and we can remove it from
-             * Dcoi.
-             *
-             */
-
-            if(ht_del(state->loaderState->Dcoi, currentCube->coordinate) != HT_SUCCESS) {
-                LOG("Error deleting  Dc (%d, %d, %d) from DCOI.\n",
-                       currentCube->coordinate.x,
-                       currentCube->coordinate.y,
-                       currentCube->coordinate.z);
-                return FALSE;
-            }
-        }
 
         currentCube = nextCube;
     }
 
-    if(ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
-        LOG("Error removing temporary cube to pointer table. This is a memory leak.");
-    }
     return TRUE;
 }
 
 static uint32_t loadCubes() {
-    C2D_Element *currentCube = NULL, *nextCube = NULL;
+    C_Element *currentCube = NULL, *prevCube = NULL;
     CubeSlot *currentDcSlot = NULL, *currentOcSlot = NULL;
     uint32_t loadedDc = FALSE, loadedOc = FALSE;
+    SDL_Thread *ftpThread = NULL;
+    SDL_sem *ftpThreadSem = NULL;
+    BOOL hadError = FALSE;
+    BOOL retVal = TRUE;
 
-    nextCube = currentCube = state->loaderState->Dcoi->listEntry->next;
-    while(nextCube != state->loaderState->Dcoi->listEntry) {
-        nextCube = currentCube->next;
+    if (LM_FTP == state->loadMode) {
+        ftpThreadSem = SDL_CreateSemaphore(0);
+        ftpThread = SDL_CreateThread(ftpthreadfunc, ftpThreadSem);
+    }
 
+    for (currentCube = state->loaderState->Dcoi->previous; currentCube != state->loaderState->Dcoi; currentCube = prevCube) {
+        prevCube = currentCube->previous;
         /*
          * Load the datacube for the current coordinate.
          *
@@ -691,7 +918,7 @@ static uint32_t loadCubes() {
         }
 
 
-        loadedDc = loadCube(currentCube->coordinate, currentDcSlot->cube, NULL);
+        loadedDc = loadCube(currentCube, currentDcSlot->cube, NULL);
         if(!loadedDc) {
             LOG("Error loading Dc (%d, %d, %d) into slot %p, mag %d dataset.",
                 currentCube->coordinate.x,
@@ -699,7 +926,13 @@ static uint32_t loadCubes() {
                 currentCube->coordinate.z,
                 currentDcSlot->cube,
                 state->magnification);
+            hadError = TRUE;
         }
+        /* LOG("Loaded: %d, %d, %d",
+            currentCube->coordinate.x,
+            currentCube->coordinate.y,
+            currentCube->coordinate.z); */
+
 
         /*
          * Load the overlay cube if overlay is activated.
@@ -716,7 +949,7 @@ static uint32_t loadCubes() {
                 return FALSE;
             }
 
-            loadedOc = loadCube(currentCube->coordinate, NULL, currentOcSlot->cube);
+            loadedOc = loadCube(currentCube, NULL, currentOcSlot->cube);
             if(!loadedOc) {
                 LOG("Error loading Oc (%d, %d, %d) into slot %p, mag%d dataset..",
                     currentCube->coordinate.x,
@@ -724,6 +957,7 @@ static uint32_t loadCubes() {
                     currentCube->coordinate.z,
                     currentOcSlot->cube,
                     state->magnification);
+                hadError = TRUE;
             }
         }
 
@@ -775,6 +1009,14 @@ static uint32_t loadCubes() {
                     currentDcSlot->cube);
                 return FALSE;
             }
+            /*
+            LOG("Deleted %d, %d, %d => %d available",
+                currentCube->coordinate.x,
+                currentCube->coordinate.y,
+                currentCube->coordinate.z,
+                state->loaderState->freeDcSlots->elements);
+            */
+
         }
         if(loadedOc) {
             if(slotListDelElement(state->loaderState->freeOcSlots, currentOcSlot) < 0) {
@@ -789,41 +1031,33 @@ static uint32_t loadCubes() {
          *
          */
 
-        if(ht_del(state->loaderState->Dcoi, currentCube->coordinate) != HT_SUCCESS) {
-            LOG("Error deleting cube coordinates (%d, %d, %d) from DCOI.",
-                currentCube->coordinate.x,
-                currentCube->coordinate.y,
-                currentCube->coordinate.z);
-            return FALSE;
-        }
-
         // We need to be able to cancel the loading when the
         // user crosses the reload-boundary
         // or when the dataset changed as a consequence of a mag switch
 
         SDL_LockMutex(state->protectLoadSignal);
-        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE)) {
+        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE) || (TRUE == hadError)) {
             SDL_UnlockMutex(state->protectLoadSignal);
+            /* LOG("LoadCubes Interrupted!"); */
 
-            if(ht_rmtable(state->loaderState->Dcoi) != LL_SUCCESS) {
-                LOG("Error removing Dcoi. This is a memory leak.");
-            }
-
-            // See the comment about the ht_new() call in knossos.c
-            state->loaderState->Dcoi = ht_new(state->cubeSetElements * 10);
-            if(state->loaderState->Dcoi == HT_FAILURE) {
-                LOG("Error creating new empty Dcoi. Fatal.");
-                _Exit(FALSE);
-            }
-
-            return FALSE;
+            retVal = FALSE;
+            break;
         }
         else {
             SDL_UnlockMutex(state->protectLoadSignal);
         }
-        currentCube = nextCube;
     }
 
+    if (LM_FTP == state->loadMode) {
+        /* LOG("LoadCubes posting FTP abort"); */
+        SDL_SemPost(ftpThreadSem);
+        /* LOG("LoadCubes waiting FTP thread"); */
+        SDL_WaitThread(ftpThread, NULL);
+        /* LOG("LoadCubes FTP thread finished, destroying semaphore"); */
+        SDL_DestroySemaphore(ftpThreadSem);
+        /* LOG("LoadCubes FTP semaphore destroyed"); */
+    }
+    lll_rmlist(state->loaderState->Dcoi);
 
-    return TRUE;
+    return retVal;
 }

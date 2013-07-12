@@ -53,7 +53,7 @@
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
-int viewer()  {
+int viewer() {
     SDL_Event event;
 
     struct viewerState *viewerState = state->viewerState;
@@ -1324,6 +1324,8 @@ uint32_t userMove(
             viewerState->currentPosition.x += x;
             viewerState->currentPosition.y += y;
             viewerState->currentPosition.z += z;
+            SET_COORDINATE(state->currentDirections[state->currentDirectionsIndex], x, y, z);
+            state->currentDirectionsIndex = (state->currentDirectionsIndex + 1) % LL_CURRENT_DIRECTIONS_SIZE;
     }
     else {
         LOG("Position (%d, %d, %d) out of bounds",

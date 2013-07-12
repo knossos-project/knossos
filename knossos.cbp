@@ -4,6 +4,7 @@
 	<Project>
 		<Option title="knossos" />
 		<Option pch_mode="2" />
+		<Option default_target="debug" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="release">
@@ -11,7 +12,6 @@
 				<Option output="knossos" prefix_auto="1" extension_auto="1" />
 				<Option type="0" />
 				<Option compiler="gcc" />
-				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
 				<Compiler>
 					<Add option="-march=pentium4" />
 					<Add option="-O3" />
@@ -47,7 +47,7 @@
 				<Option output="knossos" prefix_auto="1" extension_auto="1" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
+				<Option parameters="--data-path=i:\j0126_cubed\mag1" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-pg" />
@@ -123,6 +123,13 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="eventHandler.h" />
+		<Unit filename="ftp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ftplib/ftplib.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ftplib/ftplib.h" />
 		<Unit filename="gui.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -143,6 +150,118 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="loader.h" />
+		<Unit filename="openjpeg/bio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/bio.h" />
+		<Unit filename="openjpeg/cidx_manager.h" />
+		<Unit filename="openjpeg/cio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/cio.h" />
+		<Unit filename="openjpeg/color.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/color.h" />
+		<Unit filename="openjpeg/convert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/convert.h" />
+		<Unit filename="openjpeg/dwt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/dwt.h" />
+		<Unit filename="openjpeg/event.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/event.h" />
+		<Unit filename="openjpeg/function_list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/function_list.h" />
+		<Unit filename="openjpeg/image.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/image.h" />
+		<Unit filename="openjpeg/index.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/index.h" />
+		<Unit filename="openjpeg/indexbox_manager.h" />
+		<Unit filename="openjpeg/invert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/invert.h" />
+		<Unit filename="openjpeg/j2k.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/j2k.h" />
+		<Unit filename="openjpeg/jp2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/jp2.h" />
+		<Unit filename="openjpeg/mct.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/mct.h" />
+		<Unit filename="openjpeg/mqc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/mqc.h" />
+		<Unit filename="openjpeg/openjpeg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/openjpeg.h" />
+		<Unit filename="openjpeg/opj_apps_config.h" />
+		<Unit filename="openjpeg/opj_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/opj_clock.h" />
+		<Unit filename="openjpeg/opj_config.h" />
+		<Unit filename="openjpeg/opj_config_private.h" />
+		<Unit filename="openjpeg/opj_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/opj_getopt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/opj_getopt.h" />
+		<Unit filename="openjpeg/opj_includes.h" />
+		<Unit filename="openjpeg/opj_intmath.h" />
+		<Unit filename="openjpeg/opj_inttypes.h" />
+		<Unit filename="openjpeg/opj_malloc.h" />
+		<Unit filename="openjpeg/opj_stdint.h" />
+		<Unit filename="openjpeg/pi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/pi.h" />
+		<Unit filename="openjpeg/raw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/raw.h" />
+		<Unit filename="openjpeg/t1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/t1.h" />
+		<Unit filename="openjpeg/t1_luts.h" />
+		<Unit filename="openjpeg/t2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/t2.h" />
+		<Unit filename="openjpeg/tcd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/tcd.h" />
+		<Unit filename="openjpeg/tgt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="openjpeg/tgt.h" />
+		<Unit filename="qsort.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="refreshTime.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="remote.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -151,6 +270,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="renderer.h" />
+		<Unit filename="sha256.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sha256.h" />
 		<Unit filename="skeletonizer.c">
 			<Option compilerVar="CC" />
 		</Unit>

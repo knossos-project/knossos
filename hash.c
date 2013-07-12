@@ -132,7 +132,7 @@ static uint32_t ht_ll_rmlist(C2D_Element *delElement) {
     return LL_SUCCESS;
 }
 
-Byte *ht_get(Hashtable *hashtable, Coordinate key) {
+C2D_Element *ht_get_element(Hashtable *hashtable, Coordinate key) {
     uint32_t hashIndex;
     C2D_Element *curElement;
 
@@ -142,13 +142,24 @@ Byte *ht_get(Hashtable *hashtable, Coordinate key) {
     while(curElement) {
         if(COMPARE_COORDINATE(key, curElement->coordinate)) {
             // This is the element we're looking for!
-            return curElement->datacube;
+            return curElement;
         }
         curElement = curElement->ht_next;
     }
 
     // We don't have that element.
     return HT_FAILURE;
+}
+
+Byte *ht_get(Hashtable *hashtable, Coordinate key) {
+    C2D_Element *element = NULL;
+
+    element = ht_get_element(hashtable, key);
+    if (HT_FAILURE == element) {
+        return HT_FAILURE;
+    }
+
+    return element->datacube;
 }
 
 
