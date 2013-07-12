@@ -53,7 +53,7 @@
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
 
-int viewer() {
+int viewer()  {
     SDL_Event event;
 
     struct viewerState *viewerState = state->viewerState;
