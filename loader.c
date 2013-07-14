@@ -489,6 +489,33 @@ int CompareLoadOrderMetric(const void * a, const void * b)
     return 0;
 }
 
+floatCoordinate find_close_xyz(floatCoordinate direction) {
+    floatCoordinate xyz[3];
+    float dot_products[3];
+    int32_t i;
+    float max_dot_product;
+    int32_t max_dot_product_i;
+
+    SET_COORDINATE(xyz[0], 1.0, 0.0, 0.0);
+    SET_COORDINATE(xyz[1], 0.0, 1.0, 0.0);
+    SET_COORDINATE(xyz[2], 0.0, 0.0, 1.0);
+
+    for (i = 0; i < 3; i++) {
+        dot_products[i] = CALC_DOT_PRODUCT(direction, xyz[i]);
+    }
+    max_dot_product = dot_products[0];
+    max_dot_product_i = 0;
+    for (i = 1; i < 3; i++) {
+        if (max_dot_product < dot_products[i]) {
+            max_dot_product_i = i;
+            max_dot_product = dot_products[i];
+        }
+    }
+
+    return xyz[max_dot_product_i];
+
+}
+
 static uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     Coordinate currentDc, currentOrigin;
     floatCoordinate currentMetricPos, direction;
@@ -514,6 +541,7 @@ static uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         /* LOG("Progress %f,%f,%f", dx, dy, dz); */
     }
     SET_COORDINATE(direction, dx, dy, dz);
+    direction = find_close_xyz(direction);
     direction_norm = CALC_VECTOR_NORM(direction);
     if (0 == direction_norm) {
         LOG("No average movement, fabricating x direction!");
