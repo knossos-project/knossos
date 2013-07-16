@@ -216,6 +216,15 @@ void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
 
 void ZoomAndMultiresWidget::update() {
     orthogonalDataViewportSpinBox->setValue(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
+
+    QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
+    QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
+    QString lowestActiveMag = QString("Lowest active mag dataset: %1").arg(state->lowestAvailableMag);
+
+    this->currentActiveMagDatasetLabel = new QLabel(currentActiveMag);
+    this->highestActiveMagDatasetLabel = new QLabel(highestActiveMag);
+    this->lowestActiveMagDatasetLabel = new QLabel(lowestActiveMag);
+
 }
 
 void ZoomAndMultiresWidget::loadSettings() {

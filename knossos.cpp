@@ -25,6 +25,7 @@
 #include <QApplication>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QSettings>
 
 #include <PythonQT/PythonQt.h>
 #include <PythonQT/gui/PythonQtScriptingConsole.h>
@@ -68,10 +69,10 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    //QSettings::setPath();
 
     /* */
-
-
 
     /* */
 
@@ -173,8 +174,7 @@ int main(int argc, char *argv[])
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     //viewer->start();
     loader->start();
-    viewer->run();
-
+    viewer->run();   
 
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -212,7 +212,6 @@ int main(int argc, char *argv[])
     state->console->log("%d-%d", 5, 10);
 
     /* PYTHON QT INIT CODE */
-
     PythonQt::init();
     PythonQtObjectPtr  mainContext = PythonQt::self()->getMainModule();
     PythonQtScriptingConsole console(NULL, mainContext);
@@ -592,7 +591,6 @@ bool Knossos::sendRemoteSignal() {
 }
 
 bool Knossos::sendQuitSignal() {
-    MainWindow::UI_saveSettings();
 
     state->quitSignal = true;
 
@@ -1217,7 +1215,6 @@ void loadDefaultTreeLUT() {
         Knossos::loadTreeLUTFallback();
         MainWindow::treeColorAdjustmentsChanged();
     }
-
 
 }
 

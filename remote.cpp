@@ -250,9 +250,12 @@ bool Remote::remoteWalkTo(int x, int y, int z) {
 
    /* @todo There seems to be a bug in remote Walk which does not lead to anything in the qt version */
     /* this is an ad-hoc version which does not consider magnifications or other things */
-   for(int i = 1; i < 10; i++) {
-        emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, TELL_COORDINATE_CHANGE);
-        Sleeper::msleep(50);
+   for(int i = 1; i <= 10; i++) {
+       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, TELL_COORDINATE_CHANGE);
+       if(state->viewerState->stepsPerSec > 0)
+           Sleeper::msleep(1000 / state->viewerState->stepsPerSec);
+       else
+           Sleeper::msleep(50);
    }
 
     /*

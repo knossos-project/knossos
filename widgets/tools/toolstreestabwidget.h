@@ -26,6 +26,7 @@
  */
 
 #include <QWidget>
+#include "knossos-global.h"
 #include "../toolswidget.h"
 
 class QLabel;
@@ -40,6 +41,22 @@ class ToolsTreesTabWidget : public QWidget
 public:
     explicit ToolsTreesTabWidget(ToolsWidget *parent = 0);
     ToolsWidget *ref;
+    QLabel *activeTreeLabel;
+    QSpinBox *activeTreeSpinBox;
+
+    QPushButton *deleteActiveTreeButton;
+    QPushButton *newTreeButton;
+
+    QLabel *commentLabel;
+    QLineEdit *commentField;
+
+    QPushButton *mergeTreesButton, *splitByConnectedComponentsButton, *restoreDefaultColorButton;
+    QLabel *id1Label, *id2Label;
+    QSpinBox *id1SpinBox, *id2SpinBox;
+
+    QLabel *rLabel, *gLabel, *bLabel, *aLabel;
+    QDoubleSpinBox *rSpinBox, *gSpinBox, *bSpinBox, *aSpinBox;
+
 signals:
     void setActiveTreeSignal(int id);
     void delActiveTreeSignal();
@@ -61,21 +78,8 @@ public slots:
 
 
 protected:
-    QLabel *activeTreeLabel;
-    QSpinBox *activeTreeSpinBox;
 
-    QPushButton *deleteActiveTreeButton;
-    QPushButton *newTreeButton;
 
-    QLabel *commentLabel;
-    QLineEdit *commentField;
-
-    QPushButton *mergeTreesButton, *splitByConnectedComponentsButton, *restoreDefaultColorButton;
-    QLabel *id1Label, *id2Label;
-    QSpinBox *id1SpinBox, *id2SpinBox;
-
-    QLabel *rLabel, *gLabel, *bLabel, *aLabel;
-    QDoubleSpinBox *rSpinBox, *gSpinBox, *bSpinBox, *aSpinBox;
 
 };
 

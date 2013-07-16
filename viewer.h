@@ -56,6 +56,7 @@ public:
 
     Viewport *vp, *vp2, *vp3, *vp4;
     vpList *viewports;
+    int frames;
     //from knossos-global.h
 
     static bool loadTreeColorTable(const char *path, float *table, int type);
@@ -80,6 +81,7 @@ signals:
     void updateGLSignal3();
     void updateGLSignal4();
     void updateCoordinatesSignal(int x, int y, int z);
+    void updateZoomAndMultiresWidgetSignal();
     void idleTimeSignal();
 protected:
     bool resetViewPortData(vpConfig *viewport);
@@ -111,7 +113,7 @@ protected:
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
 
 
-
+    void rewire();
 public slots:
     bool changeDatasetMag(uint upOrDownFlag);
     bool userMove(int x, int y, int z, int serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
@@ -121,6 +123,7 @@ public slots:
     bool calcDisplayedEdgeLength();
     static bool refreshViewports();
     bool updateViewerState();
+    void showFrames();
     void run();
 protected:
     bool calcLeftUpperTexAbsPx();

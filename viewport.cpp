@@ -48,29 +48,12 @@ Viewport::Viewport(QWidget *parent, int plane) :
     //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
 
-    if(plane == VIEWPORT_SKELETON + 10) {
-        this->xy = new QPushButton("xy");
-        this->xz = new QPushButton("xz");
-        this->xy = new QPushButton("yz");
-        this->flip = new QPushButton("flip");
-        this->reset = new QPushButton("reset");
-
-        QVBoxLayout *mainLayout = new QVBoxLayout();
-        QHBoxLayout *hLayout = new QHBoxLayout();
-
-        hLayout->addWidget(xy);
-        hLayout->addWidget(xz);
-        hLayout->addWidget(yz);
-        hLayout->addWidget(flip);
-        hLayout->addWidget(reset);
-
-        mainLayout->addLayout(hLayout);
-        setLayout(mainLayout);
-    }
+    this->setAutoBufferSwap(true);
 }
 
 void Viewport::initializeGL() {
     if(plane < VIEWPORT_SKELETON) {
+
         glGenTextures(1, &state->viewerState->vpConfigs[plane].texture.texHandle);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -102,7 +85,7 @@ void Viewport::initializeGL() {
 
     }
 
-    /*
+
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed view port.
     glViewport(state->viewerState->vpConfigs[plane].upperLeftCorner.x,
@@ -127,7 +110,8 @@ void Viewport::initializeGL() {
     glEnable(GL_BLEND);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    */
+
+
 
 }
 
@@ -292,6 +276,7 @@ void Viewport::customEvent(QEvent *event) {
 
 void Viewport::drawViewport(int plane) {
     Renderer::renderOrthogonalVP(plane);
+
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -347,7 +332,6 @@ void Viewport::enterEvent(QEvent *event) {
 }
 
 void Viewport::paintEvent(QPaintEvent *event) {
-
 
 }
 
@@ -462,6 +446,5 @@ void Viewport::zoomOrthogonals(float step){
             emit changeDatasetMagSignal(triggerMagChange);
 
        emit recalcTextureOffsetsSignal();
-       emit runSignal();
 
 }

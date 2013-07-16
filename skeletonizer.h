@@ -270,7 +270,8 @@ signals:
     void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void drawGUISignal();
-    void UI_saveSkeletonSignal(int increment);
+    void saveSkeletonSignal(int increment);
+    void updateToolsSignal();
 public slots:
     static bool delTree(int targetRevision, int treeID);
     bool delActiveTree();

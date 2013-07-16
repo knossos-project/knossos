@@ -54,7 +54,6 @@ public:
     void updateTitlebar(bool useFilename);
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    static void UI_saveSettings();
     void loadSkeleton(char *fileName);
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
@@ -71,13 +70,11 @@ public:
     void createToolWidget();
     void createDataSavingWidget();
     void createSychronizationWidget();
-    void loadDefaultPrefs();
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
     void recalcTextureOffsetsSignal();
     void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
-    void runSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal();
@@ -218,8 +215,6 @@ public slots:
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);
-    void UI_saveSkeleton(int increment);
-    void saveSkelCallback();
     void saveSkeleton(QString fileName, int increment);
     void recentFileSelected(QAction *action);
 };

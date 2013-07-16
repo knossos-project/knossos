@@ -33,7 +33,6 @@
 #include <QSettings>
 #include "knossos-global.h"
 
-
 extern struct stateInfo *state;
 
 DataSavingWidget::DataSavingWidget(QWidget *parent) :

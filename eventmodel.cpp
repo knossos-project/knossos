@@ -1152,7 +1152,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
         }
     } else if(event->key() == Qt::Key_G) {
-        emit genTestNodesSignal(1000);
+        emit genTestNodesSignal(50000);
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             qDebug() << "N und shift";
@@ -1210,7 +1210,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "I pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(-0.1);
-
+            emit updateZoomWidgetSignal();
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
@@ -1221,6 +1221,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "O pressed";
         if (state->viewerState->gui->zoomSkeletonViewport == false){
             emit zoomOrthoSignal(0.1);
+            emit updateZoomWidgetSignal();
 
         } else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
@@ -1232,7 +1233,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_S) {
         if(control) {
             qDebug() << "S und control";
-            emit saveSkelCallbackSignal();
+            emit saveSkeletonSignal();
             return true;
         }
 
@@ -1272,15 +1273,17 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "Delete Key pressed";
         emit deleteActiveNodeSignal();
     } else if(event->key() == Qt::Key_F1) {
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
 
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+            emit updateTools();
         } else{
             if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
                 emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);
+                emit updateTools();
             }
         }
+
     } else if(event->key() == Qt::Key_F2) {
         qDebug() << "F2 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
@@ -1304,6 +1307,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             qDebug() << "F4 und alt";
             if(state->skeletonState->unsavedChanges) {
                 QApplication::closeAllWindows();
+                QApplication::quit();
             }
             else {
                 exit(0);

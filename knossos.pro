@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network
+QT       += core gui opengl network testlib
 
 TARGET = knossos
 TEMPLATE = app

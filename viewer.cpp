@@ -63,47 +63,6 @@ Viewer::Viewer(QObject *parent) :
     vp3->show();
     vp4->show();
 
-    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);
-
-    connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-    connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-    connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-    connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-
-    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), vp, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), vp2, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), vp3, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), vp4, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
-
-    connect(vp, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
-    connect(vp2, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
-    connect(vp3, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
-    connect(vp4, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
-
-    connect(vp, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp2, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp3, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp4, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-
-    connect(vp, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-    connect(vp2, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-    connect(vp3, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-    connect(vp4, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-
-    connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
-    connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
-    connect(vp3->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
-    connect(vp4->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
-
-    connect(vp->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-    connect(vp2->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-    connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-    connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-
-    connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
     //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
 
@@ -120,161 +79,19 @@ Viewer::Viewer(QObject *parent) :
     skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
 
     renderer = new Renderer();
+    rewire();
+    frames = 0;
 
-    connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
-    connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
-
-    connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(vp3->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(vp4->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-
-    connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
-
-    connect(vp->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vp2->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vp3->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vp4->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-
-    connect(vp->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(vp->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
-    connect(vp2->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(vp2->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
-    connect(vp3->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(vp3->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
-    connect(vp4->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(vp4->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
-
-    connect(vp->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-    connect(vp2->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-    connect(vp3->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-    connect(vp4->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-
-    connect(vp->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
-    connect(vp2->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
-    connect(vp3->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
-    connect(vp4->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
-
-    connect(vp->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(vp2->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(vp3->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(vp4->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-
-    connect(vp->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-
-    connect(vp->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
-    connect(vp2->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
-    connect(vp3->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
-    connect(vp4->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
-
-    connect(vp->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(vp2->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(vp3->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(vp4->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-
-    connect(vp->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(vp2->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(vp3->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(vp4->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-
-    connect(vp->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(vp2->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(vp3->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(vp4->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-
-    /* @todo */
-    // connect(skeletonizer, SIGNAL(UI_saveSkeletonSignal(int)), window, SLOT(saveSkeleton(int)));
-
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
-    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
-
-    connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
-    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
-    connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
-
-    connect(vp->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
-    connect(vp2->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
-    connect(vp3->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
-    connect(vp4->delegate, SIGNAL(saveSkelCallbackSignal()), window, SLOT(saveSkelCallback()));
-
-    connect(vp->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
-    connect(vp2->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
-    connect(vp3->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
-    connect(vp4->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
-
-    connect(vp->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    connect(vp2->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    connect(vp3->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    connect(vp4->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-
-    connect(vp->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp2->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp3->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp4->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-
-    connect(vp->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-    connect(vp2->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-    connect(vp3->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-    connect(vp4->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-
-    connect(vp->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp2->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp3->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z,
-                   NO_MAG_CHANGE);
-
-    connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    connect(vp->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    connect(vp2->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    connect(vp3->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    connect(vp4->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-
-    /* from x to skeletonizer´s setters */
-    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
-
-    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)), skeletonizer, SLOT(setOverrideNodeRadius(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(segRadiusToNodeRadiusSignal(float)), skeletonizer, SLOT(setSegRadiusToNodeRadius(float)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
-    //connect(renderer, SIGNAL(renderTextSignal(int,int,int,QString)), vp4, SLOT(renderTextSlot(int,int,int,QString)));
-
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-
-    connect(vp->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(vp3->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(vp4->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    /*
+    QTimer *counter = new QTimer();
+    connect(counter, SIGNAL(timeout()), this, SLOT(showFrames()));
+    counter->start(1000);
+    */
 
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(20);
+    timer->start(10);
+
 
 }
 
@@ -2197,6 +2014,9 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
     skeletonizer->skeletonChanged = true;
+
+    emit updateZoomAndMultiresWidgetSignal();
+
     return true;
 }
 
@@ -2304,12 +2124,16 @@ void Viewer::run() {
 
 
         while(viewports->elements > 0) {
-            if(drawCounter == 0)
+            if(drawCounter == 0) {
                 vp->makeCurrent();
-            else if(drawCounter == 1)
+                vp->updateGL();
+            } else if(drawCounter == 1) {
                 vp2->makeCurrent();
-            else if(drawCounter == 2)
+                vp2->updateGL();
+            } else if(drawCounter == 2) {
                 vp3->makeCurrent();
+                vp3->updateGL();
+            }
 
 
             nextVp = currentVp->next;
@@ -2403,11 +2227,11 @@ void Viewer::run() {
             currentVp = nextVp;
 
 
-
+            /*
             vp->updateGL();
             vp2->updateGL();
             vp3->updateGL();
-
+            */
 
 
 
@@ -2417,8 +2241,13 @@ void Viewer::run() {
 
 
         viewerState->userMove = false;
+        frames += 1;
 }
 
+void Viewer::showFrames() {
+    qDebug() << "frames :" << frames;
+    frames = 0;
+}
 
 
 //Initializes the window with the parameter given in viewerState
@@ -3199,5 +3028,207 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
 }
 
 bool Viewer::moveVPonTop(uint currentVP) {
+
+}
+
+void Viewer::rewire() {
+    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
+    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);   
+    connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+
+    connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+
+    connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), vp, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), vp2, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(zoomOrthoSignal(float)), vp3, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(zoomOrthoSignal(float)), vp4, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
+
+    connect(vp->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(updateZoomWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
+
+
+    connect(vp, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp2, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp3, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+    connect(vp4, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
+
+    connect(vp, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp2, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp3, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    connect(vp4, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+
+    connect(vp, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp2, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp3, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    connect(vp4, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+
+    connect(vp->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp2->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp3->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+    connect(vp4->delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
+
+    connect(vp->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp2->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+
+    connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+
+    connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
+    connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
+
+    connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp3->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(vp4->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+
+    connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
+
+    connect(vp->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp2->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp3->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vp4->delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+
+    connect(vp->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp2->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp2->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp3->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp3->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(vp4->delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(vp4->delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+
+    connect(vp->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp2->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp3->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(vp4->delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+
+    connect(vp->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp2->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp3->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(vp4->delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+
+    connect(vp->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp2->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp3->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(vp4->delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+
+    connect(vp->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+
+    connect(vp->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp2->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp3->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(vp4->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+
+    connect(vp->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp2->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp3->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(vp4->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+
+    connect(vp->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp2->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp3->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(vp4->delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+
+    connect(vp->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp2->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp3->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(vp4->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+
+    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
+
+    connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
+    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
+    connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
+
+    connect(vp->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+    connect(vp2->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+    connect(vp3->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+    connect(vp4->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+
+    connect(vp->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp2->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp3->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    connect(vp4->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+
+    connect(vp->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp2->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp3->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    connect(vp4->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+
+    connect(vp->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+
+    connect(vp->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+
+    connect(vp->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp2->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp3->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+    connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+
+    sendLoadSignal(state->viewerState->currentPosition.x,
+                   state->viewerState->currentPosition.y,
+                   state->viewerState->currentPosition.z,
+                   NO_MAG_CHANGE);
+
+    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp2->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp3->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(vp4->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+
+    /* from x to skeletonizer´s setters */
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
+
+    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)), skeletonizer, SLOT(setOverrideNodeRadius(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(segRadiusToNodeRadiusSignal(float)), skeletonizer, SLOT(setSegRadiusToNodeRadius(float)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
+
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
+
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+
+    connect(vp->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp3->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp4->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
 
 }

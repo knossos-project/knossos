@@ -47,6 +47,7 @@ public:
 signals:
     bool loadDataSetColortableSignal(const char *path, GLuint *table, int32_t type);
     void showIntersectionsSignal(bool value);
+    void updateViewerStateSignal();
 public slots:
     void enableOverlayChecked(bool on);
     void datasetLinearFilteringChecked(bool on);

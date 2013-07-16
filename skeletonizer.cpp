@@ -632,7 +632,7 @@ bool Skeletonizer::updateSkeletonState() {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();
 
-                emit UI_saveSkeletonSignal(true);
+                emit saveSkeletonSignal(true);
             }
         }
     }
@@ -749,8 +749,6 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
 
     return true;
 }
-
-//uint saveNMLSkeleton() { }
 
 int Skeletonizer::saveSkeleton() {
     treeListElement *currentTree = NULL;
@@ -1973,7 +1971,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         LOG("There exists no tree with ID %d!", treeID);
         return false;
     }
-    qDebug() << state->skeletonState->activeTree->treeID << " new tid";
+    qDebug() << state->skeletonState->activeTree->treeID << " new active tree id";
 
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = true;
@@ -2606,6 +2604,8 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         }
     }
 
+
+
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
@@ -2656,6 +2656,11 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     else {
         Viewer::refreshViewports();
     }
+
+    if(treeID == 1) {
+        Skeletonizer::setActiveTreeByID(1);
+    }
+
     return newElement;
 }
 
@@ -2732,6 +2737,8 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
         Viewer::refreshViewports();
     }
     Knossos::unlockSkeleton(true);
+
+    qDebug() << state->skeletonState->activeTree->comment;
 
     return true;
 }
@@ -3259,11 +3266,15 @@ bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListE
 
         state->skeletonState->currentComment = newComment;
     }
+
+
     //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
     memset(state->skeletonState->commentBuffer, '\0', 10240);
     strncpy(state->skeletonState->commentBuffer,
             state->skeletonState->currentComment->content,
             strlen(state->skeletonState->currentComment->content));
+
+
 
     state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
@@ -3371,7 +3382,7 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
 
     if(newContent) {
         if(currentComment->content) {
-            free(currentComment->content);
+            //free(currentComment->content);
         }
         currentComment->content = (char*)malloc(strlen(newContent) * sizeof(char) + 1);
         memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);

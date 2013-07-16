@@ -173,6 +173,8 @@ void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
     } else {
         state->viewerState->filterType = GL_NEAREST;
     }
+
+    emit updateViewerStateSignal();
 }
 
 void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
@@ -195,14 +197,14 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
         strcpy(state->viewerState->gui->datasetLUTFile, cname);
         MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
 
-        /* @todo uncomment
+
         if(Viewer::loadDatasetColorTable(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {
             LOG("Error loading Dataset LUT.\n");
             memcpy(&(state->viewerState->datasetColortable[0][0]),
                            &(state->viewerState->neutralDatasetTable[0][0]),
                            RGB_LUTSIZE);
         }
-        */
+
         MainWindow::datasetColorAdjustmentsChanged();
     }
 }

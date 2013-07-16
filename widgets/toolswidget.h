@@ -50,6 +50,7 @@ public:
     QList<int> *nodes;
 signals:
     void uncheckSignal();
+    void setActiveTreeSignal(int id);
 public slots:
     void updateDisplayedTree();
 protected:

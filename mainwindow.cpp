@@ -125,7 +125,6 @@ MainWindow::MainWindow(QWidget *parent) :
     widgetContainer->createWidgets();
     createCoordBarWin(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
 
-
     mainWidget = new QWidget(this);
     gridLayout = new QGridLayout();
     mainWidget->setLayout(gridLayout);
@@ -142,8 +141,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
     loadSettings();
-
-
 
 
 }
@@ -262,6 +259,15 @@ static void updateGuiconfig() {
 /* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
 
+    QString title;
+    if(state->skeletonState->skeletonFile) {
+        title = title.sprintf("KNOSSOS %s showing %s", KVERSION, state->skeletonState->skeletonFile);
+    } else {
+        title = title.sprintf("KNOSSOS %s showing %s", KVERSION, "no skeleton file");
+
+    }
+
+    /*
     char *filename;
     if(state->skeletonState->skeletonFile) {
 #ifdef Q_OS_UNIX
@@ -279,7 +285,9 @@ void MainWindow::updateTitlebar(bool useFilename) {
     }
 
     QString title(state->viewerState->gui->titleString);
+    */
     setWindowTitle(title);
+
 }
 
 void MainWindow::showSplashScreen() {
@@ -330,10 +338,6 @@ bool MainWindow::addRecentFile(const QString &fileName) {
     updateFileHistoryMenu();
     return true;
 }
-
-/* */
-void MainWindow::UI_saveSkeleton(int increment) { }
-void MainWindow::UI_saveSettings(){ }
 
 
 void MainWindow::loadSkeleton(char *fileName) {
@@ -470,11 +474,11 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
-    addNodeAction = new QAction(tr("&Add Node"), this);
+    addNodeAction = new QAction(tr("&Add Node(A)"), this);
     addNodeAction->setCheckable(true);
-    linkWithActiveNodeAction = new QAction(tr("&Link with Active Node"), this);
+    linkWithActiveNodeAction = new QAction(tr("&Link with Active Node(W)"), this);
     linkWithActiveNodeAction->setCheckable(true);
-    dropNodesAction = new QAction(tr("&Drop Nodes"), this);
+    dropNodesAction = new QAction(tr("&Drop Nodes(C)"), this);
     dropNodesAction->setCheckable(true);
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
     clearSkeletonAction =  new QAction(tr("&Clear Skeleton"), this);
@@ -613,6 +617,9 @@ void MainWindow::createMenus()
 
 void MainWindow::closeEvent(QCloseEvent *event) {
 
+    saveSettings();
+
+
     if(state->skeletonState->unsavedChanges) {
 
         prompt = new QMessageBox(this);
@@ -626,6 +633,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
         if((QPushButton *) prompt->clickedButton() == yesButton) {            
             event->accept();
+            QApplication::quit();
         }
 
         if((QPushButton *) prompt->clickedButton() == noButton) {
@@ -705,6 +713,7 @@ void MainWindow::updateFileHistoryMenu() {
 void MainWindow::saveSlot()
 {
 
+    qDebug() << state->skeletonState->skeletonFile;
     saveSkeleton(state->skeletonState->skeletonFile, false);
     updateTitlebar(true);
 
@@ -716,23 +725,10 @@ void MainWindow::saveAsSlot()
     if(!fileName.isEmpty()) {
 
         state->skeletonState->skeletonFile = const_cast<char *>(fileName.toStdString().c_str());
-        saveSkeleton(QString(state->skeletonState->skeletonFile), false);
+        saveSkeleton(QString(state->skeletonState->skeletonFile), state->skeletonState->autoFilenameIncrementBool);
 
     }
 
-}
-
-void MainWindow::saveSkelCallback() {
-    if(state->skeletonState->firstTree != NULL) {
-        if(state->skeletonState->unsavedChanges) {
-            UI_saveSkeleton(false);
-        } else {
-            qDebug("No changes since last save event. Not saving.");
-            return;
-        }
-    } else {
-        qDebug("No skeleton was found. Not saving.");
-    }
 }
 
 void MainWindow::saveSkeleton(QString fileName, int increment) {
@@ -742,7 +738,7 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
 
     char *cpath = const_cast<char *>(fileName.toStdString().c_str());
 
-    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, false, cpath);
+    //emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
     QFile saveFile(cpath);
     if(saveFile.open(QIODevice::ReadWrite)) {
         int saved = Skeletonizer::saveSkeleton();
@@ -767,9 +763,8 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
 
 void MainWindow::quitSlot()
 {
-   saveSettings();
    QApplication::closeAllWindows();
-
+   QApplication::quit();
 }
 
 /* edit skeleton functionality */
@@ -862,42 +857,41 @@ void MainWindow::tracingTimeSlot()
 }
 
 /* preference menu functionality */
-/**
- * @todo UI_loadSettings
- */
 void MainWindow::loadCustomPreferencesSlot()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.xml)");
-    if(!fileName.isEmpty()) {
-        cpBaseDirectory(state->viewerState->gui->settingsFile, const_cast<char *>(fileName.toStdString().c_str()), 2048);
-        strncpy(state->viewerState->gui->settingsFile, fileName.toStdString().c_str(), 2048);
-        /** @todo UI_loadSettings */
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
+    if(!fileName.isEmpty()) {      
+        QSettings::setUserIniPath(fileName);
+        loadSettings();
 
     }
 }
 
-/**
- * @todo UI_saveSettings
- */
 void MainWindow::saveCustomPreferencesSlot()
-{
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.xml)");
+{   
+    saveSettings();
+    QSettings settings;
+    QString originSettings = settings.fileName();
+
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.ini)");    
     if(!fileName.isEmpty()) {
-        cpBaseDirectory(state->viewerState->gui->customPrefsDirectory, const_cast<char *>(fileName.toStdString().c_str()), 2048);
-        strncpy(state->viewerState->gui->settingsFile, fileName.toStdString().c_str(), 2048);
-        /** @todo UI_saveSettings */
+        QFile file;
+        file.setFileName(originSettings);
+        file.copy(fileName);
     }
 }
 
-/**
-  * @todo the implementation for defaultPreferences
-  */
+
 void MainWindow::defaultPreferencesSlot() {
     int ret = QMessageBox::question(this, "", "Do you really want to load the default preferences ?", QMessageBox::Yes | QMessageBox::No);
 
     switch(ret) {
         case QMessageBox::Yes:
             clearSettings();
+            loadSettings();
+            Knossos::loadTreeLUTFallback();
+            treeColorAdjustmentsChanged();
+            datasetColorAdjustmentsChanged();
             break;
     case QMessageBox::No:
            break;
@@ -997,7 +991,6 @@ void MainWindow::pasteClipboardCoordinates(){
             this->zField->setValue(extractedCoords->z);
 
             emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-            emit runSignal();
 
             free(extractedCoords);
 
@@ -1134,17 +1127,6 @@ void MainWindow::clearSettings() {
     }
 }
 
-
-/**
-  * @todo
-  */
-void MainWindow::loadDefaultPrefs() {
-    this->showMaximized();
-
-    Knossos::loadTreeLUTFallback();
-    treeColorAdjustmentsChanged();
-    datasetColorAdjustmentsChanged();
-}
 
 void MainWindow::uncheckToolsAction() {
     this->toolsAction->setChecked(false);

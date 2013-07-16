@@ -62,7 +62,8 @@ protected:
     int plane; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
-    QPushButton *xy, *xz, *yz, *flip, *reset;
+    void drawButtons();
+
     bool entered;
 
 private:
@@ -84,6 +85,7 @@ signals:
     void recalcTextureOffsetsSignal();
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
+    void updateZoomAndMultiresWidget();
 public slots:
     void zoomOrthogonals(float step);
 };

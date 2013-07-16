@@ -23,6 +23,7 @@
  */
 
 #include "toolstreestabwidget.h"
+#include "widgets/tools/toolsquicktabwidget.h"
 
 #include <QWidget>
 #include <QLabel>
@@ -34,14 +35,15 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QGridLayout>
-#include "knossos-global.h"
+
 #include "skeletonizer.h"
+
 extern struct stateInfo *state;
 
 ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
-    QWidget(parent)
+    QWidget(parent), ref(parent)
 {
-    ref = parent;
+
     activeTreeLabel = new QLabel("Active Tree ID:");
     activeTreeSpinBox = new QSpinBox();
     this->activeTreeSpinBox->setMaximum(0);
@@ -174,25 +176,36 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
 
 
 void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
-    if(activeTreeSpinBox->minimum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->minimum())
-        return;
-
-    if(activeTreeSpinBox->maximum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->maximum())
-        return;
-
     if(!state->skeletonState->activeTree)
         return;
 
-    int currentIndex = state->skeletonState->activeTree->treeID;
+    /*
+    int currentIndex = state->skeletonState->activeTree->treeID - 1;
     int nextIndex = ref->findTreeIndex(value);
 
     if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
-        emit setActiveTreeSignal(ref->trees->at(nextIndex + 1));
-    } else if(currentIndex > nextIndex and nextIndex > 0) {
-        emit setActiveTreeSignal(ref->trees->at(nextIndex - 1));
-    }
+        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
 
-    emit updateToolsSignal();
+        //this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex + 1));
+
+    } else if(currentIndex > nextIndex and nextIndex >= 0) {
+        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
+
+        //this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex - 1));
+
+
+    } else if(currentIndex == nextIndex) {
+        //emit setActiveTreeSignal(value);
+    }
+    */
+
+    /*
+    ref->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
+    ref->toolsQuickTabWidget->activeTreeSpinBox->setValue(this->activeTreeSpinBox->value());
+    ref->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
+    */
+
+    //emit updateToolsSignal();
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
@@ -217,7 +230,13 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
 }
 
 void ToolsTreesTabWidget::commentChanged(QString comment) {
-    state->viewerState->gui->treeCommentBuffer = const_cast<char *>(comment.toStdString().c_str());
+    if(state->skeletonState->activeTree) {
+        qDebug() << comment.toStdString().c_str();
+        Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
+        state->viewerState->gui->treeCommentBuffer = const_cast<char *>(comment.toStdString().c_str());
+    } else {
+        qDebug() << "gnaaaa";
+    }
 }
 
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {

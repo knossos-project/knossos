@@ -23,23 +23,22 @@
  */
 
 #include "toolsquicktabwidget.h"
-#include "../toolswidget.h"
+#include "widgets/tools/toolstreestabwidget.h"
+
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
 #include <QFrame>
 #include <QPushButton>
 #include <QSpacerItem>
-#include "knossos-global.h"
-#include "skeletonizer.h"
 
+#include "skeletonizer.h"
 
 extern struct stateInfo *state;
 
 ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
-    QWidget(parent)
+    QWidget(parent), ref(parent)
 {
-    ref = parent;
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     treeCountLabel = new QLabel("Tree Count: 0");
@@ -60,11 +59,10 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     this->activeTreeLabel = new QLabel("Active Tree ID:");
     this->activeTreeSpinBox = new QSpinBox();
     this->activeTreeSpinBox->setMaximum(0);
-    this->activeTreeSpinBox->setMinimum(0);
+    this->activeTreeSpinBox->setMinimum(0);    
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(activeTreeLabel, activeTreeSpinBox);
-
     mainLayout->addLayout(formLayout);
 
     QFrame *line2 = new QFrame();
@@ -146,31 +144,65 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
 }
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-    if(activeTreeSpinBox->minimum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->minimum())
-        return;
 
-    if(activeTreeSpinBox->maximum() == value & activeTreeSpinBox->value() == activeTreeSpinBox->maximum())
-        return;
+    qDebug() << value << "_" << activeTreeSpinBox->value();
 
-    if(!state->skeletonState->activeTree)
+    if(!state->skeletonState->activeTree) {
         return;
+    }
 
-    int currentIndex = state->skeletonState->activeTree->treeID;
+    Skeletonizer::setActiveTreeByID(value);
+    /*
+    int currentIndex = state->skeletonState->activeTree->treeID - 1;
     int nextIndex = ref->findTreeIndex(value);
 
     if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
         //activeTreeSpinBox->setValue(ref->trees->at(nextIndex + 1));
-        emit setActiveTreeSignal(ref->trees->at(nextIndex + 1));
-    } else if(currentIndex > nextIndex and nextIndex > 0) {
+        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
+        this->activeTreeSpinBox->blockSignals(true);
+        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex+1));
+        this->activeTreeSpinBox->blockSignals(false);
+    } else if(currentIndex > nextIndex and nextIndex >= 0) {
         //activeTreeSpinBox->setValue(ref->trees->at(nextIndex - 1));
-        emit setActiveTreeSignal(ref->trees->at(nextIndex - 1));
+        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
+        this->activeTreeSpinBox->blockSignals(true);
+        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex-1));
+        this->activeTreeSpinBox->blockSignals(false);
+    } else if(currentIndex == nextIndex) {
+        //emit setActiveTreeSignal(ref->trees->at(value));
     }
+    */
 
-
-    emit updateToolsSignal();
+    /*
+    ref->toolsTreesTabWidget->blockSignals(true);
+    ref->toolsTreesTabWidget->activeTreeSpinBox->setValue(this->activeTreeSpinBox->value());
+    ref->toolsTreesTabWidget->blockSignals(false);
+    */
+    //emit updateToolsSignal();
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
+    /*
+    int currentIndex = state->skeletonState->activeNode->nodeID - 1;
+    int nextIndex = ref->findTreeIndex(value);
+
+    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
+        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex + 1));
+        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
+        this->activeTreeSpinBox->blockSignals(true);
+        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex+1));
+        this->activeTreeSpinBox->blockSignals(false);
+    } else if(currentIndex > nextIndex and nextIndex >= 0) {
+        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex - 1));
+        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
+        this->activeTreeSpinBox->blockSignals(true);
+        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex-1));
+        this->activeTreeSpinBox->blockSignals(false);
+    } else if(currentIndex == nextIndex) {
+        //emit setActiveTreeSignal(ref->trees->at(value));
+    }
+    */
+
 
     qDebug() << " hier node changed";
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
@@ -179,28 +211,31 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
         this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+
+        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content)
+            this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+        else
+            this->commentField->clear();
     }
 }
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {
-    state->viewerState->gui->commentBuffer = const_cast<char *>(comment.toStdString().c_str());
+    if(state->skeletonState->activeNode) {
+        state->skeletonState->activeNode->comment->content = const_cast<char *>(comment.toStdString().c_str());
+    }
 }
 
 void ToolsQuickTabWidget::searchForChanged(QString comment) {
     state->viewerState->gui->commentSearchBuffer = const_cast<char *>(comment.toStdString().c_str());
 }
 
-/**
-  * @bug if the searchForField is empty the application crashes while invoking nextComment
-  */
+
 void ToolsQuickTabWidget::findNextButtonClicked() {
     qDebug() << state->viewerState->gui->commentSearchBuffer;
     emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }
 
-/**
-  * @bug the application crashes while invoking nextComment
-  */
+
 void ToolsQuickTabWidget::findPreviousButtonClicked() {
     emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
 }

@@ -85,6 +85,7 @@ void CommentShortCutsTab::deleteComments() {
   * @todo an optical feedback for the user would be a nice feature
   */
 bool CommentShortCutsTab::eventFilter(QObject *obj, QEvent *event) {
+
     for(int i = 0; i < NUM; i++) {
         if(textFields[i] == obj) {
             if(event->type() == QEvent::KeyPress) {
@@ -92,7 +93,7 @@ bool CommentShortCutsTab::eventFilter(QObject *obj, QEvent *event) {
                 if(keyEvent->key() == Qt::Key_Return) {
                     if(!textFields[i]->text().isEmpty()) {
                         if(i == 0) {
-                            state->viewerState->gui->comment1 = const_cast<char *>(textFields[i]->text().toStdString().c_str());
+                            state->viewerState->gui->comment1 = const_cast<char *>(textFields[i]->text().toStdString().c_str());                            
                             return true;
                         } else if(i == 1) {
                             state->viewerState->gui->comment2 = const_cast<char *>(textFields[i]->text().toStdString().c_str());

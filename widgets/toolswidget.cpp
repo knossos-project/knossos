@@ -32,7 +32,6 @@
 
 extern stateInfo *state;
 
-
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
 {
@@ -135,22 +134,46 @@ void ToolsWidget::saveSettings() {
 }
 
 void ToolsWidget::updateDisplayedTree() {
+    qDebug() << state->skeletonState->treeElements << " trees";
+    /*
+    if(!state->skeletonState->activeTree and state->skeletonState > 0) {
+        emit setActiveTreeSignal(state->skeletonState->treeElements);
+    } */
+
     if(!trees->contains(state->skeletonState->treeElements))
         trees->append(state->skeletonState->treeElements);
     if(!nodes->contains(state->skeletonState->totalNodeElements))
         nodes->append(state->skeletonState->totalNodeElements);
 
+
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
     this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
+    //this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
+
     if(state->skeletonState->activeTree) {
 
+        //this->toolsQuickTabWidget->blockSignals(true);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+        //this->toolsQuickTabWidget->blockSignals(false);
+
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(1);
+/*
+        this->toolsTreesTabWidget->blockSignals(true);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+        this->toolsTreesTabWidget->blockSignals(false);
+        */
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(1);
+
+
+        //if(state->skeletonState->activeTree->comment)
+            //this->toolsTreesTabWidget->commentField->setText(QString(state->skeletonState->activeTree->comment));
+
+
     } else {
-        //this->toolsQuickTabWidget->activeNodeSpinBox->setEnabled(false);
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
-
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
     }
 
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
@@ -161,21 +184,14 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+
+        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
+            this->toolsQuickTabWidget->blockSignals(true);
+            this->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+            this->toolsQuickTabWidget->blockSignals(false);
+        }
     }
     this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
-    this->toolsQuickTabWidget->update();
-
-
-    if(state->skeletonState->activeTree) {
-        this->toolsTreesTabWidget->activeTreeSpinBox->setEnabled(true);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(1);
-    } else {
-        //his->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
-        //this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setEnabled(false);
-    }
 
 }
 
