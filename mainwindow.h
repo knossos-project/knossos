@@ -79,6 +79,7 @@ signals:
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal();
     void recentFileSelectSignal(int index);
+    void updateToolsSignal();
 protected:
 
 public:

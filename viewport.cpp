@@ -32,7 +32,6 @@
 
 extern stateInfo *state;
 
-
 /**
   * @note The button group for skeleton viewport does not work as expected
   * another approach is needed
@@ -41,13 +40,13 @@ Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
     delegate = new EventModel();
     connect(delegate, SIGNAL(rerender()), this, SLOT(updateGL()));
+    this->setMouseTracking(true);
 
     this->plane = plane;
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
     //this->setMouseTracking(true);
-    this->setCursor(Qt::CrossCursor);
-
+    //this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
 }
 
@@ -147,7 +146,7 @@ void Viewport::initializeOverlayGL() {
 
 void Viewport::resizeGL(int w, int h) {
 
-    qDebug("resizing");
+    LOG("resizing");
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -166,7 +165,7 @@ void Viewport::resizeGL(int w, int h) {
 
 void Viewport::paintGL() {
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
@@ -174,12 +173,8 @@ void Viewport::paintGL() {
 
         }  else {
             this->drawSkeletonViewport();
-
         }
     }
-
-
-
 }
 
 
@@ -193,7 +188,6 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    //qDebug() << "mouse move Event";
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
@@ -218,8 +212,6 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     delegate->mouseX = event->x();
     delegate->mouseY = event->y();
 
-    //qDebug() << "pressEvent";
-
     if(event->button() == Qt::LeftButton) {
         handleMouseButtonLeft(event, plane);
     }
@@ -228,7 +220,6 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     }
     else if(event->button() == Qt::RightButton) {
         handleMouseButtonRight(event, plane);
-        this->updateGL();
     }
 }
 
@@ -248,20 +239,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
-    /*
-    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-    if(keyMod.testFlag(Qt::ShiftModifier) && event->key() == Qt::Key_Left) {
-        qDebug() << "_<-_+_sh";
-    }
-    */
-    if(event->key() == Qt::Key_Left) {
-        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-        if(keyMod.testFlag(Qt::ShiftModifier)) {
-            qDebug() << "hier klappts";
-        }
-    }
-
-    handleKeyboard(event);
+    this->delegate->handleKeyboard(event, this->plane);
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -433,7 +411,6 @@ void Viewport::zoomOrthogonals(float step){
                             state->viewerState->vpConfigs[i].texture.zoomLevel += step;
                         }
                     }
-
                 }
             }
         }

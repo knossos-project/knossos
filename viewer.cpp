@@ -48,23 +48,21 @@ Viewer::Viewer(QObject *parent) :
     window->show();
     state->console = window->widgetContainer->console;
 
+
     vp = new Viewport(window, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ);
     vp3 = new Viewport(window, VIEWPORT_XZ);
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
-    vp->setGeometry(5, 40, 350,350);
-    vp2->setGeometry(355, 40, 350, 350);
-    vp3->setGeometry(5, 400, 350, 350);
-    vp4->setGeometry(355, 400, 350, 350);
+    vp->setGeometry(5, 40, 350, 350);
+    vp2->setGeometry(360, 40, 350, 350);
+    vp3->setGeometry(5, 395, 350, 350);
+    vp4->setGeometry(360, 395, 350, 350);
 
     vp->show();
     vp2->show();
     vp3->show();
     vp4->show();
-
-
-    //connect(window, SIGNAL(runSignal()), this, SLOT(run()));
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -100,7 +98,7 @@ static vpList* vpListNew() {
 
     newVpList = (vpList *) malloc(sizeof(vpList));
     if(newVpList == NULL) {
-        qDebug("Out of memory.\n");
+        LOG("Out of memory.\n");
         return NULL;
     }
 
@@ -146,7 +144,7 @@ static vpBacklog *backlogNew() {
 
     newBacklog = (vpBacklog *) malloc(sizeof( vpBacklog));
     if(newBacklog == NULL) {
-        qDebug("Out of memory.\n");
+        LOG("Out of memory.\n");
         return NULL;
     }
     newBacklog->entry = NULL;
@@ -162,7 +160,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
 
     newVpList = vpListNew();
     if(newVpList == NULL) {
-        qDebug("Error generating new vpList.");
+        LOG("Error generating new vpList.");
         _Exit(false);
     }
 
@@ -172,7 +170,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
         }
         currentBacklog = backlogNew();
         if(currentBacklog == NULL) {
-            qDebug("Error creating backlog.");
+            LOG("Error creating backlog.");
             _Exit(false);
         }
         vpListAddElement(newVpList, &(viewerState->vpConfigs[i]), currentBacklog);
@@ -351,7 +349,7 @@ static vpBacklogElement *isCubeInBacklog(struct vpBacklog *backlog, Coordinate *
 static bool backlogDel(vpBacklog *backlog) {
     while(backlog->elements > 0) {
         if(backlogDelElement(backlog, backlog->entry) < 0) {
-            qDebug("Error deleting element at %p from the backlog. %d elements remain in the list.",
+            LOG("Error deleting element at %p from the backlog. %d elements remain in the list.",
                 backlog->entry, backlog->elements);
             return false;
         }
@@ -374,7 +372,7 @@ static int vpListDelElement( vpList *list,  vpListElement *element) {
     }
 
     if(backlogDel(element->backlog) == false) {
-        qDebug("Error deleting backlog at %p of vpList element at %p.",
+        LOG("Error deleting backlog at %p of vpList element at %p.",
                element->backlog, element);
         return FAIL;
     }
@@ -390,7 +388,7 @@ static int vpListDelElement( vpList *list,  vpListElement *element) {
 static bool vpListDel(vpList *list) {
     while(list->elements > 0) {
         if(vpListDelElement(list, list->entry) < 0) {
-            qDebug("Error deleting element at %p from the slot list %d elements remain in the list.",
+            LOG("Error deleting element at %p from the slot list %d elements remain in the list.",
                    list->entry, list->elements);
             return false;
         }
@@ -406,7 +404,7 @@ static int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOff
 
     newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
     if(newElement == NULL) {
-        qDebug("Out of memory.");
+        LOG("Out of memory.");
         /* Do not return false here. That's a bug. FAIL is hackish... Is there a better way? */
         return FAIL;
     }
@@ -812,13 +810,13 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
               i = 0;
 
     if(currentVp->backlog->entry == NULL) {
-        qDebug("Called vpHandleBacklog, but there is no backlog.");
+        LOG("Called vpHandleBacklog, but there is no backlog.");
         return false;
     }
 
     elements = currentVp->backlog->elements;
     currentElement = currentVp->backlog->entry;
-    qDebug() << "starting to handle backlog";
+    LOG("starting to handle backlog");
     for(i = 0; i < elements; i++)  {
         nextElement = currentElement->next;
 
@@ -829,7 +827,7 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
-                //qDebug() << "failed to get cube in backlog";
+                LOG("failed to get cube in backlog");
                 // if(currentElement->cube.x >= 3) {
                        //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
                  //}
@@ -3079,12 +3077,18 @@ void Viewer::rewire() {
     connect(vp3->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vp4->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
+    connect(vp->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
+    connect(vp2->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
+    connect(vp3->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
+    connect(vp4->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
+
     connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
+    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
@@ -3155,12 +3159,15 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
 
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
@@ -3212,7 +3219,6 @@ void Viewer::rewire() {
 
     /* from x to skeletonizer´s setters */
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
-
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));

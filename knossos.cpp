@@ -46,12 +46,13 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-//Knossos *knossos;
-Viewer *viewer;
+
 
 //static uint isPathString(char *string);
 //static uint printUsage();
 
+void initialize(int argc, char *argv[]);
+void rewire();
 Knossos::Knossos(QObject *parent) : QObject(parent) {
     /*
     this->loader = new Loader();
@@ -66,6 +67,13 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {
 int main(int argc, char *argv[])
 { 
     QApplication a(argc, argv);
+    Knossos::initialize(argc, argv);
+
+
+    return a.exec();
+}
+
+void Knossos::initialize(int argc, char *argv[]) {
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
@@ -107,7 +115,7 @@ int main(int argc, char *argv[])
     if(Knossos::tempConfigDefaults() != true) {
         LOG("Error loading default parameters.");
         _Exit(false);
-    }    
+    }
 
     if(argc >= 2) {
         Knossos::configFromCli(argc, argv);
@@ -164,18 +172,12 @@ int main(int argc, char *argv[])
 
     Knossos::printConfigValues();
 
-    viewer = new Viewer();
+    Viewer *viewer = new Viewer();
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
 
-
-    //QObject::connect(knossos, SIGNAL(calcDisplayedEdgeLengthSignal()), viewer, SLOT(calcDisplayedEdgeLength()));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
-    //viewer->start();
-    loader->start();
-    viewer->run();   
-
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)), viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
@@ -207,6 +209,9 @@ int main(int argc, char *argv[])
 
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
+    //viewer->start();
+    loader->start();
+    viewer->run();
     remote->start();
 
     state->console->log("%d-%d", 5, 10);
@@ -226,8 +231,6 @@ int main(int argc, char *argv[])
     console.appendCommandPrompt();
     console.show();
 
-
-    return a.exec();
 }
 
 /**
@@ -1218,6 +1221,7 @@ void loadDefaultTreeLUT() {
 
 }
 
-void wire() {
+void rewire() {
+
 
 }

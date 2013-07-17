@@ -37,16 +37,13 @@ Console::Console(QWidget *parent) :
     this->editor = new QPlainTextEdit(this);
     this->editor->setReadOnly(true);
     this->editor->insertPlainText("Knossos QT\n");
-    this->editor->setFont(QFont("Courier", 12, QFont::Normal));
+    this->editor->setFont(QFont("Courier", 14, QFont::Normal));
 
     QPalette palette = this->palette();
     palette.setColor(QPalette::Base, Qt::black);
     palette.setColor(QPalette::Text, Qt::white);
     this->setPalette(palette);
 
-    for(int i = 0; i < 20; i++) {
-        this->editor->insertPlainText("Foo\n");
-    }
 
 }
 
@@ -98,11 +95,6 @@ void Console::log(const char *fmt, ...) {
     va_end(args);
 
     editor->appendPlainText(QString(fmtbuffer));
-
-
-
-
-
 
     va_end(args);
 

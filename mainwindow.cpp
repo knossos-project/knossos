@@ -64,8 +64,22 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+    /*
+    QPalette* palette = new QPalette();
+    QLinearGradient linearGradient(QPointF(width() /2, 0), QPointF(width()/2, height()/2));
+    linearGradient.setColorAt(0, Qt::lightGray);
+    linearGradient.setColorAt(1, Qt::gray);
+    palette->setBrush(QPalette::Window,*(new QBrush(linearGradient)));
+    this->setPalette(*palette);
+    */
+
+
+
+
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
+
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
@@ -347,9 +361,9 @@ void MainWindow::loadSkeleton(char *fileName) {
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
         linkWithActiveNodeSlot();
-        qDebug() << "Successfully loded";
+        LOG("Successfully loded");
     } else {
-        qDebug() << "Error";
+        LOG("Error");
         strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
     }
 }
@@ -680,13 +694,15 @@ void MainWindow::openSlot() {
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
         }
+
+        emit updateToolsSignal();
     }
 }
 
 bool MainWindow::alreadyInMenu(const QString &path) {
     for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
         qDebug() << skeletonFileHistory->at(i) << "_" << path;
-        if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseInsensitive)) {
+        if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseSensitive)) {
             return true;
         }
     }
@@ -748,10 +764,10 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
             box.setText("The skeleton was not saved successfully. Check disk space and access rights");
             box.show();
         } else if(!saved) {
-            qDebug() << "No skeleton was found. Not saving";
+            LOG("No skeleton was found. Not saving");
         } else {
             updateTitlebar(true);
-            qDebug("Successfully saved to %s", state->skeletonState->skeletonFile);
+            LOG("Successfully saved to %s", state->skeletonState->skeletonFile);
             state->skeletonState->unsavedChanges = false;
             addRecentFile(fileName);
         }

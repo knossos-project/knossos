@@ -252,7 +252,6 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
         if(currentTree->treeID == treeID) {
             return currentTree;
         }
-        qDebug() << currentTree->treeID << " id";
         currentTree = currentTree->next;
     }
     return NULL;
@@ -1065,7 +1064,7 @@ bool Skeletonizer::loadSkeleton() {
     int skeletonTime = 0;
     color4F neuronColor;
 
-    qDebug("Starting to load skeleton...");
+    LOG("Starting to load skeleton...");
 
      //  This function should always be called through UI_loadSkeleton for
      //  proper error and file name display to the user.
@@ -1971,13 +1970,16 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
         LOG("There exists no tree with ID %d!", treeID);
         return false;
     }
-    qDebug() << state->skeletonState->activeTree->treeID << " new active tree id";
+
 
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
     state->viewerState->gui->activeTreeID = currentTree->treeID;
+
+    qDebug() << " new active tree id is " << state->skeletonState->activeTree->treeID;
+
     return true;
 }
 
@@ -1999,7 +2001,7 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
-            qDebug("No node with id %d available.", nodeID);
+            LOG("No node with id %d available.", nodeID);
             Knossos::unlockSkeleton(false);
             return false;
         }
@@ -3389,10 +3391,12 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
         strncpy(currentComment->content, newContent, strlen(newContent));
 
         //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
+        /*
         memset(state->skeletonState->commentBuffer, '\0', 10240);
         strncpy(state->skeletonState->commentBuffer,
                 state->skeletonState->currentComment->content,
                 strlen(state->skeletonState->currentComment->content));
+        */
     }
 
     if(newNodeID) {
@@ -3558,6 +3562,7 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     return true;
 }
 
+/* @todo loader gets out of sync (endless loop) */
 bool Skeletonizer::popBranchNode(int targetRevision) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     // SYNCHRO BUG:
@@ -3596,23 +3601,23 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
         LOG("Branch point (node ID %d) deleted.", branchNodeID);
 #endif
 
-        /*
+
         state->viewerState->currentPosition.x
             = branchNode->position.x;
         state->viewerState->currentPosition.y
             = branchNode->position.y;
         state->viewerState->currentPosition.z
             = branchNode->position.z;
-        */
+
+
 
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 
         branchNode->isBranchNode--;
         state->skeletonState->skeletonChanged = true;
 
-        /* @todo change to Signal
         Viewer::updatePosition(TELL_COORDINATE_CHANGE);
-        */
+
         state->skeletonState->branchpointUnresolved = true;
     }
 
@@ -3652,17 +3657,17 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
                 branchNode->isBranchNode = true;
             }
             state->skeletonState->skeletonChanged = true;
-            qDebug("Branch point (node ID %d) added.", branchNode->nodeID);
+            LOG("Branch point (node ID %d) added.", branchNode->nodeID);
 
         }
         else {
-            qDebug("Active node is already a branch point");
+            LOG("Active node is already a branch point");
             Knossos::unlockSkeleton(true);
             return true;
         }
     }
     else {
-        qDebug("Make a node active before adding branch points.");
+        LOG("Make a node active before adding branch points.");
         Knossos::unlockSkeleton(true);
         return true;
     }

@@ -103,6 +103,7 @@ signals:
     void saveSkeletonSignal();
     void idleTimeSignal();
     void updateTools();
+    void updateTreeCountSignal();
     void updateZoomWidgetSignal();
 public slots:
     

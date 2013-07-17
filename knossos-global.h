@@ -1528,7 +1528,7 @@ typedef struct {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-#define LOG(...) \ 
+#define LOG2(...) \
     { \
     printf("[%s:%d] ", __FILE__, __LINE__); \
     printf(__VA_ARGS__); \
@@ -1537,5 +1537,13 @@ typedef struct {
     }
     /*if(state->viewerState->viewerReady) \
        AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/
+
+#define LOG(...) \
+{ \
+    if(state->console) { \
+        state->console->log(__VA_ARGS__); \
+        state->console->log("\n"); \
+    } \
+}
 
 #endif

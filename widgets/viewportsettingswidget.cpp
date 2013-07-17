@@ -187,21 +187,32 @@ void ViewportSettingsWidget::loadSettings() {
         bool on = settings.value(WHOLE_SKELETON).toBool();
         if(on) {
             state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_WHOLE;
+            state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+        } else {
+           state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
         }
     }
 
     if(!settings.value(ONLY_ACTIVE_TREE).isNull()) {
         this->skeletonViewportWidget->onlyActiveTreeRadioButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
         bool on = settings.value(ONLY_ACTIVE_TREE).toBool();
-        if(on)
+        if(on) {
             state->viewerState->gui->radioRenderingModel = DSP_ACTIVETREE;
+            state->skeletonState->displayMode |= DSP_ACTIVETREE;
+        } else {
+            state->skeletonState->displayMode &= ~DSP_ACTIVETREE;
+        }
     }
 
     if(!settings.value(HIDE_SKELETON).isNull()) {
         this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(settings.value(HIDE_SKELETON).toBool());
         bool on = settings.value(HIDE_SKELETON).toBool();
-        if(on)
+        if(on) {
             state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_HIDE;
+            state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
+        } else {
+            state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
+        }
     }
 
 

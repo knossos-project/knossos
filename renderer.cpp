@@ -445,7 +445,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
          || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-        qDebug("Wrong VP type given for renderOrthogonalVP() call.");
+       LOG("Wrong VP type given for renderOrthogonalVP() call.");
         return false;
     }
 
@@ -682,6 +682,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
+
 
             renderSkeleton(VIEWPORT_XZ);
 
@@ -2194,7 +2195,6 @@ void Renderer::renderSkeleton(uint viewportType) {
                     currentSegment = currentSegment->next;
 
                 }
-
 
                 /* The first 50 entries of the openGL namespace are reserved
                 for static objects (like slice plane quads...) */

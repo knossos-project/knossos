@@ -118,7 +118,7 @@ public slots:
     bool changeDatasetMag(uint upOrDownFlag);
     bool userMove(int x, int y, int z, int serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
     bool userMove_arb(float x, float y, float z, int serverMovement);
-    bool updatePosition(int serverMovement);
+    static bool updatePosition(int serverMovement);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();
     static bool refreshViewports();

@@ -90,7 +90,7 @@ void Remote::run() {
                 break;
 
             default:
-                qDebug("No such remote type (%d)\n", this->type);
+                LOG("No such remote type (%d)\n", this->type);
 
         }
 

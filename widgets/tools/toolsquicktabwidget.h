@@ -31,6 +31,7 @@
 #include <QLabel>
 #include "knossos-global.h"
 #include "../toolswidget.h"
+#include "toolsnodestabwidget.h"
 
 class QLabel;
 class QPushButton;
@@ -38,6 +39,7 @@ class QPushButton;
 class ToolsQuickTabWidget : public QWidget
 {
     friend class ToolsWidget;
+    friend class ToolsNodesTabWidget;
     Q_OBJECT
 public:
     explicit ToolsQuickTabWidget(ToolsWidget *parent = 0);
@@ -47,6 +49,7 @@ signals:
     void setActiveTreeSignal(int id);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void updateToolsSignal();
+
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

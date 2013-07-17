@@ -203,7 +203,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-
         break;
     case SKELETONIZER_ON_CLICK_ADD_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -1250,7 +1249,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         qDebug() << "C pressed";
         treeCol.r = -1.;
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
-        emit updateTools();
+        emit updateTreeCountSignal();
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(control) {
@@ -1293,6 +1292,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             if (strncmp(state->viewerState->gui->comment2, "", 1) != 0)
                 emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
         }
+        emit updateTools();
     } else if(event->key() == Qt::Key_F3) {
         qDebug() << "F3 pressed";
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){

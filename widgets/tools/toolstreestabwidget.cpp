@@ -112,7 +112,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
 
     QGridLayout *gridLayout = new QGridLayout();
 
-
     gridLayout->addWidget(activeTreeLabel, 1, 1);
     gridLayout->addWidget(activeTreeSpinBox, 1, 2);
 
@@ -156,7 +155,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     mainLayout->addLayout(gridLayout5);
     mainLayout->addWidget(restoreDefaultColorButton);
 
-
     mainLayout->addStretch(20);
     setLayout(mainLayout);
 
@@ -174,38 +172,49 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
 
 }
 
-
 void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
     if(!state->skeletonState->activeTree)
         return;
 
-    /*
-    int currentIndex = state->skeletonState->activeTree->treeID - 1;
-    int nextIndex = ref->findTreeIndex(value);
+    qDebug() << "tt activeTree changed begin";
 
-    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
-        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
-
-        //this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex + 1));
-
-    } else if(currentIndex > nextIndex and nextIndex >= 0) {
-        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
-
-        //this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex - 1));
-
-
-    } else if(currentIndex == nextIndex) {
-        //emit setActiveTreeSignal(value);
+    treeListElement *tree;
+    if(value > state->skeletonState->activeTree->treeID) {
+        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
+            value += 1;
+        }
+        if(!tree) {
+            return;
+        }
+    } else if(value < state->skeletonState->activeTree->treeID) {
+        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value > 0) {
+            value -= 1;
+        }
+        if(!tree) {
+            return;
+        }
     }
-    */
 
-    /*
-    ref->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
-    ref->toolsQuickTabWidget->activeTreeSpinBox->setValue(this->activeTreeSpinBox->value());
-    ref->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
-    */
+    ref->toolsQuickTabWidget->disconnect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
+    ref->toolsQuickTabWidget->activeTreeSpinBox->setValue(value);
+    ref->toolsQuickTabWidget->connect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
 
-    //emit updateToolsSignal();
+    activeTreeSpinBox->setValue(value);
+
+    Skeletonizer::setActiveTreeByID(value);
+    if(state->skeletonState->activeTree->comment)
+        commentField->setText(state->skeletonState->activeTree->comment);
+
+    nodeListElement *node = state->skeletonState->activeTree->firstNode;
+    if(node) {
+        emit (CHANGE_MANUAL, node, node->nodeID);
+        /* @todo set_coordinate */
+
+        /* @todo send_remote signal */
+    }
+
+
+    qDebug() << "tt active Tree changed end";
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
@@ -230,12 +239,11 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
 }
 
 void ToolsTreesTabWidget::commentChanged(QString comment) {
-    if(state->skeletonState->activeTree) {
+    if(state->skeletonState->activeTree and !comment.isEmpty()) {
         qDebug() << comment.toStdString().c_str();
         Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
-        state->viewerState->gui->treeCommentBuffer = const_cast<char *>(comment.toStdString().c_str());
     } else {
-        qDebug() << "gnaaaa";
+
     }
 }
 
@@ -275,7 +283,6 @@ void ToolsTreesTabWidget::bChanged(double value) {
 void ToolsTreesTabWidget::aChanged(double value) {
     state->viewerState->gui->actTreeColor.a = value;
     state->skeletonState->activeTree->color.a = state->viewerState->gui->actTreeColor.a;
-
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {

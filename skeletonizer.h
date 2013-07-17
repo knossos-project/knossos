@@ -294,7 +294,7 @@ public slots:
     bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel);
     static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID);
-    bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
     static int saveSkeleton();

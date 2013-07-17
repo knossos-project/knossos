@@ -24,6 +24,7 @@
 
 #include "toolsquicktabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
+#include "widgets/tools/toolsnodestabwidget.h"
 
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -73,7 +74,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
 
     activeNodeLabel = new QLabel("Active Node ID:");
     activeNodeSpinBox = new QSpinBox();
-    activeNodeSpinBox->setMinimum(1);
+    activeNodeSpinBox->setMinimum(0);
 
     QFormLayout *formLayout2 = new QFormLayout();
 
@@ -145,65 +146,52 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
+    qDebug() << "tq activeTree changed begin";
     qDebug() << value << "_" << activeTreeSpinBox->value();
 
     if(!state->skeletonState->activeTree) {
         return;
     }
 
-    Skeletonizer::setActiveTreeByID(value);
-    /*
-    int currentIndex = state->skeletonState->activeTree->treeID - 1;
-    int nextIndex = ref->findTreeIndex(value);
-
-    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
-        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex + 1));
-        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
-        this->activeTreeSpinBox->blockSignals(true);
-        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex+1));
-        this->activeTreeSpinBox->blockSignals(false);
-    } else if(currentIndex > nextIndex and nextIndex >= 0) {
-        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex - 1));
-        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
-        this->activeTreeSpinBox->blockSignals(true);
-        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex-1));
-        this->activeTreeSpinBox->blockSignals(false);
-    } else if(currentIndex == nextIndex) {
-        //emit setActiveTreeSignal(ref->trees->at(value));
+    treeListElement *tree;
+    if(value > state->skeletonState->activeTree->treeID) {
+        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
+            value += 1;
+        }
+        if(!tree) {
+            return;
+        }
+    } else if(value < state->skeletonState->activeTree->treeID) {
+        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value > 0) {
+            value -= 1;
+        }
+        if(!tree) {
+            return;
+        }
     }
-    */
 
-    /*
-    ref->toolsTreesTabWidget->blockSignals(true);
-    ref->toolsTreesTabWidget->activeTreeSpinBox->setValue(this->activeTreeSpinBox->value());
-    ref->toolsTreesTabWidget->blockSignals(false);
-    */
-    //emit updateToolsSignal();
+    ref->toolsTreesTabWidget->disconnect(ref->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
+    ref->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
+    ref->toolsTreesTabWidget->connect(ref->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
+
+    activeTreeSpinBox->setValue(value);
+
+    Skeletonizer::setActiveTreeByID(value);
+    if(state->skeletonState->activeTree->comment)
+        ref->toolsTreesTabWidget->commentField->setText(state->skeletonState->activeTree->comment);
+
+    nodeListElement *node = state->skeletonState->activeTree->firstNode;
+    if(node) {
+        emit setActiveNodeSignal(CHANGE_MANUAL, node, node->nodeID);
+        /* @todo set_coordinate */
+
+        /* @todo send_remote signal */
+    }
+
+    qDebug() << "tq active tree changed end";
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
-    /*
-    int currentIndex = state->skeletonState->activeNode->nodeID - 1;
-    int nextIndex = ref->findTreeIndex(value);
-
-    if(currentIndex < nextIndex and nextIndex < ref->trees->size()) {
-        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex + 1));
-        emit setActiveTreeSignal(ref->trees->at(currentIndex + 1));
-        this->activeTreeSpinBox->blockSignals(true);
-        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex+1));
-        this->activeTreeSpinBox->blockSignals(false);
-    } else if(currentIndex > nextIndex and nextIndex >= 0) {
-        //activeTreeSpinBox->setValue(ref->trees->at(nextIndex - 1));
-        emit setActiveTreeSignal(ref->trees->at(currentIndex - 1));
-        this->activeTreeSpinBox->blockSignals(true);
-        this->activeTreeSpinBox->setValue(ref->trees->at(currentIndex-1));
-        this->activeTreeSpinBox->blockSignals(false);
-    } else if(currentIndex == nextIndex) {
-        //emit setActiveTreeSignal(ref->trees->at(value));
-    }
-    */
-
-
     qDebug() << " hier node changed";
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
@@ -212,32 +200,46 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
         this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 
-        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content)
+        ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
+        ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        ref->toolsNodesTabWidget->activeNodeRadiusSpinBox->blockSignals(false);
+
+        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
+            qDebug() << state->skeletonState->activeNode->nodeID << " " << state->skeletonState->activeNode->comment->content;
             this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-        else
-            this->commentField->clear();
+            ref->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+        } else {
+            qDebug() << "gnaaaa";
+            this->commentField->setText("");
+            ref->toolsNodesTabWidget->commentField->setText("");
+        }
     }
 }
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {
-    if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->comment->content = const_cast<char *>(comment.toStdString().c_str());
+    char *ccomment = const_cast<char *>(comment.toStdString().c_str());
+    if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
+        Skeletonizer::addComment(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+    }
+    else{
+        if(!comment.isEmpty())
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
     }
 }
 
 void ToolsQuickTabWidget::searchForChanged(QString comment) {
-    state->viewerState->gui->commentSearchBuffer = const_cast<char *>(comment.toStdString().c_str());
+    ref->toolsNodesTabWidget->searchForField->setText(comment);
 }
 
-
 void ToolsQuickTabWidget::findNextButtonClicked() {
-    qDebug() << state->viewerState->gui->commentSearchBuffer;
-    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    emit nextCommentSignal(searchStr);
 }
 
 
 void ToolsQuickTabWidget::findPreviousButtonClicked() {
-    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    emit previousCommentSignal(searchStr);
 }
 
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {

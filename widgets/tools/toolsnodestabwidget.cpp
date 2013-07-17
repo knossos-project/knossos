@@ -38,13 +38,14 @@
 extern struct stateInfo *state;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
-    QWidget(parent)
+    QWidget(parent), ref(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     activeNodeIdLabel = new QLabel("Active Node ID");
     activeNodeIdSpinBox = new QSpinBox();
-    activeNodeIdSpinBox->setDisabled(true);
+    activeNodeIdSpinBox->setMaximum(0);
+    activeNodeIdSpinBox->setMinimum(0);
 
     jumpToNodeButton = new QPushButton("Jump to node(s)");
     deleteNodeButton = new QPushButton("Delete Node(Del)");
@@ -161,7 +162,26 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
+    emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
+    if(state->skeletonState->activeNode) {
+        ref->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+        ref->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+        ref->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        this->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
+            qDebug() << state->skeletonState->activeNode->nodeID << " " << state->skeletonState->activeNode->comment->content;
+
+            this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+            ref->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+        } else {
+            qDebug() << "gnaaaa";
+            this->commentField->setText("");
+            ref->toolsQuickTabWidget->commentField->setText("");
+        }
+    }
 }
 
 /**
@@ -172,11 +192,18 @@ void ToolsNodesTabWidget::idChanged(int value) {
 }
 
 void ToolsNodesTabWidget::commentChanged(QString comment) {
-    state->viewerState->gui->commentBuffer = const_cast<char *>(comment.toStdString().c_str());
+    char *ccomment = const_cast<char *>(comment.toStdString().c_str());
+    if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
+        Skeletonizer::addComment(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+    }
+    else{
+        if(!comment.isEmpty())
+            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
+    }
 }
 
 void ToolsNodesTabWidget::searchForChanged(QString comment) {
-    state->viewerState->gui->commentSearchBuffer = const_cast<char *>(comment.toStdString().c_str());
+    ref->toolsQuickTabWidget->searchForField->setText(comment);
 }
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
@@ -205,14 +232,16 @@ void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
   * @attention the invovation of nextComment does not lead to a crash, interesting!
   */
 void ToolsNodesTabWidget::findNextButtonClicked() {
-    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    emit nextCommentSignal(searchStr);
 }
 
 /**
   * @attention the invovation of nextComment does not lead to a crash, interesting!
   */
 void ToolsNodesTabWidget::findPreviousButtonClicked() {
-    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    emit previousCommentSignal(searchStr);
 }
 
 void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {

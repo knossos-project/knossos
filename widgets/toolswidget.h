@@ -53,6 +53,7 @@ signals:
     void setActiveTreeSignal(int id);
 public slots:
     void updateDisplayedTree();
+    void updateTreeCount();
 protected:
     void closeEvent(QCloseEvent *event);
     QTabWidget *tabs;

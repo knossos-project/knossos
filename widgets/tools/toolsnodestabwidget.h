@@ -29,6 +29,7 @@
 #include <QCheckBox>
 #include "knossos-global.h"
 #include "../toolswidget.h"
+#include "toolsquicktabwidget.h"
 
 class QLabel;
 class QSpinBox;
@@ -39,9 +40,11 @@ class QLineEdit;
 class ToolsNodesTabWidget : public QWidget
 {
     friend class ToolsWidget;
+    friend class ToolsQuickTabWidget;
     Q_OBJECT
 public:
     explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);
+    ToolsWidget *ref;
 signals:
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();
@@ -49,6 +52,7 @@ signals:
     void unlockPositionSignal();
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);
@@ -68,7 +72,6 @@ public slots:
     void lockToNodesWithCommentChanged(QString comment);
     void lockToActiveNodeButtonClicked();
     void disableLockingButtonClicked();
-
 
 protected:
     QLabel *activeNodeIdLabel, *idLabel;
