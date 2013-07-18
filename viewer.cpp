@@ -48,6 +48,26 @@ Viewer::Viewer(QObject *parent) :
     window->show();
     state->console = window->widgetContainer->console;
 
+    QWidget *mainBackground = new QWidget(window);
+    mainBackground->setGeometry(0, 32, window->width(), window->height());
+    mainBackground->setStyleSheet("background:#333333");
+    mainBackground->show();
+
+    QWidget *layoutWrapper = new QWidget(window);
+    layoutWrapper->setGeometry(0, 35, 360, 360);
+    layoutWrapper->setStyleSheet("border-radius:5px;border: 5px solid #ff0000; background: red");
+
+    QWidget *layoutWrapper2 = new QWidget(window);
+    layoutWrapper2->setGeometry(360, 35, 360, 360);
+    layoutWrapper2->setStyleSheet("border-radius:5px; border: 5px solid #0000ff; background: blue");
+
+    QWidget *layoutWrapper3 = new QWidget(window);
+    layoutWrapper3->setGeometry(0, 395, 360, 360);
+    layoutWrapper3->setStyleSheet("border-radius:5px; border: 5px solid green; background: green");
+
+    QWidget *layoutWrapper4 = new QWidget(window);
+    layoutWrapper4->setGeometry(360, 395, 360, 360);
+    layoutWrapper4->setStyleSheet("border-radius:5px; border: 5px solid #ffffff; background: black");
 
     vp = new Viewport(window, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ);
@@ -55,9 +75,14 @@ Viewer::Viewer(QObject *parent) :
     vp4 = new Viewport(window, VIEWPORT_SKELETON);
 
     vp->setGeometry(5, 40, 350, 350);
-    vp2->setGeometry(360, 40, 350, 350);
-    vp3->setGeometry(5, 395, 350, 350);
-    vp4->setGeometry(360, 395, 350, 350);
+    vp2->setGeometry(365, 40, 350, 350);
+    vp3->setGeometry(5, 400, 350, 350);
+    vp4->setGeometry(365, 400, 350, 350);
+
+    layoutWrapper->show();
+    layoutWrapper2->show();
+    layoutWrapper3->show();
+    layoutWrapper4->show();
 
     vp->show();
     vp2->show();
@@ -86,9 +111,11 @@ Viewer::Viewer(QObject *parent) :
     counter->start(1000);
     */
 
+
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(10);
+
 
 
 }
@@ -3030,6 +3057,9 @@ bool Viewer::moveVPonTop(uint currentVP) {
 }
 
 void Viewer::rewire() {
+    connect(window, SIGNAL(moveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+
+
     connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
     connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
     connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
@@ -3050,7 +3080,6 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(updateZoomWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
     connect(vp3->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
     connect(vp4->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()), Qt::DirectConnection);
-
 
     connect(vp, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
     connect(vp2, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
@@ -3171,8 +3200,8 @@ void Viewer::rewire() {
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vp, SLOT(updateGL()));
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
-    connect(window, SIGNAL(runSignal()), this, SLOT(run()));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
+
 
     connect(vp->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(vp2->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));

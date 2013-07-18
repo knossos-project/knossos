@@ -41,7 +41,6 @@ public:
     Remote *remote;
     Client *client;
 
-
     explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
@@ -66,7 +65,6 @@ public:
     static uint ones32(register uint x);
     static void loadTreeLUTFallback();
     static void initialize(int argc, char *argv[]);
-
 
 signals:
     void calcDisplayedEdgeLengthSignal();

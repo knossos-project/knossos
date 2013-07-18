@@ -200,7 +200,6 @@ void ToolsWidget::updateDisplayedTree() {
     }
 
     this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
-
 }
 
 void ToolsWidget::updateTreeCount() {

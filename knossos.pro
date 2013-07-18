@@ -48,7 +48,8 @@ SOURCES +=\
     slicer.cpp \
     widgetcontainer.cpp \
     scripting_engine.cpp \
-    decorators/skeletonizerdecorator.cpp
+    decorators/skeletonizerdecorator.cpp \
+    decorators/mainwindowdecorator.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -88,7 +89,8 @@ HEADERS  += mainwindow.h \
     Plattform.h \
     widgetcontainer.h \     
     scripting_engine.h \
-    decorators/skeletonizerdecorator.h
+    decorators/skeletonizerdecorator.h \
+    decorators/mainwindowdecorator.h
 
 FORMS    += mainwindow.ui
 

@@ -80,6 +80,8 @@ signals:
     bool loadSkeletonSignal();
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
+    void moveSignal(int x, int y, int z, int serverMovement);
+    void remoteJumpSignal(int x, int y, int z);
 protected:
 
 public:
@@ -155,7 +157,6 @@ public:
     void createCoordBarWin();
     void createViewports();
 
-
     void saveSettings();
     void loadSettings();
     void clearSettings();
@@ -164,6 +165,8 @@ public:
     bool addRecentFile(const QString &fileName);
 
 public slots:
+    void setCoordinates(int x, int y, int z);
+
     /* file menu */
     void openSlot();
     void saveSlot();

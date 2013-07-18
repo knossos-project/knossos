@@ -1070,7 +1070,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     }
 
     glDisable(GL_BLEND);
-    renderViewportBorders(currentVP);
+    //renderViewportBorders(currentVP);
 
     return true;
 }
@@ -1723,7 +1723,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
     free(textBuffer);
 
-    renderViewportBorders(currentVP);
+    //renderViewportBorders(currentVP);
 
     return true;
 }

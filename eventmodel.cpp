@@ -315,14 +315,16 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         if (clickedCoordinate->z < 0) { clickedCoordinate->z = 0; }
         else if (clickedCoordinate->z > state->boundary.z) { clickedCoordinate->z = state->boundary.z; }
 
-        /* Move to the new node position */
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-        emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
-        emit updateViewerStateSignal();
-        Knossos::sendRemoteSignal();
-        emit updateTools();
+
         break;
     }
+
+    /* Move to the new node position */
+    emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+    emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+    emit updateViewerStateSignal();
+    Knossos::sendRemoteSignal();
+    emit updateTools();
 
     return true;
 }

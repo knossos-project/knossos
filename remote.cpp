@@ -29,9 +29,7 @@
 #include "functions.h"
 #include <QDebug>
 
-
 extern stateInfo *state;
-
 
 Remote::Remote(QObject *parent) :
     QThread(parent)

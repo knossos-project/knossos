@@ -3610,7 +3610,6 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
             = branchNode->position.z;
 
 
-
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 
         branchNode->isBranchNode--;

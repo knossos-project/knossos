@@ -26,7 +26,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
-
+#include "sleeper.h"
 #include <PythonQT/PythonQt.h>
 #include <PythonQT/gui/PythonQtScriptingConsole.h>
 #include "knossos-global.h"
@@ -67,13 +67,6 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {
 int main(int argc, char *argv[])
 { 
     QApplication a(argc, argv);
-    Knossos::initialize(argc, argv);
-
-
-    return a.exec();
-}
-
-void Knossos::initialize(int argc, char *argv[]) {
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
@@ -208,13 +201,13 @@ void Knossos::initialize(int argc, char *argv[]) {
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
 
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    QObject::connect(viewer->window, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
+
 
     //viewer->start();
     loader->start();
     viewer->run();
     remote->start();
-
-    state->console->log("%d-%d", 5, 10);
 
     /* PYTHON QT INIT CODE */
     PythonQt::init();
@@ -226,10 +219,28 @@ void Knossos::initialize(int argc, char *argv[]) {
     //PythonQt::self()->addDecorators(/* Your Decorator Class */);
     mainContext.addObject("state", ptr);
 
-    mainContext.evalFile(":script.py");
+
+    PythonQt::self()->registerClass(&WidgetContainer::staticMetaObject);
+    PythonQt::self()->registerClass(&MainWindow::staticMetaObject);
+    PythonQt::self()->registerClass(&Sleeper::staticMetaObject);
+    mainContext.addObject("window", viewer->window);
+    mainContext.addObject("sleeper", new Sleeper());
+
+
+
+
+    //mainContext.evalFile(":script.py");
 
     console.appendCommandPrompt();
     console.show();
+
+
+
+    return a.exec();
+}
+
+void Knossos::initialize(int argc, char *argv[]) {
+
 
 }
 

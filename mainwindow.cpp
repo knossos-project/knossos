@@ -214,9 +214,9 @@ void MainWindow:: createCoordBarWin() {
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
-    //connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
-    //connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
-    //connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+    connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
 
 /**
@@ -1022,20 +1022,20 @@ void MainWindow::pasteClipboardCoordinates(){
 
 #include "viewer.h"
 void MainWindow::coordinateEditingFinished() {
-    qDebug() << xField->value();
-    qDebug() << yField->value();
-    qDebug() << zField->value();
 
-    state->viewerState->currentPosition.x = xField->value();
-    state->viewerState->currentPosition.y = yField->value();
-    state->viewerState->currentPosition.z = zField->value();
 
+    /*
     state->currentPositionX.x = xField->value();
     state->currentPositionX.y = yField->value();
     state->currentPositionX.z = zField->value();
     state->loadSignal = true;
+    */
 
+    //SET_COORDINATE(state->viewerState->currentPosition, xField->value(), xField->value(), xField->value());
+    emit moveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
+    //emit remoteJumpSignal(xField->value(), yField->value(), zField->value());
     //emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+
 }
 
 void MainWindow::saveSettings() {
@@ -1184,5 +1184,12 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     xField->setValue(x);
     yField->setValue(y);
     zField->setValue(z);
+}
+
+void MainWindow::setCoordinates(int x, int y, int z) {
+    xField->setValue(x);
+    yField->setValue(y);
+    zField->setValue(z);
+    xField->editingFinished();
 }
 
