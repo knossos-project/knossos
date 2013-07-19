@@ -26,7 +26,6 @@
  *	Very general stuff.
  */
 
-#include <windows.h>
 #include <SDL/SDL_net.h>
 #include <GL/gl.h>
 
