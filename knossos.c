@@ -45,6 +45,9 @@
 #include <stdint.h>
 #include <ctype.h>
 
+#ifdef WIN32
+#include "windows.h"
+#endif // WIN32
 #ifdef LINUX
 #include <signal.h>
 #endif
@@ -61,16 +64,17 @@
 
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
-char logFilename[MAX_PATH];
+char logFilename[MAX_PATH] = {0};
 
 int main(int argc, char *argv[]) {
     SDL_Thread *loadingThread = NULL, *viewingThread = NULL, *remoteThread = NULL, *clientThread = NULL, *refreshTimeThread = NULL;
     char consoleInput[1024];
-    char tempPath[MAX_PATH];
+    char tempPath[MAX_PATH] = {0};
 
+#ifdef WIN32
     GetTempPath(MAX_PATH, tempPath);
     GetTempFileName(tempPath, "KNL", 0, logFilename);
-
+#endif
     memset(consoleInput, '\0', 1024);
 
 #ifdef LINUX
@@ -672,7 +676,13 @@ static int32_t initStates() {
     state->loadMode = LM_LOCAL;
     if (LM_FTP == state->loadMode) {
         state->loadFtpCachePath = malloc(MAX_PATH);
+#ifdef WIN32
         GetTempPath(MAX_PATH, state->loadFtpCachePath);
+#endif // WIN32
+#ifdef LINUX
+        LOG("Unimplemented!");
+        return FALSE;
+#endif // LINUX
         state->ftpBasePath = /* "BASE_PATH"; */ "/j0126_cubed/";
         state->ftpHostName = /* "HOST"; */ "heidelbrain-ftp.mpimf-heidelberg.mpg.de";
         state->ftpUsername = /* "USERNAME"; */ "knossos-rw";
@@ -1084,7 +1094,7 @@ static int32_t findAndRegisterAvailableDatasets() {
 
         /* iterate over all possible mags and test their availability */
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
-            BOOL currMagExists = FALSE;
+            int32_t currMagExists = FALSE;
             if (LM_FTP == state->loadMode) {
                 char *ftpDirDelim = "/";
                 int confSize = 0;

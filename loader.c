@@ -921,8 +921,8 @@ static uint32_t loadCubes() {
     uint32_t loadedDc = FALSE, loadedOc = FALSE;
     SDL_Thread *ftpThread = NULL;
     SDL_sem *ftpThreadSem = NULL;
-    BOOL hadError = FALSE;
-    BOOL retVal = TRUE;
+    int32_t hadError = FALSE;
+    int32_t retVal = TRUE;
 
     if (LM_FTP == state->loadMode) {
         ftpThreadSem = SDL_CreateSemaphore(0);

@@ -44,7 +44,7 @@
 #define FAIL    -1
 
 #define MIN_N   1
-
+#define MAX_PATH 256
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
@@ -382,7 +382,7 @@ struct _C_Element {
         char *fullpath_filename;
         char *local_filename;
         SDL_sem *ftpSem;
-        BOOL    hasError;
+        int32_t    hasError;
 
         struct _C_Element *previous;
         struct _C_Element *next;
@@ -1579,9 +1579,7 @@ extern char logFilename[];
     char msg[1024]; \
     FILE *logFile = NULL; \
     logFile = fopen(logFilename, "a+"); \
-    LARGE_INTEGER large; \
-    QueryPerformanceCounter(&large); \
-    sprintf(msg, "[%s:%d, %d:%08X] ", __FILE__, __LINE__, GetCurrentThreadId(), large.LowPart);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, "[%s:%d] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     FILE_FLUSH(stdout); \
