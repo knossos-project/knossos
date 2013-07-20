@@ -73,6 +73,7 @@ public:
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool initialized;
     bool moveVPonTop(uint currentVP);
+    static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
 signals:
     void loadSignal();
     void finished();
@@ -86,11 +87,10 @@ signals:
 protected:
     bool resetViewPortData(vpConfig *viewport);
 
-    pxStripeList *stripesNew();
+    //pxStripeList *stripesNew();
     bool pxStripeListDelElement(struct pxStripeList *stripes, struct pxStripe *stripe);
     bool pxStripeListDel(struct pxStripeList *stripes);
     bool addPxStripe(struct vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
-
 
     bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
     bool vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
@@ -99,19 +99,18 @@ protected:
     bool vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
 
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-    bool sliceExtract_standard_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool sliceExtract_standard_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
+    bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
 
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-    bool sliceExtract_adjust_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool sliceExtract_adjust_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float,  int s, int t1, int t2);
+    bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_adjust_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float,  int s, int t1, int t2);
 
-    bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
-    bool dcSliceExtract_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool dcSliceExtract_Backlog_arb(Byte *datacube, struct viewPort *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
+    bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
+    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool dcSliceExtract_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
 
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
-
 
     void rewire();
 public slots:

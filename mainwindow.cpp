@@ -45,10 +45,7 @@
 #include <QDir>
 #include <QAction>
 #include <QThread>
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
@@ -73,9 +70,6 @@ MainWindow::MainWindow(QWidget *parent) :
     palette->setBrush(QPalette::Window,*(new QBrush(linearGradient)));
     this->setPalette(*palette);
     */
-
-
-
 
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
@@ -741,7 +735,7 @@ void MainWindow::saveAsSlot()
     if(!fileName.isEmpty()) {
 
         state->skeletonState->skeletonFile = const_cast<char *>(fileName.toStdString().c_str());
-        saveSkeleton(QString(state->skeletonState->skeletonFile), state->skeletonState->autoFilenameIncrementBool);
+        saveSkeleton(QString(state->skeletonState->skeletonFile), false);
 
     }
 
@@ -754,7 +748,7 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
 
     char *cpath = const_cast<char *>(fileName.toStdString().c_str());
 
-    //emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
+    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
     QFile saveFile(cpath);
     if(saveFile.open(QIODevice::ReadWrite)) {
         int saved = Skeletonizer::saveSkeleton();
@@ -1130,7 +1124,6 @@ void MainWindow::loadSettings() {
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
-    //widgetContainer->toolsWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
 }
 
@@ -1142,7 +1135,6 @@ void MainWindow::clearSettings() {
         settings.remove(keys.at(i));
     }
 }
-
 
 void MainWindow::uncheckToolsAction() {
     this->toolsAction->setChecked(false);
@@ -1192,4 +1184,3 @@ void MainWindow::setCoordinates(int x, int y, int z) {
     zField->setValue(z);
     xField->editingFinished();
 }
-

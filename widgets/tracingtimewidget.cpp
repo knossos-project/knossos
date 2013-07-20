@@ -81,9 +81,9 @@ void TracingTimeWidget::closeEvent(QCloseEvent *event) {
 
 void TracingTimeWidget::refreshTime() {
     int time = state->time.elapsed();
-    int hoursRunningTime = (int)(time*0.001/3600.0);
-    int minutesRunningTime = (int)(time*0.001/60.0 - hoursRunningTime * 60);
-    int secondsRunningTime = (int)(time*0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
+    int hoursRunningTime = (int)(time * 0.001 / 3600.0);
+    int minutesRunningTime = (int)(time * 0.001/60.0 - hoursRunningTime * 60);
+    int secondsRunningTime = (int)(time * 0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
 
     QString forLabel = QString().sprintf("Running Time: %02d:%02d:%02d", hoursRunningTime, minutesRunningTime, secondsRunningTime);
 
@@ -102,16 +102,16 @@ void TracingTimeWidget::checkIdleTime() {
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
 
-    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/3600.0);
-    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001)/60.0 - hoursIdleTime * 60);
-    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession*0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
+    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 3600.0);
+    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 60.0 - hoursIdleTime * 60);
+    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
 
     QString idleString = QString().sprintf("IdleTime: %02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
     this->idleTimeLabel->setText(idleString);
 
-    int hoursTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/3600.0);
-    int minutesTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001))/60.0 - hoursTracingTime * 60);
-    int secondsTracingTime = (int)((floor(time*0.001) - floor(state->skeletonState->idleTimeSession*0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
+    int hoursTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) / 3600.0);
+    int minutesTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) /60.0 - hoursTracingTime * 60);
+    int secondsTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
 
     QString tracingString = QString().sprintf("TracingTime: %02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
     this->tracingTimeLabel->setText(tracingString);

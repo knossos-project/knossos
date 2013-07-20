@@ -2,5 +2,6 @@
     <qresource prefix="/images">
         <file>logo.ico</file>
         <file>splash</file>
+        <file>script.py</file>
     </qresource>
 </RCC>

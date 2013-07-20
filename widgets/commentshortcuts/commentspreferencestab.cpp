@@ -35,6 +35,8 @@
 #include <QLabel>
 #include "GUIConstants.h"
 
+static const int N = 5;
+
 CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     QWidget(parent)
 {
@@ -63,13 +65,13 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     QGridLayout *gridLayout = new QGridLayout();
 
     numLabel = new QLabel*[5];
-    substringFields = new QLineEdit*[5];
-    colorComboBox = new QComboBox*[5];
-    radiusSpinBox = new QDoubleSpinBox*[5];
-    colorLabel = new QLabel*[5];
-    radiusLabel = new QLabel*[5];
+    substringFields = new QLineEdit*[N];
+    colorComboBox = new QComboBox*[N];
+    radiusSpinBox = new QDoubleSpinBox*[N];
+    colorLabel = new QLabel*[N];
+    radiusLabel = new QLabel*[N];
 
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < N; i++) {
         substringFields[i] = new QLineEdit();
         colorComboBox[i] = new QComboBox();
         colorComboBox[i]->addItems(list);

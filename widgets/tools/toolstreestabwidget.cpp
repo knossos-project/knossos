@@ -60,8 +60,10 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     mergeTreesButton = new QPushButton("Merge Trees");
     id1Label = new QLabel("ID 1:");
     id1SpinBox = new QSpinBox();
+    id1SpinBox->setMinimum(1);
     id2Label = new QLabel("ID 2:");
     id2SpinBox = new QSpinBox();
+    id2SpinBox->setMinimum(1);
 
     splitByConnectedComponentsButton = new QPushButton("Split By Connected Components");
     rLabel = new QLabel("R:");
@@ -108,7 +110,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     QFrame *line6 = new QFrame();
     line6->setFrameShape(QFrame::HLine);
     line6->setFrameShadow(QFrame::Sunken);
-
 
     QGridLayout *gridLayout = new QGridLayout();
 
@@ -195,6 +196,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
         }
     }
 
+    /* This prevents the infinite recursion. See QuickTabWidget for more information */
     ref->toolsQuickTabWidget->disconnect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
     ref->toolsQuickTabWidget->activeTreeSpinBox->setValue(value);
     ref->toolsQuickTabWidget->connect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
@@ -202,6 +204,12 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
     activeTreeSpinBox->setValue(value);
 
     Skeletonizer::setActiveTreeByID(value);
+
+    rSpinBox->setValue(state->skeletonState->activeTree->color.r);
+    gSpinBox->setValue(state->skeletonState->activeTree->color.g);
+    bSpinBox->setValue(state->skeletonState->activeTree->color.b);
+    aSpinBox->setValue(state->skeletonState->activeTree->color.a);
+
     if(state->skeletonState->activeTree->comment)
         commentField->setText(state->skeletonState->activeTree->comment);
 
@@ -247,8 +255,14 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
     }
 }
 
-void ToolsTreesTabWidget::mergeTreesButtonClicked() {
-    Skeletonizer::mergeTrees(CHANGE_MANUAL, state->viewerState->gui->mergeTreesID1, state->viewerState->gui->mergeTreesID2);
+void ToolsTreesTabWidget::mergeTreesButtonClicked() {    
+    qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
+    if(Skeletonizer::mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value())) {
+        ref->updateDisplayedTree();
+
+    } else {
+        LOG("Probleme");
+    }
 }
 
 void ToolsTreesTabWidget::id1Changed(int value) {
@@ -261,7 +275,11 @@ void ToolsTreesTabWidget::id2Changed(int value) {
 
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
-        Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID);
+        if(Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID)) {
+            ref->updateDisplayedTree();
+        } else {
+            LOG("Probleme");
+        }
     }
 }
 
@@ -272,24 +290,28 @@ void ToolsTreesTabWidget::rChanged(double value) {
 
 void ToolsTreesTabWidget::gChanged(double value) {
     state->viewerState->gui->actTreeColor.g = value;
-    state->skeletonState->activeTree->color.g = state->viewerState->gui->actTreeColor.g;
+    if(state->skeletonState->activeTree)
+        state->skeletonState->activeTree->color.g = state->viewerState->gui->actTreeColor.g;
 }
 
 void ToolsTreesTabWidget::bChanged(double value) {
     state->viewerState->gui->actTreeColor.b = value;
-    state->skeletonState->activeTree->color.b = state->viewerState->gui->actTreeColor.b;
+    if(state->skeletonState->activeTree)
+        state->skeletonState->activeTree->color.b = state->viewerState->gui->actTreeColor.b;
 }
 
 void ToolsTreesTabWidget::aChanged(double value) {
     state->viewerState->gui->actTreeColor.a = value;
-    state->skeletonState->activeTree->color.a = state->viewerState->gui->actTreeColor.a;
+    if(state->skeletonState->activeTree)
+        state->skeletonState->activeTree->color.a = state->viewerState->gui->actTreeColor.a;
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {
     Skeletonizer::restoreDefaultTreeColor();
-    rSpinBox->setValue(state->viewerState->gui->actTreeColor.r);
-    gSpinBox->setValue(state->viewerState->gui->actTreeColor.g);
-    bSpinBox->setValue(state->viewerState->gui->actTreeColor.b);
-    aSpinBox->setValue(state->viewerState->gui->actTreeColor.a);
+    rSpinBox->setValue(0);
+    gSpinBox->setValue(0);
+    bSpinBox->setValue(0);
+    aSpinBox->setValue(0);
 }
+
 

@@ -133,7 +133,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     mainLayout->addStretch(20);
     this->setLayout(mainLayout);
 
-
     connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
     connect(activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
@@ -144,9 +143,9 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));  
 }
 
+/** */
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
-    qDebug() << "tq activeTree changed begin";
     qDebug() << value << "_" << activeTreeSpinBox->value();
 
     if(!state->skeletonState->activeTree) {
@@ -170,13 +169,23 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
         }
     }
 
+    /* As setting also the value of the activeTreeSpinBox in the TreeTabWidget(which in turn set the value of this widget). This would cause an infinite recursion.
+       That´s the reason we have to disconnect the signal and reconnect it after the value it set.
+       Unfortunately it´s a special case here which makes this necessary.
+    */
     ref->toolsTreesTabWidget->disconnect(ref->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
     ref->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
     ref->toolsTreesTabWidget->connect(ref->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
 
     activeTreeSpinBox->setValue(value);
-
     Skeletonizer::setActiveTreeByID(value);
+
+    ref->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
+    ref->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
+    ref->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
+    ref->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
+
+
     if(state->skeletonState->activeTree->comment)
         ref->toolsTreesTabWidget->commentField->setText(state->skeletonState->activeTree->comment);
 
@@ -187,32 +196,30 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
         /* @todo send_remote signal */
     }
-
-    qDebug() << "tq active tree changed end";
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
-    qDebug() << " hier node changed";
-    emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
+    if(Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, value)) {
 
-    if(state->skeletonState->activeNode) {
-        this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-        this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-        this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        if(state->skeletonState->activeNode) {
+            this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+            this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+            this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 
-        ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
-        ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        ref->toolsNodesTabWidget->activeNodeRadiusSpinBox->blockSignals(false);
+            ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
+            ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+            ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
 
-        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
-            qDebug() << state->skeletonState->activeNode->nodeID << " " << state->skeletonState->activeNode->comment->content;
-            this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            ref->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-        } else {
-            qDebug() << "gnaaaa";
-            this->commentField->setText("");
-            ref->toolsNodesTabWidget->commentField->setText("");
+            if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
+                this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+                ref->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+            } else {
+                this->commentField->setText("");
+                ref->toolsNodesTabWidget->commentField->setText("");
+            }
         }
+    } else {
+
     }
 }
 

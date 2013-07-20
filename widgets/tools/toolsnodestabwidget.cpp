@@ -160,7 +160,6 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 }
 
 
-
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
@@ -168,8 +167,11 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         ref->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         ref->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         ref->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        /* */
+        ref->toolsQuickTabWidget->activeNodeSpinBox->blockSignals(true);
         ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        this->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        ref->toolsQuickTabWidget->activeNodeSpinBox->blockSignals(false);
+        /* */
 
         if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
             qDebug() << state->skeletonState->activeNode->nodeID << " " << state->skeletonState->activeNode->comment->content;
@@ -206,6 +208,7 @@ void ToolsNodesTabWidget::searchForChanged(QString comment) {
     ref->toolsQuickTabWidget->searchForField->setText(comment);
 }
 
+/** @todo loader out of sync */
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
     if(state->skeletonState->activeNode) {
         state->viewerState->currentPosition.x = state->skeletonState->activeNode->position.x / state->magnification;
@@ -213,32 +216,30 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
         state->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
 
         emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-
     }
-
 }
 
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     emit deleteActiveNodeSignal();
+    ref->updateDisplayedTree();
 }
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
-    if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(state->viewerState->gui->linkActiveWithNode))) {
-         Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, state->viewerState->gui->linkActiveWithNode);
+    if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(this->idSpinBox->value()))) {
+         if(Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
+             LOG("OK");
+         } else {
+             LOG("Probleme");
+         }
     }
 }
 
-/**
-  * @attention the invovation of nextComment does not lead to a crash, interesting!
-  */
+
 void ToolsNodesTabWidget::findNextButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
     emit nextCommentSignal(searchStr);
 }
 
-/**
-  * @attention the invovation of nextComment does not lead to a crash, interesting!
-  */
 void ToolsNodesTabWidget::findPreviousButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
     emit previousCommentSignal(searchStr);

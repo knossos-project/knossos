@@ -135,15 +135,14 @@ void ToolsWidget::saveSettings() {
 
 void ToolsWidget::updateDisplayedTree() {
 
-    if(!trees->contains(state->skeletonState->treeElements))
-        trees->append(state->skeletonState->treeElements);
-    if(!nodes->contains(state->skeletonState->totalNodeElements))
-        nodes->append(state->skeletonState->totalNodeElements);
-
+    if(!trees->contains(state->skeletonState->greatestTreeID))
+        trees->append(state->skeletonState->greatestTreeID);
+    if(!nodes->contains(state->skeletonState->greatestNodeID))
+        nodes->append(state->skeletonState->greatestNodeID);
 
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
-    this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
+    this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
+    this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
 
     if(state->skeletonState->activeTree) {
         this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(true);
@@ -171,8 +170,8 @@ void ToolsWidget::updateDisplayedTree() {
     }
 
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
-    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->totalNodeElements);
-    this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(state->skeletonState->totalNodeElements);
+    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->greatestNodeID);
+    this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(state->skeletonState->greatestNodeID);
 
     if(state->skeletonState->activeNode) {
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));

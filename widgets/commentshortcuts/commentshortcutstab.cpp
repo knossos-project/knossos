@@ -40,7 +40,6 @@ extern struct stateInfo *state;
 CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
     QWidget(parent)
 {
-    /* @todo setWindowTitle("Comments Shortcuts"); */
     QFormLayout *layout = new QFormLayout();
 
     labels = new QLabel*[NUM];
@@ -57,6 +56,7 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
         layout->addRow(labels[i], textFields[i]);
 
     }
+
     button = new QPushButton("Clear Comments Boxes");
     layout->addWidget(button);
     this->setLayout(layout);
@@ -72,9 +72,7 @@ void CommentShortCutsTab::deleteComments() {
             for(int i = 0; i < NUM; i++) {
                 textFields[i]->clear();
             }
-
     }
-
 }
 
 

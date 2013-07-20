@@ -66,7 +66,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->skeletonViewportSlider->setMaximum(100);
 
     this->orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    this->orthogonalDataViewportSpinBox->setMaximum(1.00);
+    this->orthogonalDataViewportSpinBox->setMaximum(1);
     this->orthogonalDataViewportSpinBox->setMinimum(0.02);
     this->orthogonalDataViewportSpinBox->setSingleStep(0.01);
 

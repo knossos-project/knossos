@@ -227,9 +227,7 @@ int main(int argc, char *argv[])
     mainContext.addObject("sleeper", new Sleeper());
 
 
-
-
-    //mainContext.evalFile(":script.py");
+    mainContext.evalFile(":script.py");
 
     console.appendCommandPrompt();
     console.show();
@@ -330,45 +328,26 @@ int Knossos::initStates() {
        return false;
    memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
-   /* @arb
+   /* @arb */
    state->alpha = 0;
+   state->beta = 0;
+   floatCoordinate v1, v2, v3;
+   Viewer::getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
-    state->beta = 0;
+   CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
+   CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
+   CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
-
-
-    floatCoordinate v1, v2, v3;
-
-    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-
-
-
-    CPY_COORDINATE(state->viewerState->viewPorts[0].v1 , v1);
-
-    CPY_COORDINATE(state->viewerState->viewPorts[0].v2 , v2);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[0].n , v3);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[1].v1 , v1);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[1].v2 , v3);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[1].n , v2);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[2].v1 , v3);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[2].v2 , v2);
-
-   CPY_COORDINATE(state->viewerState->viewPorts[2].n , v1);
-
-
-
-   state->viewerState->viewPorts[0].type = VIEWPORT_ARBITRARY;
-
-   state->viewerState->viewPorts[1].type = VIEWPORT_ARBITRARY;
-
-   state->viewerState->viewPorts[2].type = VIEWPORT_ARBITRARY;
-    */
+   state->viewerState->vpConfigs[0].type = VIEWPORT_ARBITRARY;
+   state->viewerState->vpConfigs[1].type = VIEWPORT_ARBITRARY;
+   state->viewerState->vpConfigs[2].type = VIEWPORT_ARBITRARY;
+    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
        state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
@@ -950,19 +929,14 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->userMove = false;
 
-    /* @arb
+    /* @arb */
     tempConfig->viewerState->moveCache.x = 0.0;
-
     tempConfig->viewerState->moveCache.y = 0.0;
-
     tempConfig->viewerState->moveCache.z = 0.0;
-
     tempConfig->viewerState->alphaCache = 0;
-
     tempConfig->viewerState->betaCache = 0;
-
     tempConfig->viewerState->modeArbitrary = 0;
-        */
+      /* */
 
     tempConfig->viewerState->screenSizeX = 1024;
     tempConfig->viewerState->screenSizeY = 740;
