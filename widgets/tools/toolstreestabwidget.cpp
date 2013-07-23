@@ -185,6 +185,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
             value += 1;
         }
         if(!tree) {
+            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
             return;
         }
     } else if(value < state->skeletonState->activeTree->treeID) {
@@ -192,6 +193,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
             value -= 1;
         }
         if(!tree) {
+            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
             return;
         }
     }

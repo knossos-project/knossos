@@ -408,27 +408,27 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                     }
                     break;
                 case VIEWPORT_ARBITRARY:
-                /* arb
+                /* @arb */
                 if(state->viewerState->workMode != ON_CLICK_DRAG)
                     break;
 
-                    state->viewerState->viewPorts[i].userMouseSlideX -=
-                        ((float)event.motion.xrel / state->viewerState->viewPorts[i].screenPxXPerDataPx);
-                    state->viewerState->viewPorts[i].userMouseSlideY -=
-                        ((float)event.motion.yrel / state->viewerState->viewPorts[i].screenPxYPerDataPx);
-                   */
-                    /*
-                    if(fabs(state->viewerState->viewPorts[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->viewPorts[i].userMouseSlideY) >= 1) {
-                        userMove_arb((int)(state->viewerState->viewPorts[i].v1.x * state->viewerState->viewPorts[i].userMouseSlideX + state->viewerState->viewPorts[i].v2.x * state->viewerState->viewPorts[i].userMouseSlideY),
+                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+                            ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                            ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
 
-                                 (int)(state->viewerState->viewPorts[i].v1.y * state->viewerState->viewPorts[i].userMouseSlideX + state->viewerState->viewPorts[i].v2.y * state->viewerState->viewPorts[i].userMouseSlideY),
-                                 (int)(state->viewerState->viewPorts[i].v1.z * state->viewerState->viewPorts[i].userMouseSlideX + state->viewerState->viewPorts[i].v2.z * state->viewerState->viewPorts[i].userMouseSlideY),
+
+                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+                        emit userMoveArbSignal((int)(state->viewerState->vpConfigs[i].v1.x * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.x * state->viewerState->vpConfigs[i].userMouseSlideY),
+
+                                 (int)(state->viewerState->vpConfigs[i].v1.y * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.y * state->viewerState->vpConfigs[i].userMouseSlideY),
+                                 (int)(state->viewerState->vpConfigs[i].v1.z * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.z * state->viewerState->vpConfigs[i].userMouseSlideY),
                                  TELL_COORDINATE_CHANGE);
-                        state->viewerState->viewPorts[i].userMouseSlideX = 0.;
-                        state->viewerState->viewPorts[i].userMouseSlideY = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
-                    */
+
                 break;
             }
 
@@ -861,13 +861,14 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    /* @arb
-                    userMove_arb(-10 * state->viewerState->viewPorts[state->viewerState->activeVP].v2.x * state->magnification,
-                     -10 * state->viewerState->viewPorts[state->viewerState->activeVP].v2.y * state->magnification,
+                    /* @arb */
 
-                     -10 * state->viewerState->viewPorts[state->viewerState->activeVP].v2.z * state->magnification,
+                    emit userMoveArbSignal(-10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
+                     -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
+
+                     -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification,
                      TELL_COORDINATE_CHANGE);
-                     */
+
                      break;
             }
         } else {

@@ -381,9 +381,9 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glColor4f(0., 0., 0., 1.);
             break;
         case VIEWPORT_ARBITRARY:
-            /* arb
+            /* arb */
             glColor4f(state->viewerState->vpConfigs[currentVP].n.z, state->viewerState->vpConfigs[currentVP].n.y, state->viewerState->vpConfigs[currentVP].n.x, 1.);
-            */
+
         break;
     }
     glLineWidth(3.);

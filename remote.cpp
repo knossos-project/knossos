@@ -39,7 +39,6 @@ Remote::Remote(QObject *parent) :
     //type = false;
 }
 
-
 void Remote::run() {
     floatCoordinate currToNext; //distance vector
     // remoteSignal is != false as long as the remote is active.
@@ -74,8 +73,7 @@ void Remote::run() {
                 break;
 
             case REMOTE_RECENTERING:
-            SET_COORDINATE (currToNext,
-                state->viewerState->currentPosition.x - this->recenteringPosition.x,
+                SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
                 state->viewerState->currentPosition.y - this->recenteringPosition.y,
                 state->viewerState->currentPosition.z - this->recenteringPosition.z);
                 if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {

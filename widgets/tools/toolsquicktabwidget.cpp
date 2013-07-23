@@ -158,6 +158,7 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
             value += 1;
         }
         if(!tree) {
+            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
             return;
         }
     } else if(value < state->skeletonState->activeTree->treeID) {
@@ -165,6 +166,7 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
             value -= 1;
         }
         if(!tree) {
+            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
             return;
         }
     }

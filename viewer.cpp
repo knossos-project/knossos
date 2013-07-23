@@ -38,9 +38,6 @@
 
 extern stateInfo *state;
 
-
-
-
 int correct_cubes = 0;
 int cubes_in_backlog = 0;
 
@@ -114,12 +111,9 @@ Viewer::Viewer(QObject *parent) :
     counter->start(1000);
     */
 
-
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(10);
-
-
 
 }
 
@@ -542,7 +536,7 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
 }
 
 bool Viewer::sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2) {
-    /*
+
     Byte *slice = viewPort->viewPortData;
 
     Coordinate currentPxInDc;
@@ -592,7 +586,7 @@ bool Viewer::sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPor
         ADD_COORDINATE( (currentPxInDc_float), (*v2));
 
     }
-    */
+
 
     return true;
 }
@@ -1205,7 +1199,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
         // from those cubes into the texture.
 
-    /*
+
     Coordinate lowerRightPxInDc, upperLeftPxInDc, currentDc, currentPx;
 
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
@@ -1217,13 +1211,13 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
 
 
-    floatCoordinate *v1 = &(currentVp->viewPort->v1);
+    floatCoordinate *v1 = &(currentVp->vpConfig->v1);
 
-    floatCoordinate *v2 = &(currentVp->viewPort->v2);
+    floatCoordinate *v2 = &(currentVp->vpConfig->v2);
 
 
 
-    CPY_COORDINATE(rowPx_float, currentVp->viewPort->texture.leftUpperPxInAbsPx);
+    CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
 
 
@@ -1232,7 +1226,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
 
 
-    glBindTexture(GL_TEXTURE_2D, currentVp->viewPort->texture.texHandle);
+    glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -1244,11 +1238,11 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
 
 
-    while(s < (currentVp->viewPort->s_max)){
+    while(s < (currentVp->vpConfig->s_max)){
 
         t = 0;
 
-        while(t < (currentVp->viewPort->t_max)){
+        while(t < (currentVp->vpConfig->t_max)){
 
 
 
@@ -1281,11 +1275,10 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
             //fclose(dat);
 
 
-
-            SDL_LockMutex(state->protectCube2Pointer);
-            datacube = ht_get(state->Dc2Pointer[log2uint32(state->magnification)], currentDc);
-            overlayCube = ht_get(state->Oc2Pointer[log2uint32(state->magnification)], currentDc);
-            SDL_UnlockMutex(state->protectCube2Pointer);
+            state->protectCube2Pointer->lock();
+            datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+            overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+            state->protectCube2Pointer->unlock();
 
 
 
@@ -1355,7 +1348,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
                     t++;
 
-                    if (t>=currentVp->viewPort->t_max) break;
+                    if (t>=currentVp->vpConfig->t_max) break;
 
                 }
 
@@ -1429,7 +1422,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
                     t++;
 
-                    if (t>=currentVp->viewPort->t_max) break;
+                    if (t>=currentVp->vpConfig->t_max) break;
 
                 }
 
@@ -1466,7 +1459,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
 
                 dcSliceExtract_arb(datacube,
-                                   currentVp->viewPort,
+                                   currentVp->vpConfig,
 
                                    &currentPxInDc_float,
 
@@ -1504,11 +1497,11 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
                     state->M*state->cubeEdgeLength,
                     GL_RGB,
                     GL_UNSIGNED_BYTE,
-                    currentVp->viewPort->viewPortData);
+                    currentVp->vpConfig->viewPortData);
 
 
     glBindTexture(GL_TEXTURE_2D, 0);
-    */
+
     return true;
 }
 
@@ -1749,15 +1742,15 @@ bool Viewer::initViewer() {
                                                      * sizeof(Byte)
                                                      * 3);
 
-    /* arb
-    for(i = 0; i < state->viewerState->numberViewPorts; i++){
-        state->viewerState->vpConfigs[i].viewPortData = malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
+    /* @arb */
+    for(int i = 0; i < state->viewerState->numberViewports; i++){
+        state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             LOG("Out of memory.");
-            _Exit(FALSE);
+            exit(0);
         }
         memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
-    } */
+    }
 
 
     // Default data for the overlays
@@ -2788,7 +2781,7 @@ bool Viewer::recalcTextureOffsets() {
 
                 //v2: vector in Viewport y-direction, parameter t corresponds to v2
 
-                /* arb
+                /* @arb */
                 state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max = (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
 
                 v1 = &(state->viewerState->vpConfigs[i].v1);
@@ -2867,7 +2860,7 @@ bool Viewer::recalcTextureOffsets() {
 
                 // Pixels on the screen per 1 unit in the data coordinate system at the
                 // original magnification. These guys appear to be unused!!! jk 14.5.12
-                /*state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
+                state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
                     state->viewerState->vpConfigs[i].screenPxXPerDataPx *
                     state->magnification;
 
@@ -2896,7 +2889,7 @@ bool Viewer::recalcTextureOffsets() {
                 //Offsets for crosshair
                 state->viewerState->vpConfigs[i].texture.xOffset = (midX - state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX/2) / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * state->viewerState->vpConfigs[i].screenPxXPerDataPx + 0.5 * state->viewerState->vpConfigs[i].screenPxXPerDataPx;
                 state->viewerState->vpConfigs[i].texture.yOffset = (midY - state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY/2) / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * state->viewerState->vpConfigs[i].screenPxYPerDataPx + 0.5 * state->viewerState->vpConfigs[i].screenPxYPerDataPx;
-                */
+
                 break;
             }
 
@@ -2969,12 +2962,11 @@ void Viewer::rewire() {
     connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
-    //connect(vp4->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
 
     connect(vp->delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)), Qt::DirectConnection);
     connect(vp2->delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)), Qt::DirectConnection);
     connect(vp3->delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)), Qt::DirectConnection);
-    //connect(vp4->delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)), Qt::DirectConnection);
 
     connect(vp->delegate, SIGNAL(zoomOrthoSignal(float)), vp, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
     connect(vp2->delegate, SIGNAL(zoomOrthoSignal(float)), vp2, SLOT(zoomOrthogonals(float)), Qt::DirectConnection);
@@ -2991,10 +2983,12 @@ void Viewer::rewire() {
     connect(vp3, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
     connect(vp4, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
 
+    /*
     connect(vp, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
     connect(vp2, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
     connect(vp3, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
     connect(vp4, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
+    */
 
     connect(vp, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     connect(vp2, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
@@ -3174,6 +3168,7 @@ void Viewer::rewire() {
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
+
         //alpha Winkel zur x-Achse
         //beta Winkel zur xy-Ebene
         alpha = alpha * PI/180;
