@@ -117,7 +117,7 @@ Viewer::Viewer(QObject *parent) :
 
 }
 
-static vpList* vpListNew() {
+vpList *Viewer::vpListNew() {
     vpList *newVpList = NULL;
 
     newVpList = (vpList *) malloc(sizeof(vpList));
@@ -132,7 +132,7 @@ static vpList* vpListNew() {
     return newVpList;
 }
 
-static int vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
+int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
     vpListElement *newElement;
 
     newElement = (vpListElement *) malloc(sizeof(vpListElement));
@@ -163,7 +163,7 @@ static int vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backl
     return vpList->elements;
 }
 
-static vpBacklog *backlogNew() {
+vpBacklog *Viewer::backlogNew() {
     vpBacklog *newBacklog;
 
     newBacklog = (vpBacklog *) malloc(sizeof( vpBacklog));
@@ -177,7 +177,7 @@ static vpBacklog *backlogNew() {
     return newBacklog;
 }
 
-static vpList *vpListGenerate(viewerState *viewerState) {
+vpList *Viewer::vpListGenerate(viewerState *viewerState) {
     vpList *newVpList = NULL;
     vpBacklog *currentBacklog = NULL;
     uint i = 0;
@@ -202,7 +202,7 @@ static vpList *vpListGenerate(viewerState *viewerState) {
     return newVpList;
 }
 
-static int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
+int Viewer::backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         backlog->entry = NULL;
@@ -219,7 +219,7 @@ static int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
     return backlog->elements;
 }
 
-static pxStripeList *stripesNew() {
+pxStripeList *Viewer::stripesNew() {
     struct pxStripeList *newStripes;
 
     newStripes = (pxStripeList *)malloc(sizeof(struct pxStripeList));
@@ -233,7 +233,7 @@ static pxStripeList *stripesNew() {
     return newStripes;
 }
 
-static vpBacklogElement *backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType) {
+vpBacklogElement *Viewer::backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType) {
     /* @arb */
     struct vpBacklogElement *newElement;
 
@@ -349,7 +349,7 @@ bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *curr
 }
 
 
-static vpBacklogElement *isCubeInBacklog(struct vpBacklog *backlog, Coordinate *cube) {
+vpBacklogElement *Viewer::isCubeInBacklog(struct vpBacklog *backlog, Coordinate *cube) {
 
     struct vpBacklogElement *blElement = NULL;
     /* @arb */
@@ -365,7 +365,7 @@ static vpBacklogElement *isCubeInBacklog(struct vpBacklog *backlog, Coordinate *
     return NULL;
 }
 
-static bool backlogDel(vpBacklog *backlog) {
+bool Viewer::backlogDel(vpBacklog *backlog) {
     while(backlog->elements > 0) {
         if(backlogDelElement(backlog, backlog->entry) < 0) {
             LOG("Error deleting element at %p from the backlog. %d elements remain in the list.",
@@ -380,7 +380,7 @@ static bool backlogDel(vpBacklog *backlog) {
 }
 
 
-static int vpListDelElement( vpList *list,  vpListElement *element) {
+int Viewer::vpListDelElement( vpList *list,  vpListElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         list->entry = NULL;
@@ -404,7 +404,7 @@ static int vpListDelElement( vpList *list,  vpListElement *element) {
 
 
 
-static bool vpListDel(vpList *list) {
+bool Viewer::vpListDel(vpList *list) {
     while(list->elements > 0) {
         if(vpListDelElement(list, list->entry) < 0) {
             LOG("Error deleting element at %p from the slot list %d elements remain in the list.",
@@ -417,7 +417,7 @@ static bool vpListDel(vpList *list) {
     return true;
 }
 
-static int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
+int Viewer::backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
                                  Byte *slice, uint x_px, uint y_px, uint cubeType) {
     vpBacklogElement *newElement;
 
@@ -2020,9 +2020,9 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
-    state->viewerState->vpConfigs[0].type = VIEWPORT_ARBITRARY;
-    state->viewerState->vpConfigs[1].type = VIEWPORT_ARBITRARY;
-    state->viewerState->vpConfigs[2].type = VIEWPORT_ARBITRARY;
+    //state->viewerState->vpConfigs[0].type = VIEWPORT_XY;
+    //state->viewerState->vpConfigs[1].type = VIEWPORT_XZ;
+    //state->viewerState->vpConfigs[2].type = VIEWPORT_YZ;
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -2109,20 +2109,23 @@ void Viewer::run() {
                     // is missing, a backlog is generated.
                     vpGenerateTexture(currentVp, viewerState);
                     /* @arb */
+                    /*
                     if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY)
                          vpGenerateTexture(currentVp, viewerState);
                     else
                         vpGenerateTexture_arb(currentVp, viewerState);
-
+                    */
 
                 } else {
                     // There is a backlog. We go through its elements
                     vpHandleBacklog(currentVp, viewerState);
                     /* @arb */
+                    /*
                     if (currentVp->vpConfig->type != VIEWPORT_ARBITRARY)
                         vpHandleBacklog(currentVp, viewerState);
                     else
-                        vpHandleBacklog_arb(currentVp, viewerState);                    
+                        vpHandleBacklog_arb(currentVp, viewerState);
+                        */
                 }
 
                 if(currentVp->backlog->elements == 0) {
@@ -3164,6 +3167,7 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(vp3->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(vp4->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(vp->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
 
 }
 

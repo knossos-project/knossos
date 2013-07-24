@@ -170,7 +170,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
 
-
 }
 
 void ToolsTreesTabWidget::activeTreeIDChanged(int value) {

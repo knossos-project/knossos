@@ -389,7 +389,7 @@ typedef struct Hashtable{
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
 // is unavailable at that time.
-struct pxStripe{
+struct pxStripe {
     uint32_t s;
     uint32_t t1;
     uint32_t t2;
@@ -397,11 +397,10 @@ struct pxStripe{
     struct pxStripe *next;
 };
 
-struct pxStripeList{
+struct pxStripeList {
     struct pxStripe *entry;
     uint32_t elements;
 };
-
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
@@ -409,7 +408,7 @@ struct pxStripeList{
 struct vpBacklogElement {
 	Byte *slice;
     Coordinate cube;
-    pxStripeList *stripes;
+    struct pxStripeList *stripes;
 	// I guess those aren't really necessary.
 	uint x_px;
 	uint y_px;
@@ -1478,7 +1477,7 @@ typedef struct {
 
 #define COMPARE_COORDINATE(c1, c2)  (((c1).x == (c2).x) && ((c1).y == (c2).y) && ((c1).z == (c2).z))
 
-#define CONTAINS_COORDINATE(c1, c2, c3) ( ((c2).x <= (c1).x)&&((c1).x <= (c3).x) && ((c2).y <= (c1).y)&&((c1).y <= (c3).y) && ((c2).z <= (c1).z)&&((c1).z <= (c3).z) )
+#define CONTAINS_COORDINATE(c1, c2, c3) ( ((c2).x <= (c1).x) && ((c1).x <= (c3).x) && ((c2).y <= (c1).y)&&((c1).y <= (c3).y) && ((c2).z <= (c1).z) && ((c1).z <= (c3).z) )
 
 #define ADD_COORDINATE(c1, c2) \
 	{ \

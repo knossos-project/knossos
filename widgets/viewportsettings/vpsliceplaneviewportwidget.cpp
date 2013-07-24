@@ -165,6 +165,13 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 
 void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
     state->viewerState->gui->enableOrthoSkelOverlay = on;
+
+    if(!on) {
+        state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
+    }
+    emit updateViewerStateSignal();
 }
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
@@ -271,3 +278,6 @@ void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
     state->viewerState->showVPLabels = on;
 }
 
+void VPSlicePlaneViewportWidget::updateIntersection() {
+    this->drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
+}

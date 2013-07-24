@@ -62,10 +62,15 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     recenterTimeOrthoLabel = new QLabel("Recenter Time Orthogonal [ms]:");
 
     movementSpeedSpinBox = new QSpinBox();
+    movementSpeedSpinBox->setMaximum(1000);
     jumpFramesSpinBox = new QSpinBox;
+    jumpFramesSpinBox->setMaximum(1000);
     walkFramesSpinBox = new QSpinBox;
+    walkFramesSpinBox->setMaximum(1000);
     recenterTimeParallelSpinBox = new QSpinBox();
+    recenterTimeParallelSpinBox->setMaximum(1000);
     recenterTimeOrthoSpinBox = new QSpinBox();
+    recenterTimeOrthoSpinBox->setMaximum(1000);
 
     formLayout->addRow(movementSpeedLabel, movementSpeedSpinBox);
     formLayout->addRow(jumpFramesLabel, jumpFramesSpinBox);

@@ -344,9 +344,11 @@ int Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
    CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
+
    state->viewerState->vpConfigs[0].type = VIEWPORT_ARBITRARY;
    state->viewerState->vpConfigs[1].type = VIEWPORT_ARBITRARY;
    state->viewerState->vpConfigs[2].type = VIEWPORT_ARBITRARY;
+
     /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {

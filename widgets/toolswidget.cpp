@@ -177,10 +177,16 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+
+        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(1);
+
+        this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
+        //this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(1);
+        this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
 
         if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
             this->toolsQuickTabWidget->blockSignals(true);

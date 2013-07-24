@@ -203,10 +203,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        emit workModeDropSignal();
         break;
     case SKELETONIZER_ON_CLICK_ADD_NODE:
         emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+        emit workModeLinkSignal();
         break;
     case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
         if(state->skeletonState->activeNode == NULL) {
@@ -1129,7 +1130,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-
+        emit updateSlicePlaneWidgetSignal();
     } else if(event->key() == Qt::Key_J) {
         qDebug() << "J pressed";
         Skeletonizer::UI_popBranchNode();
@@ -1141,10 +1142,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
         if(shift) {
             Skeletonizer::moveToPrevNode();
+            emit updateTools();
             return true;
         }
 
         Skeletonizer::moveToNextNode();
+        emit updateTools();
         return true;
 
 
@@ -1154,7 +1157,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             Skeletonizer::moveToPrevTree();
             return true;
         }
-
         Skeletonizer::moveToNextTree();
         return true;
 
@@ -1203,6 +1205,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         treeCol.r = -1.;
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
         emit updateTreeCountSignal();
+        emit workModeDropSignal();
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     } else if(event->key() == Qt::Key_V) {
        if(control) {
@@ -1224,6 +1227,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Delete) {
         qDebug() << "Delete Key pressed";
         emit deleteActiveNodeSignal();
+        emit updateTools();
     } else if(event->key() == Qt::Key_F1) {
 
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)){

@@ -39,6 +39,7 @@ public:
 signals:
     void showXYPlaneSignal(bool on);
     void rotateAroundActiveNodeSignal(bool on);
+    void updateViewerStateSignal();
 public slots:
     void showXYPlaneChecked(bool on);
     void showXZPlaneChecked(bool on);
@@ -48,6 +49,8 @@ public slots:
     void onlyActiveTreeSelected();
     void hideSkeletonSelected();
     void rotateAroundActiveNodeChecked(bool on);
+    void resetDisplayMode();
+
 protected:
     QLabel *datasetVisualizationLabel, *skeletonDisplayModesLabel;
     QCheckBox *showXYPlaneCheckBox, *showXZPlaneCheckBox, *showYZPlaneCheckBox;

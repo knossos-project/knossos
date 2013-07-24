@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-
 #include "toolsnodestabwidget.h"
 #include <QLabel>
 #include <QSpinBox>
@@ -161,6 +160,28 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
+    nodeListElement *node;
+
+    if(value > state->skeletonState->activeNode->nodeID) {
+        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
+            value += 1;
+        }
+        activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        if(!node) {
+            //activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+            return;
+        }
+    } else if(value < state->skeletonState->activeNode->nodeID) {
+        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
+            value -= 1;
+        }
+        activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        if(!node) {
+            //activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+            return;
+        }
+    }
+
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
     if(state->skeletonState->activeNode) {
@@ -168,18 +189,15 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         ref->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         ref->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
         /* */
-        ref->toolsQuickTabWidget->activeNodeSpinBox->blockSignals(true);
+        ref->toolsQuickTabWidget->activeNodeSpinBox->disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
         ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        ref->toolsQuickTabWidget->activeNodeSpinBox->blockSignals(false);
+        ref->toolsQuickTabWidget->activeNodeSpinBox->connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
         /* */
 
         if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
-            qDebug() << state->skeletonState->activeNode->nodeID << " " << state->skeletonState->activeNode->comment->content;
-
             this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
             ref->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
         } else {
-            qDebug() << "gnaaaa";
             this->commentField->setText("");
             ref->toolsQuickTabWidget->commentField->setText("");
         }
@@ -250,6 +268,7 @@ void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {
 }
 
 void ToolsNodesTabWidget::activeNodeRadiusChanged(double value) {
+
     state->viewerState->gui->actNodeRadius = value;
 }
 

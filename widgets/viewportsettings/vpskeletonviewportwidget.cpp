@@ -108,22 +108,38 @@ void VPSkeletonViewportWidget::showYZPlaneChecked(bool on) {
 }
 
 void VPSkeletonViewportWidget::wholeSkeletonSelected() {
-   state->viewerState->gui->radioSkeletonDisplayMode = DSP_SKEL_VP_WHOLE;
+   resetDisplayMode();
+   state->viewerState->gui->radioSkeletonDisplayMode |= DSP_SKEL_VP_WHOLE;
+   emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::onlyCurrentCubeSelected() {
-    state->viewerState->gui->radioSkeletonDisplayMode = DSP_SKEL_VP_CURRENTCUBE;
+    resetDisplayMode();
+    state->viewerState->gui->radioSkeletonDisplayMode |= DSP_SKEL_VP_CURRENTCUBE;
+    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::onlyActiveTreeSelected() {
-    state->viewerState->gui->radioSkeletonDisplayMode = DSP_ACTIVETREE;
+    resetDisplayMode();
+    state->viewerState->gui->radioSkeletonDisplayMode |= DSP_ACTIVETREE;
+    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::hideSkeletonSelected() {
-    state->viewerState->gui->radioSkeletonDisplayMode = DSP_SKEL_VP_HIDE;
+    resetDisplayMode();
+    state->viewerState->gui->radioSkeletonDisplayMode |= DSP_SKEL_VP_HIDE;
+    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::rotateAroundActiveNodeChecked(bool on) {
     state->skeletonState->rotateAroundActiveNode = on;
+}
+
+void VPSkeletonViewportWidget::resetDisplayMode() {
+    state->skeletonState->displayMode &=
+            (~DSP_SKEL_VP_WHOLE &
+            ~DSP_ACTIVETREE &
+            ~DSP_SKEL_VP_HIDE &
+            ~DSP_SKEL_VP_CURRENTCUBE);
 }
 

@@ -64,6 +64,8 @@ public slots:
     void enableColorOverlayChecked(bool on);
     void drawIntersectionsCrossHairChecked(bool on);
     void showViewPortsSizeChecked(bool on);
+    void updateIntersection();
+
 
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;

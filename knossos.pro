@@ -149,3 +149,4 @@ win32 {
 
 RESOURCES += \
     Resources.qrc
+

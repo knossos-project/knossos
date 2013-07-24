@@ -723,20 +723,45 @@ void MainWindow::updateFileHistoryMenu() {
 void MainWindow::saveSlot()
 {
 
-    qDebug() << state->skeletonState->skeletonFile;
-    saveSkeleton(state->skeletonState->skeletonFile, false);
-    updateTitlebar(true);
+    QFile file(state->skeletonState->skeletonFile);
+    if(file.open(QIODevice::ReadWrite)) {
+        saveSkeleton(state->skeletonState->skeletonFile, false);
+        updateTitlebar(true);
 
+        file.close();
+    }
 }
 
 void MainWindow::saveAsSlot()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(),"KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
+        QFileInfo info(fileName);
 
-        state->skeletonState->skeletonFile = const_cast<char *>(fileName.toStdString().c_str());
-        saveSkeleton(QString(state->skeletonState->skeletonFile), false);
+        char *cpath = const_cast<char *>(fileName.toStdString().c_str());
+        char *dir = const_cast<char *>(info.canonicalPath().toStdString().c_str());
 
+        state->skeletonState->skeletonFile;
+        state->viewerState->gui->skeletonDirectory;
+
+        memset(state->skeletonState->skeletonFile, '\0', strlen(state->skeletonState->skeletonFile));
+        strcpy(state->skeletonState->skeletonFile, cpath);
+
+        memset(state->viewerState->gui->skeletonDirectory, '\0', strlen(state->viewerState->gui->skeletonDirectory));
+        strcpy(state->viewerState->gui->skeletonDirectory, dir);
+
+        QFile file(fileName);
+
+        if(file.open(QIODevice::ReadWrite)) {
+
+            if(Skeletonizer::saveSkeleton()) {
+                updateTitlebar(true);
+            } else {
+                qDebug() << "error";
+            }
+        }
+
+        file.close();
     }
 
 }
@@ -748,8 +773,12 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
 
     char *cpath = const_cast<char *>(fileName.toStdString().c_str());
 
-    emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
-    QFile saveFile(cpath);
+    //emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
+    QFile saveFile(fileName);
+    if(saveFile.open(QIODevice::ReadWrite)) {
+        saveFile.close();
+    }
+
     if(saveFile.open(QIODevice::ReadWrite)) {
         int saved = Skeletonizer::saveSkeleton();
 
@@ -766,7 +795,7 @@ void MainWindow::saveSkeleton(QString fileName, int increment) {
             addRecentFile(fileName);
         }
     } else {
-
+        qDebug() << "ERROR WHILE OPEN";
     }
 
 }
@@ -789,6 +818,10 @@ void MainWindow::addNodeSlot()
     if(dropNodesAction->isChecked()) {
         dropNodesAction->setChecked(false);
     }
+
+    if(!addNodeAction->isChecked()) {
+        addNodeAction->setChecked(true);
+    }
 }
 
 void MainWindow::linkWithActiveNodeSlot()
@@ -800,6 +833,10 @@ void MainWindow::linkWithActiveNodeSlot()
     }
     if(dropNodesAction->isChecked()) {
         dropNodesAction->setChecked(false);
+    }
+
+    if(!linkWithActiveNodeAction->isChecked()) {
+        linkWithActiveNodeAction->setChecked(true);
     }
 }
 
@@ -813,6 +850,10 @@ void MainWindow::dropNodesSlot()
 
     if(linkWithActiveNodeAction->isChecked()) {
         linkWithActiveNodeAction->setChecked(false);
+    }
+
+    if(!dropNodesAction->isChecked()) {
+        dropNodesAction->setChecked(true);
     }
 }
 

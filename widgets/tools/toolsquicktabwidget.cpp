@@ -201,6 +201,28 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
+    nodeListElement *node;
+
+    if(value > state->skeletonState->activeNode->nodeID) {
+        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
+            value += 1;
+        }
+        activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        if(!node) {
+            //activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+            return;
+        }
+    } else if(value < state->skeletonState->activeNode->nodeID) {
+        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
+            value -= 1;
+        }
+        activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        if(!node) {
+            //activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+            return;
+        }
+    }
+
     if(Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, value)) {
 
         if(state->skeletonState->activeNode) {
@@ -208,9 +230,9 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
             this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 
-            ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
+            ref->toolsNodesTabWidget->activeNodeIdSpinBox->disconnect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
             ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-            ref->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
+            ref->toolsNodesTabWidget->activeNodeIdSpinBox->connect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
 
             if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
                 this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));

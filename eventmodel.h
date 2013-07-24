@@ -83,6 +83,7 @@ signals:
     void updateWidgetSignal();
     void workModeAddSignal();
     void workModeLinkSignal();
+    void workModeDropSignal();
     void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
     void addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
@@ -106,6 +107,7 @@ signals:
     void updateTools();
     void updateTreeCountSignal();
     void updateZoomWidgetSignal();
+    void updateSlicePlaneWidgetSignal();
 public slots:
     
 };

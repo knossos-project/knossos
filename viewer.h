@@ -86,8 +86,20 @@ signals:
     void idleTimeSignal();
 protected:
     bool resetViewPortData(vpConfig *viewport);
+    int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
+                                     Byte *slice, uint x_px, uint y_px, uint cubeType);
+    bool vpListDel(vpList *list);
+    int vpListDelElement( vpList *list,  vpListElement *element);
+    bool backlogDel(vpBacklog *backlog);
+    vpBacklogElement *isCubeInBacklog(struct vpBacklog *backlog, Coordinate *cube);
+    vpBacklogElement *backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType);
+    pxStripeList *stripesNew();
+    int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element);
+    vpList *vpListGenerate(viewerState *viewerState);
+    vpBacklog *backlogNew();
+    int vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog);
+    vpList* vpListNew();
 
-    //pxStripeList *stripesNew();
     bool pxStripeListDelElement(struct pxStripeList *stripes, struct pxStripe *stripe);
     bool pxStripeListDel(struct pxStripeList *stripes);
     bool addPxStripe(struct vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
