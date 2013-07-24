@@ -134,8 +134,6 @@ MainWindow::MainWindow(QWidget *parent) :
     createCoordBarWin(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
 
     mainWidget = new QWidget(this);
-    gridLayout = new QGridLayout();
-    mainWidget->setLayout(gridLayout);
     setCentralWidget(mainWidget);
 
     connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
@@ -148,7 +146,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
-    loadSettings();
+    //loadSettings();
+
 
 
 }

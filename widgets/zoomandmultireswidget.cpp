@@ -192,12 +192,12 @@ void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
 }
 
 void ZoomAndMultiresWidget::zoomDefaultsClicked() {
-    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MIN_ZOOM;
-    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MIN_ZOOM;
-    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MIN_ZOOM;
+    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MAX_ZOOM;
+    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MAX_ZOOM;
+    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MAX_ZOOM;
 
-    orthogonalDataViewportSlider->setValue(MIN_ZOOM);
-    orthogonalDataViewportSpinBox->setValue(MIN_ZOOM);
+    orthogonalDataViewportSlider->setValue(MAX_ZOOM);
+    orthogonalDataViewportSpinBox->setValue(MAX_ZOOM);
     skeletonViewportSlider->setValue(MIN_ZOOM);
     skeletonViewportSpinBox->setValue(MIN_ZOOM);
 

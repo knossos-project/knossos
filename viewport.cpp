@@ -48,6 +48,9 @@ Viewport::Viewport(QWidget *parent, int plane) :
     //this->setMouseTracking(true);
     //this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
+
+
+
 }
 
 void Viewport::initializeGL() {

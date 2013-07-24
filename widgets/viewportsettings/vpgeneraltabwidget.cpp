@@ -151,19 +151,22 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
 
     if(on) {
         this->edgeNodeRadiusRatioSpinBox->setEnabled(true);
+
     } else {
-        this->edgeNodeRadiusRatioLabel->setEnabled(false);
+        this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
     }
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
     state->skeletonState->overrideNodeRadiusVal = value;
+    state->skeletonState->skeletonChanged = true;
 }
 
 
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
     emit segRadiusToNodeRadiusSignal(value);
     state->skeletonState->segRadiusToNodeRadius = value;
+
 }
 
 void VPGeneralTabWidget::renderingQualityChanged(int value) {

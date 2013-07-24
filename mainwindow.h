@@ -150,6 +150,9 @@ public:
 
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
+
+    QPushButton *posButton;
+
     void updateFileHistoryMenu();
 
     void createActions();

@@ -105,6 +105,7 @@ Viewer::Viewer(QObject *parent) :
     rewire();
     frames = 0;
 
+    window->loadSettings();
     /*
     QTimer *counter = new QTimer();
     connect(counter, SIGNAL(timeout()), this, SLOT(showFrames()));
@@ -2039,8 +2040,6 @@ void Viewer::run() {
 
     state->viewerState->viewerReady = true;
 
-
-
     // Display info about skeleton save path here TODO
     // This creates a circular doubly linked list of
         // pending viewports (viewports for which the texture has not yet been
@@ -2049,10 +2048,7 @@ void Viewer::run() {
         // The idea is that we can easily remove the element representing a
         // pending viewport once its texture is completely loaded.
         viewports = vpListGenerate(viewerState);
-        drawCounter = 0;
-
         currentVp = viewports->entry;
-
 
         state->alpha += state->viewerState->alphaCache;
                 state->beta+= state->viewerState->betaCache;
@@ -2081,17 +2077,15 @@ void Viewer::run() {
 
 
         while(viewports->elements > 0) {
+
             if(drawCounter == 0) {
-                vp->makeCurrent();
-                vp->updateGL();
+                vp->updateGeometry();
             } else if(drawCounter == 1) {
-                vp2->makeCurrent();
                 vp2->updateGL();
             } else if(drawCounter == 2) {
-                vp3->makeCurrent();
+                //vp3->makeCurrent();
                 vp3->updateGL();
             }
-
 
             nextVp = currentVp->next;
             // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
@@ -2157,6 +2151,7 @@ void Viewer::run() {
                 renderer->drawGUI();
 
                 vp4->updateGL();
+                renderer->renderSkeletonVP(VIEWPORT_SKELETON);
 
                 if(viewerState->userMove == true) {
                     break;
@@ -3167,7 +3162,13 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(vp3->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(vp4->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+
     connect(vp->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
+    connect(vp2->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
+    connect(vp3->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
+    connect(vp4->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
+
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
 }
 

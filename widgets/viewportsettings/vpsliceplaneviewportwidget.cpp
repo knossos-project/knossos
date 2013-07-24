@@ -154,6 +154,7 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(useOwnDatasetColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnDatasetColorsChecked(bool)));
     connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
     connect(useOwnTreeColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnTreeColorsChecked(bool)));
+    connect(useOwnTreeColorButton, SIGNAL(clicked()), this, SLOT(useOwnTreeColorButtonClicked()));
     connect(biasSlider, SIGNAL(sliderMoved(int)), this, SLOT(biasSliderMoved(int)));
     connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
     connect(rangeDeltaSlider, SIGNAL(sliderMoved(int)), this, SLOT(rangeDeltaSliderMoved(int)));
@@ -244,22 +245,26 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
 void VPSlicePlaneViewportWidget::biasSliderMoved(int value) {
     state->viewerState->luminanceBias = value;
     biasSpinBox->setValue(value);
+    MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::biasChanged(int value) {
     state->viewerState->luminanceBias = value;
     biasSlider->setValue(value);
+    MainWindow::datasetColorAdjustmentsChanged();
 }
 
 
 void VPSlicePlaneViewportWidget::rangeDeltaSliderMoved(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSpinBox->setValue(value);
+    MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSlider->setValue(value);
+    MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::enableColorOverlayChecked(bool on) {
