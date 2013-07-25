@@ -54,6 +54,7 @@ public:
     Renderer *renderer;
     MainWindow *window;
 
+    floatCoordinate v1, v2, v3;
     Viewport *vp, *vp2, *vp3, *vp4;
     vpList *viewports;
     int frames;
@@ -102,7 +103,7 @@ protected:
 
     bool pxStripeListDelElement(struct pxStripeList *stripes, struct pxStripe *stripe);
     bool pxStripeListDel(struct pxStripeList *stripes);
-    bool addPxStripe(struct vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
+    bool addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
 
     bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
     bool vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewerState *viewerState);

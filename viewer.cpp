@@ -35,6 +35,7 @@
 #include "viewport.h"
 #include "functions.h"
 #include <qopengl.h>
+#include "knossos-global.h"
 
 extern stateInfo *state;
 
@@ -112,9 +113,32 @@ Viewer::Viewer(QObject *parent) :
     counter->start(1000);
     */
 
+    state->alpha = 0;
+    state->beta = 0;
+
+    int i = 0;
+    for (i = 0; i < state->viewerState->numberViewports; i++){
+        state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max = (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
+    }
+
+    floatCoordinate v1, v2, v3;
+    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
+
+    CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
+    CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
+    CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
+    CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
+    CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
+
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(10);
+
+
 
 }
 
@@ -225,7 +249,7 @@ pxStripeList *Viewer::stripesNew() {
 
     newStripes = (pxStripeList *)malloc(sizeof(struct pxStripeList));
     if(newStripes == NULL) {
-        printf("Out of memory.\n");
+        qDebug("Out of memory.\n");
         return NULL;
     }
     newStripes->entry = NULL;
@@ -313,36 +337,34 @@ bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *curr
     if(newStripe == NULL) {
         LOG("Out of memory.");
         /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
-        return FAIL;
+        return false;
     }
 
     newStripe->s = s;
-
     newStripe->t1 = t1;
-
     newStripe->t2 = t2;
 
     CPY_COORDINATE(newStripe->currentPxInDc_float, (*currentPxInDc_float));
 
-
-
-    if (backlogElement->stripes!=NULL){
-
-        newStripe->next = backlogElement->stripes->entry;
-
-        backlogElement->stripes->entry = newStripe;
-
+    if(backlogElement == 0) {
+        qDebug() << " NOOOO";
+    } else {
+        qDebug() << backlogElement;
+        qDebug() << "YEEES";
     }
 
-    else{
+    if(backlogElement && backlogElement->stripes == 0) {
+        qDebug() << "Fall 1";
+    } else if(backlogElement && backlogElement->stripes)
+        qDebug() << " Fall 2";
 
-        backlogElement->stripes->entry = newStripe;
-
-        newStripe->next = NULL;
-
+    if(backlogElement->stripes->entry != 0) {
+        qDebug() << "FOOOO";
     }
 
 
+    newStripe->next = backlogElement->stripes->entry;
+    backlogElement->stripes->entry = newStripe;
 
     backlogElement->stripes->elements += 1;
 
@@ -353,11 +375,11 @@ bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *curr
 vpBacklogElement *Viewer::isCubeInBacklog(struct vpBacklog *backlog, Coordinate *cube) {
 
     struct vpBacklogElement *blElement = NULL;
-    /* @arb */
+     /*@arb */
     int i = 0;
     if (backlog->elements != 0){
         blElement = backlog->entry;
-        for (i = 0; i<backlog->elements; i++){
+        for (i = 0; i<backlog->elements; i++) {
             if (COMPARE_COORDINATE(blElement->cube,(*cube))) return blElement;
             blElement = blElement->next;
         }
@@ -381,7 +403,7 @@ bool Viewer::backlogDel(vpBacklog *backlog) {
 }
 
 
-int Viewer::vpListDelElement( vpList *list,  vpListElement *element) {
+int Viewer::vpListDelElement(vpList *list,  vpListElement *element) {
     if(element->next == element) {
         // This is the only element in the list
         list->entry = NULL;
@@ -954,35 +976,7 @@ bool Viewer::vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerS
             currentElement = nextElement;
         }
 
-    //    glTexImage2D(GL_TEXTURE_2D,
-
-    //                 0,
-
-    //                 GL_RGB,
-
-    //                 state->M*state->cubeEdgeLength,
-
-    //                 state->M*state->cubeEdgeLength,
-
-    //                 0,
-
-    //                 GL_RGB,
-
-    //                 GL_UNSIGNED_BYTE,
-
-    //                 currentVp->viewPort->viewPortData);
-
-
-
-                                         glTexSubImage2D(GL_TEXTURE_2D,
-                                        0,
-                                        0,
-                                        0,
-                         state->M*state->cubeEdgeLength,
-                         state->M*state->cubeEdgeLength,
-                                        GL_RGB,
-                                        GL_UNSIGNED_BYTE,
-                                        currentVp->vpConfig->viewPortData);
+         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->M*state->cubeEdgeLength, state->M*state->cubeEdgeLength, GL_RGB, GL_UNSIGNED_BYTE, currentVp->vpConfig->viewPortData);
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -1198,11 +1192,10 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
 
 bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewerState *viewerState) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
-        // from those cubes into the texture.
+    // from those cubes into the texture.
 
 
     Coordinate lowerRightPxInDc, upperLeftPxInDc, currentDc, currentPx;
-
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
     uint32_t t_old = 0;
@@ -1210,103 +1203,46 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
     struct vpBacklogElement *backlogElement = NULL;
 
-
-
     floatCoordinate *v1 = &(currentVp->vpConfig->v1);
-
     floatCoordinate *v2 = &(currentVp->vpConfig->v2);
-
-
 
     CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
-
-
-
     CPY_COORDINATE(currentPx_float, rowPx_float);
 
 
-
     glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
-
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-
-
-    int32_t s = 0;
-
-    int32_t t = 0;
-
-
+    int s = 0;
+    int t = 0;
 
     while(s < (currentVp->vpConfig->s_max)){
-
         t = 0;
-
         while(t < (currentVp->vpConfig->t_max)){
 
-
-
             SET_COORDINATE(currentPx, roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z));
-
             SET_COORDINATE(currentDc, currentPx.x/state->cubeEdgeLength,
-
                                       currentPx.y/state->cubeEdgeLength,
-
                                       currentPx.z/state->cubeEdgeLength);
 
-
-
             if (currentPx.x < 0) currentDc.x -=1;
-
             if (currentPx.y < 0) currentDc.y -=1;
-
             if (currentPx.z < 0) currentDc.z -=1;
-
-
-
-            //dat = fopen("dd.txt", "a");
-
-            //fprintf(dat, "*****vpGenerateText---------\n");
-
-            //fprintf(dat, "*****vpGenerateText------- currentDc (%d, %d, %d)--\n", currentDc.x, currentDc.y, currentDc.z);
-
-            //fprintf(dat, "*****vpGenerateText------- currentPx_float (%f, %f, %f)--\n", currentPx_float.x, currentPx_float.y, currentPx_float.z);
-
-            //fclose(dat);
-
 
             state->protectCube2Pointer->lock();
             datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
+            //backlogElement = isCubeInBacklog(currentVp->backlog, &currentDc);
 
-
-            backlogElement = isCubeInBacklog(currentVp->backlog, &currentDc);
-
-
-
-            if (backlogElement != NULL){
-
-            //dat = fopen("dd.txt", "a");
-
-            //fprintf(dat, "*****vpGenerateText--------backlogElement != NULL----------\n");
-
-            //fclose(dat);
-
-
-
-
-
-                SET_COORDINATE(currentPxInDc_float, (currentPx_float.x-currentDc.x*state->cubeEdgeLength),
-
+            if (backlogElement != NULL) {
+               SET_COORDINATE(currentPxInDc_float, (currentPx_float.x-currentDc.x*state->cubeEdgeLength),
                                                     (currentPx_float.y-currentDc.y*state->cubeEdgeLength),
-
                                                     (currentPx_float.z-currentDc.z*state->cubeEdgeLength ));
 
                 //special case: if currentPx_float.x-currentDc.x*state->cubeEdgeLength) == -0.5 then currentPxInDc_float.x would be 127.5 which would be rounded to 128 <--- not good, should be 127 in this case,
-
                 //otherwise it would result in a closed loop
 
                 if ( currentPxInDc_float.x == 127.5 ) currentPxInDc_float.x-=0.001;
@@ -1321,69 +1257,41 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
                 if ( currentPxInDc_float.z == -0.5 ) currentPxInDc_float.z+=0.001;
 
-
-
-
-
                 SET_COORDINATE(upperLeftPxInDc, (currentDc.x*state->cubeEdgeLength),
-
                                                 (currentDc.y*state->cubeEdgeLength),
-
                                                 (currentDc.z*state->cubeEdgeLength));
 
                 SET_COORDINATE(lowerRightPxInDc, ((currentDc.x+1)*state->cubeEdgeLength-1),
-
                                                  ((currentDc.y+1)*state->cubeEdgeLength-1),
-
                                                  ((currentDc.z+1)*state->cubeEdgeLength-1) );
 
                 SET_COORDINATE(currentPx, roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z));
 
                 t_old = t;
 
-                while(CONTAINS_COORDINATE(currentPx, upperLeftPxInDc, lowerRightPxInDc)){
-
+                while(CONTAINS_COORDINATE(currentPx, upperLeftPxInDc, lowerRightPxInDc)) {
                     ADD_COORDINATE(currentPx_float, (*v2));
-
                     SET_COORDINATE(currentPx, roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z));
-
                     t++;
 
                     if (t>=currentVp->vpConfig->t_max) break;
 
                 }
 
-
-
-                addPxStripe(backlogElement, &currentPxInDc_float, s, t_old, t-1);
-
-
+                qDebug() << "px 1";
+                this->addPxStripe(backlogElement, &currentPxInDc_float, s, t_old, t-1);
 
             }
 
             else if(datacube == HT_FAILURE) {
 
-            //dat = fopen("dd.txt", "a");
-
-            //fprintf(dat, "*****vpGenerateText--------datacube == HT_FAILURE----------\n");
-
-            //fclose(dat);
-
-                backlogElement = backlogAddElement_arb(currentVp->backlog,
-                                                       currentDc,
-                                                       CUBE_DATA);
-
-
+                backlogElement = backlogAddElement_arb(currentVp->backlog,currentDc,CUBE_DATA);
 
                 SET_COORDINATE(currentPxInDc_float, (currentPx_float.x-currentDc.x*state->cubeEdgeLength),
 
                                                     (currentPx_float.y-currentDc.y*state->cubeEdgeLength),
 
-                                                    (currentPx_float.z-currentDc.z*state->cubeEdgeLength ));
-
-                //special case: if currentPx_float.x-currentDc.x*state->cubeEdgeLength) == -0.5 then currentPxInDc_float.x would be 127.5 which would be rounded to 128 <--- not good, should be 127 in this case,
-
-                //otherwise it would result in a closed loop
+                                                    (currentPx_float.z-currentDc.z*state->cubeEdgeLength ));              
 
                 if ( currentPxInDc_float.x == 127.5 ) currentPxInDc_float.x-=0.001;
 
@@ -1400,35 +1308,26 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
 
 
                 SET_COORDINATE(upperLeftPxInDc, (currentDc.x*state->cubeEdgeLength),
-
-                                                (currentDc.y*state->cubeEdgeLength),
-
+                                             (currentDc.y*state->cubeEdgeLength),
                                                 (currentDc.z*state->cubeEdgeLength));
 
-                SET_COORDINATE(lowerRightPxInDc, ((currentDc.x+1)*state->cubeEdgeLength-1),
+                SET_COORDINATE(lowerRightPxInDc, ((currentDc.x+1)*state->cubeEdgeLength - 1),
+                                                 ((currentDc.y+1)*state->cubeEdgeLength - 1),
 
-                                                 ((currentDc.y+1)*state->cubeEdgeLength-1),
-
-                                                 ((currentDc.z+1)*state->cubeEdgeLength-1) );
+                                                 ((currentDc.z+1)*state->cubeEdgeLength - 1));
 
                 SET_COORDINATE(currentPx, roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z));
 
                 t_old = t;
 
                 while(CONTAINS_COORDINATE(currentPx, upperLeftPxInDc, lowerRightPxInDc)){
-
                     ADD_COORDINATE(currentPx_float, (*v2));
-
                     SET_COORDINATE(currentPx, roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z));
-
                     t++;
-
                     if (t>=currentVp->vpConfig->t_max) break;
-
                 }
 
-
-
+                qDebug() << "px 2";
                 addPxStripe(backlogElement, &currentPxInDc_float, s, t_old, t-1);
 
             }
@@ -1486,7 +1385,6 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
         s++;
 
         ADD_COORDINATE(rowPx_float, (*v1) );
-
         CPY_COORDINATE(currentPx_float, rowPx_float)
     }
 
@@ -2000,26 +1898,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 void Viewer::run() {
 
     /* @ arb */
-    state->alpha = 0;
-    state->beta = 0;
 
-    int i = 0;
-    for (i = 0; i < state->viewerState->numberViewports; i++){
-        state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max = (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
-    }
-
-    floatCoordinate v1, v2, v3;
-    getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-
-    CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
-    CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
-    CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
-    CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
     //state->viewerState->vpConfigs[0].type = VIEWPORT_XY;
     //state->viewerState->vpConfigs[1].type = VIEWPORT_XZ;
@@ -2079,8 +1958,10 @@ void Viewer::run() {
         while(viewports->elements > 0) {
 
             if(drawCounter == 0) {
-                vp->updateGeometry();
+                //vp->makeCurrent();
+                vp->updateGL();
             } else if(drawCounter == 1) {
+                //vp2->makeCurrent();
                 vp2->updateGL();
             } else if(drawCounter == 2) {
                 //vp3->makeCurrent();
@@ -2101,25 +1982,25 @@ void Viewer::run() {
                     // to load the texture for this viewport, which is what we
                     // do now. If we can't complete the texture because a Dc
                     // is missing, a backlog is generated.
-                    vpGenerateTexture(currentVp, viewerState);
+                    //vpGenerateTexture(currentVp, viewerState);
                     /* @arb */
-                    /*
+
                     if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY)
                          vpGenerateTexture(currentVp, viewerState);
                     else
                         vpGenerateTexture_arb(currentVp, viewerState);
-                    */
+
 
                 } else {
                     // There is a backlog. We go through its elements
-                    vpHandleBacklog(currentVp, viewerState);
+                    //vpHandleBacklog(currentVp, viewerState);
                     /* @arb */
-                    /*
+
                     if (currentVp->vpConfig->type != VIEWPORT_ARBITRARY)
                         vpHandleBacklog(currentVp, viewerState);
                     else
                         vpHandleBacklog_arb(currentVp, viewerState);
-                        */
+
                 }
 
                 if(currentVp->backlog->elements == 0) {
@@ -2151,7 +2032,7 @@ void Viewer::run() {
                 renderer->drawGUI();
 
                 vp4->updateGL();
-                renderer->renderSkeletonVP(VIEWPORT_SKELETON);
+
 
                 if(viewerState->userMove == true) {
                     break;
@@ -2302,6 +2183,7 @@ bool Viewer::initializeTextures() {
 }
 
 bool Viewer::updateViewerState() {
+
 
     uint i;
 

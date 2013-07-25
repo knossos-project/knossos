@@ -112,7 +112,7 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(!settings.value(ENABLE_OVERLAY).isNull()) {
         this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(settings.value(ENABLE_OVERLAY).toBool());
-        state->viewerState->gui->enableOrthoSkelOverlay = settings.value(ENABLE_OVERLAY).toBool();
+
     }
 
     if(!settings.value(HIGHLIGHT_INTERSECTIONS).isNull()) {
@@ -185,8 +185,7 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(WHOLE_SKELETON).isNull()) {
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(settings.value(WHOLE_SKELETON).toBool());
         bool on = settings.value(WHOLE_SKELETON).toBool();
-        if(on) {
-            state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_WHOLE;
+        if(on) {            
             state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
         } else {
            state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
@@ -196,8 +195,7 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(ONLY_ACTIVE_TREE).isNull()) {
         this->skeletonViewportWidget->onlyActiveTreeRadioButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
         bool on = settings.value(ONLY_ACTIVE_TREE).toBool();
-        if(on) {
-            state->viewerState->gui->radioRenderingModel = DSP_ACTIVETREE;
+        if(on) {          
             state->skeletonState->displayMode |= DSP_ACTIVETREE;
         } else {
             state->skeletonState->displayMode &= ~DSP_ACTIVETREE;
@@ -207,8 +205,7 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(HIDE_SKELETON).isNull()) {
         this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(settings.value(HIDE_SKELETON).toBool());
         bool on = settings.value(HIDE_SKELETON).toBool();
-        if(on) {
-            state->viewerState->gui->radioRenderingModel = DSP_SKEL_VP_HIDE;
+        if(on) {            
             state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
         } else {
             state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;

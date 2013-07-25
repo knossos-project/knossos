@@ -139,7 +139,6 @@ void ZoomAndMultiresWidget::orthogonalSliderMoved(int value) {
     if(result < MIN_ZOOM)
         result = MIN_ZOOM;
     this->orthogonalDataViewportSpinBox->setValue(result);
-    state->viewerState->gui->zoomOrthoVPs = result;
 
     for(int i = 0; i < 3; i++)
         state->viewerState->vpConfigs[i].texture.zoomLevel = result;
@@ -152,7 +151,6 @@ void ZoomAndMultiresWidget::orthogonalSliderMoved(int value) {
   */
 void ZoomAndMultiresWidget::orthogonalSpinBoxChanged(double value) {
     this->orthogonalDataViewportSlider->setValue(value * 100);
-    state->viewerState->gui->zoomOrthoVPs = value;
 
     for(int i = 0; i < 3; i++)
         state->viewerState->vpConfigs[i].texture.zoomLevel = value;
@@ -161,7 +159,7 @@ void ZoomAndMultiresWidget::orthogonalSpinBoxChanged(double value) {
 }
 
 /**
-  * Again the slider only works with integer. The range from 0.00 to 0.05 is stored in 200 units
+  * Again the slider only works with integer. The range from 0.00 to 0.5 is stored in 200 units
   */
 void ZoomAndMultiresWidget::skeletonSliderMoved(int value) {
     float result = value / 200.0;
@@ -204,8 +202,6 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
     state->skeletonState->zoomLevel = 0.0;
     emit zoomLevelSignal(0.0);
     emit refreshSignal();
-
-
 }
 
 void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
@@ -243,7 +239,6 @@ void ZoomAndMultiresWidget::loadSettings() {
 
     if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble()) {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
-        state->viewerState->gui->zoomOrthoVPs = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
         for(int i = 0; i < 3; i++)
             state->viewerState->vpConfigs[i].texture.zoomLevel = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
     }

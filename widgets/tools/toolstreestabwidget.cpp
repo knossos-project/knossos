@@ -267,11 +267,11 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
 }
 
 void ToolsTreesTabWidget::id1Changed(int value) {
-    state->viewerState->gui->mergeTreesID1 = value;
+
 }
 
 void ToolsTreesTabWidget::id2Changed(int value) {
-    state->viewerState->gui->mergeTreesID2 = value;
+
 }
 
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
@@ -285,26 +285,22 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
 }
 
 void ToolsTreesTabWidget::rChanged(double value) {
-    state->viewerState->gui->actTreeColor.r = value;
-    state->skeletonState->activeTree->color.r = state->viewerState->gui->actTreeColor.r;
+    state->skeletonState->activeTree->color.r = value;
 }
 
 void ToolsTreesTabWidget::gChanged(double value) {
-    state->viewerState->gui->actTreeColor.g = value;
     if(state->skeletonState->activeTree)
-        state->skeletonState->activeTree->color.g = state->viewerState->gui->actTreeColor.g;
+        state->skeletonState->activeTree->color.g = value;
 }
 
 void ToolsTreesTabWidget::bChanged(double value) {
-    state->viewerState->gui->actTreeColor.b = value;
     if(state->skeletonState->activeTree)
-        state->skeletonState->activeTree->color.b = state->viewerState->gui->actTreeColor.b;
+        state->skeletonState->activeTree->color.b = value;
 }
 
 void ToolsTreesTabWidget::aChanged(double value) {
-    state->viewerState->gui->actTreeColor.a = value;
     if(state->skeletonState->activeTree)
-        state->skeletonState->activeTree->color.a = state->viewerState->gui->actTreeColor.a;
+        state->skeletonState->activeTree->color.a = value;
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {

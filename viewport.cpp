@@ -264,9 +264,7 @@ void Viewport::drawViewport(int plane) {
 
 void Viewport::drawSkeletonViewport() {
     Renderer::renderSkeletonVP(VIEWPORT_SKELETON);
-
 }
-
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseButtonLeft(event, VPfound);
@@ -281,9 +279,6 @@ bool Viewport::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseButtonRight(event, VPfound);
 }
 
-bool Viewport::handleMouseMotion(QMouseEvent *event, int VPfound) {
-
-}
 
 bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     return delegate->handleMouseMotionLeftHold(event, VPfound);
@@ -381,52 +376,48 @@ Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int V
 }
 
 void Viewport::zoomOrthogonals(float step){
-    int i = 0;
-        int triggerMagChange = false;
 
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+    int triggerMagChange = false;
 
-                /* check if mag is locked */
-                if(state->viewerState->datasetMagLock) {
-                    if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
-                       !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                    }
+    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+
+            /* check if mag is locked */
+            if(state->viewerState->datasetMagLock) {
+                if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
+                   !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > VPZOOMMIN)) {
+                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
                 }
-                else {
-                    /* trigger a mag change when possible */
-                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
-                        && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
-                        && (state->magnification != state->lowestAvailableMag)) {
+            }
+            else {
+                /* trigger a mag change when possible */
+                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.5)
+                    && (state->viewerState->vpConfigs[i].texture.zoomLevel >= 0.5)
+                    && (state->magnification != state->lowestAvailableMag)) {
+                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                    triggerMagChange = MAG_DOWN;
+                }
+                if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
+                    && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
+                    && (state->magnification != state->highestAvailableMag)) {
+                    state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                    triggerMagChange = MAG_UP;
+                }
+                /* performe normal zooming otherwise. This case also covers
+                * the special case of zooming in further than 0.5 on mag1 */
+                if(!triggerMagChange) {
+                    if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.09999) &&
+                       !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0000)) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        triggerMagChange = MAG_DOWN;
-                    }
-                    if((state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0)
-                        && (state->viewerState->vpConfigs[i].texture.zoomLevel <= 1.0)
-                        && (state->magnification != state->highestAvailableMag)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        triggerMagChange = MAG_UP;
-                    }
-                    /* performe normal zooming otherwise. This case also covers
-                    * the special case of zooming in further than 0.5 on mag1 */
-                    if(!triggerMagChange) {
-                        if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.09999) &&
-                           !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0000)) {
-                            state->viewerState->vpConfigs[i].texture.zoomLevel += step;
-                        }
                     }
                 }
             }
         }
+    }
 
-        /* keep the agar slider / numerical widget informed */
-        state->viewerState->gui->zoomOrthoVPs =
-            state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
+   if(triggerMagChange)
+        emit changeDatasetMagSignal(triggerMagChange);
 
-       if(triggerMagChange)
-            emit changeDatasetMagSignal(triggerMagChange);
-
-       emit recalcTextureOffsetsSignal();
+   emit recalcTextureOffsetsSignal();
 
 }

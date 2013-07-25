@@ -114,6 +114,8 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(hightlightActiveTreeCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightActiveTreeChecked(bool)));
     connect(renderingQualitySpinBox, SIGNAL(valueChanged(int)), this, SLOT(renderingQualityChanged(int)));
     connect(overrideNodeRadiusCheckBox, SIGNAL(clicked(bool)), this, SLOT(overrideNodeRadiusChecked(bool)));
+    connect(overrideNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(overrideNodeRadiusChanged(double)));
+
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
     connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));
@@ -158,8 +160,10 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
+
     state->skeletonState->overrideNodeRadiusVal = value;
     state->skeletonState->skeletonChanged = true;
+
 }
 
 
@@ -176,11 +180,11 @@ void VPGeneralTabWidget::renderingQualityChanged(int value) {
 /* @todo */
 void VPGeneralTabWidget::showPosAndSizeChecked(bool on) {
     if(on) {
-        for(int i = 0; i < state->viewerState->numberViewports; i++) {
+        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
 
         }
     } else {
-        for(int i = 0; i < state->viewerState->numberViewports; i++) {
+        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
 
         }
     }

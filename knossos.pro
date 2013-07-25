@@ -47,7 +47,6 @@ SOURCES +=\
     texturizer.cpp \
     slicer.cpp \
     widgetcontainer.cpp \
-    scripting_engine.cpp \
     decorators/skeletonizerdecorator.cpp \
     decorators/mainwindowdecorator.cpp
 
@@ -88,7 +87,6 @@ HEADERS  += mainwindow.h \
     GUIConstants.h \
     Plattform.h \
     widgetcontainer.h \     
-    scripting_engine.h \
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h
 

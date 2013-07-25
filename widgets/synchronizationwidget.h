@@ -26,8 +26,6 @@
  */
 
 #include <QDialog>
-
-
 class QSpinBox;
 class QPushButton;
 class QLabel;
@@ -49,8 +47,6 @@ protected:
     void closeEvent(QCloseEvent *event);
     QLabel *connectionLabel;
     QLabel *remotePortLabel;
-
-
 
 };
 

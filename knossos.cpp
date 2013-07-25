@@ -289,7 +289,7 @@ int Knossos::initStates() {
    state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
    state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
    state->viewerState->numberViewports = tempConfig->viewerState->numberViewports;
-   state->viewerState->inputmap = tempConfig->viewerState->inputmap;
+
    state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
    state->viewerState->walkFrames = tempConfig->viewerState->walkFrames;
    state->viewerState->userMove = tempConfig->viewerState->userMove;
@@ -926,7 +926,6 @@ bool Knossos::tempConfigDefaults() {
     tempConfig->viewerState->showVPLabels = false;
     tempConfig->viewerState->stepsPerSec = 40;
     tempConfig->viewerState->numberViewports = 4;
-    tempConfig->viewerState->inputmap = NULL;
     tempConfig->viewerState->dropFrames = 1;
     tempConfig->viewerState->walkFrames = 10;
     tempConfig->viewerState->userMove = false;
@@ -974,7 +973,7 @@ bool Knossos::tempConfigDefaults() {
         switch(i) {
         case VIEWPORT_XY:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XY ;
             break;
         case VIEWPORT_XZ:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);

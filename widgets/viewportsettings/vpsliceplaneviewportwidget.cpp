@@ -165,7 +165,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 }
 
 void VPSlicePlaneViewportWidget::enableOverlayChecked(bool on) {
-    state->viewerState->gui->enableOrthoSkelOverlay = on;
 
     if(!on) {
         state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
@@ -192,6 +191,7 @@ void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
 
 void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
     state->viewerState->depthCutOff = value;
+
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {

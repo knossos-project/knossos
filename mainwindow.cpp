@@ -88,19 +88,10 @@ MainWindow::MainWindow(QWidget *parent) :
     state->viewerState->gui->activeTreeID = 1;
     state->viewerState->gui->activeNodeID = 1;
 
-    state->viewerState->gui->totalNodes = 0;
-    state->viewerState->gui->totalTrees = 0;
-
-    state->viewerState->gui->zoomOrthoVPs =
-        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel;
-
-    state->viewerState->gui->radioSkeletonDisplayMode = 0;
 
     /* init here instead of initSkeletonizer to fix some init order issue */
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-
-    state->viewerState->gui->radioRenderingModel = 1;
 
     state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
@@ -212,13 +203,8 @@ void MainWindow:: createCoordBarWin() {
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
 
-/**
-  * This function is a replacement for the updateAgConfig() function in KNOSSOS 3.2
-  * @todo Replacements for AG_Numerical
-  */
 static void updateGuiconfig() {
-    state->viewerState->gui->totalTrees = state->skeletonState->treeElements;
-    state->viewerState->gui->totalNodes = state->skeletonState->totalNodeElements;
+
     if(state->skeletonState->totalNodeElements == 0) {
         //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, false);
         //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, false);
@@ -241,21 +227,12 @@ static void updateGuiconfig() {
             state->skeletonState->activeNode->radius;
     }
 
-    if(state->skeletonState->activeTree) {
-        state->viewerState->gui->actTreeColor =
-            state->skeletonState->activeTree->color;
-        strncpy(state->viewerState->gui->treeCommentBuffer,
-                state->skeletonState->activeTree->comment,
-                8192);
-    }
 
     SET_COORDINATE(state->viewerState->gui->oneShiftedCurrPos,
         state->viewerState->currentPosition.x + 1,
         state->viewerState->currentPosition.y + 1,
         state->viewerState->currentPosition.z + 1)
 
-    state->viewerState->gui->numBranchPoints =
-        state->skeletonState->branchStack->elementsOnStack;
 
     strncpy(state->viewerState->gui->commentBuffer,
         state->skeletonState->commentBuffer,
@@ -265,6 +242,7 @@ static void updateGuiconfig() {
 
 /* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
+
 
     QString title;
     if(state->skeletonState->skeletonFile) {
@@ -740,9 +718,6 @@ void MainWindow::saveAsSlot()
         char *cpath = const_cast<char *>(fileName.toStdString().c_str());
         char *dir = const_cast<char *>(info.canonicalPath().toStdString().c_str());
 
-        state->skeletonState->skeletonFile;
-        state->viewerState->gui->skeletonDirectory;
-
         memset(state->skeletonState->skeletonFile, '\0', strlen(state->skeletonState->skeletonFile));
         strcpy(state->skeletonState->skeletonFile, cpath);
 
@@ -1012,7 +987,7 @@ void MainWindow::copyClipboardCoordinates() {
                  "%d, %d, %d",
                  this->xField->value() + 1,
                  this->yField->value() + 1,
-                 this->zField->value()) + 1;
+                 this->zField->value() + 1);
    QString coords(copyString);
    QApplication::clipboard()->setText(coords);
 }

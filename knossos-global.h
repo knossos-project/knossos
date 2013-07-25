@@ -390,16 +390,16 @@ typedef struct Hashtable{
 // A backlog is generated when we want to retrieve a specific slice from a dc but that dc
 // is unavailable at that time.
 struct pxStripe {
-    uint32_t s;
-    uint32_t t1;
-    uint32_t t2;
+    uint s;
+    uint t1;
+    uint t2;
     floatCoordinate currentPxInDc_float;
     struct pxStripe *next;
 };
 
 struct pxStripeList {
     struct pxStripe *entry;
-    uint32_t elements;
+    uint elements;
 };
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.
@@ -408,7 +408,7 @@ struct pxStripeList {
 struct vpBacklogElement {
 	Byte *slice;
     Coordinate cube;
-    struct pxStripeList *stripes;
+    pxStripeList *stripes;
 	// I guess those aren't really necessary.
 	uint x_px;
 	uint y_px;
@@ -593,13 +593,10 @@ struct stateInfo {
 
 
     QMutex *protectOutBuffer;
-
     QMutex *protectPeerList;
 
     //  Protect changes to the skeleton for network synchronization.
-
     QMutex *protectSkeleton;
-
     QTime time; // it is not allowed to modify this object
 
  //---  Info about the state of KNOSSOS in general. --------
@@ -680,39 +677,24 @@ struct guiConfig {
     char settingsFile[2048];
     char titleString[2048];
 
-    char recentFiles[MAX_RECENT_FILES][4096];
-   // AG_MenuItem *appMenuRoot;
-
     // Current position of the user crosshair,
     //starting at 1 instead 0. This is shown to the user,
     //KNOSSOS works internally with 0 start indexing.
     Coordinate oneShiftedCurrPos;
     Coordinate activeNodeCoord;
 
-    int yesNoReturn;
-
     // tools win buffer variables
     int activeNodeID;
     int activeTreeID;
-    int totalNodes;
-    int totalTrees;
-    int numBranchPoints;
+
     char *commentBuffer;
     char *commentSearchBuffer;
     char *treeCommentBuffer;
 
-    int mergeTreesID1;
-    int mergeTreesID2;
-
-    int linkActiveWithNode;
     int useLastActNodeRadiusAsDefault;
     float actNodeRadius;
 
-    color4F actTreeColor;
-
     // File dialog widget variables and buffers
-  //  AG_FileType *fileTypeNml;
-
     char skeletonDirectory[2048];
     char datasetLUTDirectory[2048];
     char datasetImgJDirectory[2048];
@@ -722,90 +704,10 @@ struct guiConfig {
     char treeLUTFile[2048];
     char datasetLUTFile[2048];
 
-    // file saving settings win buffer variables
-    uint autoSaveInterval; // in minutes
-    int onSaveAutoIncrement;
-
-    // viewport pref window
-    int enableLinearFiltering;
-    int radioRenderingModel;
-    int enableOrthoSkelOverlay;
-    int radioSkeletonDisplayMode;
-
-    // synchronization settings win buffer variables
-
     // dataset navigation settings win buffer variables
     uint stepsPerSec;
     uint recenteringTime;
     uint dropFrames;
-
-    // skeleton statistics win buffer variables
-
-    int agInputWdgtFocused;
-
-   // AG_Window *agWin;
-
-
-   // AG_Window *navOptWin;
-  //  AG_Window *dispOptWin;
-  //  AG_Window *syncOptWin;
-  //  AG_Label *syncOptLabel;
-  //  AG_Window *saveOptWin;
-  //  AG_Window *renderingOptWin;
-  //  AG_Window *spatLockOptWin;
-  //  AG_Window *volTraceOptWin;
-  //  AG_Window *dataSetStatsWin;
-  //  AG_Window *viewportPrefWin;
-  //  AG_Window *zoomingWin;
-  //  AG_Window *tracingTimeWin;
-  //  AG_Window *commentsWin;
- //   AG_Window *setDynRangeWin;
-//	AG_Window *coordBarWin;
- //   AG_Window *skeletonVpToolsWin;
-   // AG_Window *dataSizeWinxy;
-//    AG_Window *dataSizeWinxz;
- //	AG_Window *navWin;
-//	AG_Window *toolsWin;
-    //AG_Window *aboutWin;
-
-   // AG_Window *openFileDlgWin;
-   // AG_FileDlg *fileDlgOpenSkel;
-
-    //AG_Window *saveAsFileDlgWin;
-   // AG_FileDlg *fileDlgSaveAsSkel;
-
-   // AG_Window *loadImgJTableWin;
-   // AG_FileDlg *fileDlgOpenImgJTable;
-
-
-    //Console *console;
-   //CommentsWidget *commentsWidget;
-    //TracingTimeWidget *tracingTimeWidget;
-
-    //NavigationWidget *navigationWidget;
-    //ToolsWidget *toolWidget;
-
-    /*Viewport *vpXyWin;
-    Viewport *vpXzWin;
-    Viewport *vpYzWin;
-    Viewport *vpSkelWin; */
-
-    //AG_FileDlg *fileDlg;
-
-    //AG_Numerical *actNodeIDWdgt1;
-   // AG_Numerical *actNodeIDWdgt2;
-
-    //Labels in Viewports for DataSize
-    //AG_Label *dataSizeLabelxy;
-    //AG_Label *dataSizeLabelxz;
-    //AG_Label *dataSizeLabelyz;
-
-    //Labels in tracingTimeWin
-    //AG_Label *runningTime;
-    //AG_Label *tracingTime;
-    //AG_Label *idleTime;
-
-    //Chars for commentsWin
 
     char *comment1;
     char *comment2;
@@ -813,21 +715,10 @@ struct guiConfig {
     char *comment4;
     char *comment5;
 
-    //Zoom for Skeleton Viewport
-    float zoomSkeletonViewport;
-    float zoomOrthoVPs;
-
-    //AG_Checkbox *vpLabelBox;
-    //AG_Checkbox *highlightActiveTreeBox;
-    //AG_Checkbox *showAllNodeIDsBox;
-    //AG_Checkbox *datasetLinearFilteringBox;
-    //AG_Checkbox *AutoTracingBox;
-
     // substrings for comment node preferences
     char *commentSubstr[NUM_COMMSUBSTR];
     // colors of color-dropdown in comment node preferences
     char* commentColors[NUM_COMMSUBSTR];
-
 };
 
 /**
@@ -996,7 +887,6 @@ struct viewerState {
     bool superCubeChanged;
 
     struct guiConfig *gui;
-    struct inputmap *inputmap;
 
     int luminanceBias;
     int luminanceRangeDelta;
@@ -1013,18 +903,10 @@ struct viewerState {
     float treeAdjustmentTable[RGB_LUTSIZE];
     float defaultTreeTable[RGB_LUTSIZE];
 
-
-
-
-
      // This array holds the table for overlay coloring.
      // The colors should be "maximally different".
-
     GLuint overlayColorMap[4][256];
-
     bool overlayVisible;
-
-
     // Advanced Tracing Modes Stuff
 
     bool autoTracingEnabled;
@@ -1040,9 +922,7 @@ struct viewerState {
     int resizeVP;
     int saveCoords;
     Coordinate clickedCoordinate;
-
     float cumDistRenderThres;
-
     int showPosSizButtons;
     int viewportOrder[4];
 };
@@ -1059,7 +939,6 @@ struct commentListElement {
 struct treeListElement {
     struct treeListElement *next;
     struct treeListElement *previous;
-
     struct nodeListElement *firstNode;
 
     int treeID;
@@ -1092,7 +971,6 @@ struct nodeListElement {
    // circumsphere radius - max. of length of all segments and node radius.
    //Used for frustum culling
    float circRadius;
-
     uint nodeID;
     Coordinate position;
     int isBranchNode;
@@ -1109,9 +987,7 @@ struct segmentListElement {
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
     int flag;
-
     float length;
-
     char *comment;
 
     //Those coordinates are not the same as the coordinates of the source / target nodes
@@ -1346,24 +1222,9 @@ struct clientState {
     struct IOBuffer *outBuffer;
 };
 
-/**
-  * @struct inputmap
-  * Maybe obsolet in QT
-  */
-struct inputmap {
-    int mouse;
-    int modkey;
-    int key;
-
-    int action;
-
-    struct inputmap *next;
-};
 
 /*
- *
  * Commands for undo and redo
- *
  */
 
 struct cmdList {
@@ -1527,15 +1388,6 @@ typedef struct {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-#define LOG2(...) \
-    { \
-    printf("[%s:%d] ", __FILE__, __LINE__); \
-    printf(__VA_ARGS__); \
-    printf("\n"); \
-    fflush(stdout); \
-    }
-    /*if(state->viewerState->viewerReady) \
-       AG_ConsoleMsg(state->viewerState->gui->agConsole, __VA_ARGS__); \*/
 
 #define LOG(...) \
 { \

@@ -29,7 +29,6 @@
 #include <QTabWidget>
 #include <QList>
 
-
 class ToolsQuickTabWidget;
 class ToolsTreesTabWidget;
 class ToolsNodesTabWidget;

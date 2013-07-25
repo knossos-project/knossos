@@ -36,7 +36,6 @@ public:
     explicit Loader(QObject *parent = 0);
     void run();
 
-
     Hashtable *Dcoi;
     CubeSlotList *freeDcSlots;
     CubeSlotList *freeOcSlots;

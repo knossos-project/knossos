@@ -83,11 +83,6 @@ void DataSavingWidget::loadSettings() {
 
    //setGeometry(x, y, width, height);
 
-   /*
-   autosaveButton->setChecked(state->skeletonState->autoSaveBool);
-   autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
-   autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
-   */
 }
 
 void DataSavingWidget::saveSettings() {

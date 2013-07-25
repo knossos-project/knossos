@@ -1784,7 +1784,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
-    state->viewerState->gui->totalNodes--;
+    //state->viewerState->gui->totalNodes--;
 
     setDynArray(state->skeletonState->nodeCounter,
             treeID,

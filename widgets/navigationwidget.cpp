@@ -189,7 +189,6 @@ void NavigationWidget::numberOfStepsChanged(int value) {
 void NavigationWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
-
 }
 
 void NavigationWidget::resizeEvent(QResizeEvent *event) {

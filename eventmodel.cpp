@@ -441,120 +441,120 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
-    int i = 0;
-        Coordinate newDraggedNodePos;
 
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            switch(state->viewerState->vpConfigs[i].type) {
-                case VIEWPORT_XY:
-                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
+    Coordinate newDraggedNodePos;
+
+    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+        switch(state->viewerState->vpConfigs[i].type) {
+            case VIEWPORT_XY:
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
+                    ((float)xrel(event->x())
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
+                    ((float)yrel(event->y())
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+
+                    SET_COORDINATE(newDraggedNodePos,
+                        state->viewerState->vpConfigs[i].userMouseSlideX,
+                        state->viewerState->vpConfigs[i].userMouseSlideY, 0);
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                    newDraggedNodePos.x =
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
+                        - newDraggedNodePos.x;
+                    newDraggedNodePos.y =
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
+                        - newDraggedNodePos.y;
+                    newDraggedNodePos.z =
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
+                            - newDraggedNodePos.z;
+
+                    emit editNodeSignal(CHANGE_MANUAL,
+                             0,
+                             state->viewerState->vpConfigs[i].draggedNode,
+                             0.,
+                             newDraggedNodePos.x,
+                             newDraggedNodePos.y,
+                             newDraggedNodePos.z,
+                             state->magnification);
+                }
+                break;
+            case VIEWPORT_XZ:
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
                         ((float)xrel(event->x())
-                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
                         ((float)yrel(event->y())
-                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
 
-                        SET_COORDINATE(newDraggedNodePos,
-                            state->viewerState->vpConfigs[i].userMouseSlideX,
-                            state->viewerState->vpConfigs[i].userMouseSlideY, 0);
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                        newDraggedNodePos.x =
-                            state->viewerState->vpConfigs[i].draggedNode->position.x
-                            - newDraggedNodePos.x;
-                        newDraggedNodePos.y =
-                            state->viewerState->vpConfigs[i].draggedNode->position.y
-                            - newDraggedNodePos.y;
-                        newDraggedNodePos.z =
-                            state->viewerState->vpConfigs[i].draggedNode->position.z
-                                - newDraggedNodePos.z;
+                    SET_COORDINATE(newDraggedNodePos,
+                        state->viewerState->vpConfigs[i].userMouseSlideX, 0,
+                        state->viewerState->vpConfigs[i].userMouseSlideY);
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                    newDraggedNodePos.x =
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
+                        - newDraggedNodePos.x;
+                    newDraggedNodePos.y =
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
+                        - newDraggedNodePos.y;
+                    newDraggedNodePos.z =
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
+                        - newDraggedNodePos.z;
+                    emit editNodeSignal(CHANGE_MANUAL,
+                             0,
+                             state->viewerState->vpConfigs[i].draggedNode,
+                             0.,
+                             newDraggedNodePos.x,
+                             newDraggedNodePos.y,
+                             newDraggedNodePos.z,
+                             state->magnification);
+                }
+                break;
+            case VIEWPORT_YZ:
+                if(!state->viewerState->vpConfigs[i].draggedNode) break;
+                state->viewerState->vpConfigs[i].userMouseSlideX -=
+                        ((float)xrel(event->x())
+                    / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
+                state->viewerState->vpConfigs[i].userMouseSlideY -=
+                        ((float)yrel(event->y())
+                    / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
+                if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
+                    || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
+                    SET_COORDINATE(newDraggedNodePos,
+                        0, state->viewerState->vpConfigs[i].userMouseSlideY,
+                        state->viewerState->vpConfigs[i].userMouseSlideX);
 
-                        emit editNodeSignal(CHANGE_MANUAL,
-                                 0,
-                                 state->viewerState->vpConfigs[i].draggedNode,
-                                 0.,
-                                 newDraggedNodePos.x,
-                                 newDraggedNodePos.y,
-                                 newDraggedNodePos.z,
-                                 state->magnification);
-                    }
-                    break;
-                case VIEWPORT_XZ:
-                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x())
-                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y())
-                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-
-                        SET_COORDINATE(newDraggedNodePos,
-                            state->viewerState->vpConfigs[i].userMouseSlideX, 0,
-                            state->viewerState->vpConfigs[i].userMouseSlideY);
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                        newDraggedNodePos.x =
-                            state->viewerState->vpConfigs[i].draggedNode->position.x
-                            - newDraggedNodePos.x;
-                        newDraggedNodePos.y =
-                            state->viewerState->vpConfigs[i].draggedNode->position.y
-                            - newDraggedNodePos.y;
-                        newDraggedNodePos.z =
-                            state->viewerState->vpConfigs[i].draggedNode->position.z
-                            - newDraggedNodePos.z;
-                        emit editNodeSignal(CHANGE_MANUAL,
-                                 0,
-                                 state->viewerState->vpConfigs[i].draggedNode,
-                                 0.,
-                                 newDraggedNodePos.x,
-                                 newDraggedNodePos.y,
-                                 newDraggedNodePos.z,
-                                 state->magnification);
-                    }
-                    break;
-                case VIEWPORT_YZ:
-                    if(!state->viewerState->vpConfigs[i].draggedNode) break;
-                    state->viewerState->vpConfigs[i].userMouseSlideX -=
-                            ((float)xrel(event->x())
-                        / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
-                    state->viewerState->vpConfigs[i].userMouseSlideY -=
-                            ((float)yrel(event->y())
-                        / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
-                    if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
-                        || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-                        SET_COORDINATE(newDraggedNodePos,
-                            0, state->viewerState->vpConfigs[i].userMouseSlideY,
-                            state->viewerState->vpConfigs[i].userMouseSlideX);
-
-                        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-                        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-                        newDraggedNodePos.x =
-                            state->viewerState->vpConfigs[i].draggedNode->position.x
-                            - newDraggedNodePos.x;
-                        newDraggedNodePos.y =
-                            state->viewerState->vpConfigs[i].draggedNode->position.y
-                            - newDraggedNodePos.y;
-                        newDraggedNodePos.z =
-                            state->viewerState->vpConfigs[i].draggedNode->position.z
-                            - newDraggedNodePos.z;
-                        emit editNodeSignal(CHANGE_MANUAL,
-                                 0,
-                                 state->viewerState->vpConfigs[i].draggedNode,
-                                 0.,
-                                 newDraggedNodePos.x,
-                                 newDraggedNodePos.y,
-                                 newDraggedNodePos.z,
-                                 state->magnification);
-                    }
-                    break;
-            }
+                    state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+                    state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+                    newDraggedNodePos.x =
+                        state->viewerState->vpConfigs[i].draggedNode->position.x
+                        - newDraggedNodePos.x;
+                    newDraggedNodePos.y =
+                        state->viewerState->vpConfigs[i].draggedNode->position.y
+                        - newDraggedNodePos.y;
+                    newDraggedNodePos.z =
+                        state->viewerState->vpConfigs[i].draggedNode->position.z
+                        - newDraggedNodePos.z;
+                    emit editNodeSignal(CHANGE_MANUAL,
+                             0,
+                             state->viewerState->vpConfigs[i].draggedNode,
+                             0.,
+                             newDraggedNodePos.x,
+                             newDraggedNodePos.y,
+                             newDraggedNodePos.z,
+                             state->magnification);
+                }
+                break;
         }
+    }
 
     return true;
 }
@@ -1162,22 +1162,21 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     } else if(event->key() == Qt::Key_I) {
         qDebug() << "I pressed";
-        if (state->viewerState->gui->zoomSkeletonViewport == false){
-            emit zoomOrthoSignal(-0.1);
-            emit updateZoomWidgetSignal();
-        }
-        else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+        emit zoomOrthoSignal(-0.1);
+        emit updateZoomWidgetSignal();
+
+        if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
             state->skeletonState->viewChanged = true;
         }
 
     } else if(event->key() == Qt::Key_O) {
         qDebug() << "O pressed";
-        if (state->viewerState->gui->zoomSkeletonViewport == false){
-            emit zoomOrthoSignal(0.1);
-            emit updateZoomWidgetSignal();
 
-        } else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+        emit zoomOrthoSignal(0.1);
+        emit updateZoomWidgetSignal();
+
+        if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
             if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
             state->skeletonState->viewChanged = true;
@@ -1215,12 +1214,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_1) {
         qDebug() << "1 pressed";
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
-            state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
-            state->viewerState->gui->enableOrthoSkelOverlay = 1;
+            state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;           
         }
         else {
-            state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
-            state->viewerState->gui->enableOrthoSkelOverlay = 0;
+            state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;          
         }
         state->skeletonState->skeletonChanged = true;
         emit drawGUISignal();
