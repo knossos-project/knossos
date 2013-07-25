@@ -50,6 +50,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void updateSkeletonFileName(QString &fileName);
+
     void closeEvent(QCloseEvent *event);
     void updateTitlebar(bool useFilename);
 

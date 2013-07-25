@@ -33,8 +33,7 @@
 class Skeletonizer : public QObject
 {
     Q_OBJECT
-    //friend class Viewer;
-    //friend class Remote;
+
 public:
 
     explicit Skeletonizer(QObject *parent = 0);
@@ -114,14 +113,14 @@ public:
     void delCmdListElement(struct cmdListElement *cmdEl);
 
 public:
+
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     static bool loadSkeleton();
     void popBranchNodeCanceled();
     static bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
-    static int xorInt(int xorMe);
-
+    static int xorInt(int xorMe);    
     uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
@@ -262,8 +261,6 @@ public:
 
     struct cmdList *undoList;
     struct cmdList *redoList;
-
-    QString skeletonFileAsQString;
 
 signals:
     void idleTimeSignal();

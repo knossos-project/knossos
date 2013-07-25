@@ -36,6 +36,7 @@
 
 extern stateInfo *state;
 
+
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     idleTimeSession = 0;
@@ -626,10 +627,15 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
 bool Skeletonizer::updateSkeletonState() {
     //Time to auto-save
+    /*qDebug() << state->time.elapsed();
+    qDebug() << state->skeletonState->lastSaveTicks;
+    qDebug() << ((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0);
+    qDebug() << state->skeletonState->autoSaveInterval << " min"; */
+
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
-            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000 >= state->skeletonState->autoSaveInterval) {
-                state->skeletonState->lastSaveTicks = state->time.elapsed();
+            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
+                state->skeletonState->lastSaveTicks = state->time.elapsed();                
 
                 emit saveSkeletonSignal(true);
             }
@@ -664,7 +670,7 @@ bool Skeletonizer::previousCommentlessNode() {
 }
 
 bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, char *filename) {
-   int extensionDelim = -1, countDelim = -1;
+    int extensionDelim = -1, countDelim = -1;
     char betweenDots[8192];
     char count[8192];
     char origFilename[8192], skeletonFileBase[8192];
@@ -1553,7 +1559,7 @@ void Skeletonizer::setDefaultSkelFileName() {
 #ifdef Q_OS_UNIX
     snprintf(state->skeletonState->skeletonFile,
             8192,
-            "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
+            "/Users/amos/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
             localtimestruct->tm_mday,
             localtimestruct->tm_mon + 1,
             localtimestruct->tm_year,

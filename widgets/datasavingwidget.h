@@ -39,7 +39,7 @@ public:
     void loadSettings();
     void saveSettings();
 protected:
-    QCheckBox *autosaveButton;
+    QCheckBox *autosaveCheckbox;
     QLabel *autosaveIntervalLabel;
     QSpinBox *autosaveIntervalSpinBox;
     QLabel *autoincrementFileNameLabel;
@@ -48,7 +48,8 @@ protected:
 signals:
     void uncheckSignal();
 public slots:
-    void autosaveButtonPushed(bool on);
+    void autosaveIntervalChanged(int value);
+    void autosaveCheckboxChecked(bool on);
     void autonincrementFileNameButtonPushed(bool on);
 protected:
     void closeEvent(QCloseEvent *event);

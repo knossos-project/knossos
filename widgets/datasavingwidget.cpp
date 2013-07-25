@@ -41,24 +41,23 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     setWindowTitle("Data Saving Options");
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    autosaveButton = new QCheckBox("Auto-Saving");
+    autosaveCheckbox = new QCheckBox("Auto-Saving");
     autosaveIntervalLabel = new QLabel("Autosave Interval");
     autosaveIntervalSpinBox = new QSpinBox();
-
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
 
     autoincrementFileNameButton = new QCheckBox("Autoincrement File Name");
 
-
-    mainLayout->addWidget(autosaveButton);
+    mainLayout->addWidget(autosaveCheckbox);
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(autoincrementFileNameButton);
 
     setLayout(mainLayout);
 
-    connect(autosaveButton, SIGNAL(clicked(bool)), this, SLOT(autosaveButtonPushed(bool)));
+    connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));
+    connect(autosaveIntervalSpinBox, SIGNAL(valueChanged(int)), this, SLOT(autosaveIntervalChanged(int)));
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
 }
 
@@ -74,7 +73,7 @@ void DataSavingWidget::loadSettings() {
    y = settings.value(POS_Y).toInt();
    visible = settings.value(VISIBLE).toBool();
    if(settings.value(AUTO_SAVING).toBool())
-    this->autosaveButton->setChecked(settings.value(AUTO_SAVING).toBool());
+    this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
    if(settings.value(SAVING_INTERVAL).toInt())
     this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
    if(settings.value(AUTOINC_FILENAME).toBool())
@@ -93,7 +92,7 @@ void DataSavingWidget::saveSettings() {
     settings.setValue(POS_X, this->x());
     settings.setValue(POS_Y, this->y());
     settings.setValue(VISIBLE, this->isVisible());
-    settings.setValue(AUTO_SAVING, this->autosaveButton->isChecked());
+    settings.setValue(AUTO_SAVING, this->autosaveCheckbox->isChecked());
     settings.setValue(SAVING_INTERVAL, this->autosaveIntervalSpinBox->value());
     settings.setValue(AUTOINC_FILENAME, this->autoincrementFileNameButton->isChecked());
     settings.endGroup();
@@ -104,10 +103,9 @@ void DataSavingWidget::closeEvent(QCloseEvent *event) {
     emit uncheckSignal();
 }
 
-void DataSavingWidget::autosaveButtonPushed(bool on) {
+void DataSavingWidget::autosaveCheckboxChecked(bool on) {
     if(on) {
        state->skeletonState->autoSaveBool = true;
-
        state->skeletonState->autoSaveInterval = autosaveIntervalSpinBox->value();
     } else {
         state->skeletonState->autoSaveBool = false;
@@ -123,4 +121,7 @@ void DataSavingWidget::autonincrementFileNameButtonPushed(bool on) {
 
 }
 
+void DataSavingWidget::autosaveIntervalChanged(int value) {
+    state->skeletonState->autoSaveInterval = value;
+}
 

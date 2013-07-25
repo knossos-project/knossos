@@ -45,6 +45,7 @@
 #include <QDir>
 #include <QAction>
 #include <QThread>
+#include <QRegExp>
 
 #include "knossos-global.h"
 #include "knossos.h"
@@ -137,9 +138,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
-    //loadSettings();
-
-
 
 }
 
@@ -243,13 +241,11 @@ static void updateGuiconfig() {
 /* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
 
-
     QString title;
     if(state->skeletonState->skeletonFile) {
         title = title.sprintf("KNOSSOS %s showing %s", KVERSION, state->skeletonState->skeletonFile);
     } else {
         title = title.sprintf("KNOSSOS %s showing %s", KVERSION, "no skeleton file");
-
     }
 
     /*
@@ -455,7 +451,6 @@ void MainWindow::createActions()
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = new QAction("", this);
-
     }
 
     /* edit skeleton actions */
@@ -699,13 +694,30 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
+    qDebug() << " saveBegin ";
+    if(state->skeletonState->firstTree != NULL) {
+        if(state->skeletonState->unsavedChanges) {
+            qDebug() << state->skeletonState->skeletonFile;
 
-    QFile file(state->skeletonState->skeletonFile);
-    if(file.open(QIODevice::ReadWrite)) {
-        saveSkeleton(state->skeletonState->skeletonFile, false);
-        updateTitlebar(true);
+            QString skelName = QString(state->skeletonState->skeletonFile);
+            if(state->skeletonState->autoFilenameIncrementBool) {
+                updateSkeletonFileName(skelName);
+            }
 
-        file.close();
+            QFile file(skelName);
+            if(file.open(QIODevice::ReadWrite)) {
+                if(Skeletonizer::saveSkeleton()) {
+                    qDebug() << "_saved_";
+                    updateTitlebar(true);
+                    state->skeletonState->unsavedChanges = false;
+                } else {
+                    qDebug() << "couldn´t autosave the skeleton";
+                }
+                file.close();
+            } else {
+                perror("uuuuuuu");
+            }
+        }
     }
 }
 
@@ -713,6 +725,11 @@ void MainWindow::saveAsSlot()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
+
+        if(state->skeletonState->autoFilenameIncrementBool) {
+            updateSkeletonFileName(fileName);
+        }
+
         QFileInfo info(fileName);
 
         char *cpath = const_cast<char *>(fileName.toStdString().c_str());
@@ -725,11 +742,11 @@ void MainWindow::saveAsSlot()
         strcpy(state->viewerState->gui->skeletonDirectory, dir);
 
         QFile file(fileName);
-
         if(file.open(QIODevice::ReadWrite)) {
 
             if(Skeletonizer::saveSkeleton()) {
                 updateTitlebar(true);
+                state->skeletonState->unsavedChanges = false;
             } else {
                 qDebug() << "error";
             }
@@ -737,7 +754,6 @@ void MainWindow::saveAsSlot()
 
         file.close();
     }
-
 }
 
 void MainWindow::saveSkeleton(QString fileName, int increment) {
@@ -1198,4 +1214,38 @@ void MainWindow::setCoordinates(int x, int y, int z) {
     yField->setValue(y);
     zField->setValue(z);
     xField->editingFinished();
+}
+
+/** This is a replacement for the old updateSkeletonFileName
+    It decides if a skeleton file has a revision(case 1) or not(case2).
+    if case1 the revision substring is extracted, incremented and will be replaced.
+    if case2 an initial revision will be inserted.
+    This method is actually only needed for the save or save as slots.
+*/
+
+void MainWindow::updateSkeletonFileName(QString &fileName) {
+
+    QRegExp withVersion("^[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
+    QRegExp withoutVersion("^[a-zA-Z0-9/_-\]+.nml$");
+
+    if(fileName.contains(withVersion)) {
+        QString versionString = fileName.section("", fileName.length() - 6, fileName.length() - 4);
+        int version = versionString.toInt();
+        version += 1;
+        state->skeletonState->skeletonRevision +=1;
+        versionString = QString("%1").arg(version);
+        while(versionString.length() < 3) {
+            versionString.push_front("0");
+        }
+        fileName = fileName.replace(fileName.length() - 7, 3, versionString);
+        qDebug() << fileName;
+
+    } else if(fileName.contains(withoutVersion)) {
+
+        fileName = fileName.insert(fileName.length() - 3, "001.");
+        state->skeletonState->skeletonRevision +=1;
+        qDebug() << fileName;
+    } else {
+        qDebug() << "gnaaa";
+    }
 }
