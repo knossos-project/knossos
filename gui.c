@@ -1820,7 +1820,9 @@ void createCommentsWin() {
         AG_TableAddCol(state->viewerState->ag->commentsTable, "Node ID", "<<<<<Branch Node>>>>>", NULL);
         AG_TableAddCol(state->viewerState->ag->commentsTable, "Comment", NULL, NULL);
         AG_TableSetSelectionMode(state->viewerState->ag->commentsTable, AG_TABLE_SEL_ROWS);
-        AG_TableSetRowClickFn(state->viewerState->ag->commentsTable, UI_commentTableRowClicked, NULL, NULL);
+    #ifndef LINUX
+		AG_TableSetRowClickFn(state->viewerState->ag->commentsTable, UI_commentTableRowClicked, NULL, NULL);
+	#endif
     }
     state->viewerState->ag->commentsWin = win;
     AG_WindowSetCloseAction(win, AG_WINDOW_HIDE);
@@ -1849,6 +1851,7 @@ static void tableCommentBoxModified(AG_Event *event) {
 }
 
 static void UI_commentTableRowClicked(AG_Event *event) {
+#ifndef LINUX
     int row = AG_INT(1);
     char cellVal[100];
 
@@ -1856,6 +1859,7 @@ static void UI_commentTableRowClicked(AG_Event *event) {
     AG_TablePrintCell(AG_TableGetCell(state->viewerState->ag->commentsTable, row, 0), cellVal, 100);
 
     state->skeletonState->selectedCommentNode = findNodeByNodeID(atoi(cellVal));
+#endif
 }
 
 void UI_updateCommentsWin() {
