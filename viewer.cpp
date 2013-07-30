@@ -2061,43 +2061,6 @@ void Viewer::showFrames() {
     frames = 0;
 }
 
-
-//Initializes the window with the parameter given in viewerState
-bool Viewer::createScreen() {
- // TODO what about all that outcommented code ???
- // initialize window
- //SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 5 );
- //SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
- //SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
-
- //SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    if(state->viewerState->multisamplingOnOff) {
-        //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-    }
-  //else { SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0); }
-
-  /*
-   At least on linux, the working directory is the directory from which
-   knossos was called. So 'icon' will or will not be found depending on the
-   directory from which knossos was started.
-  */
-
-
-
-  /*state->viewerState->screen = SDL_SetVideoMode(state->viewerState->screenSizeX,
-                                 state->viewerState->screenSizeY, 24,
-                                 SDL_OPENGL  | SDL_RESIZABLE);*/
-
-  /*if(state->viewerState->screen == NULL) {
-        printf("Unable to create screen: %s\n", SDL_GetError());
-        return false;
-    }*/
-
-  //set clear color (background) and clear with it
-    return true;
-}
-
 /**
 *
 * Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
@@ -2897,6 +2860,9 @@ void Viewer::rewire() {
     connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
+    connect(window, SIGNAL(saveSkeletonSignal()), skeletonizer, SLOT(saveSkeleton()));
+    connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadSkeleton()));
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
@@ -2972,6 +2938,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
 
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -3012,6 +2979,20 @@ void Viewer::rewire() {
     connect(vp3->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
     connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
     connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
+
+    connect(vp->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
+    connect(vp2->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
+    connect(vp3->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
+    connect(vp4->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
+
+    connect(vp->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+    connect(vp2->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+    connect(vp3->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+    connect(vp4->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+
+
+
+
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,

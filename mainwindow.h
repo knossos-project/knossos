@@ -75,15 +75,16 @@ public:
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
     void recalcTextureOffsetsSignal();
-    void updatePositionSignal(int serverMovement);
     void refreshViewportsSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal();
+    bool saveSkeletonSignal();
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
-    void moveSignal(int x, int y, int z, int serverMovement);
+    void userMoveSignal(int x, int y, int z, int serverMovement);
     void remoteJumpSignal(int x, int y, int z);
+
 protected:
 
 public:
@@ -223,8 +224,7 @@ public slots:
 
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
-    void updateCoordinateBar(int x, int y, int z);
-    void saveSkeleton(QString fileName, int increment);
+    void updateCoordinateBar(int x, int y, int z);  
     void recentFileSelected(QAction *action);
 };
 

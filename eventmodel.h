@@ -108,6 +108,8 @@ signals:
     void updateTreeCountSignal();
     void updateZoomWidgetSignal();
     void updateSlicePlaneWidgetSignal();
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    void popBranchNodeSignal(int targetRevision);
 public slots:
     
 };

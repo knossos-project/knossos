@@ -274,14 +274,16 @@ void ToolsQuickTabWidget::findPreviousButtonClicked() {
 }
 
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
-    Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+
 }
 
 
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
-    Skeletonizer::popBranchNode(CHANGE_MANUAL);
+    emit popBranchNodeSignal(CHANGE_MANUAL);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+    /* @todo usermove */
 }
 
 

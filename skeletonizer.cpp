@@ -530,9 +530,12 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
     return true;
 }
 
+/** @todo cleanup */
 void Skeletonizer::WRAP_popBranchNode() {
+    /*
     Skeletonizer::popBranchNode(CHANGE_MANUAL);
     state->skeletonState->askingPopBranchConfirmation = false;
+    */
 }
 
 void Skeletonizer::popBranchNodeCanceled() {
@@ -1525,7 +1528,8 @@ bool Skeletonizer::loadSkeleton() {
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
     }
 
-    /*
+
+    /* @todo
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&
        (loadedPosition.z != 0)) {
@@ -3608,20 +3612,16 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
 #endif
 
 
-        state->viewerState->currentPosition.x
-            = branchNode->position.x;
-        state->viewerState->currentPosition.y
-            = branchNode->position.y;
-        state->viewerState->currentPosition.z
-            = branchNode->position.z;
-
-
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 
         branchNode->isBranchNode--;
         state->skeletonState->skeletonChanged = true;
 
-        Viewer::updatePosition(TELL_COORDINATE_CHANGE);
+        emit userMoveSignal(branchNode->position.x - state->viewerState->currentPosition.x,
+                            branchNode->position.y - state->viewerState->currentPosition.y,
+                            branchNode->position.z - state->viewerState->currentPosition.z,
+                            TELL_COORDINATE_CHANGE);
+
 
         state->skeletonState->branchpointUnresolved = true;
     }

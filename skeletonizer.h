@@ -52,7 +52,6 @@ public:
     Viewport *vp, *vp2, *vp3, *vp4;
     static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-
     static int addNode(int targetRevision,
                     int nodeID,
                     float radius,
@@ -76,9 +75,6 @@ public:
     static bool setDynArray(dynArray *array, int pos, void *value);
     static dynArray *newDynArray(int size);
     static int splitConnectedComponent(int targetRevision, int nodeID);
-
-    static bool popBranchNode(int targetRevision);
-    static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
 
     static void UI_popBranchNode();
     static void restoreDefaultTreeColor();
@@ -113,10 +109,9 @@ public:
     void delCmdListElement(struct cmdListElement *cmdEl);
 
 public:
-
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
-    static bool loadSkeleton();
+
     void popBranchNodeCanceled();
     static bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
@@ -269,6 +264,7 @@ signals:
     void drawGUISignal();
     void saveSkeletonSignal(int increment);
     void updateToolsSignal();
+    void userMoveSignal(int x, int y, int z, int serverMovement);
 public slots:
     static bool delTree(int targetRevision, int treeID);
     bool delActiveTree();
@@ -293,8 +289,7 @@ public slots:
     static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID);
     static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
-    bool jumpToActiveNode();
-    static int saveSkeleton();
+    bool jumpToActiveNode();    
     static bool setActiveTreeByID(int treeID);
 
     /* Slots which manipulates attributes */
@@ -308,6 +303,13 @@ public slots:
     void setHighlightActiveTree(bool on);
     void setSkeletonChanged(bool on);
     void setShowNodeIDs(bool on);
+
+    bool loadSkeleton();
+    int saveSkeleton();
+
+    bool popBranchNode(int targetRevision);
+    static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+
 };
 
 #endif // SKELETONIZER_H

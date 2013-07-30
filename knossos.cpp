@@ -195,6 +195,8 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int)));
+    QObject::connect(client, SIGNAL(popBranchNodeSignal(int)), viewer->skeletonizer, SLOT(popBranchNode(int)));
+    QObject::connect(client, SIGNAL(popBranchNodeSignal(int,int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
 
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));

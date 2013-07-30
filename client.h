@@ -53,7 +53,7 @@ public:
     static bool delPeer(uint id);
     static bool broadcastCoordinate(uint x, uint y, uint z);
     static bool syncMessage(const char *fmt, ...);
-    static int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, struct IOBuffer *buffer);
+    int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, struct IOBuffer *buffer);
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
 
     uint parseInBuffer();
@@ -92,6 +92,9 @@ signals:
     void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
     bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID);
+    void popBranchNodeSignal(int targetRevision);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+
 public slots:
     void start();
     void socketConnectionSucceeded();

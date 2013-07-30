@@ -439,7 +439,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::pushBranchNode(d[0], true, true, NULL, d[1]);
+                emit pushBranchNodeSignal(d[0], true, true, NULL, d[1]);
 
                 break;
 
@@ -450,7 +450,8 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::popBranchNode(d[0]);
+                emit popBranchNodeSignal(d[0]);
+
 
                 break;
 

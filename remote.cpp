@@ -177,15 +177,16 @@ bool Remote::updateRemoteState() {
 }
 
 /**
- * @attention jump event is replaced with updatePositionSignal
+ * @attention jump event is replaced with userMoveSignal
  */
 bool Remote::remoteJump(int x, int y, int z) {
     // is not threadsafe
-    state->viewerState->currentPosition.x = x;
-    state->viewerState->currentPosition.y = y;
-    state->viewerState->currentPosition.z = z;
 
-    emit updatePositionSignal(SILENT_COORDINATE_CHANGE);
+
+    emit userMoveSignal(x - state->viewerState->currentPosition.x,
+                        y - state->viewerState->currentPosition.y,
+                        z - state->viewerState->currentPosition.z,
+                        SILENT_COORDINATE_CHANGE);
 
     return true;
 }

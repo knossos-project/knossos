@@ -325,6 +325,10 @@ void MainWindow::loadSkeleton(char *fileName) {
     strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
     strncpy(state->skeletonState->skeletonFile, fileName, 8192);
 
+    emit loadSkeletonSignal();
+    updateTitlebar(true);
+    linkWithActiveNodeSlot();
+    /*
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
         linkWithActiveNodeSlot();
@@ -332,7 +336,7 @@ void MainWindow::loadSkeleton(char *fileName) {
     } else {
         LOG("Error");
         strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
-    }
+    }*/
 }
 
 /**
@@ -706,17 +710,21 @@ void MainWindow::saveSlot()
 
             QFile file(skelName);
             if(file.open(QIODevice::ReadWrite)) {
+                emit saveSkeletonSignal();
+                updateTitlebar(true);
+                state->skeletonState->unsavedChanges = false;
+                /*
                 if(Skeletonizer::saveSkeleton()) {
                     qDebug() << "_saved_";
                     updateTitlebar(true);
                     state->skeletonState->unsavedChanges = false;
                 } else {
                     qDebug() << "couldn´t autosave the skeleton";
-                }
-                file.close();
-            } else {
-                perror("uuuuuuu");
+                }*/
             }
+
+            file.close();
+
         }
     }
 }
@@ -743,52 +751,23 @@ void MainWindow::saveAsSlot()
 
         QFile file(fileName);
         if(file.open(QIODevice::ReadWrite)) {
+            emit saveSkeletonSignal();
+            updateTitlebar(true);
+            state->skeletonState->unsavedChanges = false;
 
+            /*
             if(Skeletonizer::saveSkeleton()) {
                 updateTitlebar(true);
                 state->skeletonState->unsavedChanges = false;
             } else {
                 qDebug() << "error";
-            }
+            } */
         }
 
         file.close();
     }
 }
 
-void MainWindow::saveSkeleton(QString fileName, int increment) {
-    if(fileName.isNull()) {
-        return;
-    }
-
-    char *cpath = const_cast<char *>(fileName.toStdString().c_str());
-
-    //emit updateSkeletonFileNameSignal(CHANGE_MANUAL, increment, cpath);
-    QFile saveFile(fileName);
-    if(saveFile.open(QIODevice::ReadWrite)) {
-        saveFile.close();
-    }
-
-    if(saveFile.open(QIODevice::ReadWrite)) {
-        int saved = Skeletonizer::saveSkeleton();
-
-        if(saved == FAIL) {
-            QMessageBox box;
-            box.setText("The skeleton was not saved successfully. Check disk space and access rights");
-            box.show();
-        } else if(!saved) {
-            LOG("No skeleton was found. Not saving");
-        } else {
-            updateTitlebar(true);
-            LOG("Successfully saved to %s", state->skeletonState->skeletonFile);
-            state->skeletonState->unsavedChanges = false;
-            addRecentFile(fileName);
-        }
-    } else {
-        qDebug() << "ERROR WHILE OPEN";
-    }
-
-}
 
 void MainWindow::quitSlot()
 {
@@ -1023,15 +1002,17 @@ void MainWindow::pasteClipboardCoordinates(){
 
       if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {
 
-            state->viewerState->currentPosition.x = extractedCoords->x;
-            state->viewerState->currentPosition.y = extractedCoords->y;
-            state->viewerState->currentPosition.z = extractedCoords->z;
 
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
 
-            emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+            emit userMoveSignal(extractedCoords->x - state->viewerState->currentPosition.x,
+                                extractedCoords->y - state->viewerState->currentPosition.y,
+                                extractedCoords->z - state->viewerState->currentPosition.z,
+                                TELL_COORDINATE_CHANGE);
+
+
 
             free(extractedCoords);
 
@@ -1049,17 +1030,7 @@ void MainWindow::pasteClipboardCoordinates(){
 void MainWindow::coordinateEditingFinished() {
 
 
-    /*
-    state->currentPositionX.x = xField->value();
-    state->currentPositionX.y = yField->value();
-    state->currentPositionX.z = zField->value();
-    state->loadSignal = true;
-    */
-
-    //SET_COORDINATE(state->viewerState->currentPosition, xField->value(), xField->value(), xField->value());
-    emit moveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
-    //emit remoteJumpSignal(xField->value(), yField->value(), zField->value());
-    //emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+    emit userMoveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
 
 }
 

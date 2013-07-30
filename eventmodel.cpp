@@ -225,7 +225,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if((newNodeID = Skeletonizer::addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
-                Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, NULL, newNodeID);
+                emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID);
                 emit idleTimeSignal();
             }
             break;
@@ -1133,10 +1133,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit updateSlicePlaneWidgetSignal();
     } else if(event->key() == Qt::Key_J) {
         qDebug() << "J pressed";
-        Skeletonizer::UI_popBranchNode();
+        Skeletonizer::UI_popBranchNode(); /* @todo UI_popBranchNode was the case before qt */
     } else if(event->key() == Qt::Key_B) {
         qDebug() << "B pressed";
-        Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+        emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
         emit updateTools();
     } else if(event->key() == Qt::Key_X) {
 

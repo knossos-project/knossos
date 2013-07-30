@@ -48,6 +48,8 @@ signals:
     void setActiveTreeSignal(int id);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void updateToolsSignal();
+    void popBranchNodeSignal(int targetRevision);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
 
 public slots:
     void activeTreeIdChanged(int value);

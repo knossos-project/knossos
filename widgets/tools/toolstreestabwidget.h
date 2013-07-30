@@ -62,6 +62,7 @@ signals:
     void delActiveTreeSignal();
     void updateToolsSignal();
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+
 public slots:
     void activeTreeIDChanged(int value);
     void commentChanged(QString comment);

@@ -58,14 +58,11 @@ public:
     Viewport *vp, *vp2, *vp3, *vp4;
     vpList *viewports;
     int frames;
-    //from knossos-global.h
 
     static bool loadTreeColorTable(const char *path, float *table, int type);
-    //Initializes the window with the parameter given in viewerState
-    static bool createScreen();
     //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
     //Calling makes only sense after full initialization of the SDL / OGL screen
-    static bool initializeTextures(); // it now part of the initGL function of the viewport
+    static bool initializeTextures(); // is now part of the initGL function of the viewport
 
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
@@ -78,10 +75,6 @@ public:
 signals:
     void loadSignal();
     void finished();
-    void updateGLSignal();
-    void updateGLSignal2();
-    void updateGLSignal3();
-    void updateGLSignal4();
     void updateCoordinatesSignal(int x, int y, int z);
     void updateZoomAndMultiresWidgetSignal();
     void idleTimeSignal();
