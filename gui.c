@@ -778,6 +778,25 @@ void createToolsWin() {
                AG_ExpandHoriz(button);
            }
         }
+
+        AG_SeparatorNewHoriz(quickCommandsTab);
+
+        box = AG_BoxNew(quickCommandsTab, AG_BOX_HORIZ, AG_BOX_HOMOGENOUS);
+        {
+            numerical = AG_NumericalNewIntR(quickCommandsTab,
+                0,
+                NULL,
+                "Max. Undo Steps:",
+                &state->skeletonState->maxUndoSteps,
+                1,
+                INT_MAX);
+            {
+                AG_ExpandHoriz(numerical);
+                AG_SetEvent(numerical, "widget-gainfocus", agInputWdgtGainedFocus, NULL);
+                AG_SetEvent(numerical, "widget-lostfocus", agInputWdgtLostFocus, NULL);
+            }
+        }
+
     }
 
     treesTab = AG_NotebookAddTab(toolTabs, "Trees", AG_BOX_HOMOGENOUS);

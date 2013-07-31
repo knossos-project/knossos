@@ -141,6 +141,7 @@ uint32_t initSkeletonizer() {
     state->skeletonState->lastSerialSkeleton->previous = NULL;
     state->skeletonState->serialSkeletonCounter = 0;
     state->skeletonState->addNodeAndSerialize = TRUE;
+    state->skeletonState->maxUndoSteps = 16;
 
     state->skeletonState->saveCnt = 0;
 
@@ -4817,6 +4818,17 @@ void saveSerializedSkeleton(){
         state->skeletonState->lastSerialSkeleton = state->skeletonState->lastSerialSkeleton->next;
     }
     state->skeletonState->serialSkeletonCounter++;
+    while (state->skeletonState->serialSkeletonCounter > state->skeletonState->maxUndoSteps){
+        struct serialSkeletonListElement *newFirstSerialSkeleton = state->skeletonState->firstSerialSkeleton->next;
+        state->skeletonState->firstSerialSkeleton->next = NULL;
+        free(state->skeletonState->firstSerialSkeleton->next);
+        state->skeletonState->firstSerialSkeleton = NULL;
+        free(state->skeletonState->firstSerialSkeleton);
+        state->skeletonState->firstSerialSkeleton = newFirstSerialSkeleton;
+        state->skeletonState->firstSerialSkeleton->previous = NULL;
+        free(state->skeletonState->firstSerialSkeleton->previous);
+        state->skeletonState->serialSkeletonCounter--;
+    }
 
 }
 

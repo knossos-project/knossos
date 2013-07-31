@@ -1333,6 +1333,7 @@ struct skeletonState {
 
     int32_t addNodeAndSerialize;
     uint32_t serialSkeletonCounter;
+    uint32_t maxUndoSteps;
 };
 
 struct remoteState {
