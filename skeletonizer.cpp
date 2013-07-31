@@ -3622,7 +3622,6 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
                             branchNode->position.z - state->viewerState->currentPosition.z,
                             TELL_COORDINATE_CHANGE);
 
-
         state->skeletonState->branchpointUnresolved = true;
     }
 
@@ -3720,16 +3719,10 @@ bool Skeletonizer::setSkeletonWorkMode(int targetRevision, uint workMode) {
 
 bool Skeletonizer::jumpToActiveNode() {
     if(state->skeletonState->activeNode) {
-        state->viewerState->currentPosition.x =
-            state->skeletonState->activeNode->position.x;
-        state->viewerState->currentPosition.y =
-            state->skeletonState->activeNode->position.y;
-        state->viewerState->currentPosition.z =
-            state->skeletonState->activeNode->position.z;
-
-
-        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-
+        emit userMoveSignal(state->skeletonState->activeNode->position.x - state->viewerState->currentPosition.x,
+                            state->skeletonState->activeNode->position.y - state->viewerState->currentPosition.y,
+                            state->skeletonState->activeNode->position.z - state->viewerState->currentPosition.z,
+                            TELL_COORDINATE_CHANGE);
     }
 
     return true;
@@ -3783,12 +3776,6 @@ bool Skeletonizer::updateTreeColors() {
     return true;
 }
 
-void Skeletonizer::setViewportReferences(Viewport *vp, Viewport *vp2, Viewport *vp3, Viewport *vp4) {
-    this->vp = vp;
-    this->vp2 = vp2;
-    this->vp3 = vp3;
-    this->vp4 = vp4;
-}
 
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
 

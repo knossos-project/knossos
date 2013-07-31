@@ -27,6 +27,8 @@
 #include "functions.h"
 #include "knossos.h"
 #include "skeletonizer.h"
+#include "viewport.h"
+#include "renderer.h"
 
 extern struct stateInfo *state;
 
@@ -38,6 +40,8 @@ EventModel::EventModel(QObject *parent) :
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 {
 
+    qDebug() << "x:" << event->x() << " y:" << event->y() << "slice " << VPfound;
+
     uint clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
@@ -46,7 +50,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         qDebug("control and mouseleft");
         //first assume that user managed to hit the node
-        clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
+        clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound,
                                                 event->x(),
                                                 (state->viewerState->screenSizeY - event->y()),
                                                 10);
@@ -110,7 +114,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     if(QApplication::keyboardModifiers() == Qt::AltModifier) {
         qDebug("alt and mouseleft");
         int clickedNode;
-        clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
+        clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
                                                      (state->viewerState->screenSizeY - event->y()),
                                                      10);
@@ -134,7 +138,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
     int clickedNode;
 
-    clickedNode = Renderer::retrieveVisibleObjectBeneathSquare(VPfound,
+    clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
                                                      (state->viewerState->screenSizeY - event->y()),
                                                      1);
@@ -331,6 +335,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
+
+    qDebug() << "x:" << event->x() << " y:" << event->y() << "slice " << VPfound;
 
     qDebug() << "mouse motion with left button clicked";
 
@@ -738,6 +744,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
 bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
+    qDebug() << "viewport = " << VPfound;
     // This is a workaround for agars behavior of processing / labeling
     //events. Without it, input into a textbox would still trigger global
     //shortcut actions.
@@ -1189,10 +1196,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             emit saveSkeletonSignal();
             return true;
         }
-
         emit jumpToActiveNodeSignal();
-
-
     } else if(event->key() == Qt::Key_A) {
         qDebug() << "A pressed";
         emit workModeAddSignal();

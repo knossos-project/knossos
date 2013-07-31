@@ -29,10 +29,11 @@
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
 #include <QDebug>
-#include "renderer.h"
+#include <QFont>
 #include "eventmodel.h"
 
 class QPushButton;
+class Renderer;
 class Viewport : public QGLWidget
 {
     Q_OBJECT
@@ -40,8 +41,9 @@ public:
     explicit Viewport(QWidget *parent, int plane);
     void drawViewport(int plane);
     void drawSkeletonViewport();
+    Renderer *ref;
     EventModel *delegate;
-
+    QFont font;
 protected:
     void initializeGL();
     void initializeOverlayGL();
@@ -65,6 +67,7 @@ protected:
     void drawButtons();
 
     bool entered;
+    int focus;
 
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);

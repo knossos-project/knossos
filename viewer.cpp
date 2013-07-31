@@ -35,7 +35,7 @@
 #include "viewport.h"
 #include "functions.h"
 #include <qopengl.h>
-#include "knossos-global.h"
+
 
 extern stateInfo *state;
 
@@ -100,9 +100,23 @@ Viewer::Viewer(QObject *parent) :
 
     initViewer();
     skeletonizer = new Skeletonizer();
-    skeletonizer->setViewportReferences(vp, vp2, vp3, vp4);
+
 
     renderer = new Renderer();
+
+    vp->delegate->ref = renderer;
+    vp2->delegate->ref = renderer;
+    vp3->delegate->ref = renderer;
+    vp4->delegate->ref = renderer;
+
+    vp->ref = vp2->ref = vp3->ref = vp4->ref = renderer;
+
+    renderer->ref = vp;
+    renderer->ref2 = vp2;
+    renderer->ref3 = vp3;
+    renderer->ref4 = vp4;
+
+
     rewire();
     frames = 0;
 
@@ -137,8 +151,6 @@ Viewer::Viewer(QObject *parent) :
     QTimer *timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(10);
-
-
 
 }
 
@@ -2030,7 +2042,7 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 renderer->drawGUI();
-
+                //vp4->makeCurrent();
                 vp4->updateGL();
 
 
@@ -2939,6 +2951,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -2947,7 +2960,6 @@ void Viewer::rewire() {
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
-
 
     connect(vp->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(vp2->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
@@ -2980,18 +2992,20 @@ void Viewer::rewire() {
     connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
     connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
 
+    connect(vp->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+    connect(vp2->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+    connect(vp3->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+    connect(vp4->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+
     connect(vp->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
     connect(vp2->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
     connect(vp3->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
     connect(vp4->delegate, SIGNAL(popBranchNodeSignal(int)), skeletonizer, SLOT(popBranchNode(int)));
 
-    connect(vp->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
-    connect(vp2->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
-    connect(vp3->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
-    connect(vp4->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
-
-
-
+    connect(vp->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)), Qt::DirectConnection);
+    connect(vp2->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)), Qt::DirectConnection);
+    connect(vp3->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)), Qt::DirectConnection);
+    connect(vp4->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)), Qt::DirectConnection);
 
 
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -3002,6 +3016,7 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(skeletonizer, SIGNAL(saveSkeletonSignal(int)), window, SLOT(saveSlot()));
+    connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
 
     connect(vp->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(vp2->delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));

@@ -28,12 +28,14 @@
 #include <QObject>
 #include "knossos-global.h"
 
-
+class Viewport;
 class Renderer : public QObject
 {
     Q_OBJECT
 public:
     explicit Renderer(QObject *parent = 0);    
+    Viewport *ref, *ref2, *ref3, *ref4;
+    QFont font;
 
     static bool setRotationState(uint setTo);
     static bool rotateSkeletonViewport();
@@ -41,10 +43,10 @@ public:
     static uint renderViewportBorders(uint currentVP);
 
     static uint renderSegPlaneIntersection(struct segmentListElement *segment);
-    static uint renderText(Coordinate *pos, char *string);
+    uint renderText(Coordinate *pos, char *string, uint viewportType);
     static uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
     static uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
-    static void renderSkeleton(uint viewportType);        
+    void renderSkeleton(uint viewportType);
     static bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
     static bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
@@ -52,9 +54,9 @@ public:
 signals:
     
 public slots:
-    static uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
-    static bool renderOrthogonalVP(uint currentVP);
-    static bool renderSkeletonVP(uint currentVP);
+    uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    bool renderOrthogonalVP(uint currentVP);
+    bool renderSkeletonVP(uint currentVP);
     bool drawGUI();
 };
 

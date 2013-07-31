@@ -31,7 +31,6 @@
 #include <QWheelEvent>
 #include <stdint.h>
 #include "knossos-global.h"
-#include "renderer.h"
 
 /**
   * @class EventModel
@@ -47,11 +46,13 @@
   * If new functionality has to be integrated which uses modifier just use the way it is done in this class
   * You will save a couple of hours ..
   */
+
+class Renderer;
 class EventModel : public QObject
 {
     Q_OBJECT
 public:
-
+    Renderer *ref;
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);

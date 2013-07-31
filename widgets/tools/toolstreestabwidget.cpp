@@ -35,6 +35,7 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QGridLayout>
+#include <QMessageBox>
 
 #include "skeletonizer.h"
 

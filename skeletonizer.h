@@ -28,16 +28,13 @@
 
 #include <QObject>
 #include "knossos-global.h"
-#include "viewport.h"
 
 class Skeletonizer : public QObject
 {
     Q_OBJECT
 
 public:
-
     explicit Skeletonizer(QObject *parent = 0);
-
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
@@ -48,8 +45,6 @@ public:
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
 
-    void setViewportReferences(Viewport *vp, Viewport*vp2, Viewport*vp3, Viewport*vp4);
-    Viewport *vp, *vp2, *vp3, *vp4;
     static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
     static int addNode(int targetRevision,

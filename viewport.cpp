@@ -24,6 +24,8 @@
 
 #include "knossos-global.h"
 #include "viewport.h"
+#include "eventmodel.h"
+#include "renderer.h"
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -39,7 +41,6 @@ extern stateInfo *state;
 Viewport::Viewport(QWidget *parent, int plane) :
     QGLWidget(parent) {
     delegate = new EventModel();
-    connect(delegate, SIGNAL(rerender()), this, SLOT(updateGL()));
     this->setMouseTracking(true);
 
     this->plane = plane;
@@ -49,6 +50,7 @@ Viewport::Viewport(QWidget *parent, int plane) :
     //this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
 
+    font = QFont("Courier", 50);
 
 
 }
@@ -154,7 +156,8 @@ void Viewport::resizeGL(int w, int h) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
-    glFrustum(-x, +x, -1.0, +1.0, 0.1, 15.0);
+
+    glFrustum(-x, +x, -2.0, + 2.0, 0.1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
     SET_COORDINATE(state->viewerState->vpConfigs[plane].upperLeftCorner,
@@ -168,17 +171,23 @@ void Viewport::resizeGL(int w, int h) {
 
 void Viewport::paintGL() {
     //this->makeCurrent();
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
            this->drawViewport(plane);
-
         }  else {
             this->drawSkeletonViewport();
         }
+
     }
 
+    /*
+    if(state->skeletonState->activeNode) {
+        glColor3b(0, 1, 0);
+        renderText(1, 1, 1, QString("AA"), font);
+
+    }*/
     //this->doneCurrent();
 }
 
@@ -193,6 +202,7 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
+
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
@@ -229,6 +239,20 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
+    if(state->viewerState->moveVP != -1)
+        state->viewerState->moveVP = -1;
+    if(state->viewerState->resizeVP != -1)
+        state->viewerState->resizeVP = -1;
+
+    for(int i = 0; i < state->viewerState->numberViewports; i++) {
+        state->viewerState->vpConfigs[i].draggedNode = NULL;
+        state->viewerState->vpConfigs[i].motionTracking = false;
+        state->viewerState->vpConfigs[i].VPmoves = false;
+        state->viewerState->vpConfigs[i].VPresizes = false;
+        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+    }
+
 
 }
 
@@ -244,6 +268,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+
     this->delegate->handleKeyboard(event, this->plane);
 }
 
@@ -258,12 +283,12 @@ void Viewport::customEvent(QEvent *event) {
 }
 
 void Viewport::drawViewport(int plane) {
-    Renderer::renderOrthogonalVP(plane);
+    ref->renderOrthogonalVP(plane);
 
 }
 
 void Viewport::drawSkeletonViewport() {
-    Renderer::renderSkeletonVP(VIEWPORT_SKELETON);
+    ref->renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
@@ -315,6 +340,7 @@ void Viewport::paintEvent(QPaintEvent *event) {
 
 void Viewport::leaveEvent(QEvent *event) {
     entered = false;
+
 }
 
 Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {

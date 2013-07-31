@@ -201,6 +201,7 @@ void MainWindow:: createCoordBarWin() {
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 }
 
+/*
 static void updateGuiconfig() {
 
     if(state->skeletonState->totalNodeElements == 0) {
@@ -236,7 +237,7 @@ static void updateGuiconfig() {
         state->skeletonState->commentBuffer,
         10240);
 }
-
+*/
 
 /* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
@@ -328,6 +329,7 @@ void MainWindow::loadSkeleton(char *fileName) {
     emit loadSkeletonSignal();
     updateTitlebar(true);
     linkWithActiveNodeSlot();
+
     /*
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
@@ -545,6 +547,7 @@ void MainWindow::recentFileSelected(QAction *action) {
     QString fileName = action->text();
     char *cname = const_cast<char *>(fileName.toStdString().c_str());
     loadSkeleton(cname);
+
 }
 
 void MainWindow::createMenus()

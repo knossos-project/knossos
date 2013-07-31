@@ -22,17 +22,14 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-// refreshtimelabel should be replaced by better code now
-// #define GLUT_DISABLE_ATEXIT_HACK what is this?
-
 #include "renderer.h"
 #include "functions.h"
+#include "viewport.h"
 #include <math.h>
 
-#include <QtOpenGL>
+#include <qgl.h>
 #ifdef Q_OS_MACX
     #include <glu.h>
-    #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_LINUX
     #include <GL/gl.h>
@@ -41,8 +38,6 @@
 #ifdef Q_OS_WIN
     #include <GL/glu.h>
     #include <windows.h>
-    #include <GL/glut.h>
-
 #endif
 #include "skeletonizer.h"
 #include "viewer.h"
@@ -52,6 +47,9 @@ extern stateInfo *state;
 Renderer::Renderer(QObject *parent) :
     QObject(parent)
 {
+    font = QFont("Helvetica", 12, QFont::Normal);
+    //font.setStyleStrategy(QFont::OpenGLCompatible);
+
     uint i;
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         /* Initialize the basic model view matrix for the skeleton VP
@@ -215,15 +213,22 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint v
 }
 
 
-uint Renderer::renderText(Coordinate *pos, char *string) {
+uint Renderer::renderText(Coordinate *pos, char *string, uint viewportType) {
 
     char *c;
 
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
-    for (c = string; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-    }
+    if(viewportType == VIEWPORT_XY)
+        ref->renderText(pos->x, pos->y, pos->z, QString(string), font);
+
+    else if(viewportType == VIEWPORT_YZ)
+        ref2->renderText(pos->x, pos->y, pos->z, QString(string), font);
+    else if(viewportType == VIEWPORT_XZ)
+         ref3->renderText(pos->x, pos->y, pos->z, QString(string), font);
+    else if(viewportType == VIEWPORT_SKELETON)
+        ref4->renderText(pos->x, pos->y, pos->z, QString(string), font);
+
     glEnable(GL_DEPTH_TEST);
 
     return true;
@@ -1074,7 +1079,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
-    glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
+    //glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
 
     if(!state->viewerState->selectModeFlag) {
         glMatrixMode(GL_PROJECTION);
@@ -1670,33 +1675,53 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     /* new position */
     renderSkeleton(VIEWPORT_SKELETON);
 
+    Coordinate pos;
+
     // Draw axis description
     glColor4f(0., 0., 0., 1.);
     memset(textBuffer, '\0', 32);
     glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
+
+
     sprintf(textBuffer, "1, 1, 1");
-    for (c=textBuffer; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-    }
+
+
+    pos.x = (float)-(state->boundary.x) / 2. - 50.;
+    pos.y = (float)-(state->boundary.y) / 2. - 50.;
+    pos.z = (float)-(state->boundary.z) / 2. - 50.;
+
+    renderText(&pos, textBuffer, VIEWPORT_SKELETON);
+
     memset(textBuffer, '\0', 32);
     glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
     sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
-    for (c=textBuffer; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-    }
+    pos.x = (float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50.;
+    pos.y = (float)-(state->boundary.y / 2) - 50.;
+    pos.z = (float)-(state->boundary.z) / 2. - 50.;
+    renderText(&pos, textBuffer, VIEWPORT_SKELETON);
+
 
     memset(textBuffer, '\0', 32);
     glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
     sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
-    for (c=textBuffer; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-    }
+
+    pos.x = -(state->boundary.x / 2)- 50.;
+    pos.y = (float)(state->boundary.y) / 2. - 50.;
+    pos.z = -(state->boundary.z / 2)- 50.;
+
+    renderText(&pos, textBuffer, VIEWPORT_SKELETON);
+
     memset(textBuffer, '\0', 32);
     glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
     sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
-    for (c=textBuffer; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-    }
+
+
+    pos.x = -(state->boundary.x / 2)- 50.;
+    pos.y = -(state->boundary.y / 2)- 50.;
+    pos.z = (float)(state->boundary.z) / 2. - 50.;
+
+    renderText(&pos, textBuffer, VIEWPORT_SKELETON);
+
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
@@ -1711,7 +1736,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
     free(textBuffer);
 
-    //renderViewportBorders(currentVP);
+    renderViewportBorders(currentVP);
 
     return true;
 }
@@ -2201,7 +2226,12 @@ void Renderer::renderSkeleton(uint viewportType) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
                     memset(textBuffer, '\0', 32);
                     sprintf(textBuffer, "%d", currentNode->nodeID);
-                    renderText(&(currentNode->position), textBuffer);
+                    renderText(&(currentNode->position), textBuffer, viewportType);
+
+
+
+
+
                 }
                 lastRenderedNode = currentNode;
             }
@@ -2285,7 +2315,8 @@ void Renderer::renderSkeleton(uint viewportType) {
         glColor4f(0., 0., 0., 1.);
         memset(textBuffer, '\0', 32);
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
-        renderText(&(state->skeletonState->activeNode->position), textBuffer);
+        renderText(&(state->skeletonState->activeNode->position), textBuffer, viewportType);
+
 
     }
     /* Restore modelview matrix */

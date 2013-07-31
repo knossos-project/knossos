@@ -155,7 +155,6 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(false);
         this->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
 
-
         if(state->skeletonState->activeTree->comment)
             this->toolsTreesTabWidget->commentField->setText(QString(state->skeletonState->activeTree->comment));
         else

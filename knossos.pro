@@ -122,7 +122,6 @@ mac {
                    /usr/lib/
                    /usr/include
     LIBS += -lxml2 \
-            -framework GLUT \
             -framework Python \
             -lPythonQt
 
@@ -140,7 +139,7 @@ linux {
 
 
 win32 {
-    LIBS += -L$$PWD/../../mingw/lib/ -lglut32 -lxml2
+    LIBS += -L$$PWD/../../mingw/lib/ -lxml2
     INCLUDEPATH += $$PWD/../../mingw/include
 
 }
