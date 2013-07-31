@@ -1857,7 +1857,8 @@ static void tableCommentBoxModified(AG_Event *event) {
     if(strlen(state->viewerState->ag->tableCommentBuffer) == 0) {
         delComment(CHANGE_MANUAL,
                    state->skeletonState->selectedCommentNode->comment,
-                   state->skeletonState->selectedCommentNode->nodeID);
+                   state->skeletonState->selectedCommentNode->nodeID,
+                   TRUE);
         return;
     }
     if(state->skeletonState->selectedCommentNode->comment != NULL) {
@@ -1865,7 +1866,9 @@ static void tableCommentBoxModified(AG_Event *event) {
                     state->skeletonState->selectedCommentNode->comment,
                     0,
                     state->viewerState->ag->tableCommentBuffer,
-                    NULL, 0);
+                    NULL,
+                    0,
+                    TRUE);
         return;
     }
 }
@@ -3338,7 +3341,7 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
         10240);
 */
     if(strlen(state->skeletonState->commentBuffer) == 0) {
-        delComment(CHANGE_MANUAL, state->skeletonState->currentComment, 0);
+        delComment(CHANGE_MANUAL, state->skeletonState->currentComment, 0, TRUE);
         return;
     }
     if(state->skeletonState->activeNode) {
@@ -3347,14 +3350,16 @@ static void actNodeCommentWdgtModified(AG_Event *event) {
                        CHANGE_MANUAL,
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
-                        0);
+                        0,
+                        TRUE);
         else
             editComment(CHANGE_MANUAL,
                         state->skeletonState->activeNode->comment,
                         0,
                         state->skeletonState->commentBuffer,
                         state->skeletonState->activeNode,
-                        0);
+                        0,
+                        TRUE);
     }
     // lock position if flag is set and comment matches
     if(state->skeletonState->lockPositions && state->skeletonState->onCommentLock != NULL) {
@@ -3504,7 +3509,8 @@ static void UI_linkActiveNodeWithBtnPressed() {
         addSegment(state->skeletonState,
                    CHANGE_MANUAL,
                    state->skeletonState->activeNode->nodeID,
-                   state->viewerState->ag->linkActiveWithNode);
+                   state->viewerState->ag->linkActiveWithNode,
+                   TRUE);
 }
 
 static void UI_actNodeRadiusWdgtModified() {
@@ -3538,20 +3544,21 @@ static void UI_newTreeBtnPressed() {
     treeCol.g = -1.;
     treeCol.b = -1.;
     treeCol.a = 1.;
-    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
+    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol, TRUE);
     tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
 static void UI_splitTreeBtnPressed() {
     if(state->skeletonState->activeNode)
         splitConnectedComponent(CHANGE_MANUAL,
-                                state->skeletonState->activeNode->nodeID);
+                                state->skeletonState->activeNode->nodeID, TRUE);
 }
 
 static void UI_mergeTreesBtnPressed() {
     mergeTrees(CHANGE_MANUAL,
                 state->viewerState->ag->mergeTreesID1,
-                state->viewerState->ag->mergeTreesID2);
+                state->viewerState->ag->mergeTreesID2,
+                TRUE);
 }
 
 
@@ -3657,10 +3664,10 @@ static void UI_enableSliceVPOverlayModified(AG_Event *event) {
 }
 
 static void UI_pushBranchBtnPressed() {
-    pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
+    pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, TRUE);
 }
 static void UI_popBranchBtnPressed() {
-    UI_popBranchNode(CHANGE_MANUAL);
+    UI_popBranchNode();
 }
 
 static void UI_enableLinearFilteringModified(AG_Event *event) {

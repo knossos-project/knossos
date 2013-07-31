@@ -140,7 +140,6 @@ uint32_t initSkeletonizer() {
     state->skeletonState->lastSerialSkeleton->next = NULL;
     state->skeletonState->lastSerialSkeleton->previous = NULL;
     state->skeletonState->serialSkeletonCounter = 0;
-    state->skeletonState->addNodeAndSerialize = TRUE;
     state->skeletonState->maxUndoSteps = 16;
 
     state->skeletonState->saveCnt = 0;
@@ -297,14 +296,13 @@ int32_t addNode(struct skeletonState *skeleton,
                 Byte VPtype,
                 int32_t inMag,
                 int32_t time,
-                int32_t respectLocks) {
+                int32_t respectLocks,
+                int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     struct nodeListElement *tempNode = NULL;
     struct treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
     int32_t lockDistance = 0;
-
-    if(state->skeletonState->addNodeAndSerialize) saveSerializedSkeleton();
 
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);
@@ -349,6 +347,10 @@ int32_t addNode(struct skeletonState *skeleton,
         LOG("There exists no tree with the provided ID %d!", treeID);
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     // One node more in all trees
@@ -520,7 +522,7 @@ uint32_t updateCircRadius(struct nodeListElement *node) {
     return TRUE;
 }
 
-uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID) {
+uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, int32_t serialize) {
     struct nodeListElement *targetNode, *sourceNode;
     struct segmentListElement *sourceSeg;
     floatCoordinate node1, node2;
@@ -552,6 +554,10 @@ uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int3
         LOG("Cannot link node with itself!");
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     //One segment more in all trees
@@ -611,7 +617,7 @@ uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int3
 }
 
 
-uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel) {
+uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     /*
@@ -628,6 +634,10 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     else {
         sourceNodeID = segToDel->source->nodeID;
         targetNodeID = segToDel->target->nodeID;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     if(!segToDel) {
@@ -688,7 +698,7 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     return TRUE;
 }
 
-struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color) {
+struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     /* The variable sync is a workaround for the problem that this function
@@ -720,6 +730,11 @@ struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32
         unlockSkeleton(FALSE);
         return NULL;
     }
+
+    if(serialize){
+        saveSerializedSkeleton();
+    }
+
     memset(newElement, '\0', sizeof(struct treeListElement));
 
     skeleton->treeElements++;
@@ -870,7 +885,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     treeCol.a = 1.;
 
     if(!state->skeletonState->activeTree)
-        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
+        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol, FALSE);
 
     addedNodeID = addNode(state->skeletonState,
                           CHANGE_MANUAL,
@@ -881,6 +896,7 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
                           VPtype,
                           state->magnification,
                           -1,
+                          TRUE,
                           TRUE);
     if(!addedNodeID) {
         LOG("Error: Could not add new node!");
@@ -893,8 +909,8 @@ uint32_t UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID);
-        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, addedNodeID);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, addedNodeID, FALSE);
+        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, addedNodeID, FALSE);
     }
     checkIdleTime();
 
@@ -920,13 +936,14 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
                            VPtype,
                            state->magnification,
                            -1,
+                           TRUE,
                            TRUE);
     if(!targetNodeID) {
         LOG("Could not add new node while trying to add node and link with active node!");
         return FALSE;
     }
 
-    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
+    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID, FALSE);
 
     if(makeNodeActive)
         setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
@@ -935,8 +952,8 @@ uint32_t UI_addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID);
-        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, targetNodeID);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, targetNodeID, FALSE);
+        addComment(state->skeletonState, CHANGE_MANUAL, "First Node", NULL, targetNodeID, FALSE);
         checkIdleTime();
     }
 
@@ -1096,7 +1113,7 @@ int32_t saveSkeleton() {
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0, FALSE);
     }
 
     xmlDocument = xmlNewDoc(BAD_CAST"1.0");
@@ -1560,6 +1577,10 @@ uint32_t loadSkeleton() {
     if(state->skeletonState->mergeOnLoadFlag == FALSE) {
         merge = FALSE;
         clearSkeleton(CHANGE_MANUAL, TRUE);
+
+        while(state->skeletonState->serialSkeletonCounter > 0){
+            deleteLastSerialSkeleton();
+        }
     }
     else {
         merge = TRUE;
@@ -1769,7 +1790,7 @@ uint32_t loadSkeleton() {
 
                         currentNode = findNodeByNodeID(nodeID);
                         if(currentNode)
-                            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
+                            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0, FALSE);
                     }
                 }
 
@@ -1822,12 +1843,12 @@ uint32_t loadSkeleton() {
                 neuronColor.a = 1.;
 
             if(!merge) {
-                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor, FALSE);
                 setActiveTreeByID(neuronID);
             }
             else {
                 neuronID += greatestTreeIDbeforeLoading;
-                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+                currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor, FALSE);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             }
@@ -1837,7 +1858,6 @@ uint32_t loadSkeleton() {
                 addTreeComment(state->skeletonState, CHANGE_MANUAL, currentTree->treeID, (char *)attribute);
                 free(attribute);
             }
-            state->skeletonState->addNodeAndSerialize = FALSE;
             nodesEdgesXMLNode = thingOrParamXMLNode->children;
             while(nodesEdgesXMLNode) {
                 if(xmlStrEqual(nodesEdgesXMLNode->name, (const xmlChar *)"nodes")) {
@@ -1918,10 +1938,10 @@ uint32_t loadSkeleton() {
                                 time = state->skeletonState->skeletonTime; /* For legacy skeleton files */
 
                             if(!merge)
-                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE, FALSE);
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+                                addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE, FALSE);
                             }
                         }
 
@@ -1951,9 +1971,9 @@ uint32_t loadSkeleton() {
 
                             // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
                             if(!merge)
-                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1, nodeID2);
+                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1, nodeID2, FALSE);
                             else
-                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
+                                addSegment(state->skeletonState, CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading, FALSE);
 
                         }
                         currentXMLNode = currentXMLNode->next;
@@ -1962,7 +1982,6 @@ uint32_t loadSkeleton() {
 
                 nodesEdgesXMLNode = nodesEdgesXMLNode->next;
             }
-            state->skeletonState->addNodeAndSerialize = TRUE;
         }
 
         thingOrParamXMLNode = thingOrParamXMLNode->next;
@@ -1995,7 +2014,8 @@ uint32_t loadSkeleton() {
                         CHANGE_MANUAL,
                         (char *)attribute,
                         currentNode,
-                        0);
+                        0,
+                        FALSE);
                 }
             }
             currentXMLNode = currentXMLNode->next;
@@ -2044,7 +2064,7 @@ uint32_t loadSkeleton() {
 
 uint32_t delActiveNode() {
     if(state->skeletonState->activeNode) {
-        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode);
+        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, TRUE);
     }
     else {
         return FALSE;
@@ -2166,7 +2186,7 @@ uint32_t delActiveTree() {
             nextTree = state->skeletonState->activeTree->previous;
         }
 
-        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
+        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, TRUE);
 
         if(nextTree) {
             setActiveTreeByID(nextTree->treeID);
@@ -2189,7 +2209,7 @@ uint32_t delActiveTree() {
  * We have to delete the node from 2 structures: the skeleton's nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
-uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel) {
+uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct segmentListElement *currentSegment;
@@ -2215,8 +2235,12 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
 
     treeID = nodeToDel->correspondingTree->treeID;
 
+    if(serialize){
+        saveSerializedSkeleton();
+    }
+
     if(nodeToDel->comment) {
-        delComment(CHANGE_MANUAL, nodeToDel->comment, 0);
+        delComment(CHANGE_MANUAL, nodeToDel->comment, 0, FALSE);
     }
 
     /*
@@ -2230,9 +2254,9 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
         tempNext = currentSegment->next;
 
         if(currentSegment->flag == SEGMENT_FORWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment, FALSE);
         else if(currentSegment->flag == SEGMENT_BACKWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment, FALSE);
 
         currentSegment = tempNext;
     }
@@ -2296,7 +2320,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     return TRUE;
 }
 
-uint32_t delTree(int32_t targetRevision, int32_t treeID) {
+uint32_t delTree(int32_t targetRevision, int32_t treeID, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
@@ -2313,11 +2337,14 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID) {
         return FALSE;
     }
 
+    if(serialize){
+        saveSerializedSkeleton();
+    }
     currentNode = currentTree->firstNode;
     while(currentNode) {
         nodeToDel = currentNode;
         currentNode = nodeToDel->next;
-        delNode(CHANGE_MANUAL, 0, nodeToDel);
+        delNode(CHANGE_MANUAL, 0, nodeToDel, FALSE);
     }
     currentTree->firstNode = NULL;
 
@@ -2818,7 +2845,7 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     while(currentTree) {
         treeToDel = currentTree;
         currentTree = treeToDel->next;
-        delTree(CHANGE_MANUAL, treeToDel->treeID);
+        delTree(CHANGE_MANUAL, treeToDel->treeID, FALSE);
     }
 
     state->skeletonState->activeNode = NULL;
@@ -2874,7 +2901,7 @@ uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton) {
     return TRUE;
 }
 
-uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
+uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct treeListElement *tree1, *tree2;
@@ -2897,6 +2924,10 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2) {
         LOG("Could not merge trees, provided IDs are not valid!");
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     currentNode = tree2->firstNode;
@@ -3377,7 +3408,8 @@ int32_t delDynArray(struct dynArray *array) {
 }
 
 int32_t splitConnectedComponent(int32_t targetRevision,
-                                int32_t nodeID) {
+                                int32_t nodeID,
+                                int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct cmdListElement *cmdEl = NULL; cmdSplitTree *cmd;
@@ -3459,6 +3491,10 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     if(visitedRight == NULL || visitedLeft == NULL) {
         LOG("Out of memory.");
         _Exit(FALSE);
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     memset(visitedLeft, NODE_PRISTINE, 16384);
@@ -3552,7 +3588,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = addTreeListElement(state->skeletonState, FALSE, CHANGE_MANUAL, 0, treeCol);
+        newTree = addTreeListElement(state->skeletonState, FALSE, CHANGE_MANUAL, 0, treeCol, FALSE);
         // Splitting the connected component.
 
         while((n = (struct nodeListElement *)popStack(componentNodes))) {
@@ -3620,7 +3656,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     return nodeCount;
 }
 
-uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID) {
+uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     struct commentListElement *newComment;
@@ -3648,6 +3684,10 @@ uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char
         strncpy(newComment->content, content, strlen(content));
         skeleton->skeletonChanged = TRUE;
         skeleton->commentsChanged = TRUE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     if(!skeleton->currentComment) {
@@ -3701,7 +3741,8 @@ uint32_t editComment(int32_t targetRevision,
                      int32_t nodeID,
                      char *newContent,
                      struct nodeListElement *newNode,
-                     int32_t newNodeID) {
+                     int32_t newNodeID,
+                     int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
@@ -3718,6 +3759,10 @@ uint32_t editComment(int32_t targetRevision,
         LOG("Please provide a valid comment element to edit!");
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     nodeID = currentComment->node->nodeID;
@@ -3789,7 +3834,7 @@ uint32_t editComment(int32_t targetRevision,
     return TRUE;
 }
 
-uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID) {
+uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     int32_t nodeID = 0;
@@ -3811,6 +3856,10 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
         LOG("Please provide a valid comment element to delete!");
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     if(currentComment->content) {
@@ -4122,7 +4171,8 @@ int32_t pushBranchNode(struct skeletonState *skeleton,
                        int32_t setBranchNodeFlag,
                        int32_t checkDoubleBranchpoint,
                        struct nodeListElement *branchNode,
-                       int32_t branchNodeID) {
+                       int32_t branchNodeID,
+                       int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
 
     if(lockSkeleton(targetRevision) == FALSE) {
@@ -4134,6 +4184,9 @@ int32_t pushBranchNode(struct skeletonState *skeleton,
         branchNode = findNodeByNodeID(branchNodeID);
 
     if(branchNode) {
+        if(serialize){
+            saveSerializedSkeleton();
+        }
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
             pushStack(skeleton->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
@@ -4192,7 +4245,7 @@ void UI_popBranchNode() {
 }
 
 static void WRAP_popBranchNode() {
-    popBranchNode(CHANGE_MANUAL);
+    popBranchNode(CHANGE_MANUAL, TRUE);
     state->skeletonState->askingPopBranchConfirmation = FALSE;
 }
 
@@ -4200,7 +4253,7 @@ static void popBranchNodeCanceled() {
     state->skeletonState->askingPopBranchConfirmation = FALSE;
 }
 
-int32_t popBranchNode(int32_t targetRevision) {
+int32_t popBranchNode(int32_t targetRevision, int32_t serialize) {
     /* This is a SYNCHRONIZABLE skeleton function. Be a bit careful. */
     /* SYNCHRO BUG:
        both instances will have to confirm branch point deletion if
@@ -4213,6 +4266,10 @@ int32_t popBranchNode(int32_t targetRevision) {
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);
         return FALSE;
+    }
+
+    if(serialize){
+        saveSerializedSkeleton();
     }
 
     /* Nodes on the branch stack may not actually exist anymore */
@@ -4296,7 +4353,7 @@ uint32_t genTestNodes(uint32_t number) {
     color4F treeCol;
     //add new tree for test nodes
     treeCol.r = -1.;
-    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
+    addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol, FALSE);
 
     srand(time(NULL));
     pos.x = (int32_t)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
@@ -4790,15 +4847,7 @@ struct skeletonState *deserializeSkeleton() {
 void undo2(){
     if(state->skeletonState->serialSkeletonCounter > 0){
         deserializeSkeleton();
-        struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
-        state->skeletonState->lastSerialSkeleton->next = NULL;
-        free(state->skeletonState->lastSerialSkeleton->next);
-        state->skeletonState->lastSerialSkeleton->previous = NULL;
-        free(state->skeletonState->lastSerialSkeleton->previous);
-        state->skeletonState->lastSerialSkeleton = NULL;
-        free(state->skeletonState->lastSerialSkeleton);
-        state->skeletonState->lastSerialSkeleton = newLastSerialSkeleton;
-        state->skeletonState->serialSkeletonCounter--;
+        deleteLastSerialSkeleton();
     }
 
 }
@@ -4955,7 +5004,7 @@ Byte* serializeSkeleton() {
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0, FALSE);
     }
 
 
@@ -5331,7 +5380,7 @@ void deserializeSkeleton() {
         neuronColor.a = bytesToFloat(&serialSkeleton[memPosition]);
         memPosition+=sizeof(neuronColor.a);
 
-        currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+        currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor, FALSE);
         setActiveTreeByID(neuronID);
 
         stringLength = bytesToInt(&serialSkeleton[memPosition]);
@@ -5364,9 +5413,7 @@ void deserializeSkeleton() {
             time = bytesToInt(&serialSkeleton[memPosition]);
             memPosition+=sizeof(time);
 
-            state->skeletonState->addNodeAndSerialize = FALSE;
-            addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
-            state->skeletonState->addNodeAndSerialize = TRUE;
+            addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE, FALSE);
         }
     }
 
@@ -5377,7 +5424,7 @@ void deserializeSkeleton() {
         memPosition+=sizeof(sourceNodeID);
         targetNodeID = bytesToInt(&serialSkeleton[memPosition]);
         memPosition+=sizeof(targetNodeID);
-        addSegment(state->skeletonState, CHANGE_MANUAL, sourceNodeID, targetNodeID);
+        addSegment(state->skeletonState, CHANGE_MANUAL, sourceNodeID, targetNodeID, FALSE);
     }
     totalCommentNumber = bytesToInt(&serialSkeleton[memPosition]);
     memPosition+=sizeof(totalCommentNumber);
@@ -5393,7 +5440,7 @@ void deserializeSkeleton() {
         memPosition+=stringLength;
 
         if(temp && currentNode) {
-            addComment(state->skeletonState, CHANGE_MANUAL, (char *)temp, currentNode, 0);
+            addComment(state->skeletonState, CHANGE_MANUAL, (char *)temp, currentNode, 0, FALSE);
         }
     }
 
@@ -5403,7 +5450,7 @@ void deserializeSkeleton() {
         nodeID = bytesToInt(&serialSkeleton[memPosition]);
         currentNode = findNodeByNodeID(nodeID);
         if(currentNode){
-            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
+            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0, FALSE);
         }
         memPosition+=sizeof(nodeID);
     }
@@ -5416,4 +5463,16 @@ void deserializeSkeleton() {
     sendRemoteSignal();
 
     tempConfig->skeletonState->workMode = workMode;
+}
+
+void deleteLastSerialSkeleton(){
+    struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
+    state->skeletonState->lastSerialSkeleton->next = NULL;
+    free(state->skeletonState->lastSerialSkeleton->next);
+    state->skeletonState->lastSerialSkeleton->previous = NULL;
+    free(state->skeletonState->lastSerialSkeleton->previous);
+    state->skeletonState->lastSerialSkeleton = NULL;
+    free(state->skeletonState->lastSerialSkeleton);
+    state->skeletonState->lastSerialSkeleton = newLastSerialSkeleton;
+    state->skeletonState->serialSkeletonCounter--;
 }

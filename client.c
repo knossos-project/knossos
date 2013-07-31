@@ -461,7 +461,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addComment(skeleton, d[0], (char *)s, NULL, d[1]);
+                addComment(skeleton, d[0], (char *)s, NULL, d[1], FALSE);
 
                 break;
 
@@ -474,7 +474,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                editComment(d[0], NULL, d[1], (char *)s, NULL, d[2]);
+                editComment(d[0], NULL, d[1], (char *)s, NULL, d[2], FALSE);
 
                 break;
 
@@ -485,7 +485,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delComment(d[0], NULL, d[1]);
+                delComment(d[0], NULL, d[1], FALSE);
 
                 break;
 
@@ -517,7 +517,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 pPosition->y = d[8];
                 pPosition->z = d[9];
 
-                addNode(skeleton, d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE);
+                addNode(skeleton, d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], FALSE, FALSE);
 
                 free(pPosition);
                 pPosition = NULL;
@@ -546,7 +546,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
 
                 LOG("DELNODE: Received revision %d", d[0]);
 
-                delNode(d[0], d[1], NULL);
+                delNode(d[0], d[1], NULL, FALSE);
 
                 break;
 
@@ -558,7 +558,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                addSegment(skeleton, d[0], d[1], d[2]);
+                addSegment(skeleton, d[0], d[1], d[2], FALSE);
 
                 break;
 
@@ -570,7 +570,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delSegment(d[0], d[1], d[2], NULL);
+                delSegment(d[0], d[1], d[2], NULL, FALSE);
 
                 break;
 
@@ -586,7 +586,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 treeCol.g = f[1];
                 treeCol.b = f[2];
                 treeCol.a = 1.;
-                addTreeListElement(skeleton, TRUE, d[0], d[1], treeCol);
+                addTreeListElement(skeleton, TRUE, d[0], d[1], treeCol, FALSE);
 
                 break;
 
@@ -597,7 +597,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                delTree(d[0], d[1]);
+                delTree(d[0], d[1], FALSE);
 
                 break;
 
@@ -608,7 +608,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                mergeTrees(d[0], d[1], d[2]);
+                mergeTrees(d[0], d[1], d[2], FALSE);
 
                 break;
 
@@ -619,7 +619,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                splitConnectedComponent(d[0], d[1]);
+                splitConnectedComponent(d[0], d[1], FALSE);
 
                 LOG("Called splitcc with %d %d", d[0], d[1]);
 
@@ -632,7 +632,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                pushBranchNode(skeleton, d[0], d[2], d[3], NULL, d[1]);
+                pushBranchNode(skeleton, d[0], d[2], d[3], NULL, d[1], FALSE);
 
                 break;
 
@@ -643,7 +643,7 @@ static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *ske
                 else if(messageLen == 0)
                     goto loopExit;
 
-                popBranchNode(d[0]);
+                popBranchNode(d[0], FALSE);
 
                 break;
 

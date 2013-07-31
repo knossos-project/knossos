@@ -1331,7 +1331,6 @@ struct skeletonState {
     struct cmdList *undoList;
     struct cmdList *redoList;
 
-    int32_t addNodeAndSerialize;
     uint32_t serialSkeletonCounter;
     uint32_t maxUndoSteps;
 };
@@ -1785,9 +1784,9 @@ void setDefaultSkelFileName();
 uint32_t delActiveNode();
 uint32_t delActiveTree();
 
-uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel);
-uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel);
-uint32_t delTree(int32_t targetRevision, int32_t treeID);
+uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, struct segmentListElement *segToDel, int32_t serialize);
+uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement *nodeToDel, int32_t serialize);
+uint32_t delTree(int32_t targetRevision, int32_t treeID, int32_t serialize);
 struct nodeListElement *findNearbyNode(struct treeListElement *nearbyTree, Coordinate searchPosition);
 struct nodeListElement *findNodeInRadius(Coordinate searchPosition);
 
@@ -1802,12 +1801,13 @@ int32_t addNode(struct skeletonState *skeleton,
                 Byte VPType,
                 int32_t inMag,
                 int32_t time,
-                int32_t respectLocks);
-uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID);
+                int32_t respectLocks,
+                int32_t serialize);
+uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int32_t sourceNodeID, int32_t targetNodeID, int32_t serialize);
 
 uint32_t clearSkeleton(int32_t targetRevision, int loadingSkeleton);
 
-uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2);
+uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, int32_t serialize);
 
 void setNodeCoordinates(struct nodeListElement *node, int32_t x, int32_t y, int32_t z);
 int32_t moveToPrevNode();
@@ -1816,7 +1816,7 @@ struct nodeListElement *getNodeWithPrevID(struct nodeListElement *currentNode);
 struct nodeListElement *getNodeWithNextID(struct nodeListElement *currentNode);
 struct nodeListElement *findNodeByNodeID(int32_t nodeID);
 struct nodeListElement *findNodeByCoordinate(Coordinate *position);
-struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color);
+struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32_t sync, int32_t targetRevision, int32_t treeID, color4F color, int32_t serialize);
 int32_t moveToPrevTree();
 int32_t moveToNextTree();
 struct treeListElement* getTreeWithPrevID(struct treeListElement *currentTree);
@@ -1840,10 +1840,10 @@ int32_t delDynArray(struct dynArray *array);
 void *getDynArray(struct dynArray *array, int32_t pos);
 int32_t setDynArray(struct dynArray *array, int32_t pos, void *value);
 struct dynArray *newDynArray(int32_t size);
-int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID);
-uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID);
-uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID);
-uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID);
+int32_t splitConnectedComponent(int32_t targetRevision, int32_t nodeID, int32_t serialize);
+uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char *content, struct nodeListElement *node, int32_t nodeID, int32_t serialize);
+uint32_t delComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t commentNodeID, int32_t serialize);
+uint32_t editComment(int32_t targetRevision, struct commentListElement *currentComment, int32_t nodeID, char *newContent, struct nodeListElement *newNode, int32_t newNodeID, int32_t serialize);
 struct commentListElement *nextComment(char *searchString);
 struct commentListElement *previousComment(char *searchString);
 void setColorFromNode(struct nodeListElement *node, color4F *color);
@@ -1852,8 +1852,8 @@ unsigned int commentContainsSubstr(struct commentListElement *comment, int index
 uint32_t searchInComment(char *searchString, struct commentListElement *comment);
 int32_t unlockPosition();
 int32_t lockPosition(Coordinate lockCoordinate);
-int32_t popBranchNode(int32_t targetRevision);
-int32_t pushBranchNode(struct skeletonState *skeleton, int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID);
+int32_t popBranchNode(int32_t targetRevision, int32_t serialize);
+int32_t pushBranchNode(struct skeletonState *skeleton, int32_t targetRevision, int32_t setBranchNodeFlag, int32_t checkDoubleBranchpoint, struct nodeListElement *branchNode, int32_t branchNodeID, int32_t serialize);
 uint32_t setSkeletonWorkMode(int32_t targetRevision, uint32_t workMode);
 int32_t jumpToActiveNode();
 void UI_popBranchNode();

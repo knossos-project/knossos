@@ -41,6 +41,7 @@ void saveSerializedSkeleton();
 void undo2();
 Byte* serializeSkeleton();
 void deserializeSkeleton();
+void deleteLastSerialSkeleton();
 
 static void refreshUndoRedoBuffers();
 static void flushCmdList(struct cmdList *cmdlist);

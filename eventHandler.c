@@ -466,13 +466,13 @@ static uint32_t handleMouseButtonLeft(SDL_Event event, int32_t VPfound) {
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
-                    delSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
+                    delSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL, TRUE);
                 }
                 else if(findSegmentByNodeIDs(clickedNode, state->skeletonState->activeNode->nodeID)) {
-                    delSegment(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+                    delSegment(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL, TRUE);
                 }
                 else{
-                    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                    addSegment(state->skeletonState, CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, TRUE);
                 }
             }
         }
@@ -497,20 +497,23 @@ static uint32_t handleMouseButtonMiddle(SDL_Event event, int32_t VPfound) {
                     delSegment(CHANGE_MANUAL,
                                state->skeletonState->activeNode->nodeID,
                                clickedNode,
-                               NULL);
+                               NULL,
+                               TRUE);
                 }
                 else if(findSegmentByNodeIDs(clickedNode,
                                              state->skeletonState->activeNode->nodeID)) {
                     delSegment(CHANGE_MANUAL,
                                clickedNode,
                                state->skeletonState->activeNode->nodeID,
-                               NULL);
+                               NULL,
+                               TRUE);
                 }
                 else{
                     addSegment(state->skeletonState,
                                CHANGE_MANUAL,
                                state->skeletonState->activeNode->nodeID,
-                               clickedNode);
+                               clickedNode,
+                               TRUE);
                 }
             }
         }
@@ -562,7 +565,7 @@ static uint32_t handleMouseButtonRight(SDL_Event event, int32_t VPfound) {
             if((newNodeID = UI_addSkeletonNodeAndLinkWithActive(clickedCoordinate,
                                                                 state->viewerState->viewPorts[VPfound].type,
                                                                 FALSE))) {
-                pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID);
+                pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, NULL, newNodeID, TRUE);
             }
             break;
         }
@@ -1313,7 +1316,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         UI_popBranchNode();
         break;
     case SDLK_b:
-        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, TRUE, state->skeletonState->activeNode, 0, TRUE);
         break;
     case SDLK_x:
         if(SDL_GetModState() & KMOD_SHIFT) {
@@ -1370,7 +1373,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         break;
     case SDLK_c:
         treeCol.r = -1.;
-        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol);
+        addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, 0, treeCol, TRUE);
         tempConfig->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
         break;
     case SDLK_v:
@@ -1431,11 +1434,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F1:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment1, "", 1) != 0)){
-                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, TRUE);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment1, "", 1) != 0){
-                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0);
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment1, state->skeletonState->activeNode, 0, TRUE);
                 }
             }
         }
@@ -1444,11 +1447,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F2:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment2, "", 1) != 0)){
-                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, TRUE);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment2, "", 1) != 0){
-                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0);
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment2, state->skeletonState->activeNode, 0, TRUE);
                 }
             }
         }
@@ -1457,11 +1460,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
     case SDLK_F3:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment3, "", 1) != 0)){
-                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, TRUE);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment3, "", 1) != 0){
-                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0);
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment3, state->skeletonState->activeNode, 0, TRUE);
                 }
             }
         }
@@ -1479,11 +1482,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment4, "", 1) != 0)){
-                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0, TRUE);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment4, "", 1) != 0){
-                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0);
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment4, state->skeletonState->activeNode, 0,  TRUE);
                 }
             }
         }
@@ -1492,11 +1495,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
      case SDLK_F5:
         if(state->skeletonState->activeNode){
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->ag->comment5, "", 1) != 0)){
-                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+                addComment(state->skeletonState, CHANGE_MANUAL, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, TRUE);
             }
             else{
                 if (strncmp(state->viewerState->ag->comment5, "", 1) != 0){
-                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0);
+                    editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->ag->comment5, state->skeletonState->activeNode, 0, TRUE);
                 }
             }
         }
