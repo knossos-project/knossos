@@ -4259,6 +4259,12 @@ remote port
         xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength);
         xmlNewProp(currentXMLNode, BAD_CAST"VP_SK_edge", attrString);
     }
+    currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"Undo", NULL);
+    {
+        memset(attrString, '\0', 1024);
+        xmlStrPrintf(attrString, 1024, BAD_CAST"%d", state->skeletonState->maxUndoSteps);
+        xmlNewProp(currentXMLNode, BAD_CAST"maxUndoSteps", attrString);
+    }
     currentXMLNode = xmlNewTextChild(settingsXMLNode, NULL, BAD_CAST"toolsNodesTab", NULL);
     {
         memset(attrString, '\0', 1024);
@@ -4700,6 +4706,11 @@ static void UI_loadSettings() {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"VP_SK_edge");
             if(attribute)
                 state->viewerState->viewPorts[VIEWPORT_SKELETON].edgeLength = atoi((char *)attribute);
+        }
+        else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"Undo")) {
+            attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"maxUndoSteps");
+            if(attribute)
+                state->skeletonState->maxUndoSteps = atoi((char *)attribute);
         }
         else if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"toolsNodesTab")) {
             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"useLastRadiusAsDefault");
