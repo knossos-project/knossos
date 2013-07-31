@@ -44,6 +44,8 @@
 
 #define SLEEP_FACTOR (5)
 
+#define SLEEP_FACTOR (5)
+
 extern struct stateInfo *state;
 
 C_Element *lll_new()
@@ -865,6 +867,7 @@ static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash) {
                 }
 
 
+
                 if(slotListAddElement(state->loaderState->freeDcSlots, delCubePtr) < 1) {
                     LOG("Error adding slot %p (formerly of Dc (%d, %d, %d)) into freeDcSlots.",
                         delCubePtr,
@@ -945,7 +948,6 @@ static uint32_t loadCubes() {
             return FALSE;
         }
 
-
         loadedDc = loadCube(currentCube, currentDcSlot->cube, NULL);
         if(!loadedDc) {
             LOG("Error loading Dc (%d, %d, %d) into slot %p, mag %d dataset.",
@@ -960,7 +962,6 @@ static uint32_t loadCubes() {
             currentCube->coordinate.x,
             currentCube->coordinate.y,
             currentCube->coordinate.z); */
-
 
         /*
          * Load the overlay cube if overlay is activated.
