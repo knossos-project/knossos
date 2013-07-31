@@ -1322,6 +1322,11 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         moveToNextNode();
         break;
+    case SDLK_y:
+        if(SDL_GetModState() & KMOD_CTRL) {
+            undo2();
+        }
+        break;
     case SDLK_z: //change active tree
         if(SDL_GetModState() & KMOD_SHIFT) {
             moveToPrevTree();

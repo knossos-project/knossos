@@ -1125,6 +1125,12 @@ struct segmentListElement {
     struct nodeListElement *target;
 };
 
+struct serialSkeletonListElement {
+    struct serialSkeletonElement *next;
+    struct serialSkeletonElement *previous;
+    Byte* content;
+};
+
 struct skeletonDC {
     struct skeletonDCsegment *firstSkeletonDCsegment;
     struct skeletonDCnode *firstSkeletonDCnode;
@@ -1202,6 +1208,8 @@ struct skeletonState {
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
     struct nodeListElement *activeNode;
+    struct serialSkeletonListElement *firstSerialSkeleton;
+    struct serialSkeletonListElement *lastSerialSkeleton;
 
     struct commentListElement *currentComment;
     char *commentBuffer;
@@ -1322,6 +1330,9 @@ struct skeletonState {
 
     struct cmdList *undoList;
     struct cmdList *redoList;
+
+    int32_t addNodeAndSerialize;
+    uint32_t serialSkeletonCounter;
 };
 
 struct remoteState {

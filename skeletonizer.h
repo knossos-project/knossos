@@ -37,6 +37,11 @@ static int32_t xorInt(int32_t xorMe);
 static char *integerChecksum(int32_t in);
 
 //undo stuff
+void saveSerializedSkeleton();
+void undo2();
+Byte* serializeSkeleton();
+void deserializeSkeleton();
+
 static void refreshUndoRedoBuffers();
 static void flushCmdList(struct cmdList *cmdlist);
 static struct cmdListElement *popCmd(struct cmdList *cmdList);

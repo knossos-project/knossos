@@ -45,6 +45,7 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 #include "sha256.h"
+#include "client.h"
 
 extern struct stateInfo *tempConfig;
 extern struct stateInfo *state;
@@ -131,6 +132,15 @@ uint32_t initSkeletonizer() {
     state->skeletonState->redoList->cmdCount = 0;
     state->skeletonState->redoList->firstCmd = NULL;
     state->skeletonState->redoList->lastCmd = NULL;
+
+    state->skeletonState->firstSerialSkeleton = malloc(sizeof(state->skeletonState->firstSerialSkeleton));
+    state->skeletonState->firstSerialSkeleton->next = NULL;
+    state->skeletonState->firstSerialSkeleton->previous = NULL;
+    state->skeletonState->lastSerialSkeleton = malloc(sizeof(state->skeletonState->lastSerialSkeleton));
+    state->skeletonState->lastSerialSkeleton->next = NULL;
+    state->skeletonState->lastSerialSkeleton->previous = NULL;
+    state->skeletonState->serialSkeletonCounter = 0;
+    state->skeletonState->addNodeAndSerialize = TRUE;
 
     state->skeletonState->saveCnt = 0;
 
@@ -292,6 +302,8 @@ int32_t addNode(struct skeletonState *skeleton,
     struct treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
     int32_t lockDistance = 0;
+
+    if(state->skeletonState->addNodeAndSerialize) saveSerializedSkeleton();
 
     if(lockSkeleton(targetRevision) == FALSE) {
         unlockSkeleton(FALSE);
@@ -1824,7 +1836,7 @@ uint32_t loadSkeleton() {
                 addTreeComment(state->skeletonState, CHANGE_MANUAL, currentTree->treeID, (char *)attribute);
                 free(attribute);
             }
-
+            state->skeletonState->addNodeAndSerialize = FALSE;
             nodesEdgesXMLNode = thingOrParamXMLNode->children;
             while(nodesEdgesXMLNode) {
                 if(xmlStrEqual(nodesEdgesXMLNode->name, (const xmlChar *)"nodes")) {
@@ -1949,6 +1961,7 @@ uint32_t loadSkeleton() {
 
                 nodesEdgesXMLNode = nodesEdgesXMLNode->next;
             }
+            state->skeletonState->addNodeAndSerialize = TRUE;
         }
 
         thingOrParamXMLNode = thingOrParamXMLNode->next;
@@ -4772,3 +4785,623 @@ struct skeletonState *deserializeSkeleton() {
 
     return skeleton;
 }*/
+
+void undo2(){
+    if(state->skeletonState->serialSkeletonCounter > 0){
+        deserializeSkeleton();
+        struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
+        state->skeletonState->lastSerialSkeleton->next = NULL;
+        free(state->skeletonState->lastSerialSkeleton->next);
+        state->skeletonState->lastSerialSkeleton->previous = NULL;
+        free(state->skeletonState->lastSerialSkeleton->previous);
+        state->skeletonState->lastSerialSkeleton = NULL;
+        free(state->skeletonState->lastSerialSkeleton);
+        state->skeletonState->lastSerialSkeleton = newLastSerialSkeleton;
+        state->skeletonState->serialSkeletonCounter--;
+    }
+
+}
+
+void saveSerializedSkeleton(){
+    struct serialSkeletonListElement *serialSkeleton = NULL;
+    serialSkeleton = malloc(sizeof(*serialSkeleton));
+    serialSkeleton->content = serializeSkeleton();
+
+    if (state->skeletonState->serialSkeletonCounter == 0){
+        state->skeletonState->firstSerialSkeleton = serialSkeleton;
+        state->skeletonState->lastSerialSkeleton = serialSkeleton;
+    }
+    else{
+        state->skeletonState->lastSerialSkeleton->next = serialSkeleton;
+        serialSkeleton->previous = state->skeletonState->lastSerialSkeleton;
+        state->skeletonState->lastSerialSkeleton = state->skeletonState->lastSerialSkeleton->next;
+    }
+    state->skeletonState->serialSkeletonCounter++;
+
+}
+
+int32_t getTreeBlockSize(){
+    int32_t treeBlockSize = 0;
+    if(state->skeletonState->firstTree){
+        struct treeListElement *currentTree = state->skeletonState->firstTree;
+        treeBlockSize+=sizeof(currentTree->treeID);
+        treeBlockSize+=sizeof(currentTree->color.r)+sizeof(currentTree->color.b)+sizeof(currentTree->color.g)+sizeof(currentTree->color.a);
+        //Number of nodes, Number of segments
+        treeBlockSize+=2*sizeof(uint32_t);
+        treeBlockSize*=state->skeletonState->treeElements;
+        while(currentTree){
+            treeBlockSize+=sizeof(strlen(currentTree->comment));
+            treeBlockSize+=strlen(currentTree->comment);
+            currentTree = currentTree->next;
+        }
+    }
+    return treeBlockSize;
+}
+
+int32_t getNodeBlockSize(){
+    int32_t nodeBlockSize = 0;
+    struct nodeListElement *currentNode = NULL;
+    nodeBlockSize+=sizeof(currentNode->nodeID);
+    nodeBlockSize+=sizeof(currentNode->radius);
+    nodeBlockSize+=sizeof(currentNode->position.x);
+    nodeBlockSize+=sizeof(currentNode->position.y);
+    nodeBlockSize+=sizeof(currentNode->position.z);
+    nodeBlockSize+=sizeof(currentNode->createdInMag);
+    nodeBlockSize+=sizeof(currentNode->createdInVp);
+    nodeBlockSize+=sizeof(currentNode->timestamp);
+    return nodeBlockSize;
+}
+
+int32_t getSegmentBlockSize(){
+    int32_t segmentBlockSize = 0;
+    struct segmentListElement *currentSegment;
+    segmentBlockSize+=sizeof(currentSegment->source);
+    segmentBlockSize+=sizeof(currentSegment->target);
+    return segmentBlockSize;
+}
+
+int32_t getCommentBlockSize(){
+    int32_t commentBlockSize = 0;
+    //Number of comments
+    commentBlockSize+=sizeof(uint32_t);
+    if(state->skeletonState->currentComment){
+        struct commentListElement *currentComment = state->skeletonState->currentComment;
+         if(state->skeletonState->currentComment != NULL) {
+            do {
+                commentBlockSize+=sizeof(currentComment->node->nodeID);
+                commentBlockSize+=sizeof(strlen(currentComment->content));
+                commentBlockSize+=strlen(currentComment->content);
+                currentComment = currentComment->next;
+            } while (currentComment != state->skeletonState->currentComment);
+        }
+    }
+    return commentBlockSize;
+}
+
+int32_t getVariableBlockSize(){
+    int32_t variablesBlockSize = 0;
+    variablesBlockSize+=sizeof(strlen(state->name));
+    variablesBlockSize+=strlen(state->name);
+    variablesBlockSize+=sizeof(strlen(KVERSION));
+    variablesBlockSize+=strlen(KVERSION);
+    variablesBlockSize+=sizeof(strlen(state->skeletonState->skeletonCreatedInVersion));
+    variablesBlockSize+=strlen(state->skeletonState->skeletonCreatedInVersion);
+    variablesBlockSize+=sizeof(strlen(state->skeletonState->skeletonLastSavedInVersion));
+    variablesBlockSize+=strlen(state->skeletonState->skeletonLastSavedInVersion);
+    variablesBlockSize+=3*sizeof(state->scale.x / state->magnification);
+    variablesBlockSize+=3*sizeof(state->offset.x / state->magnification);
+    variablesBlockSize+=sizeof(state->skeletonState->lockPositions)+sizeof(state->skeletonState->lockRadius)+sizeof(strlen(state->skeletonState->onCommentLock))+strlen(state->skeletonState->onCommentLock);
+    variablesBlockSize+=sizeof(state->skeletonState->displayMode);
+    variablesBlockSize+=sizeof(state->skeletonState->workMode);
+    variablesBlockSize+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    variablesBlockSize+=sizeof(state->skeletonState->activeNode->nodeID);
+    variablesBlockSize+=3*sizeof(state->viewerState->currentPosition.x);
+    variablesBlockSize+=16*sizeof(state->skeletonState->skeletonVpModelView[0]);
+    variablesBlockSize+=2*sizeof(state->skeletonState->translateX);
+    variablesBlockSize+=3*sizeof(state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel)+sizeof(state->skeletonState->zoomLevel);
+    variablesBlockSize+=sizeof(state->skeletonState->idleTime);
+    variablesBlockSize+=sizeof(state->viewerState->ag->activeTreeID);
+    variablesBlockSize+=sizeof(state->skeletonState->treeElements);
+    return variablesBlockSize;
+}
+
+int32_t getBranchPointBlockSize(){
+    int32_t branchPointBlockSize = 0;
+    //Number of branches
+    branchPointBlockSize+=sizeof(int32_t);
+    branchPointBlockSize+=state->skeletonState->branchStack->elementsOnStack* sizeof(PTRSIZEINT);
+    return branchPointBlockSize;
+}
+
+
+Byte* serializeSkeleton() {
+
+    struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
+    PTRSIZEINT currentBranchPointID;
+    Byte *serialSkeleton = NULL;
+    struct treeListElement *currentTree;
+    struct nodeListElement *currentNode;
+    struct segmentListElement *currentSegment;
+    struct commentListElement *currentComment;
+
+    uint32_t i = 0, memPosition = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0;
+    uint32_t variablesBlockSize = getVariableBlockSize();
+    uint32_t treeBlockSize = getTreeBlockSize();
+    uint32_t nodeBlockSize = getNodeBlockSize();
+    uint32_t segmentBlockSize = getSegmentBlockSize();
+    uint32_t commentBlockSize = getCommentBlockSize();
+    uint32_t branchPointBlockSize = getBranchPointBlockSize();
+
+    reverseBranchStack = newStack(2048);
+    tempReverseStack = newStack(2048);
+
+    while((currentBranchPointID =
+        (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
+        pushStack(reverseBranchStack, (void *)currentBranchPointID);
+        pushStack(tempReverseStack, (void *)currentBranchPointID);
+    }
+    while((currentBranchPointID =
+          (PTRSIZEINT)popStack(tempReverseStack))) {
+        currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
+        pushBranchNode(state->skeletonState, CHANGE_MANUAL, FALSE, FALSE, currentNode, 0);
+    }
+
+
+    uint32_t serializedSkeletonSize = variablesBlockSize * sizeof(Byte)
+                                    + treeBlockSize * sizeof(Byte)
+                                    + nodeBlockSize * sizeof(Byte) * state->skeletonState->totalNodeElements
+                                    + segmentBlockSize * sizeof(Byte) * state->skeletonState->totalSegmentElements
+                                    + commentBlockSize * sizeof(Byte)
+                                    + branchPointBlockSize;
+
+    serialSkeleton = malloc(serializedSkeletonSize);
+    memset(serialSkeleton, '\0', serializedSkeletonSize);
+    if(serialSkeleton == NULL){
+        LOG("Out of memory");
+        _Exit(FALSE);
+    }
+
+    //Experiment name
+    integerToBytes(&serialSkeleton[memPosition], strlen(state->name));
+
+    memPosition+=sizeof(strlen(state->name));
+    strncpy(&serialSkeleton[memPosition], state->name, strlen(state->name));
+    memPosition+=strlen(state->name);
+
+    //KNOSSOS version
+    integerToBytes(&serialSkeleton[memPosition], strlen(KVERSION));
+    memPosition+=sizeof(strlen(KVERSION));
+    strncpy(&serialSkeleton[memPosition], KVERSION, strlen(KVERSION));
+    memPosition+=strlen(KVERSION);
+
+    //Created in version
+    integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonCreatedInVersion));
+    memPosition+=sizeof(strlen(state->skeletonState->skeletonCreatedInVersion));
+    strncpy(&serialSkeleton[memPosition], state->skeletonState->skeletonCreatedInVersion, strlen(state->skeletonState->skeletonCreatedInVersion));
+    memPosition+=strlen(state->skeletonState->skeletonCreatedInVersion);
+
+    //Last saved in version
+    integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonLastSavedInVersion));
+    memPosition+=sizeof(strlen(state->skeletonState->skeletonLastSavedInVersion));
+    strncpy(&serialSkeleton[memPosition], state->skeletonState->skeletonLastSavedInVersion, strlen(state->skeletonState->skeletonLastSavedInVersion));
+    memPosition+=strlen(state->skeletonState->skeletonLastSavedInVersion);
+
+    //Scale
+    floatToBytes(&serialSkeleton[memPosition], state->scale.x / state->magnification);
+    memPosition+=sizeof(state->scale.x / state->magnification);
+    floatToBytes(&serialSkeleton[memPosition], state->scale.y / state->magnification);
+    memPosition+=sizeof(state->scale.y / state->magnification);
+    floatToBytes(&serialSkeleton[memPosition], state->scale.z / state->magnification);
+    memPosition+=sizeof(state->scale.z / state->magnification);
+
+    //Offset
+    integerToBytes(&serialSkeleton[memPosition], state->offset.x / state->magnification);
+    memPosition+=sizeof(int32_t);
+    integerToBytes(&serialSkeleton[memPosition], state->offset.y / state->magnification);
+    memPosition+=sizeof(int32_t);
+    integerToBytes(&serialSkeleton[memPosition], state->offset.z / state->magnification);
+    memPosition+=sizeof(int32_t);
+
+    //LockOnComment
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockPositions);
+    memPosition+=sizeof(state->skeletonState->lockPositions);
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockRadius);
+    memPosition+=sizeof(state->skeletonState->lockRadius);
+    integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->onCommentLock));
+    memPosition+=sizeof(strlen(state->skeletonState->onCommentLock));
+    strncpy(&serialSkeleton[memPosition], state->skeletonState->onCommentLock, strlen(state->skeletonState->onCommentLock));
+    memPosition+=strlen(state->skeletonState->onCommentLock);
+
+    //Display Mode, Work Mode, Skeleton Time, Active Node
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->displayMode);
+    memPosition+=sizeof(state->skeletonState->displayMode);
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->workMode);
+    memPosition+=sizeof(state->skeletonState->workMode);
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    memPosition+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    if(state->skeletonState->activeNode){
+        integerToBytes(&serialSkeleton[memPosition], state->skeletonState->activeNode->nodeID);
+    }
+    else{
+        integerToBytes(&serialSkeleton[memPosition], 0);
+    }
+    memPosition+=sizeof(state->skeletonState->activeNode->nodeID);
+
+    //Current Position
+    integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.x);
+    memPosition+=sizeof(state->viewerState->currentPosition.x);
+    integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.y);
+    memPosition+=sizeof(state->viewerState->currentPosition.y);
+    integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.z);
+    memPosition+=sizeof(state->viewerState->currentPosition.z);
+
+    //SkeletonViewport Display
+    for (i = 0; i < 16; i++){
+        floatToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonVpModelView[i]);
+        memPosition+=sizeof(state->skeletonState->skeletonVpModelView[0]);
+    }
+    floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateX);
+    memPosition+=sizeof(state->skeletonState->translateX);
+    floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateY);
+    memPosition+=sizeof(state->skeletonState->translateY);
+
+    //Zoom Levels
+    floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    floatToBytes(&serialSkeleton[memPosition], state->skeletonState->zoomLevel);
+    memPosition+=sizeof(state->skeletonState->zoomLevel);
+
+    //Idle Time, Tree Elements
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->idleTime);
+    memPosition+=sizeof(state->skeletonState->idleTime);
+    integerToBytes(&serialSkeleton[memPosition], state->viewerState->ag->activeTreeID);
+    memPosition+=sizeof(state->viewerState->ag->activeTreeID);
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->treeElements);
+    memPosition+=sizeof(state->skeletonState->treeElements);
+
+    currentTree = state->skeletonState->firstTree;
+    if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
+        return FALSE; //No Skeleton to save
+    }
+
+        while(currentTree) {
+        integerToBytes(&serialSkeleton[memPosition], currentTree->treeID);
+        memPosition+=sizeof(currentTree->treeID);
+        if(currentTree->colorSetManually){
+            floatToBytes(&serialSkeleton[memPosition], currentTree->color.r);
+            memPosition+=sizeof(currentTree->color.r);
+            floatToBytes(&serialSkeleton[memPosition], currentTree->color.b);
+            memPosition+=sizeof(currentTree->color.b);
+            floatToBytes(&serialSkeleton[memPosition], currentTree->color.g);
+            memPosition+=sizeof(currentTree->color.g);
+            floatToBytes(&serialSkeleton[memPosition], currentTree->color.a);
+            memPosition+=sizeof(currentTree->color.a);
+        }
+        else{
+            floatToBytes(&serialSkeleton[memPosition], -1);
+            memPosition+=sizeof(currentTree->color.r);
+            floatToBytes(&serialSkeleton[memPosition], -1);
+            memPosition+=sizeof(currentTree->color.b);
+            floatToBytes(&serialSkeleton[memPosition], -1);
+            memPosition+=sizeof(currentTree->color.g);
+            floatToBytes(&serialSkeleton[memPosition], 1);
+            memPosition+=sizeof(currentTree->color.a);
+        }
+        integerToBytes(&serialSkeleton[memPosition], strlen(currentTree->comment));
+        memPosition+=sizeof(strlen(currentTree->comment));
+        strncpy(&serialSkeleton[memPosition], currentTree->comment, strlen(currentTree->comment));
+        memPosition+=strlen(currentTree->comment);
+
+        memPosition+=sizeof(totalNodeNumber);
+        currentNode = currentTree->firstNode;
+        totalNodeNumber = 0;
+        while(currentNode){
+            integerToBytes(&serialSkeleton[memPosition], currentNode->nodeID);
+            memPosition+=sizeof(currentNode->nodeID);
+            floatToBytes(&serialSkeleton[memPosition], currentNode->radius);
+            memPosition+=sizeof(currentNode->radius);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->position.x);
+            memPosition+=sizeof(currentNode->position.x);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->position.y);
+            memPosition+=sizeof(currentNode->position.y);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->position.z);
+            memPosition+=sizeof(currentNode->position.z);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->createdInVp);
+            memPosition+=sizeof(currentNode->createdInVp);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->createdInMag);
+            memPosition+=sizeof(currentNode->createdInMag);
+            integerToBytes(&serialSkeleton[memPosition], currentNode->timestamp);
+            memPosition+=sizeof(currentNode->timestamp);
+            currentNode = currentNode->next;
+            totalNodeNumber++;
+        }
+        memPosition-=nodeBlockSize * totalNodeNumber + sizeof(totalNodeNumber);
+        integerToBytes(&serialSkeleton[memPosition], totalNodeNumber);
+        memPosition+=nodeBlockSize * totalNodeNumber + sizeof(totalNodeNumber);
+
+    currentTree = currentTree->next;
+    }
+    memPosition+=sizeof(totalSegmentNumber);
+    currentTree = state->skeletonState->firstTree;
+    totalSegmentNumber = 0;
+    while(currentTree){
+        currentNode = currentTree->firstNode;
+        while(currentNode){
+            currentSegment = currentNode->firstSegment;
+            while(currentSegment){
+                if(currentSegment->flag == SEGMENT_FORWARD){
+                    integerToBytes(&serialSkeleton[memPosition], currentSegment->source->nodeID);
+                    memPosition+=sizeof(currentSegment->source->nodeID);
+                    integerToBytes(&serialSkeleton[memPosition], currentSegment->target->nodeID);
+                    memPosition+=sizeof(currentSegment->target->nodeID);
+                    totalSegmentNumber++;
+                }
+                currentSegment = currentSegment->next;
+            }
+            currentNode = currentNode->next;
+        }
+        currentTree = currentTree->next;
+    }
+    memPosition-=totalSegmentNumber*segmentBlockSize+sizeof(totalSegmentNumber);
+    integerToBytes(&serialSkeleton[memPosition], totalSegmentNumber);
+    memPosition+=totalSegmentNumber*segmentBlockSize+sizeof(totalSegmentNumber);
+
+    memPosition+=sizeof(totalCommentNumber);
+    if(state->skeletonState->currentComment){
+        currentComment = state->skeletonState->currentComment;
+        do {
+            integerToBytes(&serialSkeleton[memPosition], currentComment->node->nodeID);
+            memPosition+=sizeof(currentComment->node->nodeID);
+            integerToBytes(&serialSkeleton[memPosition], strlen(currentComment->content));
+            memPosition+=sizeof(strlen(currentComment->content));
+            strncpy(&serialSkeleton[memPosition], currentComment->content, strlen(currentComment->content));
+            memPosition+=strlen(currentComment->content);
+            currentComment = currentComment->next;
+            totalCommentNumber++;
+        } while (currentComment != state->skeletonState->currentComment);
+    }
+    memPosition-=commentBlockSize;
+    integerToBytes(&serialSkeleton[memPosition], totalCommentNumber);
+    memPosition+=commentBlockSize;
+
+    integerToBytes(&serialSkeleton[memPosition], state->skeletonState->branchStack->elementsOnStack);
+    memPosition+=sizeof(state->skeletonState->branchStack->elementsOnStack);
+    while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
+        integerToBytes(&serialSkeleton[memPosition], currentBranchPointID);
+        memPosition+=sizeof(currentBranchPointID);
+
+    }
+    return serialSkeleton;
+}
+
+
+
+void deserializeSkeleton() {
+
+    Byte *serialSkeleton = NULL;
+    uint32_t i = 0, j = 0, totalTreeNumber = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0, totalBranchPointNumber;
+    serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
+    int32_t memPosition = 0, inMag = 0, time = 0, activeNodeID = 0, activeTreeID = 0, neuronID = 0, nodeID = 0, sourceNodeID = 0, targetNodeID = 0;
+    int stringLength = 0;
+    char temp[10000];
+    color4F neuronColor;
+    struct treeListElement *currentTree;
+    struct nodeListElement *currentNode;
+    float radius;
+    Byte VPtype;
+    uint32_t workMode;
+
+    Coordinate offset;
+    floatCoordinate scale;
+    Coordinate *currentCoordinate, loadedPosition;
+
+    SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
+    SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
+    SET_COORDINATE(loadedPosition, 0, 0, 0);
+
+
+    currentCoordinate = malloc(sizeof(Coordinate));
+    if(currentCoordinate == NULL) {
+        LOG("Out of memory.");
+        return FALSE;
+    }
+    memset(currentCoordinate, '\0', sizeof(currentCoordinate));
+
+    clearSkeleton(CHANGE_MANUAL, TRUE);
+
+    stringLength = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(stringLength);
+    //memset(state->name, '\0', sizeof(state->name));
+    //strncpy(state->name, &serialSkeleton[memPosition], stringLength);
+    memPosition+=stringLength;
+
+    stringLength = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(stringLength);
+    memPosition+=stringLength;
+
+    stringLength = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(stringLength);
+    memset(state->skeletonState->skeletonCreatedInVersion, '\0', sizeof(state->skeletonState->skeletonCreatedInVersion));
+    strncpy(state->skeletonState->skeletonCreatedInVersion, &serialSkeleton[memPosition], stringLength);
+    memPosition+=stringLength;
+
+    stringLength = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(stringLength);
+    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
+    strncpy(state->skeletonState->skeletonLastSavedInVersion, &serialSkeleton[memPosition], stringLength);
+    memPosition+=stringLength;
+
+    scale.x = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->scale.x / state->magnification);
+    scale.y = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->scale.y / state->magnification);
+    scale.z = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->scale.z / state->magnification);
+
+    offset.x = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->offset.x / state->magnification);
+    offset.y = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->offset.x / state->magnification);
+    offset.z = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->offset.x / state->magnification);
+
+    state->skeletonState->lockPositions = bytesToInt(&serialSkeleton[memPosition]);
+    state->viewerState->ag->commentLockCheckbox->state = state->skeletonState->lockPositions;
+    memPosition+=sizeof(state->skeletonState->lockPositions);
+    state->skeletonState->lockRadius = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->lockRadius);
+
+    stringLength = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(stringLength);
+    memset(state->skeletonState->onCommentLock, '\0', sizeof(state->skeletonState->onCommentLock));
+    strncpy(state->skeletonState->onCommentLock, &serialSkeleton[memPosition], stringLength);
+    memPosition+=stringLength;
+
+    //state->skeletonState->displayMode = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->displayMode);
+    workMode = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->workMode);
+    memPosition+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    activeNodeID = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->activeNode->nodeID);
+
+    loadedPosition.x = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->currentPosition.x);
+    loadedPosition.y = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->currentPosition.y);
+    loadedPosition.z = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->currentPosition.z);
+
+     for (i = 0; i < 16; i++){
+//        state->skeletonState->skeletonVpModelView[i] = bytesToFloat(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(state->skeletonState->skeletonVpModelView[i]);
+    }
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+
+//    state->skeletonState->translateX = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->translateX);
+    //state->skeletonState->translateY = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->translateY);
+
+    state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    state->skeletonState->zoomLevel = bytesToFloat(&serialSkeleton[memPosition]);
+    memPosition+=+sizeof(state->skeletonState->zoomLevel);
+
+    memPosition+=sizeof(state->skeletonState->idleTime);
+
+
+    activeTreeID = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(activeTreeID);
+
+    totalTreeNumber = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(state->skeletonState->treeElements);
+
+    for (i = 0; i < totalTreeNumber; i++){
+        neuronID = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(neuronID);
+
+        neuronColor.r = bytesToFloat(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(neuronColor.r);
+        neuronColor.b = bytesToFloat(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(neuronColor.b);
+        neuronColor.g = bytesToFloat(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(neuronColor.g);
+        neuronColor.a = bytesToFloat(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(neuronColor.a);
+
+        currentTree = addTreeListElement(state->skeletonState, TRUE, CHANGE_MANUAL, neuronID, neuronColor);
+        setActiveTreeByID(neuronID);
+
+        stringLength = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(stringLength);
+        memset(temp, '\0', sizeof(temp));
+        strncpy(temp, &serialSkeleton[memPosition], stringLength);
+        memPosition+=stringLength;
+
+        totalNodeNumber = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(int32_t);
+
+        for (j = 0; j < totalNodeNumber; j++){
+            nodeID = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(nodeID);
+
+            radius = bytesToFloat(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(radius);
+
+            currentCoordinate->x = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(currentCoordinate->x);
+            currentCoordinate->y = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(currentCoordinate->y);
+            currentCoordinate->z = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(currentCoordinate->z);
+
+            VPtype = serialSkeleton[memPosition];
+            memPosition+=sizeof(VPtype);
+            inMag = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(inMag);
+            time = bytesToInt(&serialSkeleton[memPosition]);
+            memPosition+=sizeof(time);
+
+            state->skeletonState->addNodeAndSerialize = FALSE;
+            addNode(state->skeletonState, CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, FALSE);
+            state->skeletonState->addNodeAndSerialize = TRUE;
+        }
+    }
+
+    totalSegmentNumber = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(totalSegmentNumber);
+    for(i = 0; i < totalSegmentNumber; i++){
+        sourceNodeID = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(sourceNodeID);
+        targetNodeID = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(targetNodeID);
+        addSegment(state->skeletonState, CHANGE_MANUAL, sourceNodeID, targetNodeID);
+    }
+    totalCommentNumber = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(totalCommentNumber);
+    for(i = 0; i < totalCommentNumber; i++){
+        nodeID = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(nodeID);
+        currentNode = findNodeByNodeID(nodeID);
+
+        stringLength = bytesToInt(&serialSkeleton[memPosition]);
+        memPosition+=sizeof(stringLength);
+        memset(temp, '\0', sizeof(temp));
+        strncpy(temp, &serialSkeleton[memPosition], stringLength);
+        memPosition+=stringLength;
+
+        if(temp && currentNode) {
+            addComment(state->skeletonState, CHANGE_MANUAL, (char *)temp, currentNode, 0);
+        }
+    }
+
+    totalBranchPointNumber = bytesToInt(&serialSkeleton[memPosition]);
+    memPosition+=sizeof(totalBranchPointNumber);
+    for (i = 0; i < totalBranchPointNumber; i++){
+        nodeID = bytesToInt(&serialSkeleton[memPosition]);
+        currentNode = findNodeByNodeID(nodeID);
+        if(currentNode){
+            pushBranchNode(state->skeletonState, CHANGE_MANUAL, TRUE, FALSE, currentNode, 0);
+        }
+        memPosition+=sizeof(nodeID);
+    }
+
+    if(activeNodeID!=0){
+        setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
+    }
+
+    SET_COORDINATE(tempConfig->remoteState->recenteringPosition, loadedPosition.x, loadedPosition.y, loadedPosition.z);
+    sendRemoteSignal();
+
+    tempConfig->skeletonState->workMode = workMode;
+}

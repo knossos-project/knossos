@@ -25,7 +25,10 @@
 static int32_t clientRun();
 static int32_t connectToServer();
 static int32_t closeConnection();
-static float bytesToFloat(Byte *source);
+float bytesToFloat(Byte *source);
+int32_t bytesToInt(Byte *source);
+int32_t integerToBytes(Byte *dest, int32_t source);
+int32_t floatToBytes(Byte *dest, float source);
 static uint32_t parseInBuffer(struct IOBuffer *buffer, struct skeletonState *skeleton);
 static uint32_t flushOutBuffer();
 static int32_t cleanUpClient();
