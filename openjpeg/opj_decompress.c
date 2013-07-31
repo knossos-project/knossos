@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opj_apps_config.h"
-#include "..\knossos-global.h"
+#include "../knossos-global.h"
 
 #include <stdio.h>
 #include <string.h>
