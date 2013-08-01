@@ -147,7 +147,7 @@ uint Client::parseInBuffer() {
                     Client::transNetCoordinate(d[0], d[1], d[2], d[3]);
 
                 if(pPosition == NULL) {
-                    LOG("Unable to transform coordinate.");
+                    LOG("Unable to transform coordinate.")
                     break;
                 }
 
@@ -208,7 +208,7 @@ uint Client::parseInBuffer() {
                     state->clientState->saveMaster = true;
                     LOG("Instance id %d (%s) now autosaving.",
                         state->clientState->myId,
-                        state->name);
+                        state->name)
                 }
                 else {
                     state->clientState->saveMaster = false;
@@ -239,7 +239,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                LOG("Received KIKI_WITHDRAW message for id %d", d[0]);
+                LOG("Received KIKI_WITHDRAW message for id %d", d[0])
 
                 Client::delPeer(d[0]);
 
@@ -316,7 +316,7 @@ uint Client::parseInBuffer() {
 
                 pPosition = (Coordinate*)malloc(sizeof(Coordinate));
                 if(pPosition == NULL) {
-                    LOG("Out of memory.");
+                    LOG("Out of memory.")
                     goto critical;
                 }
 
@@ -351,7 +351,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                LOG("DELNODE: Received revision %d", d[0]);
+                LOG("DELNODE: Received revision %d", d[0])
 
                 emit delNodeSignal(d[0], d[1], NULL);
 
@@ -428,7 +428,7 @@ uint Client::parseInBuffer() {
 
                 Skeletonizer::splitConnectedComponent(d[0], d[1]);
 
-                LOG("Called splitcc with %d %d", d[0], d[1]);
+                LOG("Called splitcc with %d %d", d[0], d[1])
 
                 break;
 
@@ -499,7 +499,7 @@ uint Client::parseInBuffer() {
                  * connection should be terminated in this case.
                  */
 
-                LOG("Critical error.");
+                LOG("Critical error.")
                 messageLen = 5;
         }
 
@@ -516,7 +516,7 @@ loopExit:
     return true;
 
 critical:
-    LOG("Error parsing remote input.");
+    LOG("Error parsing remote input.")
     Client::skeletonSyncBroken();
     return false;
 }
@@ -639,7 +639,7 @@ bool Client::clientRun() {
                 readLen = state->clientState->remoteSocket->read(msg, 8192);
                 message = (Byte *) msg;
                 if(readLen == 0) {
-                    LOG("Remote server closed the connection.");
+                    LOG("Remote server closed the connection.")
                     break;
                 }
 
@@ -729,7 +729,7 @@ bool Client::broadcastPosition(uint x, uint y, uint z) {
 
     data = (Byte*)malloc(128 * sizeof(Byte));
     if(data == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(data, '\0', 128 * sizeof(Byte));
@@ -752,7 +752,7 @@ bool Client::broadcastPosition(uint x, uint y, uint z) {
 }
 
 bool Client::skeletonSyncBroken() {
-    LOG("Skeletons have gone out of sync, stopping synchronization.");
+    LOG("Skeletons have gone out of sync, stopping synchronization.")
     state->clientState->synchronizeSkeleton = false;
     return true;
 }
@@ -810,18 +810,18 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, 
             } while(newSize <= minBufferSize && newSize <= MAX_BUFFER_SIZE);
 
             if(newSize >= MAX_BUFFER_SIZE) {
-                LOG("Reached MAX_BUFFER_SIZE while trying to enlarge IO buffer.");
+                LOG("Reached MAX_BUFFER_SIZE while trying to enlarge IO buffer.")
                 if(mutex != NULL) {
                     mutex->unlock();
                 }
                 return false;
             }
 
-            LOG("Enlarging IO buffer %p to %d", iobuffer, newSize);
+            LOG("Enlarging IO buffer %p to %d", iobuffer, newSize)
 
             newDataPtr = (Byte*)realloc(iobuffer->data, newSize);
             if(newDataPtr == NULL) {
-                LOG("Unable to modify buffer size (realloc failed).");
+                LOG("Unable to modify buffer size (realloc failed).")
                 if(mutex != NULL) {
                     mutex->unlock();
                 }
@@ -835,7 +835,7 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, 
             /* Nothing we can do here, this probably indicates a network error
              * so the false return value from this function should be used to
              * close the connection */
-            LOG("Maximum buffer size for %p reached. This probably indicates a network error.", iobuffer);
+            LOG("Maximum buffer size for %p reached. This probably indicates a network error.", iobuffer)
             if(mutex != NULL) {
                 mutex->unlock();
             }
@@ -1029,7 +1029,7 @@ bool Client::syncMessage(const char *fmt, ...) {
 lenoverflow:
 
     va_end(ap);
-    LOG("Length overflow in client.c, syncMessage(). Tell the programmers to find the bug or increase PACKLEN.");
+    LOG("Length overflow in client.c, syncMessage(). Tell the programmers to find the bug or increase PACKLEN.")
     return false;
 }
 
@@ -1058,7 +1058,7 @@ int Client::parseInBufferByFmt(int len, const char *fmt,
     }
     else if(len == 0) {
         /* This should never happen but would lead to an infinite loop. */
-        LOG("Invalid message length from peer.");
+        LOG("Invalid message length from peer.")
         return FAIL;
     }
 
@@ -1108,7 +1108,7 @@ int Client::parseInBufferByFmt(int len, const char *fmt,
     return len;
 
 overflow:
-    LOG("Overflow in client.c, parseInBufferByFmt(). Tell the developers to fix the bug.");
+    LOG("Overflow in client.c, parseInBufferByFmt(). Tell the developers to fix the bug.")
     return FAIL;
 }
 
@@ -1132,7 +1132,7 @@ Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {
     memset(outCoordinate, '\0', sizeof(Coordinate));
 
     if(peer == NULL) {
-        LOG("Peer with id %d is not in peers list. That's a KIKI protocol violation and probably indicates a more serious bug somewhere else.", id);
+        LOG("Peer with id %d is not in peers list. That's a KIKI protocol violation and probably indicates a more serious bug somewhere else.", id)
         outCoordinate->x = x;
         outCoordinate->y = y;
         outCoordinate->z = z;
@@ -1146,10 +1146,10 @@ Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {
 
 
 void Client::socketConnectionSucceeded() {
-    LOG("Socket connection established");
+    LOG("Socket connection established")
 }
 
 void Client::socketConnectionFailed(QAbstractSocket::SocketError error) {
-    LOG(state->clientState->remoteSocket->errorString().toStdString().c_str());
+    LOG(state->clientState->remoteSocket->errorString().toStdString().c_str())
 
 }

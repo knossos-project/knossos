@@ -71,7 +71,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     /*@todo
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        LOG("Unable to create skeleton hash-table.");
+        LOG("Unable to create skeleton hash-table.")
         return false;
     }*/
 
@@ -176,7 +176,7 @@ nodeListElement *Skeletonizer::addNodeListElement(
 
     newElement = (nodeListElement*) malloc(sizeof(struct nodeListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new nodeListElement.");
+        LOG("Out of memory while trying to allocate memory for a new nodeListElement.")
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct nodeListElement));
@@ -222,7 +222,7 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
 
     newElement = (segmentListElement*) malloc(sizeof(struct segmentListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new segmentListElement.");
+        LOG("Out of memory while trying to allocate memory for a new segmentListElement.")
         return NULL;
     }
     memset(newElement, '\0', sizeof(struct segmentListElement));
@@ -337,7 +337,7 @@ bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
                                                     Coordinate::Px2DcCoord(curMagSourcePos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
-        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
+        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
         return false;
     }
     currentNewSkeletonDCsegment = (skeletonDCsegment*)malloc(sizeof (skeletonDCsegment));
@@ -398,7 +398,7 @@ bool Skeletonizer::delNodeFromSkeletonStruct(nodeListElement *node) {
                                              Coordinate::Px2DcCoord(curMagPos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
-        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
+        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
         return false;
     }
 
@@ -465,7 +465,7 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
                                                         Coordinate::Px2DcCoord(curMagSourcePos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
-        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
+        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
         return false;
     }
 
@@ -501,7 +501,7 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
                                                      Coordinate::Px2DcCoord(currentSegVectorPoint));
             if(currentSkeletonDC == HT_FAILURE) {
                 //A skeleton DC is missing
-                LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.");
+                LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
                 return false;
             }
 
@@ -570,7 +570,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                           -1,
                           true);
     if(!addedNodeID) {
-        LOG("Error: Could not add new node!");
+        LOG("Error: Could not add new node!")
         return false;
     }
 
@@ -595,7 +595,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     int targetNodeID;
 
     if(!state->skeletonState->activeNode) {
-        LOG("Please create a node before trying to link nodes.");
+        LOG("Please create a node before trying to link nodes.")
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
         return false;
     }
@@ -611,7 +611,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
                            -1,
                            true);
     if(!targetNodeID) {
-        LOG("Could not add new node while trying to add node and link with active node!");
+        LOG("Could not add new node while trying to add node and link with active node!")
         return false;
     }
 
@@ -667,7 +667,7 @@ bool Skeletonizer::previousCommentlessNode() {
     struct nodeListElement *currNode;
     currNode = state->skeletonState->activeNode->previous;
     if(currNode && (!currNode->comment)) {
-        LOG("yes");
+        LOG("yes")
         setActiveNode(CHANGE_MANUAL,
                           currNode,
                           0);
@@ -1083,7 +1083,7 @@ bool Skeletonizer::loadSkeleton() {
 
     QTime bench;
     bench.start();
-    LOG("Starting to load skeleton...");
+    LOG("Starting to load skeleton...")
 
      //  This function should always be called through UI_loadSkeleton for
      //  proper error and file name display to the user.
@@ -1103,7 +1103,7 @@ bool Skeletonizer::loadSkeleton() {
 
     currentCoordinate = (Coordinate*) malloc(sizeof(Coordinate));
     if(currentCoordinate == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         return false;
     }
     memset(currentCoordinate, '\0', sizeof(currentCoordinate));
@@ -1111,13 +1111,13 @@ bool Skeletonizer::loadSkeleton() {
     xmlDocument = xmlParseFile(state->skeletonState->skeletonFile);
 
     if(xmlDocument == NULL) {
-        LOG("Document not parsed successfully.");
+        LOG("Document not parsed successfully.")
         return false;
     }
 
     thingsXMLNode = xmlDocGetRootElement(xmlDocument);
     if(thingsXMLNode == NULL) {
-        LOG("Empty document.");
+        LOG("Empty document.")
         xmlFreeDoc(xmlDocument);
         return false;
     }
@@ -1125,7 +1125,7 @@ bool Skeletonizer::loadSkeleton() {
     if(xmlStrEqual(thingsXMLNode->name, (const xmlChar *)"things") == false) {
         LOG("Root element %s in file %s unrecognized. Not loading.",
             thingsXMLNode->name,
-            state->skeletonState->skeletonFile);
+            state->skeletonState->skeletonFile)
         return false;
     }
 
@@ -1145,7 +1145,7 @@ bool Skeletonizer::loadSkeleton() {
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
-        LOG("Document parsed successfully.");
+        LOG("Document parsed successfully.")
         bench.restart();
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
             currentXMLNode = thingOrParamXMLNode->children;
@@ -1418,7 +1418,7 @@ bool Skeletonizer::loadSkeleton() {
                             else
                                 nodeID = 0;
 
-                            LOG("Adding node: %d", nodeID);
+                            LOG("Adding node: %d", nodeID)
                             attribute = xmlGetProp(currentXMLNode, (const xmlChar *)"radius");
                             if(attribute) {
                                 radius = (float)strtod((char *)attribute, (char **)NULL);
@@ -1625,7 +1625,7 @@ bool Skeletonizer::delActiveTree() {
         }
     }
     else {
-       LOG("No active tree available.");
+       LOG("No active tree available.")
        return false;
     }
 
@@ -1653,7 +1653,7 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
     }
 
     if(!segToDel) {
-        LOG("Cannot delete segment, no segment with corresponding node IDs available!");
+        LOG("Cannot delete segment, no segment with corresponding node IDs available!")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -1666,7 +1666,7 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
     }
 
     if(!segToDel) {
-        LOG("Cannot delete segment, no segment with corresponding node IDs available!");
+        LOG("Cannot delete segment, no segment with corresponding node IDs available!")
         Knossos::unlockSkeleton(false);
         return false;
 
@@ -1745,7 +1745,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     nodeID = nodeToDel->nodeID;
 
     if(!nodeToDel) {
-        LOG("The given node %d doesn't exist. Unable to delete it.", nodeID);
+        LOG("The given node %d doesn't exist. Unable to delete it.", nodeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -1842,7 +1842,7 @@ bool Skeletonizer::delTree(int targetRevision, int treeID) {
 
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
-        LOG("There exists no tree with ID %d. Unable to delete it.", treeID);
+        LOG("There exists no tree with ID %d. Unable to delete it.", treeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -1988,7 +1988,7 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
 
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
-        LOG("There exists no tree with ID %d!", treeID);
+        LOG("There exists no tree with ID %d!", treeID)
         return false;
     }
 
@@ -2022,7 +2022,7 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
-            LOG("No node with id %d available.", nodeID);
+            LOG("No node with id %d available.", nodeID)
             Knossos::unlockSkeleton(false);
             return false;
         }
@@ -2122,7 +2122,7 @@ int Skeletonizer::addNode(int targetRevision,
 
             lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
-                LOG("Node is too far away from lock point (%d), not adding.", lockDistance);
+                LOG("Node is too far away from lock point (%d), not adding.", lockDistance)
                 Knossos::unlockSkeleton(false);
                 return false;
             }
@@ -2134,14 +2134,14 @@ int Skeletonizer::addNode(int targetRevision,
     }
 
     if(tempNode) {
-        LOG("Node with ID %d already exists, no node added.", nodeID);
+        LOG("Node with ID %d already exists, no node added.", nodeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
     tempTree = findTreeByTreeID(treeID);
 
     if(!tempTree) {
-        LOG("There exists no tree with the provided ID %d!", treeID);
+        LOG("There exists no tree with the provided ID %d!", treeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2230,7 +2230,7 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
     }
 
     if(findSegmentByNodeIDs(sourceNodeID, targetNodeID)) {
-        LOG("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID);
+        LOG("Segment between nodes %d and %d exists already.", sourceNodeID, targetNodeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2240,13 +2240,13 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
     targetNode = findNodeByNodeID(targetNodeID);
 
     if(!(sourceNode) || !(targetNode)) {
-        LOG("Could not link the nodes, because at least one is missing!");
+        LOG("Could not link the nodes, because at least one is missing!")
         Knossos::unlockSkeleton(false);
         return false;
     }
 
     if(sourceNode == targetNode) {
-        LOG("Cannot link node with itself!");
+        LOG("Cannot link node with itself!")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2334,7 +2334,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
     if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        LOG("Unable to create skeleton hash-table.");
+        LOG("Unable to create skeleton hash-table.")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2383,7 +2383,7 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2) {
     nodeListElement *firstNode, *lastNode;
 
     if(treeID1 == treeID2) {
-        LOG("Could not merge trees. Provided IDs are the same!");
+        LOG("Could not merge trees. Provided IDs are the same!")
         return false;
     }
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -2395,7 +2395,7 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2) {
     tree2 = findTreeByTreeID(treeID2);
 
     if(!(tree1) || !(tree2)) {
-        LOG("Could not merge trees, provided IDs are not valid!");
+        LOG("Could not merge trees, provided IDs are not valid!")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2590,7 +2590,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
 
     if(sync != false) {
         if(Knossos::lockSkeleton(targetRevision) == false) {
-            LOG("addtreelistelement unable to lock.");
+            LOG("addtreelistelement unable to lock.")
             Knossos::unlockSkeleton(false);
             return false;
         }
@@ -2599,14 +2599,14 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
 
     newElement = findTreeByTreeID(treeID);
     if(newElement) {
-        LOG("Tree with ID %d already exists!", treeID);
+        LOG("Tree with ID %d already exists!", treeID)
         Knossos::unlockSkeleton(true);
         return newElement;
     }
 
     newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
     if(newElement == NULL) {
-        LOG("Out of memory while trying to allocate memory for a new treeListElement.");
+        LOG("Out of memory while trying to allocate memory for a new treeListElement.")
         Knossos::unlockSkeleton(false);
         return NULL;
     }
@@ -2655,7 +2655,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     state->skeletonState->firstTree = newElement;
 
     state->skeletonState->activeTree = newElement;
-    LOG("Added new tree with ID: %d.", newElement->treeID);
+    LOG("Added new tree with ID: %d.", newElement->treeID)
 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
@@ -2737,7 +2737,7 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
     treeListElement *tree = NULL;
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
-        LOG("addTreeComment unable to lock.");
+        LOG("addTreeComment unable to lock.")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2825,7 +2825,7 @@ bool Skeletonizer::editNode(int targetRevision,
         node = findNodeByNodeID(nodeID);
     }
     if(!node) {
-        LOG("Cannot edit: node id %d invalid.", nodeID);
+        LOG("Cannot edit: node id %d invalid.", nodeID)
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -2905,14 +2905,14 @@ void* Skeletonizer::popStack(stack *stack) {
 
 bool Skeletonizer::pushStack(stack *stack, void *element) {
     if(element == NULL) {
-        LOG("Stack can't hold NULL.");
+        LOG("Stack can't hold NULL.")
         return false;
     }
 
     if(stack->stackpointer + 1 == stack->size) {
         stack->elements = (void**)realloc(stack->elements, stack->size * 2 * sizeof(void *));
         if(stack->elements == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             _Exit(false);
         }
         stack->size = stack->size * 2;
@@ -2930,20 +2930,20 @@ stack* Skeletonizer::newStack(int size) {
     struct stack *newStack = NULL;
 
     if(size <= 0) {
-        LOG("That doesn't really make any sense, right? Cannot create stack with size <= 0.");
+        LOG("That doesn't really make any sense, right? Cannot create stack with size <= 0.")
         return NULL;
     }
 
     newStack = (stack *)malloc(sizeof(struct stack));
     if(newStack == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(newStack, '\0', sizeof(struct stack));
 
     newStack->elements = (void **)malloc(sizeof(void *) * size);
     if(newStack->elements == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(newStack->elements, '\0', sizeof(void *) * size);
@@ -2982,7 +2982,7 @@ bool Skeletonizer::setDynArray(dynArray *array, int pos, void *value) {
         array->elements = (void**)realloc(array->elements, (array->end + 1 +
                                   array->firstSize) * sizeof(void *));
         if(array->elements == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             _Exit(false);
         }
         memset(&(array->elements[array->end + 1]), '\0', array->firstSize);
@@ -2999,14 +2999,14 @@ dynArray* Skeletonizer::newDynArray(int size) {
 
     newArray = (dynArray*)malloc(sizeof(struct dynArray));
     if(newArray == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(newArray, '\0', sizeof(struct dynArray));
 
     newArray->elements = (void**)malloc(sizeof(void *) * size);
     if(newArray->elements == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(newArray->elements, '\0', sizeof(void *) * size);
@@ -3084,7 +3084,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID) {
     visitedLeft = (Byte*)malloc(16384 * sizeof(Byte));
 
     if(visitedRight == NULL || visitedLeft == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
 
@@ -3111,7 +3111,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID) {
         while(index > *visitedLen) {
             *visited = (Byte*)realloc(*visited, (*visitedLen + 16384) * sizeof(Byte));
             if(*visited == NULL) {
-                LOG("Out of memory.");
+                LOG("Out of memory.")
                 _Exit(false);
             }
 
@@ -3219,7 +3219,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID) {
         state->skeletonState->skeletonChanged = true;
     }
     else {
-        LOG("The connected component is equal to the entire tree, not splitting.");
+        LOG("The connected component is equal to the entire tree, not splitting.")
     }
 
     delStack(remainingNodes);
@@ -3233,7 +3233,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID) {
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("brd", KIKI_SPLIT_CC, nodeID)) {
-            LOG("broken in splitcc.");
+            LOG("broken in splitcc.")
             Client::skeletonSyncBroken();
         }
     }
@@ -3334,7 +3334,7 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
     }
 
     if(!currentComment) {
-        LOG("Please provide a valid comment element to delete!");
+        LOG("Please provide a valid comment element to delete!")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -3396,7 +3396,7 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
         currentComment = findNodeByNodeID(nodeID)->comment;
     }
     if(!currentComment) {
-        LOG("Please provide a valid comment element to edit!");
+        LOG("Please provide a valid comment element to edit!")
         Knossos::unlockSkeleton(false);
         return false;
     }
@@ -3565,7 +3565,7 @@ bool Skeletonizer::searchInComment(char *searchString, commentListElement *comme
 
 bool Skeletonizer::unlockPosition() {
     if(state->skeletonState->positionLocked) {
-        LOG("Spatial locking disabled.");
+        LOG("Spatial locking disabled.")
     }
     state->skeletonState->positionLocked = false;
 
@@ -3573,7 +3573,7 @@ bool Skeletonizer::unlockPosition() {
 }
 
 bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
-    LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
+    LOG("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z)
     state->skeletonState->positionLocked = true;
     SET_COORDINATE(state->skeletonState->lockedPosition,
                    lockCoordinate.x,
@@ -3617,9 +3617,9 @@ bool Skeletonizer::popBranchNode(int targetRevision) {
 
     if(branchNode && branchNode->isBranchNode) {
 #if QT_POINTER_SIZE == 8
-        LOG("Branch point (node ID %"PRId64") deleted.", branchNodeID);
+        LOG("Branch point (node ID %"PRId64") deleted.", branchNodeID)
 #else
-        LOG("Branch point (node ID %d) deleted.", branchNodeID);
+        LOG("Branch point (node ID %d) deleted.", branchNodeID)
 #endif
 
 
@@ -3672,17 +3672,17 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
                 branchNode->isBranchNode = true;
             }
             state->skeletonState->skeletonChanged = true;
-            LOG("Branch point (node ID %d) added.", branchNode->nodeID);
+            LOG("Branch point (node ID %d) added.", branchNode->nodeID)
 
         }
         else {
-            LOG("Active node is already a branch point");
+            LOG("Active node is already a branch point")
             Knossos::unlockSkeleton(true);
             return true;
         }
     }
     else {
-        LOG("Make a node active before adding branch points.");
+        LOG("Make a node active before adding branch points.")
         Knossos::unlockSkeleton(true);
         return true;
     }
@@ -4090,7 +4090,7 @@ bool Skeletonizer::moveToPrevTree() {
         }
         return true;
     }
-    LOG("Reached first tree.");
+    LOG("Reached first tree.")
     */
     return false;
 }
@@ -4120,7 +4120,7 @@ bool Skeletonizer::moveToNextTree() {
         }
         return true;
     }
-    LOG("Reached last tree.");
+    LOG("Reached last tree.")
     */
     return false;
 
@@ -4263,7 +4263,7 @@ void Skeletonizer::undo() {
     case CMD_DELCOMMENT:
         break;
     default:
-        LOG("no matching command");
+        LOG("no matching command")
     }
 }
 
@@ -4315,7 +4315,7 @@ void Skeletonizer::redo() {
     case CMD_DELCOMMENT:
         break;
     default:
-        LOG("no matching command");
+        LOG("no matching command")
     }
     //remove cmd from redo-list and add to undo-list
     state->skeletonState->redoList->lastCmd = cmdEl->prev;
@@ -4437,7 +4437,7 @@ void Skeletonizer::delCmdListElement(struct cmdListElement *cmdEl) {
     case CMD_DELCOMMENT:
         break;
     default:
-        LOG("no matching command");
+        LOG("no matching command")
     }
 }
 

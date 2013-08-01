@@ -26,7 +26,7 @@
  */
 
 #include <QDialog>
-#include "stdarg.h"
+#include <stdarg.h>
 
 class QPlainTextEdit;
 class Console : public QDialog

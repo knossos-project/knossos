@@ -47,6 +47,7 @@ struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
 
+
 //static uint isPathString(char *string);
 //static uint printUsage();
 
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
     state->protectOutBuffer = new QMutex();
 
     if(Knossos::tempConfigDefaults() != true) {
-        LOG("Error loading default parameters.");
+        LOG("Error loading default parameters.")
         _Exit(false);
     }
 
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
 
     if(argc >= 2) {
         if(Knossos::configFromCli(argc, argv) == false) {
-            LOG("Error reading configuration from command line.");
+            LOG("Error reading configuration from command line.")
         }
     }
 
@@ -163,7 +164,7 @@ int main(int argc, char *argv[])
     tempConfig->boergens = 0;
 
     if(Knossos::initStates() != true) {
-       LOG("Error during initialization of the state struct.");
+       LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
 
@@ -379,7 +380,7 @@ int Knossos::initStates() {
    }
 
    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-       LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+       LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
        return false;
    }
 
@@ -403,14 +404,14 @@ int Knossos::initStates() {
 
    state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
    if(state->clientState->inBuffer == NULL) {
-       LOG("Out of memory.");
+       LOG("Out of memory.")
        return false;
    }
    memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
 
    state->clientState->inBuffer->data = (Byte *)malloc(128);
    if(state->clientState->inBuffer->data == NULL) {
-       LOG("Out of memory.");
+       LOG("Out of memory.")
        return false;
    }
    memset(state->clientState->inBuffer->data, '\0', 128);
@@ -420,14 +421,14 @@ int Knossos::initStates() {
 
    state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
    if(state->clientState->outBuffer == NULL) {
-       LOG("Out of memory.");
+       LOG("Out of memory.")
        return false;
    }
    memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
 
    state->clientState->outBuffer->data = (Byte *) malloc(128);
    if(state->clientState->outBuffer->data == NULL) {
-       LOG("Out of memory.");
+       LOG("Out of memory.")
        return false;
    }
    memset(state->clientState->outBuffer->data, '\0', 128);
@@ -823,7 +824,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {
             state->highestAvailableMag = NUM_MAG_DATASETS;
-            LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS);
+            LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS)
         }
 
         state->magnification = state->lowestAvailableMag;
@@ -971,7 +972,7 @@ bool Knossos::tempConfigDefaults() {
 
     tempConfig->viewerState->vpConfigs = (vpConfig *) malloc(tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
     if(tempConfig->viewerState->vpConfigs == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         return false;
     }
 
@@ -1055,14 +1056,14 @@ bool Knossos::readDataConfAndLocalConf() {
 
     if(length >= 1010) {
         // We need to append "/knossos.conf"
-        LOG("Data path too long.");
+        LOG("Data path too long.")
         _Exit(false);
     }
 
     strcat(configFile, tempConfig->path);
     strcat(configFile, "/knossos.conf");
 
-    LOG("Trying to read %s.", configFile);
+    LOG("Trying to read %s.", configFile)
 
     readConfigFile(configFile);
 
@@ -1112,7 +1113,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
              equals++;
              rval = (char *)malloc((strlen(equals) + 1) * sizeof(char));
              if(rval == NULL) {
-                 LOG("Out of memory.");
+                 LOG("Out of memory.")
                  _Exit(false);
              }
              memset(rval, '\0', strlen(equals) + 1);
@@ -1124,7 +1125,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
      }
      lval = (char *) malloc((llen + 1) * sizeof(char));
      if(lval == NULL) {
-         LOG("Out of memory.");
+         LOG("Out of memory.")
          _Exit(false);
      }
      memset(lval, '\0', llen + 1);
@@ -1191,7 +1192,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
 #ifdef LINUX
 void Knossos::catchSegfault(int signum) {
-    LOG("Oops, you found a bug. Tell the developers!");
+    LOG("Oops, you found a bug. Tell the developers!")
     fflush(stdout);
     fflush(stderr);
 

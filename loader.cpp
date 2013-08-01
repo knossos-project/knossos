@@ -156,7 +156,7 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
        // LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
        //     coordinate.x,
        //     coordinate.y,
-       //     coordinate.z);
+       //     coordinate.z)
 
         goto loadcube_fail;
     }
@@ -169,7 +169,7 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
     }
     filename = (char*)malloc(strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
     if(filename == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         goto loadcube_fail;
     }
     memset(filename, '\0', strlen(state->loaderPath) + strlen(state->loaderName) + strlen(typeExtension) + 38);
@@ -248,13 +248,13 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
             LOG("Could read only %d / %d bytes from DC file %s.",
                 readBytes,
                 state->cubeBytes,
-                filename);
+                filename)
             if(fclose(cubeFile) != 0) {
-                LOG("Additionally, an error occured closing the file");
+                LOG("Additionally, an error occured closing the file")
             }
             goto loadcube_fail;
         }
-        qDebug("read cubeFile successfully");
+        LOG("read cubeFile successfully")
 
 
     }
@@ -266,14 +266,14 @@ bool Loader::loadCube(Coordinate coordinate, Byte *freeDcSlot, Byte *freeOcSlot)
                 state->cubeBytes * OBJID_BYTES,
                 filename);
             if(fclose(cubeFile) != 0)
-                LOG("Additionally, an error occured closing the file");
+                LOG("Additionally, an error occured closing the file")
 
             goto loadcube_fail;
         }
     }
 
     if(fclose(cubeFile) != 0) {
-        LOG("Error closing cube file %s.", filename);
+        LOG("Error closing cube file %s.", filename)
     }
 
     free(filename);
@@ -367,7 +367,7 @@ bool Loader::initLoader() {
     // See the comment about the ht_new() call in knossos.c
     this->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
     if(this->Dcoi == HT_FAILURE) {
-        LOG("Unable to create Dcoi.");
+        LOG("Unable to create Dcoi.")
         return false;
     }
 
@@ -378,13 +378,13 @@ bool Loader::initLoader() {
     // memory location back into this list.
     this->freeDcSlots = slotListNew();
     if(this->freeDcSlots == NULL) {
-        LOG("Unable to create freeDcSlots.");
+        LOG("Unable to create freeDcSlots.")
         return false;
     }
 
     this->freeOcSlots = slotListNew();
     if(this->freeOcSlots == NULL) {
-        LOG("Unable to create freeOcSlots.");
+        LOG("Unable to create freeOcSlots.")
         return false;
     }
 
@@ -393,10 +393,10 @@ bool Loader::initLoader() {
     // be used on UNIX and VirtualLock() on Windows. This does not appear to be
     // necessary in the real world.
 
-    LOG("Allocating %d bytes for the datacubes.", state->cubeSetBytes);
+    LOG("Allocating %d bytes for the datacubes.", state->cubeSetBytes)
     this->DcSetChunk = (Byte*)malloc(state->cubeSetBytes);
     if(this->DcSetChunk == NULL) {
-        LOG("Unable to allocate memory for the DC memory slots.");
+        LOG("Unable to allocate memory for the DC memory slots.")
         return false;
     }
 
@@ -405,10 +405,10 @@ bool Loader::initLoader() {
 
 
     if(state->overlay) {
-        LOG("Allocating %d bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES);
+        LOG("Allocating %d bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES)
         this->OcSetChunk = (Byte*)malloc(state->cubeSetBytes * OBJID_BYTES);
         if(this->OcSetChunk == NULL) {
-            LOG("Unable to allocate memory for the OC memory slots.");
+            LOG("Unable to allocate memory for the OC memory slots.")
             return false;
         }
 
@@ -420,13 +420,13 @@ bool Loader::initLoader() {
     // Load the bogus dc (a placeholder when data is unavailable).
     this->bogusDc = (Byte*)malloc(state->cubeBytes);
     if(this->bogusDc == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         return false;
     }
     bogusDc = fopen("bogus.raw", "r");
     if(bogusDc != NULL) {
         if(fread(this->bogusDc, 1, state->cubeBytes, bogusDc) < state->cubeBytes) {
-            LOG("Unable to read the correct amount of bytes from the bogus dc file.");
+            LOG("Unable to read the correct amount of bytes from the bogus dc file.")
             memset(this->bogusDc, '\0', state->cubeBytes);
         }
         fclose(bogusDc);
@@ -438,7 +438,7 @@ bool Loader::initLoader() {
         // bogus oc is white
         this->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
         if(this->bogusOc == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             return false;
         }
         memset(this->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);
@@ -513,7 +513,7 @@ bool Loader::removeLoadedCubes(int magChange) {
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
                         currentCube->coordinate.z,
-                        state->loaderMagnification);
+                        state->loaderMagnification)
                     return false;
                 }
 
@@ -522,7 +522,7 @@ bool Loader::removeLoadedCubes(int magChange) {
                         delCubePtr,
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
-                        currentCube->coordinate.z);
+                        currentCube->coordinate.z)
                     return false;
                 }
             }
@@ -540,7 +540,7 @@ bool Loader::removeLoadedCubes(int magChange) {
                     LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
-                        currentCube->coordinate.z);
+                        currentCube->coordinate.z)
                     return false;
                 }
 
@@ -549,7 +549,7 @@ bool Loader::removeLoadedCubes(int magChange) {
                         delCubePtr,
                         currentCube->coordinate.x,
                         currentCube->coordinate.y,
-                        currentCube->coordinate.z);
+                        currentCube->coordinate.z)
                     return false;
                 }
             }
@@ -568,7 +568,7 @@ bool Loader::removeLoadedCubes(int magChange) {
                 LOG("Error deleting  Dc (%d, %d, %d) from DCOI.\n",
                        currentCube->coordinate.x,
                        currentCube->coordinate.y,
-                       currentCube->coordinate.z);
+                       currentCube->coordinate.z)
                 return false;
             }
         }
@@ -577,7 +577,7 @@ bool Loader::removeLoadedCubes(int magChange) {
     }
 
     if(Hashtable::ht_rmtable(mergeCube2Pointer) != LL_SUCCESS) {
-        LOG("Error removing temporary cube to pointer table. This is a memory leak.");
+        LOG("Error removing temporary cube to pointer table. This is a memory leak.")
     }
     return true;
 }
@@ -598,7 +598,7 @@ bool Loader::loadCubes() {
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
-                state->magnification);
+                state->magnification)
             return false;
         }
 
@@ -609,7 +609,7 @@ bool Loader::loadCubes() {
                 currentCube->coordinate.y,
                 currentCube->coordinate.z,
                 currentDcSlot->cube,
-                state->magnification);
+                state->magnification)
         }
 
         // Load the overlay cube if overlay is activated.
@@ -620,7 +620,7 @@ bool Loader::loadCubes() {
                     currentCube->coordinate.x,
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
-                    state->magnification);
+                    state->magnification)
                 return false;
             }
 
@@ -631,7 +631,7 @@ bool Loader::loadCubes() {
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
                     currentOcSlot->cube,
-                    state->magnification);
+                    state->magnification)
             }
         }
 
@@ -671,7 +671,7 @@ bool Loader::loadCubes() {
                     currentCube->coordinate.y,
                     currentCube->coordinate.z,
                     currentOcSlot->cube,
-                    state->loaderMagnification);
+                    state->loaderMagnification)
                 return false;
             }
         }
@@ -682,14 +682,14 @@ bool Loader::loadCubes() {
         if(loadedDc) {
             if(slotListDelElement(this->freeDcSlots, currentDcSlot) < 0) {
                 LOG("Error deleting the current Dc slot %p from the list.",
-                    currentDcSlot->cube);
+                    currentDcSlot->cube)
                 return false;
             }
         }
         if(loadedOc) {
             if(slotListDelElement(this->freeOcSlots, currentOcSlot) < 0) {
                 LOG("Error deleting the current Oc slot %p from the list.",
-                    currentOcSlot->cube);
+                    currentOcSlot->cube)
                 return false;
             }
         }
@@ -700,7 +700,7 @@ bool Loader::loadCubes() {
             LOG("Error deleting cube coordinates (%d, %d, %d) from DCOI.",
                 currentCube->coordinate.x,
                 currentCube->coordinate.y,
-                currentCube->coordinate.z);
+                currentCube->coordinate.z)
             return false;
         }
 
@@ -713,13 +713,13 @@ bool Loader::loadCubes() {
             state->protectLoadSignal->unlock();
 
             if(Hashtable::ht_rmtable(this->Dcoi) != LL_SUCCESS) {
-                LOG("Error removing Dcoi. This is a memory leak.");
+                LOG("Error removing Dcoi. This is a memory leak.")
             }
 
             // See the comment about the ht_new() call in knossos.c
             this->Dcoi = Hashtable::ht_new(state->cubeSetElements * 10);
             if(this->Dcoi == HT_FAILURE) {
-                LOG("Error creating new empty Dcoi. Fatal.");
+                LOG("Error creating new empty Dcoi. Fatal.")
                 _Exit(false);
             }
             return false;

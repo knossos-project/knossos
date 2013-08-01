@@ -86,7 +86,7 @@ void Remote::run() {
                 break;
 
             default:
-                LOG("No such remote type (%d)\n", this->type);
+                LOG("No such remote type (%d)\n", this->type)
 
         }
 
@@ -405,7 +405,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
             sendMove = (Coordinate *) malloc(sizeof(Coordinate));
             if(sendMove == NULL) {
-                LOG("Out of memory.\n");
+                LOG("Out of memory.\n")
                 return false;
             }
             memset(sendMove, '\0', sizeof(Coordinate));

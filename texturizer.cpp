@@ -91,7 +91,7 @@ bool Texturizer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewer
                                upperLeftDc.z + y_dc);
                 break;
             default:
-                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type);
+                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type)
             }
 
             state->protectCube2Pointer->lock();
@@ -228,9 +228,9 @@ bool Texturizer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerSt
             if(cube == HT_FAILURE) {
                 //qDebug() << "failed to get cube in backlog";
                 // if(currentElement->cube.x >= 3) {
-                       //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
+                       //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z)
                  //}
-                 //LOG("failed to get cube in viewer");
+                 //LOG("failed to get cube in viewer")
             } else {
                 slicer->dcSliceExtract(cube,
                                currentElement->slice,
@@ -248,7 +248,7 @@ bool Texturizer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerSt
                                 GL_UNSIGNED_BYTE,
                                 currentElement->slice);
                 glBindTexture(GL_TEXTURE_2D, 0);
-                /* @todo backlogDelElement(currentVp->backlog, currentElement); */
+                /* @todo backlogDelElement(currentVp->backlog, currentElement) */
             }
         }
         else if(currentElement->cubeType == CUBE_OVERLAY) {

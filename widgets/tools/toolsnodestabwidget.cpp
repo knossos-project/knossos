@@ -245,9 +245,9 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(this->idSpinBox->value()))) {
          if(Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
-             LOG("OK");
+             LOG("OK")
          } else {
-             LOG("Probleme");
+             LOG("Probleme")
          }
     }
 }
@@ -292,7 +292,7 @@ void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
     Coordinate activeNodePosition;
 
     if(state->skeletonState->activeNode) {
-        LOG("Locking to active node");
+        LOG("Locking to active node")
 
         activeNodePosition.x = state->skeletonState->activeNode->position.x;
         activeNodePosition.y = state->skeletonState->activeNode->position.y;
@@ -301,7 +301,7 @@ void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
         emit lockPositionSignal(activeNodePosition);
 
     } else {
-        LOG("There is not active node to lock");
+        LOG("There is not active node to lock")
     }
 }
 

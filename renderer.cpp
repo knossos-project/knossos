@@ -37,7 +37,6 @@
 #endif
 #ifdef Q_OS_WIN
     #include <GL/glu.h>
-    #include <windows.h>
 #endif
 #include "skeletonizer.h"
 #include "viewer.h"
@@ -63,7 +62,7 @@ Renderer::Renderer(QObject *parent) :
 
         glScalef(-1., 1., 1.);
         //);
-        //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio);
+        //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
         glRotatef(235., 1., 0., 0.);
         glRotatef(210., 0., 0., 1.);
         setRotationState(ROTATIONSTATERESET);
@@ -450,7 +449,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_XZ)
             || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_YZ)
          || (state->viewerState->vpConfigs[currentVP].type == VIEWPORT_ARBITRARY))) {
-       LOG("Wrong VP type given for renderOrthogonalVP() call.");
+       LOG("Wrong VP type given for renderOrthogonalVP() call.")
         return false;
     }
 
@@ -1061,7 +1060,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     }
 
     glDisable(GL_BLEND);
-    //renderViewportBorders(currentVP);
+    renderViewportBorders(currentVP);
 
     return true;
 }
@@ -1088,7 +1087,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
 
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
-//LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel);
+//LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel)
     glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
@@ -2287,8 +2286,8 @@ void Renderer::renderSkeleton(uint viewportType) {
     }
     glPointSize(1.f);
 
-    //LOG("verts lines: %d", state->skeletonState->lineVertBuffer.vertsIndex);
-    //LOG("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex);
+    //LOG("verts lines: %d", state->skeletonState->lineVertBuffer.vertsIndex)
+    //LOG("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex)
 
     /* Highlight active node */
     if(state->skeletonState->activeNode) {
@@ -2326,8 +2325,7 @@ void Renderer::renderSkeleton(uint viewportType) {
 
     free(textBuffer);
     //float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
-    //LOG("percent nodes skipped in this DL: %f", tmp);
-
+    //LOG("percent nodes skipped in this DL: %f", tmp)
     return;
 
 }

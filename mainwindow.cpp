@@ -75,7 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
-
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
@@ -292,13 +291,13 @@ bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
     #endif
 
         if(hit == NULL) {
-            LOG("Cannot find a path separator char in %s\n", path);
+            LOG("Cannot find a path separator char in %s\n", path)
             return false;
         }
 
         baseLen = (int)(hit - path);
         if(baseLen > 2047) {
-            LOG("Path too long\n");
+            LOG("Path too long\n")
             return false;
         }
 
@@ -334,9 +333,9 @@ void MainWindow::loadSkeleton(char *fileName) {
     if(Skeletonizer::loadSkeleton()) {
         updateTitlebar(true);
         linkWithActiveNodeSlot();
-        LOG("Successfully loded");
+        LOG("Successfully loded")
     } else {
-        LOG("Error");
+        LOG("Error")
         strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
     }*/
 }
@@ -1027,7 +1026,7 @@ void MainWindow::pasteClipboardCoordinates(){
       }
 
     } else {
-       LOG("Unable to fetch text from clipboard");
+       LOG("Unable to fetch text from clipboard")
     }
 
 }

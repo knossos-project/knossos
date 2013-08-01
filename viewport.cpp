@@ -150,7 +150,7 @@ void Viewport::initializeOverlayGL() {
 
 void Viewport::resizeGL(int w, int h) {
 
-    LOG("resizing");
+    LOG("resizing")
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

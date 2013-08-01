@@ -39,9 +39,6 @@
 
 extern stateInfo *state;
 
-int correct_cubes = 0;
-int cubes_in_backlog = 0;
-
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
@@ -130,7 +127,7 @@ vpList *Viewer::vpListNew() {
 
     newVpList = (vpList *) malloc(sizeof(vpList));
     if(newVpList == NULL) {
-        LOG("Out of memory.\n");
+        LOG("Out of memory.\n")
         return NULL;
     }
 
@@ -176,7 +173,7 @@ vpBacklog *Viewer::backlogNew() {
 
     newBacklog = (vpBacklog *) malloc(sizeof( vpBacklog));
     if(newBacklog == NULL) {
-        LOG("Out of memory.\n");
+        LOG("Out of memory.\n")
         return NULL;
     }
     newBacklog->entry = NULL;
@@ -192,7 +189,7 @@ vpList *Viewer::vpListGenerate(viewerState *viewerState) {
 
     newVpList = vpListNew();
     if(newVpList == NULL) {
-        LOG("Error generating new vpList.");
+        LOG("Error generating new vpList.")
         _Exit(false);
     }
 
@@ -202,7 +199,7 @@ vpList *Viewer::vpListGenerate(viewerState *viewerState) {
         }
         currentBacklog = backlogNew();
         if(currentBacklog == NULL) {
-            LOG("Error creating backlog.");
+            LOG("Error creating backlog.")
             _Exit(false);
         }
         vpListAddElement(newVpList, &(viewerState->vpConfigs[i]), currentBacklog);
@@ -247,7 +244,7 @@ vpBacklogElement *Viewer::backlogAddElement_arb(vpBacklog *backlog, Coordinate d
 
     newElement = (vpBacklogElement *)malloc(sizeof(struct vpBacklogElement));
     if(newElement == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         // Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way?
         return NULL;
     }
@@ -263,7 +260,7 @@ vpBacklogElement *Viewer::backlogAddElement_arb(vpBacklog *backlog, Coordinate d
 
     newElement->stripes = stripesNew();
     if(newElement->stripes == NULL) {
-        LOG("Error creating stripeList.");
+        LOG("Error creating stripeList.")
         exit(0);
     }
 
@@ -291,7 +288,7 @@ bool Viewer::pxStripeListDel(pxStripeList *stripes) {
     while(stripes->elements > 0) {
            if(pxStripeListDelElement(stripes, stripes->entry) < 0) {
                LOG("Error deleting stripe element at %p from the slot stripelist %d elements remain in the list.",
-                      stripes->entry, stripes->elements);
+                      stripes->entry, stripes->elements)
                return false;
            }
        }
@@ -318,7 +315,7 @@ bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *curr
 
     newStripe = (pxStripe *)malloc(sizeof(struct pxStripe));
     if(newStripe == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
         return false;
     }
@@ -376,7 +373,7 @@ bool Viewer::backlogDel(vpBacklog *backlog) {
     while(backlog->elements > 0) {
         if(backlogDelElement(backlog, backlog->entry) < 0) {
             LOG("Error deleting element at %p from the backlog. %d elements remain in the list.",
-                backlog->entry, backlog->elements);
+                backlog->entry, backlog->elements)
             return false;
         }
     }
@@ -430,7 +427,7 @@ int Viewer::backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOf
 
     newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
     if(newElement == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         /* Do not return false here. That's a bug. FAIL is hackish... Is there a better way? */
         return FAIL;
     }
@@ -814,13 +811,13 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
               i = 0;
 
     if(currentVp->backlog->entry == NULL) {
-        LOG("Called vpHandleBacklog, but there is no backlog.");
+        LOG("Called vpHandleBacklog, but there is no backlog.")
         return false;
     }
 
     elements = currentVp->backlog->elements;
     currentElement = currentVp->backlog->entry;
-    LOG("starting to handle backlog");
+    LOG("starting to handle backlog")
     for(i = 0; i < elements; i++)  {
         nextElement = currentElement->next;
 
@@ -831,14 +828,8 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
-                LOG("failed to get cube in backlog");
-                // if(currentElement->cube.x >= 3) {
-                       //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
-                 //}
-                 //LOG("failed to get cube in viewer");
+                LOG("failed to get cube in backlog")
             } else {
-                cubes_in_backlog += 1;
-                qDebug() << "vpHandleBacklog" << cubes_in_backlog;
                 dcSliceExtract(cube,
                                currentElement->slice,
                                currentElement->dcOffset,
@@ -909,7 +900,7 @@ bool Viewer::vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerS
         uint32_t elements = 0, i = 0, j = 0;
 
         if(currentVp->backlog->entry == NULL) {
-            //LOG("Called vpHandleBacklog, but there is no backlog.");
+            //LOG("Called vpHandleBacklog, but there is no backlog.")
             return false;
         }
 
@@ -929,10 +920,10 @@ bool Viewer::vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerS
 
 
                 if(cube == HT_FAILURE) {
-                    //LOG("BACKLOG_FAiLURE");
+                    //LOG("BACKLOG_FAiLURE")
 
                                        // if(currentElement->cube.x >= 3) {
-                            //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z);
+                            //LOG("handleBL: currentDc %d, %d, %d", currentElement->cube.x, currentElement->cube.y, currentElement->cube.z)
                               //          }
                     //LOG("failed to get cube in viewer");
                 }
@@ -1066,7 +1057,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                                upperLeftDc.z + y_dc);
                 break;
             default:
-                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type);
+                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type)
             }
 
             state->protectCube2Pointer->lock();
@@ -1105,7 +1096,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                                 GL_UNSIGNED_BYTE,
                                 viewerState->defaultTexData);
             } else {
-                correct_cubes += 1;
+
                 //qDebug() << "vpGenerateTexture" <<correct_cubes;
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
@@ -1447,9 +1438,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            * state->cubeEdgeLength * state->magnification,
                            currentPosition_dc.z
                            * state->cubeEdgeLength * state->magnification);
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x >1000000){ LOG("uninit x %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x);}
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ LOG("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y);}
-            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ LOG("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x >1000000){ LOG("uninit x %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x)}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ LOG("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y)}
+            //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ LOG("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)}
 
             //Set the coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
@@ -1568,11 +1559,11 @@ bool Viewer::initViewer() {
 
 
     if(state->overlay) {
-        LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]));
+        LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]))
         if(loadDatasetColorTable("stdOverlay.lut",
                           &(state->viewerState->overlayColorMap[0][0]),
                           GL_RGBA) == false) {
-            LOG("Overlay color map stdOverlay.lut does not exist.");
+            LOG("Overlay color map stdOverlay.lut does not exist.")
             state->overlay = false;
         }
     }
@@ -1585,7 +1576,7 @@ bool Viewer::initViewer() {
                * sizeof(Byte)
                * 3);
     if(state->viewerState->texData == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(state->viewerState->texData, '\0',
@@ -1603,7 +1594,7 @@ bool Viewer::initViewer() {
                    sizeof(Byte) *
                    4);
         if(state->viewerState->overlayData == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             _Exit(false);
         }
         memset(state->viewerState->overlayData, '\0',
@@ -1620,7 +1611,7 @@ bool Viewer::initViewer() {
                                                          * sizeof(Byte)
                                                          * 3);
     if(state->viewerState->defaultTexData == NULL) {
-        LOG("Out of memory.");
+        LOG("Out of memory.")
         _Exit(false);
     }
     memset(state->viewerState->defaultTexData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -1631,7 +1622,7 @@ bool Viewer::initViewer() {
     for(int i = 0; i < state->viewerState->numberViewports; i++){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             exit(0);
         }
         memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
@@ -1644,7 +1635,7 @@ bool Viewer::initViewer() {
                                                                  * sizeof(Byte)
                                                                  * 4);
         if(state->viewerState->defaultOverlayData == NULL) {
-            LOG("Out of memory.");
+            LOG("Out of memory.")
             _Exit(false);
         }
         memset(state->viewerState->defaultOverlayData, '\0', TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN
@@ -1670,11 +1661,11 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-    LOG("Reading Dataset LUT at %s\n", path);
+    LOG("Reading Dataset LUT at %s\n", path)
 
     lutFile = fopen(path, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Dataset LUT at %s.", path);
+        LOG("Unable to open Dataset LUT at %s.", path)
         return false;
     }
 
@@ -1685,21 +1676,21 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
         size = RGBA_LUTSIZE;
     }
     else {
-        LOG("Requested color type %x does not exist.", type);
+        LOG("Requested color type %x does not exist.", type)
         return false;
     }
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size)
         if(fclose(lutFile) != 0) {
-            LOG("Additionally, an error occured closing the file.");
+            LOG("Additionally, an error occured closing the file.")
         }
         return false;
     }
 
     if(fclose(lutFile) != 0) {
-        LOG("Error closing LUT file.");
+        LOG("Error closing LUT file.")
         return false;
     }
 
@@ -1729,29 +1720,29 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
 
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-    LOG("Reading Tree LUT at %s\n", path);
+    LOG("Reading Tree LUT at %s\n", path)
 
     lutFile = fopen(path, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Tree LUT at %s.", path);
+        LOG("Unable to open Tree LUT at %s.", path)
         return false;
     }
     if(type != GL_RGB) {
         /* AG_TextError("Tree colors only support RGB colors. Your color type is: %x", type); */
-        LOG("Chosen color was of type %x, but expected GL_RGB", type);
+        LOG("Chosen color was of type %x, but expected GL_RGB", type)
         return false;
     }
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size);
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size)
         if(fclose(lutFile) != 0) {
-            LOG("Additionally, an error occured closing the file.");
+            LOG("Additionally, an error occured closing the file.")
         }
         return false;
     }
     if(fclose(lutFile) != 0) {
-        LOG("Error closing LUT file.");
+        LOG("Error closing LUT file.")
         return false;
     }
 
@@ -1848,7 +1839,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             LOG("left upper tex px of VP %d is: %d, %d, %d",i,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x,
                 state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y,
-                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z);
+                state->viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)
         }
     }*/
     sendLoadSignal(state->viewerState->currentPosition.x,
@@ -2175,7 +2166,7 @@ bool Viewer::updateViewerState() {
         state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
 
         //if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) TODO Crashed
-        //    LOG("Error setting key repeat parameters.");
+        //    LOG("Error setting key repeat parameters.")
     }
 
     if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime) {
@@ -2273,7 +2264,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
         LOG("Position (%d, %d, %d) out of bounds",
             viewerState->currentPosition.x + x + 1,
             viewerState->currentPosition.y + y + 1,
-            viewerState->currentPosition.z + z + 1);
+            viewerState->currentPosition.z + z + 1)
     }
 
     calcLeftUpperTexAbsPx();

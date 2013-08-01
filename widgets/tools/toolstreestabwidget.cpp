@@ -263,7 +263,7 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
         ref->updateDisplayedTree();
 
     } else {
-        LOG("Probleme");
+        LOG("Probleme")
     }
 }
 
@@ -280,7 +280,7 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
         if(Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID)) {
             ref->updateDisplayedTree();
         } else {
-            LOG("Probleme");
+            LOG("Probleme")
         }
     }
 }

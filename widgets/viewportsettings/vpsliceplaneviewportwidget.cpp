@@ -207,7 +207,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
 
 
         if(Viewer::loadDatasetColorTable(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {
-            LOG("Error loading Dataset LUT.\n");
+            LOG("Error loading Dataset LUT.\n")
             memcpy(&(state->viewerState->datasetColortable[0][0]),
                            &(state->viewerState->neutralDatasetTable[0][0]),
                            RGB_LUTSIZE);
@@ -229,7 +229,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
         MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
         state->viewerState->treeLutSet = true;
         if(Viewer::loadTreeColorTable(cname, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
-            LOG("Error loading Tree LUT.\n");
+            LOG("Error loading Tree LUT.\n")
             memcpy(&(state->viewerState->treeColortable[0]),
                    &(state->viewerState->defaultTreeTable[0]),
                      RGB_LUTSIZE);

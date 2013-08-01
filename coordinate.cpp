@@ -78,7 +78,7 @@ Coordinate *Coordinate::parseRawCoordinateString(char *string) {
     int i = 0;
 
     if(!(extractedCoords = (Coordinate *)malloc(sizeof(Coordinate)))) {
-        LOG("Out of memory");
+        LOG("Out of memory")
         _Exit(false);
     }
 
@@ -91,20 +91,20 @@ Coordinate *Coordinate::parseRawCoordinateString(char *string) {
     }
 
     if(i < 2) {
-        LOG("Paste string doesn't contain enough delimiter-separated elements");
+        LOG("Paste string doesn't contain enough delimiter-separated elements")
         goto fail;
     }
 
     if((extractedCoords->x = atoi(coords[0])) < 0) {
-        LOG("Error converting paste string to coordinate");
+        LOG("Error converting paste string to coordinate")
         goto fail;
     }
     if((extractedCoords->y = atoi(coords[1])) < 0) {
-        LOG("Error converting paste string to coordinate");
+        LOG("Error converting paste string to coordinate")
         goto fail;
     }
     if((extractedCoords->z = atoi(coords[2])) < 0) {
-        LOG("Error converting paste string to coordinate");
+        LOG("Error converting paste string to coordinate")
         goto fail;
     }
 
