@@ -1138,13 +1138,13 @@ int32_t saveSkeleton() {
     memset(attrString, '\0', 128);
 
     currentXMLNode = xmlNewTextChild(paramsXMLNode, NULL, BAD_CAST"scale", NULL);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.x / state->magnification);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.x);
     xmlNewProp(currentXMLNode, BAD_CAST"x", attrString);
     memset(attrString, '\0', 128);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.y / state->magnification);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.y);
     xmlNewProp(currentXMLNode, BAD_CAST"y", attrString);
     memset(attrString, '\0', 128);
-    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.z / state->magnification);
+    xmlStrPrintf(attrString, 128, BAD_CAST"%f", state->scale.z);
     xmlNewProp(currentXMLNode, BAD_CAST"z", attrString);
     memset(attrString, '\0', 128);
 
