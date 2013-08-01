@@ -119,6 +119,8 @@ uint32_t initSkeletonizer() {
 
     state->skeletonState->filterCommentBuffer = calloc(1, 2048 * sizeof(char));
 
+    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
+
     state->skeletonState->selectedCommentNode = NULL;
 
     state->skeletonState->undoList = malloc(sizeof(struct cmdList));
@@ -5292,11 +5294,9 @@ void deserializeSkeleton() {
 
     stringLength = bytesToInt(&serialSkeleton[memPosition]);
     memPosition+=sizeof(stringLength);
-    if(stringLength!=0){
-        memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
-        strncpy(state->skeletonState->skeletonLastSavedInVersion, &serialSkeleton[memPosition], stringLength);
-        memPosition+=stringLength;
-    }
+    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
+    strncpy(state->skeletonState->skeletonLastSavedInVersion, &serialSkeleton[memPosition], stringLength);
+    memPosition+=stringLength;
 
     scale.x = bytesToFloat(&serialSkeleton[memPosition]);
     memPosition+=sizeof(state->scale.x / state->magnification);
