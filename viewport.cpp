@@ -38,19 +38,18 @@ extern stateInfo *state;
   * @note The button group for skeleton viewport does not work as expected
   * another approach is needed
   */
-Viewport::Viewport(QWidget *parent, int plane) :
+Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
     QGLWidget(parent) {
     delegate = new EventModel();
-    this->setMouseTracking(true);
-
-    this->plane = plane;
-    /* per default the widget only receives move event when at least one mouse button is pressed
+    this->setMouseTracking(true); /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
+
+    this->viewportType = viewportType;
+    this->plane = widgetNumber;
+
     //this->setMouseTracking(true);
     //this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
-
-    font = QFont("Courier", 50);
 
 
 }

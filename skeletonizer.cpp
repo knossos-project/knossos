@@ -1073,6 +1073,8 @@ bool Skeletonizer::loadSkeleton() {
     int skeletonTime = 0;
     color4F neuronColor;
 
+    QTime bench;
+    bench.start();
     LOG("Starting to load skeleton...");
 
      //  This function should always be called through UI_loadSkeleton for
@@ -1105,8 +1107,6 @@ bool Skeletonizer::loadSkeleton() {
         return false;
     }
 
-    LOG("Document parsed successfully.");
-
     thingsXMLNode = xmlDocGetRootElement(xmlDocument);
     if(thingsXMLNode == NULL) {
         LOG("Empty document.");
@@ -1137,6 +1137,8 @@ bool Skeletonizer::loadSkeleton() {
 
     thingOrParamXMLNode = thingsXMLNode->xmlChildrenNode;
     while(thingOrParamXMLNode) {
+        LOG("Document parsed successfully.");
+        bench.restart();
         if(xmlStrEqual(thingOrParamXMLNode->name, (const xmlChar *)"parameters")) {
             currentXMLNode = thingOrParamXMLNode->children;
             while(currentXMLNode) {
@@ -1519,6 +1521,7 @@ bool Skeletonizer::loadSkeleton() {
         }
 
         thingOrParamXMLNode = thingOrParamXMLNode->next;
+        qDebug() << "end " << bench.elapsed();
     }
 
     free(currentCoordinate);

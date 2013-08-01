@@ -84,6 +84,8 @@ signals:
     void updateToolsSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void remoteJumpSignal(int x, int y, int z);
+    void stopRenderTimerSignal();
+    void startRenderTimerSignal(int frequency);
 
 protected:
 

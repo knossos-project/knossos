@@ -143,10 +143,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::createViewports() {
     viewports = new Viewport*[4];
-    viewports[0] = new Viewport(this, VIEWPORT_XY);
-    viewports[1] = new Viewport(this, VIEWPORT_YZ);
-    viewports[2] = new Viewport(this, VIEWPORT_XZ);
-    viewports[3] = new Viewport(this, VIEWPORT_SKELETON);
+    viewports[0] = new Viewport(this, VIEWPORT_XY, VIEWPORT_XY);
+    viewports[1] = new Viewport(this, VIEWPORT_YZ, VIEWPORT_YZ);
+    viewports[2] = new Viewport(this, VIEWPORT_XZ, VIEWPORT_XZ);
+    viewports[3] = new Viewport(this, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
 
     viewports[0]->setGeometry(5, 40, 350,350);
     viewports[1]->setGeometry(355, 40, 350, 350);
@@ -661,8 +661,11 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
+        emit stopRenderTimerSignal();
 
         loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
+
+        emit startRenderTimerSignal(10);
 
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);

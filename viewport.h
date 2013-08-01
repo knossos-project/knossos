@@ -38,12 +38,12 @@ class Viewport : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit Viewport(QWidget *parent, int plane);
+    explicit Viewport(QWidget *parent, int viewportType, int widgetNumber);
     void drawViewport(int plane);
     void drawSkeletonViewport();
     Renderer *ref;
     EventModel *delegate;
-    QFont font;
+
 protected:
     void initializeGL();
     void initializeOverlayGL();
@@ -61,6 +61,7 @@ protected:
     void paintEvent(QPaintEvent *event);
     int xrel(int x);
     int yrel(int y);
+    int viewportType;
     int plane; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position

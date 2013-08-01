@@ -49,46 +49,21 @@ Viewer::Viewer(QObject *parent) :
     window->show();
     state->console = window->widgetContainer->console;
 
-    QWidget *mainBackground = new QWidget(window);
-    mainBackground->setGeometry(0, 32, window->width(), window->height());
-    mainBackground->setStyleSheet("background:#333333");
-    mainBackground->show();
-
-    QWidget *layoutWrapper = new QWidget(window);
-    layoutWrapper->setGeometry(0, 35, 360, 360);
-    layoutWrapper->setStyleSheet("border-radius:5px;border: 5px solid #ff0000; background: red");
-
-    QWidget *layoutWrapper2 = new QWidget(window);
-    layoutWrapper2->setGeometry(360, 35, 360, 360);
-    layoutWrapper2->setStyleSheet("border-radius:5px; border: 5px solid #0000ff; background: blue");
-
-    QWidget *layoutWrapper3 = new QWidget(window);
-    layoutWrapper3->setGeometry(0, 395, 360, 360);
-    layoutWrapper3->setStyleSheet("border-radius:5px; border: 5px solid green; background: green");
-
-    QWidget *layoutWrapper4 = new QWidget(window);
-    layoutWrapper4->setGeometry(360, 395, 360, 360);
-    layoutWrapper4->setStyleSheet("border-radius:5px; border: 5px solid #ffffff; background: black");
-
-    vp = new Viewport(window, VIEWPORT_XY);
-    vp2 = new Viewport(window, VIEWPORT_YZ);
-    vp3 = new Viewport(window, VIEWPORT_XZ);
-    vp4 = new Viewport(window, VIEWPORT_SKELETON);
+    vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
+    vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
+    vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
+    vp4 = new Viewport(window, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
 
     vp->setGeometry(5, 40, 350, 350);
     vp2->setGeometry(365, 40, 350, 350);
     vp3->setGeometry(5, 400, 350, 350);
     vp4->setGeometry(365, 400, 350, 350);
 
-    layoutWrapper->show();
-    layoutWrapper2->show();
-    layoutWrapper3->show();
-    layoutWrapper4->show();
-
     vp->show();
     vp2->show();
     vp3->show();
     vp4->show();
+
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -104,11 +79,8 @@ Viewer::Viewer(QObject *parent) :
 
     renderer = new Renderer();
 
-    vp->delegate->ref = renderer;
-    vp2->delegate->ref = renderer;
-    vp3->delegate->ref = renderer;
-    vp4->delegate->ref = renderer;
-
+    // This is needed for the viewport text rendering
+    vp->delegate->ref = vp2->delegate->ref = vp3->delegate->ref = vp4->delegate->ref = renderer;
     vp->ref = vp2->ref = vp3->ref = vp4->ref = renderer;
 
     renderer->ref = vp;
@@ -116,6 +88,7 @@ Viewer::Viewer(QObject *parent) :
     renderer->ref3 = vp3;
     renderer->ref4 = vp4;
 
+    timer = new QTimer();
 
     rewire();
     frames = 0;
@@ -148,7 +121,7 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
-    QTimer *timer = new QTimer();
+
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(10);
 
@@ -395,6 +368,7 @@ vpBacklogElement *Viewer::isCubeInBacklog(struct vpBacklog *backlog, Coordinate 
             if (COMPARE_COORDINATE(blElement->cube,(*cube))) return blElement;
             blElement = blElement->next;
         }
+        return blElement;
     }
     else
     return NULL;
@@ -1242,12 +1216,14 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
             if (currentPx.y < 0) currentDc.y -=1;
             if (currentPx.z < 0) currentDc.z -=1;
 
+
             state->protectCube2Pointer->lock();
             datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
-            //backlogElement = isCubeInBacklog(currentVp->backlog, &currentDc);
+
+            backlogElement = isCubeInBacklog(currentVp->backlog, &currentDc);
 
             if (backlogElement != NULL) {
                SET_COORDINATE(currentPxInDc_float, (currentPx_float.x-currentDc.x*state->cubeEdgeLength),
@@ -2065,7 +2041,8 @@ void Viewer::run() {
         vpListDel(viewports);
 
         viewerState->userMove = false;
-        frames += 1;
+        frames += 4;
+        //qDebug() << frames << " frames";
 }
 
 void Viewer::showFrames() {
@@ -2806,12 +2783,8 @@ bool Viewer::moveVPonTop(uint currentVP) {
 }
 
 void Viewer::rewire() {
-    connect(window, SIGNAL(moveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
 
-    connect(this, SIGNAL(updateGLSignal()), vp, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal2()), vp2, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal3()), vp3, SLOT(updateGL()), Qt::DirectConnection);
-    connect(this, SIGNAL(updateGLSignal4()), vp4, SLOT(updateGL()), Qt::DirectConnection);   
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
     connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
@@ -2838,13 +2811,6 @@ void Viewer::rewire() {
     connect(vp3, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
     connect(vp4, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()), Qt::DirectConnection);
 
-    /*
-    connect(vp, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp2, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp3, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    connect(vp4, SIGNAL(runSignal()), this, SLOT(run()), Qt::DirectConnection);
-    */
-
     connect(vp, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     connect(vp2, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     connect(vp3, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
@@ -2869,12 +2835,14 @@ void Viewer::rewire() {
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    /* @todo check *///connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(window, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(window, SIGNAL(saveSkeletonSignal()), skeletonizer, SLOT(saveSkeleton()));
     connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadSkeleton()));
+    connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
+    connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
 
     connect(vp->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(vp2->delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
