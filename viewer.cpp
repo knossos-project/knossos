@@ -54,10 +54,10 @@ Viewer::Viewer(QObject *parent) :
     vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
     vp4 = new Viewport(window, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
 
-    vp->setGeometry(5, 40, 350, 350);
-    vp2->setGeometry(365, 40, 350, 350);
-    vp3->setGeometry(5, 400, 350, 350);
-    vp4->setGeometry(365, 400, 350, 350);
+    vp->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 5, 350, 350);
+    vp2->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 5, 350, 350);
+    vp3->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
+    vp4->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
 
     vp->show();
     vp2->show();
@@ -75,8 +75,6 @@ Viewer::Viewer(QObject *parent) :
 
     initViewer();
     skeletonizer = new Skeletonizer();
-
-
     renderer = new Renderer();
 
     // This is needed for the viewport text rendering
@@ -2018,7 +2016,7 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 renderer->drawGUI();
-                //vp4->makeCurrent();
+                vp4->makeCurrent();
                 vp4->updateGL();
 
 

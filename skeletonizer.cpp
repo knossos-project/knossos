@@ -22,8 +22,12 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+/*
+#include <libxml/globals.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+*/
+
 #include <time.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
@@ -759,6 +763,7 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
 }
 
 int Skeletonizer::saveSkeleton() {
+
     treeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
@@ -766,6 +771,7 @@ int Skeletonizer::saveSkeleton() {
     commentListElement *currentComment = NULL;
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     int r;
+    /*
     int time;
     xmlChar attrString[128];
 
@@ -1050,11 +1056,13 @@ int Skeletonizer::saveSkeleton() {
 
     r = xmlSaveFormatFile(state->skeletonState->skeletonFile, xmlDocument, 1);
     xmlFreeDoc(xmlDocument);
+    */
     return r;
 }
 //uint loadNMLSkeleton() { }
 
 bool Skeletonizer::loadSkeleton() {
+    /*
     xmlDocPtr xmlDocument;
     xmlNodePtr currentXMLNode, thingsXMLNode, thingOrParamXMLNode, nodesEdgesXMLNode;
     int neuronID = 0, nodeID = 0, merge = false;

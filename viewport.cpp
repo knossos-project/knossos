@@ -169,7 +169,7 @@ void Viewport::resizeGL(int w, int h) {
 }
 
 void Viewport::paintGL() {
-    //this->makeCurrent();
+
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     if(state->viewerState->viewerReady) {
@@ -181,13 +181,6 @@ void Viewport::paintGL() {
 
     }
 
-    /*
-    if(state->skeletonState->activeNode) {
-        glColor3b(0, 1, 0);
-        renderText(1, 1, 1, QString("AA"), font);
-
-    }*/
-    //this->doneCurrent();
 }
 
 
@@ -252,7 +245,6 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
     }
 
-
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
@@ -267,7 +259,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
-
+    qDebug() << "keypress";
     this->delegate->handleKeyboard(event, this->plane);
 }
 
@@ -325,6 +317,7 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 }
 
 bool Viewport::handleKeyboard(QKeyEvent *event) {
+    qDebug() << "key";
     return delegate->handleKeyboard(event, plane);
 }
 

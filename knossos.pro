@@ -138,12 +138,9 @@ linux {
 }
 
 
-win32 {
-    LIBS += -L$$PWD/../../mingw/lib/ -lxml2
-    INCLUDEPATH += $$PWD/../../mingw/include
-
-}
 
 RESOURCES += \
     Resources.qrc
+
+
 

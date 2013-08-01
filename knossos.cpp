@@ -27,8 +27,8 @@
 #include <QWaitCondition>
 #include <QSettings>
 #include "sleeper.h"
-#include <PythonQT/PythonQt.h>
-#include <PythonQT/gui/PythonQtScriptingConsole.h>
+//#include <PythonQT/PythonQt.h>
+//#include <PythonQT/gui/PythonQtScriptingConsole.h>
 #include "knossos-global.h"
 #include "knossos.h"
 #include "mainwindow.h"
@@ -40,7 +40,6 @@
 
 //#include "y.tab.h"
 //#include "lex.yy.h"
-
 
 #define NUMTHREADS 4
 
@@ -142,6 +141,11 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_MACX
     strncpy(tempConfig->path, "../../../../../e1088_mag1/", 1024);
 #endif
+#ifdef Q_OS_WIN32
+    strncpy(tempConfig->path, "..\\..\\e1088_mag1", 1024);
+#endif
+
+
     strncpy(tempConfig->name, "070317_e1088", 1024);
     tempConfig->boundary.x = 2048;
     tempConfig->boundary.y = 1792;
@@ -212,13 +216,14 @@ int main(int argc, char *argv[])
     remote->start();
 
     /* PYTHON QT INIT CODE */
+    /*
     PythonQt::init();
     PythonQtObjectPtr  mainContext = PythonQt::self()->getMainModule();
     PythonQtScriptingConsole console(NULL, mainContext);
 
     StateClass *ptr = new StateClass();
     PythonQt::self()->registerClass(&StateClass::staticMetaObject);
-    //PythonQt::self()->addDecorators(/* Your Decorator Class */);
+    //PythonQt::self()->addDecorators( Your Decorator Class );
     mainContext.addObject("state", ptr);
 
 
@@ -233,7 +238,7 @@ int main(int argc, char *argv[])
 
     console.appendCommandPrompt();
     console.show();
-
+    */
 
 
     return a.exec();
@@ -347,11 +352,12 @@ int Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
 
-   state->viewerState->vpConfigs[0].type = VIEWPORT_ARBITRARY;
-   state->viewerState->vpConfigs[1].type = VIEWPORT_ARBITRARY;
-   state->viewerState->vpConfigs[2].type = VIEWPORT_ARBITRARY;
+   state->viewerState->vpConfigs[0].type = tempConfig->viewerState->vpConfigs[0].type;
+   state->viewerState->vpConfigs[1].type = tempConfig->viewerState->vpConfigs[1].type;
+   state->viewerState->vpConfigs[2].type = tempConfig->viewerState->vpConfigs[2].type;
 
-    /**/
+
+   /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
        state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
@@ -975,15 +981,15 @@ bool Knossos::tempConfigDefaults() {
         switch(i) {
         case VIEWPORT_XY:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_ARBITRARY;
+            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XY;
             break;
         case VIEWPORT_XZ:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_ARBITRARY;
+            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
             break;
         case VIEWPORT_YZ:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_ARBITRARY;
+            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
             break;
         case VIEWPORT_SKELETON:
             SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);

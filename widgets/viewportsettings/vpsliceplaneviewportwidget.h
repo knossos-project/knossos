@@ -26,12 +26,7 @@
  */
 
 #include <QWidget>
-#ifdef Q_OS_LINUX
-#include <GL/gl.h>
-#endif
-#ifdef Q_OS_MACX
-    #include <OpenGL.h>
-#endif
+#include <qgl.h>
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;
@@ -45,7 +40,7 @@ class VPSlicePlaneViewportWidget : public QWidget
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
 signals:
-    bool loadDataSetColortableSignal(const char *path, GLuint *table, int32_t type);
+    bool loadDataSetColortableSignal(const char *path, GLuint *table, int type);
     void showIntersectionsSignal(bool value);
     void updateViewerStateSignal();
 public slots:
