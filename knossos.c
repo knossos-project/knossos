@@ -683,8 +683,7 @@ static int32_t initStates() {
         GetTempPath(MAX_PATH, state->loadFtpCachePath);
 #endif // WIN32
 #ifdef LINUX
-        LOG("Unimplemented!");
-        return FALSE;
+        strncpy(state->loadFtpCachePath, "/tmp/", MAX_PATH);
 #endif // LINUX
         state->ftpBasePath = /* "BASE_PATH"; */ "/j0126_cubed/";
         state->ftpHostName = /* "HOST"; */ "heidelbrain-ftp.mpimf-heidelberg.mpg.de";

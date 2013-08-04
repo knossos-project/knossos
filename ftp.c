@@ -5,6 +5,7 @@
 #include <SDL/SDL_thread.h>
 #include <curl/curl.h>
 #include <curl/multi.h>
+#include <errno.h>
 
 extern struct stateInfo *state;
 
@@ -24,11 +25,14 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
   return fwrite(buffer, size, nmemb, elem->ftp_fh);
 }
 
+#ifdef LINUX
+#else
 LARGE_INTEGER Counter() {
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
     return li;
 }
+#endif
 
 CURLM *curlm = NULL;
 int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeArray[], int32_t currentCubeCount, int32_t max_connections, int32_t pipelines_per_connection, int32_t max_downloads, SDL_sem *ftpThreadSem, SDL_sem *loaderThreadSem, int32_t *hadErrors/*, DWORD beginTickCount*/)
@@ -47,12 +51,16 @@ int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeAr
     int32_t isBreak = FALSE;
     int32_t retVal = EXIT_SUCCESS;
     int32_t result;
+
+#ifdef LINUX
+#else
     LARGE_INTEGER zeroCount, currentCount, freq;
-
-    *hadErrors = FALSE;
-
+        
     QueryPerformanceFrequency(&freq);
     zeroCount = Counter();
+#endif
+
+    *hadErrors = FALSE;
 
     if (NULL == curlm) {
         curlm = curl_multi_init();
@@ -70,6 +78,7 @@ int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeAr
         eh = eh_array[C];
         currentCube = cubeArray[C];
         snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, currentCube->fullpath_filename);
+        LOG("Adding %s\n", remoteURL);
         curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
         curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
         curl_easy_setopt(eh, CURLOPT_WRITEDATA, currentCube);
@@ -235,8 +244,11 @@ int32_t downloadFile(char *remote_path, char *local_filename) {
 }
 
 C_Element **randomize_connection_number(int32_t *max_connections, int32_t *pipelines_per_connection, int32_t *max_downloads) {
+#ifdef LINUX
+#else
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
+#endif
     *max_connections = 5;//((li.LowPart & 0xFFFF) % 5) + 3;
     *pipelines_per_connection = 1; //((li.LowPart >> 16) % 5) + 1;
     *max_downloads = (*max_connections) * (*pipelines_per_connection);

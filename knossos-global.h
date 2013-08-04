@@ -392,8 +392,8 @@ struct _C_Element {
         int32_t isLoaded;
 
         uint32_t debugVal;
-        DWORD tickDownloaded;
-        DWORD tickDecompressed;
+        uint32_t tickDownloaded;
+        uint32_t tickDecompressed;
 
         struct _C_Element *previous;
         struct _C_Element *next;
@@ -402,8 +402,8 @@ struct _C_Element {
 typedef struct _C_Element C_Element;
 
 struct _ftp_thread_struct {
-    DWORD debugVal;
-    DWORD beginTickCount;
+    uint32_t debugVal;
+    uint32_t beginTickCount;
     void *ftpThreadSem;
     void *loaderThreadSem;
     int32_t cubeCount;
@@ -412,8 +412,8 @@ struct _ftp_thread_struct {
 typedef struct _ftp_thread_struct ftp_thread_struct;
 
 struct _loadcube_thread_struct {
-    DWORD beginTickCount;
-    DWORD decompTime;
+    uint32_t beginTickCount;
+    uint32_t decompTime;
     int32_t threadIndex;
     void *loadCubeThreadSem;
     int32_t isBusy;

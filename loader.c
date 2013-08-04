@@ -614,7 +614,7 @@ _quicksort (
     int32_t retVal = TRUE;
     CubeSlot *currentDcSlot;
     char *filename;
-    //DWORD tickCount = GetTickCount();
+    //uint32_t tickCount = GetTickCount();
 
     /*
      * Specify either freeDcSlot or freeOcSlot.
@@ -999,9 +999,9 @@ static uint32_t loadCubes() {
     int32_t cubeCount = 0, loadedCubeCount = 0;
     int32_t thread_index;
     int32_t isBreak;
-    DWORD waitTime = 0, decompTime = 0;
-    DWORD currTick, beginTickCount;
-    DWORD noDecompCurrent = 0, noDecompTotal = 0;
+    uint32_t waitTime = 0, decompTime = 0;
+    uint32_t currTick, beginTickCount;
+    uint32_t noDecompCurrent = 0, noDecompTotal = 0;
 
     for (currentCube = state->loaderState->Dcoi->previous; currentCube != state->loaderState->Dcoi; currentCube = currentCube->previous) {
         cubeCount++;
