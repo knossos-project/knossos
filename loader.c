@@ -44,8 +44,6 @@
 
 #define SLEEP_FACTOR (5)
 
-#define SLEEP_FACTOR (5)
-
 extern struct stateInfo *state;
 
 C_Element *lll_new()
@@ -72,8 +70,6 @@ C_Element *lll_new()
 void lll_del(C_Element *delElement) {
     delElement->previous->next = delElement->next;
     delElement->next->previous = delElement->previous;
-
-    SDL_DestroySemaphore(delElement->ftpSem);
 
     free(delElement->filename);
     free(delElement->local_filename);
@@ -283,10 +279,12 @@ uint32_t lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinat
     If cube to be loaded is already loaded, no need to load it now,
     just mark this element as required, so we don't delete it later.
     */
-    loadedCubePtr = ht_get_element(currentLoadedHash, key);
-    if (HT_FAILURE != loadedCubePtr) {
-        loadedCubePtr->datacube = (Byte*)(!NULL);
-        return LLL_SUCCESS;
+    if (NULL != currentLoadedHash) {
+        loadedCubePtr = ht_get_element(currentLoadedHash, key);
+        if (HT_FAILURE != loadedCubePtr) {
+            loadedCubePtr->datacube = (Byte*)(!NULL);
+            return LLL_SUCCESS;
+        }
     }
 
     putElement = (C_Element*)malloc(sizeof(C_Element));
@@ -301,7 +299,15 @@ uint32_t lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinat
     putElement->path = NULL;
     putElement->fullpath_filename = NULL;
     putElement->local_filename = NULL;
-    putElement->ftpSem = SDL_CreateSemaphore(0);
+    putElement->ftp_fh = NULL;
+    putElement->hasError = FALSE;
+    putElement->curlHandle = NULL;
+    putElement->isFinished = FALSE;
+    putElement->isAborted = FALSE;
+    putElement->isLoaded = FALSE;
+    putElement->debugVal = 0;
+    putElement->tickDownloaded = 0;
+    putElement->tickDecompressed = 0;
 
     if (LLL_SUCCESS != lll_calculate_filename(putElement)) {
         return LLL_FAILURE;
@@ -323,11 +329,20 @@ int loader() {
     struct loaderState *loaderState = state->loaderState;
     int32_t magChange = FALSE;
     Hashtable *mergeCube2Pointer = NULL;
+    uint32_t funcRetVal;
+    uint32_t prevLoaderMagnification;
 
     SDL_LockMutex(state->protectLoadSignal);
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
     initLoader();
+
+    state->loaderMagnification = log2uint32(state->magnification);
+    //LOG("loaderMagnification = %d", state->loaderMagnification);
+    strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
+    strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
+
+    prevLoaderMagnification = state->loaderMagnification;
 
     // Start the big "signal wait -> calculate dcoi -> load cubes, repeat" loop.
     while(TRUE) {
@@ -345,12 +360,9 @@ int loader() {
 
         if(state->quitSignal == TRUE) {
             LOG("Loader quitting.");
+            SDL_UnlockMutex(state->protectLoadSignal);
             break;
         }
-
-        state->loaderMagnification = log2uint32(state->magnification);
-        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
-        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 
         /*
         We create a hash that would later be assigned the union of Dc and Oc cubes already loaded by now.
@@ -362,57 +374,42 @@ int loader() {
         mergeCube2Pointer = ht_new(state->cubeSetElements * 20);
         if(mergeCube2Pointer == HT_FAILURE) {
             LOG("Unable to create the temporary cube2pointer table.");
+            SDL_UnlockMutex(state->protectLoadSignal);
             break;
         }
-        /*
-        If magnification is unchanged, we should be aware which cubes are already loaded - while calculating
-        cubes to be loaded next. We would not load again those cubes that are loaded. However, if magnification
-        changed, we need to load everything once more (from new magnification value dataset), therefore we leave
-        the hash empty for now (and fill it later, see below).
-        */
-        if (!magChange) {
-            SDL_LockMutex(state->protectCube2Pointer);
-            if(ht_union(mergeCube2Pointer,
-                    state->Dc2Pointer[state->loaderMagnification],
-                    state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
-                LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
-                break;
-            }
-            SDL_UnlockMutex(state->protectCube2Pointer);
+        SDL_LockMutex(state->protectCube2Pointer);
+        funcRetVal = ht_union(mergeCube2Pointer,
+                state->Dc2Pointer[state->loaderMagnification],
+                state->Oc2Pointer[state->loaderMagnification]);
+        SDL_UnlockMutex(state->protectCube2Pointer);
+        if (HT_SUCCESS != funcRetVal) {
+            LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
+            SDL_UnlockMutex(state->protectLoadSignal);
+            break;
         }
+
+        prevLoaderMagnification = state->loaderMagnification;
+        state->loaderMagnification = log2uint32(state->magnification);
+        //LOG("loaderMagnification = %d", state->loaderMagnification);
+        strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
+        strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 
         // currentPositionX is updated only when the boundary is
         // crossed. Access to currentPositionX is synchronized through
         // the protectLoadSignal mutex.
         // DcoiFromPos fills the Dcoi list with all datacubes that
         // we want to be in memory, given our current position.
-        if(DcoiFromPos(loaderState->Dcoi, mergeCube2Pointer) != TRUE) {
+        if(DcoiFromPos(loaderState->Dcoi, magChange ? NULL : mergeCube2Pointer) != TRUE) {
             LOG("Error computing DCOI from position.");
+            SDL_UnlockMutex(state->protectLoadSignal);
             break;
         }
-
-        /*
-        The hash of the currently loaded cubes has already been filled before in case magnification unchanged.
-        We therefore have to fill it here only if magnification changed.
-        */
-        if (magChange) {
-            SDL_LockMutex(state->protectCube2Pointer);
-            if(ht_union(mergeCube2Pointer,
-                    state->Dc2Pointer[state->loaderMagnification],
-                    state->Oc2Pointer[state->loaderMagnification]) != HT_SUCCESS) {
-                LOG("Error merging Dc2Pointer and Oc2Pointer for mag %d.", state->loaderMagnification);
-                break;
-            }
-            SDL_UnlockMutex(state->protectCube2Pointer);
-        }
-
-        SDL_UnlockMutex(state->protectLoadSignal);
 
         /*
         We shall now remove from current loaded cubes those cubes that are not required by new coordinate,
         or simply all cubes in case of magnification change
         */
-        if(removeLoadedCubes(mergeCube2Pointer) != TRUE) {
+        if(removeLoadedCubes(mergeCube2Pointer, prevLoaderMagnification) != TRUE) {
             LOG("Error removing already loaded cubes from DCOI.");
             break;
         }
@@ -420,12 +417,14 @@ int loader() {
             LOG("Error removing temporary cube to pointer table. This is a memory leak.");
         }
 
+        SDL_UnlockMutex(state->protectLoadSignal);
+
         // DCOI is now a list of all datacubes that we want in memory, given
         // our current position and that are not yet in memory. We go through
         // that list and load all those datacubes into free memory slots as
         // stored in the list freeDcSlots.
         if(loadCubes() == FALSE) {
-            //LOG("Loading of all DCOI did not complete.");
+            LOG("Loading of all DCOI did not complete.");
         }
 
         SDL_LockMutex(state->protectLoadSignal);
@@ -535,13 +534,26 @@ static uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int32_t)floorf(floatHalfSc);
 
+    switch (state->viewerState->activeVP) {
+        case VIEWPORT_XY:
+            dz = state->directionSign;
+            break;
+        case VIEWPORT_XZ:
+            dy = state->directionSign;
+            break;
+        case VIEWPORT_YZ:
+            dx = state->directionSign;
+            break;
+    }
+    /*
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
-        /* LOG("%d\t%d\t%d", state->currentDirections[i].x, state->currentDirections[i].y, state->currentDirections[i].z); */
+        // LOG("%d\t%d\t%d", state->currentDirections[i].x, state->currentDirections[i].y, state->currentDirections[i].z);
         dx += (float)state->currentDirections[i].x;
         dy += (float)state->currentDirections[i].y;
         dz += (float)state->currentDirections[i].z;
-        /* LOG("Progress %f,%f,%f", dx, dy, dz); */
+        // LOG("Progress %f,%f,%f", dx, dy, dz);
     }
+    */
     SET_COORDINATE(direction, dx, dy, dz);
     direction = find_close_xyz(direction);
     direction_norm = CALC_VECTOR_NORM(direction);
@@ -581,12 +593,14 @@ _quicksort (
      size_t,
      int (*)(const void*, const void*) );
      _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric);
-    LOG("New Order (%f, %f, %f):", direction.x, direction.y, direction.z);
+    //LOG("New Order (%f, %f, %f):", direction.x, direction.y, direction.z);
     for (i = 0; i < cubeElemCount; i++) {
+        /*
         LOG("%d\t%d\t%d",
             DcArray[i].coordinate.x - currentOrigin.x,
             DcArray[i].coordinate.y - currentOrigin.y,
             DcArray[i].coordinate.z - currentOrigin.z);
+        */
         if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
             return FALSE;
         }
@@ -596,12 +610,12 @@ _quicksort (
     return TRUE;
 }
 
-static uint32_t loadCube(C_Element *elem,
-                         Byte *freeDcSlot,
-                         Byte *freeOcSlot) {
+ int loadCube(loadcube_thread_struct *lts) {
+    int32_t retVal = TRUE;
+    CubeSlot *currentDcSlot;
+    char *filename;
+    //DWORD tickCount = GetTickCount();
 
-    int32_t sleepTime = 0;
-    FILE *fh_indicator = NULL;
     /*
      * Specify either freeDcSlot or freeOcSlot.
      *
@@ -612,50 +626,101 @@ static uint32_t loadCube(C_Element *elem,
      *
      */
 
-    if((freeDcSlot && freeOcSlot) ||
-       (!freeDcSlot && !freeOcSlot)) {
-        return FALSE;
-    }
-    if(!freeDcSlot) {
-        LOG("Overlay not supported with JPEG2000 compression");
-        goto loadcube_fail;
+    //LOG("LOADER [%08X] %d started decompressing %d", GetTickCount() - lts->beginTickCount, lts->threadIndex, lts->currentCube->debugVal);
+
+    SDL_LockMutex(state->protectLoaderSlots);
+    currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots);
+    SDL_UnlockMutex(state->protectLoaderSlots);
+    if (FALSE == currentDcSlot) {
+        LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
+            lts->currentCube->coordinate.x,
+            lts->currentCube->coordinate.y,
+            lts->currentCube->coordinate.z,
+            state->magnification);
+        retVal = FALSE;
+        goto loadcube_ret;
     }
 
+    if (!currentDcSlot->cube) {
+        goto loadcube_ret;
+    }
     if (LM_FTP == state->loadMode) {
-        /* LOG("About to wait on %d", HASH_COOR(elem->coordinate)); */
-        if (SDL_MUTEX_TIMEDOUT == SDL_SemWaitTimeout(elem->ftpSem, state->ftpFileTimeout)) {
-            LOG("Failed wait on %d", HASH_COOR(elem->coordinate));
-            goto loadcube_fail;
+        if (lts->currentCube->isAborted) {
+            LOG("Aborted while retrieving %d,%d,%d (DEBUG %d)", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, lts->currentCube->debugVal);
+            retVal = FALSE;
+            goto loadcube_ret;
         }
-        /* LOG("Success wait on %d", HASH_COOR(elem->coordinate)); */
-        if (TRUE == elem->hasError) {
-            LOG("Error retrieving %d", HASH_COOR(elem->coordinate));
+        if (lts->currentCube->hasError) {
+            LOG("Error retrieving %d,%d,%d (DEBUG %d)", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, lts->currentCube->debugVal);
             goto loadcube_fail;
         }
     }
 
-    if (EXIT_SUCCESS != jp2_decompress_main(((LM_FTP == state->loadMode) ? elem->local_filename : elem->fullpath_filename), freeDcSlot, state->cubeBytes)) {
+    filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
+    if (EXIT_SUCCESS != jp2_decompress_main(filename, currentDcSlot->cube, state->cubeBytes)) {
+        LOG("Decompression function failed!");
         goto loadcube_fail;
     }
-    return TRUE;
+    goto loadcube_manage;
 
 loadcube_fail:
+    memcpy(currentDcSlot->cube, state->loaderState->bogusDc, state->cubeBytes);
 
-    if(freeDcSlot) {
-        memcpy(freeDcSlot, state->loaderState->bogusDc, state->cubeBytes);
+loadcube_manage:
+     /* Add pointers for the dc and oc (if at least one of them could be loaded)
+     * to the Cube2Pointer table.
+     *
+     */
+    if (!retVal) {
+        goto loadcube_ret;
     }
-    else {
-        memcpy(freeOcSlot, state->loaderState->bogusOc, state->cubeBytes * OBJID_BYTES);
+    SDL_LockMutex(state->protectCube2Pointer);
+    if(ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot->cube) != HT_SUCCESS) {
+        LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+            lts->currentCube->coordinate.x,
+            lts->currentCube->coordinate.y,
+            lts->currentCube->coordinate.z,
+            currentDcSlot->cube,
+            state->loaderMagnification);
+        retVal = FALSE;
+    }
+    SDL_UnlockMutex(state->protectCube2Pointer);
+    if (!retVal) {
+        goto loadcube_ret;
     }
 
-    return TRUE;
+    /*
+     * Remove the slots
+     *
+     */
+    SDL_LockMutex(state->protectLoaderSlots);
+    if(slotListDelElement(state->loaderState->freeDcSlots, currentDcSlot) < 0) {
+        LOG("Error deleting the current Dc slot %p from the list.",
+            currentDcSlot->cube);
+        retVal = FALSE;
+    }
+    SDL_UnlockMutex(state->protectLoaderSlots);
+    if (!retVal) {
+        goto loadcube_ret;
+    }
+
+loadcube_ret:
+    if (retVal) {
+        //lts->decompTime = GetTickCount() - tickCount;
+    }
+    lts->isBusy = FALSE;
+    //LOG("LOADER [%08X] %d finished decompressing %d", GetTickCount() - lts->beginTickCount, lts->threadIndex, lts->currentCube->debugVal);
+    SDL_SemPost(lts->loadCubeThreadSem);
+    return retVal;
 }
 
 static CubeSlot *slotListGetElement(CubeSlotList *slotList) {
     if(slotList->elements > 0) {
+        //LOG("Pop %08X (%d): %08X", slotList, slotList->elements, slotList->firstSlot);
         return slotList->firstSlot;
     }
     else {
+        //LOG("Pop %08X EMPTY!", slotList);
         return FALSE;
     }
 }
@@ -695,6 +760,8 @@ static int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube) {
     slotList->firstSlot = newElement;
 
     slotList->elements = slotList->elements + 1;
+
+    //LOG("Push %08X (%d): %08X", slotList, slotList->elements, newElement);
 
     return slotList->elements;
 }
@@ -831,261 +898,228 @@ static int32_t initLoader() {
     return TRUE;
 }
 
-static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash) {
+static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash, uint32_t prevLoaderMagnification) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     C_Element *currentCCube = NULL;
     Byte *delCubePtr = NULL;
 
-    currentCube = currentLoadedHash->listEntry->next;
-    while(currentCube != currentLoadedHash->listEntry) {
-        nextCube = currentCube->next;
+    for (currentCube = currentLoadedHash->listEntry->next;
+        currentCube != currentLoadedHash->listEntry;
+        currentCube = currentCube->next) {
+        if (NULL != currentCube->datacube) {
+            continue;
+        }
+        /*
+         * This element is not required, which means we can reuse its
+         * slots for new DCs / OCs.
+         * As we are using the merged list as a proxy for the actual lists,
+         * we need to get the pointers out of the actual lists before we can
+         * add them back to the free slots lists.
+         *
+         */
 
-        if (NULL == currentCube->datacube) {
-            /*
-             * This element is not required, which means we can reuse its
-             * slots for new DCs / OCs.
-             * As we are using the merged list as a proxy for the actual lists,
-             * we need to get the pointers out of the actual lists before we can
-             * add them back to the free slots lists.
-             *
-             */
+        SDL_LockMutex(state->protectCube2Pointer);
 
-            SDL_LockMutex(state->protectCube2Pointer);
-
-            /*
-             * Process Dc2Pointer if the current cube is in Dc2Pointer.
-             *
-             */
-            if((delCubePtr = ht_get(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
-                if(ht_del(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                    LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
-                        currentCube->coordinate.x,
-                        currentCube->coordinate.y,
-                        currentCube->coordinate.z,
-                        state->loaderMagnification);
-                    return FALSE;
-                }
-
-
-
-                if(slotListAddElement(state->loaderState->freeDcSlots, delCubePtr) < 1) {
-                    LOG("Error adding slot %p (formerly of Dc (%d, %d, %d)) into freeDcSlots.",
-                        delCubePtr,
-                        currentCube->coordinate.x,
-                        currentCube->coordinate.y,
-                        currentCube->coordinate.z);
-                    return FALSE;
-                }
-                /*
-                LOG("Added %d, %d, %d => %d available",
-                        currentCube->coordinate.x,
-                        currentCube->coordinate.y,
-                        currentCube->coordinate.z,
-                        state->loaderState->freeDcSlots->elements);
-                */
+        /*
+         * Process Dc2Pointer if the current cube is in Dc2Pointer.
+         *
+         */
+        if((delCubePtr = ht_get(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if(ht_del(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
+                LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z,
+                    prevLoaderMagnification);
+                return FALSE;
             }
 
-            /*
-             * Process Oc2Pointer if the current cube is in Oc2Pointer.
-             *
-             */
-            if((delCubePtr = ht_get(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
-                if(ht_del(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
-                    LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
-                        currentCube->coordinate.x,
-                        currentCube->coordinate.y,
-                        currentCube->coordinate.z);
-                    return FALSE;
-                }
 
-                memset(delCubePtr, 0, state->cubeSetBytes * OBJID_BYTES);
-                if(slotListAddElement(state->loaderState->freeOcSlots, delCubePtr) < 1) {
-                    LOG("Error adding slot %p (formerly of Oc (%d, %d, %d)) into freeOcSlots.",
-                        delCubePtr,
-                        currentCube->coordinate.x,
-                        currentCube->coordinate.y,
-                        currentCube->coordinate.z);
-                    return FALSE;
-                }
+            if(slotListAddElement(state->loaderState->freeDcSlots, delCubePtr) < 1) {
+                LOG("Error adding slot %p (formerly of Dc (%d, %d, %d)) into freeDcSlots.",
+                    delCubePtr,
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z);
+                return FALSE;
             }
-
-            SDL_UnlockMutex(state->protectCube2Pointer);
+            /*
+            LOG("Added %d, %d, %d => %d available",
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z,
+                    state->loaderState->freeDcSlots->elements);
+            */
         }
 
-        currentCube = nextCube;
+        /*
+         * Process Oc2Pointer if the current cube is in Oc2Pointer.
+         *
+         */
+        if((delCubePtr = ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if(ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
+                LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z);
+                return FALSE;
+            }
+
+            memset(delCubePtr, 0, state->cubeSetBytes * OBJID_BYTES);
+            if(slotListAddElement(state->loaderState->freeOcSlots, delCubePtr) < 1) {
+                LOG("Error adding slot %p (formerly of Oc (%d, %d, %d)) into freeOcSlots.",
+                    delCubePtr,
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z);
+                return FALSE;
+            }
+        }
+
+        SDL_UnlockMutex(state->protectCube2Pointer);
     }
 
     return TRUE;
 }
 
+#define DECOMP_THREAD_NUM (1)
 static uint32_t loadCubes() {
-    C_Element *currentCube = NULL, *prevCube = NULL;
-    CubeSlot *currentDcSlot = NULL, *currentOcSlot = NULL;
-    uint32_t loadedDc = FALSE, loadedOc = FALSE;
+    C_Element *currentCube = NULL, *prevCube = NULL, *decompedCube = NULL;
+    CubeSlot *currentDcSlot = NULL;
+    uint32_t loadedDc = FALSE;
     SDL_Thread *ftpThread = NULL;
-    SDL_sem *ftpThreadSem = NULL;
+    ftp_thread_struct fts = {0};
+    loadcube_thread_struct lts_array[DECOMP_THREAD_NUM] = {0};
+    loadcube_thread_struct lts_empty = {0};
+    SDL_Thread *threadHandle_array[DECOMP_THREAD_NUM] = {NULL};
+    SDL_Thread *threadHandle_current;
+    void *loadCubeThreadSem = SDL_CreateSemaphore(DECOMP_THREAD_NUM);
     int32_t hadError = FALSE;
     int32_t retVal = TRUE;
+    int32_t cubeCount = 0, loadedCubeCount = 0;
+    int32_t thread_index;
+    int32_t isBreak;
+    DWORD waitTime = 0, decompTime = 0;
+    DWORD currTick, beginTickCount;
+    DWORD noDecompCurrent = 0, noDecompTotal = 0;
 
+    for (currentCube = state->loaderState->Dcoi->previous; currentCube != state->loaderState->Dcoi; currentCube = currentCube->previous) {
+        cubeCount++;
+        currentCube->debugVal = cubeCount;
+    }
+    //beginTickCount = GetTickCount();
     if (LM_FTP == state->loadMode) {
-        ftpThreadSem = SDL_CreateSemaphore(0);
-        ftpThread = SDL_CreateThread(ftpthreadfunc, ftpThreadSem);
+        fts.cubeCount = cubeCount;
+        fts.beginTickCount = beginTickCount;
+        fts.ftpThreadSem = SDL_CreateSemaphore(0);
+        fts.loaderThreadSem = SDL_CreateSemaphore(0);
+        //fts.debugVal = GetTickCount();
+        //LOG("DEBUG CreateThread FTP");
+        ftpThread = SDL_CreateThread(ftpthreadfunc, &fts);
     }
 
-    for (currentCube = state->loaderState->Dcoi->previous; currentCube != state->loaderState->Dcoi; currentCube = prevCube) {
-        prevCube = currentCube->previous;
-        /*
-         * Load the datacube for the current coordinate.
-         *
-         */
-
-        if((currentDcSlot = slotListGetElement(state->loaderState->freeDcSlots)) == FALSE) {
-            LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
-                currentCube->coordinate.x,
-                currentCube->coordinate.y,
-                currentCube->coordinate.z,
-                state->magnification);
-            return FALSE;
+    while (TRUE) {
+        // Wait on an available decompression thread
+        //LOG("LOADER [%08X] Waiting for decompression threads", GetTickCount() - beginTickCount);
+        SDL_SemWait(loadCubeThreadSem);
+        //LOG("LOADER [%08X] Signalled decompression threads: %d", GetTickCount() - beginTickCount, SDL_SemValue(loadCubeThreadSem));
+        for (thread_index = 0; (thread_index < DECOMP_THREAD_NUM) && lts_array[thread_index].isBusy; thread_index++);
+        if (DECOMP_THREAD_NUM == thread_index) {
+            LOG("All threads occupied, c'est impossible! Au revoir loader!");
+            retVal = FALSE;
+            break;
         }
-
-        loadedDc = loadCube(currentCube, currentDcSlot->cube, NULL);
-        if(!loadedDc) {
-            LOG("Error loading Dc (%d, %d, %d) into slot %p, mag %d dataset.",
-                currentCube->coordinate.x,
-                currentCube->coordinate.y,
-                currentCube->coordinate.z,
-                currentDcSlot->cube,
-                state->magnification);
-            hadError = TRUE;
-        }
-        /* LOG("Loaded: %d, %d, %d",
-            currentCube->coordinate.x,
-            currentCube->coordinate.y,
-            currentCube->coordinate.z); */
-
-        /*
-         * Load the overlay cube if overlay is activated.
-         *
-         */
-
-        if(state->overlay) {
-            if((currentOcSlot = slotListGetElement(state->loaderState->freeOcSlots)) == FALSE) {
-                LOG("Error getting a slot for the next Oc, wanted to load (%d, %d, %d), mag%d dataset.",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    state->magnification);
-                return FALSE;
-            }
-
-            loadedOc = loadCube(currentCube, NULL, currentOcSlot->cube);
-            if(!loadedOc) {
-                LOG("Error loading Oc (%d, %d, %d) into slot %p, mag%d dataset..",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    currentOcSlot->cube,
-                    state->magnification);
-                hadError = TRUE;
+        if (NULL != threadHandle_array[thread_index]) {
+            //LOG("LOADER [%08X] About to wait on vacant thread %d", GetTickCount() - beginTickCount, thread_index);
+            SDL_WaitThread(threadHandle_array[thread_index], &loadedDc);
+            //LOG("LOADER [%08X] Finihsed waiting on vacant thread %d", GetTickCount() - beginTickCount, thread_index);
+            decompTime += lts_array[thread_index].decompTime;
+            threadHandle_array[thread_index] = NULL;
+            lts_array[thread_index] = lts_empty;
+            loadedCubeCount++;
+            if (!loadedDc) {
+                //LOG("LOADER [%08X] Thread %d finished wrongfully!", GetTickCount() - beginTickCount, thread_index);
+                retVal = FALSE;
+                break;
             }
         }
-
-        /*
-         * Add pointers for the dc and oc (if at least one of them could be loaded)
-         * to the Cube2Pointer table.
-         *
-         */
-        SDL_LockMutex(state->protectCube2Pointer);
-        if(loadedDc) {
-            if(ht_put(state->Dc2Pointer[state->loaderMagnification], currentCube->coordinate, currentDcSlot->cube) != HT_SUCCESS) {
-                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    currentDcSlot->cube,
-                    state->loaderMagnification);
-                return FALSE;
-            }
-            /*    LOG("inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    currentDcSlot->cube,
-                    state->loaderMagnification);
-                    */
-        }
-
-        if(loadedOc) {
-            if(ht_put(state->Oc2Pointer[state->loaderMagnification], currentCube->coordinate, currentOcSlot->cube) != HT_SUCCESS) {
-                LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Oc2Pointer[%d].",
-                    currentCube->coordinate.x,
-                    currentCube->coordinate.y,
-                    currentCube->coordinate.z,
-                    currentOcSlot->cube,
-                    state->loaderMagnification);
-                return FALSE;
-            }
-        }
-        SDL_UnlockMutex(state->protectCube2Pointer);
-
-        /*
-         * Remove the slots
-         *
-         */
-        if(loadedDc) {
-            if(slotListDelElement(state->loaderState->freeDcSlots, currentDcSlot) < 0) {
-                LOG("Error deleting the current Dc slot %p from the list.",
-                    currentDcSlot->cube);
-                return FALSE;
-            }
-            /*
-            LOG("Deleted %d, %d, %d => %d available",
-                currentCube->coordinate.x,
-                currentCube->coordinate.y,
-                currentCube->coordinate.z,
-                state->loaderState->freeDcSlots->elements);
-            */
-
-        }
-        if(loadedOc) {
-            if(slotListDelElement(state->loaderState->freeOcSlots, currentOcSlot) < 0) {
-                LOG("Error deleting the current Oc slot %p from the list.",
-                    currentOcSlot->cube);
-                return FALSE;
-            }
-        }
-
-        /*
-         * Remove the current cube from Dcoi
-         *
-         */
 
         // We need to be able to cancel the loading when the
         // user crosses the reload-boundary
         // or when the dataset changed as a consequence of a mag switch
 
         SDL_LockMutex(state->protectLoadSignal);
-        if((state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE) || (TRUE == hadError)) {
-            SDL_UnlockMutex(state->protectLoadSignal);
-            /* LOG("LoadCubes Interrupted!"); */
-
+        isBreak = (state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == TRUE) || (TRUE == hadError);
+        SDL_UnlockMutex(state->protectLoadSignal);
+        if (isBreak) {
+            LOG("loadCubes Interrupted!");
             retVal = FALSE;
             break;
         }
-        else {
-            SDL_UnlockMutex(state->protectLoadSignal);
+        if (cubeCount == loadedCubeCount) {
+            //LOG("LOADER [%08X] FINISHED!", GetTickCount() - beginTickCount);
+            break;
         }
+
+        if (LM_FTP == state->loadMode) {
+            //currTick = -GetTickCount();
+            SDL_SemWait(fts.loaderThreadSem);
+            //currTick += GetTickCount();
+            //waitTime += currTick;
+            //LOG("LOADER [%08X] Waited %d, overall %d", GetTickCount() - beginTickCount, currTick, waitTime);
+        }
+        for (currentCube = state->loaderState->Dcoi->previous; currentCube != state->loaderState->Dcoi; currentCube = currentCube->previous) {
+            if (currentCube->isLoaded) {
+                continue;
+            }
+            if ((currentCube->isFinished) || (LM_FTP != state->loadMode)) {
+                //LOG("LOADER [%08X] Found %d", GetTickCount() - beginTickCount, currentCube->debugVal);
+                currentCube->isLoaded = TRUE;
+                break;
+            }
+        }
+        if (state->loaderState->Dcoi == currentCube) {
+            LOG("All cubes loaded, c'est impossible! Au revoir loader!");
+            retVal = FALSE;
+            break;
+        }
+        /*
+         * Load the datacube for the current coordinate.
+         *
+         */
+        lts_array[thread_index].currentCube = currentCube;
+        lts_array[thread_index].isBusy = TRUE;
+        lts_array[thread_index].loadCubeThreadSem = loadCubeThreadSem;
+        lts_array[thread_index].beginTickCount = beginTickCount;
+        lts_array[thread_index].threadIndex = thread_index;
+        lts_array[thread_index].decompTime = 0;
+        threadHandle_array[thread_index] = SDL_CreateThread(loadCube, &lts_array[thread_index]);
     }
 
     if (LM_FTP == state->loadMode) {
-        /* LOG("LoadCubes posting FTP abort"); */
-        SDL_SemPost(ftpThreadSem);
-        /* LOG("LoadCubes waiting FTP thread"); */
+        //LOG("LoadCubes posting FTP abort");
+        SDL_SemPost(fts.ftpThreadSem);
+        //LOG("LoadCubes waiting FTP thread");
         SDL_WaitThread(ftpThread, NULL);
-        /* LOG("LoadCubes FTP thread finished, destroying semaphore"); */
-        SDL_DestroySemaphore(ftpThreadSem);
-        /* LOG("LoadCubes FTP semaphore destroyed"); */
+        //LOG("LoadCubes FTP thread finished, destroying semaphore");
+        SDL_DestroySemaphore(fts.ftpThreadSem);
+        //LOG("LoadCubes FTP semaphore destroyed");
+        SDL_DestroySemaphore(fts.loaderThreadSem);
+
+        if (TRUE == retVal) {
+            //LOG("loadCubes: Util (%08X) %d", fts.debugVal, (100*decompTime)/(1 + GetTickCount() - beginTickCount));
+        }
     }
+
+    for (thread_index = 0; thread_index <  DECOMP_THREAD_NUM; thread_index++) {
+        if (NULL != threadHandle_array[thread_index]) {
+            LOG("LOADER Decompression thread %d was open! Waiting...", thread_index);
+            SDL_WaitThread(threadHandle_array[thread_index], NULL);
+            //LOG("LOADER [%08X] Decompression thread %d finished.", GetTickCount() - beginTickCount, thread_index);
+        }
+    }
+    SDL_DestroySemaphore(loadCubeThreadSem);
+
     lll_rmlist(state->loaderState->Dcoi);
 
     return retVal;

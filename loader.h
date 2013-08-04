@@ -24,7 +24,7 @@
 
 static uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash);
 static CubeSlot *slotListGetElement(CubeSlotList *slotList);
-static uint32_t loadCube(C_Element *elem, Byte *freeDcSlot, Byte *freeOcSlot);
+int loadCube(loadcube_thread_struct *lts);
 static uint32_t cleanUpLoader(struct loaderState *loaderState);
 
 // ALWAYS give the slotList*Element functions an element that
@@ -36,6 +36,6 @@ static int32_t slotListAddElement(CubeSlotList *slotList, Byte *datacube);
 static CubeSlotList *slotListNew();
 static int32_t slotListDel(CubeSlotList *delList);
 static int32_t initLoader();
-static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash);
+static uint32_t removeLoadedCubes(Hashtable *currentLoadedHash, uint32_t prevLoaderMagnification);
 static uint32_t loadCubes();
 static int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, C_Element *target, Hashtable *currentLoadedHash);

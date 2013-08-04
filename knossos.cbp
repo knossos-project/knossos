@@ -40,6 +40,7 @@
 					<Add library="freetype" />
 					<Add library="pthreadVC2" />
 					<Add library="libSDL_Clipboard" />
+					<Add library="curl.dll" />
 				</Linker>
 			</Target>
 			<Target title="debug">
@@ -47,7 +48,7 @@
 				<Option output="knossos" prefix_auto="1" extension_auto="1" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--data-path=i:\j0126_cubed\mag1" />
+				<Option parameters="--data-path=C:\Oren\knossos-trunk-svn\tools/ --supercube-edge=5" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-pg" />
@@ -77,6 +78,7 @@
 					<Add library="pthreadVC2" />
 					<Add library="libSDL_Clipboard" />
 					<Add library="gdi32" />
+					<Add library="curl.dll" />
 				</Linker>
 			</Target>
 		</Build>
@@ -107,6 +109,7 @@
 			<Add library="freetype" />
 			<Add library="pthreadVC2" />
 			<Add library="libSDL_Clipboard" />
+			<Add library="curl.dll" />
 		</Linker>
 		<Unit filename="client.c">
 			<Option compilerVar="CC" />

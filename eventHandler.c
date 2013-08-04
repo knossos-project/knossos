@@ -60,6 +60,8 @@ uint32_t handleEvent(SDL_Event event) {
         AG_ProcessTimeout(time);
     }
 
+    state->directionSign = 1;
+
     switch(event.type) {
         case SDL_MOUSEMOTION:
         case SDL_MOUSEBUTTONDOWN:
@@ -733,6 +735,8 @@ static uint32_t handleMouseButtonWheelForward(SDL_Event event, int32_t VPfound) 
 static uint32_t handleMouseButtonWheelBackward(SDL_Event event, int32_t VPfound) {
     float radius;
 
+    state->directionSign = -1;
+
     if(VPfound == -1)
         return TRUE;
 
@@ -1255,6 +1259,7 @@ static uint32_t handleKeyboard(SDL_Event event) {
         }
         break;
     case SDLK_d:
+        state->directionSign = -1;
         if(SDL_GetModState() & KMOD_SHIFT) {
             switch(state->viewerState->viewPorts[state->viewerState->activeVP].type) {
                 case VIEWPORT_XY:

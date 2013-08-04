@@ -26,6 +26,8 @@
  *	Very general stuff.
  */
 
+#include <SDL/SDL.h>
+#include <SDL/SDL_thread.h>
 #include <SDL/SDL_net.h>
 #include <GL/gl.h>
 
@@ -35,7 +37,8 @@
 #include <agar/core.h>
 #include <agar/gui.h>
 
-#include "ftplib/ftplib.h"
+/* #include "ftplib/ftplib.h" */
+#include <curl/curl.h>
 
 #define KVERSION "3.4.2"
 
@@ -381,14 +384,43 @@ struct _C_Element {
         char *path;
         char *fullpath_filename;
         char *local_filename;
-        SDL_sem *ftpSem;
+        CURL *curlHandle;
+        FILE *ftp_fh;
         int32_t    hasError;
+        int32_t isFinished;
+        int32_t isAborted;
+        int32_t isLoaded;
+
+        uint32_t debugVal;
+        DWORD tickDownloaded;
+        DWORD tickDecompressed;
 
         struct _C_Element *previous;
         struct _C_Element *next;
 };
 
 typedef struct _C_Element C_Element;
+
+struct _ftp_thread_struct {
+    DWORD debugVal;
+    DWORD beginTickCount;
+    void *ftpThreadSem;
+    void *loaderThreadSem;
+    int32_t cubeCount;
+};
+
+typedef struct _ftp_thread_struct ftp_thread_struct;
+
+struct _loadcube_thread_struct {
+    DWORD beginTickCount;
+    DWORD decompTime;
+    int32_t threadIndex;
+    void *loadCubeThreadSem;
+    int32_t isBusy;
+    C_Element *currentCube;
+};
+
+typedef struct _loadcube_thread_struct loadcube_thread_struct;
 
 struct _LO_Element {
         Coordinate coordinate;
@@ -585,6 +617,9 @@ struct stateInfo {
         // use sendLoadSignal() to signal to the loading thread.
         SDL_mutex *protectLoadSignal;
 
+        // Protect slot list during loading
+        SDL_mutex *protectLoaderSlots;
+
 		// This should be accessed through sendRemoteSignal() only.
         SDL_mutex *protectRemoteSignal;
 
@@ -613,6 +648,7 @@ struct stateInfo {
         // This gives the current direction whenever userMove is called
         Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
         int32_t currentDirectionsIndex;
+        int32_t directionSign;
 
         // This gives the current position ONLY when the reload
         // boundary has been crossed. Change it through
@@ -629,7 +665,6 @@ struct stateInfo {
         char       *ftpHostName;
         char       *ftpUsername;
         char       *ftpPassword;
-        netbuf     *ftpConn;
         int32_t    ftpFileTimeout;
 
         // Dc2Pointer and Oc2Pointer provide a mappings from cube
@@ -1590,12 +1625,14 @@ extern char logFilename[];
     char msg[1024]; \
     FILE *logFile = NULL; \
     logFile = fopen(logFilename, "a+"); \
-    sprintf(msg, "[%s:%d] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, "[%s\t%d ] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
     FILE_FLUSH(stdout); \
     FILE_CLOSE(logFile); \
     }
+
+extern int32_t downloadFile(char *remote_path, char *local_filename);
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 

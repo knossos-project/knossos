@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
     char consoleInput[1024];
     char tempPath[MAX_PATH] = {0};
 
+
+
 #ifdef WIN32
     GetTempPath(MAX_PATH, tempPath);
     GetTempFileName(tempPath, "KNL", 0, logFilename);
@@ -114,6 +116,7 @@ int main(int argc, char *argv[]) {
     state->conditionClientSignal = SDL_CreateCond();
     state->protectSkeleton = SDL_CreateMutex();
     state->protectLoadSignal = SDL_CreateMutex();
+    state->protectLoaderSlots = SDL_CreateMutex();
     state->protectRemoteSignal = SDL_CreateMutex();
     state->protectClientSignal = SDL_CreateMutex();
     state->protectCube2Pointer = SDL_CreateMutex();
@@ -673,7 +676,7 @@ static int32_t initStates() {
     SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
     state->loadLocalSystem = LS_WINDOWS;
-    state->loadMode = LM_LOCAL;
+    state->loadMode = LM_FTP;
     if (LM_FTP == state->loadMode) {
         state->loadFtpCachePath = malloc(MAX_PATH);
 #ifdef WIN32
@@ -685,11 +688,14 @@ static int32_t initStates() {
 #endif // LINUX
         state->ftpBasePath = /* "BASE_PATH"; */ "/j0126_cubed/";
         state->ftpHostName = /* "HOST"; */ "heidelbrain-ftp.mpimf-heidelberg.mpg.de";
-        state->ftpUsername = /* "USERNAME"; */ "knossos-rw";
-        state->ftpPassword = /* "PASSWORD"; */ "thissisanewwpasss";
+        state->ftpUsername = /* "USERNAME"; */ /* "knossos-rw" */ "knossos-read";
+        state->ftpPassword = /* "PASSWORD"; */ /* "thissisanewwpasss" */ "readme";
         state->ftpFileTimeout = 30*1000;
+        /*
         state->ftpConn = NULL;
         FtpInit();
+        */
+        curl_global_init(CURL_GLOBAL_DEFAULT);
     }
 
     // We're not doing stuff in parallel, yet. So we skip the locking
@@ -712,7 +718,9 @@ static int32_t initStates() {
 
     /* searches for multiple mag datasets and enables multires if more
      * than one was found */
-    findAndRegisterAvailableDatasets();
+    if (FALSE == findAndRegisterAvailableDatasets()) {
+        return FALSE;
+    }
 
     return TRUE;
 }
@@ -759,6 +767,7 @@ static uint32_t isPathString(char *string) {
 */
 
 int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
+    //LOG("DEBUG sendLoadSignal Before");
     SDL_LockMutex(state->protectLoadSignal);
 
     state->loadSignal = TRUE;
@@ -779,6 +788,7 @@ int32_t sendLoadSignal(uint32_t x, uint32_t y, uint32_t z, int32_t magChanged) {
     SDL_UnlockMutex(state->protectLoadSignal);
 
     SDL_CondSignal(state->conditionLoadSignal);
+    //LOG("DEBUG sendLoadSignal After");
 
     return TRUE;
 }
@@ -1046,6 +1056,7 @@ static int32_t findAndRegisterAvailableDatasets() {
 
     if(isMultiresCompatible && (state->magnification == 1)) {
         if (LM_FTP == state->loadMode) {
+            /*
             if (!FtpConnect(state->ftpHostName,&state->ftpConn)) {
                 LOG("FTP Connection Error!");
                 _Exit(FALSE);
@@ -1055,6 +1066,7 @@ static int32_t findAndRegisterAvailableDatasets() {
                 LOG("FTP Login Failure: %s", FtpLastResponse(state->ftpConn));
                 _Exit(FALSE);
             }
+            */
         }
         else {
             /* take base path and go one level up */
@@ -1099,7 +1111,8 @@ static int32_t findAndRegisterAvailableDatasets() {
                 char *ftpDirDelim = "/";
                 int confSize = 0;
                 sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
-                if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) {
+                /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
+                if (EXIT_SUCCESS == downloadFile(currPath, NULL)) {
                     currMagExists = TRUE;
                 }
             }
@@ -1154,11 +1167,6 @@ static int32_t findAndRegisterAvailableDatasets() {
                 sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
-        if (LM_FTP == state->loadMode) {
-            FtpQuit(state->ftpConn);
-            state->ftpConn = NULL;
-        }
-
         LOG("Highest Mag: %d", state->highestAvailableMag);
 
         if(state->lowestAvailableMag == INT_MAX) {
