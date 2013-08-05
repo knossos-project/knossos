@@ -2829,7 +2829,7 @@ void Viewer::rewire() {
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(window, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(window, SIGNAL(saveSkeletonSignal()), skeletonizer, SLOT(saveSkeleton()));
-    connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadSkeleton()));
+    connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadQmlSkeleton()));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
 

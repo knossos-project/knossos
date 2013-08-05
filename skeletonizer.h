@@ -27,6 +27,7 @@
 
 
 #include <QObject>
+#include <QtXml/QXmlStreamReader>
 #include "knossos-global.h"
 
 class Skeletonizer : public QObject
@@ -104,6 +105,7 @@ public:
     void delCmdListElement(struct cmdListElement *cmdEl);
 
 public:
+
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
 
@@ -301,6 +303,10 @@ public slots:
 
     bool loadSkeleton();
     int saveSkeleton();
+
+    bool loadQmlSkeleton();
+
+
 
     bool popBranchNode(int targetRevision);
     static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);

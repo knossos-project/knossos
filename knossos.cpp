@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     state->conditionLoadSignal = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
     state->conditionClientSignal = new QWaitCondition();
-    state->protectSkeleton = new QMutex(QMutex::Recursive);
+    state->protectSkeleton = new QMutex();
     state->protectLoadSignal = new QMutex();
     state->protectRemoteSignal = new QMutex();
     state->protectClientSignal = new QMutex();

@@ -660,17 +660,19 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
-        emit stopRenderTimerSignal();
+        //emit stopRenderTimerSignal();
 
         loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
 
-        emit startRenderTimerSignal(10);
+        //emit startRenderTimerSignal(10);
 
+        /*
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
         }
 
         emit updateToolsSignal();
+        */
     }
 }
 

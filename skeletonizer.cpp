@@ -1061,6 +1061,717 @@ int Skeletonizer::saveSkeleton() {
 }
 //uint loadNMLSkeleton() { }
 
+
+bool Skeletonizer::loadQmlSkeleton() {
+    int neuronID = 0, nodeID = 0, merge = false;
+    int nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
+    float radius;
+    Byte VPtype;
+    int inMag, magnification = 0;
+    int globalMagnificationSpecified = false;
+
+    struct treeListElement *currentTree;
+    struct nodeListElement *currentNode = NULL;
+    Coordinate *currentCoordinate, loadedPosition;
+    Coordinate offset;
+    floatCoordinate scale;
+    int time, activeNodeID = 0;
+    int skeletonTime = 0;
+    color4F neuronColor;
+
+    SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z)
+    SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
+    SET_COORDINATE(loadedPosition, 0, 0, 0);
+
+    currentCoordinate = (Coordinate*) malloc(sizeof(Coordinate));
+    if(currentCoordinate == NULL) {
+        LOG("Out of memory.");
+        return false;
+    }
+    memset(currentCoordinate, '\0', sizeof(currentCoordinate));
+
+
+    QFile file(QString(state->skeletonState->skeletonFile));
+
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        LOG("Document not parsed successfully.")
+        return false;
+    }
+
+    if(!state->skeletonState->mergeOnLoadFlag) {
+        merge = false;
+        clearSkeleton(CHANGE_MANUAL, true);
+    }
+    else {
+        merge = true;
+        greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
+        greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
+    }
+
+    QTime bench;
+
+    int counter = 0;
+
+    QXmlStreamReader xml(&file);
+
+    while(!xml.atEnd() and !xml.hasError()) {
+        qDebug() << xml.name();
+        xml.readNext();
+
+        if(xml.isStartDocument()) {
+             continue;
+        }
+
+        while(xml.isWhitespace()) {
+            xml.readNext();
+        }
+
+        if(xml.isStartElement()) {
+
+            if(xml.name() == "things") {
+                continue;
+            }
+
+            if(xml.name() == "parameters") {
+
+                xml.readNextStartElement();
+
+                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "parameters")) {
+
+                    QXmlStreamAttributes attributes = xml.attributes();
+                    QString attribute;
+
+                    qDebug() << xml.name().toString();
+                    if(xml.name() == "experiment" and xml.isStartElement()) {
+                        attribute = attributes.value("name").toString();
+                        if(!attribute.isNull()) {
+                            strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toStdString().c_str());
+                        } else {
+                            strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
+                        }
+                        xml.readNext();
+                        if(xml.name() == "experiment" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "createdin" and xml.isStartElement()) {
+                        attribute  = attributes.value("version").toString();
+                        if(!attribute.isNull()) {
+                            strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toStdString().c_str());
+                        } else {
+                            strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
+                        }
+
+                        xml.readNext();
+                        if(xml.name() == "createdin" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "magnification" and xml.isStartElement()) {
+                        attribute  = attributes.value("factor").toString();
+                        if(!attribute.isNull()) {
+                            magnification = attribute.toInt();
+                            globalMagnificationSpecified = true;
+                        } else {
+                            magnification = 0;
+                        }
+                        xml.readNext();
+                        if(xml.name() == "magnification" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "offset" and xml.isStartElement()) {
+                        attribute = attributes.value("x").toString();
+                        if(!attribute.isNull())
+                            offset.x = attribute.toInt();
+
+                        attribute = attributes.value("y").toString();
+                        if(!attribute.isNull())
+                            offset.y = attribute.toInt();
+
+                        attribute = attributes.value("z").toString();
+                        if(!attribute.isNull())
+                            offset.z = attribute.toInt();
+
+                        xml.readNext();
+                        if(xml.name() == "offset" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "time" and xml.isStartElement()) {
+                        attribute = attributes.value("ms").toString();
+                        if(!attribute.isNull()) {
+                            if(hasObfuscatedTime()) {
+                                skeletonTime = xorInt(attribute.toInt());
+                            } else {
+                                skeletonTime = attribute.toInt();
+                            }
+                        }
+                        xml.readNext();
+                        if(xml.name() == "time" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "activeNode" and xml.isStartElement()) {
+                        if(!merge) {
+                            attribute = attributes.value("id").toString();
+                            if(!attribute.isNull()) {
+                                activeNodeID = attribute.toInt();
+                            }
+                        }
+                        xml.readNext();
+                        if(xml.name() == "activeNode" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "scale" and xml.isStartElement()) {
+                        attribute = attributes.value("x").toString();
+                        if(!attribute.isNull()) {
+                            scale.x = attribute.toFloat();
+                        }
+
+                        attribute = attributes.value("y").toString();
+                        if(!attribute.isNull()) {
+                            scale.y = attribute.toFloat();
+                        }
+
+                        attribute = attributes.value("z").toString();
+                        if(!attribute.isNull()) {
+                            scale.z = attribute.toFloat();
+                        }
+                        xml.readNext();
+                        if(xml.name() == "scale" and xml.isEndElement())
+                            xml.readNext();
+
+                    }
+
+                    if(xml.name() == "editPosition" and xml.isStartElement()) {
+                        attribute = attributes.value("x").toString();
+                        if(!attribute.isNull())
+                            loadedPosition.x = attribute.toInt();
+
+                        attribute = attributes.value("y").toString();
+                        if(!attribute.isNull())
+                            loadedPosition.x = attribute.toInt();
+
+                        attribute = attributes.value("z").toString();
+                        if(!attribute.isNull())
+                            loadedPosition.x = attribute.toInt();
+
+                        xml.readNext();
+                        if(xml.name() == "editPosition" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "skeletonVPState" and xml.isStartElement()) {
+                        int j = 0;
+                        char element [8];
+                        for (j = 0; j < 16; j++){
+                            sprintf (element, "E%d", j);
+                            attribute = attributes.value(element).toString();
+                            state->skeletonState->skeletonVpModelView[j] = attribute.toFloat();
+                        }
+                        glMatrixMode(GL_MODELVIEW);
+                        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+
+                        attribute = attributes.value("translateX").toString();
+                        if(!attribute.isNull()) {
+                            state->skeletonState->translateX = attribute.toFloat();
+                        }
+
+                        if(attribute.isNull()) {
+                            state->skeletonState->translateY = attribute.toFloat();
+                        }
+
+                        xml.readNext();
+                        if(xml.name() == "skeletonVPState" and xml.isEndElement())
+                            xml.readNext();
+
+                    }
+
+                    if(xml.name() == "vpSettingsZoom" and xml.isStartElement()) {
+                        attribute = attributes.value("XYPlane").toString();
+                        if(!attribute.isNull()) {
+                            state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = attribute.toFloat();
+                        }
+                        attribute = attributes.value("XZPlane").toString();
+                        if(!attribute.isNull()) {
+                            state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = attribute.toFloat();
+                        }
+                        attribute = attributes.value("YZPlane").toString();
+                        if(!attribute.isNull()) {
+                            state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = attribute.toFloat();
+                        }
+                        attribute = attributes.value("SkelVP").toString();
+                        if(!attribute.isNull())
+                            state->skeletonState->zoomLevel = attribute.toFloat();
+
+                        xml.readNext();
+                        if(xml.name() == "vpSettingsZoom" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    if(xml.name() == "idleTime" and xml.isStartElement()) {
+                        attribute = attributes.value("ms").toString();
+                        if(!attribute.isNull()) {
+                            if(hasObfuscatedTime()) {
+                                state->skeletonState->idleTime = xorInt(attribute.toInt());
+                            } else {
+                                state->skeletonState->idleTime = attribute.toInt();
+                            }
+                        }
+                        state->skeletonState->idleTimeTicksOffset = state->time.elapsed();
+
+                        xml.readNext();
+                        if(xml.name() == "idleTime" and xml.isEndElement())
+                            xml.readNext();
+                    }
+
+                    while(xml.readNext() == QXmlStreamReader::Characters) {
+                    }
+                }
+
+            }
+
+            else if(xml.name() == "branchpoints") {
+                xml.readNextStartElement();
+
+                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "branchpoints")) {
+
+                    if(xml.name() == "branchpoint" and xml.isStartElement()) {
+                        QXmlStreamAttributes attributes = xml.attributes();
+                        QString attribute;
+
+                        attribute = attributes.value("id").toString();
+                        if(!attribute.isNull()) {
+                            if(!merge) {
+                                nodeID = attribute.toInt();
+                            } else {
+                                nodeID = attribute.toInt() + greatestNodeIDbeforeLoading;
+                            }
+                            currentNode = findNodeByNodeID(nodeID);
+                            if(currentNode)
+                                pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0);
+                        }
+                    }
+
+                    while(xml.readNext() == QXmlStreamReader::Characters) {
+
+                    }
+                }
+
+            }
+
+            else if(xml.name() == "comments") {
+                xml.readNextStartElement();
+
+                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "comments")) {
+
+                    QXmlStreamAttributes attributes = xml.attributes();
+                    QString attribute;
+
+                    if(xml.name() == "comment" and xml.isStartElement()) {
+                        attribute = attributes.value("node").toString();
+                        if(!attribute.isNull()) {
+                            if(!merge)
+                                nodeID = attribute.toInt();
+                            else
+                                nodeID = attribute.toInt() + greatestNodeIDbeforeLoading;
+
+                            currentNode = findNodeByNodeID(nodeID);
+                        }
+
+                        attribute = attributes.value("content").toString();
+                        if(!attribute.isNull() && currentNode) {
+                            addComment(CHANGE_MANUAL, attribute.toStdString().c_str(), currentNode, 0);
+                        }
+                    }
+
+                    while(xml.readNext() == QXmlStreamReader::Characters) {
+
+                    }
+                }
+
+            }
+
+            else if(xml.name() == "thing") {
+                bench.start();
+                //counter += 1;
+                //qDebug() << "c " << counter;
+
+                QXmlStreamAttributes thingAttributes = xml.attributes();
+                QString thingAttribute;
+
+                thingAttribute = thingAttributes.value("id").toString();
+                if(!thingAttribute.isNull()) {
+                    neuronID = thingAttribute.toInt();
+                } else {
+                    neuronID = 0;
+                }
+
+                thingAttribute = thingAttributes.value("color.r").toString();
+                if(!thingAttribute.isNull()) {
+                    neuronColor.r = thingAttribute.toFloat();
+                } else {
+                    neuronColor.r = -1;
+                }
+
+                thingAttribute = thingAttributes.value("color.g").toString();
+                if(!thingAttribute.isNull()) {
+                    neuronColor.g = thingAttribute.toFloat();
+                } else {
+                    neuronColor.g = -1;
+                }
+
+                thingAttribute = thingAttributes.value("color.b").toString();
+                if(!thingAttribute.isNull()) {
+                    neuronColor.g = thingAttribute.toFloat();
+                } else {
+                    neuronColor.g = -1;
+                }
+
+                thingAttribute = thingAttributes.value("color.a").toString();
+                if(!thingAttribute.isNull()) {
+                    neuronColor.g = thingAttribute.toFloat();
+                } else {
+                    neuronColor.g = -1;
+                }
+
+                if(!merge) {
+                    qDebug() << "inloadQmlSkel";
+                    currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
+                    setActiveTreeByID(neuronID);
+                } else {
+                    neuronID += greatestTreeIDbeforeLoading;
+                    currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
+                    setActiveTreeByID(currentTree->treeID);
+                    neuronID = currentTree->treeID;
+                }
+
+                thingAttribute = thingAttributes.value("comment").toString();
+                if(!thingAttribute.isNull()) {
+                    addTreeComment(CHANGE_MANUAL, currentTree->treeID, const_cast<char *>(thingAttribute.toStdString().c_str()));
+                }
+
+            }
+
+            else if(xml.name() == "nodes") {
+                xml.readNextStartElement();
+
+                if(xml.name() == "node") {
+                    while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "nodes")) {
+                        QXmlStreamAttributes nodeAttributes;
+                        QString nodeAttribute;
+
+
+                        if(xml.name() == "node" and xml.isStartElement()) {
+                            nodeAttributes = xml.attributes();
+
+                            nodeAttribute = nodeAttributes.value("id").toString();
+                            if(!nodeAttribute.isNull()) {
+                                nodeID = nodeAttribute.toInt();
+                            } else {
+                                nodeID = 0;
+                            }
+                            //LOG("Adding node: %d", nodeID);
+
+                            nodeAttribute = nodeAttributes.value("radius").toString();
+                            if(!nodeAttribute.isNull()) {
+                                radius = nodeAttribute.toFloat();
+                            } else {
+                                radius = state->skeletonState->defaultNodeRadius;
+                            }
+
+                            nodeAttribute = nodeAttributes.value("x").toString();
+                            if(!nodeAttribute.isNull()) {
+                                currentCoordinate->x = nodeAttribute.toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->x = currentCoordinate->x * magnification;
+                                } else {
+                                    currentCoordinate->x = 0;
+                                }
+                            }
+
+                            nodeAttribute = nodeAttributes.value("y").toString();
+                            if(!nodeAttribute.isNull()) {
+                                currentCoordinate->y = nodeAttribute.toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->y = currentCoordinate->y * magnification;
+                                } else {
+                                    currentCoordinate->y = 0;
+                                }
+                            }
+
+                            nodeAttribute = nodeAttributes.value("z").toString();
+                            if(!nodeAttribute.isNull()) {
+                                currentCoordinate->z = nodeAttribute.toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->z = currentCoordinate->z * magnification;
+                                } else {
+                                    currentCoordinate->z = 0;
+                                }
+                            }
+
+                            nodeAttribute = nodeAttributes.value("inVp").toString();
+                            if(!nodeAttribute.isNull()) {
+                                VPtype = nodeAttribute.toInt();
+                            } else {
+                                VPtype = VIEWPORT_UNDEFINED;
+                            }
+
+                            nodeAttribute = nodeAttributes.value("inMag").toString();
+                            if(!nodeAttribute.isNull()) {
+                                inMag = nodeAttribute.toInt();
+                            } else
+                                inMag = magnification; // For legacy skeleton files
+
+                            nodeAttribute = nodeAttributes.value("time").toString();
+                            if(!nodeAttribute.isNull()) {
+                                time = nodeAttribute.toInt();
+                            } else
+                                time = skeletonTime; // For legacy skeleton files
+
+
+                            if(!merge)
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
+                            else {
+                                nodeID += greatestNodeIDbeforeLoading;
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
+                            }
+
+                        } // end node
+
+                        while(xml.readNext() == QXmlStreamReader::Characters) {
+
+                        }
+
+                    } // end while nodes
+
+                }
+            } else if(xml.name() == "edges") {
+                //qDebug() << xml.name();
+                qDebug() << xml.lineNumber();
+                xml.readNextStartElement();
+                QXmlStreamAttributes edgeAttributes;
+                QString edgeAttribute;
+
+                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "edges")) {
+                    //qDebug() << xml.name() << " " << xml.tokenType() << " " << xml.lineNumber() << " " << xml.hasError();
+
+                    if(xml.name() == "edge" and xml.isStartElement()) {
+                        edgeAttributes = xml.attributes();
+
+                        // Add edge
+                        edgeAttribute = edgeAttributes.value("source").toString();
+                        if(!edgeAttribute.isNull())
+                            nodeID1 = edgeAttribute.toInt();
+                        else
+                            nodeID1 = 0;
+
+                        edgeAttribute = edgeAttributes.value("target").toString();
+                        if(!edgeAttribute.isNull())
+                            nodeID2 = edgeAttribute.toInt();
+                         else
+                            nodeID2 = 0;
+
+                        // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
+
+                        if(!merge)
+                            addSegment(CHANGE_MANUAL, nodeID1, nodeID2);
+                        else
+                            addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
+
+                    }
+
+                    while(xml.readNext() == QXmlStreamReader::Characters) { }
+                }
+
+            } // end edges
+
+                /*
+                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "thing")) {
+
+                    qDebug() << xml.name() << " _" << xml.lineNumber();
+
+                    if(xml.name() == "nodes") {
+                        xml.readNextStartElement();
+
+                        while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "nodes")) {
+                            QXmlStreamAttributes nodeAttributes;
+                            QString nodeAttribute;
+
+
+                            if(xml.name() == "node" and xml.isStartElement()) {
+                                nodeAttributes = xml.attributes();
+
+                                nodeAttribute = nodeAttributes.value("id").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    nodeID = nodeAttribute.toInt();
+                                } else {
+                                    nodeID = 0;
+                                }
+                                //LOG("Adding node: %d", nodeID);
+
+                                nodeAttribute = nodeAttributes.value("radius").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    radius = nodeAttribute.toFloat();
+                                } else {
+                                    radius = state->skeletonState->defaultNodeRadius;
+                                }
+
+                                nodeAttribute = nodeAttributes.value("x").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    currentCoordinate->x = nodeAttribute.toInt() - 1;
+                                    if(globalMagnificationSpecified) {
+                                        currentCoordinate->x = currentCoordinate->x * magnification;
+                                    } else {
+                                        currentCoordinate->x = 0;
+                                    }
+                                }
+
+                                nodeAttribute = nodeAttributes.value("y").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    currentCoordinate->y = nodeAttribute.toInt() - 1;
+                                    if(globalMagnificationSpecified) {
+                                        currentCoordinate->y = currentCoordinate->y * magnification;
+                                    } else {
+                                        currentCoordinate->y = 0;
+                                    }
+                                }
+
+                                nodeAttribute = nodeAttributes.value("z").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    currentCoordinate->z = nodeAttribute.toInt() - 1;
+                                    if(globalMagnificationSpecified) {
+                                        currentCoordinate->z = currentCoordinate->z * magnification;
+                                    } else {
+                                        currentCoordinate->z = 0;
+                                    }
+                                }
+
+                                nodeAttribute = nodeAttributes.value("inVp").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    VPtype = nodeAttribute.toInt();
+                                } else {
+                                    VPtype = VIEWPORT_UNDEFINED;
+                                }
+
+                                nodeAttribute = nodeAttributes.value("inMag").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    inMag = nodeAttribute.toInt();
+                                } else
+                                    inMag = magnification; // For legacy skeleton files
+
+                                nodeAttribute = nodeAttributes.value("time").toString();
+                                if(!nodeAttribute.isNull()) {
+                                    time = nodeAttribute.toInt();
+                                } else
+                                    time = skeletonTime; // For legacy skeleton files
+
+
+                                if(!merge)
+                                    addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
+                                else {
+                                    nodeID += greatestNodeIDbeforeLoading;
+                                    addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false);
+                                }
+
+                            } // end node
+
+                            while(xml.readNext() == QXmlStreamReader::Characters) {
+
+                            }
+
+                        } // end while nodes
+
+                        qDebug() << bench.elapsed() << " after nodes";
+
+                        while(xml.readNext() == QXmlStreamReader::Characters) {
+
+                        }
+                    } // end nodes
+
+                    else if(xml.name() == "edges") {
+                        qDebug() << xml.lineNumber();
+                        xml.readNextStartElement();
+                        QXmlStreamAttributes edgeAttributes;
+                        QString edgeAttribute;
+
+                        while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "edges")) {
+
+                            if(xml.name() == "edge" and xml.isStartElement()) {
+                                edgeAttributes = xml.attributes();
+
+                                // Add edge
+                                edgeAttribute = edgeAttributes.value("source").toString();
+                                if(!edgeAttribute.isNull())
+                                    nodeID1 = edgeAttribute.toInt();
+                                else
+                                    nodeID1 = 0;
+
+                                edgeAttribute = edgeAttributes.value("target").toString();
+                                if(!edgeAttribute.isNull())
+                                    nodeID2 = edgeAttribute.toInt();
+                                 else
+                                    nodeID2 = 0;
+
+                                // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
+
+                                if(!merge)
+                                    addSegment(CHANGE_MANUAL, nodeID1, nodeID2);
+                                else
+                                    addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading);
+
+                            }
+
+                            while(xml.readNext() == QXmlStreamReader::Characters) { }
+                        }
+
+                    } // end edges
+
+                    while(xml.readNext() == QXmlStreamReader::Characters) { }
+                } // end-while thing
+                qDebug() << bench.elapsed() << " after edges";
+            } // end-thing
+            */
+
+        } // end start Element
+    } // end while
+
+    if(xml.hasError()) {
+        qDebug() << xml.errorString() << " at" << xml.lineNumber();
+    }
+
+    file.close();
+
+    if(activeNodeID) {
+        setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
+    }
+
+
+    /* @todo
+    if((loadedPosition.x != 0) &&
+       (loadedPosition.y != 0) &&
+       (loadedPosition.z != 0)) {
+        state->viewerState->currentPosition.x =
+            loadedPosition.x - 1;
+        state->viewerState->currentPosition.y =
+            loadedPosition.y - 1;
+        state->viewerState->currentPosition.z =
+            loadedPosition.z - 1;
+         @todo change to Signal loadSkeleton has to be non-static
+        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
+
+} */
+
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    state->skeletonState->skeletonTime = skeletonTime;
+    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+
+    return true;
+
+}
+
 bool Skeletonizer::loadSkeleton() {
     /*
     xmlDocPtr xmlDocument;
@@ -1234,6 +1945,7 @@ bool Skeletonizer::loadSkeleton() {
                         loadedPosition.z = atoi((char *)attribute);
                 }
 
+                /* bis hier */
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"skeletonVPState")) {
                     int j = 0;
                     char element [8];
@@ -1514,6 +2226,7 @@ bool Skeletonizer::loadSkeleton() {
                                 nodeID2 = 0;
 
                             // printf("Trying to add a segment between %d and %d\n", nodeID1, nodeID2);
+
                             if(!merge)
                                 addSegment(CHANGE_MANUAL, nodeID1, nodeID2);
                             else
@@ -2628,7 +3341,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     }
 
 
-
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
@@ -2681,7 +3393,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     }
 
     if(treeID == 1) {
-        Skeletonizer::setActiveTreeByID(1);
+        //Skeletonizer::setActiveTreeByID(1);
     }
 
     return newElement;
