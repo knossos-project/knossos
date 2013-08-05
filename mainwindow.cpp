@@ -62,7 +62,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
     /*
     QPalette* palette = new QPalette();
     QLinearGradient linearGradient(QPointF(width() /2, 0), QPointF(width()/2, height()/2));
@@ -194,11 +193,14 @@ void MainWindow:: createCoordBarWin() {
 
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
-    connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
+    connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
+
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
+
 }
+
 
 /*
 static void updateGuiconfig() {
@@ -320,25 +322,6 @@ bool MainWindow::addRecentFile(const QString &fileName) {
     return true;
 }
 
-
-void MainWindow::loadSkeleton(char *fileName) {
-    strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
-    strncpy(state->skeletonState->skeletonFile, fileName, 8192);
-
-    emit loadSkeletonSignal();
-    updateTitlebar(true);
-    linkWithActiveNodeSlot();
-
-    /*
-    if(Skeletonizer::loadSkeleton()) {
-        updateTitlebar(true);
-        linkWithActiveNodeSlot();
-        LOG("Successfully loded")
-    } else {
-        LOG("Error")
-        strncpy(state->skeletonState->skeletonFile, state->skeletonState->prevSkeletonFile, 8192);
-    }*/
-}
 
 /**
   * @todo Replacements for the Labels
@@ -660,19 +643,19 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
-        //emit stopRenderTimerSignal();
+        strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
+        strncpy(state->skeletonState->skeletonFile, fileName, 8192);
 
-        loadSkeleton(const_cast<char *>(fileName.toStdString().c_str()));
+        emit loadSkeletonSignal();
+        updateTitlebar(true);
+        linkWithActiveNodeSlot();
 
-        //emit startRenderTimerSignal(10);
-
-        /*
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
         }
 
         emit updateToolsSignal();
-        */
+
     }
 }
 
@@ -705,6 +688,7 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
+    emit saveSkeletonSignal();
     qDebug() << " saveBegin ";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
@@ -715,20 +699,10 @@ void MainWindow::saveSlot()
                 updateSkeletonFileName(skelName);
             }
 
-            QFile file(skelName);
-            if(file.open(QIODevice::ReadWrite)) {
-                emit saveSkeletonSignal();
-                updateTitlebar(true);
-                state->skeletonState->unsavedChanges = false;
-                /*
-                if(Skeletonizer::saveSkeleton()) {
-                    qDebug() << "_saved_";
-                    updateTitlebar(true);
-                    state->skeletonState->unsavedChanges = false;
-                } else {
-                    qDebug() << "couldn´t autosave the skeleton";
-                }*/
-            }
+
+            emit saveSkeletonSignal();
+            updateTitlebar(true);
+            state->skeletonState->unsavedChanges = false;
 
             file.close();
 
@@ -756,20 +730,12 @@ void MainWindow::saveAsSlot()
         memset(state->viewerState->gui->skeletonDirectory, '\0', strlen(state->viewerState->gui->skeletonDirectory));
         strcpy(state->viewerState->gui->skeletonDirectory, dir);
 
-        QFile file(fileName);
-        if(file.open(QIODevice::ReadWrite)) {
-            emit saveSkeletonSignal();
-            updateTitlebar(true);
-            state->skeletonState->unsavedChanges = false;
 
-            /*
-            if(Skeletonizer::saveSkeleton()) {
-                updateTitlebar(true);
-                state->skeletonState->unsavedChanges = false;
-            } else {
-                qDebug() << "error";
-            } */
-        }
+        emit saveSkeletonSignal();
+        updateTitlebar(true);
+        state->skeletonState->unsavedChanges = false;
+
+
 
         file.close();
     }
@@ -1036,7 +1002,6 @@ void MainWindow::pasteClipboardCoordinates(){
 #include "viewer.h"
 void MainWindow::coordinateEditingFinished() {
 
-
     emit userMoveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
 
 }
@@ -1182,16 +1147,20 @@ void MainWindow::uncheckNavigationAction() {
 }
 
 void MainWindow::updateCoordinateBar(int x, int y, int z) {
+    if(x > 0 and y > 0 and z > 0) {
     xField->setValue(x);
     yField->setValue(y);
     zField->setValue(z);
+    }
 }
 
 void MainWindow::setCoordinates(int x, int y, int z) {
+    if(x > 0 and y > 0 and z > 0) {
     xField->setValue(x);
     yField->setValue(y);
     zField->setValue(z);
     xField->editingFinished();
+    }
 }
 
 /** This is a replacement for the old updateSkeletonFileName

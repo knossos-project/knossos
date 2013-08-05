@@ -745,6 +745,217 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
     return true;
 }
 
+bool Skeletonizer::saveXmlSkeleton() {
+    treeListElement *currentTree = NULL;
+    nodeListElement *currentNode = NULL;
+    PTRSIZEINT currentBranchPointID;
+    segmentListElement *currentSegment = NULL;
+    commentListElement *currentComment = NULL;
+    stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
+    int r;
+    int time;
+
+    //  This function should always be called through UI_saveSkeleton
+    // for proper error and file name display to the user.
+
+    // We need to do this to be able to save the branch point stack to a file
+    //and still have the branch points available to the user afterwards.
+
+   reverseBranchStack = newStack(2048);
+   tempReverseStack = newStack(2048);
+   while((currentBranchPointID =
+         (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
+       pushStack(reverseBranchStack, (void *)currentBranchPointID);
+       pushStack(tempReverseStack, (void *)currentBranchPointID);
+   }
+
+   while((currentBranchPointID =
+         (PTRSIZEINT)popStack(tempReverseStack))) {
+       currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
+       pushBranchNode(CHANGE_MANUAL, false, false, currentNode, 0);
+   }
+
+    /* */
+    QFile file(QString(state->skeletonState->skeletonFile));
+    if(!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Failed to open file";
+    }
+
+    QString tmp;
+
+    QXmlStreamWriter xml(&file);
+    xml.setAutoFormatting(true);
+    xml.writeStartDocument();
+
+    xml.writeStartElement("things");
+
+    xml.writeStartElement("parameters");
+    xml.writeStartElement("experiment");
+    xml.writeAttribute("name", QString(state->name));
+    xml.writeEndElement();
+
+    xml.writeStartElement("lastsavedin");
+    xml.writeAttribute("version", QString(KVERSION));
+    xml.writeEndElement();
+
+    xml.writeStartElement("createdin");
+    char *ptr = state->skeletonState->skeletonCreatedInVersion;
+    xml.writeAttribute("version", QString(ptr));
+    xml.writeEndElement();
+
+    xml.writeStartElement("scale");
+    xml.writeAttribute("x", tmp.setNum((float)state->scale.x / state->magnification));
+    xml.writeAttribute("y", tmp.setNum((float)state->scale.y / state->magnification));
+    xml.writeAttribute("z", tmp.setNum((float)state->scale.z / state->magnification));
+    xml.writeEndElement();
+
+    xml.writeStartElement("offset");
+    xml.writeAttribute("x", tmp.setNum(state->offset.x / state->magnification));
+    xml.writeAttribute("y", tmp.setNum(state->offset.y / state->magnification));
+    xml.writeAttribute("z", tmp.setNum(state->offset.z / state->magnification));
+    xml.writeEndElement();
+
+    xml.writeStartElement("time"); // @todo xorint
+    xml.writeAttribute("ms", tmp.setNum(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed()));
+    xml.writeEndElement();
+
+    if(state->skeletonState->activeNode) {
+        xml.writeStartElement("activeNode");
+        xml.writeAttribute("id", tmp.setNum(state->skeletonState->activeNode->nodeID));
+        xml.writeEndElement();
+    }
+
+    xml.writeStartElement("editPosition");
+    xml.writeAttribute("x", tmp.setNum(state->viewerState->currentPosition.x + 1));
+    xml.writeAttribute("y", tmp.setNum(state->viewerState->currentPosition.y + 1));
+    xml.writeAttribute("z", tmp.setNum(state->viewerState->currentPosition.z + 1));
+    xml.writeEndElement();
+
+    xml.writeStartElement("skeletonVPState"); // @todo test
+    int j = 0;
+    char element[8];
+    for(j = 0; j < 16; j++) {
+        sprintf(element, "E%d", j);
+        ptr = element;
+        xml.writeAttribute(QString(ptr), tmp.setNum(state->skeletonState->skeletonVpModelView[j]));
+    }
+    xml.writeEndElement();
+
+    xml.writeStartElement("vpSettingsZoom");
+    xml.writeAttribute("XYPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel));
+    xml.writeAttribute("XZPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel));
+    xml.writeAttribute("YZPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel));
+    xml.writeAttribute("SkelPlane", tmp.setNum(state->viewerState->vpConfigs[VIEWPORT_SKELETON].texture.zoomLevel));
+    xml.writeEndElement();
+
+    xml.writeEndElement(); // end parameters
+
+    currentTree = state->skeletonState->firstTree;
+    if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
+
+        file.close();
+        return false; // No Skeleton to save
+    }
+
+    while(currentTree) {
+        xml.writeStartElement("thing");
+        xml.writeAttribute("id", tmp.setNum(currentTree->treeID));
+
+        if(currentTree->colorSetManually) {
+            xml.writeAttribute("color.r", tmp.setNum(currentTree->color.r));
+            xml.writeAttribute("color.g", tmp.setNum(currentTree->color.g));
+            xml.writeAttribute("color.b", tmp.setNum(currentTree->color.b));
+            xml.writeAttribute("color.a", tmp.setNum(currentTree->color.a));
+        } else {
+            xml.writeAttribute("color.r", QString("-1."));
+            xml.writeAttribute("color.g", QString("-1."));
+            xml.writeAttribute("color.b", QString("-1."));
+            xml.writeAttribute("color.a", QString("1."));
+        }
+
+        if(state->skeletonState->activeTree->comment) {
+            ptr = state->skeletonState->activeTree->comment;
+            xml.writeAttribute("comment", QString(ptr));
+        }
+
+        xml.writeStartElement("nodes");
+
+        currentNode = currentTree->firstNode;
+        while(currentNode) {
+            xml.writeStartElement("node");
+            xml.writeAttribute("id", tmp.setNum(currentNode->nodeID));
+            xml.writeAttribute("radius", tmp.setNum(currentNode->radius));
+            xml.writeAttribute("x", tmp.setNum(currentNode->position.x + 1));
+            xml.writeAttribute("y", tmp.setNum(currentNode->position.y + 1));
+            xml.writeAttribute("z", tmp.setNum(currentNode->position.z + 1));
+            xml.writeAttribute("inVp", tmp.setNum(currentNode->createdInVp));
+            xml.writeAttribute("inMag", tmp.setNum(currentNode->createdInMag));
+            xml.writeAttribute("time", tmp.setNum(currentNode->timestamp));
+
+            currentNode = currentNode->next;
+
+            xml.writeEndElement(); // end node
+        }
+
+        xml.writeEndElement(); // end nodes
+        xml.writeStartElement("edges");
+
+        currentNode = currentTree->firstNode;
+        while(currentNode) {
+            currentSegment = currentNode->firstSegment;
+            while(currentSegment) {
+                if(currentSegment->flag == SEGMENT_FORWARD) {
+                    xml.writeStartElement("edge");
+                    xml.writeAttribute("source", tmp.setNum(currentSegment->source->nodeID));
+                    xml.writeAttribute("target", tmp.setNum(currentSegment->target->nodeID));
+                    xml.writeEndElement();
+                }
+
+                currentSegment = currentSegment->next;
+            }
+
+            currentNode = currentNode->next;
+        }
+
+        //currentSegment = currentSegment-
+
+        xml.writeEndElement(); // end edges
+
+        currentTree = currentTree->next;
+
+        xml.writeEndElement(); // end tree
+    }
+
+    currentComment = state->skeletonState->currentComment;
+    if(state->skeletonState->currentComment != NULL) {
+        xml.writeStartElement("comments");
+
+        do {
+            xml.writeStartElement("comment");
+            xml.writeAttribute("node", tmp.setNum(currentComment->node->nodeID));
+            xml.writeAttribute("content", QString(currentComment->content));
+            xml.writeEndElement();
+
+        } while(currentComment != state->skeletonState->currentComment);
+
+        xml.writeEndElement(); // end comments
+    }
+
+    xml.writeStartElement("branchpoints");
+    while(currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack)) {
+        xml.writeStartElement("branchpoint");
+        xml.writeAttribute("id", tmp.setNum(currentBranchPointID));
+        xml.writeEndElement();
+    }
+    xml.writeEndElement(); // end branchpoints
+
+    xml.writeEndElement(); // end things
+    xml.writeEndDocument();
+    file.close();
+
+    return true;
+}
+
 int Skeletonizer::saveSkeleton() {
 
     treeListElement *currentTree = NULL;
@@ -1045,7 +1256,7 @@ int Skeletonizer::saveSkeleton() {
 //uint loadNMLSkeleton() { }
 
 
-bool Skeletonizer::loadQmlSkeleton() {
+bool Skeletonizer::loadXmlSkeleton() {
     int neuronID = 0, nodeID = 0, merge = false;
     int nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
@@ -1421,7 +1632,7 @@ bool Skeletonizer::loadQmlSkeleton() {
                 }
 
                 if(!merge) {
-                    qDebug() << "inloadQmlSkel";
+                    qDebug() << "inloadXmlSkel";
                     currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
                     setActiveTreeByID(neuronID);
                 } else {
@@ -3376,7 +3587,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     }
 
     if(treeID == 1) {
-        //Skeletonizer::setActiveTreeByID(1);
+        Skeletonizer::setActiveTreeByID(1);
     }
 
     return newElement;

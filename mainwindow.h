@@ -56,7 +56,6 @@ public:
     void updateTitlebar(bool useFilename);
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
-    void loadSkeleton(char *fileName);
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
     static void datasetColorAdjustmentsChanged();

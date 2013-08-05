@@ -89,6 +89,7 @@ Viewer::Viewer(QObject *parent) :
     frames = 0;
 
     window->loadSettings();
+    window->setCoordinates(state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
     /*
     QTimer *counter = new QTimer();
     connect(counter, SIGNAL(timeout()), this, SLOT(showFrames()));
@@ -2781,8 +2782,8 @@ void Viewer::rewire() {
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(window, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
-    connect(window, SIGNAL(saveSkeletonSignal()), skeletonizer, SLOT(saveSkeleton()));
-    connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadQmlSkeleton()));
+    connect(window, SIGNAL(saveSkeletonSignal()), skeletonizer, SLOT(saveXmlSkeleton()));
+    connect(window, SIGNAL(loadSkeletonSignal()), skeletonizer, SLOT(loadXmlSkeleton()));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
 

@@ -46,8 +46,6 @@
 struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
-
-
 //static uint isPathString(char *string);
 //static uint printUsage();
 
