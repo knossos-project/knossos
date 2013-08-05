@@ -1945,7 +1945,7 @@ bool Skeletonizer::loadSkeleton() {
                         loadedPosition.z = atoi((char *)attribute);
                 }
 
-                /* bis hier */
+
                 if(xmlStrEqual(currentXMLNode->name, (const xmlChar *)"skeletonVPState")) {
                     int j = 0;
                     char element [8];
