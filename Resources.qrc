@@ -3,5 +3,7 @@
         <file>logo.ico</file>
         <file>splash</file>
         <file>script.py</file>
+        <file>arrow</file>
+        <file>arrow2</file>
     </qresource>
 </RCC>
