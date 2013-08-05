@@ -70,6 +70,9 @@ protected:
     bool entered;
     int focus;
 
+    QPushButton *moveButton, *resizeButton;
+    QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
+
 private:
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
@@ -91,6 +94,14 @@ signals:
     void updateZoomAndMultiresWidget();
 public slots:
     void zoomOrthogonals(float step);
+    void moveButtonClicked();
+    void resizeButtonClicked();
+    void xyButtonClicked();
+    void xzButtonClicked();
+    void yzButtonClicked();
+    void r90ButtonClicked();
+    void r180ButtonClicked();
+    void resetButtonClicked();
 };
 
 #endif // VIEWPORT_H

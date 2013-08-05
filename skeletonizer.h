@@ -27,7 +27,7 @@
 
 
 #include <QObject>
-#include <QtXml/QXmlStreamReader>
+#include <QtXml>
 #include "knossos-global.h"
 
 class Skeletonizer : public QObject

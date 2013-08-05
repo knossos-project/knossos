@@ -34,22 +34,55 @@
 
 extern stateInfo *state;
 
-/**
-  * @note The button group for skeleton viewport does not work as expected
-  * another approach is needed
-  */
+
 Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
     QGLWidget(parent) {
     delegate = new EventModel();
-    this->setMouseTracking(true); /* per default the widget only receives move event when at least one mouse button is pressed
+    /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
     this->viewportType = viewportType;
     this->plane = widgetNumber;
 
-    //this->setMouseTracking(true);
-    //this->setCursor(Qt::CrossCursor);
+    this->setMouseTracking(true);
+    this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
+    this->setFocusPolicy(Qt::StrongFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
+
+    moveButton = new QPushButton("Move", this);
+    moveButton->setGeometry(323, 298, 25, 25);
+
+    resizeButton = new QPushButton("Resize", this);
+    resizeButton->setGeometry(322, 322, 25, 25);
+
+    moveButton->show();
+    resizeButton->show();
+
+    connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
+    connect(resizeButton, SIGNAL(clicked()), this, SLOT(resizeButtonClicked()));
+
+    if(widgetNumber == VIEWPORT_SKELETON) {
+        xyButton = new QPushButton("xy", this);
+        xyButton->setGeometry(113, 2, 35, 20);
+        xzButton = new QPushButton("xz", this);
+        xzButton->setGeometry(153, 2, 35, 20);
+        yzButton = new QPushButton("yz", this);
+        yzButton->setGeometry(193, 2, 35, 20);
+        r90Button = new QPushButton("r90", this);
+        r90Button->setGeometry(233, 2, 35, 20);
+        r180Button = new QPushButton("r180", this);
+        r180Button->setGeometry(273, 2, 35, 20);
+        resetButton = new QPushButton("reset", this);
+        resetButton->setGeometry(313, 2, 35, 20);
+
+        connect(xyButton, SIGNAL(clicked()), this, SLOT(xyButtonClicked()));
+        connect(xzButton, SIGNAL(clicked()), this, SLOT(xzButtonClicked()));
+        connect(yzButton, SIGNAL(clicked()), this, SLOT(yzButtonClicked()));
+        connect(r90Button, SIGNAL(clicked()), this, SLOT(r90ButtonClicked()));
+        connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
+        connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
+    }
+
 
 
 }
@@ -216,6 +249,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
+
     delegate->mouseX = event->x();
     delegate->mouseY = event->y();
 
@@ -437,5 +471,37 @@ void Viewport::zoomOrthogonals(float step){
         emit changeDatasetMagSignal(triggerMagChange);
 
    emit recalcTextureOffsetsSignal();
+
+}
+
+void Viewport::moveButtonClicked() {
+
+}
+
+void Viewport::resizeButtonClicked() {
+
+}
+
+void Viewport::xyButtonClicked() {
+
+}
+
+void Viewport::xzButtonClicked() {
+
+}
+
+void Viewport::yzButtonClicked() {
+
+}
+
+void Viewport::r90ButtonClicked() {
+
+}
+
+void Viewport::r180ButtonClicked() {
+
+}
+
+void Viewport::resetButtonClicked() {
 
 }

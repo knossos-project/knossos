@@ -59,11 +59,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->skeletonDCnumber = 8000;
     state->skeletonState->workMode = ON_CLICK_DRAG;
 
-    /* @CMP
-    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber)
-        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
-    */
-
     updateSkeletonState();
 
     //Create a new hash-table that holds the skeleton datacubes
@@ -633,11 +628,6 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 }
 
 bool Skeletonizer::updateSkeletonState() {
-    //Time to auto-save
-    /*qDebug() << state->time.elapsed();
-    qDebug() << state->skeletonState->lastSaveTicks;
-    qDebug() << ((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0);
-    qDebug() << state->skeletonState->autoSaveInterval << " min"; */
 
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
@@ -649,14 +639,7 @@ bool Skeletonizer::updateSkeletonState() {
         }
     }
 
-    /* @CMP
-    if(state->skeletonState->skeletonDCnumber != tempConfig->skeletonState->skeletonDCnumber) {
-        state->skeletonState->skeletonDCnumber = tempConfig->skeletonState->skeletonDCnumber;
-    }
-    if(state->skeletonState->workMode != tempConfig->skeletonState->workMode) {
-        setSkeletonWorkMode(CHANGE_MANUAL, tempConfig->skeletonState->workMode);
-    }
-    */
+
     setSkeletonWorkMode(CHANGE_MANUAL, state->skeletonState->workMode);
     return true;
 }

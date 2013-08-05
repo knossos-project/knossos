@@ -1760,15 +1760,6 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
 bool Viewer::updatePosition(int serverMovement) {
     Coordinate jump;
 
-    /* @CMP */
-    /*
-    if(COMPARE_COORDINATE(state->viewerState->currentPosition, state->viewerState->currentPosition) != true) {
-        jump.x = state->viewerState->currentPosition.x - state->viewerState->currentPosition.x;
-        jump.y = state->viewerState->currentPosition.y - state->viewerState->currentPosition.y;
-        jump.z = tempConfig->viewerState->currentPosition.z - state->viewerState->currentPosition.z;
-        userMove(jump.x, jump.y, jump.z, serverMovement);
-    }
-    */
     return true;
 }
 
@@ -2128,18 +2119,6 @@ bool Viewer::updateViewerState() {
 
     uint i;
 
-    /*if(!(state->viewerState->currentPosition.x == (tempConfig->viewerState->currentPosition.x - 1))) {
-        state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x - 1;
-    }
-    if(!(state->viewerState->currentPosition.y == (tempConfig->viewerState->currentPosition.y - 1))) {
-        state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y - 1;
-    }
-    if(!(state->viewerState->currentPosition.z == (tempConfig->viewerState->currentPosition.z - 1))) {
-        state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z - 1;
-    }*/
-
-    /* @CMP */
-
     for(i = 0; i < state->viewerState->numberViewports; i++) {
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
         // Set the parameters for the texture.
@@ -2155,27 +2134,6 @@ bool Viewer::updateViewerState() {
 
     updateZoomCube();
 
-    /* @CMP
-    if(state->viewerState->workMode != tempConfig->viewerState->workMode) {
-        state->viewerState->workMode = tempConfig->viewerState->workMode;
-    }
-    if(state->viewerState->dropFrames != tempConfig->viewerState->dropFrames) {
-        state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
-    }
-    if(state->viewerState->stepsPerSec != tempConfig->viewerState->stepsPerSec) {
-        state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
-
-        //if(SDL_EnableKeyRepeat(200, (1000 / state->viewerState->stepsPerSec)) == FAIL) TODO Crashed
-        //    LOG("Error setting key repeat parameters.")
-    }
-
-    if(state->viewerState->recenteringTime != tempConfig->viewerState->recenteringTime) {
-        state->viewerState->recenteringTime = tempConfig->viewerState->recenteringTime;
-    }
-    if(state->viewerState->recenteringTimeOrth != tempConfig->viewerState->recenteringTimeOrth) {
-        state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
-    }
-    */
     return true;
 }
 
@@ -2279,11 +2237,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                   viewerState->currentPosition.z);
     }
 
-    /* @CMP
-    tempConfig->viewerState->currentPosition.x = viewerState->currentPosition.x;
-    tempConfig->viewerState->currentPosition.y = viewerState->currentPosition.y;
-    tempConfig->viewerState->currentPosition.z = viewerState->currentPosition.z;
-    */
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;
