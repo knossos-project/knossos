@@ -2132,7 +2132,6 @@ bool Viewer::updateViewerState() {
     }
     glBindTexture(GL_TEXTURE_2D, 0);
 
-
     updateZoomCube();
 
     return true;

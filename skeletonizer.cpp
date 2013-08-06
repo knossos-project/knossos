@@ -628,8 +628,8 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 }
 
 bool Skeletonizer::updateSkeletonState() {
-
-    if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
+    /* @todo */
+    if(state->skeletonState->autoSaveBool /*|| state->clientState->saveMaster*/) {
         if(state->skeletonState->autoSaveInterval) {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();                
@@ -1287,10 +1287,16 @@ bool Skeletonizer::loadXmlSkeleton() {
 
     QFile file(QString(state->skeletonState->skeletonFile));
 
+    if(!file.size()) {
+        LOG("File is empty")
+        return false;
+    }
+
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         LOG("Document not parsed successfully.")
         return false;
     }
+
 
     if(!state->skeletonState->mergeOnLoadFlag) {
         merge = false;
@@ -1309,7 +1315,7 @@ bool Skeletonizer::loadXmlSkeleton() {
     QXmlStreamReader xml(&file);
 
     while(!xml.atEnd() and !xml.hasError()) {
-        qDebug() << xml.name();
+        qDebug() << xml.name().toString();
         xml.readNext();
 
         if(xml.isStartDocument()) {
@@ -1682,8 +1688,10 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->x = currentCoordinate->x * magnification;
                                 } else {
-                                    currentCoordinate->x = 0;
+                                    currentCoordinate->x = currentCoordinate->x;
                                 }
+                            } else {
+                                currentCoordinate->x = 0;
                             }
 
                             nodeAttribute = nodeAttributes.value("y").toString();
@@ -1691,6 +1699,8 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 currentCoordinate->y = nodeAttribute.toInt() - 1;
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->y = currentCoordinate->y * magnification;
+                                } else {
+                                    currentCoordinate->y = currentCoordinate->y;
                                 } else {
                                     currentCoordinate->y = 0;
                                 }
@@ -1701,6 +1711,8 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 currentCoordinate->z = nodeAttribute.toInt() - 1;
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->z = currentCoordinate->z * magnification;
+                                } else {
+                                    currentCoordinate->z = currentCoordinate->z;
                                 } else {
                                     currentCoordinate->z = 0;
                                 }
@@ -2742,10 +2754,12 @@ bool Skeletonizer::delTree(int targetRevision, int treeID) {
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode, *nodeToDel;
 
+
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
         return false;
     }
+
 
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
@@ -2778,6 +2792,7 @@ bool Skeletonizer::delTree(int targetRevision, int treeID) {
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
+
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("brd", KIKI_DELTREE, treeID)) {

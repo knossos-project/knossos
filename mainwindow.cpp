@@ -527,8 +527,17 @@ void MainWindow::createActions()
 
 void MainWindow::recentFileSelected(QAction *action) {
     QString fileName = action->text();
-    char *cname = const_cast<char *>(fileName.toStdString().c_str());
-    loadSkeleton(cname);
+    if(!fileName.isNull()) {
+        QFileInfo info(fileName);
+        char *cname = const_cast<char *>(fileName.toStdString().c_str());
+        strncpy(state->skeletonState->skeletonFile, cname, 8192);
+
+        emit loadSkeletonSignal();
+        updateTitlebar(true);
+        linkWithActiveNodeSlot();
+
+        emit updateToolsSignal();
+    }
 
 }
 
@@ -625,14 +634,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   *
   */
 void MainWindow::openSlot() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", state->viewerState->gui->skeletonDirectory, "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
 
     if(!fileName.isNull()) {
         QFileInfo info(fileName);
         QString path = info.canonicalPath();
 
-        char *cpath = const_cast<char *>(info.canonicalPath().toStdString().c_str());
-        MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
+        char *cpath = const_cast<char *>(fileName.toStdString().c_str());
+        //MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
+
 
         int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
 
@@ -643,8 +653,10 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
-        strncpy(state->skeletonState->prevSkeletonFile, state->skeletonState->skeletonFile, 8192);
-        strncpy(state->skeletonState->skeletonFile, fileName, 8192);
+        strncpy(state->skeletonState->skeletonFile, cpath, 8192);
+        //strncpy(state->skeletonState->skeletonFile, cpath, 8192);
+
+        qDebug() << state->skeletonState->skeletonFile << "!!";
 
         emit loadSkeletonSignal();
         updateTitlebar(true);
@@ -702,9 +714,7 @@ void MainWindow::saveSlot()
 
             emit saveSkeletonSignal();
             updateTitlebar(true);
-            state->skeletonState->unsavedChanges = false;
-
-            file.close();
+            state->skeletonState->unsavedChanges = false;           
 
         }
     }
@@ -735,9 +745,6 @@ void MainWindow::saveAsSlot()
         updateTitlebar(true);
         state->skeletonState->unsavedChanges = false;
 
-
-
-        file.close();
     }
 }
 
@@ -816,6 +823,11 @@ void MainWindow::clearSkeletonSlot()
         case QMessageBox::Ok:
             emit clearSkeletonSignal(CHANGE_MANUAL, false);
             updateTitlebar(false);
+            emit updateToolsSignal();
+
+
+
+
     }
 }
 

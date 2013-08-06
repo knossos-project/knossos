@@ -160,6 +160,9 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
+    if(!state->skeletonState->activeNode)
+        return;
+
     nodeListElement *node;
 
     if(value > state->skeletonState->activeNode->nodeID) {
