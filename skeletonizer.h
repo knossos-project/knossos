@@ -304,8 +304,8 @@ public slots:
     bool loadSkeleton();
     int saveSkeleton();
 
-    bool loadXmlSkeleton();
-    bool saveXmlSkeleton();
+    bool loadXmlSkeleton(QString fileName);
+    bool saveXmlSkeleton(QString fileName);
 
 
     bool popBranchNode(int targetRevision);

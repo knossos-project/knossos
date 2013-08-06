@@ -77,8 +77,8 @@ signals:
     void refreshViewportsSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
-    bool loadSkeletonSignal();
-    bool saveSkeletonSignal();
+    bool loadSkeletonSignal(QString fileName);
+    bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);

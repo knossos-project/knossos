@@ -180,7 +180,6 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
         //this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
 
-
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);

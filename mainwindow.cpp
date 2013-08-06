@@ -244,31 +244,13 @@ static void updateGuiconfig() {
 void MainWindow::updateTitlebar(bool useFilename) {
 
     QString title;
-    if(state->skeletonState->skeletonFile) {
-        title = title.sprintf("KNOSSOS %s showing %s", KVERSION, state->skeletonState->skeletonFile);
+    if(!state->skeletonState->skeletonFileAsQString.isNull()) {
+        title = QString("KNOSSOS %1 showing %2").arg(KVERSION).arg(state->skeletonState->skeletonFileAsQString);
+
     } else {
-        title = title.sprintf("KNOSSOS %s showing %s", KVERSION, "no skeleton file");
+        title = QString("KNOSSOS %1 showing %2").arg(KVERSION).arg("no skeleton file");
     }
 
-    /*
-    char *filename;
-    if(state->skeletonState->skeletonFile) {
-#ifdef Q_OS_UNIX
-    filename = strrchr(state->skeletonState->skeletonFile, '/');
-#else
-    filename = strrchr(state->skeletonState->skeletonFile, '\\');
-#endif
-    }
-
-    if(!useFilename ||!filename) {
-        snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, "no skeleton file");
-    }
-    else {
-        snprintf(state->viewerState->gui->titleString, 2047, "KNOSSOS %s showing %s [%s]", KVERSION, state->datasetBaseExpName, ++filename);
-    }
-
-    QString title(state->viewerState->gui->titleString);
-    */
     setWindowTitle(title);
 
 }
@@ -276,7 +258,6 @@ void MainWindow::updateTitlebar(bool useFilename) {
 void MainWindow::showSplashScreen() {
     QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
-
 }
 
 // -- static methods -- //
@@ -321,7 +302,6 @@ bool MainWindow::addRecentFile(const QString &fileName) {
     updateFileHistoryMenu();
     return true;
 }
-
 
 /**
   * @todo Replacements for the Labels
@@ -528,11 +508,12 @@ void MainWindow::createActions()
 void MainWindow::recentFileSelected(QAction *action) {
     QString fileName = action->text();
     if(!fileName.isNull()) {
-        QFileInfo info(fileName);
+
+        state->skeletonState->skeletonFileAsQString = fileName;
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strncpy(state->skeletonState->skeletonFile, cname, 8192);
 
-        emit loadSkeletonSignal();
+        emit loadSkeletonSignal(fileName);
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
@@ -635,14 +616,11 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   */
 void MainWindow::openSlot() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    state->skeletonState->skeletonFileAsQString = fileName;
 
     if(!fileName.isNull()) {
         QFileInfo info(fileName);
         QString path = info.canonicalPath();
-
-        char *cpath = const_cast<char *>(fileName.toStdString().c_str());
-        //MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, cpath, 2048);
-
 
         int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
 
@@ -653,12 +631,10 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
-        strncpy(state->skeletonState->skeletonFile, cpath, 8192);
-        //strncpy(state->skeletonState->skeletonFile, cpath, 8192);
 
-        qDebug() << state->skeletonState->skeletonFile << "!!";
 
-        emit loadSkeletonSignal();
+
+        emit loadSkeletonSignal(fileName);
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
@@ -700,19 +676,18 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-    emit saveSkeletonSignal();
+    //emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
     qDebug() << " saveBegin ";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
-            qDebug() << state->skeletonState->skeletonFile;
+
 
             QString skelName = QString(state->skeletonState->skeletonFile);
             if(state->skeletonState->autoFilenameIncrementBool) {
                 updateSkeletonFileName(skelName);
             }
 
-
-            emit saveSkeletonSignal();
+            emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
             updateTitlebar(true);
             state->skeletonState->unsavedChanges = false;           
 
@@ -731,17 +706,9 @@ void MainWindow::saveAsSlot()
 
         QFileInfo info(fileName);
 
-        char *cpath = const_cast<char *>(fileName.toStdString().c_str());
-        char *dir = const_cast<char *>(info.canonicalPath().toStdString().c_str());
+        state->skeletonState->skeletonFileAsQString = fileName;
 
-        memset(state->skeletonState->skeletonFile, '\0', strlen(state->skeletonState->skeletonFile));
-        strcpy(state->skeletonState->skeletonFile, cpath);
-
-        memset(state->viewerState->gui->skeletonDirectory, '\0', strlen(state->viewerState->gui->skeletonDirectory));
-        strcpy(state->viewerState->gui->skeletonDirectory, dir);
-
-
-        emit saveSkeletonSignal();
+        emit saveSkeletonSignal(fileName);
         updateTitlebar(true);
         state->skeletonState->unsavedChanges = false;
 
@@ -824,9 +791,6 @@ void MainWindow::clearSkeletonSlot()
             emit clearSkeletonSignal(CHANGE_MANUAL, false);
             updateTitlebar(false);
             emit updateToolsSignal();
-
-
-
 
     }
 }

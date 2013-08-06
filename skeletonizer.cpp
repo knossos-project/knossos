@@ -629,12 +629,13 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
 bool Skeletonizer::updateSkeletonState() {
     /* @todo */
+
     if(state->skeletonState->autoSaveBool /*|| state->clientState->saveMaster*/) {
         if(state->skeletonState->autoSaveInterval) {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();                
 
-                emit saveSkeletonSignal(true);
+                 emit saveSkeletonSignal(true);
             }
         }
     }
@@ -745,7 +746,7 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
     return true;
 }
 
-bool Skeletonizer::saveXmlSkeleton() {
+bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     treeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
@@ -1256,7 +1257,7 @@ int Skeletonizer::saveSkeleton() {
 //uint loadNMLSkeleton() { }
 
 
-bool Skeletonizer::loadXmlSkeleton() {
+bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int neuronID = 0, nodeID = 0, merge = false;
     int nodeID1, nodeID2, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
@@ -1285,24 +1286,20 @@ bool Skeletonizer::loadXmlSkeleton() {
     memset(currentCoordinate, '\0', sizeof(currentCoordinate));
 
 
-    QFile file(QString(state->skeletonState->skeletonFile));
-
-    if(!file.size()) {
-        LOG("File is empty")
-        return false;
-    }
+    QFile file(fileName);
 
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        LOG("Document not parsed successfully.")
+        qDebug() << "Document not parsed successfully.";
         return false;
     }
 
+    qDebug() << state->skeletonState->skeletonFile;
 
     if(!state->skeletonState->mergeOnLoadFlag) {
         merge = false;
         clearSkeleton(CHANGE_MANUAL, true);
-    }
-    else {
+        qDebug() << state->skeletonState->skeletonFile;
+    } else {
         merge = true;
         greatestNodeIDbeforeLoading = state->skeletonState->greatestNodeID;
         greatestTreeIDbeforeLoading = state->skeletonState->greatestTreeID;
@@ -1625,16 +1622,16 @@ bool Skeletonizer::loadXmlSkeleton() {
 
                 thingAttribute = thingAttributes.value("color.b").toString();
                 if(!thingAttribute.isNull()) {
-                    neuronColor.g = thingAttribute.toFloat();
+                    neuronColor.b = thingAttribute.toFloat();
                 } else {
-                    neuronColor.g = -1;
+                    neuronColor.b = -1;
                 }
 
                 thingAttribute = thingAttributes.value("color.a").toString();
                 if(!thingAttribute.isNull()) {
-                    neuronColor.g = thingAttribute.toFloat();
+                    neuronColor.a = thingAttribute.toFloat();
                 } else {
-                    neuronColor.g = -1;
+                    neuronColor.a = -1;
                 }
 
                 if(!merge) {
@@ -1687,8 +1684,6 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 currentCoordinate->x = nodeAttribute.toInt() - 1;
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->x = currentCoordinate->x * magnification;
-                                } else {
-                                    currentCoordinate->x = currentCoordinate->x;
                                 }
                             } else {
                                 currentCoordinate->x = 0;
@@ -1699,11 +1694,9 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 currentCoordinate->y = nodeAttribute.toInt() - 1;
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->y = currentCoordinate->y * magnification;
-                                } else {
-                                    currentCoordinate->y = currentCoordinate->y;
-                                } else {
-                                    currentCoordinate->y = 0;
                                 }
+                            } else {
+                                currentCoordinate->y = 0;
                             }
 
                             nodeAttribute = nodeAttributes.value("z").toString();
@@ -1711,11 +1704,9 @@ bool Skeletonizer::loadXmlSkeleton() {
                                 currentCoordinate->z = nodeAttribute.toInt() - 1;
                                 if(globalMagnificationSpecified) {
                                     currentCoordinate->z = currentCoordinate->z * magnification;
-                                } else {
-                                    currentCoordinate->z = currentCoordinate->z;
-                                } else {
-                                    currentCoordinate->z = 0;
                                 }
+                            } else {
+                                currentCoordinate->z = 0;
                             }
 
                             nodeAttribute = nodeAttributes.value("inVp").toString();
@@ -2490,26 +2481,10 @@ void Skeletonizer::setDefaultSkelFileName() {
     if(localtimestruct->tm_year >= 100)
         localtimestruct->tm_year -= 100;
 
-#ifdef Q_OS_UNIX
-    snprintf(state->skeletonState->skeletonFile,
-            8192,
-            "/Users/amos/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#else
-    snprintf(state->skeletonState->skeletonFile,
-            8192,
-            "skeletonFiles\\skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#endif
-    MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
+    state->skeletonState->skeletonFileAsQString = QString("/Users/amos/skeleton-default.000.nml");
+
+
+    // MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFile, 2048);
 }
 
 bool Skeletonizer::delActiveNode() {
