@@ -352,7 +352,7 @@ int32_t addNode(struct skeletonState *skeleton,
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     // One node more in all trees
@@ -559,7 +559,7 @@ uint32_t addSegment(struct skeletonState *skeleton, int32_t targetRevision, int3
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     //One segment more in all trees
@@ -639,7 +639,7 @@ uint32_t delSegment(int32_t targetRevision, int32_t sourceNodeID, int32_t target
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     if(!segToDel) {
@@ -734,7 +734,7 @@ struct treeListElement *addTreeListElement(struct skeletonState *skeleton, int32
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     memset(newElement, '\0', sizeof(struct treeListElement));
@@ -2238,7 +2238,7 @@ uint32_t delNode(int32_t targetRevision, int32_t nodeID, struct nodeListElement 
     treeID = nodeToDel->correspondingTree->treeID;
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     if(nodeToDel->comment) {
@@ -2340,7 +2340,7 @@ uint32_t delTree(int32_t targetRevision, int32_t treeID, int32_t serialize) {
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
     currentNode = currentTree->firstNode;
     while(currentNode) {
@@ -2929,7 +2929,7 @@ uint32_t mergeTrees(int32_t targetRevision, int32_t treeID1, int32_t treeID2, in
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     currentNode = tree2->firstNode;
@@ -3496,7 +3496,7 @@ int32_t splitConnectedComponent(int32_t targetRevision,
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     memset(visitedLeft, NODE_PRISTINE, 16384);
@@ -3689,7 +3689,7 @@ uint32_t addComment(struct skeletonState *skeleton, int32_t targetRevision, char
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     if(!skeleton->currentComment) {
@@ -3764,7 +3764,7 @@ uint32_t editComment(int32_t targetRevision,
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     nodeID = currentComment->node->nodeID;
@@ -3861,7 +3861,7 @@ uint32_t delComment(int32_t targetRevision, struct commentListElement *currentCo
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     if(currentComment->content) {
@@ -4187,7 +4187,7 @@ int32_t pushBranchNode(struct skeletonState *skeleton,
 
     if(branchNode) {
         if(serialize){
-            saveSerializedSkeleton();
+//        saveSerializedSkeleton();
         }
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
             pushStack(skeleton->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
@@ -4271,7 +4271,7 @@ int32_t popBranchNode(int32_t targetRevision, int32_t serialize) {
     }
 
     if(serialize){
-        saveSerializedSkeleton();
+//        saveSerializedSkeleton();
     }
 
     /* Nodes on the branch stack may not actually exist anymore */

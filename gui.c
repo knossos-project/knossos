@@ -544,7 +544,7 @@ void createSaveOptionsWin() {
 void createCoordBarWin() {
 	state->viewerState->ag->coordBarWin = AG_WindowNew(AG_WINDOW_PLAIN|AG_WINDOW_NOBACKGROUND);
 	/* if you change that: set coord bar win stuff also for the resize event! should be a define */
-    AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin, AG_WINDOW_TR, 700, 20);
+    AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin, AG_WINDOW_TR, 500, 20);
     AG_WindowSetPadding(state->viewerState->ag->coordBarWin, 0, 0, 3, 1);
     createCurrPosWdgt(state->viewerState->ag->coordBarWin);
 	AG_WindowShow(state->viewerState->ag->coordBarWin);
@@ -2403,7 +2403,7 @@ void createCurrPosWdgt(AG_Window *parent) {
     AG_BoxSetPadding(box, 0);
     AG_BoxSetSpacing(box, 0);
 
-    button = AG_ButtonNewFn(box, 0, "undo", undo2, NULL);
+    /*button = AG_ButtonNewFn(box, 0, "undo", undo2, NULL);
     {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
         AG_ExpandHoriz(button);
@@ -2413,8 +2413,7 @@ void createCurrPosWdgt(AG_Window *parent) {
     {
         AG_ButtonSetPadding(button, 1, 1, 1, 1);
         AG_ExpandHoriz(button);
-    }
-
+    }*/
 
     button = AG_ButtonNewFn(box, 0, "copy", UI_copyClipboardCoordinates, NULL);
     {
@@ -3090,7 +3089,7 @@ static void resizeCallback(uint32_t newWinLenX, uint32_t newWinLenY) {
 
     /* reposition & resize current pos window (in title bar!) */
     AG_WindowSetGeometryAligned(state->viewerState->ag->coordBarWin,
-        AG_WINDOW_TR, 700, 20);
+        AG_WINDOW_TR, 500, 20);
 
     /* reinit the rendering system - resizing the window leads to a new OGL context */
     initializeTextures();
