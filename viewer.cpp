@@ -117,9 +117,8 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
-
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(10);
+    timer->start(25);
 
 }
 
@@ -1867,8 +1866,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 void Viewer::run() {
 
     /* @ arb */
-
-
     //state->viewerState->vpConfigs[0].type = VIEWPORT_XY;
     //state->viewerState->vpConfigs[1].type = VIEWPORT_XZ;
     //state->viewerState->vpConfigs[2].type = VIEWPORT_YZ;
@@ -1899,35 +1896,35 @@ void Viewer::run() {
         currentVp = viewports->entry;
 
         state->alpha += state->viewerState->alphaCache;
-                state->beta+= state->viewerState->betaCache;
-                state->viewerState->alphaCache = state->viewerState->betaCache = 0;
+        state->beta+= state->viewerState->betaCache;
+        state->viewerState->alphaCache = state->viewerState->betaCache = 0;
 
-                if (state->alpha >= 360)
-                    state->alpha -= 360;
-                else if (state->alpha < 0)
-                    state->alpha += 360;
-                if (state->beta >= 360)
-                    state->beta -= 360;
-                else if (state->beta < 0)
-                    state->beta += 360;
+        if (state->alpha >= 360)
+            state->alpha -= 360;
+        else if (state->alpha < 0)
+            state->alpha += 360;
+        if (state->beta >= 360)
+            state->beta -= 360;
+        else if (state->beta < 0)
+            state->beta += 360;
 
-                getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
-                CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
-                CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
-                CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
-                CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
-                CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
-                CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
-                CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
-                CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
-                CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
-                recalcTextureOffsets();
+        getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
+        CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
+        CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
+        CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
+        CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
+        recalcTextureOffsets();
 
 
         while(viewports->elements > 0) {
 
             if(drawCounter == 0) {
-                //vp->makeCurrent();
+                //vp->makeCurrent();                
                 vp->updateGL();
             } else if(drawCounter == 1) {
                 //vp2->makeCurrent();
@@ -1999,7 +1996,9 @@ void Viewer::run() {
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
                 renderer->drawGUI();
-                vp4->makeCurrent();
+
+
+                //vp4->makeCurrent();
                 vp4->updateGL();
 
 
@@ -2018,12 +2017,14 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
+
+
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
         viewerState->userMove = false;
         frames += 4;
-        //qDebug() << frames << " frames";
+        //qDebug() << frames << " frames";       
 }
 
 void Viewer::showFrames() {
@@ -2189,6 +2190,7 @@ bool Viewer::updateZoomCube() {
 }
 
 bool Viewer::userMove(int x, int y, int z, int serverMovement) {
+    //qDebug() << frames << " t1";
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -2208,6 +2210,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
 
     viewerState->userMove = true;
 
+
     if ((viewerState->currentPosition.x + x) >= 0 &&
         (viewerState->currentPosition.x + x) <= state->boundary.x &&
         (viewerState->currentPosition.y + y) >= 0 &&
@@ -2224,6 +2227,8 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
             viewerState->currentPosition.y + y + 1,
             viewerState->currentPosition.z + z + 1)
     }
+
+    qDebug() << state->viewerState->currentPosition.x << " " << state->viewerState->currentPosition.y;
 
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
@@ -2246,8 +2251,12 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 viewerState->currentPosition.z,
                                 NO_MAG_CHANGE);
     }
+
+    qDebug() << state->viewerState->currentPosition.x;
+
     emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
+
     return true;
 }
 
@@ -2959,6 +2968,27 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(vp3->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(vp4->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
+
+    connect(vp->delegate, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
+    connect(vp2->delegate, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
+    connect(vp3->delegate, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
+    connect(vp4->delegate, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
+
+    connect(vp->delegate, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
+    connect(vp2->delegate, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
+    connect(vp3->delegate, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
+    connect(vp4->delegate, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
+
+    connect(vp->delegate, SIGNAL(moveToNextNodeSignal()), skeletonizer, SLOT(moveToNextNode()));
+    connect(vp2->delegate, SIGNAL(moveToNextNodeSignal()), skeletonizer, SLOT(moveToNextNode()));
+    connect(vp3->delegate, SIGNAL(moveToNextNodeSignal()), skeletonizer, SLOT(moveToNextNode()));
+    connect(vp4->delegate, SIGNAL(moveToNextNodeSignal()), skeletonizer, SLOT(moveToNextNode()));
+
+    connect(vp->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
+    connect(vp2->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
+    connect(vp3->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
+    connect(vp4->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
+
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 

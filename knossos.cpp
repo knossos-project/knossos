@@ -188,6 +188,16 @@ int main(int argc, char *argv[])
     QObject::connect(viewer->vp3->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
 
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+
+
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));

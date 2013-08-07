@@ -578,7 +578,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     saveSettings();
 
-
     if(state->skeletonState->unsavedChanges) {
 
         prompt = new QMessageBox(this);

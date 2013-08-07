@@ -53,6 +53,10 @@ signals:
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+
+    void setRemoteStateTypeSignal(int type);
+    void setRecenteringPositionSignal(int x, int y, int z);
+    void updateViewerStateSignal();
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

@@ -91,10 +91,8 @@ public:
     bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
     bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
-    static bool moveToNextTree();
-    static bool moveToPrevTree();
-    static bool moveToPrevNode();
-    static bool moveToNextNode();
+
+
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
     void refreshUndoRedoBuffers();
     void undo();
@@ -262,6 +260,9 @@ signals:
     void saveSkeletonSignal(int increment);
     void updateToolsSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
+    void setRemoteStateTypeSignal(int type);
+    void setRecenteringPositionSignal(int x, int y, int z);
+
 public slots:
     static bool delTree(int targetRevision, int treeID);
     bool delActiveTree();
@@ -310,6 +311,10 @@ public slots:
 
     bool popBranchNode(int targetRevision);
     static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    bool moveToNextTree();
+    bool moveToPrevTree();
+    bool moveToPrevNode();
+    bool moveToNextNode();
 
 };
 

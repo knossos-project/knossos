@@ -189,7 +189,7 @@ void Viewport::resizeGL(int w, int h) {
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
 
-    glFrustum(-x, +x, -2.0, + 2.0, 0.1, 15.0);
+    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
     SET_COORDINATE(state->viewerState->vpConfigs[plane].upperLeftCorner,
@@ -388,6 +388,7 @@ Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int V
     yDistance = event->y()
         - state->viewerState->vpConfigs[VPfound].upperLeftCorner.y;
 
+
     switch(state->viewerState->vpConfigs[VPfound].type) {
         case VIEWPORT_XY:
             x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
@@ -422,7 +423,9 @@ Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int V
         &&(y >= 0) && (y <= state->boundary.y)
         &&(z >= 0) && (z <= state->boundary.z)) {
         SET_COORDINATE((*foundCoordinate), x, y, z);
+
         return foundCoordinate;
+
     }
     return NULL;
 }

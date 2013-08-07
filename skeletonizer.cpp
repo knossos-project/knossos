@@ -4991,8 +4991,9 @@ bool Skeletonizer::moveToPrevTree() {
     return false;
 }
 
+/* @todo */
 bool Skeletonizer::moveToNextTree() {
-    /*
+
     struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     struct nodeListElement *node;
 
@@ -5003,64 +5004,65 @@ bool Skeletonizer::moveToNextTree() {
         setActiveTreeByID(nextTree->treeID);
         //set tree's first node to active node if existent
         node = state->skeletonState->activeTree->firstNode;
+
         if(node == NULL) {
             return true;
-        }
-        else {
+        } else {
             setActiveNode(CHANGE_MANUAL, node, node->nodeID);
-            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                           node->position.x,
-                           node->position.y,
-                           node->position.z);
-            sendRemoteSignal();
+
+                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+                emit setRecenteringPositionSignal(node->position.x,
+                                             node->position.y,
+                                             node->position.z);
+                Knossos::sendRemoteSignal();
+
+
         }
         return true;
     }
     LOG("Reached last tree.")
-    */
+
     return false;
 
 }
 
 bool Skeletonizer::moveToPrevNode() {
-    /*
+
     struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
 
     if(state->skeletonState->activeNode == NULL) {
-        return FALSE;
+        return false;
     }
     if(prevNode) {
         setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
-        tempConfig->remoteState->type = REMOTE_RECENTERING;
-        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                       prevNode->position.x,
-                       prevNode->position.y,
-                       prevNode->position.z);
-        sendRemoteSignal();
-        return TRUE;
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(prevNode->position.x,
+                                     prevNode->position.y,
+                                     prevNode->position.z);
+        Knossos::sendRemoteSignal();
+        return true;
     }
-    */
+
     return false;
 }
 
 bool Skeletonizer::moveToNextNode() {
-    /*
+
     struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode);
 
     if(state->skeletonState->activeNode == NULL) {
-        return FALSE;
+        return false;
     }
     if(nextNode) {
         setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
-        tempConfig->remoteState->type = REMOTE_RECENTERING;
-        SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                       nextNode->position.x,
-                       nextNode->position.y,
-                       nextNode->position.z);
-        sendRemoteSignal();
-        return TRUE;
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(nextNode->position.x,
+                                     nextNode->position.y,
+                                     nextNode->position.z);
+        Knossos::sendRemoteSignal();
+        return true;
     }
-    */
+
     return false;
 
 }

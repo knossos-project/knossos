@@ -227,6 +227,8 @@ public slots:
     void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);  
     void recentFileSelected(QAction *action);
+
+
 };
 
 #endif // MAINWINDOW_H

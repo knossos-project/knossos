@@ -63,6 +63,9 @@ signals:
     void updateToolsSignal();
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
 
+    void setRemoteStateTypeSignal(int type);
+    void setRecenteringPositionSignal(int x, int y, int z);
+    void updateViewerStateSignal();
 public slots:
     void activeTreeIDChanged(int value);
     void commentChanged(QString comment);
@@ -78,9 +81,7 @@ public slots:
     void aChanged(double value);
     void restoreDefaultColorButtonClicked();
 
-
 protected:
-
 
 
 };

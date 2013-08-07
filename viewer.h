@@ -58,9 +58,8 @@ public:
     floatCoordinate v1, v2, v3;
     Viewport *vp, *vp2, *vp3, *vp4;
     vpList *viewports;
-    QTimer *timer;
+    QTimer *timer;    
     int frames;
-
 
     static bool loadTreeColorTable(const char *path, float *table, int type);
     //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory

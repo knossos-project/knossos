@@ -51,6 +51,9 @@ signals:
     void popBranchNodeSignal(int targetRevision);
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
 
+    void setRemoteStateTypeSignal(int type);
+    void setRecenteringPositionSignal(int x, int y, int z);
+    void updateViewerStateSignal();
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

@@ -33,6 +33,7 @@
 #include <QLineEdit>
 #include <QDoubleSpinBox>
 #include "skeletonizer.h"
+#include "knossos.h"
 
 extern struct stateInfo *state;
 
@@ -229,14 +230,14 @@ void ToolsNodesTabWidget::searchForChanged(QString comment) {
     ref->toolsQuickTabWidget->searchForField->setText(comment);
 }
 
-/** @todo loader out of sync */
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
     if(state->skeletonState->activeNode) {
-        state->viewerState->currentPosition.x = state->skeletonState->activeNode->position.x / state->magnification;
-        state->viewerState->currentPosition.y = state->skeletonState->activeNode->position.y / state->magnification;
-        state->viewerState->currentPosition.z = state->skeletonState->activeNode->position.z / state->magnification;
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
+                                       state->skeletonState->activeNode->position.y / state->magnification,
+                                       state->skeletonState->activeNode->position.z / state->magnification);
+        emit Knossos::sendRemoteSignal();
 
-        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
     }
 }
 

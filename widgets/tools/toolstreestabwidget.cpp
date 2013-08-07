@@ -38,6 +38,7 @@
 #include <QMessageBox>
 
 #include "skeletonizer.h"
+#include "knossos.h"
 
 extern struct stateInfo *state;
 
@@ -217,10 +218,12 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
 
     nodeListElement *node = state->skeletonState->activeTree->firstNode;
     if(node) {
-        emit (CHANGE_MANUAL, node, node->nodeID);
-        /* @todo set_coordinate */
-
-        /* @todo send_remote signal */
+        emit setActiveNodeSignal(CHANGE_MANUAL, node, node->nodeID);
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
+                                       state->skeletonState->activeNode->position.y / state->magnification,
+                                       state->skeletonState->activeNode->position.z / state->magnification);
+        emit Knossos::sendRemoteSignal();
     }
 
 

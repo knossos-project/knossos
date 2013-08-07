@@ -111,6 +111,11 @@ signals:
     void updateSlicePlaneWidgetSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     void popBranchNodeSignal(int targetRevision);
+
+    void moveToNextTreeSignal();
+    void moveToPrevTreeSignal();
+    void moveToPrevNodeSignal();
+    void moveToNextNodeSignal();
 public slots:
     
 };

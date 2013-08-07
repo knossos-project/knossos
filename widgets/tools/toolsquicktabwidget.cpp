@@ -34,6 +34,7 @@
 #include <QSpacerItem>
 
 #include "skeletonizer.h"
+#include "knossos.h"
 
 extern struct stateInfo *state;
 
@@ -143,7 +144,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));  
 }
 
-/** */
+
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
     qDebug() << value << "_" << activeTreeSpinBox->value();
@@ -194,9 +195,11 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
     nodeListElement *node = state->skeletonState->activeTree->firstNode;
     if(node) {
         emit setActiveNodeSignal(CHANGE_MANUAL, node, node->nodeID);
-        /* @todo set_coordinate */
-
-        /* @todo send_remote signal */
+        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
+                                       state->skeletonState->activeNode->position.y / state->magnification,
+                                       state->skeletonState->activeNode->position.z / state->magnification);
+        emit Knossos::sendRemoteSignal();
     }
 }
 

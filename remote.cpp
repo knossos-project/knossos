@@ -28,6 +28,7 @@
 #include "renderer.h"
 #include "functions.h"
 #include <QDebug>
+#include <QTest>
 
 extern stateInfo *state;
 
@@ -51,7 +52,7 @@ void Remote::run() {
 
     while(true) {
         //qDebug("remote says hello %i", ++i);
-        Sleeper::msleep(50);
+        msleep(50);
         state->protectRemoteSignal->lock();
         while(!state->remoteSignal) {
             state->conditionRemoteSignal->wait(state->protectRemoteSignal);
@@ -76,13 +77,16 @@ void Remote::run() {
                 SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
                 state->viewerState->currentPosition.y - this->recenteringPosition.y,
                 state->viewerState->currentPosition.z - this->recenteringPosition.z);
+
                 if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
                     remoteJump(this->recenteringPosition.x,
                                           this->recenteringPosition.y,
                                           this->recenteringPosition.z);
                                break;
                 }
-                remoteWalkTo(this->recenteringPosition.x, this->recenteringPosition.y, this->recenteringPosition.z);
+                remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
+                           this->recenteringPosition.y - state->viewerState->currentPosition.y,
+                           this->recenteringPosition.z - state->viewerState->currentPosition.z);
                 break;
 
             default:
@@ -94,6 +98,7 @@ void Remote::run() {
             break;
         }
     }
+
 }
 
 bool Remote::newTrajectory(char *trajName, char *trajectory) {
@@ -247,19 +252,25 @@ bool Remote::remoteWalkTo(int x, int y, int z) {
 
    /* @todo There seems to be a bug in remote Walk which does not lead to anything in the qt version */
     /* this is an ad-hoc version which does not consider magnifications or other things */
+    float distance = euclidicNorm(&vec);
+
    for(int i = 1; i <= 10; i++) {
-       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, TELL_COORDINATE_CHANGE);
+       //emit userMoveSignal(x_moves / distance, x_moves / distance, z_moves / distance, SILENT_COORDINATE_CHANGE);
+       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE);
        if(state->viewerState->stepsPerSec > 0)
-           Sleeper::msleep(1000 / state->viewerState->stepsPerSec);
+           msleep(1000 / state->viewerState->stepsPerSec);
        else
-           Sleeper::msleep(50);
+           msleep(50);
+
    }
 
-    /*
-    retval = remoteWalk(x_moves, y_moves, z_moves);
-    */
+    //retval = remoteWalk(x_moves, y_moves, z_moves);
 
     return true;
+}
+
+void Remote::msleep(unsigned long msec) {
+    QThread::msleep(msec);
 }
 
 /**
@@ -341,7 +352,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     if(timePerStep < 10) timePerStep = 10;
 
-    emit userMoveSignal(walkVector.x, walkVector.y, walkVector.z, TELL_COORDINATE_CHANGE);
+    //emit userMoveSignal(walkVector.x, walkVector.y, walkVector.z, TELL_COORDINATE_CHANGE);
 
     //moveEvent.type = SDL_USEREVENT;
     //moveEvent.user.code = USEREVENT_MOVE; /** @attention a replacement for this user_event is userMoveSignal
@@ -364,6 +375,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
     if(abs(z) >= abs(x) && abs(z) >= abs(y)) {
         totalMoves = abs(z) / state->magnification;
     }
+
+    qDebug() << totalMoves << "T";
 
     singleMove.x = (float)x / (float)totalMoves;
     singleMove.y = (float)y / (float)totalMoves;
@@ -427,7 +440,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
-        Sleeper::sleep(eventDelay);
+        msleep(eventDelay);
     }
 
     emit idleTimeSignal();
