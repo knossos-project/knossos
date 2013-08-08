@@ -85,7 +85,7 @@ signals:
     void remoteJumpSignal(int x, int y, int z);
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);
-
+    void loaderSignal(int x, int y, int z, int serverMovement);
 protected:
 
 public:

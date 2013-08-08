@@ -61,7 +61,6 @@ Viewer::Viewer(QObject *parent) :
     vp3->show();
     vp4->show();
 
-
     /* order of the initialization of the rendering system is
      * 1. initViewer
      * 2. new Skeletonizer
@@ -118,7 +117,7 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(25);
+    timer->start(20);
 
 }
 
@@ -811,7 +810,7 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
               i = 0;
 
     if(currentVp->backlog->entry == NULL) {
-        LOG("Called vpHandleBacklog, but there is no backlog.")
+        qDebug("Called vpHandleBacklog, but there is no backlog.");
         return false;
     }
 
@@ -828,7 +827,8 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
-                LOG("failed to get cube in backlog")
+                qDebug("failed to get cube in backlog");
+
             } else {
                 dcSliceExtract(cube,
                                currentElement->slice,
@@ -1057,7 +1057,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                                upperLeftDc.z + y_dc);
                 break;
             default:
-                LOG("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type)
+                qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type);
             }
 
             state->protectCube2Pointer->lock();
@@ -1078,6 +1078,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             index = texIndex(x_dc, y_dc, 3, &(currentVp->vpConfig->texture));
 
             if(datacube == HT_FAILURE) {
+
                 backlogAddElement(currentVp->backlog,
                                   currentDc,
                                   dcOffset,
@@ -1864,7 +1865,8 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
-
+    QTime bench;
+    bench.start();
     /* @ arb */
     //state->viewerState->vpConfigs[0].type = VIEWPORT_XY;
     //state->viewerState->vpConfigs[1].type = VIEWPORT_XZ;
@@ -1924,15 +1926,16 @@ void Viewer::run() {
         while(viewports->elements > 0) {
 
             if(drawCounter == 0) {
-                //vp->makeCurrent();                
-                vp->updateGL();
+                vp->makeCurrent();
+                //vp->updateGL();
             } else if(drawCounter == 1) {
-                //vp2->makeCurrent();
-                vp2->updateGL();
+                vp2->makeCurrent();
+                //vp2->updateGL();
             } else if(drawCounter == 2) {
-                //vp3->makeCurrent();
-                vp3->updateGL();
+                vp3->makeCurrent();
+                //vp3->updateGL();
             }
+
 
             nextVp = currentVp->next;
             // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
@@ -1955,6 +1958,7 @@ void Viewer::run() {
                          vpGenerateTexture(currentVp, viewerState);
                     else
                         vpGenerateTexture_arb(currentVp, viewerState);
+
 
 
                 } else {
@@ -1998,9 +2002,13 @@ void Viewer::run() {
                 renderer->drawGUI();
 
 
-                //vp4->makeCurrent();
-                vp4->updateGL();
+                vp->updateGL();
 
+                vp2->updateGL();
+
+                vp3->updateGL();
+
+                vp4->updateGL();
 
                 if(viewerState->userMove == true) {
                     break;
@@ -2024,7 +2032,45 @@ void Viewer::run() {
 
         viewerState->userMove = false;
         frames += 4;
-        //qDebug() << frames << " frames";       
+        logSingle();
+        //qDebug() << frames << " frames";
+
+        //qDebug() << bench.elapsed() << " ms";
+}
+
+void Viewer::logSingle() {
+    if(state->singleLogging) {
+
+        viewportTexture tex = state->viewerState->vpConfigs[0].texture;
+
+
+        QPlainTextEdit *editor = new QPlainTextEdit();
+        editor->insertPlainText(QString("DEBUGGING TEXTURE DATA\n"));
+        editor->insertPlainText(QString("texHandle: %1\n").arg(tex.texHandle));
+        editor->insertPlainText(QString("overlayHandle: %1\n").arg(tex.overlayHandle));
+        editor->insertPlainText(QString("leftUpperPxInAbsPx: %1, %2, %3\n").arg(tex.leftUpperPxInAbsPx.x).arg(tex.leftUpperPxInAbsPx.y).arg(tex.leftUpperPxInAbsPx.z));
+        editor->insertPlainText(QString("edgeLengthDC: %1\n").arg(tex.edgeLengthDc));
+        editor->insertPlainText(QString("edgeLengthPx: %1\n").arg(tex.edgeLengthPx));
+        editor->insertPlainText(QString("displayedEdgeLengthX: %1\n").arg(tex.displayedEdgeLengthX));
+        editor->insertPlainText(QString("displayedEdgeLengthY: %1\n").arg(tex.displayedEdgeLengthY));
+        editor->insertPlainText(QString("texUnitsPerDataPx: %1\n").arg(tex.texUnitsPerDataPx));
+
+        editor->insertPlainText(QString("texLUx: %1\n").arg(tex.texLUx));
+        editor->insertPlainText(QString("texLUy: %1\n").arg(tex.texLUy));
+        editor->insertPlainText(QString("texLLx: %1\n").arg(tex.texLLx));
+        editor->insertPlainText(QString("texLLy: %1\n").arg(tex.texLLy));
+        editor->insertPlainText(QString("texRUx: %1\n").arg(tex.texRUx));
+        editor->insertPlainText(QString("texRUy: %1\n").arg(tex.texRUy));
+        editor->insertPlainText(QString("texRLx: %1\n").arg(tex.texRLx));
+        editor->insertPlainText(QString("texRLy: %1\n").arg(tex.texRLy));
+
+        editor->insertPlainText(QString("xOffset: %1\n").arg(tex.xOffset));
+        editor->insertPlainText(QString("yOffset: %1\n").arg(tex.yOffset));
+        editor->insertPlainText(QString("zoomLevel: %1\n").arg(tex.zoomLevel));
+
+        editor->show();
+        state->singleLogging = false;
+    }
 }
 
 void Viewer::showFrames() {
@@ -2228,7 +2274,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
             viewerState->currentPosition.z + z + 1)
     }
 
-    qDebug() << state->viewerState->currentPosition.x << " " << state->viewerState->currentPosition.y;
+    //qDebug() << state->viewerState->currentPosition.x << " " << state->viewerState->currentPosition.y;
 
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
@@ -2789,7 +2835,6 @@ void Viewer::rewire() {
     /* @todo check *///connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(window, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
 
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
@@ -2991,7 +3036,7 @@ void Viewer::rewire() {
 
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-
+    connect(window, SIGNAL(loaderSignal(int,int,int,int)), this, SLOT(sendLoadSignal(uint,uint,uint,int)));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

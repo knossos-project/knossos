@@ -112,7 +112,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::AltModifier) {
-        qDebug("alt and mouseleft");
+        //qDebug("alt and mouseleft");
         int clickedNode;
         clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound,
                                                      event->x(),
@@ -148,10 +148,10 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             if(keyMod.testFlag(Qt::ControlModifier)) {
-                qDebug("shift and control and mouse middle");
+                //qDebug("shift and control and mouse middle");
                 // Pressed SHIFT and CTRL
             } else {
-                qDebug("shift and mouse middle");
+                //qDebug("shift and mouse middle");
                 // Pressed SHIFT only.
 
                 // Delete segment between clicked and active node
@@ -202,7 +202,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return true;
     }
 
-    qDebug() << clickedCoordinate->x << " " << clickedCoordinate->y << " " << clickedCoordinate->z;
+    //qDebug() << clickedCoordinate->x << " " << clickedCoordinate->y << " " << clickedCoordinate->z;
 
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
@@ -580,7 +580,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
-    qDebug() << "wheel up";
+    //qDebug() << "wheel up";
 
     float radius;
 
@@ -591,7 +591,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
 
     if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
-        qDebug("shift and mouse wheel up and activeNode");
+        //qDebug("shift and mouse wheel up and activeNode");
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -662,7 +662,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
 bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
-    qDebug() << "mouseWheelDown";
+    //qDebug() << "mouseWheelDown";
 
     float radius;
 
@@ -758,6 +758,11 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
+
+    if(event->key() == Qt::Key_Space) {
+        state->singleLogging = true;
+
+    }
 
     // new qt version
     if(event->key() == Qt::Key_Left) {

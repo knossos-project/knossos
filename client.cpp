@@ -33,11 +33,19 @@ extern stateInfo *state;
 
 
 Client::Client(QObject *parent) :
-    QObject(parent)
+    QThread(parent)
 {
+
+    this->remoteSocket = new QTcpSocket(this);
+    connect(this->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()), Qt::QueuedConnection);
+    connect(this->remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)), Qt::QueuedConnection);
+
+    //remoteSocket->moveToThread(this);
+    /*
     state->clientState->remoteSocket = new QTcpSocket();
     connect(state->clientState->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
     connect(state->clientState->remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
+    */
 }
 
 /**
@@ -46,7 +54,7 @@ Client::Client(QObject *parent) :
  * @todo checking if the socket is executed in a separete thread
  * a replacement for the SocketSet functionality
  */
-static bool connectToServer() {
+bool Client::connectToServer() {
     //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
     int timeoutIn100ms = 30; // ??
 
@@ -58,9 +66,10 @@ static bool connectToServer() {
     }
 
     // connect to host
-    state->clientState->remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
-    state->clientState->socketSet = new QSet<QTcpSocket *>();
-    state->clientState->socketSet->insert(state->clientState->remoteSocket);
+
+    remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
+    socketSet = new QSet<QTcpSocket *>();
+    socketSet->insert(state->clientState->remoteSocket);
 
     // AG_LabelText(state->viewerState->ag->syncOptLabel, "Connected to server.");
 
@@ -68,12 +77,12 @@ static bool connectToServer() {
     return true;
 }
 
-static bool closeConnection() {
-    if(state->clientState->remoteSocket != NULL) {
-           state->clientState->remoteSocket->close();
+bool Client::closeConnection() {
+    if(remoteSocket != NULL) {
+           remoteSocket->close();
        }
 
-       delete(state->clientState->socketSet);
+       delete(socketSet);
 
        state->clientState->connected = false;
 
@@ -84,7 +93,7 @@ static bool closeConnection() {
 
 }
 
-static float bytesToFloat(Byte *source) {
+float bytesToFloat(Byte *source) {
     /*
      * There are issues with sending floats over networks. There might be
      * strange bugs when sending data between different architectures...
@@ -524,14 +533,14 @@ critical:
 /**
  * @test Byte * is converted to char *
  */
-static bool flushOutBuffer() {
+bool Client::flushOutBuffer() {
 
     state->protectOutBuffer->lock();
 
     if(state->clientState->outBuffer->length > 0) {
         char *content = (char *)state->clientState->outBuffer->data;
-        state->clientState->remoteSocket->write(content, state->clientState->outBuffer->length);
-        state->clientState->remoteSocket->flush();
+        remoteSocket->write(content, state->clientState->outBuffer->length);
+        remoteSocket->flush();
         memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->length);
         state->clientState->outBuffer->length = 0;
     }
@@ -540,7 +549,7 @@ static bool flushOutBuffer() {
     return true;
 }
 
-static bool cleanUpClient() {
+bool cleanUpClient() {
     free(state->clientState);
     state->clientState = NULL;
 
@@ -634,7 +643,7 @@ bool Client::clientRun() {
             //SDLNet_CheckSockets(clientState->socketSet, 100); TODO SDLNet_Checksockets immediate crash
 
 
-            if(state->clientState->remoteSocket->isValid()) {
+            if(remoteSocket->isValid()) {
                 char *msg = "";
                 readLen = state->clientState->remoteSocket->read(msg, 8192);
                 message = (Byte *) msg;
@@ -679,7 +688,7 @@ bool Client::clientRun() {
 /**
  * This method is a replacement for the SDL_NET functionality.
  */
-void Client::start() {
+void Client::run() {
     clientState *clientState = state->clientState;
 
     while(!state->viewerState->viewerReady or state->viewerState->splash) {
@@ -692,19 +701,19 @@ void Client::start() {
 
     for(int i = 1; i < 5; i++) {
         //viewerEventObj->sendLoadSignal(i * 100, i * 100, i * 100, NO_MAG_CHANGE);
-        Sleeper::sleep(500);
+        Sleeper::msleep(500);
         state->protectClientSignal->lock();
         while(!state->clientSignal) {
             state->conditionClientSignal->wait(state->protectClientSignal);
         }
 
+        qDebug() << "client awaken";
         state->clientSignal = false;
         state->protectClientSignal->unlock();
 
         if(state->quitSignal == true) {
             break;
         }
-
 
         clientState->synchronizeSkeleton = state->clientState->synchronizeSkeleton;
         clientState->synchronizePosition = state->clientState->synchronizePosition;
@@ -1150,6 +1159,6 @@ void Client::socketConnectionSucceeded() {
 }
 
 void Client::socketConnectionFailed(QAbstractSocket::SocketError error) {
-    LOG(state->clientState->remoteSocket->errorString().toStdString().c_str())
+    LOG(remoteSocket->errorString().toStdString().c_str())
 
 }

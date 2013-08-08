@@ -29,6 +29,7 @@
 #include "functions.h"
 #include <QDebug>
 #include <QTest>
+#include <math.h>
 
 extern stateInfo *state;
 
@@ -84,9 +85,15 @@ void Remote::run() {
                                           this->recenteringPosition.z);
                                break;
                 }
+
+                /*
+                remoteWalkTo(this->recenteringPosition.x, this->recenteringPosition.y, this->recenteringPosition.z);
+                */
+
                 remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
                            this->recenteringPosition.y - state->viewerState->currentPosition.y,
                            this->recenteringPosition.z - state->viewerState->currentPosition.z);
+
                 break;
 
             default:
@@ -240,7 +247,6 @@ bool Remote::remoteWalkTo(int x, int y, int z) {
             SDL_Delay(100);
         }*/
 
-
     x_moves = x - state->viewerState->currentPosition.x;
     y_moves = y - state->viewerState->currentPosition.y;
     z_moves = z - state->viewerState->currentPosition.z;
@@ -250,13 +256,16 @@ bool Remote::remoteWalkTo(int x, int y, int z) {
     vec.y = y_moves;
     vec.z = z_moves;
 
+
+
    /* @todo There seems to be a bug in remote Walk which does not lead to anything in the qt version */
     /* this is an ad-hoc version which does not consider magnifications or other things */
     float distance = euclidicNorm(&vec);
 
    for(int i = 1; i <= 10; i++) {
-       //emit userMoveSignal(x_moves / distance, x_moves / distance, z_moves / distance, SILENT_COORDINATE_CHANGE);
-       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE);
+       emit userMoveSignal(x_moves / 10, x_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE);
+       /*
+       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE); */
        if(state->viewerState->stepsPerSec > 0)
            msleep(1000 / state->viewerState->stepsPerSec);
        else
@@ -376,7 +385,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
         totalMoves = abs(z) / state->magnification;
     }
 
-    qDebug() << totalMoves << "T";
+    //qDebug() << totalMoves << "T";
 
     singleMove.x = (float)x / (float)totalMoves;
     singleMove.y = (float)y / (float)totalMoves;
@@ -398,6 +407,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             doMove.x = -state->magnification;
             residuals.x += state->magnification;
         }
+
         if(residuals.y >= state->magnification) {
             doMove.y = state->magnification;
             residuals.y -= state->magnification;
@@ -406,6 +416,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             doMove.y = -state->magnification;
             residuals.y += state->magnification;
         }
+
         if(residuals.z >= state->magnification) {
             doMove.z = state->magnification;
             residuals.z -= state->magnification;
@@ -414,6 +425,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
             doMove.z = -state->magnification;
             residuals.z += state->magnification;
         }
+
+        //qDebug() << doMove.x << " " << doMove.y << " " << doMove.z;
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
             sendMove = (Coordinate *) malloc(sizeof(Coordinate));
@@ -426,6 +439,10 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->x = doMove.x;
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
+
+            qDebug() << sendMove->x << " " << singleMove.x;
+            qDebug() << sendMove->y << " " << singleMove.y;
+            qDebug() << sendMove->z << " " << singleMove.z;
 
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 

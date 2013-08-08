@@ -465,6 +465,8 @@ struct assignment {
 
 struct stateInfo {
 
+    bool singleLogging;
+
     Console *console;
     float alpha, beta;
     //  Info about the data

@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     tempConfig->boundary.z = 2048;
     tempConfig->scale.x = 22.0;
     tempConfig->scale.y = 22.0;
-    tempConfig->scale.z = 33.0;
+    tempConfig->scale.z = 22.0;
     tempConfig->cubeEdgeLength = 128;
     tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
 
@@ -218,11 +218,14 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     QObject::connect(viewer->window, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
 
-
     //viewer->start();
     loader->start();
     viewer->run();
     remote->start();
+    client->start();
+
+    state->clientSignal = true;
+    //client->run();
 
     /* PYTHON QT INIT CODE */
     /*
@@ -1191,6 +1194,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
              }
          }
      }
+     qDebug() << "executed";
  }
 
  return true;

@@ -36,14 +36,20 @@
   * This is based that users can work with datasets in different magnification at once!
   */
 class QAbstractSocket;
-class Client : public QObject
+class Client : public QThread
 {
     Q_OBJECT
 public:
     explicit Client(QObject *parent = 0);
 
+    bool connectToServer();
+    bool closeConnection();
+    bool flushOutBuffer();
+
     static bool broadcastPosition(uint x, uint y, uint z);
     static bool skeletonSyncBroken();
+
+
     static int bytesToInt(Byte *source);
     static bool integerToBytes(Byte *dest, int source);
     static bool floatToBytes(Byte *dest, float source);
@@ -77,6 +83,9 @@ public:
     struct peerListElement *firstPeer;
     struct IOBuffer *inBuffer;
     struct IOBuffer *outBuffer;
+
+
+    void run();
 signals:
     void finished();
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
@@ -96,7 +105,7 @@ signals:
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
 
 public slots:
-    void start();
+
     void socketConnectionSucceeded();
     void socketConnectionFailed(QAbstractSocket::SocketError error);
     

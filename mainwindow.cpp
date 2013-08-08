@@ -965,7 +965,7 @@ void MainWindow::pasteClipboardCoordinates(){
             free(extractedCoords);
 
       } else {
-          qDebug("Unexpected Error in MainWindow::pasteCliboardCoordinates");
+          LOG("Unexpected Error in MainWindow::pasteCliboardCoordinates");
       }
 
     } else {
@@ -974,11 +974,8 @@ void MainWindow::pasteClipboardCoordinates(){
 
 }
 
-#include "viewer.h"
-void MainWindow::coordinateEditingFinished() {
-
+void MainWindow::coordinateEditingFinished() {    
     emit userMoveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
-
 }
 
 void MainWindow::saveSettings() {
@@ -1122,10 +1119,10 @@ void MainWindow::uncheckNavigationAction() {
 }
 
 void MainWindow::updateCoordinateBar(int x, int y, int z) {
-    if(x > 0 and y > 0 and z > 0) {
-    xField->setValue(x);
-    yField->setValue(y);
-    zField->setValue(z);
+    if(x > 0 or y > 0 or z > 0) {
+        xField->setValue(x);
+        yField->setValue(y);
+        zField->setValue(z);
     }
 }
 

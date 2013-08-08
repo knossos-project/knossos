@@ -70,10 +70,11 @@ public:
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
 
     static bool loadDatasetColorTable(const char *path, GLuint *table, int type);
-    bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
+
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
+    void logSingle();
 signals:
     void loadSignal();
     void finished();
@@ -132,6 +133,7 @@ public slots:
     bool updateViewerState();
     void showFrames();
     void run();
+    bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
