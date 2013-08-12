@@ -155,12 +155,12 @@ void ToolsWidget::updateDisplayedTree() {
         else
             this->toolsTreesTabWidget->commentField->setText("");
 
-    } else {
-        qDebug() << "this case";
+    } else {       
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
         this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
         this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
+        return;
 
     }
 
@@ -176,7 +176,7 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(1);
 
         this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
-        //this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
 
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
@@ -186,7 +186,6 @@ void ToolsWidget::updateDisplayedTree() {
             this->toolsQuickTabWidget->blockSignals(true);
             this->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
             this->toolsQuickTabWidget->blockSignals(false);
-
 
             this->toolsNodesTabWidget->blockSignals(true);
             this->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));

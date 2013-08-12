@@ -170,18 +170,32 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
             value += 1;
         }
-        activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+        disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
+        disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
+        activeNodeIdSpinBox->setValue(value);
+        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
+        connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
+        connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+
         if(!node) {
-            //activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
             return;
         }
     } else if(value < state->skeletonState->activeNode->nodeID) {
         while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
             value -= 1;
         }
-        activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+        disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
+        disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
+        activeNodeIdSpinBox->setValue(value);
+        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
+        connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
+        connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+
         if(!node) {
-            //activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
             return;
         }
     }
@@ -219,11 +233,17 @@ void ToolsNodesTabWidget::commentChanged(QString comment) {
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
         Skeletonizer::addComment(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
-    }
-    else{
+    } else {
         if(!comment.isEmpty())
             Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
     }
+
+    emit updateCommentsTableSignal();
+
+    disconnect(ref->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsQuickTabWidget, SLOT(commentChanged(QString)));
+    ref->toolsQuickTabWidget->commentField->setText(comment);
+    connect(ref->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsQuickTabWidget, SLOT(commentChanged(QString)));
+
 }
 
 void ToolsNodesTabWidget::searchForChanged(QString comment) {
@@ -249,9 +269,9 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(this->idSpinBox->value()))) {
          if(Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
-             LOG("OK")
+
          } else {
-             LOG("Probleme")
+
          }
     }
 }

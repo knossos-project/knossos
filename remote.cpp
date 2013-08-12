@@ -426,6 +426,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
             residuals.z += state->magnification;
         }
 
+
+
         //qDebug() << doMove.x << " " << doMove.y << " " << doMove.z;
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {

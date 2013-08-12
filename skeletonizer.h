@@ -308,7 +308,6 @@ public slots:
     bool loadXmlSkeleton(QString fileName);
     bool saveXmlSkeleton(QString fileName);
 
-
     bool popBranchNode(int targetRevision);
     static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     bool moveToNextTree();

@@ -120,7 +120,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
     connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));
 
-
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {

@@ -5,9 +5,13 @@
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
 #include "widgets/synchronizationwidget.h"
-#include "widgets/commentswidget.h"
 #include "widgets/datasavingwidget.h"
 #include "widgets/splashscreenwidget.h"
+
+#include "widgets/commentswidget.h"
+#include "widgets/commentshortcuts/commentshortcutstab.h"
+#include "widgets/commentshortcuts/commentspreferencestab.h"
+#include "widgets/commentshortcuts/commentsnodecommentstab.h"
 
 #include "widgets/toolswidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"

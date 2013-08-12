@@ -37,11 +37,17 @@ class CommentsPreferencesTab : public QWidget
     Q_OBJECT
 public:
     explicit CommentsPreferencesTab(QWidget *parent = 0);
-    
+
 signals:
-    
+
+
 public slots:
-    
+    void enableCondRadiusChecked(bool on);
+    void enableCondColoringChecked(bool on);
+    void substringEntered();
+    void colorChanged(QString color);
+    void radiusChanged(double value);
+
 protected:
     QCheckBox *enableCondColoringCheckBox;
     QCheckBox *enableCondRadiusCheckBox;

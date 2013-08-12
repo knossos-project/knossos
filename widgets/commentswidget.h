@@ -31,6 +31,7 @@ class QEvent;
 class QTabWidget;
 class CommentShortCutsTab;
 class CommentsPreferencesTab;
+class CommentsNodeCommentsTab;
 class CommentsWidget : public QDialog
 {
     Q_OBJECT
@@ -38,6 +39,9 @@ public:
     explicit CommentsWidget(QWidget *parent = 0);    
     void loadSettings();
     void saveSettings();
+    CommentShortCutsTab *shortcutTab;
+    CommentsPreferencesTab *preferencesTab;
+    CommentsNodeCommentsTab *nodeCommentsTab;
 signals:
     void uncheckSignal();
 public slots:
@@ -45,8 +49,6 @@ public slots:
 protected:
     void closeEvent(QCloseEvent *event);
     QTabWidget *tabs;
-    CommentShortCutsTab *shortcutTab;
-    CommentsPreferencesTab *preferencesTab;
 };
 
 #endif // COMMENTSWIDGET_H

@@ -2164,8 +2164,7 @@ bool Viewer::initializeTextures() {
 
 bool Viewer::updateViewerState() {
 
-
-    uint i;
+   uint i;
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
@@ -2176,6 +2175,7 @@ bool Viewer::updateViewerState() {
         // Set the parameters for the texture.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
     }
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -2781,6 +2781,7 @@ bool Viewer::moveVPonTop(uint currentVP) {
 
 void Viewer::rewire() {
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
+    connect(window, SIGNAL(updateCommentsTableSignal()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
 
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 

@@ -25,6 +25,7 @@
 #include "commentswidget.h"
 #include "commentshortcuts/commentshortcutstab.h"
 #include "commentshortcuts/commentspreferencestab.h"
+#include "commentshortcuts/commentsnodecommentstab.h"
 #include "GUIConstants.h"
 #include <QSettings>
 #include <QEvent>
@@ -46,10 +47,12 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
 
     this->shortcutTab = new CommentShortCutsTab();
     this->preferencesTab = new CommentsPreferencesTab();
+    this->nodeCommentsTab = new CommentsNodeCommentsTab();
 
     tabs = new QTabWidget(this);
     tabs->addTab(shortcutTab, "shortcuts");
     tabs->addTab(preferencesTab, "preferences");
+    tabs->addTab(nodeCommentsTab, "node comments");
 
 }
 

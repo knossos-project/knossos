@@ -54,6 +54,7 @@ signals:
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
+    void updateCommentsTableSignal();
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

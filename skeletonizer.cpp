@@ -4962,7 +4962,7 @@ bool Skeletonizer::delSegmentFromCmd(struct segmentListElement *segToDel) {
 }
 
 bool Skeletonizer::moveToPrevTree() {
-    /*
+
     struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     struct nodeListElement *node;
     if(state->skeletonState->activeTree == NULL) {
@@ -4977,21 +4977,21 @@ bool Skeletonizer::moveToPrevTree() {
         }
         else {
             setActiveNode(CHANGE_MANUAL, node, node->nodeID);
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(node->position.x,
+                                         node->position.y,
+                                         node->position.z);
 
-            SET_COORDINATE(tempConfig->remoteState->recenteringPosition,
-                           node->position.x,
-                           node->position.y,
-                           node->position.z);
             Knossos::sendRemoteSignal();
         }
         return true;
     }
     LOG("Reached first tree.")
-    */
+
     return false;
 }
 
-/* @todo */
+
 bool Skeletonizer::moveToNextTree() {
 
     struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);

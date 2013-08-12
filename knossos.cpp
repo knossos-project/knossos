@@ -146,9 +146,9 @@ int main(int argc, char *argv[])
 
 
     strncpy(tempConfig->name, "070317_e1088", 1024);
-    tempConfig->boundary.x = 2048;
-    tempConfig->boundary.y = 1792;
-    tempConfig->boundary.z = 2048;
+    tempConfig->boundary.x = 20000;
+    tempConfig->boundary.y = 20000;
+    tempConfig->boundary.z = 20000;
     tempConfig->scale.x = 22.0;
     tempConfig->scale.y = 22.0;
     tempConfig->scale.z = 22.0;
@@ -160,6 +160,8 @@ int main(int argc, char *argv[])
     tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
     tempConfig->cubeSetBytes = tempConfig->cubeSetElements* tempConfig->cubeBytes;
     tempConfig->boergens = 0;
+
+
 
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.")
@@ -193,7 +195,6 @@ int main(int argc, char *argv[])
 
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
 
@@ -793,7 +794,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                 currMag);
     #endif
             FILE *testKconf;
-            //sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
+            sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
 
             /* try fopen() on knossos.conf of currently tested dataset */
             if ((testKconf = fopen(currKconfPath, "r"))) {
@@ -852,6 +853,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         /* state->magnification already contains the right mag! */
 
         pathLen = strlen(state->path);
+        qDebug() << pathLen;
 
         if((state->path[pathLen-1] == '\\')
            || (state->path[pathLen-1] == '/')) {

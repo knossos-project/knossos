@@ -81,6 +81,7 @@ signals:
     bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
+    void updateCommentsTableSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void remoteJumpSignal(int x, int y, int z);
     void stopRenderTimerSignal();

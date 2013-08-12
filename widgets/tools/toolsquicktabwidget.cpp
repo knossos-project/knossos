@@ -213,18 +213,32 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
         while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
             value += 1;
         }
-        activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
+        disconnect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+        this->activeNodeSpinBox->setValue(value);
+        ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
+        connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
+        connect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+
+
         if(!node) {
-            //activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
             return;
         }
     } else if(value < state->skeletonState->activeNode->nodeID) {
         while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
             value -= 1;
         }
-        activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
+        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
+        disconnect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+        this->activeNodeSpinBox->setValue(value);
+        ref->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
+        connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
+        connect(ref->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), ref->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+
+
         if(!node) {
-            //activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
             return;
         }
     }
@@ -262,6 +276,12 @@ void ToolsQuickTabWidget::commentChanged(QString comment) {
         if(!comment.isEmpty())
             Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
     }
+
+    emit updateCommentsTableSignal();
+
+    disconnect(ref->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsNodesTabWidget, SLOT(commentChanged(QString)));
+    ref->toolsNodesTabWidget->commentField->setText(comment);
+    connect(ref->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsNodesTabWidget, SLOT(commentChanged(QString)));
 }
 
 void ToolsQuickTabWidget::searchForChanged(QString comment) {
@@ -273,7 +293,6 @@ void ToolsQuickTabWidget::findNextButtonClicked() {
     emit nextCommentSignal(searchStr);
 }
 
-
 void ToolsQuickTabWidget::findPreviousButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
     emit previousCommentSignal(searchStr);
@@ -282,9 +301,7 @@ void ToolsQuickTabWidget::findPreviousButtonClicked() {
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
     emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
-
 }
-
 
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
     emit popBranchNodeSignal(CHANGE_MANUAL);

@@ -48,7 +48,8 @@ SOURCES +=\
     slicer.cpp \
     widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
-    decorators/mainwindowdecorator.cpp
+    decorators/mainwindowdecorator.cpp \
+    widgets/commentshortcuts/commentsnodecommentstab.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -88,7 +89,8 @@ HEADERS  += mainwindow.h \
     Plattform.h \
     widgetcontainer.h \     
     decorators/skeletonizerdecorator.h \
-    decorators/mainwindowdecorator.h
+    decorators/mainwindowdecorator.h \
+    widgets/commentshortcuts/commentsnodecommentstab.h
 
 FORMS    += mainwindow.ui
 

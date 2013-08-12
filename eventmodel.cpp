@@ -1141,6 +1141,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_G) {
         emit genTestNodesSignal(50000);
+        emit updateTools();
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             qDebug() << "N und shift";
@@ -1185,7 +1186,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit moveToNextNodeSignal();
         emit updateTools();
         return true;
-
 
     } else if(event->key() == Qt::Key_Z) {
 

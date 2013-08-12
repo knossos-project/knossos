@@ -167,16 +167,16 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(pasteButton);
 
     xField = new QSpinBox();
-    xField->setMaximum(10000);
+    xField->setMaximum(1000000);
     xField->setMinimumWidth(75);
 
     xField->setValue(state->viewerState->currentPosition.x);
     yField = new QSpinBox();
-    yField->setMaximum(10000);
+    yField->setMaximum(1000000);
     yField->setMinimumWidth(75);
     yField->setValue(state->viewerState->currentPosition.y);
     zField = new QSpinBox();
-    zField->setMaximum(10000);
+    zField->setMaximum(1000000);
     zField->setMinimumWidth(75);
     zField->setValue(state->viewerState->currentPosition.z);
 
@@ -634,6 +634,7 @@ void MainWindow::openSlot() {
 
 
         emit loadSkeletonSignal(fileName);
+        emit updateCommentsTableSignal();
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
