@@ -36,10 +36,11 @@ Client::Client(QObject *parent) :
     QThread(parent)
 {
 
+    /*
     this->remoteSocket = new QTcpSocket(this);
     connect(this->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()), Qt::QueuedConnection);
     connect(this->remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)), Qt::QueuedConnection);
-
+    */
     //remoteSocket->moveToThread(this);
     /*
     state->clientState->remoteSocket = new QTcpSocket();
@@ -54,22 +55,30 @@ Client::Client(QObject *parent) :
  * @todo checking if the socket is executed in a separete thread
  * a replacement for the SocketSet functionality
  */
-bool Client::connectToServer() {
+bool Client::connectToServer(QTcpSocket *remoteSocket) {
     //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
     int timeoutIn100ms = 30; // ??
 
     // lookup the host
-    QHostInfo hostInfo = QHostInfo::fromName(QHostInfo::localHostName());
+    QHostInfo hostInfo = QHostInfo::fromName("localhost");
     if(hostInfo.error() != QHostInfo::NoError) {
         qDebug() << hostInfo.errorString();
         return false;
     }
 
-    // connect to host
-
-    remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort);
+    remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort, QIODevice::ReadWrite);
+    if(!remoteSocket->waitForConnected(3000)) {
+        qDebug() << "cannot establish a socket connection";
+        LOG("Cannot establish a socket connection");
+        emit sendDisconnectedState();
+        return false;
+    }
+    qDebug() << "connection established";
+    emit sendConnectedState();
     socketSet = new QSet<QTcpSocket *>();
     socketSet->insert(state->clientState->remoteSocket);
+
+
 
     // AG_LabelText(state->viewerState->ag->syncOptLabel, "Connected to server.");
 
@@ -77,18 +86,16 @@ bool Client::connectToServer() {
     return true;
 }
 
-bool Client::closeConnection() {
+bool Client::closeConnection(QTcpSocket *remoteSocket) {
     if(remoteSocket != NULL) {
            remoteSocket->close();
        }
-
-       delete(socketSet);
 
        state->clientState->connected = false;
 
 
       state->clientState->connected = false;
-      //AG_LabelText(state->viewerState->ag->syncOptLabel, "No connection to server.");
+      emit sendDisconnectedState();
       return true;
 
 }
@@ -561,7 +568,7 @@ bool cleanUpClient() {
  * @todo pushEvent
  * @test byte buffer is temporarily converted to char *(because of the socket read method) and backwards
  */
-bool Client::clientRun() {
+bool Client::clientRun(QTcpSocket *remoteSocket) {
     clientState *clientState = state->clientState;
     Byte *message = NULL;
     uint messageLen = 0, nameLen = 0, readLen = 0;
@@ -577,7 +584,7 @@ bool Client::clientRun() {
     //autoSaveOffEvent.type = SDL_USEREVENT;
     //autoSaveOffEvent.user.code = USEREVENT_NOAUTOSAVE;
 
-    if(connectToServer() == true) {
+    if(connectToServer(remoteSocket) == true) {
         /*
          * Autosave is turned off. Whether a knossos instance autosaves or
          * does not autosave during synchronization is determined by the "save
@@ -590,6 +597,8 @@ bool Client::clientRun() {
          * encountered.
          *
          */
+
+
 
         //if(SDL_PushEvent(&autoSaveOffEvent) == FAIL)
         //    LOG("SDL_PushEvent returned -1"); SDL TODO
@@ -665,22 +674,21 @@ bool Client::clientRun() {
             state->protectClientSignal->lock();
             if(state->clientSignal == true) {
                 state->clientSignal = false;
-                state->protectClientSignal->lock();
+                state->protectClientSignal->unlock();
                 break;
             }
-            state->protectClientSignal->lock();
+            state->protectClientSignal->unlock();
         }
     }
 
     state->clientState->saveMaster = false;
     if(!state->skeletonState->autoSaveBool) {
-       // AG_TextMsg(AG_MSG_INFO, AGAR TODO
-       //            "Synchronization has ended and this instance "
-       //            "will currently not autosave. Please turn autosave "
-       //            "on manually if it is required.");
+        LOG("Synchronization has ended and this instance will currently not autosave. Please turn autosave on manually if it is required.");
     }
 
-    closeConnection();
+
+    closeConnection(remoteSocket);
+    qDebug() << "after closeConnection";
 
     return true;
 }
@@ -689,6 +697,12 @@ bool Client::clientRun() {
  * This method is a replacement for the SDL_NET functionality.
  */
 void Client::run() {
+
+    QTcpSocket *remoteSocket = new QTcpSocket();
+
+    //connect(remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
+    //connect(remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
+
     clientState *clientState = state->clientState;
 
     while(!state->viewerState->viewerReady or state->viewerState->splash) {
@@ -699,35 +713,35 @@ void Client::run() {
         Knossos::sendClientSignal();
     }
 
-    for(int i = 1; i < 5; i++) {
-        //viewerEventObj->sendLoadSignal(i * 100, i * 100, i * 100, NO_MAG_CHANGE);
-        Sleeper::msleep(500);
+    while(true) {
         state->protectClientSignal->lock();
         while(!state->clientSignal) {
+            qDebug() << "waiting for the next client signal";
             state->conditionClientSignal->wait(state->protectClientSignal);
         }
 
-        qDebug() << "client awaken";
         state->clientSignal = false;
         state->protectClientSignal->unlock();
 
-        if(state->quitSignal == true) {
+        if(state->quitSignal == true)
             break;
-        }
 
-        clientState->synchronizeSkeleton = state->clientState->synchronizeSkeleton;
-        clientState->synchronizePosition = state->clientState->synchronizePosition;
-        clientState->remotePort = state->clientState->remotePort;
-        strncpy(clientState->serverAddress, state->clientState->serverAddress, 1024);
+        /* Update state.
 
-        clientRun();
+        clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
+        clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
+        clientState->remotePort = tempConfig->clientState->remotePort;
+        strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+        */
+        clientRun(remoteSocket);
 
-        if(state->quitSignal == false) {
+        if(state->quitSignal == true)
             break;
-        }
     }
 
-    cleanUpClient();
+
+        cleanUpClient();
+
 }
 
 
@@ -784,7 +798,7 @@ bool Client::floatToBytes(Byte *dest, float source) {
 
 int Client::Wrapper_SDLNet_TCP_Open(void *params) {
     clientState *cState = (clientState*)params;
-  //  clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
+    //clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
     cState->connectionTried = true;
     return true;
 }
@@ -1155,10 +1169,12 @@ Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {
 
 
 void Client::socketConnectionSucceeded() {
+    qDebug("established");
     LOG("Socket connection established")
 }
 
 void Client::socketConnectionFailed(QAbstractSocket::SocketError error) {
-    LOG(remoteSocket->errorString().toStdString().c_str())
+    qDebug("error");
+    LOG("Connection failed");
 
 }

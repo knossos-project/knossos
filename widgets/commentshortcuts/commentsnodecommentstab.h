@@ -8,6 +8,7 @@ class QCheckBox;
 class QLineEdit;
 class QPushButton;
 class QTableWidget;
+class QTableWidgetItem;
 class CommentsNodeCommentsTab : public QWidget
 {
     Q_OBJECT
@@ -19,20 +20,17 @@ signals:
 public slots:
     void updateCommentsTable();
     void branchPointOnlyChecked(bool on);
+    void commentChanged(QTableWidgetItem *item);
+    void itemSelected(int row, int col);
+    void doubleClicked(QTableWidgetItem *item);
 
 protected:
     QCheckBox *branchNodesOnlyCheckbox;
     QLabel *filterLabel;
-    QLineEdit *filterField;
-    QLabel *editCommentLabel;
-    QLineEdit *editCommentField;
-    QPushButton *jumpToNodeButton;
+    QLineEdit *filterField;    
     QTableWidget *nodeTable;
     int tableIndex;
     QList<QString> *nodesWithComment;
-
-
-
 
 };
 

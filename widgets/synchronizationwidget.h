@@ -43,6 +43,8 @@ signals:
     void uncheckSignal();
 public slots:
     void connectButtonPushed();
+    void updateConnectionInfo();
+    void updateDisconnectionInfo();
 protected:
     void closeEvent(QCloseEvent *event);
     QLabel *connectionLabel;

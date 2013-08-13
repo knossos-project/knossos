@@ -29,6 +29,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include "knossos-global.h"
+#include "knossos.h"
 
 extern struct stateInfo *state;
 
@@ -44,6 +45,7 @@ SynchronizationWidget::SynchronizationWidget(QWidget *parent) :
     remotePortSpinBox = new QSpinBox();
     remotePortSpinBox->setMaximum(65535);
     remotePortSpinBox->setValue(7890);
+    remotePortSpinBox->setEnabled(false);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(remotePortLabel, remotePortSpinBox);
@@ -78,12 +80,25 @@ void SynchronizationWidget::closeEvent(QCloseEvent *event) {
 void SynchronizationWidget::connectButtonPushed() {
     if(!connected) {
         connected = true;
+
+        Knossos::sendClientSignal();
+
         connectButton->setText("Disconnect");
     } else {
         connected = false;
         connectButton->setText("Connect");
     }
-        //sendClientSignal();
 
+
+}
+
+void SynchronizationWidget::updateConnectionInfo() {
+    connectionLabel->setText("Connected");
+    connectButton->setText("Disconnect");
+}
+
+void SynchronizationWidget::updateDisconnectionInfo() {
+    connectionLabel->setText("No Connection");
+    connectButton->setText("Connect");
 }
 

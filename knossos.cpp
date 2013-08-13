@@ -199,7 +199,6 @@ int main(int argc, char *argv[])
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
 
-
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));
@@ -212,6 +211,8 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int)));
     QObject::connect(client, SIGNAL(popBranchNodeSignal(int)), viewer->skeletonizer, SLOT(popBranchNode(int)));
     QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(sendConnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
+    QObject::connect(client, SIGNAL(sendDisconnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
 
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
@@ -226,7 +227,7 @@ int main(int argc, char *argv[])
     remote->start();
     client->start();
 
-    state->clientSignal = true;
+    //state->clientSignal = true;
     //client->run();
 
     /* PYTHON QT INIT CODE */
@@ -586,6 +587,7 @@ bool Knossos::unlockSkeleton(int increment) {
 }
 
 bool Knossos::sendClientSignal() {
+    qDebug() << "sending the client signal";
     state->protectClientSignal->lock();
     state->clientSignal = true;
     state->protectClientSignal->unlock();
@@ -639,6 +641,7 @@ bool Knossos::readConfigFile(const char *path) {
     QFile file(path);
     if(!file.open(QIODevice::ReadOnly)) {
             qDebug("Error reading config file at path:%s", path);
+            return false;
     }
 
     QTextStream stream(&file);
@@ -684,7 +687,8 @@ bool Knossos::readConfigFile(const char *path) {
 
     }
 
-    file.close();
+    if(file.isOpen())
+        file.close();
 
 
     /*
@@ -708,7 +712,7 @@ bool Knossos::readConfigFile(const char *path) {
             }
         }
         */
-        return false;
+        return true;
 }
 
 bool Knossos::printConfigValues() {
@@ -906,7 +910,11 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         /* state->magnification already contains the right mag! */
 
         pathLen = strlen(state->path);
-        qDebug() << pathLen;
+
+        if(pathLen == 0) {
+            return false;
+        }
+
 
         if((state->path[pathLen-1] == '\\')
            || (state->path[pathLen-1] == '/')) {
@@ -1279,7 +1287,6 @@ void loadDefaultTreeLUT() {
         Knossos::loadTreeLUTFallback();
         MainWindow::treeColorAdjustmentsChanged();
     }
-
 }
 
 void rewire() {

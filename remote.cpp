@@ -442,9 +442,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
 
-            qDebug() << sendMove->x << " " << singleMove.x;
-            qDebug() << sendMove->y << " " << singleMove.y;
-            qDebug() << sendMove->z << " " << singleMove.z;
+            //qDebug() << sendMove->x << " " << singleMove.x;
+            //qDebug() << sendMove->y << " " << singleMove.y;
+            //qDebug() << sendMove->z << " " << singleMove.z;
 
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 

@@ -2298,8 +2298,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 NO_MAG_CHANGE);
     }
 
-    qDebug() << state->viewerState->currentPosition.x;
-
     emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
 

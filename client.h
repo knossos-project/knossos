@@ -42,8 +42,8 @@ class Client : public QThread
 public:
     explicit Client(QObject *parent = 0);
 
-    bool connectToServer();
-    bool closeConnection();
+    bool connectToServer(QTcpSocket *remoteSocket);
+    bool closeConnection(QTcpSocket *remoteSocket);
     bool flushOutBuffer();
 
     static bool broadcastPosition(uint x, uint y, uint z);
@@ -63,7 +63,7 @@ public:
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
 
     uint parseInBuffer();
-    bool clientRun();
+    bool clientRun(QTcpSocket *remoteSocket);
 
     bool connectAsap;
     int remotePort;
@@ -103,7 +103,8 @@ signals:
     bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID);
     void popBranchNodeSignal(int targetRevision);
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
-
+    void sendConnectedState();
+    void sendDisconnectedState();
 public slots:
 
     void socketConnectionSucceeded();
