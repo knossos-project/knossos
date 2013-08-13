@@ -26,6 +26,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
+#include <QFile>
 #include "sleeper.h"
 //#include <PythonQT/PythonQt.h>
 //#include <PythonQT/gui/PythonQtScriptingConsole.h>
@@ -69,7 +70,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-    //QSettings::setPath();
+
 
     /* */
 
@@ -133,7 +134,7 @@ int main(int argc, char *argv[])
     }
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
-
+    /*
 #ifdef Q_OS_UNIX
     strncpy(tempConfig->path, "../../e1088_mag1/", 1024);
 #endif
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
     tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
     tempConfig->cubeSetBytes = tempConfig->cubeSetElements* tempConfig->cubeBytes;
     tempConfig->boergens = 0;
-
+    */
 
 
     if(Knossos::initStates() != true) {
@@ -634,6 +635,58 @@ bool Knossos::stripNewlines(char *string) {
 
 /** @todo function yyparse is not found. Functionality is temporarily uncommented  */
 bool Knossos::readConfigFile(const char *path) {
+
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly)) {
+            qDebug("Error reading config file at path:%s", path);
+    }
+
+    QTextStream stream(&file);
+
+
+    while(!stream.atEnd()) {
+        QString line = stream.readLine();
+        if(line.isEmpty())
+            continue;
+
+        QStringList tokenList = line.split(QRegExp("[^A-Za-z0-9_.]"), QString::SkipEmptyParts);
+
+        QString token = tokenList.at(0);
+
+        if(token == "experiment") {
+            token = tokenList.at(2);
+            char *expName = const_cast<char *>(token.toStdString().c_str());
+            strncpy(tempConfig->name, expName, 1024);
+
+        } else if(token == "scale") {
+            token = tokenList.at(1);
+            if(token == "x") {
+                tempConfig->scale.x = tokenList.at(2).toFloat();
+            } else if(token == "y") {
+                tempConfig->scale.y = tokenList.at(2).toFloat();
+            } else if(token == "z") {
+                tempConfig->scale.z = tokenList.at(2).toFloat();
+            }
+        } else if(token == "boundary") {
+            token = tokenList.at(1);
+            if(token == "x") {
+                tempConfig->boundary.x = tokenList.at(2).toFloat();
+            } else if(token == "y") {
+                tempConfig->boundary.y = tokenList.at(2).toFloat();
+            } else if(token == "z") {
+                tempConfig->boundary.z = tokenList.at(2).toFloat();
+            }
+        } else if(token == "magnification") {
+            tempConfig->magnification = tokenList.at(1).toInt();
+        } else {
+            LOG("Skipping unknown parameter");
+        }
+
+    }
+
+    file.close();
+
+
     /*
     FILE *configFile;
         size_t bytesRead;
@@ -1073,6 +1126,7 @@ bool Knossos::readDataConfAndLocalConf() {
 
     strcat(configFile, tempConfig->path);
     strcat(configFile, "/knossos.conf");
+
 
     LOG("Trying to read %s.", configFile)
 

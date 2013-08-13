@@ -139,6 +139,9 @@ linux {
                    /usr/include/GL/
 }
 
+win32 {
+
+}
 
 
 RESOURCES += \
