@@ -28,8 +28,8 @@
 #include <QSettings>
 #include <QFile>
 #include "sleeper.h"
-//#include <PythonQT/PythonQt.h>
-//#include <PythonQT/gui/PythonQtScriptingConsole.h>
+#include <PythonQT/PythonQt.h>
+#include <PythonQT/gui/PythonQtScriptingConsole.h>
 #include "knossos-global.h"
 #include "knossos.h"
 #include "mainwindow.h"
@@ -38,6 +38,7 @@
 #include "viewport.h"
 #include "widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
+
 
 //#include "y.tab.h"
 //#include "lex.yy.h"
@@ -231,8 +232,9 @@ int main(int argc, char *argv[])
     //client->run();
 
     /* PYTHON QT INIT CODE */
-    /*
+
     PythonQt::init();
+
     PythonQtObjectPtr  mainContext = PythonQt::self()->getMainModule();
     PythonQtScriptingConsole console(NULL, mainContext);
 
@@ -240,7 +242,6 @@ int main(int argc, char *argv[])
     PythonQt::self()->registerClass(&StateClass::staticMetaObject);
     //PythonQt::self()->addDecorators( Your Decorator Class );
     mainContext.addObject("state", ptr);
-
 
     PythonQt::self()->registerClass(&WidgetContainer::staticMetaObject);
     PythonQt::self()->registerClass(&MainWindow::staticMetaObject);
@@ -253,7 +254,8 @@ int main(int argc, char *argv[])
 
     console.appendCommandPrompt();
     console.show();
-    */
+
+
 
 
     return a.exec();

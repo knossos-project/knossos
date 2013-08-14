@@ -140,7 +140,15 @@ linux {
 }
 
 win32 {
+    LIBS += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\python2.7\config\libpython2.7.dll.a \
+            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt.a \
+            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt_QtAll.a \
 
+
+
+    INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
+                   C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include \
+                   C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib
 }
 
 
