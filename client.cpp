@@ -113,6 +113,7 @@ float bytesToFloat(Byte *source) {
 #define FLOATS 16
 #define INTS 16
 uint Client::parseInBuffer() {
+    qDebug() << "in parseInBuffer";
     int messageLen = 0;
     clientState *clientState = state->clientState;
 
@@ -546,8 +547,12 @@ bool Client::flushOutBuffer() {
 
     if(state->clientState->outBuffer->length > 0) {
         char *content = (char *)state->clientState->outBuffer->data;
-        remoteSocket->write(content, state->clientState->outBuffer->length);
-        remoteSocket->flush();
+
+
+
+        //remoteSocket->write(content, state->clientState->outBuffer->length);
+        //remoteSocket->flush();
+
         memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->length);
         state->clientState->outBuffer->length = 0;
     }
@@ -615,6 +620,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
         else {
             nameLen = strlen(state->name);
         }
+
         messageLen = nameLen + 6 * 4 + 5;
         message[0] = KIKI_HI;
         Client::integerToBytes(&message[1], messageLen);
@@ -629,7 +635,10 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
         Client::IOBufferAppend(clientState->outBuffer, message, messageLen, state->protectOutBuffer);
         memset(message, '\0', 8192 * sizeof(Byte));
 
+
+
         while(true) {
+
             /*
              * Slowing this loop down might be a good idea if it proves
              * to eat a lot of power. It probably wouldn't hurt, synchronizing
@@ -640,6 +649,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
              * Write all pending outgoing data to the socket
              */
             flushOutBuffer();
+            Sleeper::sleep(50);
 
             /*
              * Read all incoming data into the read buffer
@@ -651,12 +661,18 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
              */
             //SDLNet_CheckSockets(clientState->socketSet, 100); TODO SDLNet_Checksockets immediate crash
 
+            char *msg = new char[8192];
+            memset(msg, '\0', 8192);
 
             if(remoteSocket->isValid()) {
-                char *msg = "";
-                readLen = state->clientState->remoteSocket->read(msg, 8192);
-                message = (Byte *) msg;
+
+                qDebug() << "is readable";
+                readLen = remoteSocket->read(msg, 8192);
+                qDebug() << "readlen: " << readLen;
+                qDebug() << QString(msg);
+
                 if(readLen == 0) {
+                    qDebug() << "remote server closed the connection";
                     LOG("Remote server closed the connection.")
                     break;
                 }
@@ -664,6 +680,8 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
 
                 Client::IOBufferAppend(clientState->inBuffer, message, readLen, NULL);
                 memset(message, '\0', 8192);
+            } else {
+
             }
 
             /*

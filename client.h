@@ -49,7 +49,6 @@ public:
     static bool broadcastPosition(uint x, uint y, uint z);
     static bool skeletonSyncBroken();
 
-
     static int bytesToInt(Byte *source);
     static bool integerToBytes(Byte *dest, int source);
     static bool floatToBytes(Byte *dest, float source);

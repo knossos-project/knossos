@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QTableWidgetItem>
+#include <QHeaderView>
 #include "skeletonizer.h"
 
 
@@ -27,10 +28,10 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 
     nodeTable = new QTableWidget();
     nodeTable->setColumnCount(2);
-    nodeTable->setFixedWidth(300);
 
-    nodeTable->setHorizontalHeaderItem(0, left);
+    nodeTable->setHorizontalHeaderItem(0, left);    
     nodeTable->setHorizontalHeaderItem(1, right);
+    nodeTable->horizontalHeader()->setStretchLastSection(true);
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(branchNodesOnlyCheckbox);
@@ -39,7 +40,6 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
     hLayout->addWidget(filterField);
     mainLayout->addLayout(hLayout);
     mainLayout->addWidget(nodeTable);
-
 
     this->setLayout(mainLayout);
     connect(branchNodesOnlyCheckbox, SIGNAL(clicked(bool)), this, SLOT(branchPointOnlyChecked(bool)));
@@ -136,3 +136,4 @@ void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
 
 
 }
+

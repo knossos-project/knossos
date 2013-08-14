@@ -1316,7 +1316,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
          // Draw the slice planes for orientation inside the data stack
 
-
         glPushMatrix();
 
         // single operation! TDitem
@@ -1681,9 +1680,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     memset(textBuffer, '\0', 32);
     glRasterPos3f((float)-(state->boundary.x) / 2. - 50., (float)-(state->boundary.y) / 2. - 50., (float)-(state->boundary.z) / 2. - 50.);
 
-
     sprintf(textBuffer, "1, 1, 1");
-
 
     pos.x = (float)-(state->boundary.x) / 2. - 50.;
     pos.y = (float)-(state->boundary.y) / 2. - 50.;
@@ -1699,7 +1696,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     pos.z = (float)-(state->boundary.z) / 2. - 50.;
     renderText(&pos, textBuffer, VIEWPORT_SKELETON);
 
-
     memset(textBuffer, '\0', 32);
     glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
     sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
@@ -1713,7 +1709,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     memset(textBuffer, '\0', 32);
     glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
     sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
-
 
     pos.x = -(state->boundary.x / 2)- 50.;
     pos.y = -(state->boundary.y / 2)- 50.;
@@ -1741,6 +1736,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 }
 
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
+
     int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
@@ -1756,6 +1752,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         state->viewerState->vpConfigs[currentVP].edgeLength,
         state->viewerState->vpConfigs[currentVP].edgeLength);
 
+
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
     glSelectBuffer(8192, selectionBuffer);
@@ -1770,19 +1767,17 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     glMatrixMode(GL_PROJECTION);
 
     glLoadIdentity();
-
     gluPickMatrix(x, y, (float)width, (float)width, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
     } else {
-        //glEnable(GL_DEPTH_TEST);
-        //glCallList(state->viewerState->vpConfigs[currentVP].displayList);
         glDisable(GL_DEPTH_TEST);
         renderOrthogonalVP(currentVP);
     }
 
     hits = glRenderMode(GL_RENDER);
+    qDebug() << hits << " collision";
     glLoadIdentity();
 
     ptr = (GLuint *)selectionBuffer;

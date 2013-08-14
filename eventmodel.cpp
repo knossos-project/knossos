@@ -50,15 +50,18 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         qDebug("control and mouseleft");
         //first assume that user managed to hit the node
-        clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound,
-                                                event->x(),
-                                                (state->viewerState->screenSizeY - event->y()),
-                                                10);
-        qDebug() << clickedNode << " clicked node";
+
+
+        clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+
+        qDebug() << clickedNode << " clicked node";      
+
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
+            emit updateTools();
             return true;
         }
+
 
         if(VPfound == VIEWPORT_SKELETON) {
             return false;
@@ -70,9 +73,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
                                 VPfound);
             if(clickedCoordinate) {
                 newActiveNode = Skeletonizer::findNodeInRadius(*clickedCoordinate);
-                if(newActiveNode != NULL) {
-                    qDebug() << "activeNode";
+                if(newActiveNode != NULL) {                    
                     emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+                    emit updateTools();
                     return true;
                 }
             }

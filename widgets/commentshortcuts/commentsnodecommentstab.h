@@ -13,8 +13,7 @@ class CommentsNodeCommentsTab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CommentsNodeCommentsTab(QWidget *parent = 0);
-
+    explicit CommentsNodeCommentsTab(QWidget *parent = 0);    
 signals:
     void updateCommentsTableSignal();
 public slots:

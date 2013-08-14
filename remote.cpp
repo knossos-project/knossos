@@ -286,6 +286,7 @@ void Remote::msleep(unsigned long msec) {
  * @attention moveEvent is replaced  by userMoveSignal
  */
 bool Remote::remoteWalk(int x, int y, int z) {
+
     /*
     * This function breaks the big walk distance into many small movements
     * where the maximum length of the movement along any single axis is
@@ -363,9 +364,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
     //emit userMoveSignal(walkVector.x, walkVector.y, walkVector.z, TELL_COORDINATE_CHANGE);
 
-    //moveEvent.type = SDL_USEREVENT;
-    //moveEvent.user.code = USEREVENT_MOVE; /** @attention a replacement for this user_event is userMoveSignal
-
     if(state->viewerState->stepsPerSec > 0)
         eventDelay = 1000 / state->viewerState->stepsPerSec;
     else
@@ -426,10 +424,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
             residuals.z += state->magnification;
         }
 
-
-
-        //qDebug() << doMove.x << " " << doMove.y << " " << doMove.z;
-
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
             sendMove = (Coordinate *) malloc(sizeof(Coordinate));
             if(sendMove == NULL) {
@@ -441,6 +435,13 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->x = doMove.x;
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
+
+            if(x == 0)
+                sendMove->x = 0;
+            else if(y == 0)
+                sendMove->y = 0;
+            else if(z == 0)
+                sendMove->z = 0;
 
             //qDebug() << sendMove->x << " " << singleMove.x;
             //qDebug() << sendMove->y << " " << singleMove.y;

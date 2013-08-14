@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     }
 
     //2012.12.11 HARDCODED FOR TESTING LOADER
-    /*
+
 #ifdef Q_OS_UNIX
     strncpy(tempConfig->path, "../../e1088_mag1/", 1024);
 #endif
@@ -147,9 +147,9 @@ int main(int argc, char *argv[])
 
 
     strncpy(tempConfig->name, "070317_e1088", 1024);
-    tempConfig->boundary.x = 20000;
-    tempConfig->boundary.y = 20000;
-    tempConfig->boundary.z = 20000;
+    tempConfig->boundary.x = 2000;
+    tempConfig->boundary.y = 2000;
+    tempConfig->boundary.z = 2000;
     tempConfig->scale.x = 22.0;
     tempConfig->scale.y = 22.0;
     tempConfig->scale.z = 22.0;
@@ -157,11 +157,11 @@ int main(int argc, char *argv[])
     tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
 
     tempConfig->cubeSliceArea = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
-    tempConfig->M = 3;
+    tempConfig->M = 5;
     tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
     tempConfig->cubeSetBytes = tempConfig->cubeSetElements* tempConfig->cubeBytes;
     tempConfig->boergens = 0;
-    */
+
 
 
     if(Knossos::initStates() != true) {

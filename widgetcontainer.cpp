@@ -88,6 +88,7 @@ void WidgetContainer::createCoordBarWidget() {
     this->coordBarWidget = new CoordinateBarWidget();
 }
 
+
 void WidgetContainer::createWidgets() {
     createConsoleWidget();
     createTracingTimeWidget();

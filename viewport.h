@@ -83,11 +83,8 @@ private:
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
     bool handleKeyboard(QKeyEvent *event);
-    static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
-signals:
-    void renderOrthogonalVPSignal(int plane);
-    void renderSkeletonVPSignal(int plane);
+signals:    
     void recalcTextureOffsetsSignal();
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);

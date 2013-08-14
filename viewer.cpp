@@ -56,6 +56,8 @@ Viewer::Viewer(QObject *parent) :
     vp3->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
     vp4->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
 
+
+
     vp->show();
     vp2->show();
     vp3->show();
@@ -117,7 +119,7 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(20);
+    timer->start(15);
 
 }
 
@@ -1867,10 +1869,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 void Viewer::run() {
     QTime bench;
     bench.start();
-    /* @ arb */
-    //state->viewerState->vpConfigs[0].type = VIEWPORT_XY;
-    //state->viewerState->vpConfigs[1].type = VIEWPORT_XZ;
-    //state->viewerState->vpConfigs[2].type = VIEWPORT_YZ;
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -2001,13 +1999,9 @@ void Viewer::run() {
                 skeletonizer->updateSkeletonState();
                 renderer->drawGUI();
 
-
                 vp->updateGL();
-
                 vp2->updateGL();
-
                 vp3->updateGL();
-
                 vp4->updateGL();
 
                 if(viewerState->userMove == true) {
@@ -2025,8 +2019,6 @@ void Viewer::run() {
 
             currentVp = nextVp;
 
-
-
         }//end while(viewports->elements > 0)
         vpListDel(viewports);
 
@@ -2042,7 +2034,6 @@ void Viewer::logSingle() {
     if(state->singleLogging) {
 
         viewportTexture tex = state->viewerState->vpConfigs[0].texture;
-
 
         QPlainTextEdit *editor = new QPlainTextEdit();
         editor->insertPlainText(QString("DEBUGGING TEXTURE DATA\n"));

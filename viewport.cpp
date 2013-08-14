@@ -369,66 +369,6 @@ void Viewport::leaveEvent(QEvent *event) {
 
 }
 
-Coordinate* Viewport::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {
-    Coordinate *foundCoordinate;
-    foundCoordinate = static_cast<Coordinate*>(malloc(sizeof(Coordinate)));
-    int x, y, z;
-    x = y = z = 0;
-
-    // These variables store the distance in screen pixels from the left and
-    // upper border from the user mouse click to the VP boundaries.
-    uint xDistance, yDistance;
-
-    if((VPfound == -1)
-        || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))
-            return NULL;
-
-    xDistance = event->x()
-        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.x;
-    yDistance = event->y()
-        - state->viewerState->vpConfigs[VPfound].upperLeftCorner.y;
-
-
-    switch(state->viewerState->vpConfigs[VPfound].type) {
-        case VIEWPORT_XY:
-            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)xDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)yDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            z = state->viewerState->currentPosition.z;
-            break;
-        case VIEWPORT_XZ:
-            x = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.x
-                + ((int)(((float)xDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)yDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            y = state->viewerState->currentPosition.y;
-            break;
-        case VIEWPORT_YZ:
-            z = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.z
-                + ((int)(((float)xDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx));
-            y = state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen.y
-                + ((int)(((float)yDistance)
-                / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx));
-            x = state->viewerState->currentPosition.x;
-            break;
-    }
-    //check if coordinates are in range
-    if((x >= 0) && (x <= state->boundary.x)
-        &&(y >= 0) && (y <= state->boundary.y)
-        &&(z >= 0) && (z <= state->boundary.z)) {
-        SET_COORDINATE((*foundCoordinate), x, y, z);
-
-        return foundCoordinate;
-
-    }
-    return NULL;
-}
 
 void Viewport::zoomOrthogonals(float step){
 

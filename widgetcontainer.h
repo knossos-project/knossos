@@ -2,6 +2,7 @@
 #define WIDGETCONTAINER_H
 
 #include <QObject>
+
 #include "widgets/console.h"
 #include "widgets/tracingtimewidget.h"
 #include "widgets/synchronizationwidget.h"
@@ -63,6 +64,7 @@ public:
     DataSavingWidget *dataSavingWidget;
     SynchronizationWidget *synchronizationWidget;
     SplashScreenWidget *splashWidget;
+
 signals:
     
 public slots:
