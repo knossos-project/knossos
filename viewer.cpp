@@ -1648,7 +1648,6 @@ bool Viewer::initViewer() {
 
     updateViewerState();
     recalcTextureOffsets();
-    viewports = vpListGenerate(state->viewerState);
 
     return true;
 }

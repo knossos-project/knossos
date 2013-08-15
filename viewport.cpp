@@ -47,7 +47,7 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
     this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
-    this->setFocusPolicy(Qt::StrongFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
+    this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
 
     moveButton = new QPushButton("Move", this);
     moveButton->setGeometry(323, 298, 25, 25);
@@ -294,7 +294,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
     qDebug() << "keypress";
-    this->delegate->handleKeyboard(event, this->plane);
+    this->delegate->handleKeyboard(event, focus);
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -350,14 +350,10 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return delegate->handleMouseWheelBackward(event, VPfound);
 }
 
-bool Viewport::handleKeyboard(QKeyEvent *event) {
-    qDebug() << "key";
-    return delegate->handleKeyboard(event, plane);
-}
-
 void Viewport::enterEvent(QEvent *event) {
     entered = true;
-
+    focus = this->plane;
+    this->setCursor(Qt::CrossCursor);
 }
 
 void Viewport::paintEvent(QPaintEvent *event) {
@@ -365,7 +361,7 @@ void Viewport::paintEvent(QPaintEvent *event) {
 }
 
 void Viewport::leaveEvent(QEvent *event) {
-    entered = false;
+    entered = false;    
 
 }
 

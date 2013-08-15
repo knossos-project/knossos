@@ -1003,6 +1003,12 @@ struct segmentListElement {
     struct nodeListElement *target;
 };
 
+struct serialSkeletonListElement {
+    struct serialSkeletonElement *next;
+    struct serialSkeletonElement *previous;
+    Byte* content;
+};
+
 struct skeletonDC {
     struct skeletonDCsegment *firstSkeletonDCsegment;
     struct skeletonDCnode *firstSkeletonDCnode;
@@ -1082,10 +1088,13 @@ struct skeletonState {
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
     struct nodeListElement *activeNode;
+    struct serialSkeletonListElement *firstSerialSkeleton;
+    struct serialSkeletonListElement *lastSerialSkeleton;
 
     struct commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
+    char *filterCommentBuffer;
 
     struct stack *branchStack;
 
@@ -1098,8 +1107,8 @@ struct skeletonState {
 
     uint numberComments;
 
-    unsigned int userCommentColoringOn;
-    unsigned int commentNodeRadiusOn;
+    uint userCommentColoringOn;
+    uint commentNodeRadiusOn;
 
     bool lockPositions;
     bool positionLocked;
@@ -1142,6 +1151,7 @@ struct skeletonState {
     bool datasetChanged;
     //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
     bool skeletonSliceVPchanged;
+    bool commentsChanged;
 
     //uint skeletonDisplayMode;
     uint displayMode;
@@ -1168,6 +1178,7 @@ struct skeletonState {
 
     color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
+    nodeListElement *selectedCommentNode;
 
     //If TRUE, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
@@ -1196,6 +1207,7 @@ struct skeletonState {
     // This is for a workaround around agar bug #171
     bool askingPopBranchConfirmation;
     char skeletonCreatedInVersion[32];
+    char skeletonLastSavedInVersion[32];
 
     struct cmdList *undoList;
     struct cmdList *redoList;

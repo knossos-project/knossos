@@ -48,7 +48,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
-        qDebug("control and mouseleft");
+
         //first assume that user managed to hit the node
 
 
@@ -591,10 +591,12 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
         return true;
 
     Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-
+    if(keyMod.testFlag(Qt::ShiftModifier)) {
+        qDebug() << "ok";
+    }
 
     if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
-        //qDebug("shift and mouse wheel up and activeNode");
+        qDebug("shift and mouse wheel up and activeNode");
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -674,7 +676,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
     Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
 
-    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ControlModifier))) {
+
+    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
         qDebug("shift and mouse wheel down");
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
@@ -761,6 +764,11 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
+
+    if(shift) {
+       Qt::MouseButtons buttons =  QApplication::mouseButtons();
+
+    }
 
     if(event->key() == Qt::Key_Space) {
         state->singleLogging = true;

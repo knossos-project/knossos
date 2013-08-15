@@ -62,14 +62,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    /*
-    QPalette* palette = new QPalette();
-    QLinearGradient linearGradient(QPointF(width() /2, 0), QPointF(width()/2, height()/2));
-    linearGradient.setColorAt(0, Qt::lightGray);
-    linearGradient.setColorAt(1, Qt::gray);
-    palette->setBrush(QPalette::Window,*(new QBrush(linearGradient)));
-    this->setPalette(*palette);
-    */
 
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
@@ -169,16 +161,21 @@ void MainWindow:: createCoordBarWin() {
     xField = new QSpinBox();
     xField->setMaximum(1000000);
     xField->setMinimumWidth(75);
+    xField->clearFocus();
 
     xField->setValue(state->viewerState->currentPosition.x);
     yField = new QSpinBox();
+
     yField->setMaximum(1000000);
     yField->setMinimumWidth(75);
     yField->setValue(state->viewerState->currentPosition.y);
+    yField->clearFocus();
+
     zField = new QSpinBox();
     zField->setMaximum(1000000);
     zField->setMinimumWidth(75);
     zField->setValue(state->viewerState->currentPosition.z);
+    zField->clearFocus();
 
     xLabel = new QLabel("x");
     yLabel = new QLabel("y");

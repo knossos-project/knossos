@@ -44,12 +44,11 @@ SOURCES +=\
     widgets/splashscreenwidget.cpp \
     widgets/coordinatebarwidget.cpp \
     functions.cpp \
-    texturizer.cpp \
-    slicer.cpp \
     widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
     decorators/mainwindowdecorator.cpp \
-    widgets/commentshortcuts/commentsnodecommentstab.cpp
+    widgets/commentshortcuts/commentsnodecommentstab.cpp \
+    scripting.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -90,7 +89,8 @@ HEADERS  += mainwindow.h \
     widgetcontainer.h \     
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \
-    widgets/commentshortcuts/commentsnodecommentstab.h
+    widgets/commentshortcuts/commentsnodecommentstab.h \
+    scripting.h
 
 FORMS    += mainwindow.ui
 
@@ -98,7 +98,6 @@ OTHER_FILES += \
     knossos.layout \
     iconv.dll \
     libfreetype-6.dll \
-    libxml2.dll \
     pthreadVC2.dll \
     zlib1.dll \
     icon \

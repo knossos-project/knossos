@@ -32,6 +32,8 @@
 #include <QFont>
 #include "eventmodel.h"
 
+static int focus;
+
 class QPushButton;
 class Renderer;
 class Viewport : public QGLWidget
@@ -68,7 +70,7 @@ protected:
     void drawButtons();
 
     bool entered;
-    int focus;
+
 
     QPushButton *moveButton, *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
@@ -81,8 +83,7 @@ private:
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
-    bool handleKeyboard(QKeyEvent *event);
+    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);    
 
 signals:    
     void recalcTextureOffsetsSignal();

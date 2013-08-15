@@ -22,12 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-/*
-#include <libxml/globals.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-*/
-
 #include <time.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
@@ -93,7 +87,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->showXZplane = false;
     state->skeletonState->showYZplane = false;
     state->skeletonState->showNodeIDs = false;
-    state->skeletonState->highlightActiveTree = false;
+    state->skeletonState->highlightActiveTree = true;
     state->skeletonState->rotateAroundActiveNode = false;
     state->skeletonState->showIntersections = false;
 
@@ -124,6 +118,8 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->searchStrBuffer = (char*) malloc(2048 * sizeof(char));
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
 
+    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
+
     state->skeletonState->undoList = (cmdList *)malloc(sizeof(struct cmdList));
     memset(state->skeletonState->undoList, '\0', sizeof(struct cmdList));
     state->skeletonState->undoList->cmdCount = 0;
@@ -149,6 +145,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->datasetChanged = true;
     state->skeletonState->skeletonSliceVPchanged = true;
+    state->skeletonState->commentsChanged = false;
     state->skeletonState->unsavedChanges = false;
     state->skeletonState->askingPopBranchConfirmation = false;
 
@@ -2675,6 +2672,10 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
 
     delNodeFromSkeletonStruct(nodeToDel);
 
+    if(state->skeletonState->selectedCommentNode == nodeToDel) {
+        state->skeletonState->selectedCommentNode = NULL;
+    }
+
     if(nodeToDel == nodeToDel->correspondingTree->firstNode) {
         nodeToDel->correspondingTree->firstNode = nodeToDel->next;
     }
@@ -4301,7 +4302,7 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
 
     if(newContent) {
         if(currentComment->content) {
-            //free(currentComment->content);
+            free(currentComment->content);
         }
         currentComment->content = (char*)malloc(strlen(newContent) * sizeof(char) + 1);
         memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);

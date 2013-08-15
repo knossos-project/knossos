@@ -64,6 +64,7 @@ public:
     static uint log2uint32(register uint x);
     static uint ones32(register uint x);
     static void loadTreeLUTFallback();
+    static void loadDefaultTreeLUT();
     static void initialize(int argc, char *argv[]);
 
 signals:
