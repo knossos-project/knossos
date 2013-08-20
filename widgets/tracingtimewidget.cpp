@@ -116,3 +116,5 @@ void TracingTimeWidget::checkIdleTime() {
     QString tracingString = QString().sprintf("TracingTime: %02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
     this->tracingTimeLabel->setText(tracingString);
 }
+
+

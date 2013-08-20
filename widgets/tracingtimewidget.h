@@ -40,6 +40,7 @@ signals:
 public slots:
     void refreshTime();
     void checkIdleTime();
+
 protected:
     QLabel *runningTimeLabel;
     QLabel *tracingTimeLabel;

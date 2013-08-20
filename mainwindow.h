@@ -59,18 +59,9 @@ public:
     static void reloadDataSizeWin();
     static void treeColorAdjustmentsChanged();
     static void datasetColorAdjustmentsChanged();
-
     void showSplashScreen();
-    void showAboutScreen();
-    void createConsoleWidget();
-    void createTracingTimeWidget();
-    void createCommentsWidget();
-    void createZoomAndMultiresWidget();
-    void createNavigationWidget();
-    void createViewportSettingsWidget();
-    void createToolWidget();
-    void createDataSavingWidget();
-    void createSychronizationWidget();
+
+
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
     void recalcTextureOffsetsSignal();
@@ -159,7 +150,6 @@ public:
     QPushButton *posButton;
 
     void updateFileHistoryMenu();
-
     void createActions();
     void createMenus();
     void createCoordBarWin();

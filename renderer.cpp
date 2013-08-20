@@ -1745,6 +1745,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     GLuint names, *ptr, minZ, *ptrName;
     ptrName = NULL;
 
+
     glViewport(state->viewerState->vpConfigs[currentVP].upperLeftCorner.x,
         state->viewerState->screenSizeY
         - state->viewerState->vpConfigs[currentVP].upperLeftCorner.y

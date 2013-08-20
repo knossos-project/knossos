@@ -28,8 +28,6 @@
 #include <QSettings>
 #include <QFile>
 #include "sleeper.h"
-#include <PythonQT/PythonQt.h>
-#include <PythonQT/gui/PythonQtScriptingConsole.h>
 #include "knossos-global.h"
 #include "knossos.h"
 #include "mainwindow.h"
@@ -38,6 +36,7 @@
 #include "viewport.h"
 #include "widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
+#include "scripting.h"
 
 
 //#include "y.tab.h"
@@ -45,7 +44,6 @@
 
 #define NUMTHREADS 4
 
-struct stateInfo *tempConfig = NULL;
 struct stateInfo *state = NULL;
 
 //static uint isPathString(char *string);
@@ -105,7 +103,7 @@ int main(int argc, char *argv[])
     state->protectPeerList = new QMutex();
     state->protectOutBuffer = new QMutex();
 
-    if(Knossos::tempConfigDefaults() != true) {
+    if(Knossos::configDefaults() != true) {
         LOG("Error loading default parameters.")
         _Exit(false);
     }
@@ -114,7 +112,7 @@ int main(int argc, char *argv[])
         Knossos::configFromCli(argc, argv);
     }
 
-    if(tempConfig->path[0] != '\0') {
+    if(state->path[0] != '\0') {
         // Got a path from cli.
         Knossos::readDataConfAndLocalConf();
         // We need to read the specified config file again because it should
@@ -124,9 +122,9 @@ int main(int argc, char *argv[])
     else {
         Knossos::readConfigFile("knossos.conf");
     }
-    state->viewerState->voxelDimX = tempConfig->scale.x;
-    state->viewerState->voxelDimY = tempConfig->scale.y;
-    state->viewerState->voxelDimZ = tempConfig->scale.z;
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
 
     if(argc >= 2) {
         if(Knossos::configFromCli(argc, argv) == false) {
@@ -137,32 +135,30 @@ int main(int argc, char *argv[])
     //2012.12.11 HARDCODED FOR TESTING LOADER
 
 #ifdef Q_OS_UNIX
-    strncpy(tempConfig->path, "../../e1088_mag1/", 1024);
+    strncpy(state->path, "../../e1088_mag1/", 1024);
 #endif
 #ifdef Q_OS_MACX
-    strncpy(tempConfig->path, "../../../../../e1088_mag1/", 1024);
+    strncpy(state->path, "../../../../../e1088_mag1/", 1024);
 #endif
 #ifdef Q_OS_WIN32
     strncpy(tempConfig->path, "..\\..\\e1088_mag1", 1024);
 #endif
 
 
-    strncpy(tempConfig->name, "070317_e1088", 1024);
-    tempConfig->boundary.x = 2000;
-    tempConfig->boundary.y = 2000;
-    tempConfig->boundary.z = 2000;
-    tempConfig->scale.x = 22.0;
-    tempConfig->scale.y = 22.0;
-    tempConfig->scale.z = 22.0;
-    tempConfig->cubeEdgeLength = 128;
-    tempConfig->cubeBytes = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
+    strncpy(state->name, "070317_e1088", 1024);
+    state->boundary.x = 2000;
+    state->boundary.y = 2000;
+    state->boundary.z = 2000;
+    state->scale.x = 22.0;
+    state->scale.y = 22.0;
+    state->scale.z = 22.0;
+    state->cubeEdgeLength = 128;
+    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
 
-    tempConfig->cubeSliceArea = tempConfig->cubeEdgeLength * tempConfig->cubeEdgeLength;
-    tempConfig->M = 5;
-    tempConfig->cubeSetElements = tempConfig->M * tempConfig->M  * tempConfig->M;
-    tempConfig->cubeSetBytes = tempConfig->cubeSetElements* tempConfig->cubeBytes;
-    tempConfig->boergens = 0;
-
+    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
+    state->M = 5;
+    state->cubeSetElements = state->M * state->M  * state->M;
+    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
 
     if(Knossos::initStates() != true) {
@@ -176,6 +172,7 @@ int main(int argc, char *argv[])
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
+    Scripting *scripts = new Scripting();
 
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
@@ -222,49 +219,22 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     QObject::connect(viewer->window, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
 
-    //viewer->start();
     loader->start();
     viewer->run();
     remote->start();
     client->start();
+    scripts->start();
 
     //state->clientSignal = true;
     //client->run();
-
-    /* PYTHON QT INIT CODE */
-
-    PythonQt::init();
-
-    PythonQtObjectPtr  mainContext = PythonQt::self()->getMainModule();
-    PythonQtScriptingConsole console(NULL, mainContext);
-
-    StateClass *ptr = new StateClass();
-    PythonQt::self()->registerClass(&StateClass::staticMetaObject);
-    //PythonQt::self()->addDecorators( Your Decorator Class );
-    mainContext.addObject("state", ptr);
-
-    PythonQt::self()->registerClass(&WidgetContainer::staticMetaObject);
-    PythonQt::self()->registerClass(&MainWindow::staticMetaObject);
-    PythonQt::self()->registerClass(&Sleeper::staticMetaObject);
-    mainContext.addObject("window", viewer->window);
-    mainContext.addObject("sleeper", new Sleeper());
-
-
-    mainContext.evalFile(":script.py");
-
-    console.appendCommandPrompt();
-    console.show();
-
-
-
 
     return a.exec();
 }
 
 void Knossos::initialize(int argc, char *argv[]) {
 
-
 }
+
 
 /**
  * This function overwrites the values of state with the value of tempConfig
@@ -273,84 +243,29 @@ void Knossos::initialize(int argc, char *argv[]) {
 int Knossos::initStates() {
    state->time.start();
 
-   //General stuff
-   state->boergens = tempConfig->boergens;
-   strncpy(state->path, tempConfig->path, 1024);
-   strncpy(state->name, tempConfig->name, 1024);
-   state->boundary.x = tempConfig->boundary.x;
-   state->boundary.y = tempConfig->boundary.y;
-   state->boundary.z = tempConfig->boundary.z;
-   state->scale.x = tempConfig->scale.x;
-   state->scale.y = tempConfig->scale.y;
-   state->scale.z = tempConfig->scale.z;
-   state->offset.x = tempConfig->offset.x;
-   state->offset.y = tempConfig->offset.y;
-   state->offset.z = tempConfig->offset.z;
-   state->cubeEdgeLength = tempConfig->cubeEdgeLength;
-
-   if(tempConfig->M % 2 == 0) {
-       state->M = tempConfig->M - 1;
-       tempConfig->M = state->M;
-   }
-   else {
-       state->M = tempConfig->M;
+   //General stuff   
+   if(state->M % 2 == 0) {
+       state->M = state->M - 1;
    }
 
-   state->magnification = tempConfig->magnification;
-   state->overlay = tempConfig->overlay;
-
-   // For the viewer
-   state->viewerState->highlightVp = tempConfig->viewerState->highlightVp;
-   state->viewerState->vpKeyDirection[VIEWPORT_XY] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY];
-   state->viewerState->vpKeyDirection[VIEWPORT_XZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ];
-   state->viewerState->vpKeyDirection[VIEWPORT_YZ] = tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ];
-   state->viewerState->overlayVisible = tempConfig->viewerState->overlayVisible;
-   state->viewerState->datasetColortableOn = tempConfig->viewerState->datasetColortableOn;
-   state->viewerState->datasetAdjustmentOn = tempConfig->viewerState->datasetAdjustmentOn;
-   state->viewerState->treeColortableOn = tempConfig->viewerState->treeColortableOn;
-   state->viewerState->drawVPCrosshairs = tempConfig->viewerState->drawVPCrosshairs;
-   state->viewerState->showVPLabels = tempConfig->viewerState->showVPLabels;
-   state->viewerState->viewerReady = tempConfig->viewerState->viewerReady;
-   state->viewerState->stepsPerSec = tempConfig->viewerState->stepsPerSec;
-   state->viewerState->numberViewports = tempConfig->viewerState->numberViewports;
-
-   state->viewerState->dropFrames = tempConfig->viewerState->dropFrames;
-   state->viewerState->walkFrames = tempConfig->viewerState->walkFrames;
-   state->viewerState->userMove = tempConfig->viewerState->userMove;
-   state->viewerState->screenSizeX = tempConfig->viewerState->screenSizeX;
-   state->viewerState->screenSizeY = tempConfig->viewerState->screenSizeY;
-   state->viewerState->filterType = tempConfig->viewerState->filterType;
-   state->viewerState->currentPosition.x = tempConfig->viewerState->currentPosition.x;
-   state->viewerState->currentPosition.y = tempConfig->viewerState->currentPosition.y;
-   state->viewerState->currentPosition.z = tempConfig->viewerState->currentPosition.z;
-   state->viewerState->recenteringTimeOrth = tempConfig->viewerState->recenteringTimeOrth;
-   state->viewerState->walkOrth = tempConfig->viewerState->walkOrth;
+   // For the viewer  
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;
    state->skeletonState->idleTimeSession = 0;
-   state->viewerState->moveVP = tempConfig->viewerState->moveVP;
-   state->viewerState->resizeVP = tempConfig->viewerState->resizeVP;
-   state->viewerState->showPosSizButtons = tempConfig->viewerState->showPosSizButtons;
+
    // the voxel dim stuff needs an cleanup. this is such a mess. fuck
    state->viewerState->voxelDimX = state->scale.x;
    state->viewerState->voxelDimY = state->scale.y;
    state->viewerState->voxelDimZ = state->scale.z;
    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
-   state->viewerState->depthCutOff = tempConfig->viewerState->depthCutOff;
-   state->viewerState->luminanceBias = tempConfig->viewerState->luminanceBias;
-   state->viewerState->luminanceRangeDelta = tempConfig->viewerState->luminanceRangeDelta;
+   state->viewerState->depthCutOff = state->viewerState->depthCutOff;
    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-   Knossos::loadTreeLUTFallback();
+   Knossos::loadDefaultTreeLUT();
 
    state->viewerState->treeLutSet = false;
-
-   state->viewerState->vpConfigs = (vpConfig *)malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
-   if(state->viewerState->vpConfigs == NULL)
-       return false;
-   memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
    /* @arb */
    state->alpha = 0;
@@ -368,30 +283,28 @@ int Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
    CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
 
-
-   state->viewerState->vpConfigs[0].type = tempConfig->viewerState->vpConfigs[0].type;
-   state->viewerState->vpConfigs[1].type = tempConfig->viewerState->vpConfigs[1].type;
-   state->viewerState->vpConfigs[2].type = tempConfig->viewerState->vpConfigs[2].type;
-
-
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-       state->viewerState->vpConfigs[i].upperLeftCorner = tempConfig->viewerState->vpConfigs[i].upperLeftCorner;
-       state->viewerState->vpConfigs[i].type = tempConfig->viewerState->vpConfigs[i].type;
-       state->viewerState->vpConfigs[i].draggedNode = tempConfig->viewerState->vpConfigs[i].draggedNode;
-       state->viewerState->vpConfigs[i].userMouseSlideX = tempConfig->viewerState->vpConfigs[i].userMouseSlideX;
-       state->viewerState->vpConfigs[i].userMouseSlideY = tempConfig->viewerState->vpConfigs[i].userMouseSlideY;
-       state->viewerState->vpConfigs[i].edgeLength = tempConfig->viewerState->vpConfigs[i].edgeLength;
+       /*
+       state->viewerState->vpConfigs[i].upperLeftCorner = state->viewerState->vpConfigs[i].upperLeftCorner;
+       state->viewerState->vpConfigs[i].type = state->viewerState->vpConfigs[i].type;
+       state->viewerState->vpConfigs[i].draggedNode = state->viewerState->vpConfigs[i].draggedNode;
+       state->viewerState->vpConfigs[i].userMouseSlideX = state->viewerState->vpConfigs[i].userMouseSlideX;
+       state->viewerState->vpConfigs[i].userMouseSlideY = state->viewerState->vpConfigs[i].userMouseSlideY;
+       state->viewerState->vpConfigs[i].edgeLength = state->viewerState->vpConfigs[i].edgeLength;
+       */
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
-           tempConfig->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
+           state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
            / (float)state->magnification;
 
-       state->viewerState->vpConfigs[i].texture.edgeLengthPx = tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx;
-       state->viewerState->vpConfigs[i].texture.edgeLengthDc = tempConfig->viewerState->vpConfigs[i].texture.edgeLengthDc;
-       state->viewerState->vpConfigs[i].texture.zoomLevel = tempConfig->viewerState->vpConfigs[i].texture.zoomLevel;
-       state->viewerState->vpConfigs[i].texture.usedTexLengthPx = tempConfig->M * tempConfig->cubeEdgeLength;
-       state->viewerState->vpConfigs[i].texture.usedTexLengthDc = tempConfig->M;
+       /*
+       state->viewerState->vpConfigs[i].texture.edgeLengthPx = state->viewerState->vpConfigs[i].texture.edgeLengthPx;
+       state->viewerState->vpConfigs[i].texture.edgeLengthDc = state->viewerState->vpConfigs[i].texture.edgeLengthDc;
+       state->viewerState->vpConfigs[i].texture.zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel;
+       state->viewerState->vpConfigs[i].texture.usedTexLengthPx = state->M * state->cubeEdgeLength;
+       */
+       state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
 
    }
 
@@ -405,18 +318,7 @@ int Knossos::initStates() {
    */
 
 
-   // For the GUI
-   strncpy(state->viewerState->gui->settingsFile,
-           tempConfig->viewerState->gui->settingsFile,
-           2048);
-
    // For the client
-
-   state->clientState->connectAsap = tempConfig->clientState->connectAsap;
-   state->clientState->connectionTimeout = tempConfig->clientState->connectionTimeout;
-   state->clientState->remotePort = tempConfig->clientState->remotePort;
-   strncpy(state->clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
-   state->clientState->connected = tempConfig->clientState->connected;
 
    state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
    if(state->clientState->inBuffer == NULL) {
@@ -451,23 +353,8 @@ int Knossos::initStates() {
 
    state->clientState->outBuffer->size = 128;
    state->clientState->outBuffer->length = 0;
-   state->clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
-   state->clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
-   state->clientState->saveMaster = tempConfig->clientState->saveMaster;
 
-   // For the skeletonizer
-   state->skeletonState->lockPositions = tempConfig->skeletonState->lockPositions;
-   state->skeletonState->positionLocked = tempConfig->skeletonState->positionLocked;
-   state->skeletonState->lockRadius = tempConfig->skeletonState->lockRadius;
-   state->skeletonState->lockedPosition = tempConfig->skeletonState->lockedPosition;
-   strcpy(state->skeletonState->onCommentLock, tempConfig->skeletonState->onCommentLock);
-   state->skeletonState->branchpointUnresolved = tempConfig->skeletonState->branchpointUnresolved;
-   state->skeletonState->autoFilenameIncrementBool = tempConfig->skeletonState->autoFilenameIncrementBool;
-   state->skeletonState->autoSaveBool = tempConfig->skeletonState->autoSaveBool;
-   state->skeletonState->autoSaveInterval = tempConfig->skeletonState->autoSaveInterval;
-   state->skeletonState->skeletonTime = tempConfig->skeletonState->skeletonTime;
-   state->skeletonState->skeletonTimeCorrection = tempConfig->skeletonState->skeletonTimeCorrection;
-   state->skeletonState->definedSkeletonVpView = tempConfig->skeletonState->definedSkeletonVpView;
+   // For the skeletonizer   
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
    state->skeletonState->idleTime = 0;
    state->skeletonState->idleTimeNow = 0;
@@ -661,28 +548,28 @@ bool Knossos::readConfigFile(const char *path) {
         if(token == "experiment") {
             token = tokenList.at(2);
             char *expName = const_cast<char *>(token.toStdString().c_str());
-            strncpy(tempConfig->name, expName, 1024);
+            strncpy(state->name, expName, 1024);
 
         } else if(token == "scale") {
             token = tokenList.at(1);
             if(token == "x") {
-                tempConfig->scale.x = tokenList.at(2).toFloat();
+                state->scale.x = tokenList.at(2).toFloat();
             } else if(token == "y") {
-                tempConfig->scale.y = tokenList.at(2).toFloat();
+                state->scale.y = tokenList.at(2).toFloat();
             } else if(token == "z") {
-                tempConfig->scale.z = tokenList.at(2).toFloat();
+                state->scale.z = tokenList.at(2).toFloat();
             }
         } else if(token == "boundary") {
             token = tokenList.at(1);
             if(token == "x") {
-                tempConfig->boundary.x = tokenList.at(2).toFloat();
+                state->boundary.x = tokenList.at(2).toFloat();
             } else if(token == "y") {
-                tempConfig->boundary.y = tokenList.at(2).toFloat();
+                state->boundary.y = tokenList.at(2).toFloat();
             } else if(token == "z") {
-                tempConfig->boundary.z = tokenList.at(2).toFloat();
+                state->boundary.z = tokenList.at(2).toFloat();
             }
         } else if(token == "magnification") {
-            tempConfig->magnification = tokenList.at(1).toInt();
+            state->magnification = tokenList.at(1).toInt();
         } else {
             LOG("Skipping unknown parameter");
         }
@@ -961,9 +848,9 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
 bool Knossos::cleanUpMain() {
 
-    free(tempConfig->viewerState);
-    free(tempConfig->clientState);
-    free(tempConfig);
+    free(state->viewerState);
+    free(state->clientState);
+    free(state);
     free(state->viewerState);
     free(state->clientState);
     free(state);
@@ -971,150 +858,143 @@ bool Knossos::cleanUpMain() {
     return true;
 }
 
-bool Knossos::tempConfigDefaults() {
-
-    if(tempConfig == NULL) {
-        tempConfig = Knossos::emptyState();
-        if(tempConfig == NULL)
-            return false;
-    }
+bool Knossos::configDefaults() {
 
     // General stuff
-    tempConfig->boergens = false;
-    tempConfig->boundary.x = 1000;
-    tempConfig->boundary.y = 1000;
-    tempConfig->boundary.z = 1000;
-    tempConfig->scale.x = 1.;
-    tempConfig->scale.y = 1.;
-    tempConfig->scale.z = 1.;
-    tempConfig->offset.x = 0;
-    tempConfig->offset.y = 0;
-    tempConfig->offset.z = 0;
-    tempConfig->cubeEdgeLength = 128;
-    tempConfig->M = 3;
-    tempConfig->magnification = 1;
-    tempConfig->overlay = false;
+    state->boergens = false;
+    state->boundary.x = 1000;
+    state->boundary.y = 1000;
+    state->boundary.z = 1000;
+    state->scale.x = 1.;
+    state->scale.y = 1.;
+    state->scale.z = 1.;
+    state->offset.x = 0;
+    state->offset.y = 0;
+    state->offset.z = 0;
+    state->cubeEdgeLength = 128;
+    state->M = 3;
+    state->magnification = 1;
+    state->overlay = false;
 
     // For the viewer
-    tempConfig->viewerState->highlightVp = VIEWPORT_UNDEFINED;
-    tempConfig->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
-    tempConfig->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
-    tempConfig->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-    tempConfig->viewerState->overlayVisible = false;
-    tempConfig->viewerState->datasetColortableOn = false;
-    tempConfig->viewerState->datasetAdjustmentOn = false;
-    tempConfig->viewerState->treeColortableOn = false;
-    tempConfig->viewerState->viewerReady = false;
-    tempConfig->viewerState->drawVPCrosshairs = true;
-    tempConfig->viewerState->showVPLabels = false;
-    tempConfig->viewerState->stepsPerSec = 40;
-    tempConfig->viewerState->numberViewports = 4;
-    tempConfig->viewerState->dropFrames = 1;
-    tempConfig->viewerState->walkFrames = 10;
-    tempConfig->viewerState->userMove = false;
+    state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
+    state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
+    state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
+    state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
+    state->viewerState->overlayVisible = false;
+    state->viewerState->datasetColortableOn = false;
+    state->viewerState->datasetAdjustmentOn = false;
+    state->viewerState->treeColortableOn = false;
+    state->viewerState->viewerReady = false;
+    state->viewerState->drawVPCrosshairs = true;
+    state->viewerState->showVPLabels = false;
+    state->viewerState->stepsPerSec = 40;
+    state->viewerState->numberViewports = 4;
+    state->viewerState->dropFrames = 1;
+    state->viewerState->walkFrames = 10;
+    state->viewerState->userMove = false;
 
     /* @arb */
-    tempConfig->viewerState->moveCache.x = 0.0;
-    tempConfig->viewerState->moveCache.y = 0.0;
-    tempConfig->viewerState->moveCache.z = 0.0;
-    tempConfig->viewerState->alphaCache = 0;
-    tempConfig->viewerState->betaCache = 0;
-    tempConfig->viewerState->modeArbitrary = 0;
+    state->viewerState->moveCache.x = 0.0;
+    state->viewerState->moveCache.y = 0.0;
+    state->viewerState->moveCache.z = 0.0;
+    state->viewerState->alphaCache = 0;
+    state->viewerState->betaCache = 0;
+    state->viewerState->modeArbitrary = 0;
       /* */
 
-    tempConfig->viewerState->screenSizeX = 1024;
-    tempConfig->viewerState->screenSizeY = 740;
-    tempConfig->viewerState->filterType = GL_LINEAR;
-    tempConfig->viewerState->currentPosition.x = 0;
-    tempConfig->viewerState->currentPosition.y = 0;
-    tempConfig->viewerState->currentPosition.z = 0;
-    tempConfig->viewerState->voxelDimX = tempConfig->scale.x;
-    tempConfig->viewerState->voxelDimY = tempConfig->scale.y;
-    tempConfig->viewerState->voxelDimZ = tempConfig->scale.z;
-    tempConfig->viewerState->voxelXYRatio = tempConfig->viewerState->voxelDimX / tempConfig->viewerState->voxelDimY;
-    tempConfig->viewerState->voxelXYtoZRatio = tempConfig->viewerState->voxelDimX / tempConfig->viewerState->voxelDimZ;
-    tempConfig->viewerState->depthCutOff = 5.;
-    tempConfig->viewerState->luminanceBias = 0;
-    tempConfig->viewerState->luminanceRangeDelta = 255;
-    tempConfig->viewerState->autoTracingDelay = 50;
-    tempConfig->viewerState->autoTracingSteps = 10;
-    tempConfig->viewerState->recenteringTimeOrth = 500;
-    tempConfig->viewerState->walkOrth = false;
-    tempConfig->viewerState->moveVP = 10;
-    tempConfig->viewerState->resizeVP = 10;
-    tempConfig->viewerState->showPosSizButtons = true;
+    state->viewerState->screenSizeX = 1024;
+    state->viewerState->screenSizeY = 740;
+    state->viewerState->filterType = GL_LINEAR;
+    state->viewerState->currentPosition.x = 0;
+    state->viewerState->currentPosition.y = 0;
+    state->viewerState->currentPosition.z = 0;
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->viewerState->voxelDimX / state->viewerState->voxelDimY;
+    state->viewerState->voxelXYtoZRatio = state->viewerState->voxelDimX / state->viewerState->voxelDimZ;
+    state->viewerState->depthCutOff = 5.;
+    state->viewerState->luminanceBias = 0;
+    state->viewerState->luminanceRangeDelta = 255;
+    state->viewerState->autoTracingDelay = 50;
+    state->viewerState->autoTracingSteps = 10;
+    state->viewerState->recenteringTimeOrth = 500;
+    state->viewerState->walkOrth = false;
+    state->viewerState->moveVP = 10;
+    state->viewerState->resizeVP = 10;
+    state->viewerState->showPosSizButtons = true;
 
-    tempConfig->viewerState->vpConfigs = (vpConfig *) malloc(tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
-    if(tempConfig->viewerState->vpConfigs == NULL) {
+    state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));
+    if(state->viewerState->vpConfigs == NULL) {
         LOG("Out of memory.")
         return false;
     }
+    memset(state->viewerState->vpConfigs, '\0', state->viewerState->numberViewports * sizeof(struct vpConfig));
 
-    memset(tempConfig->viewerState->vpConfigs, '\0', tempConfig->viewerState->numberViewports * sizeof(struct vpConfig));
-
-    for(uint i = 0; i < tempConfig->viewerState->numberViewports; i++) {
+    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
         switch(i) {
         case VIEWPORT_XY:
-            SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+            state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
             break;
         case VIEWPORT_XZ:
-            SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+            state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
             break;
         case VIEWPORT_YZ:
-            SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+            state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
             break;
         case VIEWPORT_SKELETON:
-            SET_COORDINATE(tempConfig->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
-            tempConfig->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+            state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
             break;
         }
 
-        tempConfig->viewerState->vpConfigs[i].draggedNode = NULL;
-        tempConfig->viewerState->vpConfigs[i].userMouseSlideX = 0.;
-        tempConfig->viewerState->vpConfigs[i].userMouseSlideY = 0.;
-        tempConfig->viewerState->vpConfigs[i].edgeLength = 350;
-        tempConfig->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
-        tempConfig->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
-        tempConfig->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / tempConfig->cubeEdgeLength;
+        state->viewerState->vpConfigs[i].draggedNode = NULL;
+        state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
+        state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
+        state->viewerState->vpConfigs[i].edgeLength = 350;
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthPx = TEXTURE_EDGE_LEN;
+        state->viewerState->vpConfigs[i].texture.edgeLengthDc = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
 
         //This variable indicates the current zoom value for a viewport.
         //Zooming is continous, 1: max zoom out, 0.1: max zoom in (adjust values..)
-        tempConfig->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
     }
 
     // For the GUI
-    snprintf(tempConfig->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
+    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
 
     // For the client
-    tempConfig->clientState->connectAsap = false;
-    tempConfig->clientState->connectionTimeout = 3000;
-    tempConfig->clientState->remotePort = 7890;
-    strncpy(tempConfig->clientState->serverAddress, "localhost", 1024);
-    tempConfig->clientState->connected = false;
-    tempConfig->clientState->synchronizeSkeleton = true;
-    tempConfig->clientState->synchronizePosition = true;
-    tempConfig->clientState->saveMaster = false;
+    state->clientState->connectAsap = false;
+    state->clientState->connectionTimeout = 3000;
+    state->clientState->remotePort = 7890;
+    strncpy(state->clientState->serverAddress, "localhost", 1024);
+    state->clientState->connected = false;
+    state->clientState->synchronizeSkeleton = true;
+    state->clientState->synchronizePosition = true;
+    state->clientState->saveMaster = false;
 
 
     // For the skeletonizer
-    tempConfig->skeletonState->lockRadius = 100;
-    tempConfig->skeletonState->lockPositions = false;
+    state->skeletonState->lockRadius = 100;
+    state->skeletonState->lockPositions = false;
 
-    strncpy(tempConfig->skeletonState->onCommentLock, "seed", 1024);
-    tempConfig->skeletonState->branchpointUnresolved = false;
-    tempConfig->skeletonState->autoFilenameIncrementBool = true;
-    tempConfig->skeletonState->autoSaveBool = true;
-    tempConfig->skeletonState->autoSaveInterval = 5;
-    tempConfig->skeletonState->skeletonTime = 0;
-    tempConfig->skeletonState->skeletonTimeCorrection = state->time.elapsed();
-    tempConfig->skeletonState->definedSkeletonVpView = 0;
+    strncpy(state->skeletonState->onCommentLock, "seed", 1024);
+    state->skeletonState->branchpointUnresolved = false;
+    state->skeletonState->autoFilenameIncrementBool = true;
+    state->skeletonState->autoSaveBool = true;
+    state->skeletonState->autoSaveInterval = 5;
+    state->skeletonState->skeletonTime = 0;
+    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+    state->skeletonState->definedSkeletonVpView = 0;
 
     //This number is currently arbitrary, but high values ensure a good performance
-    tempConfig->skeletonState->skeletonDCnumber = 8000;
-    tempConfig->skeletonState->workMode = ON_CLICK_DRAG;
+    state->skeletonState->skeletonDCnumber = 8000;
+    state->skeletonState->workMode = ON_CLICK_DRAG;
 
     return true;
 
@@ -1126,7 +1006,7 @@ bool Knossos::readDataConfAndLocalConf() {
     char configFile[1024];
 
     memset(configFile, '\0', 1024);
-    length = strlen(tempConfig->path);
+    length = strlen(state->path);
 
     if(length >= 1010) {
         // We need to append "/knossos.conf"
@@ -1134,7 +1014,7 @@ bool Knossos::readDataConfAndLocalConf() {
         _Exit(false);
     }
 
-    strcat(configFile, tempConfig->path);
+    strcat(configFile, state->path);
     strcat(configFile, "/knossos.conf");
 
 
@@ -1211,34 +1091,34 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
          if(strcmp(lval, lvals[j]) == 0) {
              switch(j) {
                  case 0:
-                     strncpy(tempConfig->path, rval, 1023);
+                     strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                     tempConfig->clientState->connectAsap = true;
+                     state->clientState->connectAsap = true;
                      break;
                  case 2:
-                     tempConfig->scale.x = (float)strtod(rval, NULL);
+                     state->scale.x = (float)strtod(rval, NULL);
                      break;
                  case 3:
-                     tempConfig->scale.y = (float)strtod(rval, NULL);
+                     state->scale.y = (float)strtod(rval, NULL);
                      break;
                  case 4:
-                     tempConfig->scale.z = (float)strtod(rval, NULL);
+                     state->scale.z = (float)strtod(rval, NULL);
                      break;
                  case 5:
-                     tempConfig->boundary.x = (int)atoi(rval);
+                     state->boundary.x = (int)atoi(rval);
                      break;
                  case 6:
-                     tempConfig->boundary.y = (int)atoi(rval);
+                     state->boundary.y = (int)atoi(rval);
                      break;
                  case 7:
-                     tempConfig->boundary.z = (int)atoi(rval);
+                     state->boundary.z = (int)atoi(rval);
                      break;
                  case 8:
-                     strncpy(tempConfig->name, rval, 1023);
+                     strncpy(state->name, rval, 1023);
                      break;
                  case 9:
-                     tempConfig->M = (int)atoi(rval);
+                     state->M = (int)atoi(rval);
                      break;
                  case 10:
                      Viewer::loadDatasetColorTable(rval, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
@@ -1247,20 +1127,19 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      Knossos::readConfigFile(rval);
                      break;
                  case 12:
-                     tempConfig->magnification = (int)atoi(rval);
+                     state->magnification = (int)atoi(rval);
                      break;
                  case 13:
-                     tempConfig->overlay = true;
-                     tempConfig->viewerState->overlayVisible = true;
+                     state->overlay = true;
+                     state->viewerState->overlayVisible = true;
                      break;
                  case 14:
-                     strncpy(tempConfig->viewerState->gui->settingsFile, rval, 2000);
-                     strcpy(tempConfig->viewerState->gui->settingsFile + strlen(rval), ".xml");
+                     strncpy(state->viewerState->gui->settingsFile, rval, 2000);
+                     strcpy(state->viewerState->gui->settingsFile + strlen(rval), ".xml");
                      break;
              }
          }
-     }
-     qDebug() << "executed";
+     }     
  }
 
  return true;
@@ -1283,7 +1162,7 @@ void Knossos::catchSegfault(int signum) {
   * A structural update might be advantegous for the future.
   */
 
-void loadDefaultTreeLUT() {
+void Knossos::loadDefaultTreeLUT() {
 
     if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
         Knossos::loadTreeLUTFallback();

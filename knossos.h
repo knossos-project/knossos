@@ -50,7 +50,7 @@ public:
     static struct stateInfo *emptyState();
     static bool findAndRegisterAvailableDatasets();
     static bool cleanUpMain();
-    static bool tempConfigDefaults();
+    static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);
     static void catchSegfault(int signum);
     static int initStates();
