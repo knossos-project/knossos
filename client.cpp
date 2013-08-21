@@ -667,6 +667,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
             if(remoteSocket->isValid()) {
 
                 qDebug() << "is readable";
+                remoteSocket->waitForReadyRead();
                 readLen = remoteSocket->read(msg, 8192);
                 qDebug() << "readlen: " << readLen;
                 qDebug() << QString(msg);

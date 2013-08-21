@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
     }
 
 
+
 #ifdef Q_OS_UNIX
     strncpy(state->path, "../../e1088_mag1/", 1024);
 #endif
@@ -141,6 +142,7 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WIN32
     strncpy(state->path, "..\\..\\e1088_mag1", 1024);
 #endif
+
 
     strncpy(state->name, "070317_e1088", 1024);
     state->boundary.x = 2000;

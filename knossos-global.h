@@ -718,9 +718,10 @@ struct guiConfig {
     char *comment5;
 
     // substrings for comment node preferences
-    char *commentSubstr[NUM_COMMSUBSTR];
+    QStringList *commentSubstr;
+    //char **commentSubstr;
     // colors of color-dropdown in comment node preferences
-    char* commentColors[NUM_COMMSUBSTR];
+    char **commentColors;
 };
 
 /**

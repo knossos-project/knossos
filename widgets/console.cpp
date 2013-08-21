@@ -88,7 +88,7 @@ void Console::saveSettings() {
 
 void Console::log(const char *fmt, ...) {
 
-
+    /*
     va_list args;
     char fmtbuffer[1024];
     memset(fmtbuffer, '\0', 1024);
@@ -99,7 +99,7 @@ void Console::log(const char *fmt, ...) {
     va_end(args);
 
     editor->appendPlainText(QString(fmtbuffer));
-
+    */
 
 
 }

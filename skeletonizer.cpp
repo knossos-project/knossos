@@ -4709,31 +4709,31 @@ int Skeletonizer::xorInt(int xorMe) {
 void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
     int nr;
 
-        if(node->isBranchNode) { //branch nodes are always blue
-            SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
+    if(node->isBranchNode) { //branch nodes are always blue
+        SET_COLOR((*color), 0.f, 0.f, 1.f, 1.f);
+        return;
+    }
+
+    if(node->comment != NULL) {
+        // default color for comment nodes
+        SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
+
+        if(state->skeletonState->userCommentColoringOn == false) {
+            // conditional node coloring is disabled
+            // comment nodes have default color, return
             return;
         }
 
-        if(node->comment != NULL) {
-            // default color for comment nodes
-            SET_COLOR((*color), 1.f, 1.f, 0.f, 1.f);
-
-            if(state->skeletonState->userCommentColoringOn == false) {
-                // conditional node coloring is disabled
-                // comment nodes have default color, return
-                return;
-            }
-
-            if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
-                //no substring match => keep default color and return
-                return;
-            }
-            if(state->skeletonState->commentColors[nr].a > 0.f) {
-                //substring match, change color
-                *color = state->skeletonState->commentColors[nr];
-            }
+        if((nr = commentContainsSubstr(node->comment, -1)) == -1) {
+            //no substring match => keep default color and return
+            return;
         }
-        return;
+        if(state->skeletonState->commentColors[nr].a > 0.f) {
+            //substring match, change color
+            *color = state->skeletonState->commentColors[nr];
+        }
+    }
+    return;
 }
 
 void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
@@ -5077,16 +5077,16 @@ unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comm
         return -1;
     }
     if(index == -1) { //no index specified
-        for(i = 0; i < NUM_COMMSUBSTR; i++) {
-            if(strlen(state->viewerState->gui->commentSubstr[i]) > 0
-                && strstr(comment->content, state->viewerState->gui->commentSubstr[i]) != NULL) {
+        for(i = 0; i < NUM_COMMSUBSTR; i++) {            
+            if(state->viewerState->gui->commentSubstr->at(i).length() > 0
+                && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(i).toStdString().c_str())) != NULL) {
                 return i;
             }
         }
     }
     else if(index > -1 && index < NUM_COMMSUBSTR) {
-        if(strlen(state->viewerState->gui->commentSubstr[index]) > 0
-           && strstr(comment->content, state->viewerState->gui->commentSubstr[index]) != NULL) {
+        if(state->viewerState->gui->commentSubstr->at(index).length() > 0
+           && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(index).toStdString().c_str())) != NULL) {
             return index;
         }
     }

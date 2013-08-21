@@ -47,6 +47,9 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     QWidget(parent)
 {
 
+    state->viewerState->gui->commentSubstr = new QStringList();
+    state->viewerState->gui->commentColors = new char*[N];
+
     QStringList list;
     list << GREEN << ROSE << AZURE << PURPLE << BROWN;
 
@@ -78,13 +81,12 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
     radiusLabel = new QLabel*[N];
 
     for(int i = 0; i < N; i++) {
-        state->viewerState->gui->commentSubstr[i] = "";
+
+        state->viewerState->gui->commentSubstr->push_back(QString(""));
         substringFields[i] = new QLineEdit();
         substringFields[i]->setObjectName(QString("%1").arg(i));
         colorComboBox[i] = new QComboBox();
         colorComboBox[i]->addItems(list);
-
-        //colorComboBox[i]->children().at(i)->installEventFilter(this);
 
         connect(substringFields[i], SIGNAL(editingFinished()), this, SLOT(substringEntered()));
         connect(colorComboBox[i], SIGNAL(currentTextChanged(QString)), this, SLOT(colorChanged(QString)));
@@ -123,16 +125,20 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
 void CommentsPreferencesTab::enableCondColoringChecked(bool on) {
     if(on) {
         state->skeletonState->userCommentColoringOn = true;
+        qDebug() << "enabled";
     } else {
         state->skeletonState->userCommentColoringOn = false;
+        qDebug() << "disabled";
     }
 }
 
 void CommentsPreferencesTab::enableCondRadiusChecked(bool on) {
     if(on) {
         state->skeletonState->commentNodeRadiusOn = true;
+        qDebug() << "enabled";
     } else {
         state->skeletonState->commentNodeRadiusOn = false;
+        qDebug() << "disabled";
     }
 }
 
@@ -141,27 +147,32 @@ void CommentsPreferencesTab::substringEntered() {
     QLineEdit *field = (QLineEdit*) sender();
     for(int i = 0; i < N; i++) {
         if(field == substringFields[i]) {
-            qDebug() << field->text();
-            state->viewerState->gui->commentSubstr[i] = const_cast<char *>(field->text().toStdString().c_str());
-        }
+            state->viewerState->gui->commentSubstr->replace(i, substringFields[i]->text());
+         }
     }
 }
 
 void CommentsPreferencesTab::colorChanged(QString color) {
+
     QComboBox *colorBox = (QComboBox*) sender();
     for(int i = 0; i < N; i++) {
         if(colorBox == colorComboBox[i]) {
             color4F col;
             if(color == "green") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.13, 0.69, 0.3, 1.);
+                qDebug() << "green selected";
             } else if(color == "rose") {
                  SET_COLOR(state->skeletonState->commentColors[i], 0.94, 0.89, 0.69, 1.);
+                 qDebug() << " rose selected";
             } else if(color == "azure") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.6, 0.85, 0.92, 1.);
+                qDebug() << "azure selected";
             } else if(color == "purple") {
-                SET_COLOR(state->skeletonState->commentColors[i], 0.64, 0.29, 0.64, 1.)
+                SET_COLOR(state->skeletonState->commentColors[i], 0.64, 0.29, 0.64, 1.);
+                qDebug() << "purple";
             } else if(color == "brown") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.73, 0.48, 0.34, 1.);
+                qDebug() << "brown";
             }
         }
     }

@@ -43,7 +43,9 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 
     this->setLayout(mainLayout);
     connect(branchNodesOnlyCheckbox, SIGNAL(clicked(bool)), this, SLOT(branchPointOnlyChecked(bool)));
-    connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(commentChanged(QTableWidgetItem*)));
+    connect(filterField, SIGNAL(editingFinished()), this, SLOT(filterChanged()));
+
+    //connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(commentChanged(QTableWidgetItem*)));
     connect(nodeTable, SIGNAL(cellClicked(int,int)), this, SLOT(itemSelected(int,int)));
     connect(nodeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(doubleClicked(QTableWidgetItem*)));
 }
@@ -61,13 +63,21 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
     tree = state->skeletonState->firstTree;
 
-    filterNoCase = filterField->text();
-    char *filter = const_cast<char *>(filterNoCase.toStdString().c_str());
+
+    const char *filter = filterField->text().toStdString().c_str();
     if(strlen(filter) > 0 )
         filtered = true;
 
     tableIndex = 0;
     nodeTable->clear();
+
+    QTableWidgetItem *left, *right;
+    left = new QTableWidgetItem(QString("Node ID"));
+    right = new QTableWidgetItem(QString("Comment"));
+
+    nodeTable->setHorizontalHeaderItem(0, left);
+    nodeTable->setHorizontalHeaderItem(1, right);
+    nodeTable->horizontalHeader()->setStretchLastSection(true);
 
     nodeTable->setRowCount(state->skeletonState->totalNodeElements);
 
@@ -80,8 +90,8 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
                 continue;
             }           
 
-            if(filtered) {
-                if(strstr(filter, node->comment->content) != NULL) {                    
+            if(filtered) {               
+                if(strstr(node->comment->content, filter) != NULL) {
                     if(branchNodesOnlyCheckbox->isChecked() && node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
 
                         QTableWidgetItem *nodeID = new QTableWidgetItem(QString("%1").arg(node->nodeID));
@@ -118,22 +128,36 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
 }
 
+void CommentsNodeCommentsTab::filterChanged() {
+    updateCommentsTable();
+}
+
 void CommentsNodeCommentsTab::branchPointOnlyChecked(bool on) {
     updateCommentsTable();
 }
 
 void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
-    int nodeID = item->text().toInt();
 
 
 }
 
 void CommentsNodeCommentsTab::itemSelected(int row, int col) {
 
+    qDebug() << "row:" << row;
+    QTableWidgetItem *nodeID = nodeTable->item(row, 0);
+    QTableWidgetItem *comment = nodeTable->item(row, 1);
+
+    if(!nodeID or !comment)
+        return;
+
+    state->skeletonState->selectedCommentNode = Skeletonizer::findNodeByNodeID(nodeID->text().toInt());
 }
 
 void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
+    if(!state->skeletonState->selectedCommentNode)
+       return;
 
-
+    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedCommentNode->nodeID);
+    emit setJumpToActiveNodeSignal();
 }
 

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QList>
+#include "knossos-global.h"
 class QLabel;
 class QCheckBox;
 class QLineEdit;
@@ -16,9 +17,12 @@ public:
     explicit CommentsNodeCommentsTab(QWidget *parent = 0);    
 signals:
     void updateCommentsTableSignal();
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    void setJumpToActiveNodeSignal();
 public slots:
     void updateCommentsTable();
     void branchPointOnlyChecked(bool on);
+    void filterChanged();
     void commentChanged(QTableWidgetItem *item);
     void itemSelected(int row, int col);
     void doubleClicked(QTableWidgetItem *item);

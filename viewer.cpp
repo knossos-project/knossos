@@ -3030,9 +3030,11 @@ void Viewer::rewire() {
     connect(vp3->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
     connect(vp4->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
 
-
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(window, SIGNAL(loaderSignal(int,int,int,int)), this, SLOT(sendLoadSignal(uint,uint,uint,int)));
+
+    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setJumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
