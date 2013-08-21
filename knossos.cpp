@@ -38,7 +38,6 @@
 #include "widgets/tracingtimewidget.h"
 #include "scripting.h"
 
-
 //#include "y.tab.h"
 //#include "lex.yy.h"
 
@@ -132,7 +131,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    //2012.12.11 HARDCODED FOR TESTING LOADER
 
 #ifdef Q_OS_UNIX
     strncpy(state->path, "../../e1088_mag1/", 1024);
@@ -141,9 +139,8 @@ int main(int argc, char *argv[])
     strncpy(state->path, "../../../../../e1088_mag1/", 1024);
 #endif
 #ifdef Q_OS_WIN32
-    strncpy(tempConfig->path, "..\\..\\e1088_mag1", 1024);
+    strncpy(state->path, "..\\..\\e1088_mag1", 1024);
 #endif
-
 
     strncpy(state->name, "070317_e1088", 1024);
     state->boundary.x = 2000;
@@ -165,6 +162,7 @@ int main(int argc, char *argv[])
        LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
+
 
     Knossos::printConfigValues();
 
@@ -224,9 +222,6 @@ int main(int argc, char *argv[])
     remote->start();
     client->start();
     scripts->start();
-
-    //state->clientSignal = true;
-    //client->run();
 
     return a.exec();
 }
@@ -524,7 +519,6 @@ bool Knossos::stripNewlines(char *string) {
 
 }
 
-/** @todo function yyparse is not found. Functionality is temporarily uncommented  */
 bool Knossos::readConfigFile(const char *path) {
 
     QFile file(path);
@@ -580,27 +574,6 @@ bool Knossos::readConfigFile(const char *path) {
         file.close();
 
 
-    /*
-    FILE *configFile;
-        size_t bytesRead;
-        char fileBuffer[16384];
-        YY_BUFFER_STATE confParseBuffer;
-
-        configFile = fopen(path, "r");
-
-        if(configFile != NULL) {
-            memset(fileBuffer, '\0', 16384);
-            bytesRead = fread(fileBuffer, 1, 16383, configFile);
-            if(bytesRead > 0) {
-                stripNewlines(fileBuffer);
-                confParseBuffer = yy_scan_string(fileBuffer);
-                yyparse(state);
-                yy_delete_buffer(confParseBuffer);
-                fclose(configFile);
-                return true;
-            }
-        }
-        */
         return true;
 }
 

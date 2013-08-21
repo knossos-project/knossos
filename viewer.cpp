@@ -2157,6 +2157,13 @@ bool Viewer::updateViewerState() {
    uint i;
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
+        if(i == 0)
+            vp->makeCurrent();
+        else if(i == 1)
+            vp2->makeCurrent();
+        else if(i == 2)
+            vp3->makeCurrent();
+
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
         // Set the parameters for the texture.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
