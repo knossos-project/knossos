@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QList>
 #include "knossos-global.h"
+
 class QLabel;
 class QCheckBox;
 class QLineEdit;

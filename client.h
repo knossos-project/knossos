@@ -105,7 +105,6 @@ signals:
     void sendConnectedState();
     void sendDisconnectedState();
 public slots:
-
     void socketConnectionSucceeded();
     void socketConnectionFailed(QAbstractSocket::SocketError error);
     

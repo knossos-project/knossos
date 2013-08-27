@@ -34,7 +34,7 @@
 
 /**
  *
- *  This file contains functions that are called by the thread (entry point: start()) managing the GUI,
+ *  This file contains functions that are called by the managing,
  *  all openGL rendering operations and
  *  all skeletonization operations commanded directly by the user over the GUI. The files gui.c, renderer.c and
  *  skeletonizer.c contain functions mainly used by the corresponding "subsystems". viewer.c contains the main
@@ -61,14 +61,9 @@ public:
     QTimer *timer;    
     int frames;
 
-    static bool loadTreeColorTable(const char *path, float *table, int type);
-    //Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
-    //Calling makes only sense after full initialization of the SDL / OGL screen
-    static bool initializeTextures(); // is now part of the initGL function of the viewport
-
+    static bool loadTreeColorTable(const char *path, float *table, int type);    
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
-
     static bool loadDatasetColorTable(const char *path, GLuint *table, int type);
 
     bool initialized;
@@ -128,8 +123,7 @@ public slots:
     bool userMove_arb(float x, float y, float z, int serverMovement);
     static bool updatePosition(int serverMovement);
     bool recalcTextureOffsets();
-    bool calcDisplayedEdgeLength();
-    static bool refreshViewports();
+    bool calcDisplayedEdgeLength();    
     bool updateViewerState();
     void showFrames();
     void run();

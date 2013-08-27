@@ -46,8 +46,7 @@ extern stateInfo *state;
 Renderer::Renderer(QObject *parent) :
     QObject(parent)
 {
-    font = QFont("Helvetica", 12, QFont::Normal);
-    //font.setStyleStrategy(QFont::OpenGLCompatible);
+    font = QFont("Helvetica", 12, QFont::Normal);   
 
     uint i;
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -212,15 +211,14 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint v
 }
 
 
-uint Renderer::renderText(Coordinate *pos, char *string, uint viewportType) {
+uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType) {
 
-    char *c;
+
 
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
     if(viewportType == VIEWPORT_XY)
         ref->renderText(pos->x, pos->y, pos->z, QString(string), font);
-
     else if(viewportType == VIEWPORT_YZ)
         ref2->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_XZ)
@@ -430,9 +428,6 @@ static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4
 
 }
 
-bool Renderer::drawGUI() {
-    return true;
-}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
@@ -1280,7 +1275,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                     state->skeletonState->definedSkeletonVpView = 0;
                     state->skeletonState->rotationcounter = 0;
                 }
-                Viewer::refreshViewports();
+
                 break;
 
             case 5:
@@ -1292,7 +1287,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                     state->skeletonState->definedSkeletonVpView = 0;
                     state->skeletonState->rotationcounter = 0;
                 }
-                Viewer::refreshViewports();
+
                 break;
             case 6:
                 // Resetting
@@ -2256,9 +2251,7 @@ void Renderer::renderSkeleton(uint viewportType) {
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
-
     }
-
 
     if(state->skeletonState->overrideNodeRadiusBool)
         glPointSize(state->skeletonState->overrideNodeRadiusVal);

@@ -139,8 +139,7 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     mainLayout->addWidget(line4);
     mainLayout->addLayout(gridLayout4);
 
-    setLayout(mainLayout);
-    //mainLayout->addStretch(50);
+    setLayout(mainLayout);    
     connect(activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
     connect(jumpToNodeButton, SIGNAL(clicked()), this, SLOT(jumpToNodeButtonClicked()));
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
@@ -158,7 +157,6 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     connect(disableLockingButton, SIGNAL(clicked()), this, SLOT(disableLockingButtonClicked()));
 
 }
-
 
 void ToolsNodesTabWidget::activeNodeChanged(int value) {
     if(!state->skeletonState->activeNode)
@@ -179,7 +177,6 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
 
         if(!node) {
-
             return;
         }
     } else if(value < state->skeletonState->activeNode->nodeID) {
@@ -222,9 +219,7 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
     }
 }
 
-/**
-  * @todo why is the field above disabled and the id spinbox below?
-  */
+/* @todo */
 void ToolsNodesTabWidget::idChanged(int value) {
     state->viewerState->gui->activeNodeID = value;
 }
@@ -266,6 +261,7 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     ref->updateDisplayedTree();
 }
 
+/* @todo */
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(this->idSpinBox->value()))) {
          if(Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {

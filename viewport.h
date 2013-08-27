@@ -32,10 +32,11 @@
 #include <QFont>
 #include "eventmodel.h"
 
-static int focus;
+static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
 
 class QPushButton;
 class Renderer;
+class EventModel;
 class Viewport : public QGLWidget
 {
     Q_OBJECT
@@ -57,7 +58,6 @@ protected:
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
-    void customEvent(QEvent *event);
     void enterEvent(QEvent *event);
     void leaveEvent(QEvent *event);
     void paintEvent(QPaintEvent *event);
@@ -67,10 +67,8 @@ protected:
     int plane; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
-    void drawButtons();
 
     bool entered;
-
 
     QPushButton *moveButton, *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
@@ -84,7 +82,6 @@ private:
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);    
-
 signals:    
     void recalcTextureOffsetsSignal();
     void runSignal();

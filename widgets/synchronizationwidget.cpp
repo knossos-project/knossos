@@ -74,9 +74,7 @@ void SynchronizationWidget::closeEvent(QCloseEvent *event) {
     emit uncheckSignal();
 }
 
-/**
-  * @todo In GUI.c there are two methods UI_SyncConnect and UI_SyncDisconnect which requests state->clientState->connect but do not change the value ? Who does this job
-  */
+
 void SynchronizationWidget::connectButtonPushed() {
     if(!connected) {
         connected = true;

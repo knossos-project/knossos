@@ -45,16 +45,15 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
     labels = new QLabel*[NUM];
     textFields = new QLineEdit*[NUM];
 
+    /* this creates the Strings for the Label F1-F5 */
     for(int i = 0; i < NUM; i++) {
         QString tmp;
         tmp = QString("F%1").arg((i+1));
         labels[i] = new QLabel(tmp);
 
         textFields[i] = new QLineEdit();
-
         textFields[i]->installEventFilter(this);
         layout->addRow(labels[i], textFields[i]);
-
     }
 
     button = new QPushButton("Clear Comments Boxes");
@@ -74,8 +73,6 @@ void CommentShortCutsTab::deleteComments() {
             }
     }
 }
-
-
 
 /**
   * This method is a replacement for SIGNAL and SLOT. If the user pushs the return button in the respective textField, the method finds out which textField is

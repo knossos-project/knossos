@@ -1,6 +1,8 @@
 #ifndef WIDGETCONTAINER_H
 #define WIDGETCONTAINER_H
 
+/* Include your widget and your subwidgets and you have easy access via this class */
+
 #include <QObject>
 
 #include "widgets/console.h"

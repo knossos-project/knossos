@@ -136,10 +136,12 @@ void CommentsNodeCommentsTab::branchPointOnlyChecked(bool on) {
     updateCommentsTable();
 }
 
+/** @todo */
 void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
 
 
 }
+
 
 void CommentsNodeCommentsTab::itemSelected(int row, int col) {
 
@@ -153,6 +155,7 @@ void CommentsNodeCommentsTab::itemSelected(int row, int col) {
     state->skeletonState->selectedCommentNode = Skeletonizer::findNodeByNodeID(nodeID->text().toInt());
 }
 
+/** If the row of a table contains node information and is double Clicked then knossos jump to this node   */
 void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
     if(!state->skeletonState->selectedCommentNode)
        return;

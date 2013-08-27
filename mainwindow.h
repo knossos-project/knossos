@@ -64,8 +64,7 @@ public:
 
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
-    void recalcTextureOffsetsSignal();
-    void refreshViewportsSignal();
+    void recalcTextureOffsetsSignal();    
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal(QString fileName);
@@ -152,7 +151,7 @@ public:
     void updateFileHistoryMenu();
     void createActions();
     void createMenus();
-    void createCoordBarWin();
+    void createCoordBar();
     void createViewports();
 
     void saveSettings();

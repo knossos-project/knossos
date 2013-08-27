@@ -83,8 +83,6 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
 
-
-
 }
 
 void Viewport::initializeGL() {
@@ -282,11 +280,9 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
-
     if(event->delta() > 0) {
         handleMouseWheelForward(event, plane);
-    }
-    else {
+    } else {
         handleMouseWheelBackward(event, plane);
     }
 
@@ -299,12 +295,6 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
 
-}
-
-void Viewport::customEvent(QEvent *event) {
-    if(event->type() == QEvent::User) {
-
-    }
 }
 
 void Viewport::drawViewport(int plane) {

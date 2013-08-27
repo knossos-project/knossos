@@ -30,6 +30,10 @@
 #include "sleeper.h"
 #include "knossos-global.h"
 #include "knossos.h"
+#include "client.h"
+#include "remote.h"
+#include "loader.h"
+#include "viewer.h"
 #include "mainwindow.h"
 #include "skeletonizer.h"
 #include "eventmodel.h"
@@ -38,28 +42,11 @@
 #include "widgets/tracingtimewidget.h"
 #include "scripting.h"
 
-//#include "y.tab.h"
-//#include "lex.yy.h"
-
 #define NUMTHREADS 4
 
 struct stateInfo *state = NULL;
 
-//static uint isPathString(char *string);
-//static uint printUsage();
-
-void initialize(int argc, char *argv[]);
-void rewire();
-Knossos::Knossos(QObject *parent) : QObject(parent) {
-    /*
-    this->loader = new Loader();
-
-    this->viewer = new Viewer();
-    this->remote = new Remote();
-    this->client = new Client();
-    */
-}
-
+Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
 { 
@@ -68,11 +55,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-
-    /* */
-
-    /* */
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -85,22 +67,6 @@ int main(int argc, char *argv[])
     // All this config data should be used. Command line overrides
     // local knossos.conf and local knossos.conf overrides knossos.conf
     // from data and knossos.conf from data overrides defaults.
-
-    state = Knossos::emptyState();
-    state->loadSignal = false;
-    state->remoteSignal = false;
-    state->quitSignal = false;
-    state->clientSignal = false;
-    state->conditionLoadSignal = new QWaitCondition();
-    state->conditionRemoteSignal = new QWaitCondition();
-    state->conditionClientSignal = new QWaitCondition();
-    state->protectSkeleton = new QMutex(QMutex::Recursive);
-    state->protectLoadSignal = new QMutex();
-    state->protectRemoteSignal = new QMutex();
-    state->protectClientSignal = new QMutex();
-    state->protectCube2Pointer = new QMutex();
-    state->protectPeerList = new QMutex();
-    state->protectOutBuffer = new QMutex();
 
     if(Knossos::configDefaults() != true) {
         LOG("Error loading default parameters.")
@@ -159,12 +125,10 @@ int main(int argc, char *argv[])
     state->cubeSetElements = state->M * state->M  * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
-
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
-
 
     Knossos::printConfigValues();
 
@@ -228,13 +192,9 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
-void Knossos::initialize(int argc, char *argv[]) {
-
-}
-
 
 /**
- * This function overwrites the values of state with the value of tempConfig
+ * This function initializes the values of state with the value of tempConfig
  * Beyond it allocates the dynamic data structures
  */
 int Knossos::initStates() {
@@ -821,19 +781,22 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
 }
 
-bool Knossos::cleanUpMain() {
-
-    free(state->viewerState);
-    free(state->clientState);
-    free(state);
-    free(state->viewerState);
-    free(state->clientState);
-    free(state);
-
-    return true;
-}
-
 bool Knossos::configDefaults() {
+    state = Knossos::emptyState();
+    state->loadSignal = false;
+    state->remoteSignal = false;
+    state->quitSignal = false;
+    state->clientSignal = false;
+    state->conditionLoadSignal = new QWaitCondition();
+    state->conditionRemoteSignal = new QWaitCondition();
+    state->conditionClientSignal = new QWaitCondition();
+    state->protectSkeleton = new QMutex(QMutex::Recursive);
+    state->protectLoadSignal = new QMutex();
+    state->protectRemoteSignal = new QMutex();
+    state->protectClientSignal = new QMutex();
+    state->protectCube2Pointer = new QMutex();
+    state->protectPeerList = new QMutex();
+    state->protectOutBuffer = new QMutex();
 
     // General stuff
     state->boergens = false;
@@ -1119,17 +1082,6 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
  return true;
 }
-
-#ifdef LINUX
-void Knossos::catchSegfault(int signum) {
-    LOG("Oops, you found a bug. Tell the developers!")
-    fflush(stdout);
-    fflush(stderr);
-
-    _Exit(false);
-
-}
-#endif
 
 
 /**

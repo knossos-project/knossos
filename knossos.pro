@@ -82,10 +82,7 @@ HEADERS  += mainwindow.h \
     widgets/splashscreenwidget.h \
     widgets/coordinatebarwidget.h \
     functions.h \
-    texturizer.h \
-    slicer.h \
     GUIConstants.h \
-    Plattform.h \
     widgetcontainer.h \     
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \
@@ -117,6 +114,7 @@ OTHER_FILES += \
     defaultSettings.xml \
     customCursor.xpm \
     config.y \
+
 
 mac {
     INCLUDEPATH += /usr/include/Python2.7 \

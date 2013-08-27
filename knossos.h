@@ -27,19 +27,10 @@
 #include <qobject.h>
 #include <QtOpenGL>
 #include "mainwindow.h"
-#include "loader.h"
-#include "viewer.h"
-#include "remote.h"
-#include "client.h"
 
 class Knossos : public QObject {
     Q_OBJECT
 public:
-    MainWindow *window;
-    Loader *loader;
-    Viewer *viewer;
-    Remote *remote;
-    Client *client;
 
     explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
@@ -48,11 +39,9 @@ public:
     static bool loadNeutralDatasetLUT(GLuint *datasetLut);
     static bool readDataConfAndLocalConf();
     static struct stateInfo *emptyState();
-    static bool findAndRegisterAvailableDatasets();
-    static bool cleanUpMain();
+    static bool findAndRegisterAvailableDatasets();    
     static bool configDefaults();
-    static bool configFromCli(int argCount, char *arguments[]);
-    static void catchSegfault(int signum);
+    static bool configFromCli(int argCount, char *arguments[]);   
     static int initStates();
 
     static bool unlockSkeleton(int increment);
@@ -65,7 +54,7 @@ public:
     static uint ones32(register uint x);
     static void loadTreeLUTFallback();
     static void loadDefaultTreeLUT();
-    static void initialize(int argc, char *argv[]);
+
 
 signals:
     void calcDisplayedEdgeLengthSignal();

@@ -254,9 +254,7 @@ public:
 
 signals:
     void idleTimeSignal();
-    void updatePositionSignal(int serverMovement);
-    void refreshViewportsSignal();
-    void drawGUISignal();
+    void updatePositionSignal(int serverMovement);        
     void saveSkeletonSignal(int increment);
     void updateToolsSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
@@ -302,8 +300,6 @@ public slots:
     void setSkeletonChanged(bool on);
     void setShowNodeIDs(bool on);
 
-    bool loadSkeleton();
-    int saveSkeleton();
 
     bool loadXmlSkeleton(QString fileName);
     bool saveXmlSkeleton(QString fileName);

@@ -35,6 +35,7 @@
 #include "viewport.h"
 #include "functions.h"
 #include <qopengl.h>
+#include <QtConcurrent/QtConcurrentRun>
 
 
 extern stateInfo *state;
@@ -57,11 +58,12 @@ Viewer::Viewer(QObject *parent) :
     vp4->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
 
 
-
     vp->show();
     vp2->show();
     vp3->show();
     vp4->show();
+
+    timer = new QTimer();
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -83,8 +85,6 @@ Viewer::Viewer(QObject *parent) :
     renderer->ref2 = vp2;
     renderer->ref3 = vp3;
     renderer->ref4 = vp4;
-
-    timer = new QTimer();
 
     rewire();
     frames = 0;
@@ -117,6 +117,7 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
+
 
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(15);
@@ -418,7 +419,6 @@ bool Viewer::vpListDel(vpList *list) {
         }
     }
 
-    free(list);
     return true;
 }
 
@@ -1839,7 +1839,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
                             state->viewerState->currentPosition.y,
                             state->viewerState->currentPosition.z,
                             upOrDownFlag);
-    //refreshViewports();
+
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
     skeletonizer->skeletonChanged = true;
@@ -1989,6 +1989,8 @@ void Viewer::run() {
                 }
             }
 
+
+
             drawCounter++;
             if(drawCounter == 3) {
                 drawCounter = 0;
@@ -1996,7 +1998,7 @@ void Viewer::run() {
                 updateViewerState();
                 recalcTextureOffsets();
                 skeletonizer->updateSkeletonState();
-                renderer->drawGUI();
+
 
                 vp->updateGL();
                 vp2->updateGL();
@@ -2066,90 +2068,6 @@ void Viewer::logSingle() {
 void Viewer::showFrames() {
     qDebug() << "frames :" << frames;
     frames = 0;
-}
-
-/**
-*
-* Transfers all (orthogonal viewports) textures completly from ram (*viewerState->vpConfigs[i].texture.data) to video memory
-* @attention Calling makes only sense after full initialization of the OGL screen
-* The functionality is moved into the initializeGL respectively initializeOverlayGL method of the
-* GLWidgets
-*/
-bool Viewer::initializeTextures() {
-    uint i = 0;
-
-    /*problem of deleting textures when calling again after resize?! TDitem */
-    for(int i = 0; i < state->viewerState->numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-            //vp->makeCurrent();
-            //state->viewerState->vpConfigs[i].displayList = glGenLists(1);
-            //vp->context()->makeCurrent();
-
-            glGenTextures(1, &state->viewerState->vpConfigs[i].texture.texHandle);
-            if(state->overlay) {
-                glGenTextures(1, &state->viewerState->vpConfigs[i].texture.overlayHandle);
-            }
-        }
-    }
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        if(state->viewerState->vpConfigs[i].type == VIEWPORT_SKELETON) {
-            continue;
-        }
-
-        // Handle data textures.
-
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-        // loads an empty texture into video memory - during user movement, this
-        // texture is updated via glTexSubImage2D in vpGenerateTexture & vpHandleBacklog
-        // We need GL_RGB as texture internal format to color the textures
-
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_RGB,
-                     state->viewerState->vpConfigs[i].texture.edgeLengthPx,
-                     state->viewerState->vpConfigs[i].texture.edgeLengthPx,
-                     0,
-                     GL_RGB,
-                     GL_UNSIGNED_BYTE,
-                     state->viewerState->defaultTexData);
-
-        //Handle overlay textures.
-
-        if(state->overlay) {
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.overlayHandle);
-
-            //Set the parameters for the texture.
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
-
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-            glTexImage2D(GL_TEXTURE_2D,
-                         0,
-                         GL_RGBA,
-                         state->viewerState->vpConfigs[i].texture.edgeLengthPx,
-                         state->viewerState->vpConfigs[i].texture.edgeLengthPx,
-                         0,
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         state->viewerState->defaultOverlayData);
-        }
-    }
-    return true;
 }
 
 bool Viewer::updateViewerState() {
@@ -2295,7 +2213,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 NO_MAG_CHANGE);
     }
 
-    emit updateCoordinatesSignal(viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
+    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
 
     return true;
@@ -2738,12 +2656,6 @@ bool Viewer::recalcTextureOffsets() {
     return true;
 }
 
-bool Viewer::refreshViewports() {
-
-
-    return true;
-}
-
 bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     qDebug() << "Viewer: sendLoadSignal begin";
     state->protectLoadSignal->lock();
@@ -2829,9 +2741,8 @@ void Viewer::rewire() {
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     /* @todo check *///connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(window, SIGNAL(refreshViewportsSignal()), this, SLOT(refreshViewports()));
-    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
 
+    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
 
@@ -2947,12 +2858,6 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
     connect(vp3->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
     connect(vp4->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-
-    connect(vp->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp2->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp3->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(vp4->delegate, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
-    connect(skeletonizer, SIGNAL(drawGUISignal()), renderer, SLOT(drawGUI()));
 
     connect(vp->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(vp2->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));

@@ -37,7 +37,7 @@
   * @brief This is the EventHandler from Knossos 3.2 adjusted for the QT version
   *
   * The class adopts the core functionality from EventHandler with the exception that
-  * SDL Events are replaced through the corresponding QT-Events
+  * SDL Events are replaced through the corresponding QT-Events.
   *
   * @warning The api documentation for event-handlig in QT 5 seems to be outdated :
   * Keyboard modifier like SHIFT, ALT and CONTROl has to be requested from QApplication
@@ -100,7 +100,6 @@ signals:
     void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    void drawGUISignal();
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();

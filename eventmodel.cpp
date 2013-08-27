@@ -1159,7 +1159,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
         }
         state->skeletonState->skeletonChanged = true;
-        emit drawGUISignal();
+
     } else if(event->key() == Qt::Key_Delete) {
         emit deleteActiveNodeSignal();
         emit updateTools();

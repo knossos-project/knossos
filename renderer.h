@@ -37,27 +37,28 @@ public:
     Viewport *ref, *ref2, *ref3, *ref4;
     QFont font;
 
-    static bool setRotationState(uint setTo);
-    static bool rotateSkeletonViewport();
-    static bool updateRotationStateMatrix(float M1[16], float M2[16]);
-    static uint renderViewportBorders(uint currentVP);
+protected:
+    bool setRotationState(uint setTo);
+    bool rotateSkeletonViewport();
+    bool updateRotationStateMatrix(float M1[16], float M2[16]);
+    uint renderViewportBorders(uint currentVP);
 
-    static uint renderSegPlaneIntersection(struct segmentListElement *segment);
-    uint renderText(Coordinate *pos, char *string, uint viewportType);
-    static uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
-    static uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
+    uint renderSegPlaneIntersection(struct segmentListElement *segment);
+    uint renderText(Coordinate *pos,const char *string, uint viewportType);
+    uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
     void renderSkeleton(uint viewportType);
-    static bool doubleMeshCapacity(mesh *toDouble);
+    bool doubleMeshCapacity(mesh *toDouble);
     bool initMesh(mesh *meshToInit, uint initialSize);
-    static bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
-    static bool updateFrustumClippingPlanes(uint viewportType);
+    bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
+    bool updateFrustumClippingPlanes(uint viewportType);
 signals:
     
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
-    bool drawGUI();
+
 };
 
 #endif // RENDERER_H

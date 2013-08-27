@@ -51,7 +51,7 @@ void WidgetContainer::createNavigationWidget() {
 
 void WidgetContainer::createToolWidget() {
     toolsWidget = new ToolsWidget();
-    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
     toolsWidget->setMinimumSize(430, 610);
     //toolsWidget->setGeometry(500, 100, 430, 610);
 }
@@ -87,7 +87,6 @@ void WidgetContainer::showSplashScreenWidget() {
 void WidgetContainer::createCoordBarWidget() {
     this->coordBarWidget = new CoordinateBarWidget();
 }
-
 
 void WidgetContainer::createWidgets() {
     createConsoleWidget();

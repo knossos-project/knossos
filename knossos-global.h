@@ -1404,11 +1404,12 @@ typedef struct {
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
 
+
 #define LOG(...) \
 { \
+    extern stateInfo *state; \
     if(state->console) { \
         state->console->log(__VA_ARGS__); \
-        state->console->log("\n"); \
     } \
 }
 

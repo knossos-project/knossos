@@ -86,10 +86,6 @@ void Remote::run() {
                                break;
                 }
 
-                /*
-                remoteWalkTo(this->recenteringPosition.x, this->recenteringPosition.y, this->recenteringPosition.z);
-                */
-
                 remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
                            this->recenteringPosition.y - state->viewerState->currentPosition.y,
                            this->recenteringPosition.z - state->viewerState->currentPosition.z);
@@ -199,81 +195,6 @@ bool Remote::remoteJump(int x, int y, int z) {
                         y - state->viewerState->currentPosition.y,
                         z - state->viewerState->currentPosition.z,
                         SILENT_COORDINATE_CHANGE);
-
-    return true;
-}
-
-bool Remote::remoteWalkTo(int x, int y, int z) {
-    /* This function is _not_ thread safe
-     * Do not get confused!
-     * remoteWalkTo walks us TO the coordinates (x, y, z) and remoteWalk
-     * walks along the vector (x, y, z) from wherever we start.
-     */
-
-    int x_moves = 0, y_moves = 0, z_moves = 0;
-    int retval = true;
-
-
-         /*  TDItem
-         *  The commented part below is a workaround that causes the so-called
-         *  "jitter bug". I could not reproduce the underlying problem in the agar
-         *  version of knossos, so I'll comment it out in the hope that the bug is
-         *  gone. Testing is needed here.
-         *
-         */
-
-        /*
-         * The loop is a hack to get around the problem where move events to the
-         * viewer are being lost. When that happens, the walk ends somewhere
-         * near to the real destination. This is, of course, _wrong_ in
-         * principle because it could "bend" the path.
-         *
-         * Also, the real cause of that bug is very much unclear...
-         *
-         * This is very shitty and has a serious race condition now that the client
-         * runs in a seperate thread.
-         *
-
-        while(state->viewerState->currentPosition.x != x || state->viewerState->currentPosition.y != y
-                || state->viewerState->currentPosition.z != z) {
-            x_moves = x - state->viewerState->currentPosition.x;
-            y_moves = y - state->viewerState->currentPosition.y;
-            z_moves = z - state->viewerState->currentPosition.z;
-
-            retval = remoteWalk(x_moves, y_moves, z_moves);
-
-            // This is a workaround to cover a bug in the workaround... ;)
-
-            SDL_Delay(100);
-        }*/
-
-    x_moves = x - state->viewerState->currentPosition.x;
-    y_moves = y - state->viewerState->currentPosition.y;
-    z_moves = z - state->viewerState->currentPosition.z;
-
-    floatCoordinate vec;
-    vec.x = x_moves;
-    vec.y = y_moves;
-    vec.z = z_moves;
-
-
-
-   /* @todo There seems to be a bug in remote Walk which does not lead to anything in the qt version */
-    /* this is an ad-hoc version which does not consider magnifications or other things */
-    float distance = euclidicNorm(&vec);
-
-   for(int i = 1; i <= 10; i++) {
-       emit userMoveSignal(x_moves / 10, x_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE);
-       /*
-       emit userMoveSignal(x_moves / 10, y_moves / 10, z_moves / 10, SILENT_COORDINATE_CHANGE); */
-       if(state->viewerState->stepsPerSec > 0)
-           msleep(1000 / state->viewerState->stepsPerSec);
-       else
-           msleep(50);
-
-   }
-
-    //retval = remoteWalk(x_moves, y_moves, z_moves);
 
     return true;
 }
@@ -445,12 +366,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
 
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
 
-            /** @todo replacement for this here
-            moveEvent.user.data1 = sendMove;
-            while(SDL_PushEvent(&moveEvent) == FAIL) {
-                printf("get error: %s\n", SDL_GetError());
-                SDL_Delay(10);
-            } */
         }
 
         // This is, of course, not really correct as the time of running

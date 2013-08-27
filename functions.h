@@ -3,6 +3,10 @@
 
 #include "knossos-global.h"
 
+/* This header contains functions that only use stateInfo independent data types.
+ * They can be used every-where.
+ */
+
 int roundFloat(float number);
 bool normalizeVector(floatCoordinate *v);
 float euclidicNorm(floatCoordinate *v);

@@ -79,7 +79,6 @@ MainWindow::MainWindow(QWidget *parent) :
     state->viewerState->gui->activeTreeID = 1;
     state->viewerState->gui->activeNodeID = 1;
 
-
     /* init here instead of initSkeletonizer to fix some init order issue */
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
@@ -113,7 +112,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     widgetContainer = new WidgetContainer(this);
     widgetContainer->createWidgets();
-    createCoordBarWin(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
+
+    createCoordBar(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
 
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
@@ -149,7 +149,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow:: createCoordBarWin() {
+void MainWindow:: createCoordBar() {
     copyButton = new QPushButton("Copy");
     pasteButton = new QPushButton("Paste");
 
@@ -188,7 +188,6 @@ void MainWindow:: createCoordBarWin() {
     this->toolBar->addWidget(zLabel);
     this->toolBar->addWidget(zField);
 
-
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
 
@@ -198,46 +197,6 @@ void MainWindow:: createCoordBarWin() {
 
 }
 
-
-/*
-static void updateGuiconfig() {
-
-    if(state->skeletonState->totalNodeElements == 0) {
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, false);
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, false);
-        state->viewerState->gui->activeNodeID = 0;
-        state->viewerState->gui->activeNodeCoord.x = 0;
-        state->viewerState->gui->activeNodeCoord.y = 0;
-        state->viewerState->gui->activeNodeCoord.z = 0;
-    }
-    else {
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt1, true);
-        //AG_NumericalSetWriteable(state->viewerState->gui->actNodeIDWdgt2, true);
-    }
-
-    if(state->skeletonState->activeNode) {
-        SET_COORDINATE(state->viewerState->gui->activeNodeCoord,
-            state->skeletonState->activeNode->position.x + 1,
-            state->skeletonState->activeNode->position.y + 1,
-            state->skeletonState->activeNode->position.z + 1)
-        state->viewerState->gui->actNodeRadius =
-            state->skeletonState->activeNode->radius;
-    }
-
-
-    SET_COORDINATE(state->viewerState->gui->oneShiftedCurrPos,
-        state->viewerState->currentPosition.x + 1,
-        state->viewerState->currentPosition.y + 1,
-        state->viewerState->currentPosition.z + 1)
-
-
-    strncpy(state->viewerState->gui->commentBuffer,
-        state->skeletonState->commentBuffer,
-        10240);
-}
-*/
-
-/* @todo */
 void MainWindow::updateTitlebar(bool useFilename) {
 
     QString title;
@@ -510,6 +469,7 @@ void MainWindow::recentFileSelected(QAction *action) {
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strncpy(state->skeletonState->skeletonFile, cname, 8192);
 
+        QApplication::processEvents();
         emit loadSkeletonSignal(fileName);
         updateTitlebar(true);
         linkWithActiveNodeSlot();
@@ -933,11 +893,6 @@ void MainWindow::copyClipboardCoordinates() {
    QApplication::clipboard()->setText(coords);
 }
 
-/**
-  * @todo uncommented method call refreshViewports can first be used when the viewports instances are saved in viewer-state
-  * @bug updatePosition leads to application will be terminated
-  * Why are the values saved in tempConfig and not state ?
-  */
 void MainWindow::pasteClipboardCoordinates(){
     QString text = QApplication::clipboard()->text();
 
@@ -945,9 +900,7 @@ void MainWindow::pasteClipboardCoordinates(){
       char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
 
       Coordinate *extractedCoords = NULL;
-
       if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {
-
 
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
@@ -958,8 +911,6 @@ void MainWindow::pasteClipboardCoordinates(){
                                 extractedCoords->z - state->viewerState->currentPosition.z,
                                 TELL_COORDINATE_CHANGE);
 
-
-
             free(extractedCoords);
 
       } else {
@@ -969,7 +920,6 @@ void MainWindow::pasteClipboardCoordinates(){
     } else {
        LOG("Unable to fetch text from clipboard")
     }
-
 }
 
 void MainWindow::coordinateEditingFinished() {    
@@ -1137,7 +1087,7 @@ void MainWindow::setCoordinates(int x, int y, int z) {
     It decides if a skeleton file has a revision(case 1) or not(case2).
     if case1 the revision substring is extracted, incremented and will be replaced.
     if case2 an initial revision will be inserted.
-    This method is actually only needed for the save or save as slots.
+    This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
 
 void MainWindow::updateSkeletonFileName(QString &fileName) {

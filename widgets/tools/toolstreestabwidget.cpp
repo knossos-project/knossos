@@ -270,6 +270,7 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
     }
 }
 
+/* @todo */
 void ToolsTreesTabWidget::id1Changed(int value) {
 
 }

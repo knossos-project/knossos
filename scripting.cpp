@@ -10,9 +10,7 @@ Scripting::Scripting(QObject *parent) :
     font.setPixelSize(12);
     font.setBold(true);
 
-
     PythonQt::init();
-
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     console = new PythonQtScriptingConsole(NULL, ctx);

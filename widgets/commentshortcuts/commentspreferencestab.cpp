@@ -108,17 +108,11 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
         gridLayout->addWidget(radiusSpinBox[i], i , 6);
     }
 
-
-
-
     layout->addLayout(gridLayout);
     setLayout(layout);
 
     connect(enableCondColoringCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCondColoringChecked(bool)));
     connect(enableCondRadiusCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCondRadiusChecked(bool)));
-
-
-
 
 }
 

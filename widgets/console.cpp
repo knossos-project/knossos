@@ -26,9 +26,6 @@
 #include "GUIConstants.h"
 #include <QPlainTextEdit>
 #include <QSettings>
-#include <QDebug>
-#include <QMetaType>
-
 
 Console::Console(QWidget *parent) :
     QDialog(parent)
@@ -43,8 +40,6 @@ Console::Console(QWidget *parent) :
     palette.setColor(QPalette::Base, Qt::black);
     palette.setColor(QPalette::Text, Qt::white);
     this->setPalette(palette);
-
-
 }
 
 void Console::resizeEvent(QResizeEvent *event) {
@@ -86,20 +81,17 @@ void Console::saveSettings() {
     settings.endGroup();
 }
 
+/** used by the LOG macro, see knossos-global.h
+*/
 void Console::log(const char *fmt, ...) {
 
-    /*
     va_list args;
     char fmtbuffer[1024];
     memset(fmtbuffer, '\0', 1024);
-
 
     va_start(args, fmt);
     vsnprintf(fmtbuffer, sizeof(fmtbuffer), fmt, args);
     va_end(args);
 
     editor->appendPlainText(QString(fmtbuffer));
-    */
-
-
 }
