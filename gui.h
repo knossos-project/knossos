@@ -171,3 +171,5 @@ static void resetVpPosSize();
 static void createVpPosSizWin(int i);
 static void setDataSizeWinPositions();
 static void focusViewport(int VPfound);
+
+static int invalidFilename(char *filename);

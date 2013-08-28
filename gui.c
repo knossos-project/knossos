@@ -2713,7 +2713,7 @@ void WRAP_saveSkeleton() {
     int32_t saved = saveSkeleton();
     if(saved == FAIL) {
         AG_TextError("The skeleton was not saved successfully.\n"
-                     "Check disk space and access rights.\n"
+                     "Check for forbidden filename, disk space and access rights.\n"
                      "Attempted to write to: %s", state->skeletonState->skeletonFile);
         LOG("Save to %s failed.", state->skeletonState->skeletonFile);
     }
@@ -2799,6 +2799,21 @@ void OkfileDlgOpenSkel(AG_Event *event) {
     AG_ObjectDetach(AG_WidgetParentWindow(dlg));
 }
 
+static int invalidFilename(char *filename) {
+    LOG("shortfilename: %s", filename);
+    if( strchr(filename, '<') || strchr(filename, '>') || strchr(filename, ':') || strchr(filename, '"')
+       || strchr(filename, '\\') || strchr(filename, '/') || strchr(filename, '|') || strchr(filename, '*')
+       || strchr(filename, '?') || strchr(filename, '[') || strchr(filename, ']') || strchr(filename, '=')
+       || strchr(filename, '%') || strchr(filename, '$') || strchr(filename, '+') || strchr(filename, ',')
+       || strchr(filename, ';')
+       || strstr(filename, "..")
+       || !strcmp(filename, "~")
+       || !strncmp(filename, "-", 1)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 void OkfileDlgSaveAsSkel(AG_Event *event) {
     char *filename = AG_STRING(1);
     char *shortFilename;
@@ -2812,6 +2827,12 @@ void OkfileDlgSaveAsSkel(AG_Event *event) {
     strncpy(shortFilename,
             filename + strlen(state->viewerState->ag->skeletonDirectory),
             strlen(filename) - strlen(state->viewerState->ag->skeletonDirectory));
+
+    if(invalidFilename(shortFilename+1)) {
+        AG_TextError("The filename contains invalid characters. Tried to save to %s", filename);
+        LOG("The filename contains invalid characters. Tried to save to %s", filename);
+        return;
+    }
 
     extension = malloc(4);
     memset(extension, '\0', 4);
