@@ -120,9 +120,10 @@ mac {
     INCLUDEPATH += /usr/include/Python2.7 \
                    /usr/lib/
                    /usr/include
-    LIBS += -lxml2 \
-            -framework Python \
-            -lPythonQt
+    LIBS += -framework Python \
+            -lPythonQt \
+            -framework OpenGL
+
 
 }
 
@@ -157,5 +158,5 @@ win32 {
 RESOURCES += \
     Resources.qrc
 
-
+QMAKE_CXXFLAGS_RELEASE += O2
 

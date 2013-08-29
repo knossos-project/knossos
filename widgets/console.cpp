@@ -26,6 +26,8 @@
 #include "GUIConstants.h"
 #include <QPlainTextEdit>
 #include <QSettings>
+#include <QMutex>
+#include <QDebug>
 
 Console::Console(QWidget *parent) :
     QDialog(parent)
@@ -85,6 +87,12 @@ void Console::saveSettings() {
 */
 void Console::log(const char *fmt, ...) {
 
+
+
+    /*
+   QMutex mutex;
+   if(mutex.tryLock()) {
+
     va_list args;
     char fmtbuffer[1024];
     memset(fmtbuffer, '\0', 1024);
@@ -94,4 +102,8 @@ void Console::log(const char *fmt, ...) {
     va_end(args);
 
     editor->appendPlainText(QString(fmtbuffer));
+
+    mutex.unlock();
+   } */
 }
+

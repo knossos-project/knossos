@@ -228,6 +228,7 @@ uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType
 
     glEnable(GL_DEPTH_TEST);
 
+
     return true;
 }
 
@@ -1730,24 +1731,32 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
+#include "sleeper.h"
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
 
     int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
+
+
     GLuint selectionBuffer[8192] = {0};
     GLint hits, openGLviewport[4];
     GLuint names, *ptr, minZ, *ptrName;
     ptrName = NULL;
 
-
-    glViewport(state->viewerState->vpConfigs[currentVP].upperLeftCorner.x,
-        state->viewerState->screenSizeY
-        - state->viewerState->vpConfigs[currentVP].upperLeftCorner.y
-        - state->viewerState->vpConfigs[currentVP].edgeLength,
-        state->viewerState->vpConfigs[currentVP].edgeLength,
-        state->viewerState->vpConfigs[currentVP].edgeLength);
-
+    if(currentVP == 0) {
+        ref->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == 1) {
+        ref3->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == 2) {
+        ref2->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == 3) {
+        ref4->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    }
 
     glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
@@ -1761,9 +1770,10 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     glPushName(0);
 
     glMatrixMode(GL_PROJECTION);
-
     glLoadIdentity();
-    gluPickMatrix(x, y, (float)width, (float)width, openGLviewport);
+
+
+    gluPickMatrix(x, ref->height() - y, width, width, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
@@ -1780,6 +1790,14 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
 
     minZ = 0xffffffff;
 
+    for(int i = 49; i < 100; i++) {
+        if(selectionBuffer[i] != 0) {
+            qDebug() << i << " " << selectionBuffer[i];
+        }
+
+    }
+
+
 
     for(i = 0; i < hits; i++) {
         names = *ptr;
@@ -1792,13 +1810,14 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         ptr += names + 2;
     }
 
+
+
     state->viewerState->selectModeFlag = false;
     if(ptrName) {
         return *ptrName - 50;
-    }
-    else {
+    } else {
         return false;
-    }
+    }       
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

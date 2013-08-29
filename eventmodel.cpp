@@ -50,11 +50,15 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 
         clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
+        qDebug() << " clickedNode:" << clickedNode;
+
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
             emit updateTools();
             return true;
         }
+
+        return false;
 
         if(VPfound == VIEWPORT_SKELETON) {
             return false;
@@ -127,7 +131,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     int clickedNode;
 
     clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), (state->viewerState->screenSizeY - event->y()), 1);
-
 
     if(clickedNode) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();

@@ -68,9 +68,9 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     walkFramesSpinBox = new QSpinBox;
     walkFramesSpinBox->setMaximum(1000);
     recenterTimeParallelSpinBox = new QSpinBox();
-    recenterTimeParallelSpinBox->setMaximum(1000);
+    recenterTimeParallelSpinBox->setMaximum(10000);
     recenterTimeOrthoSpinBox = new QSpinBox();
-    recenterTimeOrthoSpinBox->setMaximum(1000);
+    recenterTimeOrthoSpinBox->setMaximum(10000);
 
     formLayout->addRow(movementSpeedLabel, movementSpeedSpinBox);
     formLayout->addRow(jumpFramesLabel, jumpFramesSpinBox);
@@ -139,7 +139,7 @@ void NavigationWidget::movementSpeedChanged(int value) {
 }
 
 void NavigationWidget::jumpFramesChanged(int value) {
-    state->viewerState->recenteringTimeOrth = value;
+    state->viewerState->dropFrames = value;
 }
 
 void NavigationWidget::walkFramesChanged(int value) {

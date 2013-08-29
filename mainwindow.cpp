@@ -46,6 +46,7 @@
 #include <QAction>
 #include <QThread>
 #include <QRegExp>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include "knossos-global.h"
 #include "knossos.h"
@@ -128,7 +129,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     updateTitlebar(false);
-
 }
 
 void MainWindow::createViewports() {
@@ -470,7 +470,7 @@ void MainWindow::recentFileSelected(QAction *action) {
         strncpy(state->skeletonState->skeletonFile, cname, 8192);
 
         QApplication::processEvents();
-        emit loadSkeletonSignal(fileName);
+        QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
@@ -575,6 +575,7 @@ void MainWindow::openSlot() {
     state->skeletonState->skeletonFileAsQString = fileName;
 
     if(!fileName.isNull()) {
+        QApplication::processEvents();
         QFileInfo info(fileName);
         QString path = info.canonicalPath();
 
@@ -588,9 +589,8 @@ void MainWindow::openSlot() {
         }
 
 
+        QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
 
-
-        emit loadSkeletonSignal(fileName);
         emit updateCommentsTableSignal();
         updateTitlebar(true);
         linkWithActiveNodeSlot();

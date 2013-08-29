@@ -46,6 +46,7 @@
 
 struct stateInfo *state = NULL;
 
+#include <QtConcurrent/QtConcurrentRun>
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -124,6 +126,7 @@ int main(int argc, char *argv[])
     state->M = 5;
     state->cubeSetElements = state->M * state->M  * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
+
 
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.")
@@ -243,24 +246,11 @@ int Knossos::initStates() {
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-       /*
-       state->viewerState->vpConfigs[i].upperLeftCorner = state->viewerState->vpConfigs[i].upperLeftCorner;
-       state->viewerState->vpConfigs[i].type = state->viewerState->vpConfigs[i].type;
-       state->viewerState->vpConfigs[i].draggedNode = state->viewerState->vpConfigs[i].draggedNode;
-       state->viewerState->vpConfigs[i].userMouseSlideX = state->viewerState->vpConfigs[i].userMouseSlideX;
-       state->viewerState->vpConfigs[i].userMouseSlideY = state->viewerState->vpConfigs[i].userMouseSlideY;
-       state->viewerState->vpConfigs[i].edgeLength = state->viewerState->vpConfigs[i].edgeLength;
-       */
+
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
            / (float)state->magnification;
 
-       /*
-       state->viewerState->vpConfigs[i].texture.edgeLengthPx = state->viewerState->vpConfigs[i].texture.edgeLengthPx;
-       state->viewerState->vpConfigs[i].texture.edgeLengthDc = state->viewerState->vpConfigs[i].texture.edgeLengthDc;
-       state->viewerState->vpConfigs[i].texture.zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel;
-       state->viewerState->vpConfigs[i].texture.usedTexLengthPx = state->M * state->cubeEdgeLength;
-       */
        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
 
    }
@@ -269,11 +259,6 @@ int Knossos::initStates() {
        LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
        return false;
    }
-
-   /* @todo todo emitting signals out of class seems to be problematic
-   emit knossos->calcDisplayedEdgeLengthSignal();
-   */
-
 
    // For the client
 
@@ -497,7 +482,7 @@ bool Knossos::readConfigFile(const char *path) {
         if(line.isEmpty())
             continue;
 
-        QStringList tokenList = line.split(QRegExp("[^A-Za-z0-9_.]"), QString::SkipEmptyParts);
+        QStringList tokenList = line.split(QRegExp("[^A-Za-z0-9_.-]"), QString::SkipEmptyParts);
 
         QString token = tokenList.at(0);
 

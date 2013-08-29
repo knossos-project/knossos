@@ -56,6 +56,7 @@ Viewer::Viewer(QObject *parent) :
     vp2->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 5, 350, 350);
     vp3->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
     vp4->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
+    state->viewerState->screenSizeY = vp4->geometry().bottom();
 
 
     vp->show();
@@ -91,11 +92,6 @@ Viewer::Viewer(QObject *parent) :
 
     window->loadSettings();
     window->setCoordinates(state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
-    /*
-    QTimer *counter = new QTimer();
-    connect(counter, SIGNAL(timeout()), this, SLOT(showFrames()));
-    counter->start(1000);
-    */
 
     state->alpha = 0;
     state->beta = 0;
