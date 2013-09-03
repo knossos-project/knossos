@@ -115,6 +115,13 @@ signals:
     void moveToPrevTreeSignal();
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
+
+    nodeListElement *findNodeInRadiusSignal(Coordinate searchPosition);
+    segmentListElement *findSegmentByNodeIDSignal(int sourceNodeID, int targetNodeID);
+    nodeListElement *findNodeByNodeIDSignal(int nodeID);
+    uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+
 public slots:
     
 };

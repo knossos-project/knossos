@@ -27,6 +27,8 @@
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QSettings>
+#include <QSpacerItem>
+#include <QGroupBox>
 #include <math.h>
 #include "GUIConstants.h"
 #include "knossos-global.h"
@@ -37,6 +39,8 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)
 {
     this->setWindowTitle("Tracing Time");
+    this->setStyleSheet("");
+
     this->runningTimeLabel = new QLabel("Running Time: 00:00:00");
     this->tracingTimeLabel = new QLabel("Tracing Time: 00:00:00");
     this->idleTimeLabel = new QLabel("Idle Time: 00:00:00");
@@ -45,6 +49,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     layout->addWidget(runningTimeLabel);
     layout->addWidget(tracingTimeLabel);
     layout->addWidget(idleTimeLabel);
+    layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     this->setLayout(layout);
 
     timer = new QTimer();

@@ -42,7 +42,7 @@ public:
     static bool findAndRegisterAvailableDatasets();    
     static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);   
-    static int initStates();
+    bool initStates();
 
     static bool unlockSkeleton(int increment);
     static bool lockSkeleton(uint targetRevision);
@@ -52,12 +52,16 @@ public:
     static bool sendServerSignal();
     static uint log2uint32(register uint x);
     static uint ones32(register uint x);
-    static void loadTreeLUTFallback();
-    static void loadDefaultTreeLUT();
+
+    void loadDefaultTreeLUT();
 
 
 signals:
     void calcDisplayedEdgeLengthSignal();
+    void treeColorAdjustmentChangedSignal();
+    bool loadTreeColorTableSignal(const char *path, float *table, int type);
+public slots:
+    void loadTreeLUTFallback();
 
 };
 

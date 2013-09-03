@@ -45,6 +45,7 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
 {
     setWindowTitle("Comments Shortcuts");
 
+
     this->shortcutTab = new CommentShortCutsTab();
     this->preferencesTab = new CommentsPreferencesTab();
     this->nodeCommentsTab = new CommentsNodeCommentsTab();

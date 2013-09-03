@@ -25,11 +25,8 @@
 #include <time.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
-#include "renderer.h"
 #include "knossos.h"
 #include "client.h"
-#include "viewer.h"
-#include "mainwindow.h"
 #include "functions.h"
 #include <QProgressDialog>
 
@@ -578,8 +575,6 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
     }
 
     emit idleTimeSignal();
-
-    //Remote::checkIdleTime();
 
     return true;
 }

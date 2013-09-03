@@ -20,6 +20,7 @@ signals:
     void updateCommentsTableSignal();
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setJumpToActiveNodeSignal();
+    nodeListElement *findNodeByNodeIDSignal(int id);
 public slots:
     void updateCommentsTable();
     void branchPointOnlyChecked(bool on);

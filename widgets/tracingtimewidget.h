@@ -42,6 +42,7 @@ public slots:
     void checkIdleTime();
 
 protected:
+
     QLabel *runningTimeLabel;
     QLabel *tracingTimeLabel;
     QLabel *idleTimeLabel;

@@ -66,6 +66,12 @@ signals:
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
+    treeListElement *findTreeByTreeIDSignal(int value);
+    void restoreDefaultTreeColorSignal();
+    int splitConnectedComponent(int targetRevision, int nodeID);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+    bool addTreeComment(int targetRevision, int treeID, char *comment);
+    bool mergeTrees(int targetRevision, int treeID1, int treeID2);
 public slots:
     void activeTreeIDChanged(int value);
     void commentChanged(QString comment);

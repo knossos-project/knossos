@@ -36,7 +36,6 @@ static int focus; /* This variable is needed to distinguish the viewport in case
 
 class QPushButton;
 class Renderer;
-class EventModel;
 class Viewport : public QGLWidget
 {
     Q_OBJECT

@@ -43,6 +43,8 @@ signals:
     bool loadDataSetColortableSignal(const char *path, GLuint *table, int type);
     void showIntersectionsSignal(bool value);
     void updateViewerStateSignal();
+    bool loadTreeColorTableSignal(const char *path, float *table, int type);
+    void treeColorAdjustmentsChangedSignal();
 public slots:
     void enableOverlayChecked(bool on);
     void datasetLinearFilteringChecked(bool on);

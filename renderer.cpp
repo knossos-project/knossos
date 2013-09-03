@@ -1123,8 +1123,8 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
-         // Now we draw the  background of our skeleton VP
 
+         // Now we draw the  background of our skeleton VP
 
         glPushMatrix();
         glTranslatef(0., 0., -10. * ((float)state->skeletonState->volBoundary - 2.));
@@ -1133,6 +1133,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glDisable(GL_TEXTURE_2D);
 
         glLoadName(1);
+
         glColor4f(0.9, 0.9, 0.9, 1.); // HERE
         // The * 10 should prevent, that the user translates into space with gray background - dirty solution. TDitem
         glBegin(GL_QUADS);

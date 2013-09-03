@@ -32,7 +32,6 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QDoubleSpinBox>
-#include "skeletonizer.h"
 #include "knossos.h"
 
 extern struct stateInfo *state;
@@ -165,7 +164,7 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
     nodeListElement *node;
 
     if(value > state->skeletonState->activeNode->nodeID) {
-        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
+        while((node = findNodeByNodeIDSignal(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
             value += 1;
         }
 
@@ -180,7 +179,7 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
             return;
         }
     } else if(value < state->skeletonState->activeNode->nodeID) {
-        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
+        while((node = findNodeByNodeIDSignal(value)) == 0 and value > 0) {
             value -= 1;
         }
 
@@ -227,10 +226,10 @@ void ToolsNodesTabWidget::idChanged(int value) {
 void ToolsNodesTabWidget::commentChanged(QString comment) {
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-        Skeletonizer::addComment(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
     } else {
         if(!comment.isEmpty())
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
+         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
     }
 
     emit updateCommentsTableSignal();
@@ -263,8 +262,8 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
 
 /* @todo */
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
-    if((state->skeletonState->activeNode) && (Skeletonizer::findNodeByNodeID(this->idSpinBox->value()))) {
-         if(Skeletonizer::addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
+    if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
+         if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
 
          } else {
 

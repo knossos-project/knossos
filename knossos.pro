@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network xml testlib
+QT       += core gui opengl network xml
 
 TARGET = knossos
 TEMPLATE = app
@@ -219,3 +219,4 @@ win32 {
 
 RESOURCES += \
     Resources.qrc
+

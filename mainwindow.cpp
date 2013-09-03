@@ -46,13 +46,15 @@
 #include <QAction>
 #include <QThread>
 #include <QRegExp>
+#include <QToolButton>
 #include <QtConcurrent/QtConcurrentRun>
 
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
-#include "skeletonizer.h"
 #include "widgetcontainer.h"
+
+
 
 extern struct stateInfo *state;
 
@@ -62,7 +64,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
 
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
@@ -150,10 +151,17 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow:: createCoordBar() {
-    copyButton = new QPushButton("Copy");
-    pasteButton = new QPushButton("Paste");
+
+    copyButton = new QToolButton();
+    copyButton->setToolTip("Copy");
+    copyButton->setIcon(QIcon(":/images/icons/edit-copy.png"));
+
+    pasteButton = new QToolButton();
+    pasteButton->setToolTip("Paste");
+    pasteButton->setIcon(QIcon(":/images/icons/edit-paste.png"));
 
     this->toolBar = new QToolBar();
+    this->toolBar->setMaximumHeight(80);
     this->addToolBar(toolBar);
     this->toolBar->addWidget(copyButton);
     this->toolBar->addWidget(pasteButton);
@@ -181,12 +189,34 @@ void MainWindow:: createCoordBar() {
     yLabel = new QLabel("y");
     zLabel = new QLabel("z");
 
+    this->toolBar->setMovable(false);
+    this->toolBar->setFloatable(false);
+
     this->toolBar->addWidget(xLabel);
     this->toolBar->addWidget(xField);
     this->toolBar->addWidget(yLabel);
     this->toolBar->addWidget(yField);
     this->toolBar->addWidget(zLabel);
-    this->toolBar->addWidget(zField);
+    this->toolBar->addWidget(zField);    
+    this->toolBar->addSeparator();
+
+    pythonButton = new QToolButton();
+    pythonButton->setToolTip("Python");
+    pythonButton->setIcon(QIcon(":/images/python.png"));        
+    this->toolBar->addWidget(pythonButton);    
+
+    tracingTimeButton = new QToolButton();
+    tracingTimeButton->setToolTip("Tracing Time Widget");
+    tracingTimeButton->setIcon(QIcon(":/images/icons/appointment.png"));
+    this->toolBar->addWidget(tracingTimeButton);
+
+    this->toolBar->setBackgroundRole(QPalette::Dark);
+
+
+    zoomAndMultiresButton = new QToolButton();
+    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution");
+    zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
+    this->toolBar->addWidget(zoomAndMultiresButton);
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
@@ -301,7 +331,7 @@ void MainWindow::treeColorAdjustmentsChanged(){
                 memcpy(state->viewerState->treeAdjustmentTable,
                 state->viewerState->treeColortable,
                 RGB_LUTSIZE * sizeof(float));
-                Skeletonizer::updateTreeColors();
+                emit updateTreeColorsSignal();
             }
             else {
                 memcpy(state->viewerState->treeAdjustmentTable,
@@ -314,7 +344,7 @@ void MainWindow::treeColorAdjustmentsChanged(){
                 memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->defaultTreeTable,
             RGB_LUTSIZE * sizeof(float));
-                    Skeletonizer::updateTreeColors();
+                    emit updateTreeColorsSignal();
             }
 }
 
@@ -385,7 +415,7 @@ void MainWindow::createActions()
     dropNodesAction = new QAction(tr("&Drop Nodes(C)"), this);
     dropNodesAction->setCheckable(true);
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
-    clearSkeletonAction =  new QAction(tr("&Clear Skeleton"), this);
+
 
     if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {
         addNodeAction->setChecked(true);
@@ -399,7 +429,7 @@ void MainWindow::createActions()
     connect(linkWithActiveNodeAction, SIGNAL(triggered()), this, SLOT(linkWithActiveNodeSlot()));
     connect(dropNodesAction, SIGNAL(triggered()), this, SLOT(dropNodesSlot()));
     connect(skeletonStatisticsAction, SIGNAL(triggered()), this, SLOT(skeletonStatisticsSlot()));
-    connect(clearSkeletonAction, SIGNAL(triggered()), this, SLOT(clearSkeletonSlot()));
+
 
     /* view actions */
     workModeViewAction = new QAction(tr("&Work Mode"), this);
@@ -409,8 +439,6 @@ void MainWindow::createActions()
     recenterOnClickAction->setCheckable(true);
     zoomAndMultiresAction = new QAction(tr("Zoom and Multires.."), this);
     zoomAndMultiresAction->setCheckable(true);
-    tracingTimeAction = new QAction(tr("&Tracing Time"), this);
-    tracingTimeAction->setCheckable(true);
 
     if(state->viewerState->workMode == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
@@ -420,8 +448,7 @@ void MainWindow::createActions()
 
     connect(dragDatasetAction, SIGNAL(triggered()), this, SLOT(dragDatasetSlot()));
     connect(recenterOnClickAction, SIGNAL(triggered()), this, SLOT(recenterOnClickSlot()));
-    connect(zoomAndMultiresAction, SIGNAL(triggered()), this, SLOT(zoomAndMultiresSlot()));
-    connect(tracingTimeAction, SIGNAL(triggered()), this, SLOT(tracingTimeSlot()));
+    connect(zoomAndMultiresAction, SIGNAL(triggered()), this, SLOT(zoomAndMultiresSlot()));    
 
     /* preferences actions */
     loadCustomPreferencesAction = new QAction(tr("&Load Custom Preferences"), this);
@@ -456,8 +483,8 @@ void MainWindow::createActions()
     connect(commentShortcutsAction, SIGNAL(triggered()), this, SLOT(commentShortcutsSlots()));
 
     /* Help actions */
-    aboutAction = new QAction(tr("&About"), this);
-    connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutSlot()));
+    //aboutAction = new QAction(tr("&About"), this);
+    //connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 
 }
 
@@ -482,21 +509,13 @@ void MainWindow::recentFileSelected(QAction *action) {
 void MainWindow::createMenus()
 {
     fileMenu = menuBar()->addMenu("&File");
-    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DirOpenIcon), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    recentFileMenu = fileMenu->addMenu("Recent File(s)");
+    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("&Recent File(s)"));
 
-    /* History Entries */
-
-    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-        ////historyEntryActions[i]->setText(skeletonFileHistory->at(i));
-        recentFileMenu->addAction(historyEntryActions[i]);   
-    }
-    connect(recentFileMenu, SIGNAL(triggered(QAction*)), this, SLOT(recentFileSelected(QAction*)));
-
-    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
     fileMenu->addSeparator();
-    fileMenu->addAction(QIcon("quit"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     editMenu = menuBar()->addMenu("&Edit Skeleton");
     workModeEditMenu = editMenu->addMenu("&Work Mode");
@@ -504,14 +523,15 @@ void MainWindow::createMenus()
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
     editMenu->addAction(skeletonStatisticsAction);
-    editMenu->addAction(clearSkeletonAction);
+    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "&Clear Skeleton", this, SLOT(clearSkeletonSlot()));
 
     viewMenu = menuBar()->addMenu("&View");
     workModeViewMenu = viewMenu->addMenu("&Work Mode");
         workModeViewMenu->addAction(dragDatasetAction);
         workModeViewMenu->addAction(recenterOnClickAction);
     viewMenu->addAction(zoomAndMultiresAction);
-    viewMenu->addAction(tracingTimeAction);
+    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "&Tracing Time Widget", this, SLOT(tracingTimeSlot()));
+
 
     preferenceMenu = menuBar()->addMenu("&Preferences");
     preferenceMenu->addAction(loadCustomPreferencesAction);
@@ -528,7 +548,7 @@ void MainWindow::createMenus()
     windowMenu->addAction(commentShortcutsAction);
 
     helpMenu = menuBar()->addMenu("&Help");
-    helpMenu->addAction(aboutAction);
+    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "&About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "&File|About")));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -625,8 +645,15 @@ void MainWindow::updateFileHistoryMenu() {
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
         QString path = *it;
 
+
+
         historyEntryActions[i]->setText(path);
-        recentFileMenu->addAction(historyEntryActions[i]);
+        if(!historyEntryActions[i]->text().isEmpty()) {
+            recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected(QAction*)));
+            historyEntryActions[i]->setVisible(true);
+        } else {
+            historyEntryActions[i]->setVisible(false);
+        }
         i++;
     }
 }
@@ -778,8 +805,10 @@ void MainWindow::zoomAndMultiresSlot()
 
 void MainWindow::tracingTimeSlot()
 {
+
     this->widgetContainer->tracingTimeWidget->show();
     tracingTimeAction->setChecked(true);
+
 }
 
 /* preference menu functionality */
@@ -815,7 +844,7 @@ void MainWindow::defaultPreferencesSlot() {
         case QMessageBox::Yes:
             clearSettings();
             loadSettings();
-            Knossos::loadTreeLUTFallback();
+            emit loadTreeLUTFallback();
             treeColorAdjustmentsChanged();
             datasetColorAdjustmentsChanged();
             break;

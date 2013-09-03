@@ -8,8 +8,6 @@
 #include <QFormLayout>
 #include <QTableWidgetItem>
 #include <QHeaderView>
-#include "skeletonizer.h"
-
 
 #include "knossos-global.h"
 
@@ -152,7 +150,7 @@ void CommentsNodeCommentsTab::itemSelected(int row, int col) {
     if(!nodeID or !comment)
         return;
 
-    state->skeletonState->selectedCommentNode = Skeletonizer::findNodeByNodeID(nodeID->text().toInt());
+    state->skeletonState->selectedCommentNode = findNodeByNodeIDSignal(nodeID->text().toInt());
 }
 
 /** If the row of a table contains node information and is double Clicked then knossos jump to this node   */

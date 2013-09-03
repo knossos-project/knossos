@@ -130,11 +130,10 @@ void ViewportSettingsWidget::loadSettings() {
             state->viewerState->filterType = GL_NEAREST;
     }
 
-    /* @todo the depth-cutoff leads to a black viewport screen default value = 0.5!
     if(!settings.value(DEPTH_CUTOFF).isNull()) {
         this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(settings.value(DEPTH_CUTOFF).toDouble());
         state->viewerState->depthCutOff = settings.value(DEPTH_CUTOFF).toDouble();
-    } */
+    }
 
 
     if(!settings.value(BIAS).isNull()) {

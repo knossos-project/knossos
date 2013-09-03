@@ -43,7 +43,9 @@
 #include "scripting.h"
 #include "ftp.h"
 
-//#include "windows.h"
+#ifdef Q_OS_WIN
+    #include "windows.h"
+#endif
 
 #define NUMTHREADS 4
 
@@ -59,13 +61,12 @@ int main(int argc, char *argv[])
     char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
 
-
-
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+    Knossos *knossos = new Knossos();
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -108,38 +109,7 @@ int main(int argc, char *argv[])
         }
     }
 
-
-// START
-    /*
-#ifdef Q_OS_UNIX
-    strncpy(state->path, "../../e1088_mag1/", 1024);
-#endif
-#ifdef Q_OS_MACX
-    strncpy(state->path, "../../../../../e1088_mag1/", 1024);
-#endif
-#ifdef Q_OS_WIN32
-    strncpy(state->path, "..\\..\\e1088_mag1", 1024);
-#endif
-
-
-    strncpy(state->name, "070317_e1088", 1024);
-    state->boundary.x = 2000;
-    state->boundary.y = 2000;
-    state->boundary.z = 2000;
-    state->scale.x = 22.0;
-    state->scale.y = 22.0;
-    state->scale.z = 22.0;
-    state->cubeEdgeLength = 128;
-    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-
-    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
-    state->M = 5;
-    state->cubeSetElements = state->M * state->M  * state->M;
-    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-    */
-// END
-
-    if(Knossos::initStates() != true) {
+    if(knossos->initStates() != true) {
        LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
@@ -152,6 +122,10 @@ int main(int argc, char *argv[])
     Client *client = new Client();
     Scripting *scripts = new Scripting();
 
+    QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
+    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(const char*,float*,int)), viewer, SLOT(loadTreeColorTable(const char*,float*,int)));
+
+    QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -194,8 +168,8 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
 
-    QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    QObject::connect(viewer->window, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));    
+    QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
 
     loader->start();
     viewer->run();
@@ -211,7 +185,7 @@ int main(int argc, char *argv[])
  * This function initializes the values of state with the value of tempConfig
  * Beyond it allocates the dynamic data structures
  */
-int Knossos::initStates() {
+bool Knossos::initStates() {
    state->time.start();
 
    //General stuff   
@@ -234,7 +208,7 @@ int Knossos::initStates() {
    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
-   Knossos::loadDefaultTreeLUT();
+   loadDefaultTreeLUT();
 
    state->viewerState->treeLutSet = false;
 
@@ -257,24 +231,10 @@ int Knossos::initStates() {
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-       /*
-       state->viewerState->vpConfigs[i].upperLeftCorner = state->viewerState->vpConfigs[i].upperLeftCorner;
-       state->viewerState->vpConfigs[i].type = state->viewerState->vpConfigs[i].type;
-       state->viewerState->vpConfigs[i].draggedNode = state->viewerState->vpConfigs[i].draggedNode;
-       state->viewerState->vpConfigs[i].userMouseSlideX = state->viewerState->vpConfigs[i].userMouseSlideX;
-       state->viewerState->vpConfigs[i].userMouseSlideY = state->viewerState->vpConfigs[i].userMouseSlideY;
-       state->viewerState->vpConfigs[i].edgeLength = state->viewerState->vpConfigs[i].edgeLength;
-       */
+
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
-           / (float)state->magnification;
-
-       /*
-       state->viewerState->vpConfigs[i].texture.edgeLengthPx = state->viewerState->vpConfigs[i].texture.edgeLengthPx;
-       state->viewerState->vpConfigs[i].texture.edgeLengthDc = state->viewerState->vpConfigs[i].texture.edgeLengthDc;
-       state->viewerState->vpConfigs[i].texture.zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel;
-       state->viewerState->vpConfigs[i].texture.usedTexLengthPx = state->M * state->cubeEdgeLength;
-       */
+           / (float)state->magnification;       
        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
 
    }
@@ -1191,9 +1151,9 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
 void Knossos::loadDefaultTreeLUT() {
 
-    if(Viewer::loadTreeColorTable("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
+    if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
         Knossos::loadTreeLUTFallback();
-        MainWindow::treeColorAdjustmentsChanged();
+        emit treeColorAdjustmentChangedSignal();
     }
 }
 

@@ -23,11 +23,8 @@
  */
 
 #include "eventmodel.h"
-#include "mainwindow.h"
 #include "functions.h"
 #include "knossos.h"
-#include "skeletonizer.h"
-#include "viewport.h"
 #include "renderer.h"
 
 extern struct stateInfo *state;
@@ -67,7 +64,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         //in other VPs we traverse nodelist to find nearest node inside the radius
         clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
         if(clickedCoordinate) {
-            newActiveNode = Skeletonizer::findNodeInRadius(*clickedCoordinate);
+            newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
             if(newActiveNode != NULL) {
                 emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                 emit updateTools();
@@ -112,9 +109,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         clickedNode = ref->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), (state->viewerState->screenSizeY - event->y()), 10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
-                if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID, clickedNode)) {
+                if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
                     emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
-                } else if(Skeletonizer::findSegmentByNodeIDs(clickedNode, state->skeletonState->activeNode->nodeID)) {
+                } else if(findSegmentByNodeIDSignal(clickedNode, state->skeletonState->activeNode->nodeID)) {
                     emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
                 } else{
                     emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
@@ -144,13 +141,13 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 
                 // Delete segment between clicked and active node
                 if(state->skeletonState->activeNode) {
-                    if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->activeNode->nodeID,
+                    if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID,
                                             clickedNode)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
                                    NULL);
-                    } else if(Skeletonizer::findSegmentByNodeIDs(clickedNode,
+                    } else if(findSegmentByNodeIDSignal(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
@@ -163,8 +160,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
             }
         } else {
             // No modifier pressed
-            state->viewerState->vpConfigs[VPfound].draggedNode =
-                Skeletonizer::findNodeByNodeID(clickedNode);
+            state->viewerState->vpConfigs[VPfound].draggedNode = findNodeByNodeIDSignal(clickedNode);
             state->viewerState->vpConfigs[VPfound].motionTracking = 1;
         }
     }
@@ -212,7 +208,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         if(keyMod.testFlag(Qt::ControlModifier)) {
             //2. Add a "stump", a branch node to which we don't automatically move.
-            if((newNodeID = Skeletonizer::addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+            if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID);
@@ -223,7 +219,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         //3. Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
 
-        if(Skeletonizer::addSkeletonNodeAndLinkWithActive(clickedCoordinate,
+        if(addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                state->viewerState->vpConfigs[VPfound].type,
                                                true) == false) { //could not add node
             break;
@@ -1149,7 +1145,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit workModeLinkSignal();
     } else if(event->key() == Qt::Key_C) {
         treeCol.r = -1.;
-        Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
+        emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
         emit updateTreeCountSignal();
         emit workModeDropSignal();
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;

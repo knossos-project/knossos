@@ -35,7 +35,6 @@
 #include <QFileDialog>
 #include "knossos-global.h"
 #include "mainwindow.h"
-#include "viewer.h"
 
 extern struct stateInfo *state;
 
@@ -206,7 +205,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
         MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
 
 
-        if(Viewer::loadDatasetColorTable(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {
+        if(loadDataSetColortableSignal(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {
             LOG("Error loading Dataset LUT.\n")
             memcpy(&(state->viewerState->datasetColortable[0][0]),
                            &(state->viewerState->neutralDatasetTable[0][0]),
@@ -228,7 +227,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
         strcpy(state->viewerState->gui->treeLUTFile, cname);
         MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
         state->viewerState->treeLutSet = true;
-        if(Viewer::loadTreeColorTable(cname, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
+        if(loadTreeColorTableSignal(cname, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
             LOG("Error loading Tree LUT.\n")
             memcpy(&(state->viewerState->treeColortable[0]),
                    &(state->viewerState->defaultTreeTable[0]),
@@ -236,7 +235,8 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
             state->viewerState->treeLutSet = false;
         }
 
-        MainWindow::treeColorAdjustmentsChanged();
+
+        emit treeColorAdjustmentsChangedSignal();
 
     }
 }

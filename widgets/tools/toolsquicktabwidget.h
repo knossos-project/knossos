@@ -46,7 +46,7 @@ signals:
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
     void setActiveTreeSignal(int id);
-    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    bool setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void updateToolsSignal();
     void popBranchNodeSignal(int targetRevision);
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
@@ -55,6 +55,10 @@ signals:
     void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
     void updateCommentsTableSignal();
+    treeListElement *findTreeByTreeIDSignal(int value);
+    nodeListElement *findNodeByNodeIDSignal(int value);
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

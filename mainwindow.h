@@ -35,6 +35,7 @@ class MainWindow;
 
 class QLabel;
 class QToolBar;
+class QToolButton;
 class QPushButton;
 class QSpinBox;
 class QMessageBox;
@@ -57,7 +58,7 @@ public:
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
     static void reloadDataSizeWin();
-    static void treeColorAdjustmentsChanged();
+
     static void datasetColorAdjustmentsChanged();
     void showSplashScreen();
 
@@ -73,17 +74,19 @@ signals:
     void updateToolsSignal();
     void updateCommentsTableSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
-    void remoteJumpSignal(int x, int y, int z);
+
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);
+    void updateTreeColorsSignal();
+    void loadTreeLUTFallback();
 protected:
 
 public:
     Ui::MainWindow *ui;
 
     QToolBar *toolBar;
-    QPushButton *copyButton;
-    QPushButton *pasteButton;
+    QToolButton *copyButton;
+    QToolButton *pasteButton;
     QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *xField, *yField, *zField;
 
@@ -146,6 +149,10 @@ public:
     QFile *loadedFile;
 
     QPushButton *posButton;
+
+    QToolButton *pythonButton;
+    QToolButton *tracingTimeButton;
+    QToolButton *zoomAndMultiresButton;
 
     void updateFileHistoryMenu();
     void createActions();
@@ -216,7 +223,7 @@ public slots:
     void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);  
     void recentFileSelected(QAction *action);
-
+    void treeColorAdjustmentsChanged();
 
 };
 

@@ -61,7 +61,6 @@ public:
     QTimer *timer;    
     int frames;
 
-    static bool loadTreeColorTable(const char *path, float *table, int type);    
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
     static bool loadDatasetColorTable(const char *path, GLuint *table, int type);
@@ -76,6 +75,7 @@ signals:
     void updateCoordinatesSignal(int x, int y, int z);
     void updateZoomAndMultiresWidgetSignal();
     void idleTimeSignal();
+    bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
     int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
@@ -115,7 +115,6 @@ protected:
     bool dcSliceExtract_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
 
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
-
     void rewire();
 public slots:
     bool changeDatasetMag(uint upOrDownFlag);
@@ -128,6 +127,7 @@ public slots:
     void showFrames();
     void run();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
+    bool loadTreeColorTable(const char *path, float *table, int type);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

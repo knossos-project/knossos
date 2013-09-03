@@ -23,8 +23,9 @@ void WidgetContainer::createConsoleWidget() {
 
 void WidgetContainer::createTracingTimeWidget() {
     tracingTimeWidget = new TracingTimeWidget();
-    tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+    tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     tracingTimeWidget->setMinimumSize(200, 100);
+
     //tracingTimeWidget->setGeometry(800, 350, 200, 100);
 }
 
@@ -79,6 +80,7 @@ void WidgetContainer::createSychronizationWidget() {
 
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
+
     splashWidget->setWindowFlags(Qt::Tool);
     //splashWidget->setGeometry(400, 100, 500, 500);
     splashWidget->show();

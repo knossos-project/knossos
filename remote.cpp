@@ -24,11 +24,9 @@
 #include "knossos-global.h"
 #include "remote.h"
 #include "sleeper.h"
-#include "viewer.h"
-#include "renderer.h"
 #include "functions.h"
 #include <QDebug>
-#include <QTest>
+//#include <QTest>
 #include <math.h>
 
 extern stateInfo *state;

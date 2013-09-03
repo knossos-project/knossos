@@ -34,6 +34,7 @@
 #include <QCheckBox>
 #include <QDebug>
 #include <QSettings>
+#include <QSpacerItem>
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -55,15 +56,21 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 {
     setWindowTitle("Zoom and Multiresolution Settings");
 
+
     // top layout
     QGridLayout *topLayout = new QGridLayout();
     this->orthogonalDataViewportLabel = new QLabel("Orthogonal Data Viewport");
-    this->skeletonViewportLabel = new QLabel("Skeleton View");
+    this->skeletonViewportLabel = new QLabel("Skeleton Viewport");
 
     this->orthogonalDataViewportSlider = new QSlider(Qt::Horizontal);
     this->orthogonalDataViewportSlider->setMaximum(100);
+    this->orthogonalDataViewportSlider->setTickInterval(10);
+    this->orthogonalDataViewportSlider->setTickPosition(QSlider::TicksBelow);
+
     this->skeletonViewportSlider = new QSlider(Qt::Horizontal);
     this->skeletonViewportSlider->setMaximum(100);
+    this->skeletonViewportSlider->setTickInterval(10);
+    this->skeletonViewportSlider->setTickPosition(QSlider::TicksBelow);
 
     this->orthogonalDataViewportSpinBox = new QDoubleSpinBox();
     this->orthogonalDataViewportSpinBox->setMaximum(1);
@@ -95,10 +102,8 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     line->setFrameShadow(QFrame::Sunken);
 
     mainLayout->addWidget(line);
-    mainLayout->addSpacing(10);
 
-    this->lockDatasetLabel = new QLabel("Lock dataset to current mag");
-    this->lockDatasetCheckBox = new QCheckBox();
+    this->lockDatasetCheckBox = new QCheckBox("Lock dataset to current mag");
 
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
     QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
@@ -109,14 +114,16 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->lowestActiveMagDatasetLabel = new QLabel(lowestActiveMag);
 
     QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(lockDatasetLabel, 0, 1);
-    gridLayout->addWidget(lockDatasetCheckBox, 0, 2);
+
+    gridLayout->addWidget(lockDatasetCheckBox, 0, 1);
 
     mainLayout->addLayout(gridLayout);
 
     mainLayout->addWidget(currentActiveMagDatasetLabel);
     mainLayout->addWidget(highestActiveMagDatasetLabel);
     mainLayout->addWidget(lowestActiveMagDatasetLabel);
+
+    mainLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     setLayout(mainLayout);
 

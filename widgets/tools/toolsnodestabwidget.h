@@ -58,6 +58,10 @@ signals:
     void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
     void updateCommentsTableSignal();
+    nodeListElement *findNodeByNodeIDSignal(int value);
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

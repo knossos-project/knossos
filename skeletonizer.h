@@ -37,16 +37,16 @@ class Skeletonizer : public QObject
 public:
     explicit Skeletonizer(QObject *parent = 0);
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
-    static nodeListElement *findNodeInRadius(Coordinate searchPosition);
+
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
-    static nodeListElement *findNodeByNodeID(int nodeID);
+
     static nodeListElement *findNodeByCoordinate(Coordinate *position);
-    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
 
-    static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
+
 
     static int addNode(int targetRevision,
                     int nodeID,
@@ -57,10 +57,10 @@ public:
                     int inMag,
                     int time,
                     int respectLocks);
-    static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID);
-    static bool mergeTrees(int targetRevision, int treeID1, int treeID2);
 
-    static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
+
+
+
 
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
@@ -70,15 +70,15 @@ public:
     static void *getDynArray(dynArray *array, int pos);
     static bool setDynArray(dynArray *array, int pos, void *value);
     static dynArray *newDynArray(int size);
-    static int splitConnectedComponent(int targetRevision, int nodeID);
+
 
     static void UI_popBranchNode();
-    static void restoreDefaultTreeColor();
-    static bool updateTreeColors();
+
+
     static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
     static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
-    static treeListElement* findTreeByTreeID(int treeID);
+
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
     static void WRAP_popBranchNode();
@@ -311,6 +311,17 @@ public slots:
     bool moveToPrevNode();
     bool moveToNextNode();
 
+    static treeListElement* findTreeByTreeID(int treeID);
+    static nodeListElement *findNodeByNodeID(int nodeID);
+    static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID);
+    static void restoreDefaultTreeColor();
+    static int splitConnectedComponent(int targetRevision, int nodeID);
+    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+    static bool mergeTrees(int targetRevision, int treeID1, int treeID2);
+    static bool updateTreeColors();
+    static nodeListElement *findNodeInRadius(Coordinate searchPosition);
+    static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
+    static uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 };
 
 #endif // SKELETONIZER_H

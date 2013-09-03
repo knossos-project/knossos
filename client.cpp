@@ -23,14 +23,11 @@
  */
 
 #include "skeletonizer.h"
-#include "remote.h"
 #include "knossos.h"
-#include "viewer.h"
 #include "client.h"
 #include "sleeper.h"
 
 extern stateInfo *state;
-
 
 Client::Client(QObject *parent) :
     QThread(parent)

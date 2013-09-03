@@ -33,7 +33,6 @@
 #include <QPushButton>
 #include <QSpacerItem>
 
-#include "skeletonizer.h"
 #include "knossos.h"
 
 extern struct stateInfo *state;
@@ -155,7 +154,7 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
     treeListElement *tree;
     if(value > state->skeletonState->activeTree->treeID) {
-        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
+        while((tree = findTreeByTreeIDSignal(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
             value += 1;
         }
         if(!tree) {
@@ -163,7 +162,7 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
             return;
         }
     } else if(value < state->skeletonState->activeTree->treeID) {
-        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value > 0) {
+        while((tree = findTreeByTreeIDSignal(value)) == 0 and value > 0) {
             value -= 1;
         }
         if(!tree) {
@@ -181,13 +180,12 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
     ref->toolsTreesTabWidget->connect(ref->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
 
     activeTreeSpinBox->setValue(value);
-    Skeletonizer::setActiveTreeByID(value);
+    emit setActiveTreeSignal(value);
 
     ref->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
     ref->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
     ref->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
     ref->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
-
 
     if(state->skeletonState->activeTree->comment)
         ref->toolsTreesTabWidget->commentField->setText(state->skeletonState->activeTree->comment);
@@ -210,7 +208,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
     nodeListElement *node;
 
     if(value > state->skeletonState->activeNode->nodeID) {
-        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
+        while((node = findNodeByNodeIDSignal(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
             value += 1;
         }
 
@@ -226,7 +224,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             return;
         }
     } else if(value < state->skeletonState->activeNode->nodeID) {
-        while((node = Skeletonizer::findNodeByNodeID(value)) == 0 and value > 0) {
+        while((node = findNodeByNodeIDSignal(value)) == 0 and value > 0) {
             value -= 1;
         }
 
@@ -243,7 +241,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
         }
     }
 
-    if(Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, value)) {
+    if(setActiveNodeSignal(CHANGE_MANUAL, 0, value)) {
 
         if(state->skeletonState->activeNode) {
             this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
@@ -270,11 +268,12 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
 void ToolsQuickTabWidget::commentChanged(QString comment) {
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-        Skeletonizer::addComment(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+
+        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
     }
     else{
         if(!comment.isEmpty())
-            Skeletonizer::editComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
     }
 
     emit updateCommentsTableSignal();

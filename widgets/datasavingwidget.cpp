@@ -31,6 +31,7 @@
 #include <QLabel>
 #include <QSpinBox>
 #include <QSettings>
+#include <QSpacerItem>
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -53,7 +54,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     mainLayout->addWidget(autosaveCheckbox);
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(autoincrementFileNameButton);
-
+    mainLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(mainLayout);
 
     connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));

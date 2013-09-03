@@ -27,6 +27,7 @@
 #include <QPlainTextEdit>
 #include <QSettings>
 
+
 Console::Console(QWidget *parent) :
     QDialog(parent)
 {

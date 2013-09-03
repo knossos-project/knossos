@@ -46,7 +46,7 @@ public:
     bool closeConnection(QTcpSocket *remoteSocket);
     bool flushOutBuffer();
 
-    static bool broadcastPosition(uint x, uint y, uint z);
+
     static bool skeletonSyncBroken();
 
     static int bytesToInt(Byte *source);
@@ -107,7 +107,7 @@ signals:
 public slots:
     void socketConnectionSucceeded();
     void socketConnectionFailed(QAbstractSocket::SocketError error);
-    
+    static bool broadcastPosition(uint x, uint y, uint z);
 };
 
 #endif // CLIENT_H

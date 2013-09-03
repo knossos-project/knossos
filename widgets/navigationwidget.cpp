@@ -32,6 +32,7 @@
 #include <QGroupBox>
 #include <QSpacerItem>
 #include <QSettings>
+#include <QGroupBox>
 #include "GUIConstants.h"
 #include "knossos-global.h"
 
@@ -43,16 +44,7 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     this->setWindowTitle("Navigation Settings");
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
-    // General section
-    generalLabel = new QLabel("General");
-
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-
-    mainLayout->addWidget(generalLabel);
-    mainLayout->addWidget(line);
-
+    QGroupBox *generalGroup = new QGroupBox("General");
     QFormLayout *formLayout = new QFormLayout();
 
     movementSpeedLabel = new QLabel("Movement Speed:");
@@ -64,7 +56,7 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     movementSpeedSpinBox = new QSpinBox();
     movementSpeedSpinBox->setMaximum(1000);
     jumpFramesSpinBox = new QSpinBox;
-    jumpFramesSpinBox->setMaximum(1000);
+    jumpFramesSpinBox->setMaximum(1000);    
     walkFramesSpinBox = new QSpinBox;
     walkFramesSpinBox->setMaximum(1000);
     recenterTimeParallelSpinBox = new QSpinBox();
@@ -78,30 +70,29 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     formLayout->addRow(recenterTimeParallelLabel, recenterTimeParallelSpinBox);
     formLayout->addRow(recenterTimeOrthoLabel, recenterTimeOrthoSpinBox);
 
-    this->advanceTracingModesLabel = new QLabel("Advance Tracing Modes");
+    generalGroup->setLayout(formLayout);
+    mainLayout->addWidget(generalGroup);
 
-    mainLayout->addLayout(formLayout);
-
+    QGroupBox *advanceGroup = new QGroupBox("Advance Tracing Modes");
     mainLayout->addSpacing(10);
-
-    // Advance Tracing Modes section
-    mainLayout->addWidget(advanceTracingModesLabel);
 
     QFrame *line2 = new QFrame();
     line2->setFrameShape(QFrame::HLine);
     line2->setFrameShadow(QFrame::Sunken);
-
-    mainLayout->addWidget(line2);
 
     normalModeButton = new QRadioButton("Normal Mode");
     additionalViewportDirectionMoveButton = new QRadioButton("Additional Viewport Direction Move");
     additionalTracingDirectionMoveButton = new QRadioButton("Additional Tracing Direction Move");
     additionalMirroredMoveButton = new QRadioButton("Additional Mirrored Move");
 
-    mainLayout->addWidget(normalModeButton);
-    mainLayout->addWidget(this->additionalViewportDirectionMoveButton);
-    mainLayout->addWidget(this->additionalTracingDirectionMoveButton);
-    mainLayout->addWidget(this->additionalMirroredMoveButton);
+    QVBoxLayout *layout = new QVBoxLayout();
+
+    layout->addWidget(normalModeButton);
+    layout->addWidget(this->additionalViewportDirectionMoveButton);
+    layout->addWidget(this->additionalTracingDirectionMoveButton);
+    layout->addWidget(this->additionalMirroredMoveButton);
+
+    advanceGroup->setLayout(layout);
 
     QFormLayout *restLayout = new QFormLayout();
 
@@ -114,8 +105,9 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     restLayout->addRow(delayTimePerStepLabel, delayTimePerStepSpinBox);
     restLayout->addRow(numberOfStepsLabel, numberOfStepsSpinBox);
 
-    mainLayout->addLayout(restLayout);
-    this->setLayout(mainLayout);
+    layout->addLayout(restLayout);
+    mainLayout->addWidget(advanceGroup);
+    setLayout(mainLayout);
 
     connect(movementSpeedSpinBox, SIGNAL(valueChanged(int)), this, SLOT(movementSpeedChanged(int)));
     connect(jumpFramesSpinBox, SIGNAL(valueChanged(int)), this, SLOT(jumpFramesChanged(int)));

@@ -37,7 +37,6 @@
 #include <QGridLayout>
 #include <QMessageBox>
 
-#include "skeletonizer.h"
 #include "knossos.h"
 
 extern struct stateInfo *state;
@@ -182,7 +181,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
 
     treeListElement *tree;
     if(value > state->skeletonState->activeTree->treeID) {
-        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
+        while((tree = findTreeByTreeIDSignal(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
             value += 1;
         }
         if(!tree) {
@@ -190,7 +189,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
             return;
         }
     } else if(value < state->skeletonState->activeTree->treeID) {
-        while((tree = Skeletonizer::findTreeByTreeID(value)) == 0 and value > 0) {
+        while((tree = findTreeByTreeIDSignal(value)) == 0 and value > 0) {
             value -= 1;
         }
         if(!tree) {
@@ -206,7 +205,7 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
 
     activeTreeSpinBox->setValue(value);
 
-    Skeletonizer::setActiveTreeByID(value);
+    emit setActiveTreeSignal(value);
 
     rSpinBox->setValue(state->skeletonState->activeTree->color.r);
     gSpinBox->setValue(state->skeletonState->activeTree->color.g);
@@ -246,7 +245,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
+    emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit updateToolsSignal();
 }
@@ -254,7 +253,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
 void ToolsTreesTabWidget::commentChanged(QString comment) {
     if(state->skeletonState->activeTree and !comment.isEmpty()) {
         qDebug() << comment.toStdString().c_str();
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
+        emit addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
     } else {
 
     }
@@ -262,7 +261,7 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
 
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {    
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
-    if(Skeletonizer::mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value())) {
+    if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value())) {
         ref->updateDisplayedTree();
 
     } else {
@@ -281,7 +280,7 @@ void ToolsTreesTabWidget::id2Changed(int value) {
 
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
-        if(Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID)) {
+        if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID)) {
             ref->updateDisplayedTree();
         } else {
             LOG("Probleme")
@@ -309,7 +308,7 @@ void ToolsTreesTabWidget::aChanged(double value) {
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {
-    Skeletonizer::restoreDefaultTreeColor();
+    emit restoreDefaultTreeColorSignal();
     rSpinBox->setValue(0);
     gSpinBox->setValue(0);
     bSpinBox->setValue(0);
