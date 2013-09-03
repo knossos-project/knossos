@@ -51,25 +51,25 @@ For Loader file loader
 #define LM_FTP      1
 
 struct _C_Element {
-        Coordinate coordinate;
+    Coordinate coordinate;
 
-        char *filename;
-        char *path;
-        char *fullpath_filename;
-        char *local_filename;
-        CURL *curlHandle;
-        FILE *ftp_fh;
-        int32_t    hasError;
-        int32_t isFinished;
-        int32_t isAborted;
-        int32_t isLoaded;
+    char *filename;
+    char *path;
+    char *fullpath_filename;
+    char *local_filename;
+    CURL *curlHandle;
+    FILE *ftp_fh;
+    int32_t    hasError;
+    int32_t isFinished;
+    int32_t isAborted;
+    int32_t isLoaded;
 
-        //uint32_t debugVal;
-        //DWORD tickDownloaded;
-        //DWORD tickDecompressed;
+    //uint32_t debugVal;
+    //DWORD tickDownloaded;
+    //DWORD tickDecompressed;
 
-        struct _C_Element *previous;
-        struct _C_Element *next;
+    struct _C_Element *previous;
+    struct _C_Element *next;
 };
 
 typedef struct _C_Element C_Element;
