@@ -640,6 +640,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
     float radius;
 
+    state->directionSign = -1;
+
     if(VPfound == -1)
         return true;
 
@@ -1025,6 +1027,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
         }
     } else if(event->key() == Qt::Key_D) {
+        state->directionSign = -1;
         if(shift) {
             switch(VPfound) {
                 case VIEWPORT_XY:

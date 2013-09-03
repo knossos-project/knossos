@@ -217,10 +217,9 @@ void ZoomAndMultiresWidget::update() {
     QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
     QString lowestActiveMag = QString("Lowest active mag dataset: %1").arg(state->lowestAvailableMag);
 
-    this->currentActiveMagDatasetLabel = new QLabel(currentActiveMag);
-    this->highestActiveMagDatasetLabel = new QLabel(highestActiveMag);
-    this->lowestActiveMagDatasetLabel = new QLabel(lowestActiveMag);
-
+    this->currentActiveMagDatasetLabel->setText(currentActiveMag);
+    this->highestActiveMagDatasetLabel->setText(highestActiveMag);
+    this->lowestActiveMagDatasetLabel->setText(lowestActiveMag);
 }
 
 void ZoomAndMultiresWidget::loadSettings() {

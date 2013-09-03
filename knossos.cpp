@@ -41,22 +41,31 @@
 #include "widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
 #include "scripting.h"
+#include "ftp.h"
+
+//#include "windows.h"
 
 #define NUMTHREADS 4
 
 struct stateInfo *state = NULL;
+char logFilename[MAX_PATH] = {0};
 
-#include <QtConcurrent/QtConcurrentRun>
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
-{ 
+{
+    char tempPath[MAX_PATH] = {0};
+
+    char *file = "/Users/amos/log.txt";
+    strcpy(logFilename, file);
+
+
+
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -100,7 +109,8 @@ int main(int argc, char *argv[])
     }
 
 
-
+// START
+    /*
 #ifdef Q_OS_UNIX
     strncpy(state->path, "../../e1088_mag1/", 1024);
 #endif
@@ -126,7 +136,8 @@ int main(int argc, char *argv[])
     state->M = 5;
     state->cubeSetElements = state->M * state->M  * state->M;
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
+    */
+// END
 
     if(Knossos::initStates() != true) {
        LOG("Error during initialization of the state struct.")
@@ -246,11 +257,24 @@ int Knossos::initStates() {
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
+       /*
+       state->viewerState->vpConfigs[i].upperLeftCorner = state->viewerState->vpConfigs[i].upperLeftCorner;
+       state->viewerState->vpConfigs[i].type = state->viewerState->vpConfigs[i].type;
+       state->viewerState->vpConfigs[i].draggedNode = state->viewerState->vpConfigs[i].draggedNode;
+       state->viewerState->vpConfigs[i].userMouseSlideX = state->viewerState->vpConfigs[i].userMouseSlideX;
+       state->viewerState->vpConfigs[i].userMouseSlideY = state->viewerState->vpConfigs[i].userMouseSlideY;
+       state->viewerState->vpConfigs[i].edgeLength = state->viewerState->vpConfigs[i].edgeLength;
+       */
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
            / (float)state->magnification;
 
+       /*
+       state->viewerState->vpConfigs[i].texture.edgeLengthPx = state->viewerState->vpConfigs[i].texture.edgeLengthPx;
+       state->viewerState->vpConfigs[i].texture.edgeLengthDc = state->viewerState->vpConfigs[i].texture.edgeLengthDc;
+       state->viewerState->vpConfigs[i].texture.zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel;
+       state->viewerState->vpConfigs[i].texture.usedTexLengthPx = state->M * state->cubeEdgeLength;
+       */
        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
 
    }
@@ -259,6 +283,11 @@ int Knossos::initStates() {
        LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
        return false;
    }
+
+   /* @todo todo emitting signals out of class seems to be problematic
+   emit knossos->calcDisplayedEdgeLengthSignal();
+   */
+
 
    // For the client
 
@@ -308,7 +337,21 @@ int Knossos::initStates() {
    state->cubeSetElements = state->M * state->M * state->M;
    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
 
+   memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
+   state->currentDirectionsIndex = 0;
+   SET_COORDINATE(state->previousPositionX, 0, 0, 0);
    SET_COORDINATE(state->currentPositionX, 0, 0, 0);
+
+   state->loadLocalSystem = LS_UNIX;
+   if (LM_FTP == state->loadMode) {
+
+       state->loadFtpCachePath = (char*)malloc(MAX_PATH);
+
+       char *tmp = "/Users/amos/temp/";
+       strcpy(state->loadFtpCachePath, tmp);
+
+       curl_global_init(CURL_GLOBAL_DEFAULT);
+   }
 
    // We're not doing stuff in parallel, yet. So we skip the locking
    // part.
@@ -332,7 +375,9 @@ int Knossos::initStates() {
    //  than one was found
 
 
-   Knossos::findAndRegisterAvailableDatasets();
+   if (false == Knossos::findAndRegisterAvailableDatasets()) {
+       return false;
+   }
 
    return true;
 
@@ -482,14 +527,20 @@ bool Knossos::readConfigFile(const char *path) {
         if(line.isEmpty())
             continue;
 
-        QStringList tokenList = line.split(QRegExp("[^A-Za-z0-9_.-]"), QString::SkipEmptyParts);
+        QStringList tokenList = line.split(
+                    QRegExp("[ ;]"),
+                    QString::SkipEmptyParts);
 
         QString token = tokenList.at(0);
 
         if(token == "experiment") {
             token = tokenList.at(2);
-            char *expName = const_cast<char *>(token.toStdString().c_str());
-            strncpy(state->name, expName, 1024);
+            QStringList experimentTokenList = token.split(
+                        QRegExp("[\"]"),
+                        QString::SkipEmptyParts);
+            QString experimentToken = experimentTokenList.at(0);
+            std::string stdString = experimentToken.toStdString();
+            strncpy(state->name, stdString.c_str(), 1024);
 
         } else if(token == "scale") {
             token = tokenList.at(1);
@@ -511,6 +562,21 @@ bool Knossos::readConfigFile(const char *path) {
             }
         } else if(token == "magnification") {
             state->magnification = tokenList.at(1).toInt();
+        } else if(token == "ftp_mode") {
+            state->loadMode = LM_FTP;
+            int ti;
+            std::string stdString;
+            const int FTP_PARAMS_NUM = 4;
+            char *ftp_conf_strings[FTP_PARAMS_NUM] = { state->ftpHostName, state->ftpBasePath, state->ftpUsername, state->ftpPassword };
+            for (ti = 0; ti < FTP_PARAMS_NUM; ti++) {
+                token = tokenList.at(ti + 1);
+                stdString = token.toStdString();
+                strncpy(ftp_conf_strings[ti], stdString.c_str(), MAX_PATH);
+            }
+            state->ftpFileTimeout = tokenList.at(ti + 1).toInt();
+
+        } else if (token == "compression_ratio") {
+            state->compressionRatio = tokenList.at(1).toInt();
         } else {
             LOG("Skipping unknown parameter");
         }
@@ -582,14 +648,15 @@ struct stateInfo *Knossos::emptyState() {
  */
 bool Knossos::findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
-    uint currMag, i;
+    uint32_t currMag, i;
+    uint32_t isMultiresCompatible = false;
     char currPath[1024];
     char levelUpPath[1024];
     char currKconfPath[1024];
     char datasetBaseDirName[1024];
     char datasetBaseExpName[1024];
-    int isPathSepTerminated = false;
-    uint pathLen;
+    int32_t isPathSepTerminated = false;
+    uint32_t pathLen;
 
     memset(currPath, '\0', 1024);
     memset(levelUpPath, '\0', 1024);
@@ -602,38 +669,61 @@ bool Knossos::findAndRegisterAvailableDatasets() {
      * a dataset that allows multires. */
 
     /* Multires is only enabled if K is launched with mag1!
-    * Launching it with another dataset than mag1 leads to the old
-    * behavior, that only this mag is shown, this happens also
-    * when the path contains no mag string. */
+     * Launching it with another dataset than mag1 leads to the old
+     * behavior, that only this mag is shown, this happens also
+     * when the path contains no mag string. */
 
-    if((strstr(state->name, "mag") != NULL) && (state->magnification == 1)) {
+    if(state->path[strlen(state->path) - 1] == '/'
+       || state->path[strlen(state->path) - 1] == '\\') {
+        isPathSepTerminated = true;
+    }
 
-        /* take base path and go one level up */
-        pathLen = strlen(state->path);
+    if (LM_FTP == state->loadMode) {
+        isMultiresCompatible = true;
+    }
+    else {
+        if(isPathSepTerminated) {
+            if(strncmp(&state->path[strlen(state->path) - 5], "mag1", 4) == 0) {
+                isMultiresCompatible = true;
+            }
+        }
+        else {
+            if(strncmp(&state->path[strlen(state->path) - 4], "mag1", 4) == 0) {
+                isMultiresCompatible = true;
+            }
+        }
+    }
 
-        for(i = 1; i < pathLen; i++) {
-            if((state->path[pathLen-i] == '\\') || (state->path[pathLen-i] == '/')) {
-                if(i == 1) {
-                    /* This is the trailing path separator, ignore. */
-                    isPathSepTerminated = true;
-                    continue;
+    if(isMultiresCompatible && (state->magnification == 1)) {
+        if (LM_FTP != state->loadMode) {
+            /* take base path and go one level up */
+            pathLen = strlen(state->path);
+
+            for(i = 1; i < pathLen; i++) {
+                if((state->path[pathLen-i] == '\\')
+                    || (state->path[pathLen-i] == '/')) {
+                    if(i == 1) {
+                        /* This is the trailing path separator, ignore. */
+                        isPathSepTerminated = true;
+                        continue;
+                    }
+                    /* this contains the path "one level up" */
+                    strncpy(levelUpPath, state->path, pathLen - i + 1);
+                    levelUpPath[pathLen - i + 1] = '\0';
+                    /* this contains the dataset dir without "mag1"
+                     * K must be launched with state->path set to the
+                     * mag1 dataset for multires to work! This is by convention. */
+                    if(isPathSepTerminated) {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
+                        datasetBaseDirName[i - 6] = '\0';
+                    }
+                    else {
+                        strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
+                        datasetBaseDirName[i - 5] = '\0';
+                    }
+
+                    break;
                 }
-                /* this contains the path "one level up" */
-                strncpy(levelUpPath, state->path, pathLen - i + 1);
-                levelUpPath[pathLen - i + 1] = '\0';
-                /* this contains the dataset dir without "mag1"
-                 * K must be launched with state->path set to the
-                 * mag1 dataset for multires to work! This is by convention. */
-                if(isPathSepTerminated) {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 6);
-                    datasetBaseDirName[i - 6] = '\0';
-                }
-                else {
-                    strncpy(datasetBaseDirName, state->path + pathLen - i + 1, i - 5);
-                    datasetBaseDirName[i - 5] = '\0';
-                }
-
-                break;
             }
         }
 
@@ -643,34 +733,48 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         /* iterate over all possible mags and test their availability */
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+            int32_t currMagExists = false;
+            if (LM_FTP == state->loadMode) {
+                char *ftpDirDelim = "/";
+                int confSize = 0;
+                sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
+                /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
+                if (EXIT_SUCCESS == downloadFile(currPath, NULL)) {
+                    currMagExists = true;
+                }
+            }
+            else {
+                /* compile the path to the currently tested directory */
+                //if(i!=0) currMag *= 2;
+        #ifdef Q_OS_UNIX
+                sprintf(currPath,
+                    "%s%smag%d/",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #else
+                sprintf(currPath,
+                    "%s%smag%d\\",
+                    levelUpPath,
+                    datasetBaseDirName,
+                    currMag);
+        #endif
+                FILE *testKconf;
+                sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
 
-            /* compile the path to the currently tested directory */
-            //if(i!=0) currMag *= 2;
-    #ifdef Q_OS_UNIX
-            sprintf(currPath,
-                "%s%smag%d/",
-                levelUpPath,
-                datasetBaseDirName,
-                currMag);
-    #else
-            sprintf(currPath,
-                "%s%smag%d\\",
-                levelUpPath,
-                datasetBaseDirName,
-                currMag);
-    #endif
-            FILE *testKconf;
-            sprintf(currKconfPath, "%s%s", currPath, "knossos.conf");
-
-            /* try fopen() on knossos.conf of currently tested dataset */
-            if ((testKconf = fopen(currKconfPath, "r"))) {
+                /* try fopen() on knossos.conf of currently tested dataset */
+                if ((testKconf = fopen(currKconfPath, "r"))) {
+                    fclose(testKconf);
+                    currMagExists = true;
+                }
+            }
+            if (currMagExists) {
 
                 if(state->lowestAvailableMag > currMag) {
                     state->lowestAvailableMag = currMag;
                 }
                 state->highestAvailableMag = currMag;
 
-                fclose(testKconf);
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
                 strcpy(state->magPaths[log2uint32(currMag)], currPath);
@@ -690,6 +794,16 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                 sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
+        LOG("Highest Mag: %d", state->highestAvailableMag);
+
+        if(state->lowestAvailableMag == INT_MAX) {
+            /* This can happen if a bug in the string parsing above causes knossos to
+             * search the wrong directories. We exit here to prevent guaranteed
+             * subsequent crashes. */
+
+            LOG("Unsupported data path format.");
+            _Exit(false);
+        }
 
         /* Do not enable multires by default, even if more than one dataset was found.
          * Multires might be confusing to untrained tracers! Experts can easily enable it..
@@ -700,11 +814,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {
             state->highestAvailableMag = NUM_MAG_DATASETS;
-            LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS)
+            LOG("KNOSSOS currently supports only datasets downsampled by a factor of %d. This can easily be changed in the source.", NUM_MAG_DATASETS);
         }
 
         state->magnification = state->lowestAvailableMag;
-
         /*state->boundary.x *= state->magnification;
         state->boundary.y *= state->magnification;
         state->boundary.z *= state->magnification;
@@ -719,11 +832,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         /* state->magnification already contains the right mag! */
 
         pathLen = strlen(state->path);
-
-        if(pathLen == 0) {
-            return false;
+        if(!pathLen) {
+            LOG("No valid dataset specified.\n");
+            _Exit(false);
         }
-
 
         if((state->path[pathLen-1] == '\\')
            || (state->path[pathLen-1] == '/')) {
@@ -763,7 +875,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
     }
     return true;
-
 }
 
 bool Knossos::configDefaults() {
@@ -777,6 +888,7 @@ bool Knossos::configDefaults() {
     state->conditionClientSignal = new QWaitCondition();
     state->protectSkeleton = new QMutex(QMutex::Recursive);
     state->protectLoadSignal = new QMutex();
+    state->protectLoaderSlots = new QMutex();
     state->protectRemoteSignal = new QMutex();
     state->protectClientSignal = new QMutex();
     state->protectCube2Pointer = new QMutex();
@@ -918,6 +1030,9 @@ bool Knossos::configDefaults() {
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
     state->skeletonState->workMode = ON_CLICK_DRAG;
+
+    state->loadMode = LM_LOCAL;
+    state->compressionRatio = 0;
 
     return true;
 

@@ -186,13 +186,13 @@ public:
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    //TRUE, if all display lists must be updated
+    //true, if all display lists must be updated
     bool skeletonChanged;
-    //TRUE, if the view on the skeleton changed
+    //true, if the view on the skeleton changed
     bool viewChanged;
-    //TRUE, if dataset parameters (size, ...) changed
+    //true, if dataset parameters (size, ...) changed
     bool datasetChanged;
-    //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
+    //true, if only displayListSkeletonSlicePlaneVP must be updated.
     bool skeletonSliceVPchanged;
 
     //uint skeletonDisplayMode;
@@ -221,7 +221,7 @@ public:
     color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
 
-    //If TRUE, loadSkeleton merges the current skeleton with the provided
+    //If true, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
 
     uint lastSaveTicks;

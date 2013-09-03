@@ -41,12 +41,14 @@
 #include <QtNetwork/qhostaddress.h>
 #include <QtCore/qset.h>
 
+#include <curl/curl.h>
+
 #define KVERSION "3.4"
 
 #define FAIL    -1
 
 #define MIN_N   1
-
+#define MAX_PATH 256
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
@@ -280,6 +282,7 @@ typedef struct {
         float z;
 } floatCoordinate;
 
+#define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 struct Coordinate{
     int x;
     int y;
@@ -373,6 +376,10 @@ typedef struct Hashtable{
     // hashtable is the hashtable to look in.
     // On success, a pointer to Byte (a Datacube) is returned, HT_FAILURE else.
     static Byte *ht_get(Hashtable *hashtable, Coordinate key);
+    // Internal implementation of ht_get, only return the hash element where data is stored.
+    // This should also be used when you actually want to change something in the element
+    // if it exists.
+    static C2D_Element *ht_get_element(Hashtable *hashtable, Coordinate key);
 
     // Insert an element.
     static uint ht_put(Hashtable *hashtable, Coordinate key, Byte *value);
@@ -476,9 +483,9 @@ struct stateInfo {
     // its sleep and do something new.
     bool loadSignal;
 
-    // If loadSignal is TRUE and quitSignal is TRUE, make the
-    // loading thread quit. loadSignal == TRUE means the loader
-    // has been signalled. If quitSignal != TRUE, it will go on
+    // If loadSignal is true and quitSignal is true, make the
+    // loading thread quit. loadSignal == true means the loader
+    // has been signalled. If quitSignal != true, it will go on
     // loading its stuff.
     bool quitSignal;
 
@@ -512,6 +519,8 @@ struct stateInfo {
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
     uint magnification;
+
+    uint compressionRatio;
 
     uint highestAvailableMag;
     uint lowestAvailableMag;
@@ -578,6 +587,9 @@ struct stateInfo {
 
     QMutex *protectLoadSignal;
 
+    // Protect slot list during loading
+    QMutex *protectLoaderSlots;
+
     // This should be accessed through sendRemoteSignal() only.
 
     QMutex *protectRemoteSignal;
@@ -603,11 +615,29 @@ struct stateInfo {
 
  //---  Info about the state of KNOSSOS in general. --------
 
+/* Calculate movement trajectory for loading based on how many last single movements */
+#define LL_CURRENT_DIRECTIONS_SIZE (20)
+    // This gives the current direction whenever userMove is called
+    Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
+    int32_t currentDirectionsIndex;
+    int32_t directionSign;
+
     // This gives the current position ONLY when the reload
     // boundary has been crossed. Change it through
     // sendLoadSignal() exclusively. It has to be locked by
     // protectLoadSignal.
     Coordinate currentPositionX;
+    Coordinate previousPositionX;
+
+    // Cube loader affairs
+    int32_t    loadMode;
+    int32_t    loadLocalSystem;
+    char       *loadFtpCachePath;
+    char       ftpBasePath[MAX_PATH];
+    char       ftpHostName[MAX_PATH];
+    char       ftpUsername[MAX_PATH];
+    char       ftpPassword[MAX_PATH];
+    int32_t    ftpFileTimeout;
 
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
     // coordinates to pointers to datacubes / overlay cubes loaded
@@ -1144,13 +1174,13 @@ struct skeletonState {
     float rotationState[16];
     // The next three flags cause recompilation of the above specified display lists.
 
-    //TRUE, if all display lists must be updated
+    //true, if all display lists must be updated
     bool skeletonChanged;
-    //TRUE, if the view on the skeleton changed
+    //true, if the view on the skeleton changed
     bool viewChanged;
-    //TRUE, if dataset parameters (size, ...) changed
+    //true, if dataset parameters (size, ...) changed
     bool datasetChanged;
-    //TRUE, if only displayListSkeletonSlicePlaneVP must be updated.
+    //true, if only displayListSkeletonSlicePlaneVP must be updated.
     bool skeletonSliceVPchanged;
     bool commentsChanged;
 
@@ -1181,7 +1211,7 @@ struct skeletonState {
     float commentNodeRadii[NUM_COMMSUBSTR];
     nodeListElement *selectedCommentNode;
 
-    //If TRUE, loadSkeleton merges the current skeleton with the provided
+    //If true, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
 
     uint lastSaveTicks;
@@ -1344,11 +1374,35 @@ typedef struct {
         color.a = ac; \
         }
 
+#define ABS(x) (((x) >= 0) ? (x) : -(x))
+#define SQR(x) ((x)*(x))
+
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
         coordinate.x = a; \
         coordinate.y = b; \
         coordinate.z = c; \
+        }
+
+#define CALC_VECTOR_NORM(v) (sqrt(SQR(v.x) + SQR(v.y) + SQR(v.z)))
+
+#define NORM_VECTOR(v, norm) \
+        { \
+        v.x /= (norm); \
+        v.y /= (norm); \
+        v.z /= (norm); \
+        }
+
+#define CALC_DOT_PRODUCT(a, b) ((a.x * b.x) + (a.y * b.y) + (a.z * b.z))
+#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) (ABS(CALC_DOT_PRODUCT(point, plane)) / CALC_VECTOR_NORM(plane))
+#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
+        { SET_COORDINATE(coordinate, ox + offset_array[0], oy + offset_array[1], oz + offset_array[2]); }
+
+#define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
+        { \
+            offset_array[direction_index] = k; \
+            offset_array[(direction_index + 1) % 3] = i; \
+            offset_array[(direction_index + 2) % 3] = j; \
         }
 
 #define COMPARE_COORDINATE(c1, c2)  (((c1).x == (c2).x) && ((c1).y == (c2).y) && ((c1).z == (c2).z))
@@ -1403,14 +1457,40 @@ typedef struct {
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
 #define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-
+#define FPRINTF_STR_FILE(fh, str) \
+    { \
+    if (NULL != fh) {fprintf(fh, "%s", str);} \
+    }
+#define FILE_FLUSH(fh) \
+    { \
+    if (NULL != fh) { fflush(fh);} \
+    }
+#define FILE_CLOSE(fh) \
+    { \
+    if (NULL != fh) { fclose(fh); fh = NULL;} \
+    }
+extern char logFilename[];
 
 #define LOG(...) \
 { \
-    extern stateInfo *state; \
-    if(state->console) { \
-        state->console->log(__VA_ARGS__); \
-    } \
+    char msg[1024]; \
+    FILE *logFile = NULL; \
+    logFile = fopen(logFilename, "a+"); \
+    sprintf(msg, "[%s\t%d ] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
+    FILE_FLUSH(stdout); \
+    FILE_CLOSE(logFile); \
 }
+
+// New log implementation, merge old one into new once the new doesn't crash anymore
+/*
+#define LOG(...) \
+extern stateInfo *state; \
+if(state->console) { \
+    state->console->log(__VA_ARGS__); \
+} \
+*/
+
 
 #endif

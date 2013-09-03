@@ -48,7 +48,33 @@ SOURCES +=\
     decorators/skeletonizerdecorator.cpp \
     decorators/mainwindowdecorator.cpp \
     widgets/commentshortcuts/commentsnodecommentstab.cpp \
-    scripting.cpp
+    scripting.cpp \
+    qsort.cpp \
+    ftp.cpp \
+    openjpeg/cio.c \
+    openjpeg/bio.c \
+    openjpeg/color.c \
+    openjpeg/convert.c \
+    openjpeg/dwt.c \
+    openjpeg/event.c \
+    openjpeg/function_list.c \
+    openjpeg/image.c \
+    openjpeg/index.c \
+    openjpeg/invert.c \
+    openjpeg/j2k.c \
+    openjpeg/jp2.c \
+    openjpeg/mct.c \
+    openjpeg/mqc.c \
+    openjpeg/openjpeg.c \
+    openjpeg/opj_clock.c \
+    openjpeg/opj_decompress.c \
+    openjpeg/opj_getopt.c \
+    openjpeg/pi.c \
+    openjpeg/raw.c \
+    openjpeg/t1.c \
+    openjpeg/t2.c \
+    openjpeg/tcd.c \
+    openjpeg/tgt.c
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -87,7 +113,43 @@ HEADERS  += mainwindow.h \
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
-    scripting.h
+    scripting.h \
+    openjpeg/tgt.h \
+    openjpeg/tcd.h \
+    openjpeg/t2.h \
+    openjpeg/t1_luts.h \
+    openjpeg/t1.h \
+    openjpeg/raw.h \
+    openjpeg/pi.h \
+    openjpeg/opj_stdint.h \
+    openjpeg/opj_malloc.h \
+    openjpeg/opj_inttypes.h \
+    openjpeg/opj_intmath.h \
+    openjpeg/opj_includes.h \
+    openjpeg/opj_getopt.h \
+    openjpeg/opj_config_private.h \
+    openjpeg/opj_config.h \
+    openjpeg/opj_clock.h \
+    openjpeg/opj_apps_config.h \
+    openjpeg/openjpeg.h \
+    openjpeg/mqc.h \
+    openjpeg/mct.h \
+    openjpeg/jp2.h \
+    openjpeg/j2k.h \
+    openjpeg/invert.h \
+    openjpeg/indexbox_manager.h \
+    openjpeg/index.h \
+    openjpeg/image.h \
+    openjpeg/function_list.h \
+    openjpeg/format_defs.h \
+    openjpeg/event.h \
+    openjpeg/dwt.h \
+    openjpeg/convert.h \
+    openjpeg/color.h \
+    openjpeg/cio.h \
+    openjpeg/cidx_manager.h \
+    openjpeg/bio.h \
+    ftp.h
 
 FORMS    += mainwindow.ui
 
@@ -113,7 +175,7 @@ OTHER_FILES += \
     ChangeLog.txt \
     defaultSettings.xml \
     customCursor.xpm \
-    config.y \
+    config.y
 
 
 mac {
@@ -122,14 +184,11 @@ mac {
                    /usr/include
     LIBS += -framework Python \
             -lPythonQt \
-            -framework OpenGL
-
-
+            -lcurl
 }
 
 linux {
-    LIBS += -lxml2 \
-            -lGL \
+    LIBS += -lGL \
             -lGLU \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
 
@@ -145,18 +204,18 @@ win32 {
         DEBUG_EXT =
     }
 
-    LIBS += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\python2.7\config\libpython2.7.dll.a \           
+    LIBS += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\python2.7\config\libpython2.7.dll.a \
             C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt$${DEBUG_EXT}.a \
             C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt_QtAll$${DEBUG_EXT}.a \
+            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libcurl.dll.a \
+            -lwsock32
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include \
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib
+
 }
 
 
 RESOURCES += \
     Resources.qrc
-
-QMAKE_CXXFLAGS_RELEASE += O2
-

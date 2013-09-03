@@ -25,12 +25,12 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "knossos-global.h"
 #include <QObject>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
 #include <stdint.h>
-#include "knossos-global.h"
 
 /**
   * @class EventModel

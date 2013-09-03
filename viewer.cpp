@@ -243,7 +243,7 @@ vpBacklogElement *Viewer::backlogAddElement_arb(vpBacklog *backlog, Coordinate d
     newElement = (vpBacklogElement *)malloc(sizeof(struct vpBacklogElement));
     if(newElement == NULL) {
         LOG("Out of memory.")
-        // Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way?
+        // Do not return false here. That's a bug. FAIL is hackish... Is there a better way?
         return NULL;
     }
 
@@ -314,7 +314,7 @@ bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *curr
     newStripe = (pxStripe *)malloc(sizeof(struct pxStripe));
     if(newStripe == NULL) {
         LOG("Out of memory.")
-        /* Do not return FALSE here. That's a bug. FAIL is hackish... Is there a better way? */
+        /* Do not return false here. That's a bug. FAIL is hackish... Is there a better way? */
         return false;
     }
 
@@ -814,18 +814,18 @@ bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState)
 
     elements = currentVp->backlog->elements;
     currentElement = currentVp->backlog->entry;
-    LOG("starting to handle backlog")
+    //LOG("starting to handle backlog")
     for(i = 0; i < elements; i++)  {
         nextElement = currentElement->next;
 
         if(currentElement->cubeType == CUBE_DATA) {
             state->protectCube2Pointer->lock();
-            qDebug() << currentElement->cube.x << " " << currentElement->cube.y << " " << currentElement->cube.z;
+            //qDebug() << currentElement->cube.x << " " << currentElement->cube.y << " " << currentElement->cube.z;
             cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
             state->protectCube2Pointer->unlock();
 
             if(cube == HT_FAILURE) {
-                qDebug("failed to get cube in backlog");
+                //qDebug("failed to get cube in backlog");
 
             } else {
                 dcSliceExtract(cube,
@@ -2001,9 +2001,9 @@ void Viewer::run() {
                 vp3->updateGL();
                 vp4->updateGL();
 
-                if(viewerState->userMove == true) {
+                //if(viewerState->userMove == true) {
                     break;
-                }
+                //}
             }
 
             // An incoming user movement event makes the current backlog &
@@ -2177,6 +2177,8 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
             viewerState->currentPosition.x += x;
             viewerState->currentPosition.y += y;
             viewerState->currentPosition.z += z;
+            SET_COORDINATE(state->currentDirections[state->currentDirectionsIndex], x, y, z);
+            state->currentDirectionsIndex = (state->currentDirectionsIndex + 1) % LL_CURRENT_DIRECTIONS_SIZE;
     }
     else {
         LOG("Position (%d, %d, %d) out of bounds",
@@ -2658,6 +2660,7 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->loadSignal = true;  
     state->datasetChangeSignal = magChanged;
 
+    state->previousPositionX = state->currentPositionX;
 
     // Convert the coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
@@ -2932,7 +2935,6 @@ void Viewer::rewire() {
     connect(vp4->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-    connect(window, SIGNAL(loaderSignal(int,int,int,int)), this, SLOT(sendLoadSignal(uint,uint,uint,int)));
 
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setJumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
