@@ -222,7 +222,7 @@ public slots:
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);  
-    void recentFileSelected(QAction *action);
+    void recentFileSelected();
     void treeColorAdjustmentsChanged();
 
 };

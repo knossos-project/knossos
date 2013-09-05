@@ -2674,6 +2674,11 @@ void Viewer::rewire() {
 
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(window, SIGNAL(updateCommentsTableSignal()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(this->vp->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(this->vp2->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(this->vp3->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(this->vp4->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+
 
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
@@ -2806,7 +2811,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(findNodeByNodeIDSignal(value)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
@@ -2884,10 +2889,10 @@ void Viewer::rewire() {
     connect(vp3->delegate, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
     connect(vp->delegate, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
 
-    connect(vp->delegate, SIGNAL(findNodeByNodeIDSignal(nodeID)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(vp2->delegate, SIGNAL(findNodeByNodeIDSignal(nodeID)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(vp3->delegate, SIGNAL(findNodeByNodeIDSignal(nodeID)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(vp4->delegate, SIGNAL(findNodeByNodeIDSignal(nodeID)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(vp->delegate, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(vp2->delegate, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(vp3->delegate, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(vp4->delegate, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
 
     connect(vp->delegate, SIGNAL(addSkeletonNodeAndLinkWithActiveSignal(Coordinate*,Byte,int)), skeletonizer, SLOT(addSkeletonNodeAndLinkWithActive(Coordinate*,Byte,int)));
     connect(vp2->delegate, SIGNAL(addSkeletonNodeAndLinkWithActiveSignal(Coordinate*,Byte,int)), skeletonizer, SLOT(addSkeletonNodeAndLinkWithActive(Coordinate*,Byte,int)));

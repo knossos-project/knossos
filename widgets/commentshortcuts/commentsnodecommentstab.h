@@ -13,6 +13,7 @@ class QTableWidget;
 class QTableWidgetItem;
 class CommentsNodeCommentsTab : public QWidget
 {
+    friend class TestCommentsWidget;
     Q_OBJECT
 public:
     explicit CommentsNodeCommentsTab(QWidget *parent = 0);    

@@ -33,6 +33,7 @@ class QEvent;
 class CommentShortCutsTab : public QWidget
 {
     friend class CommentsWidget;
+    friend class TestCommentsWidget;
     Q_OBJECT
 public:
     explicit CommentShortCutsTab(QWidget *parent = 0);

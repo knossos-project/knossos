@@ -88,19 +88,19 @@ bool CommentShortCutsTab::eventFilter(QObject *obj, QEvent *event) {
                 if(keyEvent->key() == Qt::Key_Return) {
                     if(!textFields[i]->text().isEmpty()) {
                         if(i == 0) {
-                            state->viewerState->gui->comment1 = const_cast<char *>(textFields[i]->text().toStdString().c_str());                            
+                            strcpy(state->viewerState->gui->comment1, textFields[i]->text().toStdString().c_str());
                             return true;
                         } else if(i == 1) {
-                            state->viewerState->gui->comment2 = const_cast<char *>(textFields[i]->text().toStdString().c_str());
+                            strcpy(state->viewerState->gui->comment2, textFields[i]->text().toStdString().c_str());
                             return true;
                         } else if(i == 2) {
-                            state->viewerState->gui->comment3 = const_cast<char *>(textFields[i]->text().toStdString().c_str());
+                           strcpy(state->viewerState->gui->comment3, textFields[i]->text().toStdString().c_str());
                             return true;
                         } else if(i == 3) {
-                            state->viewerState->gui->comment4 = const_cast<char *>(textFields[i]->text().toStdString().c_str());
+                           strcpy(state->viewerState->gui->comment4, textFields[i]->text().toStdString().c_str());
                             return true;
                         } else if(i == 4) {
-                            state->viewerState->gui->comment5 = const_cast<char *>(textFields[i]->text().toStdString().c_str());
+                            strcpy(state->viewerState->gui->comment5, textFields[i]->text().toStdString().c_str());
                             return true;
                         }
                     }

@@ -39,6 +39,7 @@ extern struct stateInfo *state;
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QWidget(parent)
 {
+
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     this->skeletonVisualizationLabel = new QLabel("Skeleton Visualization");
@@ -119,7 +120,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
     connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
     connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));
-
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
@@ -132,7 +132,6 @@ void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
     emit skeletonChangedSignal(true);
 
     state->skeletonState->highlightActiveTree = on;
-
     state->skeletonState->skeletonChanged = true;
 }
 
@@ -142,7 +141,6 @@ void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
     emit skeletonChangedSignal(true);
 
     state->skeletonState->showNodeIDs = on;
-
     state->skeletonState->skeletonChanged = true;
 }
 
@@ -162,7 +160,6 @@ void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
 
     state->skeletonState->overrideNodeRadiusVal = value;
     state->skeletonState->skeletonChanged = true;
-
 }
 
 

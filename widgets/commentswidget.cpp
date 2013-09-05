@@ -44,8 +44,6 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
     QDialog(parent)
 {
     setWindowTitle("Comments Shortcuts");
-
-
     this->shortcutTab = new CommentShortCutsTab();
     this->preferencesTab = new CommentsPreferencesTab();
     this->nodeCommentsTab = new CommentsNodeCommentsTab();
@@ -71,19 +69,19 @@ void CommentsWidget::loadSettings() {
 
     if(!settings.value(COMMENT1).isNull()) {
         this->shortcutTab->textFields[0]->setText(settings.value(COMMENT1).toString());
-        state->viewerState->gui->comment1 = const_cast<char *>(settings.value(COMMENT1).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment1, settings.value(COMMENT1).toString().toStdString().c_str());
     } if(!settings.value(COMMENT2).isNull()) {
         this->shortcutTab->textFields[1]->setText(settings.value(COMMENT2).toString());
-        state->viewerState->gui->comment2 = const_cast<char *>(settings.value(COMMENT2).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment2, settings.value(COMMENT2).toString().toStdString().c_str());
     } if(!settings.value(COMMENT3).isNull()) {
         this->shortcutTab->textFields[2]->setText(settings.value(COMMENT3).toString());
-        state->viewerState->gui->comment3 = const_cast<char *>(settings.value(COMMENT3).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment3, settings.value(COMMENT3).toString().toStdString().c_str());
     } if(!settings.value(COMMENT4).isNull()) {
         this->shortcutTab->textFields[3]->setText(settings.value(COMMENT4).toString());
-        state->viewerState->gui->comment4 = const_cast<char *>(settings.value(COMMENT4).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment4, settings.value(COMMENT4).toString().toStdString().c_str());
     } if(!settings.value(COMMENT5).isNull()) {
         this->shortcutTab->textFields[4]->setText(settings.value(COMMENT5).toString());
-        state->viewerState->gui->comment5 = const_cast<char *>(settings.value(COMMENT5).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment5, settings.value(COMMENT5).toString().toStdString().c_str());
     }
 
     if(!settings.value(SUBSTR1).isNull())

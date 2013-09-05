@@ -327,7 +327,7 @@ bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
                                                     Coordinate::Px2DcCoord(curMagSourcePos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
-        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
+        //LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
         return false;
     }
     currentNewSkeletonDCsegment = (skeletonDCsegment*)malloc(sizeof (skeletonDCsegment));

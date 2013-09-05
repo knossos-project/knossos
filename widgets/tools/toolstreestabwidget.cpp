@@ -204,7 +204,6 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
     ref->toolsQuickTabWidget->connect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
 
     activeTreeSpinBox->setValue(value);
-
     emit setActiveTreeSignal(value);
 
     rSpinBox->setValue(state->skeletonState->activeTree->color.r);

@@ -107,6 +107,7 @@ signals:
     void updateTools();
     void updateTreeCountSignal();
     void updateZoomWidgetSignal();
+    void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     void popBranchNodeSignal(int targetRevision);

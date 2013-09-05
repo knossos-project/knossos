@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network xml
+QT       += core gui opengl network xml testlib
 
 TARGET = knossos
 TEMPLATE = app
@@ -74,7 +74,8 @@ SOURCES +=\
     openjpeg/t1.c \
     openjpeg/t2.c \
     openjpeg/tcd.c \
-    openjpeg/tgt.c
+    openjpeg/tgt.c \
+    test/testcommentswidget.cpp
 
 HEADERS  += mainwindow.h \
     knossos-global.h \
@@ -114,7 +115,11 @@ HEADERS  += mainwindow.h \
     decorators/mainwindowdecorator.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     scripting.h \
-    openjpeg/tgt.h \
+    ftp.h \
+    test/testcommentswidget.h
+
+
+PRECOMPILED_HEADER += openjpeg/tgt.h \
     openjpeg/tcd.h \
     openjpeg/t2.h \
     openjpeg/t1_luts.h \
@@ -149,7 +154,7 @@ HEADERS  += mainwindow.h \
     openjpeg/cio.h \
     openjpeg/cidx_manager.h \
     openjpeg/bio.h \
-    ftp.h
+
 
 FORMS    += mainwindow.ui
 
@@ -220,3 +225,4 @@ win32 {
 RESOURCES += \
     Resources.qrc
 
+include(test/config.pri)

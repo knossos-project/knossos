@@ -152,6 +152,14 @@ MainWindow::~MainWindow()
 
 void MainWindow:: createCoordBar() {
 
+    QToolButton *open = new QToolButton();
+    open->setToolTip("Open");
+    open->setIcon(QIcon(":/images/icons/document-open.png"));
+
+    QToolButton *save = new QToolButton();
+    save->setToolTip("Save");
+    save->setIcon(QIcon(":/images/icons/document-save.png"));
+
     copyButton = new QToolButton();
     copyButton->setToolTip("Copy");
     copyButton->setIcon(QIcon(":/images/icons/edit-copy.png"));
@@ -163,8 +171,12 @@ void MainWindow:: createCoordBar() {
     this->toolBar = new QToolBar();
     this->toolBar->setMaximumHeight(80);
     this->addToolBar(toolBar);
+    this->toolBar->addWidget(open);
+    this->toolBar->addWidget(save);
+    this->toolBar->addSeparator();
     this->toolBar->addWidget(copyButton);
     this->toolBar->addWidget(pasteButton);
+
 
     xField = new QSpinBox();
     xField->setMaximum(1000000);
@@ -212,11 +224,30 @@ void MainWindow:: createCoordBar() {
 
     this->toolBar->setBackgroundRole(QPalette::Dark);
 
-
     zoomAndMultiresButton = new QToolButton();
-    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution");
+    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution Widget");
     zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
     this->toolBar->addWidget(zoomAndMultiresButton);
+
+    QToolButton *syncButton = new QToolButton();
+    syncButton->setToolTip("Dataset Synchronization Widget");
+    syncButton->setIcon(QIcon(":images/icons/network-connect.png"));
+    this->toolBar->addWidget(syncButton);
+
+    QToolButton *viewportSettingsButton = new QToolButton();
+    viewportSettingsButton->setToolTip("Viewport Settings Widget");
+    viewportSettingsButton->setIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
+    this->toolBar->addWidget(viewportSettingsButton);
+
+    QToolButton *toolsButton = new QToolButton();
+    toolsButton->setToolTip("Tools Widget");
+    toolsButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
+    this->toolBar->addWidget(toolsButton);
+
+    QToolButton *commentShortcutsButton = new QToolButton();
+    commentShortcutsButton->setToolTip("Comments Shortcut Widget");
+    commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
+    this->toolBar->addWidget(commentShortcutsButton);
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
@@ -437,8 +468,6 @@ void MainWindow::createActions()
     dragDatasetAction->setCheckable(true);
     recenterOnClickAction = new QAction(tr("&Recenter on Click"), this);
     recenterOnClickAction->setCheckable(true);
-    zoomAndMultiresAction = new QAction(tr("Zoom and Multires.."), this);
-    zoomAndMultiresAction->setCheckable(true);
 
     if(state->viewerState->workMode == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
@@ -448,7 +477,6 @@ void MainWindow::createActions()
 
     connect(dragDatasetAction, SIGNAL(triggered()), this, SLOT(dragDatasetSlot()));
     connect(recenterOnClickAction, SIGNAL(triggered()), this, SLOT(recenterOnClickSlot()));
-    connect(zoomAndMultiresAction, SIGNAL(triggered()), this, SLOT(zoomAndMultiresSlot()));    
 
     /* preferences actions */
     loadCustomPreferencesAction = new QAction(tr("&Load Custom Preferences"), this);
@@ -465,10 +493,9 @@ void MainWindow::createActions()
     connect(loadCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(loadCustomPreferencesSlot()));
     connect(saveCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(saveCustomPreferencesSlot()));
     connect(defaultPreferencesAction, SIGNAL(triggered()), this, SLOT(defaultPreferencesSlot()));
-    connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));
-    connect(synchronizationAction, SIGNAL(triggered()), this, SLOT(synchronizationSlot()));
+    connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));    
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
-    connect(viewportSettingsAction, SIGNAL(triggered()), this, SLOT(viewportSettingsSlot()));
+
 
     /* window actions */
     toolsAction = new QAction(tr("&Tools"), this);
@@ -478,9 +505,7 @@ void MainWindow::createActions()
     commentShortcutsAction = new QAction(tr("&Comment Shortcuts"), this);
     commentShortcutsAction->setCheckable(true);
 
-    connect(toolsAction, SIGNAL(triggered()), this, SLOT(toolsSlot()));
-    connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
-    connect(commentShortcutsAction, SIGNAL(triggered()), this, SLOT(commentShortcutsSlots()));
+    connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));    
 
     /* Help actions */
     //aboutAction = new QAction(tr("&About"), this);
@@ -488,7 +513,9 @@ void MainWindow::createActions()
 
 }
 
-void MainWindow::recentFileSelected(QAction *action) {
+void MainWindow::recentFileSelected() {
+    QAction *action = (QAction *)sender();
+
     QString fileName = action->text();
     if(!fileName.isNull()) {
 
@@ -497,7 +524,9 @@ void MainWindow::recentFileSelected(QAction *action) {
         strncpy(state->skeletonState->skeletonFile, cname, 8192);
 
         QApplication::processEvents();
-        QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        future.waitForFinished();
+
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
@@ -529,8 +558,8 @@ void MainWindow::createMenus()
     workModeViewMenu = viewMenu->addMenu("&Work Mode");
         workModeViewMenu->addAction(dragDatasetAction);
         workModeViewMenu->addAction(recenterOnClickAction);
-    viewMenu->addAction(zoomAndMultiresAction);
-    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "&Tracing Time Widget", this, SLOT(tracingTimeSlot()));
+    this->zoomAndMultiresAction = viewMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "&Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
+    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "&Tracing Time", this, SLOT(tracingTimeSlot()));
 
 
     preferenceMenu = menuBar()->addMenu("&Preferences");
@@ -538,14 +567,16 @@ void MainWindow::createMenus()
     preferenceMenu->addAction(saveCustomPreferencesAction);
     preferenceMenu->addAction(defaultPreferencesAction);
     preferenceMenu->addAction(datasetNavigationAction);
-    preferenceMenu->addAction(synchronizationAction);
+    synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "&Synchronization", this, SLOT(synchronizationSlot()));
     preferenceMenu->addAction(dataSavingOptionsAction);
-    preferenceMenu->addAction(viewportSettingsAction);
+
+    viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "&Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
     windowMenu = menuBar()->addMenu("&Windows");
-    windowMenu->addAction(toolsAction);
+    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "&Tools", this, SLOT(toolsSlot()));
+
     windowMenu->addAction(logAction);
-    windowMenu->addAction(commentShortcutsAction);
+    commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "&Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
 
     helpMenu = menuBar()->addMenu("&Help");
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "&About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "&File|About")));
@@ -645,11 +676,9 @@ void MainWindow::updateFileHistoryMenu() {
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
         QString path = *it;
 
-
-
         historyEntryActions[i]->setText(path);
         if(!historyEntryActions[i]->text().isEmpty()) {
-            recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected(QAction*)));
+            recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected()));
             historyEntryActions[i]->setVisible(true);
         } else {
             historyEntryActions[i]->setVisible(false);

@@ -23,6 +23,7 @@
  */
 
 #include <QApplication>
+#include <QTest>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
@@ -43,6 +44,8 @@
 #include "scripting.h"
 #include "ftp.h"
 
+#include "test/testcommentswidget.h"
+
 #ifdef Q_OS_WIN
     #include "windows.h"
 #endif
@@ -56,8 +59,8 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
 {
-    char tempPath[MAX_PATH] = {0};
 
+    char tempPath[MAX_PATH] = {0};
     char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
 
@@ -176,6 +179,12 @@ int main(int argc, char *argv[])
     remote->start();
     client->start();
     scripts->start();
+
+    /* TEST */
+
+    TestCommentsWidget test;
+    test.reference = viewer;
+    QTest::qExec(&test);
 
     return a.exec();
 }
@@ -480,8 +489,6 @@ bool Knossos::readConfigFile(const char *path) {
     }
 
     QTextStream stream(&file);
-
-
     while(!stream.atEnd()) {
         QString line = stream.readLine();
         if(line.isEmpty())

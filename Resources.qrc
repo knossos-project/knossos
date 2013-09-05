@@ -23,5 +23,10 @@
         <file>icons/zoom-in.png</file>
         <file>icons/zoom-original.png</file>
         <file>icons/zoom-out.png</file>
+        <file>icons/view-list-icons-symbolic.png</file>
+        <file>icons/insert-text.png</file>
+        <file>icons/configure-toolbars.png</file>
+        <file>icons/network-connect.png</file>
+        <file>icons/network-disconnect.png</file>
     </qresource>
 </RCC>
