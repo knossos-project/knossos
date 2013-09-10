@@ -54,8 +54,6 @@
 #include "viewport.h"
 #include "widgetcontainer.h"
 
-
-
 extern struct stateInfo *state;
 
 // -- Constructor and destroyer -- //
@@ -115,7 +113,7 @@ MainWindow::MainWindow(QWidget *parent) :
     widgetContainer = new WidgetContainer(this);
     widgetContainer->createWidgets();
 
-    createCoordBar(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
+    createToolBar(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
 
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
@@ -150,13 +148,13 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow:: createCoordBar() {
+void MainWindow:: createToolBar() {
 
-    QToolButton *open = new QToolButton();
+    open = new QToolButton();
     open->setToolTip("Open");
     open->setIcon(QIcon(":/images/icons/document-open.png"));
 
-    QToolButton *save = new QToolButton();
+    save = new QToolButton();
     save->setToolTip("Save");
     save->setIcon(QIcon(":/images/icons/document-save.png"));
 
@@ -176,7 +174,6 @@ void MainWindow:: createCoordBar() {
     this->toolBar->addSeparator();
     this->toolBar->addWidget(copyButton);
     this->toolBar->addWidget(pasteButton);
-
 
     xField = new QSpinBox();
     xField->setMaximum(1000000);
@@ -229,25 +226,28 @@ void MainWindow:: createCoordBar() {
     zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
     this->toolBar->addWidget(zoomAndMultiresButton);
 
-    QToolButton *syncButton = new QToolButton();
+    syncButton = new QToolButton();
     syncButton->setToolTip("Dataset Synchronization Widget");
     syncButton->setIcon(QIcon(":images/icons/network-connect.png"));
     this->toolBar->addWidget(syncButton);
 
-    QToolButton *viewportSettingsButton = new QToolButton();
+    viewportSettingsButton = new QToolButton();
     viewportSettingsButton->setToolTip("Viewport Settings Widget");
     viewportSettingsButton->setIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
     this->toolBar->addWidget(viewportSettingsButton);
 
-    QToolButton *toolsButton = new QToolButton();
+    toolsButton = new QToolButton();
     toolsButton->setToolTip("Tools Widget");
     toolsButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
     this->toolBar->addWidget(toolsButton);
 
-    QToolButton *commentShortcutsButton = new QToolButton();
+    commentShortcutsButton = new QToolButton();
     commentShortcutsButton->setToolTip("Comments Shortcut Widget");
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
+
+    connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
+    connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
@@ -256,10 +256,16 @@ void MainWindow:: createCoordBar() {
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 
+    connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
+    connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
+    connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
+    connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
+    connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
+    connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
+
 }
 
 void MainWindow::updateTitlebar(bool useFilename) {
-
     QString title;
     if(!state->skeletonState->skeletonFileAsQString.isNull()) {
         title = QString("KNOSSOS %1 showing %2").arg(KVERSION).arg(state->skeletonState->skeletonFileAsQString);
@@ -354,7 +360,6 @@ void MainWindow::reloadDataSizeWin(){
 }
 
 void MainWindow::treeColorAdjustmentsChanged(){
-
     //user lut activated
         if(state->viewerState->treeColortableOn) {
             //user lut selected
@@ -596,7 +601,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
         prompt->exec();
 
-
         if((QPushButton *) prompt->clickedButton() == yesButton) {            
             event->accept();
             QApplication::quit();
@@ -606,7 +610,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             event->ignore();
             prompt->close();
         }
-
     }
 }
 
@@ -638,7 +641,6 @@ void MainWindow::openSlot() {
         } else {
             state->skeletonState->mergeOnLoadFlag = false;
         }
-
 
         QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
 
@@ -693,7 +695,6 @@ void MainWindow::saveSlot()
     qDebug() << " saveBegin ";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
-
 
             QString skelName = QString(state->skeletonState->skeletonFile);
             if(state->skeletonState->autoFilenameIncrementBool) {
@@ -798,13 +799,11 @@ void MainWindow::skeletonStatisticsSlot()
 void MainWindow::clearSkeletonSlot()
 {
     int ret = QMessageBox::question(this, "", "Really clear the skeleton (you can not undo this) ?", QMessageBox::Ok | QMessageBox::No);
-
     switch(ret) {
         case QMessageBox::Ok:
             emit clearSkeletonSignal(CHANGE_MANUAL, false);
             updateTitlebar(false);
             emit updateToolsSignal();
-
     }
 }
 
@@ -828,16 +827,12 @@ void MainWindow::recenterOnClickSlot()
 
 void MainWindow::zoomAndMultiresSlot()
 {
-    this->widgetContainer->zoomAndMultiresWidget->show();
-    zoomAndMultiresAction->setChecked(true);
+    this->widgetContainer->zoomAndMultiresWidget->show();    
 }
 
 void MainWindow::tracingTimeSlot()
 {
-
-    this->widgetContainer->tracingTimeWidget->show();
-    tracingTimeAction->setChecked(true);
-
+    this->widgetContainer->tracingTimeWidget->show();    
 }
 
 /* preference menu functionality */
@@ -1112,13 +1107,6 @@ void MainWindow::uncheckSynchronizationAction() {
     this->synchronizationAction->setChecked(false);
 }
 
-void MainWindow::uncheckTracingTimeAction() {
-    this->tracingTimeAction->setChecked(false);
-}
-
-void MainWindow::uncheckZoomAndMultiresAction() {
-    this->zoomAndMultiresAction->setChecked(false);
-}
 
 void MainWindow::uncheckNavigationAction() {
     this->datasetNavigationAction->setChecked(false);
@@ -1147,7 +1135,6 @@ void MainWindow::setCoordinates(int x, int y, int z) {
     if case2 an initial revision will be inserted.
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
-
 void MainWindow::updateSkeletonFileName(QString &fileName) {
 
     QRegExp withVersion("^[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
@@ -1166,7 +1153,6 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
         qDebug() << fileName;
 
     } else if(fileName.contains(withoutVersion)) {
-
         fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
         qDebug() << fileName;

@@ -181,10 +181,11 @@ int main(int argc, char *argv[])
     scripts->start();
 
     /* TEST */
-
+    /*
     TestCommentsWidget test;
     test.reference = viewer;
     QTest::qExec(&test);
+    */
 
     return a.exec();
 }
@@ -615,15 +616,15 @@ struct stateInfo *Knossos::emptyState() {
  */
 bool Knossos::findAndRegisterAvailableDatasets() {
     /* state->path stores the path to the dataset K was launched with */
-    uint32_t currMag, i;
-    uint32_t isMultiresCompatible = false;
+    uint currMag, i;
+    uint isMultiresCompatible = false;
     char currPath[1024];
     char levelUpPath[1024];
     char currKconfPath[1024];
     char datasetBaseDirName[1024];
     char datasetBaseExpName[1024];
-    int32_t isPathSepTerminated = false;
-    uint32_t pathLen;
+    int isPathSepTerminated = false;
+    uint pathLen;
 
     memset(currPath, '\0', 1024);
     memset(levelUpPath, '\0', 1024);
@@ -700,7 +701,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         /* iterate over all possible mags and test their availability */
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
-            int32_t currMagExists = false;
+            int currMagExists = false;
             if (LM_FTP == state->loadMode) {
                 char *ftpDirDelim = "/";
                 int confSize = 0;

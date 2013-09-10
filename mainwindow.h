@@ -148,16 +148,19 @@ public:
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
-    QPushButton *posButton;
-
+    QToolButton *open, *save;
     QToolButton *pythonButton;
     QToolButton *tracingTimeButton;
     QToolButton *zoomAndMultiresButton;
+    QToolButton *syncButton;
+    QToolButton *viewportSettingsButton;
+    QToolButton *toolsButton;
+    QToolButton *commentShortcutsButton;
 
     void updateFileHistoryMenu();
     void createActions();
     void createMenus();
-    void createCoordBar();
+    void createToolBar();
     void createViewports();
 
     void saveSettings();
@@ -214,9 +217,7 @@ public slots:
     void uncheckToolsAction();
     void uncheckViewportSettingAction();
     void uncheckCommentShortcutsAction();
-    void uncheckConsoleAction();
-    void uncheckTracingTimeAction();
-    void uncheckZoomAndMultiresAction();
+    void uncheckConsoleAction();    
     void uncheckDataSavingAction();
 
     void uncheckSynchronizationAction();

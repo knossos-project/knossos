@@ -619,8 +619,8 @@ struct stateInfo {
 #define LL_CURRENT_DIRECTIONS_SIZE (20)
     // This gives the current direction whenever userMove is called
     Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
-    int32_t currentDirectionsIndex;
-    int32_t directionSign;
+    int currentDirectionsIndex;
+    int directionSign;
 
     // This gives the current position ONLY when the reload
     // boundary has been crossed. Change it through
@@ -630,14 +630,14 @@ struct stateInfo {
     Coordinate previousPositionX;
 
     // Cube loader affairs
-    int32_t    loadMode;
-    int32_t    loadLocalSystem;
+    int    loadMode;
+    int    loadLocalSystem;
     char       *loadFtpCachePath;
     char       ftpBasePath[MAX_PATH];
     char       ftpHostName[MAX_PATH];
     char       ftpUsername[MAX_PATH];
     char       ftpPassword[MAX_PATH];
-    int32_t    ftpFileTimeout;
+    int    ftpFileTimeout;
 
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
     // coordinates to pointers to datacubes / overlay cubes loaded

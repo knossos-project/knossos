@@ -504,7 +504,7 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
     /* @arb */
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
-    int32_t sliceIndex = 0, dcIndex = 0;
+    int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
@@ -541,7 +541,7 @@ bool Viewer::sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPor
 
     floatCoordinate currentPxInDc_float;
 
-    int32_t sliceIndex = 0, dcIndex = 0;
+    int sliceIndex = 0, dcIndex = 0;
 
     floatCoordinate *v2 = &(viewPort->v2);
 
@@ -640,7 +640,7 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
     /* @arb */
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
-    int32_t sliceIndex = 0, dcIndex = 0;
+    int sliceIndex = 0, dcIndex = 0;
     floatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
@@ -674,7 +674,7 @@ bool Viewer::sliceExtract_adjust_Backlog_arb(Byte *datacube, vpConfig *viewPort,
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     floatCoordinate currentPxInDc_float;
-    int32_t sliceIndex = 0, dcIndex = 0;
+    int sliceIndex = 0, dcIndex = 0;
     //floatCoordinate *v1 = &(viewPort->v1);
     floatCoordinate *v2 = &(viewPort->v2);
 
@@ -892,7 +892,7 @@ bool Viewer::vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerS
         /* @arb */
         struct pxStripe *stripe;
         Byte *cube = NULL;
-        uint32_t elements = 0, i = 0, j = 0;
+        uint elements = 0, i = 0, j = 0;
 
         if(currentVp->backlog->entry == NULL) {
             //LOG("Called vpHandleBacklog, but there is no backlog.")
@@ -1160,7 +1160,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewe
     Coordinate lowerRightPxInDc, upperLeftPxInDc, currentDc, currentPx;
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    uint32_t t_old = 0;
+    uint t_old = 0;
     Byte *datacube = NULL, *overlayCube = NULL;
 
     struct vpBacklogElement *backlogElement = NULL;

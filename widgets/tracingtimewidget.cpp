@@ -81,12 +81,12 @@ void TracingTimeWidget::saveSettings() {
 
 void TracingTimeWidget::closeEvent(QCloseEvent *event) {
     this->hide();
-    emit uncheckSignal();
 }
 
 void TracingTimeWidget::refreshTime() {
     int time = state->time.elapsed();
-    int hoursRunningTime = (int)(time * 0.001 / 3600.0);
+
+    int hoursRunningTime = (int)(time * 0.001 / 3600.0);//
     int minutesRunningTime = (int)(time * 0.001/60.0 - hoursRunningTime * 60);
     int secondsRunningTime = (int)(time * 0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
 
@@ -102,10 +102,12 @@ void TracingTimeWidget::checkIdleTime() {
 
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
     state->skeletonState->idleTimeNow = time;
-    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 900000) { //tolerance of 15 minutes
+    if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 600000) { //tolerance of 10 minutes
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
+
+    state->skeletonState->unsavedChanges = true;
 
     int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 3600.0);
     int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 60.0 - hoursIdleTime * 60);

@@ -355,6 +355,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             sendMove->y = doMove.y;
             sendMove->z = doMove.z;
 
+
             if(x == 0)
                 sendMove->x = 0;
             if(y == 0)
@@ -362,7 +363,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
             if(z == 0)
                 sendMove->z = 0;
 
-            emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);            
+
+            emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
+
         }
 
         // This is, of course, not really correct as the time of running

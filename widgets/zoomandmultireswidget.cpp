@@ -212,9 +212,7 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
 }
 
 void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
-    this->hide();
-    emit uncheckSignal();
-
+    this->hide();   
 }
 
 void ZoomAndMultiresWidget::update() {

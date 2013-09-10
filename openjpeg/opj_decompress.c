@@ -353,7 +353,7 @@ static void info_callback(const char *msg, void *client_data) {
 int jp2_decompress_main(char *infile, char *buf, int bufsize)
 {
     int i;
-    int32_t *dataptr;
+    int *dataptr;
 
 	opj_dparameters_t parameters;			/* decompression parameters */
 	opj_image_t* image = NULL;

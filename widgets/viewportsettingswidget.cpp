@@ -184,7 +184,7 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(WHOLE_SKELETON).isNull()) {
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(settings.value(WHOLE_SKELETON).toBool());
         bool on = settings.value(WHOLE_SKELETON).toBool();
-        if(on) {            
+        if(!on) {
             state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
         } else {
            state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;

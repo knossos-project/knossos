@@ -74,7 +74,7 @@ void lll_rmlist(C_Element *Dcoi) {
     }
 }
 
-uint32_t lll_calculate_filename(C_Element *elem) {
+uint lll_calculate_filename(C_Element *elem) {
     char *filename = NULL;
     char *local_dir_delim = NULL;
     char *file_dir_delim = NULL;
@@ -83,8 +83,8 @@ uint32_t lll_calculate_filename(C_Element *elem) {
     char typeExtension[8] = "";
     char compressionExtension[8] = "";
     FILE *cubeFile = NULL;
-    int32_t readBytes = 0;
-    int32_t boergens_param_1 = 0, boergens_param_2 = 0, boergens_param_3 = 0;
+    int readBytes = 0;
+    int boergens_param_1 = 0, boergens_param_2 = 0, boergens_param_3 = 0;
     char *boergens_param_1_name = "", *boergens_param_2_name = "", *boergens_param_3_name = "";
     char *local_cache_path_builder = NULL, *local_cache_path_total = NULL;
     int filenameSize = 1000;
@@ -248,7 +248,7 @@ uint32_t lll_calculate_filename(C_Element *elem) {
     return LLL_SUCCESS;
 }
 
-uint32_t lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate key) {
+uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate key) {
     C_Element *putElement = NULL;
     C2D_Element *loadedCubePtr = NULL;
 
@@ -331,7 +331,7 @@ int calc_nonzero_sign(float x) {
 
 void Loader::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
     float distance_from_plane, distance_from_direction, distance_from_origin, dot_product;
-    int32_t i = 0;
+    int i = 0;
 
     distance_from_plane = CALC_POINT_DISTANCE_FROM_PLANE(currentMetricPos, direction);
     distance_from_origin = CALC_VECTOR_NORM(currentMetricPos);
@@ -353,7 +353,7 @@ int Loader::CompareLoadOrderMetric(const void * a, const void * b)
 {
     LO_Element *elem_a, *elem_b;
     float m_a, m_b;
-    int32_t metric_index;
+    int metric_index;
 
     elem_a = (LO_Element *)a;
     elem_b = (LO_Element *)b;
@@ -381,9 +381,9 @@ int CompareLoadOrderMetric_LoaderWrapper(const void *a, const void *b, const voi
 floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
     floatCoordinate xyz[3];
     float dot_products[3];
-    int32_t i;
+    int i;
     float max_dot_product;
-    int32_t max_dot_product_i;
+    int max_dot_product_i;
 
     SET_COORDINATE(xyz[0], 1.0, 0.0, 0.0);
     SET_COORDINATE(xyz[1], 0.0, 1.0, 0.0);
@@ -405,22 +405,22 @@ floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
 
 }
 
-uint32_t Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
+uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     Coordinate currentDc, currentOrigin;
     floatCoordinate currentMetricPos, direction;
     Coordinate debugCoor;
     LO_Element *DcArray;
-    int32_t cubeElemCount;
-    int32_t i;
-    int32_t edgeLen, halfSc;
-    int32_t x, y, z;
+    int cubeElemCount;
+    int i;
+    int edgeLen, halfSc;
+    int x, y, z;
     float dx = 0, dy = 0, dz = 0;
     float direction_norm;
     float floatHalfSc;
 
     edgeLen = state->M;
     floatHalfSc = (float)edgeLen / 2.;
-    halfSc = (int32_t)floorf(floatHalfSc);
+    halfSc = (int)floorf(floatHalfSc);
 
     /*
     switch (state->viewerState->activeVP) {
@@ -503,7 +503,7 @@ extern "C" {
 int jp2_decompress_main(char *infile, char *buf, int bufsize);
 }
  void Loader::loadCube(loadcube_thread_struct *lts) {
-    int32_t retVal = true;
+    int retVal = true;
     CubeSlot *currentDcSlot;
     char *filename;
     FILE *cubeFile = NULL;
@@ -820,7 +820,7 @@ bool Loader::initLoader() {
     return true;
 }
 
-uint32_t Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint32_t prevLoaderMagnification) {
+uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification) {
     C2D_Element *currentCube = NULL, *nextCube = NULL;
     C_Element *currentCCube = NULL;
     Byte *delCubePtr = NULL;
@@ -905,10 +905,10 @@ uint32_t Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint32_t prevLo
 }
 
 #define DECOMP_THREAD_NUM (1)
-uint32_t Loader::loadCubes() {
+uint Loader::loadCubes() {
     C_Element *currentCube = NULL, *prevCube = NULL, *decompedCube = NULL;
     CubeSlot *currentDcSlot = NULL;
-    uint32_t loadedDc;
+    uint loadedDc;
     FtpThread *ftpThread;
     ftp_thread_struct fts = {0};
     loadcube_thread_struct lts_array[DECOMP_THREAD_NUM] = {0};
@@ -916,11 +916,11 @@ uint32_t Loader::loadCubes() {
     loadcube_thread_struct lts_empty = {0};
     LoadCubeThread *threadHandle_array[DECOMP_THREAD_NUM] = {NULL};
     QSemaphore *loadCubeThreadSem = new QSemaphore(DECOMP_THREAD_NUM);
-    int32_t hadError = false;
-    int32_t retVal = true;
-    int32_t cubeCount = 0, loadedCubeCount = 0;
-    int32_t thread_index;
-    int32_t isBreak;
+    int hadError = false;
+    int retVal = true;
+    int cubeCount = 0, loadedCubeCount = 0;
+    int thread_index;
+    int isBreak;
     //DWORD waitTime = 0, decompTime = 0;
     //DWORD currTick, beginTickCount;
     //DWORD noDecompCurrent = 0, noDecompTotal = 0;
@@ -1105,7 +1105,7 @@ void Loader::run() {
   *
   */
 bool Loader::load() {
-    uint32_t funcRetVal;
+    uint funcRetVal;
 
     qDebug() << "Load: load begin";
     if(!initialized) {

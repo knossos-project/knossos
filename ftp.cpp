@@ -35,7 +35,7 @@ LARGE_INTEGER Counter() {
 */
 
 CURLM *curlm = NULL;
-int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeArray[], int32_t currentCubeCount, int32_t max_connections, int32_t pipelines_per_connection, int32_t max_downloads, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int32_t *hadErrors/*, DWORD beginTickCount*/)
+int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], int currentCubeCount, int max_connections, int pipelines_per_connection, int max_downloads, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int *hadErrors/*, DWORD beginTickCount*/)
 {
     C_Element *currentCube;
     CURLMsg *msg;
@@ -48,9 +48,9 @@ int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeAr
     struct timeval T;
     long httpCode = 0;
     char remoteURL[MAX_PATH];
-    int32_t isBreak = false;
-    int32_t retVal = EXIT_SUCCESS;
-    int32_t result;
+    int isBreak = false;
+    int retVal = EXIT_SUCCESS;
+    int result;
     //LARGE_INTEGER zeroCount, currentCount, freq;
 
     *hadErrors = false;
@@ -216,9 +216,9 @@ int32_t downloadFiles(CURL **eh_array, int32_t totalCubeCount, C_Element *cubeAr
     return retVal;
 }
 
-int32_t downloadFile(char *remote_path, char *local_filename) {
-    int32_t retVal;
-    int32_t hadErrors;
+int downloadFile(char *remote_path, char *local_filename) {
+    int retVal;
+    int hadErrors;
     C_Element elem;
     CURL *eh = NULL;
 
@@ -238,7 +238,7 @@ int32_t downloadFile(char *remote_path, char *local_filename) {
     return EXIT_SUCCESS;
 }
 
-C_Element **randomize_connection_number(int32_t *max_connections, int32_t *pipelines_per_connection, int32_t *max_downloads) {
+C_Element **randomize_connection_number(int *max_connections, int *pipelines_per_connection, int *max_downloads) {
     //LARGE_INTEGER li;
     //QueryPerformanceCounter(&li);
     *max_connections = 5;//((li.LowPart & 0xFFFF) % 5) + 3;
@@ -253,14 +253,14 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
     C_Element **multiCubes;
     CURL **eh_array = NULL;
     FILE *fh = NULL;
-    int32_t i;
-    int32_t C;
-    int32_t isBreak = false;
-    int32_t retVal = true;
-    int32_t MAX_DOWNLOADS;
-    int32_t max_connections, pipelines_per_connection;
-    int32_t hadErrors = false;
-    int32_t totalDownloads = 0;
+    int i;
+    int C;
+    int isBreak = false;
+    int retVal = true;
+    int MAX_DOWNLOADS;
+    int max_connections, pipelines_per_connection;
+    int hadErrors = false;
+    int totalDownloads = 0;
 
     //LOG("DEBUG ftpthreadfunc Start");
 

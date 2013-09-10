@@ -1343,6 +1343,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                 glLoadName(VIEWPORT_XY);
                 glBegin(GL_QUADS);
                     glNormal3i(0,0,1);
+
                     glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLUx, state->viewerState->vpConfigs[i].texture.texLUy);
                     glVertex3f(-dataPxX, -dataPxY, 0.);
                     glTexCoord2f(state->viewerState->vpConfigs[i].texture.texRUx, state->viewerState->vpConfigs[i].texture.texRUy);

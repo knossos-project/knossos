@@ -59,12 +59,12 @@ struct _C_Element {
     char *local_filename;
     CURL *curlHandle;
     FILE *ftp_fh;
-    int32_t    hasError;
-    int32_t isFinished;
-    int32_t isAborted;
-    int32_t isLoaded;
+    int    hasError;
+    int isFinished;
+    int isAborted;
+    int isLoaded;
 
-    //uint32_t debugVal;
+    //uint debugVal;
     //DWORD tickDownloaded;
     //DWORD tickDecompressed;
 
@@ -83,7 +83,7 @@ struct _ftp_thread_struct {
 */
     QSemaphore *ftpThreadSem;
     QSemaphore *loaderThreadSem;
-    int32_t cubeCount;
+    int cubeCount;
     Loader* thisPtr;
 };
 
@@ -92,12 +92,12 @@ typedef struct _ftp_thread_struct ftp_thread_struct;
 struct _loadcube_thread_struct {
     //DWORD beginTickCount;
     //DWORD decompTime;
-    int32_t threadIndex;
+    int threadIndex;
     QSemaphore *loadCubeThreadSem;
-    int32_t isBusy;
+    int isBusy;
     C_Element *currentCube;
     Loader* thisPtr;
-    uint32_t retVal;
+    uint retVal;
 };
 
 typedef struct _loadcube_thread_struct loadcube_thread_struct;
@@ -146,11 +146,11 @@ public slots:
     bool load();
 protected:    
     bool initialized;
-    uint32_t prevLoaderMagnification;
+    uint prevLoaderMagnification;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
-    int32_t addCubicDcSet(int32_t xBase, int32_t yBase, int32_t zBase, int32_t edgeLen, C_Element *target, Hashtable *currentLoadedHash);
-    uint32_t DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash);
+    int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, Hashtable *currentLoadedHash);
+    uint DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash);
     CubeSlot *slotListGetElement(CubeSlotList *slotList);
     void loadCube(loadcube_thread_struct *lts);
     int slotListDelElement(CubeSlotList *slotList, CubeSlot *element);
@@ -158,8 +158,8 @@ protected:
     int slotListAddElement(CubeSlotList *slotList, Byte *datacube);
     CubeSlotList *slotListNew();
     bool initLoader();
-    uint32_t removeLoadedCubes(Hashtable *currentLoadedHash, uint32_t prevLoaderMagnification);
-    uint32_t loadCubes();
+    uint removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification);
+    uint loadCubes();
 };
 
 #endif // LOADER_H
