@@ -575,6 +575,8 @@ int jp2_decompress_main(char *infile, char *buf, int bufsize);
                 LOG("Additionally, an error occured closing the file");
             }
             goto loadcube_fail;
+        } else {
+            fclose(cubeFile);
         }
     }
     goto loadcube_manage;

@@ -1852,7 +1852,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 void Viewer::run() {    
 
     QTime bench;
-    bench.start();
+
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -1971,8 +1971,6 @@ void Viewer::run() {
                     vpListDelElement(viewports, currentVp);
                 }
             }
-
-
 
             drawCounter++;
             if(drawCounter == 3) {
