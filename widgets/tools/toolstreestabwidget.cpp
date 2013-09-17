@@ -42,7 +42,7 @@
 extern struct stateInfo *state;
 
 ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
-    QWidget(parent), ref(parent)
+    QWidget(parent), reference(parent)
 {
 
     activeTreeLabel = new QLabel("Active Tree ID:");
@@ -199,9 +199,9 @@ void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
     }
 
     /* This prevents the infinite recursion. See QuickTabWidget for more information */
-    ref->toolsQuickTabWidget->disconnect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
-    ref->toolsQuickTabWidget->activeTreeSpinBox->setValue(value);
-    ref->toolsQuickTabWidget->connect(ref->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
+    reference->toolsQuickTabWidget->disconnect(reference->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
+    reference->toolsQuickTabWidget->activeTreeSpinBox->setValue(value);
+    reference->toolsQuickTabWidget->connect(reference->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
 
     activeTreeSpinBox->setValue(value);
     emit setActiveTreeSignal(value);
@@ -261,7 +261,7 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {    
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value())) {
-        ref->updateDisplayedTree();
+        reference->updateDisplayedTree();
 
     } else {
         LOG("Probleme")
@@ -280,7 +280,7 @@ void ToolsTreesTabWidget::id2Changed(int value) {
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
         if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID)) {
-            ref->updateDisplayedTree();
+            reference->updateDisplayedTree();
         } else {
             LOG("Probleme")
         }

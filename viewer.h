@@ -78,8 +78,7 @@ signals:
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
-    int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
-                                     Byte *slice, uint x_px, uint y_px, uint cubeType);
+    int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset, Byte *slice, uint x_px, uint y_px, uint cubeType);
     bool vpListDel(vpList *list);
     int vpListDelElement( vpList *list,  vpListElement *element);
     bool backlogDel(vpBacklog *backlog);

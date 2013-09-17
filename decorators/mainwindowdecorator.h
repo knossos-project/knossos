@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "knossos-global.h"
-#include "mainwindow.h"
+#include "widgets/mainwindow.h"
 
 class MainWindowDecorator : public QObject
 {

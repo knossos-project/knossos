@@ -35,11 +35,11 @@
 #include "remote.h"
 #include "loader.h"
 #include "viewer.h"
-#include "mainwindow.h"
+#include "widgets/mainwindow.h"
 #include "skeletonizer.h"
 #include "eventmodel.h"
-#include "viewport.h"
-#include "widgetcontainer.h"
+#include "widgets/viewport.h"
+#include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
 #include "scripting.h"
 #include "ftp.h"
@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
     Scripting *scripts = new Scripting();
+    scripts->reference = viewer->skeletonizer;
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
     QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(const char*,float*,int)), viewer, SLOT(loadTreeColorTable(const char*,float*,int)));
@@ -178,7 +179,7 @@ int main(int argc, char *argv[])
     viewer->run();
     remote->start();
     client->start();
-    scripts->start();
+    scripts->run();
 
     /* TEST */
     /*
@@ -1166,6 +1167,5 @@ void Knossos::loadDefaultTreeLUT() {
 }
 
 void rewire() {
-
 
 }

@@ -71,7 +71,7 @@ public slots:
     void popBranchNodeButtonClicked();
 
 public:
-    ToolsWidget *ref;
+    ToolsWidget *reference;
     QLabel *treeCountLabel, *nodeCountLabel;
     QLabel *activeTreeLabel, *activeNodeLabel;
     QLabel *xLabel, *yLabel, *zLabel;

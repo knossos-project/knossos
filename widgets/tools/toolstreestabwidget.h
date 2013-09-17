@@ -40,7 +40,7 @@ class ToolsTreesTabWidget : public QWidget
     Q_OBJECT
 public:
     explicit ToolsTreesTabWidget(ToolsWidget *parent = 0);
-    ToolsWidget *ref;
+    ToolsWidget *reference;
     QLabel *activeTreeLabel;
     QSpinBox *activeTreeSpinBox;
 

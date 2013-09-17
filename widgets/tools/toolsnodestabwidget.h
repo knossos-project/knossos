@@ -45,7 +45,7 @@ class ToolsNodesTabWidget : public QWidget
     Q_OBJECT
 public:
     explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);
-    ToolsWidget *ref;
+    ToolsWidget *reference;
 signals:
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();

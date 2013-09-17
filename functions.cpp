@@ -1,6 +1,8 @@
 #include "functions.h"
 #include <math.h>
 
+/** this file contains function which are not dependent from any state */
+
 int roundFloat(float number) {
     if(number >= 0) return (int)(number + 0.5);
     else return (int)(number - 0.5);

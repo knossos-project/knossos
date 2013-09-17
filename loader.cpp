@@ -93,25 +93,25 @@ uint lll_calculate_filename(C_Element *elem) {
     coordinate = elem->coordinate;
 
     switch (state->loadLocalSystem) {
-        case LS_UNIX:
-            local_dir_delim = "/";
-            break;
-        case LS_WINDOWS:
-            local_dir_delim = "\\";
-            break;
-        default:
-            return LLL_FAILURE;
+    case LS_UNIX:
+        local_dir_delim = "/";
+        break;
+    case LS_WINDOWS:
+        local_dir_delim = "\\";
+        break;
+    default:
+        return LLL_FAILURE;
     }
 
     switch (state->loadMode) {
-        case LM_LOCAL:
-            file_dir_delim = local_dir_delim;
-            break;
-        case LM_FTP:
-            file_dir_delim = "/";
-            break;
-        default:
-            return LLL_FAILURE;
+    case LM_LOCAL:
+        file_dir_delim = local_dir_delim;
+        break;
+    case LM_FTP:
+        file_dir_delim = "/";
+        break;
+    default:
+        return LLL_FAILURE;
     }
 
 
@@ -173,33 +173,33 @@ uint lll_calculate_filename(C_Element *elem) {
         snprintf(magnificationStr, filenameSize, "mag%d%s", state->magnification, file_dir_delim);
     }
     snprintf(elem->path, filenameSize,
-         "%s%s%s%.4d%s%s%.4d%s%s%.4d",
-         (LM_FTP == state->loadMode) ? state->ftpBasePath : state->loaderPath,
-         magnificationStr,
-         boergens_param_1_name,
-         boergens_param_1,
-         file_dir_delim,
-         boergens_param_2_name,
-         boergens_param_2,
-         file_dir_delim,
-         boergens_param_3_name,
-         boergens_param_3
-         );
+             "%s%s%s%.4d%s%s%.4d%s%s%.4d",
+             (LM_FTP == state->loadMode) ? state->ftpBasePath : state->loaderPath,
+             magnificationStr,
+             boergens_param_1_name,
+             boergens_param_1,
+             file_dir_delim,
+             boergens_param_2_name,
+             boergens_param_2,
+             file_dir_delim,
+             boergens_param_3_name,
+             boergens_param_3
+             );
     free(magnificationStr);
     /* LOG("Path: %s", elem->path); */
     snprintf(elem->filename, filenameSize,
-         "%s_x%.4d_y%.4d_z%.4d.%s%s",
-         state->loaderName,
-         coordinate.x,
-         coordinate.y,
-         coordinate.z,
-         compressionExtension,
-         typeExtension);
+             "%s_x%.4d_y%.4d_z%.4d.%s%s",
+             state->loaderName,
+             coordinate.x,
+             coordinate.y,
+             coordinate.z,
+             compressionExtension,
+             typeExtension);
     snprintf(elem->fullpath_filename, filenameSize,
-         "%s%s%s",
-         elem->path,
-         file_dir_delim,
-         elem->filename);
+             "%s%s%s",
+             elem->path,
+             file_dir_delim,
+             elem->filename);
     /* LOG("FullPath: %s", elem->fullpath_filename); */
 
     if (LM_FTP != state->loadMode) {
@@ -239,10 +239,10 @@ uint lll_calculate_filename(C_Element *elem) {
     }
     memset(elem->local_filename, '\0', filenameSize);
     snprintf(elem->local_filename, filenameSize,
-         "%s%s%s",
-         local_cache_path_total,
-         local_dir_delim,
-         elem->filename);
+             "%s%s%s",
+             local_cache_path_total,
+             local_dir_delim,
+             elem->filename);
     free(local_cache_path_total);
 
     return LLL_SUCCESS;
@@ -253,12 +253,12 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     C2D_Element *loadedCubePtr = NULL;
 
     if((key.x > 9999) ||
-       (key.y > 9999) ||
-       (key.z > 9999) ||
-       (key.x < 0) ||
-       (key.y < 0) ||
-       (key.z < 0)) {
-       /* LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
+            (key.y > 9999) ||
+            (key.z > 9999) ||
+            (key.x < 0) ||
+            (key.y < 0) ||
+            (key.z < 0)) {
+        /* LOG("Requested cube coordinate (%d, %d, %d) out of bounds.",
             key.x,
             key.y,
             key.z); */
@@ -474,14 +474,14 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
             }
         }
     }
-extern void
-        _quicksort (
-             void *pbase,
-             size_t total_elems,
-             size_t size,
-             int (*cmp)(const void*, const void*, const void *),
-             const void *ctx);
-     _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric_LoaderWrapper, (const void*)this);
+    extern void
+            _quicksort (
+                void *pbase,
+                size_t total_elems,
+                size_t size,
+                int (*cmp)(const void*, const void*, const void *),
+                const void *ctx);
+    _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric_LoaderWrapper, (const void*)this);
     //LOG("New Order (%f, %f, %f):", direction.x, direction.y, direction.z);
     for (i = 0; i < cubeElemCount; i++) {
         /*
@@ -502,7 +502,7 @@ extern void
 extern "C" {
 int jp2_decompress_main(char *infile, char *buf, int bufsize);
 }
- void Loader::loadCube(loadcube_thread_struct *lts) {
+void Loader::loadCube(loadcube_thread_struct *lts) {
     int retVal = true;
     CubeSlot *currentDcSlot;
     char *filename;
@@ -585,7 +585,7 @@ loadcube_fail:
     memcpy(currentDcSlot->cube, lts->thisPtr->bogusDc, state->cubeBytes);
 
 loadcube_manage:
-     /* Add pointers for the dc and oc (if at least one of them could be loaded)
+    /* Add pointers for the dc and oc (if at least one of them could be loaded)
      * to the Cube2Pointer table.
      *
      */
@@ -633,16 +633,16 @@ loadcube_ret:
     return;
 }
 
- void LoadCubeThread::run() {
-     loadcube_thread_struct *lts = (loadcube_thread_struct*)this->ctx;
-     lts->thisPtr->loadCube(lts);
- }
+void LoadCubeThread::run() {
+    loadcube_thread_struct *lts = (loadcube_thread_struct*)this->ctx;
+    lts->thisPtr->loadCube(lts);
+}
 
- LoadCubeThread::LoadCubeThread(void *ctx) {
-     this->ctx = ctx;
- }
+LoadCubeThread::LoadCubeThread(void *ctx) {
+    this->ctx = ctx;
+}
 
- /**
+/**
  * @brief slotListGetElement
  * @param slotList
  * @return false changed to NULL
@@ -733,7 +733,7 @@ bool Loader::initLoader() {
     this->Dcoi = lll_new();
     if(this->Dcoi == HT_FAILURE) {
         LOG("Unable to create Dcoi.")
-        return false;
+                return false;
     }
 
     // freeDcSlots / freeOcSlots are lists of pointers to locations that
@@ -744,13 +744,13 @@ bool Loader::initLoader() {
     this->freeDcSlots = slotListNew();
     if(this->freeDcSlots == NULL) {
         LOG("Unable to create freeDcSlots.")
-        return false;
+                return false;
     }
 
     this->freeOcSlots = slotListNew();
     if(this->freeOcSlots == NULL) {
         LOG("Unable to create freeOcSlots.")
-        return false;
+                return false;
     }
 
     // These are potentially huge allocations.
@@ -759,10 +759,10 @@ bool Loader::initLoader() {
     // necessary in the real world.
 
     LOG("Allocating %d bytes for the datacubes.", state->cubeSetBytes)
-    this->DcSetChunk = (Byte*)malloc(state->cubeSetBytes);
+            this->DcSetChunk = (Byte*)malloc(state->cubeSetBytes);
     if(this->DcSetChunk == NULL) {
         LOG("Unable to allocate memory for the DC memory slots.")
-        return false;
+                return false;
     }
     memset(this->DcSetChunk, 0, state->cubeSetBytes);
     for(i = 0; i < state->cubeSetBytes; i += state->cubeBytes) {
@@ -771,10 +771,10 @@ bool Loader::initLoader() {
 
     if(state->overlay) {
         LOG("Allocating %d bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES)
-        this->OcSetChunk = (Byte*)malloc(state->cubeSetBytes * OBJID_BYTES);
+                this->OcSetChunk = (Byte*)malloc(state->cubeSetBytes * OBJID_BYTES);
         if(this->OcSetChunk == NULL) {
             LOG("Unable to allocate memory for the OC memory slots.")
-            return false;
+                    return false;
         }
         memset(this->OcSetChunk, 0, state->cubeSetBytes * OBJID_BYTES);
         for(i = 0; i < state->cubeSetBytes * OBJID_BYTES; i += state->cubeBytes * OBJID_BYTES)
@@ -786,13 +786,13 @@ bool Loader::initLoader() {
     this->bogusDc = (Byte*)malloc(state->cubeBytes);
     if(this->bogusDc == NULL) {
         LOG("Out of memory.")
-        return false;
+                return false;
     }
     bogusDc = fopen("bogus.raw", "r");
     if(bogusDc != NULL) {
         if(fread(this->bogusDc, 1, state->cubeBytes, bogusDc) < state->cubeBytes) {
             LOG("Unable to read the correct amount of bytes from the bogus dc file.")
-            memset(this->bogusDc, '\0', state->cubeBytes);
+                    memset(this->bogusDc, '\0', state->cubeBytes);
         }
         fclose(bogusDc);
     }
@@ -804,7 +804,7 @@ bool Loader::initLoader() {
         this->bogusOc = (Byte*)malloc(state->cubeBytes * OBJID_BYTES);
         if(this->bogusOc == NULL) {
             LOG("Out of memory.")
-            return false;
+                    return false;
         }
         memset(this->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);
     }
@@ -828,8 +828,8 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
     Byte *delCubePtr = NULL;
 
     for (currentCube = currentLoadedHash->listEntry->next;
-        currentCube != currentLoadedHash->listEntry;
-        currentCube = currentCube->next) {
+         currentCube != currentLoadedHash->listEntry;
+         currentCube = currentCube->next) {
         if (NULL != currentCube->datacube) {
             continue;
         }
@@ -1075,7 +1075,7 @@ uint Loader::loadCubes() {
 
 void Loader::run() {
     qDebug() << "Loader: start begin";
-    state->protectLoadSignal->lock();   
+    state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
     initLoader();
@@ -1083,16 +1083,16 @@ void Loader::run() {
 
     // Start "signal wait" loop.
     while(true)  {
-       // as long the loadSignal is false, the loops waits
-       while(state->loadSignal == false) {
+        // as long the loadSignal is false, the loops waits
+        while(state->loadSignal == false) {
             state->conditionLoadSignal->wait(state->protectLoadSignal);
-       }
+        }
 
-       qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
-       qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
-       if (true == load()) {
-           break;
-       }
+        qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
+        qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
+        if (true == load()) {
+            break;
+        }
     }
 
     qDebug() << "Loader: start ended";
@@ -1144,7 +1144,7 @@ bool Loader::load() {
     }
     state->protectCube2Pointer->lock();
     funcRetVal = Hashtable::ht_union(mergeCube2Pointer,
-            state->Dc2Pointer[state->loaderMagnification],
+                                     state->Dc2Pointer[state->loaderMagnification],
             state->Oc2Pointer[state->loaderMagnification]);
     state->protectCube2Pointer->unlock();
     if (HT_SUCCESS != funcRetVal) {

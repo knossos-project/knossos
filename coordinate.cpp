@@ -26,6 +26,7 @@
 
 extern stateInfo *state;
 
+
 /**
  * This function calculates the coordinates of the datacube from pixel coordinates
  */
@@ -68,6 +69,7 @@ bool Coordinate::transCoordinate(Coordinate *outCoordinate,
     return true;
 }
 
+/** This method parses a coordinate string seperated with delimeters [],(),/,;,- */
 Coordinate *Coordinate::parseRawCoordinateString(char *string) {
     Coordinate *extractedCoords = NULL;
     char coordStr[strlen(string)];
@@ -116,6 +118,7 @@ fail:
 
 }
 
+/** test with overloadable operator, maybe obsolet */
 void Coordinate::operator=(Coordinate const &rhs) {
     x = rhs.x;
     y = rhs.y;

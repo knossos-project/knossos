@@ -3,7 +3,9 @@
 #include "knossos-global.h"
 #include "loader.h"
 #include <stdio.h>
-//#include "windows.h"
+#ifdef Q_OS_WIN
+#include "windows.h"
+#endif
 
 #include <curl/curl.h>
 #include <curl/multi.h>

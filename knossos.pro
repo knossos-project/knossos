@@ -8,9 +8,10 @@ QT       += core gui opengl network xml testlib
 
 TARGET = knossos
 TEMPLATE = app
+CONFIG -=app_bundle
 
 SOURCES +=\
-    mainwindow.cpp \
+    widgets/mainwindow.cpp \
     eventmodel.cpp \
     client.cpp \
     loader.cpp \
@@ -22,7 +23,7 @@ SOURCES +=\
     coordinate.cpp \
     Hashtable.cpp \
     sleeper.cpp \
-    viewport.cpp \
+    widgets/viewport.cpp \
     treeLUT_fallback.cpp \
     widgets/console.cpp \
     widgets/tracingtimewidget.cpp \
@@ -44,7 +45,7 @@ SOURCES +=\
     widgets/splashscreenwidget.cpp \
     widgets/coordinatebarwidget.cpp \
     functions.cpp \
-    widgetcontainer.cpp \
+    widgets/widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
     decorators/mainwindowdecorator.cpp \
     widgets/commentshortcuts/commentsnodecommentstab.cpp \
@@ -77,7 +78,7 @@ SOURCES +=\
     openjpeg/tgt.c \
     test/testcommentswidget.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
     eventmodel.h \
     client.h \
@@ -88,7 +89,7 @@ HEADERS  += mainwindow.h \
     renderer.h \
     knossos.h\
     sleeper.h \
-    viewport.h \
+    widgets/viewport.h \
     widgets/console.h \
     widgets/tracingtimewidget.h \
     widgets/commentswidget.h \
@@ -110,7 +111,7 @@ HEADERS  += mainwindow.h \
     widgets/coordinatebarwidget.h \
     functions.h \
     GUIConstants.h \
-    widgetcontainer.h \     
+    widgets/widgetcontainer.h \
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \

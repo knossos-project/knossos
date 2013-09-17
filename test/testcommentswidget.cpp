@@ -1,8 +1,8 @@
 #include "testcommentswidget.h"
-#include "widgetcontainer.h"
-#include "mainwindow.h"
+#include "widgets/widgetcontainer.h"
+#include "widgets/mainwindow.h"
 #include "widgets/commentswidget.h"
-#include "viewport.h"
+#include "widgets/viewport.h"
 #include <QPushButton>
 #include <QMessageBox>
 

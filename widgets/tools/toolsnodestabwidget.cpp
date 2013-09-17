@@ -37,7 +37,7 @@
 extern struct stateInfo *state;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
-    QWidget(parent), ref(parent)
+    QWidget(parent), reference(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
@@ -169,11 +169,11 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         }
 
         disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
+        disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
         activeNodeIdSpinBox->setValue(value);
-        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
+        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
         connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+        connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
 
         if(!node) {
             return;
@@ -184,11 +184,11 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
         }
 
         disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
+        disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
         activeNodeIdSpinBox->setValue(value);
-        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
+        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
         connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+        connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
 
         if(!node) {
 
@@ -199,21 +199,21 @@ void ToolsNodesTabWidget::activeNodeChanged(int value) {
     emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
 
     if(state->skeletonState->activeNode) {
-        ref->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-        ref->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-        ref->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        reference->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+        reference->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+        reference->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
         /* */
-        ref->toolsQuickTabWidget->activeNodeSpinBox->disconnect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-        ref->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        ref->toolsQuickTabWidget->activeNodeSpinBox->connect(ref->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), ref->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+        reference->toolsQuickTabWidget->activeNodeSpinBox->disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        reference->toolsQuickTabWidget->activeNodeSpinBox->connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
         /* */
 
         if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
             this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            ref->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+            reference->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
         } else {
             this->commentField->setText("");
-            ref->toolsQuickTabWidget->commentField->setText("");
+            reference->toolsQuickTabWidget->commentField->setText("");
         }
     }
 }
@@ -234,14 +234,14 @@ void ToolsNodesTabWidget::commentChanged(QString comment) {
 
     emit updateCommentsTableSignal();
 
-    disconnect(ref->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsQuickTabWidget, SLOT(commentChanged(QString)));
-    ref->toolsQuickTabWidget->commentField->setText(comment);
-    connect(ref->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), ref->toolsQuickTabWidget, SLOT(commentChanged(QString)));
+    disconnect(reference->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsQuickTabWidget, SLOT(commentChanged(QString)));
+    reference->toolsQuickTabWidget->commentField->setText(comment);
+    connect(reference->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsQuickTabWidget, SLOT(commentChanged(QString)));
 
 }
 
 void ToolsNodesTabWidget::searchForChanged(QString comment) {
-    ref->toolsQuickTabWidget->searchForField->setText(comment);
+    reference->toolsQuickTabWidget->searchForField->setText(comment);
 }
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
@@ -257,7 +257,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
 
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     emit deleteActiveNodeSignal();
-    ref->updateDisplayedTree();
+    reference->updateDisplayedTree();
 }
 
 /* @todo */

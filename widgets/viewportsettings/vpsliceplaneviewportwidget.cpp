@@ -34,7 +34,7 @@
 #include <QGridLayout>
 #include <QFileDialog>
 #include "knossos-global.h"
-#include "mainwindow.h"
+#include "widgets/mainwindow.h"
 
 extern struct stateInfo *state;
 

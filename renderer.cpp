@@ -24,7 +24,7 @@
 
 #include "renderer.h"
 #include "functions.h"
-#include "viewport.h"
+#include "widgets/viewport.h"
 #include <math.h>
 
 #include <qgl.h>
@@ -218,7 +218,7 @@ uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
     if(viewportType == VIEWPORT_XY)
-        ref->renderText(pos->x, pos->y, pos->z, QString(string), font);
+        reference->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_YZ)
         ref2->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_XZ)
@@ -1747,7 +1747,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     ptrName = NULL;
 
     if(currentVP == 0) {
-        ref->makeCurrent();
+        reference->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == 1) {
         ref3->makeCurrent();
@@ -1775,7 +1775,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     glLoadIdentity();
 
 
-    gluPickMatrix(x, ref->height() - y, width, width, openGLviewport);
+    gluPickMatrix(x, reference->height() - y, width, width, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);

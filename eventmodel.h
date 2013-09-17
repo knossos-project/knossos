@@ -30,7 +30,6 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
-#include <stdint.h>
 
 /**
   * @class EventModel
@@ -52,7 +51,7 @@ class EventModel : public QObject
 {
     Q_OBJECT
 public:
-    Renderer *ref;
+    Renderer *reference;
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
