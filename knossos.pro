@@ -117,10 +117,8 @@ HEADERS  += widgets/mainwindow.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     scripting.h \
     ftp.h \
-    test/testcommentswidget.h
-
-
-PRECOMPILED_HEADER += openjpeg/tgt.h \
+    test/testcommentswidget.h \
+    openjpeg/tgt.h \
     openjpeg/tcd.h \
     openjpeg/t2.h \
     openjpeg/t1_luts.h \
@@ -154,7 +152,7 @@ PRECOMPILED_HEADER += openjpeg/tgt.h \
     openjpeg/color.h \
     openjpeg/cio.h \
     openjpeg/cidx_manager.h \
-    openjpeg/bio.h \
+    openjpeg/bio.h
 
 
 FORMS    += mainwindow.ui

@@ -219,16 +219,42 @@ uint lll_calculate_filename(C_Element *elem) {
     }
     memset(local_cache_path_total, '\0', filenameSize);
     snprintf(local_cache_path_builder, filenameSize, "%smag%d%s", state->loadFtpCachePath, state->magnification, local_dir_delim);
-    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total, 0777);
+    strcat(local_cache_path_total, local_cache_path_builder);
+
+#ifdef Q_OS_UNIX
+    mkdir(local_cache_path_total, 0777);
+#endif
+#ifdef Q_OS_WIN
+    mkdir(local_cache_path_total);
+#endif
     /* LOG("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_1_name, boergens_param_1);
-    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total, 0777);
+    strcat(local_cache_path_total, local_cache_path_builder);
+#ifdef Q_OS_UNIX
+    mkdir(local_cache_path_total, 0777);
+#endif
+#ifdef Q_OS_WIN
+    mkdir(local_cache_path_total);
+#endif
     /* LOG("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_2_name, boergens_param_2);
-    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total, 0777);
+    strcat(local_cache_path_total, local_cache_path_builder);
+#ifdef Q_OS_UNIX
+    mkdir(local_cache_path_total, 0777);
+#endif
+#ifdef Q_OS_WIN
+    mkdir(local_cache_path_total);
+#endif
     /* LOG("%s", local_cache_path_total); */
     snprintf(local_cache_path_builder, filenameSize, "%s%s%.4d", local_dir_delim, boergens_param_3_name, boergens_param_3);
-    strcat(local_cache_path_total, local_cache_path_builder); mkdir(local_cache_path_total, 0777);
+    strcat(local_cache_path_total, local_cache_path_builder);
+
+#ifdef Q_OS_UNIX
+    mkdir(local_cache_path_total, 0777);
+#endif
+#ifdef Q_OS_WIN
+    mkdir(local_cache_path_total);
+#endif
     /* LOG("%s", local_cache_path_total); */
     free(local_cache_path_builder);
 
