@@ -5015,47 +5015,46 @@ Byte* serializeSkeleton() {
                                     + nodeBlockSize * sizeof(Byte) * state->skeletonState->totalNodeElements
                                     + segmentBlockSize * sizeof(Byte) * state->skeletonState->totalSegmentElements
                                     + commentBlockSize * sizeof(Byte)
-                                    + branchPointBlockSize;
+                                    + branchPointBlockSize * sizeof(Byte);
 
     serialSkeleton = malloc(serializedSkeletonSize);
-    memset(serialSkeleton, '\0', serializedSkeletonSize);
     if(serialSkeleton == NULL){
         LOG("Out of memory");
         _Exit(FALSE);
     }
+    memset(serialSkeleton, '\0', serializedSkeletonSize);
 
     //Experiment name
     integerToBytes(&serialSkeleton[memPosition], strlen(state->name));
-
-    memPosition+=sizeof(strlen(state->name));
+    memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], state->name, strlen(state->name));
     memPosition+=strlen(state->name);
 
     //KNOSSOS version
     integerToBytes(&serialSkeleton[memPosition], strlen(KVERSION));
-    memPosition+=sizeof(strlen(KVERSION));
+    memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], KVERSION, strlen(KVERSION));
     memPosition+=strlen(KVERSION);
 
     //Created in version
     integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonCreatedInVersion));
-    memPosition+=sizeof(strlen(state->skeletonState->skeletonCreatedInVersion));
+    memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], state->skeletonState->skeletonCreatedInVersion, strlen(state->skeletonState->skeletonCreatedInVersion));
     memPosition+=strlen(state->skeletonState->skeletonCreatedInVersion);
 
     //Last saved in version
     integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonLastSavedInVersion));
-    memPosition+=sizeof(strlen(state->skeletonState->skeletonLastSavedInVersion));
+    memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], state->skeletonState->skeletonLastSavedInVersion, strlen(state->skeletonState->skeletonLastSavedInVersion));
     memPosition+=strlen(state->skeletonState->skeletonLastSavedInVersion);
 
     //Scale
     floatToBytes(&serialSkeleton[memPosition], state->scale.x / state->magnification);
-    memPosition+=sizeof(state->scale.x / state->magnification);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->scale.y / state->magnification);
-    memPosition+=sizeof(state->scale.y / state->magnification);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->scale.z / state->magnification);
-    memPosition+=sizeof(state->scale.z / state->magnification);
+    memPosition+=sizeof(float);
 
     //Offset
     integerToBytes(&serialSkeleton[memPosition], state->offset.x / state->magnification);
@@ -5067,64 +5066,64 @@ Byte* serializeSkeleton() {
 
     //LockOnComment
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockPositions);
-    memPosition+=sizeof(state->skeletonState->lockPositions);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockRadius);
-    memPosition+=sizeof(state->skeletonState->lockRadius);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->onCommentLock));
-    memPosition+=sizeof(strlen(state->skeletonState->onCommentLock));
+    memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], state->skeletonState->onCommentLock, strlen(state->skeletonState->onCommentLock));
     memPosition+=strlen(state->skeletonState->onCommentLock);
 
     //Display Mode, Work Mode, Skeleton Time, Active Node
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->displayMode);
-    memPosition+=sizeof(state->skeletonState->displayMode);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->workMode);
-    memPosition+=sizeof(state->skeletonState->workMode);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
-    memPosition+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
+    memPosition+=sizeof(int32_t);
     if(state->skeletonState->activeNode){
         integerToBytes(&serialSkeleton[memPosition], state->skeletonState->activeNode->nodeID);
     }
     else{
         integerToBytes(&serialSkeleton[memPosition], 0);
     }
-    memPosition+=sizeof(state->skeletonState->activeNode->nodeID);
+    memPosition+=sizeof(int32_t);
 
     //Current Position
     integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.x);
-    memPosition+=sizeof(state->viewerState->currentPosition.x);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.y);
-    memPosition+=sizeof(state->viewerState->currentPosition.y);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.z);
-    memPosition+=sizeof(state->viewerState->currentPosition.z);
+    memPosition+=sizeof(int32_t);
 
     //SkeletonViewport Display
     for (i = 0; i < 16; i++){
         floatToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonVpModelView[i]);
-        memPosition+=sizeof(state->skeletonState->skeletonVpModelView[0]);
+        memPosition+=sizeof(float);
     }
     floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateX);
-    memPosition+=sizeof(state->skeletonState->translateX);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateY);
-    memPosition+=sizeof(state->skeletonState->translateY);
+    memPosition+=sizeof(float);
 
     //Zoom Levels
     floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
-    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XY].texture.zoomLevel);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
-    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_XZ].texture.zoomLevel);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
-    memPosition+=sizeof(state->viewerState->viewPorts[VIEWPORT_YZ].texture.zoomLevel);
+    memPosition+=sizeof(float);
     floatToBytes(&serialSkeleton[memPosition], state->skeletonState->zoomLevel);
-    memPosition+=sizeof(state->skeletonState->zoomLevel);
+    memPosition+=sizeof(float);
 
     //Idle Time, Tree Elements
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->idleTime);
-    memPosition+=sizeof(state->skeletonState->idleTime);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->viewerState->ag->activeTreeID);
-    memPosition+=sizeof(state->viewerState->ag->activeTreeID);
+    memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->treeElements);
-    memPosition+=sizeof(state->skeletonState->treeElements);
+    memPosition+=sizeof(int32_t);
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
@@ -5133,62 +5132,62 @@ Byte* serializeSkeleton() {
 
         while(currentTree) {
         integerToBytes(&serialSkeleton[memPosition], currentTree->treeID);
-        memPosition+=sizeof(currentTree->treeID);
+        memPosition+=sizeof(int32_t);
         if(currentTree->colorSetManually){
             floatToBytes(&serialSkeleton[memPosition], currentTree->color.r);
-            memPosition+=sizeof(currentTree->color.r);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], currentTree->color.b);
-            memPosition+=sizeof(currentTree->color.b);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], currentTree->color.g);
-            memPosition+=sizeof(currentTree->color.g);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], currentTree->color.a);
-            memPosition+=sizeof(currentTree->color.a);
+            memPosition+=sizeof(float);
         }
         else{
             floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(currentTree->color.r);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(currentTree->color.b);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(currentTree->color.g);
+            memPosition+=sizeof(float);
             floatToBytes(&serialSkeleton[memPosition], 1);
-            memPosition+=sizeof(currentTree->color.a);
+            memPosition+=sizeof(float);
         }
         integerToBytes(&serialSkeleton[memPosition], strlen(currentTree->comment));
-        memPosition+=sizeof(strlen(currentTree->comment));
+        memPosition+=sizeof(int32_t);
         strncpy(&serialSkeleton[memPosition], currentTree->comment, strlen(currentTree->comment));
         memPosition+=strlen(currentTree->comment);
 
-        memPosition+=sizeof(totalNodeNumber);
+        memPosition+=sizeof(int32_t);
         currentNode = currentTree->firstNode;
         totalNodeNumber = 0;
         while(currentNode){
             integerToBytes(&serialSkeleton[memPosition], currentNode->nodeID);
-            memPosition+=sizeof(currentNode->nodeID);
+            memPosition+=sizeof(int32_t);
             floatToBytes(&serialSkeleton[memPosition], currentNode->radius);
-            memPosition+=sizeof(currentNode->radius);
+            memPosition+=sizeof(float);
             integerToBytes(&serialSkeleton[memPosition], currentNode->position.x);
-            memPosition+=sizeof(currentNode->position.x);
+            memPosition+=sizeof(int32_t);
             integerToBytes(&serialSkeleton[memPosition], currentNode->position.y);
-            memPosition+=sizeof(currentNode->position.y);
+            memPosition+=sizeof(int32_t);
             integerToBytes(&serialSkeleton[memPosition], currentNode->position.z);
-            memPosition+=sizeof(currentNode->position.z);
+            memPosition+=sizeof(int32_t);
             integerToBytes(&serialSkeleton[memPosition], currentNode->createdInVp);
             memPosition+=sizeof(currentNode->createdInVp);
             integerToBytes(&serialSkeleton[memPosition], currentNode->createdInMag);
-            memPosition+=sizeof(currentNode->createdInMag);
+            memPosition+=sizeof(int32_t);
             integerToBytes(&serialSkeleton[memPosition], currentNode->timestamp);
-            memPosition+=sizeof(currentNode->timestamp);
+            memPosition+=sizeof(int32_t);
             currentNode = currentNode->next;
             totalNodeNumber++;
         }
-        memPosition-=nodeBlockSize * totalNodeNumber + sizeof(totalNodeNumber);
+        memPosition-=nodeBlockSize * totalNodeNumber + sizeof(int32_t);
         integerToBytes(&serialSkeleton[memPosition], totalNodeNumber);
-        memPosition+=nodeBlockSize * totalNodeNumber + sizeof(totalNodeNumber);
+        memPosition+=nodeBlockSize * totalNodeNumber + sizeof(int32_t);
 
     currentTree = currentTree->next;
     }
-    memPosition+=sizeof(totalSegmentNumber);
+    memPosition+=sizeof(int32_t);
     currentTree = state->skeletonState->firstTree;
     totalSegmentNumber = 0;
     while(currentTree){
@@ -5198,9 +5197,9 @@ Byte* serializeSkeleton() {
             while(currentSegment){
                 if(currentSegment->flag == SEGMENT_FORWARD){
                     integerToBytes(&serialSkeleton[memPosition], currentSegment->source->nodeID);
-                    memPosition+=sizeof(currentSegment->source->nodeID);
+                    memPosition+=sizeof(int32_t);
                     integerToBytes(&serialSkeleton[memPosition], currentSegment->target->nodeID);
-                    memPosition+=sizeof(currentSegment->target->nodeID);
+                    memPosition+=sizeof(int32_t);
                     totalSegmentNumber++;
                 }
                 currentSegment = currentSegment->next;
@@ -5209,18 +5208,18 @@ Byte* serializeSkeleton() {
         }
         currentTree = currentTree->next;
     }
-    memPosition-=totalSegmentNumber*segmentBlockSize+sizeof(totalSegmentNumber);
+    memPosition-=totalSegmentNumber*segmentBlockSize+sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], totalSegmentNumber);
-    memPosition+=totalSegmentNumber*segmentBlockSize+sizeof(totalSegmentNumber);
+    memPosition+=totalSegmentNumber*segmentBlockSize+sizeof(int32_t);
 
-    memPosition+=sizeof(totalCommentNumber);
+    memPosition+=sizeof(int32_t);
     if(state->skeletonState->currentComment){
         currentComment = state->skeletonState->currentComment;
         do {
             integerToBytes(&serialSkeleton[memPosition], currentComment->node->nodeID);
-            memPosition+=sizeof(currentComment->node->nodeID);
+            memPosition+=sizeof(int32_t);
             integerToBytes(&serialSkeleton[memPosition], strlen(currentComment->content));
-            memPosition+=sizeof(strlen(currentComment->content));
+            memPosition+=sizeof(int32_t);
             strncpy(&serialSkeleton[memPosition], currentComment->content, strlen(currentComment->content));
             memPosition+=strlen(currentComment->content);
             currentComment = currentComment->next;
@@ -5232,7 +5231,7 @@ Byte* serializeSkeleton() {
     memPosition+=commentBlockSize;
 
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->branchStack->elementsOnStack);
-    memPosition+=sizeof(state->skeletonState->branchStack->elementsOnStack);
+    memPosition+=sizeof(int32_t);
     while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
         integerToBytes(&serialSkeleton[memPosition], currentBranchPointID);
         memPosition+=sizeof(currentBranchPointID);
