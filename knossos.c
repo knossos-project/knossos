@@ -676,7 +676,8 @@ static int32_t initStates() {
     SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
     state->loadLocalSystem = LS_WINDOWS;
-    state->loadMode = LM_FTP;
+    //Switch here between flags LM_LOCAL and LM_FTP;
+    state->loadMode = LM_LOCAL;
     if (LM_FTP == state->loadMode) {
         state->loadFtpCachePath = malloc(MAX_PATH);
 #ifdef WIN32
