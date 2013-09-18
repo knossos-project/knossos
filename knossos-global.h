@@ -1161,8 +1161,8 @@ struct segmentListElement {
 };
 
 struct serialSkeletonListElement {
-    struct serialSkeletonElement *next;
-    struct serialSkeletonElement *previous;
+    struct serialSkeletonListElement *next;
+    struct serialSkeletonListElement *previous;
     Byte* content;
 };
 
