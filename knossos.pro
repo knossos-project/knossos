@@ -10,8 +10,7 @@ TARGET = knossos
 TEMPLATE = app
 CONFIG -=app_bundle
 
-SOURCES +=\
-    widgets/mainwindow.cpp \
+SOURCES += widgets/mainwindow.cpp \
     eventmodel.cpp \
     client.cpp \
     loader.cpp \
