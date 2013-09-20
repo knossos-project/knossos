@@ -60,6 +60,7 @@ public slots:
     void setRemoteStateType(int type);
     void setRecenteringPosition(int x, int y, int z);
     bool remoteJump(int x, int y, int z);
+
 };
 
 #endif // REMOTE_H

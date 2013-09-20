@@ -269,11 +269,11 @@ void ToolsQuickTabWidget::commentChanged(QString comment) {
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
 
-        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0, true);
     }
     else{
         if(!comment.isEmpty())
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0, true);
     }
 
     emit updateCommentsTableSignal();
@@ -298,14 +298,13 @@ void ToolsQuickTabWidget::findPreviousButtonClicked() {
 }
 
 void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
-    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }
 
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
-    emit popBranchNodeSignal(CHANGE_MANUAL);
+    emit popBranchNodeSignal(CHANGE_MANUAL, true);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
-
 }
 
 

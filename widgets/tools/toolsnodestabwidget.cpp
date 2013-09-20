@@ -226,10 +226,10 @@ void ToolsNodesTabWidget::idChanged(int value) {
 void ToolsNodesTabWidget::commentChanged(QString comment) {
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0);
+        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0, true);
     } else {
         if(!comment.isEmpty())
-         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0);
+         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0, true);
     }
 
     emit updateCommentsTableSignal();
@@ -263,7 +263,7 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
 /* @todo */
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
-         if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value())) {
+         if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true)) {
 
          } else {
 

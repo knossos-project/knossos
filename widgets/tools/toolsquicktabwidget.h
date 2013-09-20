@@ -49,8 +49,8 @@ signals:
     void setActiveTreeSignal(int id);
     bool setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void updateToolsSignal();
-    void popBranchNodeSignal(int targetRevision);
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    void popBranchNodeSignal(int targetRevision, int serialize);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
 
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
@@ -58,8 +58,8 @@ signals:
     void updateCommentsTableSignal();
     treeListElement *findTreeByTreeIDSignal(int value);
     nodeListElement *findNodeByNodeIDSignal(int value);
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
 public slots:
     void activeTreeIdChanged(int value);
     void activeNodeIdChanged(int value);

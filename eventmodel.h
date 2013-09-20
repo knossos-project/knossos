@@ -95,11 +95,11 @@ signals:
     void previousCommentSignal(char *searchString);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
     void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
     void idleTimeSignal();
@@ -108,8 +108,8 @@ signals:
     void updateZoomWidgetSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
-    void popBranchNodeSignal(int targetRevision);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    void popBranchNodeSignal(int targetRevision, int serialize);
 
     void moveToNextTreeSignal();
     void moveToPrevTreeSignal();
@@ -120,10 +120,11 @@ signals:
     segmentListElement *findSegmentByNodeIDSignal(int sourceNodeID, int targetNodeID);
     nodeListElement *findNodeByNodeIDSignal(int nodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
-    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
 
+    void undoSignal();
 public slots:
-    
+
 };
 
 #endif // EVENTMODEL_H

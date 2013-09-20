@@ -60,9 +60,9 @@ signals:
     void updateViewerStateSignal();
     void updateCommentsTableSignal();
     nodeListElement *findNodeByNodeIDSignal(int value);
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
 public slots:
     void activeNodeChanged(int value);
     void idChanged(int value);

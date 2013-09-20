@@ -156,15 +156,15 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));
-    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*)), viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*)));
+    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*)), viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*)));
-    QObject::connect(client, SIGNAL(delTreeSignal(int,int)), viewer->skeletonizer, SLOT(delTree(int,int)));
+    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(delTreeSignal(int,int,int)), viewer->skeletonizer, SLOT(delTree(int,int,int)));
     QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
-    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int)));
-    QObject::connect(client, SIGNAL(popBranchNodeSignal(int)), viewer->skeletonizer, SLOT(popBranchNode(int)));
-    QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
+    QObject::connect(client, SIGNAL(popBranchNodeSignal(int,int)), viewer->skeletonizer, SLOT(popBranchNode(int,int)));
+    QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(sendConnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
     QObject::connect(client, SIGNAL(sendDisconnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
 
@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
 
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));    
     QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
+
 
     loader->start();
     viewer->run();

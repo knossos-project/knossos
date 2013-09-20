@@ -109,11 +109,11 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
+                    emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL, true);
                 } else if(findSegmentByNodeIDSignal(clickedNode, state->skeletonState->activeNode->nodeID)) {
-                    emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
+                    emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL, true);
                 } else{
-                    emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                    emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, true);
                 }
             }
         }
@@ -145,15 +145,15 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
-                                   NULL);
+                                   NULL, true);
                     } else if(findSegmentByNodeIDSignal(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
-                                   NULL);
+                                   NULL, true);
                     } else {
-                        emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
+                        emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, true);
                     }
                 }
             }
@@ -197,8 +197,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
         if(state->skeletonState->activeNode == NULL) {
             //1. no node to link with
-            emit addSkeletonNodeSignal(clickedCoordinate,
-                               state->viewerState->vpConfigs[VPfound].type);
+            emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         }
 
@@ -210,7 +209,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
-                emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID);
+                emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID, true);
                 emit idleTimeSignal();
             }
             break;
@@ -1086,10 +1085,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         emit updateSlicePlaneWidgetSignal();
     } else if(event->key() == Qt::Key_J) {
-        emit popBranchNodeSignal(CHANGE_MANUAL);
+        emit popBranchNodeSignal(CHANGE_MANUAL, true);
         emit updateTools();
     } else if(event->key() == Qt::Key_B) {
-        emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+        emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
         emit updateTools();
     } else if(event->key() == Qt::Key_X) {
         if(shift) {
@@ -1103,6 +1102,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         return true;
 
     } else if(event->key() == Qt::Key_Z) {
+
+        if(control) {
+            emit undoSignal();
+            return true;
+        }
+
         if(shift) {
             emit moveToNextTreeSignal();
             emit updateTools();
@@ -1144,7 +1149,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit workModeLinkSignal();
     } else if(event->key() == Qt::Key_C) {
         treeCol.r = -1.;
-        emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
+        emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
         emit updateTreeCountSignal();
         emit workModeDropSignal();
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
@@ -1169,7 +1174,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);           
         } else{
             if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);               
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
             }
         }
         emit updateTools();
@@ -1180,7 +1185,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else{
             if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
         }
         emit updateTools();
         emit updateCommentsTable();
@@ -1190,7 +1195,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else{
            if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
         }
         emit updateTools();
         emit updateCommentsTable();
@@ -1204,7 +1209,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
             else{
                if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
+                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
             }
             emit updateTools();
             emit updateCommentsTable();
@@ -1215,7 +1220,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else{
             if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
         }
         emit updateTools();
         emit updateCommentsTable();

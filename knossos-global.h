@@ -1035,8 +1035,8 @@ struct segmentListElement {
 };
 
 struct serialSkeletonListElement {
-    struct serialSkeletonElement *next;
-    struct serialSkeletonElement *previous;
+    struct serialSkeletonListElement *next;
+    struct serialSkeletonListElement *previous;
     Byte* content;
 };
 
@@ -1243,6 +1243,9 @@ struct skeletonState {
     struct cmdList *undoList;
     struct cmdList *redoList;
 
+    uint serialSkeletonCounter;
+    uint maxUndoSteps;
+
     QString skeletonFileAsQString;
 };
 
@@ -1267,101 +1270,6 @@ struct clientState {
     struct IOBuffer *outBuffer;
 };
 
-
-/*
- * Commands for undo and redo
- */
-
-struct cmdList {
-    int cmdCount;
-    struct cmdListElement *firstCmd;
-    struct cmdListElement *lastCmd;
-};
-
-struct cmdListElement {
-    void *cmd;
-    int cmdType; //see command type constants
-    struct cmdListElement *prev;
-    struct cmdListElement *next;
-};
-
-typedef struct {
-    struct nodeListElement *deletedNode;
-} cmdDelNode;
-
-typedef struct {
-    int prevActiveNodeID;
-    struct nodeListElement *newNode;
-    int oldWorkMode;
-    int newWorkMode;
-} cmdAddNode;
-
-typedef struct {
-    int NodeID1;
-    int NodeID2;
-} cmdLinkNode;
-
-typedef struct {
-    int NodeID1;
-    int NodeID2;
-} cmdUnlinkNode;
-
-typedef struct {
-    int popNodeID;
-    int oldActiveNodeID;
-} cmdPopBranch;
-
-typedef struct {
-    int NodeID;
-} cmdPushBranchNode;
-
-typedef struct {
-    int oldActiveNodeID;
-    int newActiveNodeID;
-} cmdChangeActiveNode;
-
-typedef struct {
-    int oldActiveTreeID;
-    int newActiveTreeID;
-} cmdChangeActiveTree;
-
-typedef struct {
-    int treeID;
-} cmdAddTree;
-
-
-typedef struct {
-
-} cmdDelTree;
-
-typedef struct {
-    struct skeletonState *skelState;
-} cmdSplitTree;
-
-typedef struct {
-
-} cmdMergeTree;
-
-typedef struct {
-    int treeID;
-    color4F oldColor;
-} cmdChangeTreeColor;
-
-typedef struct {
-    int nodeID;
-    char* oldComment;
-    char* newComment;
-} cmdChangeComment;
-
-typedef struct {
-    int nodeID;
-    char* comment;
-} cmdDelComment;
-
-typedef struct {
-    int nodeID;
-    char* comment;
-} cmdAddComment;
 
 /* global functions */
 

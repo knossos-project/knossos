@@ -49,6 +49,7 @@ public:
 
     static bool skeletonSyncBroken();
 
+    static float bytesToFloat(Byte *source);
     static int bytesToInt(Byte *source);
     static bool integerToBytes(Byte *dest, int source);
     static bool floatToBytes(Byte *dest, float source);
@@ -93,15 +94,15 @@ signals:
     void remoteJumpSignal(int x, int y, int z);
     void skeletonWorkModeSignal(int targetRevision, uint workMode);
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
     void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel);
-    void delTreeSignal(int targetRevision, int treeID);
+    void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
+    void delTreeSignal(int targetRevision, int treeID, int serialize);
     void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
-    bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID);
-    void popBranchNodeSignal(int targetRevision);
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
+    void popBranchNodeSignal(int targetRevision, int serialize);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void sendConnectedState();
     void sendDisconnectedState();
 public slots:

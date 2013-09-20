@@ -97,7 +97,7 @@ bool Client::closeConnection(QTcpSocket *remoteSocket) {
 
 }
 
-float bytesToFloat(Byte *source) {
+float Client::bytesToFloat(Byte *source) {
     /*
      * There are issues with sending floats over networks. There might be
      * strange bugs when sending data between different architectures...
@@ -295,7 +295,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit editCommentSignal(d[0], NULL, d[1], (char *)s, NULL, d[2]);
+                emit editCommentSignal(d[0], NULL, d[1], (char *)s, NULL, d[2], false);
 
                 break;
 
@@ -306,7 +306,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delCommentSignal(d[0], NULL, d[1]);
+                emit delCommentSignal(d[0], NULL, d[1], false);
 
                 break;
 
@@ -338,7 +338,7 @@ uint Client::parseInBuffer() {
                 pPosition->y = d[8];
                 pPosition->z = d[9];
 
-                Skeletonizer::addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], false);
+                Skeletonizer::addNode(d[0], d[2], f[0], d[3], pPosition, (Byte)d[4], d[5], d[6], false, false);
 
                 free(pPosition);
                 pPosition = NULL;
@@ -367,7 +367,7 @@ uint Client::parseInBuffer() {
 
                 LOG("DELNODE: Received revision %d", d[0])
 
-                emit delNodeSignal(d[0], d[1], NULL);
+                emit delNodeSignal(d[0], d[1], NULL, false);
 
                 break;
 
@@ -379,7 +379,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::addSegment(d[0], d[1], d[2]);
+                Skeletonizer::addSegment(d[0], d[1], d[2], false);
 
                 break;
 
@@ -391,7 +391,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delSegmentSignal(d[0], d[1], d[2], NULL);
+                emit delSegmentSignal(d[0], d[1], d[2], NULL, false);
 
                 break;
 
@@ -407,7 +407,7 @@ uint Client::parseInBuffer() {
                 treeCol.g = f[1];
                 treeCol.b = f[2];
                 treeCol.a = 1.;
-                Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol);
+                Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol, false);
 
                 break;
 
@@ -418,7 +418,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delTreeSignal(d[0], d[1]);
+                emit delTreeSignal(d[0], d[1], false);
 
                 break;
 
@@ -429,7 +429,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::mergeTrees(d[0], d[1], d[2]);
+                Skeletonizer::mergeTrees(d[0], d[1], d[2], false);
 
                 break;
 
@@ -440,8 +440,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::splitConnectedComponent(d[0], d[1]);
-
+                Skeletonizer::splitConnectedComponent(d[0], d[1], false);
                 LOG("Called splitcc with %d %d", d[0], d[1])
 
                 break;
@@ -453,7 +452,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit pushBranchNodeSignal(d[0], true, true, NULL, d[1]);
+                emit pushBranchNodeSignal(d[0], true, true, NULL, d[1], false);
 
                 break;
 
@@ -464,7 +463,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit popBranchNodeSignal(d[0]);
+                emit popBranchNodeSignal(d[0], false);
 
 
                 break;
@@ -620,14 +619,14 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
 
         messageLen = nameLen + 6 * 4 + 5;
         message[0] = KIKI_HI;
-        Client::integerToBytes(&message[1], messageLen);
+        Client::Client::integerToBytes(&message[1], messageLen);
         strncpy((char *)&message[5], state->name, nameLen);
         Client::floatToBytes(&message[5 + nameLen], state->scale.x);
         Client::floatToBytes(&message[5 + nameLen + 4], state->scale.y);
         Client::floatToBytes(&message[5 + nameLen + 8], state->scale.z);
-        Client::integerToBytes(&message[5 + nameLen + 12], state->offset.x);
-        Client::integerToBytes(&message[5 + nameLen + 16], state->offset.y);
-        Client::integerToBytes(&message[5 + nameLen + 20], state->offset.z);
+        Client::Client::integerToBytes(&message[5 + nameLen + 12], state->offset.x);
+        Client::Client::integerToBytes(&message[5 + nameLen + 16], state->offset.y);
+        Client::Client::integerToBytes(&message[5 + nameLen + 20], state->offset.z);
 
         Client::IOBufferAppend(clientState->outBuffer, message, messageLen, state->protectOutBuffer);
         memset(message, '\0', 8192 * sizeof(Byte));
@@ -776,12 +775,12 @@ bool Client::broadcastPosition(uint x, uint y, uint z) {
     messageLen = 22;
 
     data[0] = KIKI_REPEAT;
-    Client::integerToBytes(&data[1], messageLen);
+    Client::Client::integerToBytes(&data[1], messageLen);
     data[5] = KIKI_POSITION;
-    Client::integerToBytes(&data[6], clientState->myId);
-    Client::integerToBytes(&data[10], x);
-    Client::integerToBytes(&data[14], y);
-    Client::integerToBytes(&data[18], z);
+    Client::Client::integerToBytes(&data[6], clientState->myId);
+    Client::Client::integerToBytes(&data[10], x);
+    Client::Client::integerToBytes(&data[14], y);
+    Client::Client::integerToBytes(&data[18], z);
 
     Client::IOBufferAppend(clientState->outBuffer, data, messageLen, state->protectOutBuffer);
 
@@ -802,7 +801,7 @@ int Client::bytesToInt(Byte *source) {
     return dest;
 }
 
-bool Client::integerToBytes(Byte *dest, int source) {
+bool Client::Client::integerToBytes(Byte *dest, int source) {    
     memcpy(dest, &source, sizeof(int));
     return true;
 }
@@ -990,7 +989,7 @@ bool Client::syncMessage(const char *fmt, ...) {
                 }
                 d = va_arg(ap, int);
 
-                Client::integerToBytes(&packedBytes[len - 4], d);
+                Client::Client::integerToBytes(&packedBytes[len - 4], d);
                 break;
 
             case 'b':
@@ -1027,7 +1026,7 @@ bool Client::syncMessage(const char *fmt, ...) {
                 if(len > PACKLEN) {
                     goto lenoverflow;
                 }
-                Client::integerToBytes(&packedBytes[len - 4], state->skeletonState->skeletonRevision);
+                Client::Client::integerToBytes(&packedBytes[len - 4], state->skeletonState->skeletonRevision);
                 //printf("sending delta to revision %d\n", *(int *)(&packedBytes[len - 4]));
                 break;
             case 'l':
@@ -1053,9 +1052,9 @@ bool Client::syncMessage(const char *fmt, ...) {
 
     va_end(ap);
 
-    Client::integerToBytes(&packedBytes[1], len);
+    Client::Client::integerToBytes(&packedBytes[1], len);
     if(peerLenField >= 0) {
-        Client::integerToBytes(&packedBytes[peerLenField], len - 5);
+        Client::Client::integerToBytes(&packedBytes[peerLenField], len - 5);
     }
     if(!Client::IOBufferAppend(state->clientState->outBuffer,
                        packedBytes,
