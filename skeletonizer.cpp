@@ -1967,12 +1967,12 @@ int Skeletonizer::addNode(int targetRevision,
     floatCoordinate lockVector;
     int lockDistance = 0;
 
-   qDebug("adfadfafafaf");
+
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
         return false;
     }
-qDebug("adfadfafafaf");
+
     state->skeletonState->branchpointUnresolved = false;
 
      // respectLocks refers to locking the position to a specific coordinate such as to
@@ -4674,7 +4674,6 @@ void Skeletonizer::deleteLastSerialSkeleton(){
 }
 
 void Skeletonizer::saveSerializedSkeleton(){
-    qDebug("aaaaaaaaa");
     struct serialSkeletonListElement *serialSkeleton = NULL;
     serialSkeleton = (serialSkeletonListElement *)malloc(sizeof(*serialSkeleton));
     serialSkeleton->content = (Byte *)serializeSkeleton();

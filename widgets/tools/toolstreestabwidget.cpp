@@ -244,7 +244,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
+    emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit updateToolsSignal();
 }
@@ -262,20 +262,11 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value(), true)) {
         reference->updateDisplayedTree();
-
     } else {
         LOG("Probleme")
     }
 }
 
-/* @todo */
-void ToolsTreesTabWidget::id1Changed(int value) {
-
-}
-
-void ToolsTreesTabWidget::id2Changed(int value) {
-
-}
 
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {

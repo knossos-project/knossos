@@ -2,10 +2,9 @@
 #define TESTCOMMENTSWIDGET_H
 
 #include <QObject>
-#include <QtTest/QTest>
+#include <QTest>
 #include "../knossos-global.h"
 #include "viewer.h"
-
 
 class TestCommentsWidget : public QObject
 {
@@ -20,9 +19,11 @@ public slots:
 private slots:
     void testEnterComments();
     void testAddNodeComment();
+    //void testEnableConditionalColoring();
+    //void testEnableConditionalRadius();
 
-    void testDeleteComments(); // this slot should called at the end.
+
+    void testDeleteComments(); // this slot should be called at the end.
 
 };
-
 #endif // TESTCOMMENTSWIDGET_H

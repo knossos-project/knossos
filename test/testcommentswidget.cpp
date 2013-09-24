@@ -85,7 +85,6 @@ void TestCommentsWidget::testAddNodeComment() {
     QCOMPARE(tools->toolsNodesTabWidget->commentField->text(), usedString);
 
     bool found;
-
     // get the id of the node from the quick tab spinbox
     int nodeID = tools->toolsQuickTabWidget->activeNodeSpinBox->value();
     // iterate through the table and find the entry of this node
@@ -100,3 +99,22 @@ void TestCommentsWidget::testAddNodeComment() {
     // the test will fail if no item in the table was found
     QVERIFY(found == true);
 }
+/*
+
+void TestCommentsWidget::testEnableConditionalColoring() {
+    CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
+    CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
+    commentsWidget->setVisible(true);
+
+
+
+}
+
+void TestCommentsWidget::testEnableConditionalRadius() {
+    CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
+    CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
+    commentsWidget->setVisible(true);
+
+}
+*/
+

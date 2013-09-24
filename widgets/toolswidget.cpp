@@ -135,14 +135,21 @@ void ToolsWidget::saveSettings() {
 
 void ToolsWidget::updateDisplayedTree() {
 
-
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
-    this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
+    if(state->skeletonState->treeElements == 0) {
+        this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(0);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(0);
+
+    } else {
+        this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
+    }
 
     if(state->skeletonState->activeTree) {
         this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(true);
         this->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
+
+
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
         this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(1);
@@ -157,6 +164,7 @@ void ToolsWidget::updateDisplayedTree() {
             this->toolsTreesTabWidget->commentField->setText("");
 
     } else {
+        this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(0));
 
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);

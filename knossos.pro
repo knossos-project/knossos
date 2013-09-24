@@ -8,7 +8,8 @@ QT       += core gui opengl network xml testlib
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG -=app_bundle
+CONFIG += qtestlib
+CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
     eventmodel.cpp \
@@ -75,7 +76,9 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/t2.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
-    test/testcommentswidget.cpp
+    test/testcommentswidget.cpp \
+    test/testskeletonviewport.cpp \
+    test/testtoolswidget.cpp
 
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
@@ -151,7 +154,9 @@ HEADERS  += widgets/mainwindow.h \
     openjpeg/color.h \
     openjpeg/cio.h \
     openjpeg/cidx_manager.h \
-    openjpeg/bio.h
+    openjpeg/bio.h \
+    test/testskeletonviewport.h \
+    test/testtoolswidget.h
 
 
 FORMS    += mainwindow.ui

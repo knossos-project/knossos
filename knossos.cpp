@@ -45,6 +45,7 @@
 #include "ftp.h"
 
 #include "test/testcommentswidget.h"
+#include "test/testtoolswidget.h"
 
 #ifdef Q_OS_WIN
     #include "windows.h"
@@ -123,8 +124,8 @@ int main(int argc, char *argv[])
     Loader *loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
-    Scripting *scripts = new Scripting();
-    scripts->reference = viewer->skeletonizer;
+    //Scripting *scripts = new Scripting();
+    //scripts->reference = viewer->skeletonizer;
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
     QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(const char*,float*,int)), viewer, SLOT(loadTreeColorTable(const char*,float*,int)));
@@ -180,14 +181,20 @@ int main(int argc, char *argv[])
     viewer->run();
     remote->start();
     client->start();
-    scripts->run();
+    //scripts->run();
 
     /* TEST */
+
     /*
+    TestToolsWidget tools;
+    tools.reference = viewer;
+    QTest::qExec(&tools);
+
     TestCommentsWidget test;
     test.reference = viewer;
     QTest::qExec(&test);
     */
+
 
     return a.exec();
 }

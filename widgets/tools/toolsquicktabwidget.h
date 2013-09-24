@@ -40,6 +40,7 @@ class ToolsQuickTabWidget : public QWidget
     friend class ToolsWidget;
     friend class ToolsNodesTabWidget;
     friend class TestCommentsWidget;
+    friend class TestToolsWidget;
     Q_OBJECT
 public:
     explicit ToolsQuickTabWidget(ToolsWidget *parent = 0);
