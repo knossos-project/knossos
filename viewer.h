@@ -71,7 +71,6 @@ public:
     void logSingle();
 signals:
     void loadSignal();
-    void finished();
     void updateCoordinatesSignal(int x, int y, int z);
     void updateZoomAndMultiresWidgetSignal();
     void idleTimeSignal();

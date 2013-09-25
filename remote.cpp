@@ -364,7 +364,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
                 sendMove->z = 0;
 
 
+
             emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
+
 
         }
 

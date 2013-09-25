@@ -24,15 +24,14 @@
 
 #include <cstring>
 #include <time.h>
+#include <QProgressDialog>
 #include "skeletonizer.h"
 #include "knossos-global.h"
 #include "knossos.h"
 #include "client.h"
 #include "functions.h"
-#include <QProgressDialog>
 
 extern stateInfo *state;
-
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
@@ -4795,7 +4794,7 @@ int Skeletonizer::getBranchPointBlockSize(){
     return branchPointBlockSize;
 }
 
-void Skeletonizer::undo(){
+void Skeletonizer::undo() {
     qDebug() << " entered : undo";
     if(state->skeletonState->serialSkeletonCounter > 0){
         deserializeSkeleton();

@@ -249,9 +249,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
             this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 
-            reference->toolsNodesTabWidget->activeNodeIdSpinBox->disconnect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
             reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-            reference->toolsNodesTabWidget->activeNodeIdSpinBox->connect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
 
             if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
                 this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));

@@ -32,6 +32,7 @@ class QRadioButton;
 class QLabel;
 class NavigationWidget : public QDialog
 {
+    friend class TestNavigationWidget;
     Q_OBJECT
 public:
     explicit NavigationWidget(QWidget *parent = 0);

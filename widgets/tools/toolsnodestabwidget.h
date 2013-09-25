@@ -56,7 +56,6 @@ signals:
     void nextCommentSignal(char *searchString);
     void previousCommentSignal(char *searchString);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
@@ -66,10 +65,7 @@ signals:
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
 public slots:
-    void idChanged(int value);
-    //void commentChanged(QString comment);
-    //void searchForChanged(QString comment);
-
+    void idChanged(int value);    
     void jumpToNodeButtonClicked();
     void deleteNodeButtonClicked();
     void linkNodeWithButtonClicked();

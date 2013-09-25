@@ -40,14 +40,9 @@ public:
 
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
-
     static nodeListElement *findNodeByCoordinate(Coordinate *position);
-
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);
-
-
-
     static int addNode(int targetRevision,
                     int nodeID,
                     float radius,
@@ -59,10 +54,6 @@ public:
                     int respectLocks,
                     int serialize);
 
-
-
-
-
     static void *popStack(stack *stack);
     static bool pushStack(stack *stack, void *element);
     static stack *newStack(int size);
@@ -72,10 +63,7 @@ public:
     static bool setDynArray(dynArray *array, int pos, void *value);
     static dynArray *newDynArray(int size);
 
-
     static void UI_popBranchNode();
-
-
     static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
     static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
@@ -95,7 +83,6 @@ public:
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 
 public:
-
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
@@ -290,7 +277,6 @@ public slots:
     void setHighlightActiveTree(bool on);
     void setSkeletonChanged(bool on);
     void setShowNodeIDs(bool on);
-
 
     bool loadXmlSkeleton(QString fileName);
     bool saveXmlSkeleton(QString fileName);

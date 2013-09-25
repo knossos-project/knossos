@@ -22,6 +22,9 @@ signals:
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setJumpToActiveNodeSignal();
     nodeListElement *findNodeByNodeIDSignal(int id);
+    void updateTools();
+public slots:
+
 public slots:
     void updateCommentsTable();
     void branchPointOnlyChecked(bool on);

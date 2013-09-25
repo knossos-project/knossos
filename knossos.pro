@@ -79,7 +79,8 @@ SOURCES += widgets/mainwindow.cpp \
     test/testcommentswidget.cpp \
     test/testskeletonviewport.cpp \
     test/testtoolswidget.cpp \
-    test/testnavigationwidget.cpp
+    test/testnavigationwidget.cpp \
+    test/testzoomandmultireswidget.cpp
 
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
@@ -158,7 +159,8 @@ HEADERS  += widgets/mainwindow.h \
     openjpeg/bio.h \
     test/testskeletonviewport.h \
     test/testtoolswidget.h \
-    test/testnavigationwidget.h
+    test/testnavigationwidget.h \
+    test/testzoomandmultireswidget.h
 
 
 FORMS    += mainwindow.ui

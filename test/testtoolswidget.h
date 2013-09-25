@@ -22,7 +22,11 @@ private slots:
     void testAddNodesPerMouseClick();
     void testDeleteActiveTreeCaseZero();
     void testDeleteActiveTreeCaseNotZero();
+    void testMergeTrees();
+    void testSplitConnectedComponents();
+    void testRestoreColors();
 
+    // TODO Comments Locking
 
     
 };

@@ -62,7 +62,6 @@ public:
     static void datasetColorAdjustmentsChanged();
     void showSplashScreen();
 
-
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
     void recalcTextureOffsetsSignal();    

@@ -164,6 +164,7 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     connect(newTreeButton, SIGNAL(clicked()), this, SLOT(newTreeButtonClicked()));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
     connect(mergeTreesButton, SIGNAL(clicked()), this, SLOT(mergeTreesButtonClicked()));
+    connect(splitByConnectedComponentsButton, SIGNAL(clicked()), this, SLOT(splitByConnectedComponentsButtonClicked()));
     connect(rSpinBox, SIGNAL(valueChanged(double)), this, SLOT(rChanged(double)));
     connect(gSpinBox, SIGNAL(valueChanged(double)), this, SLOT(gChanged(double)));
     connect(bSpinBox, SIGNAL(valueChanged(double)), this, SLOT(bChanged(double)));
@@ -206,8 +207,6 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value(), true)) {
         reference->updateDisplayedTree();
-    } else {
-        LOG("Probleme")
     }
 }
 
@@ -216,8 +215,6 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
         if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, true)) {
             reference->updateDisplayedTree();
-        } else {
-            LOG("Probleme")
         }
     }
 }

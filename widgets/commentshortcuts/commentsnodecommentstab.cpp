@@ -1,4 +1,3 @@
-#include "commentsnodecommentstab.h"
 #include <QPushButton>
 #include <QLabel>
 #include <QLineEdit>
@@ -8,7 +7,7 @@
 #include <QFormLayout>
 #include <QTableWidgetItem>
 #include <QHeaderView>
-
+#include "commentsnodecommentstab.h"
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
@@ -43,7 +42,7 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
     connect(branchNodesOnlyCheckbox, SIGNAL(clicked(bool)), this, SLOT(branchPointOnlyChecked(bool)));
     connect(filterField, SIGNAL(editingFinished()), this, SLOT(filterChanged()));
 
-    //connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(commentChanged(QTableWidgetItem*)));
+    connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(commentChanged(QTableWidgetItem*)));
     connect(nodeTable, SIGNAL(cellClicked(int,int)), this, SLOT(itemSelected(int,int)));
     connect(nodeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(doubleClicked(QTableWidgetItem*)));
 }
@@ -135,15 +134,15 @@ void CommentsNodeCommentsTab::branchPointOnlyChecked(bool on) {
     updateCommentsTable();
 }
 
-/** @todo */
+
 void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
-
-
+    if(state->skeletonState->selectedCommentNode) {
+        strcpy(state->skeletonState->selectedCommentNode->comment->content, item->text().toStdString().c_str());
+        emit updateTools();
+    }
 }
 
-
 void CommentsNodeCommentsTab::itemSelected(int row, int col) {
-
     qDebug() << "row:" << row;
     QTableWidgetItem *nodeID = nodeTable->item(row, 0);
     QTableWidgetItem *comment = nodeTable->item(row, 1);
@@ -162,4 +161,3 @@ void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
     emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedCommentNode->nodeID);
     emit setJumpToActiveNodeSignal();
 }
-

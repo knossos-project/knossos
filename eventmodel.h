@@ -72,7 +72,6 @@ public:
 protected:
 
 signals:
-    void rerender();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void userMoveArbSignal(float x, float y, float z, int serverMovement);
     void updatePositionSignal(int serverMovement);

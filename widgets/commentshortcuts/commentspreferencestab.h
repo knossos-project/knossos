@@ -33,13 +33,13 @@ class QCheckBox;
 class QLineEdit;
 class CommentsPreferencesTab : public QWidget
 {
+    friend class TestCommentsWidget;
     friend class CommentsWidget;
     Q_OBJECT
 public:
     explicit CommentsPreferencesTab(QWidget *parent = 0);
 
 signals:
-
 
 public slots:
     void enableCondRadiusChecked(bool on);

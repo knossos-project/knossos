@@ -3,6 +3,9 @@
 #include "widgets/mainwindow.h"
 #include "widgets/commentswidget.h"
 #include "widgets/viewport.h"
+#include "widgets/toolswidget.h"
+#include "widgets/tools/toolsquicktabwidget.h"
+#include "QtOpenGL/qgl.h"
 #include <QPushButton>
 #include <QMessageBox>
 
@@ -29,6 +32,8 @@ void TestCommentsWidget::testDeleteComments() {
 
    for(int i = 0; i < 5; i++)
         QCOMPARE(tab->textFields[i]->text(), QString(""));
+
+   reference->window->clearSkeletonSlot();
 
 }
 
@@ -57,7 +62,7 @@ void TestCommentsWidget::testEnterComments() {
     }
 }
 
-/** This test adds a node to the first viewport and change it´s comment via F4
+/** This test adds a node to the first viewport and change it´s comment via the F1-F5 Buttons
  *  Three Widget locations will be checked.
  *  - 1. ToolsQuickTab commentsField
  *  - 2. ToolsNodeTab commentsField
@@ -66,7 +71,6 @@ void TestCommentsWidget::testEnterComments() {
 void TestCommentsWidget::testAddNodeComment() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentShortCutsTab *tab = commentsWidget->shortcutTab;
-
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
 
     commentsWidget->setVisible(true);
@@ -76,45 +80,145 @@ void TestCommentsWidget::testAddNodeComment() {
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
 
-    QTest::mouseClick(firstViewport, Qt::RightButton, 0,  pos);
-    QTest::keyClick(firstViewport, Qt::Key_F4);
+    for(int i = 0; i < 5; i++) {
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0,  pos);
 
-    QString usedString = tab->textFields[3]->text();
+        if(i == 0)
+            QTest::keyClick(firstViewport, Qt::Key_F1);
+        else if(i == 1)
+            QTest::keyClick(firstViewport, Qt::Key_F2);
+        else if(i == 2)
+            QTest::keyClick(firstViewport, Qt::Key_F3);
+        else if(i == 3)
+            QTest::keyClick(firstViewport, Qt::Key_F4);
+        else if(i == 4)
+            QTest::keyClick(firstViewport, Qt::Key_F5);
 
-    QCOMPARE(tools->toolsQuickTabWidget->commentField->text(), usedString);
-    QCOMPARE(tools->toolsNodesTabWidget->commentField->text(), usedString);
+        QString usedString = tab->textFields[i]->text();
 
-    bool found;
-    // get the id of the node from the quick tab spinbox
-    int nodeID = tools->toolsQuickTabWidget->activeNodeSpinBox->value();
-    // iterate through the table and find the entry of this node
-    for(int k = 0; k < commentsWidget->nodeCommentsTab->nodeTable->rowCount(); k++) {
-        QTableWidgetItem *idColumn = commentsWidget->nodeCommentsTab->nodeTable->item(k, 0);
-        if(idColumn->text().toInt() == nodeID) {
-            QCOMPARE(usedString, commentsWidget->nodeCommentsTab->nodeTable->item(k, 1)->text());
-            found = true;
+        QCOMPARE(tools->toolsQuickTabWidget->commentField->text(), usedString);
+        QCOMPARE(tools->toolsNodesTabWidget->commentField->text(), usedString);
+
+        bool found;
+        // get the id of the node from the quick tab spinbox
+        int nodeID = tools->toolsQuickTabWidget->activeNodeSpinBox->value();
+        // iterate through the table and find the entry of this node
+        for(int k = 0; k < commentsWidget->nodeCommentsTab->nodeTable->rowCount(); k++) {
+            QTableWidgetItem *idColumn = commentsWidget->nodeCommentsTab->nodeTable->item(k, 0);
+            if(idColumn->text().toInt() == nodeID) {
+                QCOMPARE(usedString, commentsWidget->nodeCommentsTab->nodeTable->item(k, 1)->text());
+                found = true;
+            }
         }
-    }
 
     // the test will fail if no item in the table was found
     QVERIFY(found == true);
+    }
+
+    reference->window->clearSkeletonSlot();
 }
-/*
+
 
 void TestCommentsWidget::testEnableConditionalColoring() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
     commentsWidget->setVisible(true);
 
+    Viewport *firstViewport = reference->vp;
+    QPoint pos = firstViewport->pos();
+    pos.setX(pos.x() + 10);
+    pos.setY(pos.y() + 10);
 
+    // the first node of a tree is a branchnode which won´t be colored
+    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+    // that´s why another node is needed
+
+    for(int i = 0; i < 5; i++) {
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+        // we need a comment to check the coloring later
+        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
+        // the coloring checkbox will be enabled and a corresponding substring will be defined
+
+        int random = rand() % 5;
+
+        preferenceTab->substringFields[i]->setText("T");
+        preferenceTab->colorComboBox[i]->setCurrentIndex(random);
+        if(!preferenceTab->enableCondColoringCheckBox->isChecked())
+            preferenceTab->enableCondColoringCheckBox->setChecked(true);
+
+        // check the color declared in the skeleton Model
+        color4F *color = state->skeletonState->commentColors;
+
+        if(random == 0) {
+            // the reference values are 0.13, 0.69, 0.3, 1.
+            QVERIFY(color->r == 0.13);
+            QVERIFY(color->g == 0.69);
+            QVERIFY(color->b == 0.3);
+            QVERIFY(color->a == 1.F);
+        } else if(random == 1) {
+            // the reference values are 0.94, 0.89, 0.69, 1.
+            QVERIFY(color->r == 0.94);
+            QVERIFY(color->g == 0.89);
+            QVERIFY(color->b == 0.69);
+            QVERIFY(color->a == 1.F);
+        } else if(random == 2) {
+            // the reference values are 0.6, 0.85, 0.92, 1.)
+            QVERIFY(color->r == 0.6);
+            QVERIFY(color->g == 0.85);
+            QVERIFY(color->b == 0.92);
+            QVERIFY(color->a == 1);
+        } else if(random == 3) {
+            // the reference values are 0.64, 0.29, 0.64, 1.);
+            QVERIFY(color->r == 0.64);
+            QVERIFY(color->g == 0.29);
+            QVERIFY(color->b == 0.64);
+            QVERIFY(color->a == 1);
+        } else if(random == 4) {
+            // the reference values are 0.73, 0.48, 0.34, 1.
+            QVERIFY(color->r == 0.73F);
+            QVERIFY(color->g == 0.48F);
+            QVERIFY(color->b == 0.34F);
+            QVERIFY(color->a == 1.F);
+        }
+    }
+
+    reference->window->clearSkeletonSlot();
 
 }
 
+// TODO
 void TestCommentsWidget::testEnableConditionalRadius() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
     commentsWidget->setVisible(true);
 
+    Viewport *firstViewport = reference->vp;
+    QPoint pos = firstViewport->pos();
+    pos.setX(pos.x() + 10);
+    pos.setY(pos.y() + 10);
+
+    int random[] = {10, 20, 50, 80, 100};
+
+    for(int i = 0; i < 5; i++) {
+        // the first node of a tree is a branchnode which won´t be colored
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+        // that´s why another node is needed
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+        // we need a comment to check the coloring later
+        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
+
+        // the coloring checkbox will be enabled and a corresponding substring will be defined
+        preferenceTab->substringFields[i]->setText("T");
+
+        preferenceTab->radiusSpinBox[i]->setValue(random[i]);
+        if(!preferenceTab->enableCondRadiusCheckBox->isChecked())
+            preferenceTab->enableCondRadiusCheckBox->setChecked(true);
+
+        // check the resulting radius size
+        QVERIFY(20 == state->skeletonState->commentNodeRadii[i]);
+    }
+
+    reference->window->clearSkeletonSlot();
 }
-*/
+
 
