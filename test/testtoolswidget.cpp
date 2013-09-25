@@ -269,10 +269,10 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
     // lets add n Trees
     int random = rand() % 100 + 1;
     for(int i = 0; i < random; i++) {
-        QTest::keyClicks(firstViewport, Qt::Key_C);
+        QTest::keyClick(firstViewport, Qt::Key_C);
     }
 
-    QPoint pos = firstViewport->pos();
+    pos = firstViewport->pos();
     // and a node for tree no n
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 

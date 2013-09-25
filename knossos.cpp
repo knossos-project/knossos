@@ -61,6 +61,9 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 int main(int argc, char *argv[])
 {
 
+
+
+
     char tempPath[MAX_PATH] = {0};
     char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
@@ -161,7 +164,7 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
     QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(delTreeSignal(int,int,int)), viewer->skeletonizer, SLOT(delTree(int,int,int)));
-    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
     QObject::connect(client, SIGNAL(popBranchNodeSignal(int,int)), viewer->skeletonizer, SLOT(popBranchNode(int,int)));

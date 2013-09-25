@@ -37,6 +37,7 @@ class QLabel;
 class QPushButton;
 class ToolsQuickTabWidget : public QWidget
 {
+    friend class WidgetContainer;
     friend class ToolsWidget;
     friend class ToolsNodesTabWidget;
     friend class TestCommentsWidget;

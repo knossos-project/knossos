@@ -282,7 +282,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit addCommentSignal(d[0], (char *)s, NULL, d[1]);
+                emit addCommentSignal(d[0], (char *)s, NULL, d[1], false);
 
                 break;
 

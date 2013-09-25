@@ -30,11 +30,13 @@
 #include "knossos-global.h"
 #include <QSettings>
 
+
 extern stateInfo *state;
 
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
 {
+
     this->setWindowTitle("Tools");
     tabs = new QTabWidget(this);
 

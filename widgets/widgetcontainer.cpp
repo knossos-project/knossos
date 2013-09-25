@@ -8,6 +8,13 @@ WidgetContainer::WidgetContainer(MainWindow *parent) :
 }
 
 void WidgetContainer::rewire() {
+
+    connect(this->toolsWidget->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
+    connect(this->toolsWidget->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
+
+    connect(this->toolsWidget->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(commentChanged(QString)));
+    connect(this->toolsWidget->toolsNodesTabWidget->searchForField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(searchForChanged(QString)));
+
     connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
     connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
     connect(this->toolsWidget->toolsNodesTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));

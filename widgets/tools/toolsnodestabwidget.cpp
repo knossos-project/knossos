@@ -139,13 +139,12 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     mainLayout->addLayout(gridLayout4);
 
     setLayout(mainLayout);    
-    connect(activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
     connect(jumpToNodeButton, SIGNAL(clicked()), this, SLOT(jumpToNodeButtonClicked()));
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
     connect(linkNodeWithButton, SIGNAL(clicked()), this, SLOT(linkNodeWithButtonClicked()));
     connect(idSpinBox, SIGNAL(valueChanged(int)), this, SLOT(idChanged(int)));
-    connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
-    connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
+    //connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
+    //connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
     connect(useLastRadiusBox, SIGNAL(clicked(bool)), this, SLOT(useLastRadiusChecked(bool)));
     connect(activeNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(activeNodeRadiusChanged(double)));
     connect(defaultNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(defaultNodeRadiusChanged(double)));
@@ -157,92 +156,12 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 }
 
-void ToolsNodesTabWidget::activeNodeChanged(int value) {
-    if(!state->skeletonState->activeNode)
-        return;
 
-    nodeListElement *node;
 
-    if(value > state->skeletonState->activeNode->nodeID) {
-        while((node = findNodeByNodeIDSignal(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
-            value += 1;
-        }
-
-        disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
-        activeNodeIdSpinBox->setValue(value);
-        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
-        connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-
-        if(!node) {
-            return;
-        }
-    } else if(value < state->skeletonState->activeNode->nodeID) {
-        while((node = findNodeByNodeIDSignal(value)) == 0 and value > 0) {
-            value -= 1;
-        }
-
-        disconnect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget->activeNodeSpinBox, SLOT(activeNodeChanged(int)));
-        activeNodeIdSpinBox->setValue(value);
-        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(value);
-        connect(this->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeChanged(int)));
-        connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-
-        if(!node) {
-
-            return;
-        }
-    }
-
-    emit setActiveNodeSignal(CHANGE_MANUAL, 0, value);
-
-    if(state->skeletonState->activeNode) {
-        reference->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-        reference->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-        reference->toolsQuickTabWidget->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
-        /* */
-        reference->toolsQuickTabWidget->activeNodeSpinBox->disconnect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-        reference->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        reference->toolsQuickTabWidget->activeNodeSpinBox->connect(reference->toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-        /* */
-
-        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
-            this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            reference->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-        } else {
-            this->commentField->setText("");
-            reference->toolsQuickTabWidget->commentField->setText("");
-        }
-    }
-}
-
-/* @todo */
 void ToolsNodesTabWidget::idChanged(int value) {
     state->viewerState->gui->activeNodeID = value;
 }
 
-void ToolsNodesTabWidget::commentChanged(QString comment) {
-    char *ccomment = const_cast<char *>(comment.toStdString().c_str());
-    if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0, true);
-    } else {
-        if(!comment.isEmpty())
-         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0, true);
-    }
-
-    emit updateCommentsTableSignal();
-
-    disconnect(reference->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsQuickTabWidget, SLOT(commentChanged(QString)));
-    reference->toolsQuickTabWidget->commentField->setText(comment);
-    connect(reference->toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsQuickTabWidget, SLOT(commentChanged(QString)));
-
-}
-
-void ToolsNodesTabWidget::searchForChanged(QString comment) {
-    reference->toolsQuickTabWidget->searchForField->setText(comment);
-}
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
     if(state->skeletonState->activeNode) {

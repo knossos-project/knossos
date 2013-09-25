@@ -78,7 +78,8 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/tgt.c \
     test/testcommentswidget.cpp \
     test/testskeletonviewport.cpp \
-    test/testtoolswidget.cpp
+    test/testtoolswidget.cpp \
+    test/testnavigationwidget.cpp
 
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
@@ -156,7 +157,8 @@ HEADERS  += widgets/mainwindow.h \
     openjpeg/cidx_manager.h \
     openjpeg/bio.h \
     test/testskeletonviewport.h \
-    test/testtoolswidget.h
+    test/testtoolswidget.h \
+    test/testnavigationwidget.h
 
 
 FORMS    += mainwindow.ui

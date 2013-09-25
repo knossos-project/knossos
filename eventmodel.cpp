@@ -1171,7 +1171,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit updateTools();
     } else if(event->key() == Qt::Key_F1) {        
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0);           
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
         } else{
             if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
                 emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
@@ -1181,7 +1181,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit updateCommentsTable();
     } else if(event->key() == Qt::Key_F2) {
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
         }
         else{
             if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
@@ -1191,7 +1191,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit updateCommentsTable();
     } else if(event->key() == Qt::Key_F3) {
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
         }
         else{
            if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
@@ -1205,7 +1205,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             QApplication::quit();
         } else {
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-                emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0);
+                emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
             }
             else{
                if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
@@ -1216,7 +1216,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_F5) {
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0);
+            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
         }
         else{
             if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)

@@ -98,7 +98,7 @@ signals:
     void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
     void delTreeSignal(int targetRevision, int treeID, int serialize);
-    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
     void popBranchNodeSignal(int targetRevision, int serialize);

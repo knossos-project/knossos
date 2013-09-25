@@ -122,8 +122,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
     connect(widgetContainer->commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
     connect(widgetContainer->console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
-    connect(widgetContainer->tracingTimeWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckTracingTimeAction()));
-    connect(widgetContainer->zoomAndMultiresWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckZoomAndMultiresAction()));
+
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));

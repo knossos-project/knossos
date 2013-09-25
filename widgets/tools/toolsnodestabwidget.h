@@ -39,6 +39,7 @@ class QLineEdit;
 
 class ToolsNodesTabWidget : public QWidget
 {
+    friend class WidgetContainer;
     friend class ToolsWidget;
     friend class ToolsQuickTabWidget;
     friend class TestCommentsWidget;
@@ -65,10 +66,9 @@ signals:
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
 public slots:
-    void activeNodeChanged(int value);
     void idChanged(int value);
-    void commentChanged(QString comment);
-    void searchForChanged(QString comment);
+    //void commentChanged(QString comment);
+    //void searchForChanged(QString comment);
 
     void jumpToNodeButtonClicked();
     void deleteNodeButtonClicked();

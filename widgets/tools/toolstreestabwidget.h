@@ -73,7 +73,6 @@ signals:
     bool addTreeComment(int targetRevision, int treeID, char *comment);
     bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
 public slots:
-    void activeTreeIDChanged(int value);
     void commentChanged(QString comment);
     void deleteActiveTreeButtonClicked();
     void newTreeButtonClicked();

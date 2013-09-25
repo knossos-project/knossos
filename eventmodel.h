@@ -97,7 +97,7 @@ signals:
     void previousCommentlessNodeSignal();
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
     void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void jumpToActiveNodeSignal();

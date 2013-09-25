@@ -160,7 +160,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     mainLayout->addStretch(20);
     setLayout(mainLayout);
 
-    connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIDChanged(int)));
     connect(deleteActiveTreeButton, SIGNAL(clicked()), this, SLOT(deleteActiveTreeButtonClicked()));
     connect(newTreeButton, SIGNAL(clicked()), this, SLOT(newTreeButtonClicked()));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
@@ -171,61 +170,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
 
-}
-
-void ToolsTreesTabWidget::activeTreeIDChanged(int value) {
-    if(!state->skeletonState->activeTree)
-        return;
-
-    qDebug() << "tt activeTree changed begin";
-
-    treeListElement *tree;
-    if(value > state->skeletonState->activeTree->treeID) {
-        while((tree = findTreeByTreeIDSignal(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
-            value += 1;
-        }
-        if(!tree) {
-            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-            return;
-        }
-    } else if(value < state->skeletonState->activeTree->treeID) {
-        while((tree = findTreeByTreeIDSignal(value)) == 0 and value > 0) {
-            value -= 1;
-        }
-        if(!tree) {
-            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-            return;
-        }
-    }
-
-    /* This prevents the infinite recursion. See QuickTabWidget for more information */
-    reference->toolsQuickTabWidget->disconnect(reference->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
-    reference->toolsQuickTabWidget->activeTreeSpinBox->setValue(value);
-    reference->toolsQuickTabWidget->connect(reference->toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
-
-    activeTreeSpinBox->setValue(value);
-    emit setActiveTreeSignal(value);
-
-    rSpinBox->setValue(state->skeletonState->activeTree->color.r);
-    gSpinBox->setValue(state->skeletonState->activeTree->color.g);
-    bSpinBox->setValue(state->skeletonState->activeTree->color.b);
-    aSpinBox->setValue(state->skeletonState->activeTree->color.a);
-
-    if(state->skeletonState->activeTree->comment)
-        commentField->setText(state->skeletonState->activeTree->comment);
-
-    nodeListElement *node = state->skeletonState->activeTree->firstNode;
-    if(node) {
-        emit setActiveNodeSignal(CHANGE_MANUAL, node, node->nodeID);
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
-                                       state->skeletonState->activeNode->position.y / state->magnification,
-                                       state->skeletonState->activeNode->position.z / state->magnification);
-        emit Knossos::sendRemoteSignal();
-    }
-
-
-    qDebug() << "tt active Tree changed end";
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {

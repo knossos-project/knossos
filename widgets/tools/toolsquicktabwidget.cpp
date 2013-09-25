@@ -212,6 +212,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             value += 1;
         }
 
+
         disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
         disconnect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
         this->activeNodeSpinBox->setValue(value);
@@ -277,10 +278,9 @@ void ToolsQuickTabWidget::commentChanged(QString comment) {
     }
 
     emit updateCommentsTableSignal();
-
-    disconnect(reference->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsNodesTabWidget, SLOT(commentChanged(QString)));
+    this->commentField->setText(comment);
     reference->toolsNodesTabWidget->commentField->setText(comment);
-    connect(reference->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), reference->toolsNodesTabWidget, SLOT(commentChanged(QString)));
+
 }
 
 void ToolsQuickTabWidget::searchForChanged(QString comment) {

@@ -351,10 +351,9 @@ vpBacklogElement *Viewer::isCubeInBacklog(struct vpBacklog *backlog, Coordinate 
 
     struct vpBacklogElement *blElement = NULL;
      /*@arb */
-    int i = 0;
     if (backlog->elements != 0){
         blElement = backlog->entry;
-        for (i = 0; i<backlog->elements; i++) {
+        for (uint i = 0; i<backlog->elements; i++) {
             if (COMPARE_COORDINATE(blElement->cube,(*cube))) return blElement;
             blElement = blElement->next;
         }
@@ -2821,7 +2820,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
@@ -2845,10 +2844,10 @@ void Viewer::rewire() {
     connect(vp3->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
     connect(vp4->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
 
-    connect(vp->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp2->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp3->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
-    connect(vp4->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(vp->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    connect(vp2->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    connect(vp3->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    connect(vp4->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
 
     connect(vp->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
     connect(vp2->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
@@ -2868,7 +2867,7 @@ void Viewer::rewire() {
     connect(vp->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(vp2->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(vp3->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    connect(vp4->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,intint)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+    connect(vp4->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
@@ -2934,7 +2933,7 @@ void Viewer::rewire() {
 
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int, int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int, int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
 
