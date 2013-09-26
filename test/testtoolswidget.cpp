@@ -357,7 +357,5 @@ void TestToolsWidget::testRestoreColors() {
     QCOMPARE(tools->toolsTreesTabWidget->bSpinBox->value(), 0.0);
     QCOMPARE(tools->toolsTreesTabWidget->aSpinBox->value(), 0.0);
 
-
     reference->window->clearSkeletonSlot();
-
 }

@@ -49,11 +49,8 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyPressed() {
     QTest::keyClick(firstViewport, Qt::Key_I);
 
     QCOMPARE(state->viewerState->vpConfigs[0].texture.zoomLevel, zoomLevel - 0.1);
-
     QTest::keyClick(firstViewport, Qt::Key_O);
-
     QCOMPARE(state->viewerState->vpConfigs[0].texture.zoomLevel, zoomLevel);
-
 
 
 }
@@ -65,4 +62,6 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyAndMouseCombination() 
     pos.setY(pos.y() + 10);
 
     float zoomLevel = state->viewerState->vpConfigs[0].texture.zoomLevel;
+
+
 }

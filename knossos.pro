@@ -80,7 +80,9 @@ SOURCES += widgets/mainwindow.cpp \
     test/testskeletonviewport.cpp \
     test/testtoolswidget.cpp \
     test/testnavigationwidget.cpp \
-    test/testzoomandmultireswidget.cpp
+    test/testzoomandmultireswidget.cpp \
+    test/testorthogonalviewport.cpp \
+    test/testdatasavingwidget.cpp
 
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
@@ -160,7 +162,9 @@ HEADERS  += widgets/mainwindow.h \
     test/testskeletonviewport.h \
     test/testtoolswidget.h \
     test/testnavigationwidget.h \
-    test/testzoomandmultireswidget.h
+    test/testzoomandmultireswidget.h \
+    test/testorthogonalviewport.h \
+    test/testdatasavingwidget.h
 
 
 FORMS    += mainwindow.ui

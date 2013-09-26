@@ -65,7 +65,7 @@ Renderer::Renderer(QObject *parent) :
         glRotatef(235., 1., 0., 0.);
         glRotatef(210., 0., 0., 1.);
         setRotationState(ROTATIONSTATERESET);
-     //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+        //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
         /* save the matrix for further use... */
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 

@@ -118,7 +118,10 @@ void TestCommentsWidget::testAddNodeComment() {
     reference->window->clearSkeletonSlot();
 }
 
-
+/** This testcase declares a tree and two nodes
+*  A random color from the combobox will be selected, a matching substring will be defined and the conditional coloring enabled
+*  Then the resulting color will be checked
+*/
 void TestCommentsWidget::testEnableConditionalColoring() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
@@ -186,7 +189,7 @@ void TestCommentsWidget::testEnableConditionalColoring() {
 
 }
 
-// TODO
+/** This testcase checks the conditional radius */
 void TestCommentsWidget::testEnableConditionalRadius() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
@@ -215,10 +218,91 @@ void TestCommentsWidget::testEnableConditionalRadius() {
             preferenceTab->enableCondRadiusCheckBox->setChecked(true);
 
         // check the resulting radius size
-        QVERIFY(20 == state->skeletonState->commentNodeRadii[i]);
+        QVERIFY(random[i] == state->skeletonState->commentNodeRadii[i]);
     }
 
     reference->window->clearSkeletonSlot();
 }
 
 
+/** @tood this testcase needs a more complex rework */
+void TestCommentsWidget::testCommentsTable() {
+
+    CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
+    CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
+    ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
+    Viewport *firstViewport = reference->vp;
+
+    QPoint pos = firstViewport->pos();
+    pos.setX(pos.x() + 10);
+    pos.setY(pos.y() + 10);
+
+    // lets add a couple of nodes, remember that the first node is a branchnode
+    for(int i = 0; i < 5; i++) {
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+        if(i > 0) {
+            tools->toolsQuickTabWidget->commentField->setText("Random");
+            QTest::keyClick(tools->toolsQuickTabWidget->commentField, Qt::Key_Return);
+        }
+    }
+
+    // check if branchnodes are filtered
+    commentsWidget->nodeCommentsTab->branchNodesOnlyCheckbox->setChecked(true);
+
+    // only one node should be in the table the branchnode (id = 1)
+    QCOMPARE(2, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
+    commentsWidget->nodeCommentsTab->branchNodesOnlyCheckbox->setChecked(false);
+
+    // check if the substring filtering works
+    commentsWidget->nodeCommentsTab->filterField->setText("R");
+    QTest::keyClick(commentsWidget->nodeCommentsTab->filterField, Qt::Key_Return);
+    // all nodes should be listed excepted the first branchnode (id = 1)
+    QCOMPARE(4, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
+
+    commentsWidget->nodeCommentsTab->filterField->setText("");
+    QTest::keyClick(commentsWidget->nodeCommentsTab->filterField, Qt::Key_Return);
+
+    // the active node id is 5 at the moment, lets delete a node
+    QTest::keyClick(firstViewport, Qt::Key_Delete);
+    QCOMPARE(3, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
+
+    reference->window->clearSkeletonSlot();
+}
+
+/** @todo this testcase exceeds the maximum amount of warnings.
+ *The parameter -maxwarnings should be 0 for unlimited warning.
+ Have to find out if it is a compile time or a runtime argument and where ..*/
+void TestCommentsWidget::testCommentsTablePerformance() {
+
+    CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
+    CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
+    ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
+    Viewport *firstViewport = reference->vp;
+
+    QPoint pos = firstViewport->pos();
+    pos.setX(pos.x() + 10);
+    pos.setY(pos.y() + 10);
+
+    int n = 1000;
+    QTime bench;
+    int msec;
+    // lets add n nodes each having a comment
+    for(int i = 0; i <= n; i++) {
+        if(i == n-1) {
+            bench.start();
+        }
+        QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+        tools->toolsQuickTabWidget->commentField->setText("Random Text");
+        QTest::keyClick(tools->toolsQuickTabWidget->commentField, Qt::Key_Return);
+
+        if(i == n-1) {
+            msec = bench.elapsed();
+        }
+    }
+
+    QTextEdit edit;
+    edit.setText(QString("%1 msec").arg(msec));
+    edit.show();
+
+    reference->window->clearSkeletonSlot();
+}

@@ -19,6 +19,8 @@ public slots:
     
 private slots:
     void testMovementSpeed();
+    void testJumpFrames();
+    void testWalkFrames();
 };
 
 #endif // TESTNAVIGATIONWIDGET_H

@@ -47,6 +47,7 @@
 #include "test/testcommentswidget.h"
 #include "test/testtoolswidget.h"
 #include "test/testnavigationwidget.h"
+#include "test/testorthogonalviewport.h"
 
 #ifdef Q_OS_WIN
     #include "windows.h"
@@ -188,6 +189,11 @@ int main(int argc, char *argv[])
     //scripts->run();
 
     /* TEST */
+    /*
+    TestOrthogonalViewport ortho;
+    ortho.reference = viewer;
+    QTest::qExec(&ortho);
+    */
 
     /*
     TestToolsWidget tools;
@@ -199,12 +205,12 @@ int main(int argc, char *argv[])
     test.reference = viewer;
     QTest::qExec(&test);
     */
-    /*
+
     TestNavigationWidget navigation;
     navigation.viewerReference = viewer;
     navigation.remoteReference = remote;
     QTest::qExec(&navigation);
-    */
+
 
     return a.exec();
 }

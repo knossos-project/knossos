@@ -212,14 +212,10 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             value += 1;
         }
 
-
-        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-        disconnect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));        
         this->activeNodeSpinBox->setValue(value);
         reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
         connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-        connect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
-
 
         if(!node) {
             return;
@@ -230,11 +226,10 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
         }
 
         disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-        disconnect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
         this->activeNodeSpinBox->setValue(value);
         reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
         connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-        connect(reference->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), reference->toolsNodesTabWidget, SLOT(activeNodeChanged(int)));
+
 
 
         if(!node) {
@@ -304,5 +299,3 @@ void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
     emit popBranchNodeSignal(CHANGE_MANUAL, true);
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }
-
-

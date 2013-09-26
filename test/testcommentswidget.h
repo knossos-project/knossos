@@ -21,7 +21,8 @@ private slots:
     void testAddNodeComment();
     void testEnableConditionalColoring();
     void testEnableConditionalRadius();
-
+    void testCommentsTable();
+    void testCommentsTablePerformance();
 
     void testDeleteComments(); // this slot should be called at the end.
 

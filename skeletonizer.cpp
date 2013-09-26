@@ -3605,9 +3605,10 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
             pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
                 branchNode->isBranchNode = true;
+
+                state->skeletonState->skeletonChanged = true;
+                LOG("Branch point (node ID %d) added.", branchNode->nodeID)
             }
-            state->skeletonState->skeletonChanged = true;
-            LOG("Branch point (node ID %d) added.", branchNode->nodeID)
 
         }
         else {

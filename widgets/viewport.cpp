@@ -31,6 +31,7 @@
 #include <QHBoxLayout>
 #include "sleeper.h"
 #include "functions.h"
+#include <QPainter>
 
 extern stateInfo *state;
 
@@ -82,7 +83,6 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
-
 }
 
 void Viewport::initializeGL() {
@@ -203,13 +203,13 @@ void Viewport::paintGL() {
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+
     if(state->viewerState->viewerReady) {
         if(this->plane < VIEWPORT_SKELETON) {
            this->drawViewport(plane);
         }  else {
             this->drawSkeletonViewport();
         }
-
     }
 
 }
