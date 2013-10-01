@@ -260,6 +260,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
 }
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {
+
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
 
@@ -278,6 +279,7 @@ void ToolsQuickTabWidget::commentChanged(QString comment) {
 
 void ToolsQuickTabWidget::searchForChanged(QString comment) {
     reference->toolsNodesTabWidget->searchForField->setText(comment);
+
 }
 
 void ToolsQuickTabWidget::findNextButtonClicked() {

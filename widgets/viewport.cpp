@@ -214,7 +214,6 @@ void Viewport::paintGL() {
 
 }
 
-
 //functions to determine position x/y relative to last position lastX, lastY
 int Viewport::xrel(int x) {
     return (x - this->lastX);

@@ -206,11 +206,12 @@ int main(int argc, char *argv[])
     QTest::qExec(&test);
     */
 
+    /*
     TestNavigationWidget navigation;
     navigation.viewerReference = viewer;
     navigation.remoteReference = remote;
     QTest::qExec(&navigation);
-
+    */
 
     return a.exec();
 }

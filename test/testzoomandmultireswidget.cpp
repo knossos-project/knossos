@@ -55,6 +55,7 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyPressed() {
 
 }
 
+/* @todo the key combination ctrl + mouse wheel up/down seems not to work at the moment */
 void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyAndMouseCombination() {
     Viewport *firstViewport = reference->vp;
     QPoint pos = firstViewport->pos();
@@ -62,6 +63,5 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyAndMouseCombination() 
     pos.setY(pos.y() + 10);
 
     float zoomLevel = state->viewerState->vpConfigs[0].texture.zoomLevel;
-
 
 }

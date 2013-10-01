@@ -13,6 +13,7 @@ TestNavigationWidget::TestNavigationWidget(QObject *parent) :
 
 void TestNavigationWidget::testMovementSpeed() {
     NavigationWidget *navigationWidget = viewerReference->window->widgetContainer->navigationWidget;
+
     navigationWidget->movementSpeedSpinBox->setValue(20);
 
     Viewport *firstViewport = viewerReference->vp;
