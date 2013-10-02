@@ -1136,7 +1136,8 @@ struct skeletonState {
     uint workMode;
     uint volBoundary;
 
-    uint numberComments;
+    uint totalComments;
+    uint totalBranchpoints;
 
     uint userCommentColoringOn;
     uint commentNodeRadiusOn;

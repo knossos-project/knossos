@@ -101,7 +101,8 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->lastSaveTicks = 0;
     state->skeletonState->autoSaveInterval = 5;
-
+    state->skeletonState->totalComments = 0;
+    state->skeletonState->totalBranchpoints = 0;
 
     state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
     memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
@@ -125,7 +126,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->lastSerialSkeleton->previous = NULL;
     state->skeletonState->serialSkeletonCounter = 0;
     state->skeletonState->maxUndoSteps = 16;
-
 
     state->skeletonState->saveCnt = 0;
 
@@ -768,9 +768,10 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
    }
 
     /* */
-    QFile file(QString(state->skeletonState->skeletonFile));
-    if(!file.open(QIODevice::WriteOnly)) {
-        qDebug() << "Failed to open file";
+    QFile file(fileName);
+    if(!file.open(QIODevice::WriteOnly)) {        
+        qErrnoWarning("Failed to open file");
+        return false;
     }
 
     QString tmp;
@@ -807,7 +808,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeAttribute("z", tmp.setNum(state->offset.z / state->magnification));
     xml.writeEndElement();
 
-    xml.writeStartElement("time"); // @todo xorint
+    xml.writeStartElement("time");
     xml.writeAttribute("ms", tmp.setNum(xorInt(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed())));
     xml.writeEndElement();
 
@@ -823,7 +824,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeAttribute("z", tmp.setNum(state->viewerState->currentPosition.z + 1));
     xml.writeEndElement();
 
-    xml.writeStartElement("skeletonVPState"); // @todo test
+    xml.writeStartElement("skeletonVPState");
     int j = 0;
     char element[8];
     for(j = 0; j < 16; j++) {
@@ -865,9 +866,10 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
             xml.writeAttribute("color.a", QString("1."));
         }
 
-        if(state->skeletonState->activeTree->comment) {
-            ptr = state->skeletonState->activeTree->comment;
-            xml.writeAttribute("comment", QString(ptr));
+        qDebug() << currentTree->comment;
+
+        if(currentTree->comment) {
+            xml.writeAttribute("comment", QString(currentTree->comment));
         }
 
         xml.writeStartElement("nodes");
@@ -885,7 +887,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
             xml.writeAttribute("time", tmp.setNum(currentNode->timestamp));
 
             currentNode = currentNode->next;
-
             xml.writeEndElement(); // end node
         }
 
@@ -909,8 +910,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
             currentNode = currentNode->next;
         }
 
-        //currentSegment = currentSegment-
-
         xml.writeEndElement(); // end edges
 
         currentTree = currentTree->next;
@@ -919,7 +918,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     }
 
     currentComment = state->skeletonState->currentComment;
-    if(state->skeletonState->currentComment != NULL) {
+    if(state->skeletonState->currentComment) {
         xml.writeStartElement("comments");
 
         do {
@@ -927,6 +926,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
             xml.writeAttribute("node", tmp.setNum(currentComment->node->nodeID));
             xml.writeAttribute("content", QString(currentComment->content));
             xml.writeEndElement();
+            currentComment = currentComment->next;
 
         } while(currentComment != state->skeletonState->currentComment);
 
@@ -978,7 +978,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Document not parsed successfully.";
+        qErrnoWarning("Document not parsed successfully.");
         return false;
     }
 
@@ -2643,8 +2643,6 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
     }
     Knossos::unlockSkeleton(true);
 
-    qDebug() << state->skeletonState->activeTree->comment;
-
     return true;
 }
 
@@ -3234,6 +3232,7 @@ bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListE
     }
     Knossos::unlockSkeleton(true);
 
+    state->skeletonState->totalComments++;
     return true;
 }
 
@@ -3305,6 +3304,7 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
     }
     Knossos::unlockSkeleton(true);
 
+    state->skeletonState->totalComments--;
     return true;
 }
 
@@ -3581,6 +3581,7 @@ exit_popbranchnode:
 
     }
 
+    state->skeletonState->totalBranchpoints--;
     Knossos::unlockSkeleton(true);
     return true;
 }
@@ -3598,7 +3599,6 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
     if(branchNode) {
         if(serialize){
             saveSerializedSkeleton();
-
         }
 
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
@@ -3636,6 +3636,7 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
     }
     Knossos::unlockSkeleton(true);
 
+    state->skeletonState->totalBranchpoints++;
     return true;
 }
 

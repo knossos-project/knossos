@@ -2929,6 +2929,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(restoreDefaultTreeColorSignal()), skeletonizer, SLOT(restoreDefaultTreeColor()));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(splitConnectedComponent(int,int, int)), skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,char*)), skeletonizer, SLOT(addTreeComment(int,int,char*)));
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)), skeletonizer, SLOT(mergeTrees(int,int,int,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));

@@ -126,6 +126,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));
     updateTitlebar(false);
 }
 
@@ -641,7 +642,9 @@ void MainWindow::openSlot() {
             state->skeletonState->mergeOnLoadFlag = false;
         }
 
-        QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        future.waitForFinished();
+
 
         emit updateCommentsTableSignal();
         updateTitlebar(true);
@@ -731,6 +734,7 @@ void MainWindow::saveAsSlot()
 
 void MainWindow::quitSlot()
 {
+   saveSettings();
    QApplication::closeAllWindows();
    QApplication::quit();
 }

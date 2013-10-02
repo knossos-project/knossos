@@ -306,3 +306,10 @@ void TestCommentsWidget::testCommentsTablePerformance() {
 
     reference->window->clearSkeletonSlot();
 }
+
+void TestCommentsWidget::endTestCase() {
+    CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
+    commentsWidget->hide();
+    emit ready();
+    qDebug() << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+}

@@ -44,6 +44,7 @@
 #include "scripting.h"
 #include "ftp.h"
 
+#include "test/knossostestrunner.h"
 #include "test/testcommentswidget.h"
 #include "test/testtoolswidget.h"
 #include "test/testnavigationwidget.h"
@@ -62,9 +63,6 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
 {
-
-
-
 
     char tempPath[MAX_PATH] = {0};
     char *file = "/Users/amos/log.txt";
@@ -181,7 +179,6 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));    
     QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
 
-
     loader->start();
     viewer->run();
     remote->start();
@@ -200,11 +197,23 @@ int main(int argc, char *argv[])
     tools.reference = viewer;
     QTest::qExec(&tools);
     */
+    KnossosTestRunner runner;
+    runner.reference = viewer;
+    runner.addTestClasses();
+    runner.show();
+
+
+
     /*
+    QStringList args;
+    args << "-silent" << "-o" << "RESULT.xml" << "-xml";
+
     TestCommentsWidget test;
     test.reference = viewer;
-    QTest::qExec(&test);
+
+    QTest::qExec(&test, args);
     */
+
 
     /*
     TestNavigationWidget navigation;

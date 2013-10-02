@@ -82,7 +82,45 @@ SOURCES += widgets/mainwindow.cpp \
     test/testnavigationwidget.cpp \
     test/testzoomandmultireswidget.cpp \
     test/testorthogonalviewport.cpp \
-    test/testdatasavingwidget.cpp
+    test/testdatasavingwidget.cpp \
+    test/testskeletonloadandsave.cpp \
+    test/knossostestrunner.cpp
+
+PRECOMPILED_HEADER += openjpeg/tgt.h \
+    openjpeg/tcd.h \
+    openjpeg/t2.h \
+    openjpeg/t1_luts.h \
+    openjpeg/t1.h \
+    openjpeg/raw.h \
+    openjpeg/pi.h \
+    openjpeg/opj_stdint.h \
+    openjpeg/opj_malloc.h \
+    openjpeg/opj_inttypes.h \
+    openjpeg/opj_intmath.h \
+    openjpeg/opj_includes.h \
+    openjpeg/opj_getopt.h \
+    openjpeg/opj_config_private.h \
+    openjpeg/opj_config.h \
+    openjpeg/opj_clock.h \
+    openjpeg/opj_apps_config.h \
+    openjpeg/openjpeg.h \
+    openjpeg/mqc.h \
+    openjpeg/mct.h \
+    openjpeg/jp2.h \
+    openjpeg/j2k.h \
+    openjpeg/invert.h \
+    openjpeg/indexbox_manager.h \
+    openjpeg/index.h \
+    openjpeg/image.h \
+    openjpeg/function_list.h \
+    openjpeg/format_defs.h \
+    openjpeg/event.h \
+    openjpeg/dwt.h \
+    openjpeg/convert.h \
+    openjpeg/color.h \
+    openjpeg/cio.h \
+    openjpeg/cidx_manager.h \
+    openjpeg/bio.h
 
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
@@ -123,48 +161,15 @@ HEADERS  += widgets/mainwindow.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     scripting.h \
     ftp.h \
-    test/testcommentswidget.h \
-    openjpeg/tgt.h \
-    openjpeg/tcd.h \
-    openjpeg/t2.h \
-    openjpeg/t1_luts.h \
-    openjpeg/t1.h \
-    openjpeg/raw.h \
-    openjpeg/pi.h \
-    openjpeg/opj_stdint.h \
-    openjpeg/opj_malloc.h \
-    openjpeg/opj_inttypes.h \
-    openjpeg/opj_intmath.h \
-    openjpeg/opj_includes.h \
-    openjpeg/opj_getopt.h \
-    openjpeg/opj_config_private.h \
-    openjpeg/opj_config.h \
-    openjpeg/opj_clock.h \
-    openjpeg/opj_apps_config.h \
-    openjpeg/openjpeg.h \
-    openjpeg/mqc.h \
-    openjpeg/mct.h \
-    openjpeg/jp2.h \
-    openjpeg/j2k.h \
-    openjpeg/invert.h \
-    openjpeg/indexbox_manager.h \
-    openjpeg/index.h \
-    openjpeg/image.h \
-    openjpeg/function_list.h \
-    openjpeg/format_defs.h \
-    openjpeg/event.h \
-    openjpeg/dwt.h \
-    openjpeg/convert.h \
-    openjpeg/color.h \
-    openjpeg/cio.h \
-    openjpeg/cidx_manager.h \
-    openjpeg/bio.h \
+    test/testcommentswidget.h \    
     test/testskeletonviewport.h \
     test/testtoolswidget.h \
     test/testnavigationwidget.h \
     test/testzoomandmultireswidget.h \
     test/testorthogonalviewport.h \
-    test/testdatasavingwidget.h
+    test/testdatasavingwidget.h \
+    test/testskeletonloadandsave.h \
+    test/knossostestrunner.h
 
 
 FORMS    += mainwindow.ui

@@ -41,7 +41,6 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
     this->setLayout(mainLayout);
     connect(branchNodesOnlyCheckbox, SIGNAL(clicked(bool)), this, SLOT(branchPointOnlyChecked(bool)));
     connect(filterField, SIGNAL(editingFinished()), this, SLOT(filterChanged()));
-
     connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(commentChanged(QTableWidgetItem*)));
     connect(nodeTable, SIGNAL(cellClicked(int,int)), this, SLOT(itemSelected(int,int)));
     connect(nodeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(doubleClicked(QTableWidgetItem*)));
@@ -59,8 +58,6 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
     }
 
     tree = state->skeletonState->firstTree;
-
-
     const char *filter = filterField->text().toStdString().c_str();
     if(strlen(filter) > 0 )
         filtered = true;
@@ -72,11 +69,15 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
     left = new QTableWidgetItem(QString("Node ID"));
     right = new QTableWidgetItem(QString("Comment"));
 
+    nodeTable->verticalHeader()->setVisible(false);
     nodeTable->setHorizontalHeaderItem(0, left);
     nodeTable->setHorizontalHeaderItem(1, right);
     nodeTable->horizontalHeader()->setStretchLastSection(true);
 
-    nodeTable->setRowCount(state->skeletonState->totalNodeElements);
+    if(this->branchNodesOnlyCheckbox->isChecked())
+        nodeTable->setRowCount(state->skeletonState->totalBranchpoints);
+    else
+        nodeTable->setRowCount(state->skeletonState->totalComments);
 
     while(tree) {
         node = tree->firstNode;
@@ -118,12 +119,10 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
                     tableIndex += 1;
                 }
             }
-
             node = node->next;
         }
         tree = tree->next;
     }
-
 }
 
 void CommentsNodeCommentsTab::filterChanged() {

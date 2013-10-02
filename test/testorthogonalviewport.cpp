@@ -3,7 +3,7 @@
 #include "widgets/viewport.h"
 #include "widgets/mainwindow.h"
 #include "knossos-global.h"
-#include "function.h"
+#include "functions.h"
 
 extern stateInfo *state;
 

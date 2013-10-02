@@ -13,9 +13,8 @@ public:
     explicit TestCommentsWidget(QObject *parent = 0);
     Viewer *reference;
 signals:
-    
+    void ready();
 public slots:
-
 private slots:
     void testEnterComments();
     void testAddNodeComment();
@@ -23,8 +22,7 @@ private slots:
     void testEnableConditionalRadius();
     void testCommentsTable();
     void testCommentsTablePerformance();
-
     void testDeleteComments(); // this slot should be called at the end.
-
+    void endTestCase();
 };
 #endif // TESTCOMMENTSWIDGET_H

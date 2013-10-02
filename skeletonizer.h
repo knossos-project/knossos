@@ -126,7 +126,7 @@ public:
     uint workMode;
     uint volBoundary;
 
-    uint numberComments;
+    uint totalComments;
 
     unsigned int userCommentColoringOn;
     unsigned int commentNodeRadiusOn;
