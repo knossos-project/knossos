@@ -796,11 +796,16 @@ void MainWindow::skeletonStatisticsSlot()
     QMessageBox::information(this, "Information", "This feature is not yet implemented", QMessageBox::Ok);
 }
 
-/**
- * @todo Invokation of Skeleton::clearSkeleton leads to crashing the application
- */
+
+void MainWindow::clearSkeletonWithoutConfirmation() {
+    emit clearSkeletonSignal(CHANGE_MANUAL, false);
+    updateTitlebar(false);
+    emit updateToolsSignal();
+}
+
 void MainWindow::clearSkeletonSlot()
 {
+
     int ret = QMessageBox::question(this, "", "Really clear the skeleton (you can not undo this) ?", QMessageBox::Ok | QMessageBox::No);
     switch(ret) {
         case QMessageBox::Ok:
@@ -808,6 +813,11 @@ void MainWindow::clearSkeletonSlot()
             updateTitlebar(false);
             emit updateToolsSignal();
     }
+
+    emit clearSkeletonSignal(CHANGE_MANUAL, false);
+    updateTitlebar(false);
+    emit updateToolsSignal();
+
 }
 
 /* view menu functionality */

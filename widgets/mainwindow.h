@@ -30,7 +30,7 @@
 #include <QQueue>
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class QLabel;
@@ -147,6 +147,8 @@ public:
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
+    QLabel *lol;
+
     QToolButton *open, *save;
     QToolButton *pythonButton;
     QToolButton *tracingTimeButton;
@@ -184,6 +186,9 @@ public slots:
     void dropNodesSlot();
     void skeletonStatisticsSlot();
     void clearSkeletonSlot();
+    void clearSkeletonWithoutConfirmation();
+
+
 
     /* view menu */
     void dragDatasetSlot();

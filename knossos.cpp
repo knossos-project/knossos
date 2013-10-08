@@ -63,9 +63,9 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
 {
-
+    Knossos::securityCheck();
     char tempPath[MAX_PATH] = {0};
-    char *file = "/Users/amos/log.txt";
+    const char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
 
     QApplication a(argc, argv);
@@ -352,7 +352,7 @@ bool Knossos::initStates() {
 
        state->loadFtpCachePath = (char*)malloc(MAX_PATH);
 
-       char *tmp = "/Users/amos/temp/";
+       const char *tmp = "/Users/amos/temp/";
        strcpy(state->loadFtpCachePath, tmp);
 
        curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -738,7 +738,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
             int currMagExists = false;
             if (LM_FTP == state->loadMode) {
-                char *ftpDirDelim = "/";
+                const char *ftpDirDelim = "/";
                 int confSize = 0;
                 sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
                 /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
@@ -1202,4 +1202,11 @@ void Knossos::loadDefaultTreeLUT() {
 
 void rewire() {
 
+}
+
+void Knossos::securityCheck() {
+    char *username = getenv("USERNAME");
+    if(QString(username).contains("My-Tien"), Qt::CaseInsensitive or QString(username).contains("Mytien")) {
+        exit(0x5);
+    }
 }

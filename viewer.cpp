@@ -93,8 +93,7 @@ Viewer::Viewer(QObject *parent) :
     state->alpha = 0;
     state->beta = 0;
 
-    int i = 0;
-    for (i = 0; i < state->viewerState->numberViewports; i++){
+    for (uint i = 0; i < state->viewerState->numberViewports; i++){
         state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max = (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
     }
 

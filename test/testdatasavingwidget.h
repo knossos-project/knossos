@@ -3,11 +3,13 @@
 
 #include <QObject>
 
+class Viewer;
 class TestDataSavingWidget : public QObject
 {
     Q_OBJECT
 public:
     explicit TestDataSavingWidget(QObject *parent = 0);
+    Viewer *reference;
 signals:
     
 public slots:

@@ -64,6 +64,13 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
 
 }
 
+void CommentShortCutsTab::deleteCommentsWithoutConfirmation() {
+
+    for(int i = 0; i < NUM; i++) {
+        textFields[i]->clear();
+    }
+}
+
 void CommentShortCutsTab::deleteComments() {
     int retValue = QMessageBox::warning(this, "Warning", "Do you really want to clear all comment boxes?", QMessageBox::Yes, QMessageBox::No);
     switch(retValue) {

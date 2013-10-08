@@ -75,6 +75,7 @@ signals:
 public slots:
     void commentChanged(QString comment);
     void deleteActiveTreeButtonClicked();
+    void deleteActiveTreeWithoutConfirmation();
     void newTreeButtonClicked();
     void mergeTreesButtonClicked();
     void splitByConnectedComponentsButtonClicked();

@@ -86,7 +86,7 @@ SOURCES += widgets/mainwindow.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp
 
-PRECOMPILED_HEADER += openjpeg/tgt.h \
+PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
     openjpeg/t2.h \
     openjpeg/t1_luts.h \

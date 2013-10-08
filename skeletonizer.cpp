@@ -3699,15 +3699,17 @@ void Skeletonizer::UI_popBranchNode() {
 }
 
 void Skeletonizer::restoreDefaultTreeColor() {
-    int index = (state->skeletonState->activeTree->treeID - 1) % 256;
-    state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
-    state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
-    state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
-    state->skeletonState->activeTree->color.a = 1.;
+    if(state->skeletonState->activeTree) {
+        int index = (state->skeletonState->activeTree->treeID - 1) % 256;
+        state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
+        state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
+        state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
+        state->skeletonState->activeTree->color.a = 1.;
 
-    state->skeletonState->activeTree->colorSetManually = false;
-    state->skeletonState->skeletonChanged = true;
-    state->skeletonState->unsavedChanges = true;
+        state->skeletonState->activeTree->colorSetManually = false;
+        state->skeletonState->skeletonChanged = true;
+        state->skeletonState->unsavedChanges = true;
+    }
 }
 
 bool Skeletonizer::updateTreeColors() {

@@ -183,6 +183,11 @@ void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
     }
 }
 
+void ToolsTreesTabWidget::deleteActiveTreeWithoutConfirmation() {
+    emit delActiveTreeSignal();
+    emit updateToolsSignal();
+}
+
 void ToolsTreesTabWidget::newTreeButtonClicked() {
     color4F treeCol;
     treeCol.r = -1;
@@ -220,7 +225,8 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
 }
 
 void ToolsTreesTabWidget::rChanged(double value) {
-    state->skeletonState->activeTree->color.r = value;
+    if(state->skeletonState->activeTree)
+        state->skeletonState->activeTree->color.r = value;
 }
 
 void ToolsTreesTabWidget::gChanged(double value) {

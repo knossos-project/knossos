@@ -27,7 +27,6 @@
 
 #include <QDialog>
 #include <stdarg.h>
-
 class QPlainTextEdit;
 class Console : public QDialog
 {
@@ -45,7 +44,6 @@ public slots:
 
 protected:
     QPlainTextEdit *editor;
-
     void closeEvent(QCloseEvent *event);
 
 };

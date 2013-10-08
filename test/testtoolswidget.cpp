@@ -39,7 +39,7 @@ void TestToolsWidget::testAddTreesPerMouseClick() {
     QCOMPARE(random, tools->toolsQuickTabWidget->activeTreeSpinBox->text().toInt());
     QCOMPARE(random, tools->toolsTreesTabWidget->activeTreeSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 
 }
 
@@ -132,7 +132,7 @@ void TestToolsWidget::testAddTreesPerKeyPress() {
     QCOMPARE(activeTree, random[0] + random[1] + random[2]);
 
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 /* This testcase adds an amount of nodes with the right mouse button and compare the
@@ -210,7 +210,7 @@ void TestToolsWidget::testAddNodesPerMouseClick() {
     activeNode = tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt();
     QCOMPARE(activeNode, random[0] + random[1] + random[2]);
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 /* This test case checks if all skeleton information are cleared after using the DeleteActiveTreeButton */
@@ -224,7 +224,7 @@ void TestToolsWidget::testDeleteActiveTreeCaseZero() {
     QCOMPARE(state->skeletonState->treeElements, tools->toolsQuickTabWidget->activeTreeSpinBox->text().toInt());
     QCOMPARE(state->skeletonState->treeElements, tools->toolsTreesTabWidget->activeTreeSpinBox->text().toInt());
 
-    tools->toolsTreesTabWidget->deleteActiveTreeButton->click();
+    tools->toolsTreesTabWidget->deleteActiveTreeWithoutConfirmation();
 
     /* After pushing the DeleteActiveNodeButton activeTreeID and activeNodeID should be zero */
     QVERIFY(state->skeletonState->treeElements == 0);
@@ -235,7 +235,7 @@ void TestToolsWidget::testDeleteActiveTreeCaseZero() {
     QCOMPARE(state->skeletonState->treeElements, tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
     QCOMPARE(state->skeletonState->treeElements, tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 
@@ -258,11 +258,11 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 
     // now we delete the last tree and check the node ID
-    tools->toolsTreesTabWidget->deleteActiveTreeButton->click();
+    tools->toolsTreesTabWidget->deleteActiveTreeWithoutConfirmation();
     QVERIFY(2 == tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
     QVERIFY(2 == tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 
     // Another Case
 
@@ -277,11 +277,11 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 
     // now we delete the last tree and check the node ID
-    tools->toolsTreesTabWidget->deleteActiveTreeButton->click();
+    tools->toolsTreesTabWidget->deleteActiveTreeWithoutConfirmation();
     QVERIFY(0 == tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
     QVERIFY(0 == tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 void TestToolsWidget::testMergeTrees() {
@@ -310,7 +310,7 @@ void TestToolsWidget::testMergeTrees() {
     QVERIFY(1 == tools->toolsQuickTabWidget->activeTreeSpinBox->text().toInt());
     QVERIFY(1 == tools->toolsTreesTabWidget->activeTreeSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 void TestToolsWidget::testSplitConnectedComponents() {
@@ -325,16 +325,17 @@ void TestToolsWidget::testSplitConnectedComponents() {
 
     // Let´s change the workmode to a
     QTest::keyClick(firstViewport, Qt::Key_A);
-
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 
     tools->toolsTreesTabWidget->splitByConnectedComponentsButton->click();
+
+    int trees = state->skeletonState->treeElements;
 
     QVERIFY(2 == state->skeletonState->treeElements);
     QVERIFY(2 == tools->toolsQuickTabWidget->activeTreeSpinBox->text().toInt());
     QVERIFY(2 == tools->toolsTreesTabWidget->activeTreeSpinBox->text().toInt());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 void TestToolsWidget::testRestoreColors() {
@@ -357,5 +358,5 @@ void TestToolsWidget::testRestoreColors() {
     QCOMPARE(tools->toolsTreesTabWidget->bSpinBox->value(), 0.0);
     QCOMPARE(tools->toolsTreesTabWidget->aSpinBox->value(), 0.0);
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }

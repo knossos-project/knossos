@@ -42,6 +42,7 @@ public:
 signals:
 public slots:
     void deleteComments();
+    void deleteCommentsWithoutConfirmation();
 protected:
     static const int NUM = 5;
     QLabel **labels;

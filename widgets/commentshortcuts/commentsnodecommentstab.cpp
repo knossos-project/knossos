@@ -90,7 +90,7 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
             if(filtered) {               
                 if(strstr(node->comment->content, filter) != NULL) {
-                    if(branchNodesOnlyCheckbox->isChecked() && node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
+                    if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
 
                         QTableWidgetItem *nodeID = new QTableWidgetItem(QString("%1").arg(node->nodeID));
                         Qt::ItemFlags flags = nodeID->flags();

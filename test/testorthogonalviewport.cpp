@@ -33,4 +33,5 @@ void TestOrthogonalViewport::testAddNodeAccuracy() {
     qDebug() << coord.y << " " << position.y;
     qDebug() << coord.z << " " << position.z;
 
+    reference->window->clearSkeletonWithoutConfirmation();
 }

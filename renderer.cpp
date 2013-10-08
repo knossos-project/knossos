@@ -213,8 +213,6 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint v
 
 uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType) {
 
-
-
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
     if(viewportType == VIEWPORT_XY)

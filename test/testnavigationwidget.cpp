@@ -34,7 +34,7 @@ void TestNavigationWidget::testMovementSpeed() {
     int msec = bench.elapsed();
     qDebug() << msec;
 
-    viewerReference->window->clearSkeletonSlot();
+    viewerReference->window->clearSkeletonWithoutConfirmation();
 }
 
 // @todo the d/f depending to the added node
@@ -106,7 +106,7 @@ void TestNavigationWidget::testJumpFrames() {
     newCoord.x = viewerReference->window->yField->value();
     QCOMPARE(oldCoord.y, newCoord.y);
 
-    viewerReference->window->clearSkeletonSlot();
+    viewerReference->window->clearSkeletonWithoutConfirmation();
 }
 
 /* @todo the d/f depending to the added node  */
@@ -176,5 +176,5 @@ void TestNavigationWidget::testWalkFrames() {
     newCoord.x = viewerReference->window->yField->value();
     QCOMPARE(oldCoord.y, newCoord.y);
 
-    viewerReference->window->clearSkeletonSlot();
+    viewerReference->window->clearSkeletonWithoutConfirmation();
 }

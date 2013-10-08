@@ -31,7 +31,7 @@ public slots:
     void filterChanged();
     void commentChanged(QTableWidgetItem *item);
     void itemSelected(int row, int col);
-    void doubleClicked(QTableWidgetItem *item);
+    void doubleClicked(QTableWidgetItem *item = 0);
 
 protected:
     QCheckBox *branchNodesOnlyCheckbox;

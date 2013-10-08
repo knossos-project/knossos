@@ -204,6 +204,7 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
     orthogonalDataViewportSlider->setValue(MAX_ZOOM);
     orthogonalDataViewportSpinBox->setValue(MAX_ZOOM);
     skeletonViewportSlider->setValue(MIN_ZOOM);
+    int value = skeletonViewportSlider->value();
     skeletonViewportSpinBox->setValue(MIN_ZOOM);
 
     state->skeletonState->zoomLevel = 0.0;

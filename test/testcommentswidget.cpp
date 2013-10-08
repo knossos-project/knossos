@@ -17,7 +17,6 @@ TestCommentsWidget::TestCommentsWidget(QObject *parent) :
 
 }
 
-/** @attention: the upcoming message box is modal and blocks the test method. It has to be queried with yes.**/
 void TestCommentsWidget::testDeleteComments() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentShortCutsTab *tab = commentsWidget->shortcutTab;
@@ -28,12 +27,12 @@ void TestCommentsWidget::testDeleteComments() {
         QTest::keyClicks(tab->textFields[i], QString("A comment %1").arg(i));
     }
 
-   tab->button->clicked(true);
+   tab->deleteCommentsWithoutConfirmation();
 
    for(int i = 0; i < 5; i++)
         QCOMPARE(tab->textFields[i]->text(), QString(""));
 
-   reference->window->clearSkeletonSlot();
+   reference->window->clearSkeletonWithoutConfirmation();
 
 }
 
@@ -115,7 +114,7 @@ void TestCommentsWidget::testAddNodeComment() {
     QVERIFY(found == true);
     }
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 /** This testcase declares a tree and two nodes
@@ -185,7 +184,7 @@ void TestCommentsWidget::testEnableConditionalColoring() {
         }
     }
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 
 }
 
@@ -221,7 +220,7 @@ void TestCommentsWidget::testEnableConditionalRadius() {
         QVERIFY(random[i] == state->skeletonState->commentNodeRadii[i]);
     }
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 
@@ -266,7 +265,7 @@ void TestCommentsWidget::testCommentsTable() {
     QTest::keyClick(firstViewport, Qt::Key_Delete);
     QCOMPARE(3, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 /** @todo this testcase exceeds the maximum amount of warnings.
@@ -304,7 +303,7 @@ void TestCommentsWidget::testCommentsTablePerformance() {
     edit.setText(QString("%1 msec").arg(msec));
     edit.show();
 
-    reference->window->clearSkeletonSlot();
+    reference->window->clearSkeletonWithoutConfirmation();
 }
 
 void TestCommentsWidget::endTestCase() {
