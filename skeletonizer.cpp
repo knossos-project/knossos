@@ -4176,6 +4176,7 @@ void Skeletonizer::setShowNodeIDs(bool on) {
 /* @todo ACTIVE_TREE_ID durch Widgets */
 
 Byte *Skeletonizer::serializeSkeleton() {
+    /*
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     PTRSIZEINT currentBranchPointID;
     Byte *serialSkeleton = NULL;
@@ -4184,6 +4185,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     struct segmentListElement *currentSegment;
     struct commentListElement *currentComment;
 
+    qDebug() << "ABSCHNITT 1";
     uint32_t i = 0, memPosition = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0;
     uint32_t variablesBlockSize = getVariableBlockSize();
     uint32_t treeBlockSize = getTreeBlockSize();
@@ -4195,6 +4197,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     reverseBranchStack = newStack(2048);
     tempReverseStack = newStack(2048);
 
+    qDebug() << "ABSCHNITT 2";
     while((currentBranchPointID =
         (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
         pushStack(reverseBranchStack, (void *)currentBranchPointID);
@@ -4214,6 +4217,10 @@ Byte *Skeletonizer::serializeSkeleton() {
                                     + commentBlockSize * sizeof(Byte)
                                     + branchPointBlockSize * sizeof(Byte);
 
+    if(serializedSkeletonSize > 1000000) {
+        qDebug() << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
+    }
+
     serialSkeleton = (Byte *)malloc(serializedSkeletonSize);
     if(serialSkeleton == NULL){
         LOG("Out of memory");
@@ -4221,6 +4228,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     }
     memset(serialSkeleton, '\0', serializedSkeletonSize);
 
+    qDebug() << "ABSCHNITT 3";
     //Experiment name
     Client::integerToBytes(&serialSkeleton[memPosition], strlen(state->name));
     memPosition+=sizeof(int32_t);
@@ -4271,6 +4279,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     strncpy((char *)&serialSkeleton[memPosition], state->skeletonState->onCommentLock, strlen(state->skeletonState->onCommentLock));
     memPosition+=strlen(state->skeletonState->onCommentLock);
 
+    qDebug() << "ABSCHNITT 4";
     //Display Mode, Work Mode, Skeleton Time, Active Node
     Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->displayMode);
     memPosition+=sizeof(int32_t);
@@ -4294,6 +4303,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     Client::integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.z);
     memPosition+=sizeof(int32_t);
 
+    qDebug() << "ABSCHNITT 5";
     //SkeletonViewport Display
     for (i = 0; i < 16; i++){
         Client::floatToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonVpModelView[i]);
@@ -4434,11 +4444,14 @@ Byte *Skeletonizer::serializeSkeleton() {
         memPosition+=sizeof(currentBranchPointID);
 
     }
-    return serialSkeleton;
+    */
+    return NULL;
+
 }
 
 void Skeletonizer::deserializeSkeleton() {
 
+    /*
     Byte *serialSkeleton = NULL;
     uint i = 0, j = 0, totalTreeNumber = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0, totalBranchPointNumber;
     serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
@@ -4661,10 +4674,12 @@ void Skeletonizer::deserializeSkeleton() {
 
     emit setRecenteringPositionSignal(loadedPosition.x, loadedPosition.y, loadedPosition.z);
     Knossos::sendRemoteSignal();
+    */
 
 }
 
 void Skeletonizer::deleteLastSerialSkeleton(){
+    /*
     struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
     state->skeletonState->lastSerialSkeleton->next = NULL;
     free(state->skeletonState->lastSerialSkeleton->next);
@@ -4674,9 +4689,11 @@ void Skeletonizer::deleteLastSerialSkeleton(){
     free(state->skeletonState->lastSerialSkeleton);
     state->skeletonState->lastSerialSkeleton = newLastSerialSkeleton;
     state->skeletonState->serialSkeletonCounter--;
+    */
 }
 
 void Skeletonizer::saveSerializedSkeleton(){
+    /*
     struct serialSkeletonListElement *serialSkeleton = NULL;
     serialSkeleton = (serialSkeletonListElement *)malloc(sizeof(*serialSkeleton));
     serialSkeleton->content = (Byte *)serializeSkeleton();
@@ -4702,11 +4719,13 @@ void Skeletonizer::saveSerializedSkeleton(){
         free(state->skeletonState->firstSerialSkeleton->previous);
         state->skeletonState->serialSkeletonCounter--;
     }
-
+    */
 }
 
 int Skeletonizer::getTreeBlockSize(){
+
     int treeBlockSize = 0;
+    /*
     if(state->skeletonState->firstTree){
         struct treeListElement *currentTree = state->skeletonState->firstTree;
         treeBlockSize+=sizeof(currentTree->treeID);
@@ -4719,12 +4738,13 @@ int Skeletonizer::getTreeBlockSize(){
             treeBlockSize+=strlen(currentTree->comment);
             currentTree = currentTree->next;
         }
-    }
+    } */
     return treeBlockSize;
 }
 
 int Skeletonizer::getNodeBlockSize(){
     int nodeBlockSize = 0;
+    /*
     struct nodeListElement *currentNode = NULL;
     nodeBlockSize+=sizeof(currentNode->nodeID);
     nodeBlockSize+=sizeof(currentNode->radius);
@@ -4734,6 +4754,7 @@ int Skeletonizer::getNodeBlockSize(){
     nodeBlockSize+=sizeof(currentNode->createdInMag);
     nodeBlockSize+=sizeof(currentNode->createdInVp);
     nodeBlockSize+=sizeof(currentNode->timestamp);
+    */
     return nodeBlockSize;
 }
 
