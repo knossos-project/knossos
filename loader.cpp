@@ -1190,11 +1190,15 @@ bool Loader::load() {
     // the protectLoadSignal mutex.
     // DcoiFromPos fills the Dcoi list with all datacubes that
     // we want to be in memory, given our current position.
+
+
     if(DcoiFromPos(this->Dcoi, magChange ? NULL : mergeCube2Pointer) != true) {
         LOG("Error computing DCOI from position.");
         state->protectLoadSignal->unlock();
         return true;
     }
+
+
 
     /*
     We shall now remove from current loaded cubes those cubes that are not required by new coordinate,

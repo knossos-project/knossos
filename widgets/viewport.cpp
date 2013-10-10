@@ -225,6 +225,10 @@ int Viewport::yrel(int y) {
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
+   /* if(delegate->grap) {
+        this->move(event->x(), event->y());
+    }*/
+
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
@@ -240,6 +244,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
 
     if(clickEvent) {
+
         delegate->mouseX = event->x();
         delegate->mouseY = event->y();
     }
@@ -251,6 +256,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     delegate->mouseY = event->y();
 
     if(event->button() == Qt::LeftButton) {
+        //this->move(event->x() - this->pos().x(), event->y() - pos().y());
         handleMouseButtonLeft(event, plane);
     }
     else if(event->button() == Qt::MidButton) {

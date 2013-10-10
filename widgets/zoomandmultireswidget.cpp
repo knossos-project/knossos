@@ -246,7 +246,11 @@ void ZoomAndMultiresWidget::loadSettings() {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
         for(int i = 0; i < 3; i++)
             state->viewerState->vpConfigs[i].texture.zoomLevel = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
+    } else {
+        this->orthogonalDataViewportSpinBox->setValue(1);
     }
+
+
     if(!settings.value(SKELETON_VIEW).toDouble()) {
         this->skeletonViewportSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
         state->skeletonState->zoomLevel = settings.value(SKELETON_VIEW).toDouble();

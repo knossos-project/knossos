@@ -11,12 +11,9 @@ void WidgetContainer::rewire() {
 
     connect(this->toolsWidget->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
     connect(this->toolsWidget->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
-
     connect(this->toolsWidget->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(commentChanged(QString)));
     connect(this->toolsWidget->toolsNodesTabWidget->searchForField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(searchForChanged(QString)));
-
     connect(this->commentsWidget->nodeCommentsTab, SIGNAL(updateTools()), this->toolsWidget, SLOT(updateDisplayedTree()));
-
     connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
     connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
     connect(this->toolsWidget->toolsNodesTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
@@ -27,70 +24,63 @@ void WidgetContainer::createConsoleWidget() {
     console = new Console();
     console->setWindowFlags(Qt::WindowStaysOnTopHint);
     console->setMinimumSize(200, 100);
-    //console->setGeometry(800, 500, 200, 120);
+
 }
 
 void WidgetContainer::createTracingTimeWidget() {
     tracingTimeWidget = new TracingTimeWidget();
     tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    tracingTimeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     tracingTimeWidget->setMinimumSize(200, 100);
 
-    //tracingTimeWidget->setGeometry(800, 350, 200, 100);
 }
 
 void WidgetContainer::createCommentsWidget() {
     commentsWidget = new CommentsWidget();
     commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    commentsWidget->setMinimumSize(470, 300);
-    //commentsWidget->setGeometry(800, 100, 470, 300);
+    commentsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createZoomAndMultiresWidget() {
     zoomAndMultiresWidget = new ZoomAndMultiresWidget();
     zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    zoomAndMultiresWidget->setMinimumSize(380, 200);
-    //zoomAndMultiresWidget->setGeometry(1024, 100, 380, 200);
+    zoomAndMultiresWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createNavigationWidget() {
     navigationWidget = new NavigationWidget();
     navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    navigationWidget->setMinimumSize(200, 200);
-    //navigationWidget->setGeometry(1024, 350, 200, 200);
+    navigationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createToolWidget() {
     toolsWidget = new ToolsWidget();
     toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    toolsWidget->setMinimumSize(430, 610);
-    //toolsWidget->setGeometry(500, 100, 430, 610);
+    toolsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
 }
 
 void WidgetContainer::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget();
     viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    viewportSettingsWidget->setMinimumSize(680, 400);
-    //viewportSettingsWidget->setGeometry(500, 500, 680, 400);
+    viewportSettingsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createDataSavingWidget() {
     dataSavingWidget = new DataSavingWidget();
     dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    dataSavingWidget->setMinimumSize(220, 120);
-    //dataSavingWidget->setGeometry(100, 100, 220, 120);
+    dataSavingWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createSychronizationWidget() {
     synchronizationWidget = new SynchronizationWidget();
     synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
-    synchronizationWidget->setMinimumSize(200, 120);
-    //synchronizationWidget->setGeometry(100, 350, 200, 120);
+    synchronizationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
 }
 
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
-
-    //splashWidget->setGeometry(400, 100, 500, 500);
     splashWidget->show();
 }
 

@@ -69,6 +69,7 @@ public:
     int yrel(int y);
     int mouseX;
     int mouseY;
+    bool grap;
 protected:
 
 signals:

@@ -50,6 +50,7 @@
 #include "test/testnavigationwidget.h"
 #include "test/testorthogonalviewport.h"
 
+
 #ifdef Q_OS_WIN
     #include "windows.h"
 #endif
@@ -63,6 +64,7 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 int main(int argc, char *argv[])
 {
+    QApplication::setStyle("CDE Style");
     Knossos::securityCheck();
     char tempPath[MAX_PATH] = {0};
     const char *file = "/Users/amos/log.txt";

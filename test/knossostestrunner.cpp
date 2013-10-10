@@ -102,6 +102,7 @@ void KnossosTestRunner::addTestClasses() {
         treeWidget->addTopLevelItem(item);
 
         for(int i = 0; i < metaObj->methodCount(); i++) {
+            qDebug() << "_" << a << "_" << i;
             QMetaMethod method = metaObj->method(i);
             QVariant variant(method.name());
             QString text = variant.toString();

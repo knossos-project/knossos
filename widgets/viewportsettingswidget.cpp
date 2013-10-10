@@ -30,6 +30,7 @@
 #include "GUIConstants.h"
 #include <QCheckBox>
 #include <QDoubleSpinBox>
+#include <QLabel>
 #include <QRadioButton>
 #include "knossos-global.h"
 
@@ -48,6 +49,8 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
     tabs->addTab(generalTabWidget, "General");
     tabs->addTab(slicePlaneViewportWidget, "Slice Plane Viewports");
     tabs->addTab(skeletonViewportWidget, "Skeleton Viewport");
+
+
 
 }
 
@@ -102,6 +105,10 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(OVERRIDE_NODES_RADIUS_VALUE).isNull()) {
         this->generalTabWidget->overrideNodeRadiusSpinBox->setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE).toDouble());
         state->skeletonState->overrideNodeRadiusVal = settings.value(OVERRIDE_NODES_RADIUS_VALUE).toDouble();
+    } else {
+        this->generalTabWidget->overrideNodeRadiusSpinBox->setValue(false);
+        state->skeletonState->overrideNodeRadiusVal = 0;
+        this->generalTabWidget->edgeNodeRadiusRatioLabel->setStyleSheet("color: gray");
     }
 
 
@@ -112,7 +119,9 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(!settings.value(ENABLE_OVERLAY).isNull()) {
         this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(settings.value(ENABLE_OVERLAY).toBool());
-
+    } else {
+        this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(true);
+        state->overlay = true;
     }
 
     if(!settings.value(HIGHLIGHT_INTERSECTIONS).isNull()) {
@@ -133,17 +142,26 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(DEPTH_CUTOFF).isNull()) {
         this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(settings.value(DEPTH_CUTOFF).toDouble());
         state->viewerState->depthCutOff = settings.value(DEPTH_CUTOFF).toDouble();
+    } else {
+        this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(1);
+        state->viewerState->depthCutOff = 1;
     }
 
 
     if(!settings.value(BIAS).isNull()) {
         this->slicePlaneViewportWidget->biasSpinBox->setValue(settings.value(BIAS).toInt());
         state->viewerState->luminanceBias = settings.value(BIAS).toInt();
+    } else {
+        this->slicePlaneViewportWidget->biasSpinBox->setValue(0);
+        state->viewerState->luminanceBias = 0;
     }
 
     if(!settings.value(RANGE_DELTA).isNull()) {
         this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(settings.value(RANGE_DELTA).toInt());
         state->viewerState->luminanceRangeDelta = settings.value(RANGE_DELTA).toInt();
+    } else {
+        this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(this->slicePlaneViewportWidget->rangeDeltaSpinBox->maximum());
+        state->viewerState->luminanceRangeDelta = 255;
     }
 
 

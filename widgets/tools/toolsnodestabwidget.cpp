@@ -98,9 +98,10 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     gridLayout->addWidget(jumpToNodeButton, 1, 1);
     gridLayout->addWidget(deleteNodeButton, 1, 2);
     gridLayout->addWidget(linkNodeWithButton, 2, 1);
+    gridLayout->addWidget(idSpinBox, 2,2);
 
-    QFormLayout *formLayout2 = new QFormLayout();
-    formLayout2->addRow(idLabel, idSpinBox);
+    //QFormLayout *formLayout2 = new QFormLayout();
+    //formLayout2->addRow(idLabel, idSpinBox);
 
     QFormLayout *formLayout3 = new QFormLayout();
     formLayout3->addRow(commentLabel, commentField);
@@ -128,7 +129,7 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
     mainLayout->addLayout(formLayout);
     mainLayout->addLayout(gridLayout);
-    mainLayout->addLayout(formLayout2);
+    //mainLayout->addLayout(formLayout2);
     mainLayout->addWidget(line);
     mainLayout->addLayout(formLayout3);
     mainLayout->addWidget(line2);

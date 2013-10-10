@@ -126,8 +126,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));    
     updateTitlebar(false);
+
+
 }
 
 void MainWindow::createViewports() {
@@ -884,6 +886,7 @@ void MainWindow::defaultPreferencesSlot() {
             emit loadTreeLUTFallback();
             treeColorAdjustmentsChanged();
             datasetColorAdjustmentsChanged();
+            this->setGeometry(0, 0, 1024, 768);
             break;
     case QMessageBox::No:
            break;
@@ -894,6 +897,7 @@ void MainWindow::defaultPreferencesSlot() {
 void MainWindow::datatasetNavigationSlot()
 {
     this->widgetContainer->navigationWidget->show();
+    this->widgetContainer->navigationWidget->adjustSize();
     datasetNavigationAction->setChecked(true);
 }
 
@@ -912,6 +916,7 @@ void MainWindow::dataSavingOptionsSlot()
 void MainWindow::viewportSettingsSlot()
 {
     this->widgetContainer->viewportSettingsWidget->show();
+    this->widgetContainer->viewportSettingsWidget->adjustSize();
     viewportSettingsAction->setChecked(true);
 }
 
@@ -920,6 +925,7 @@ void MainWindow::viewportSettingsSlot()
 void MainWindow::toolsSlot()
 {
     this->widgetContainer->toolsWidget->show();
+    this->widgetContainer->toolsWidget->adjustSize();
     toolsAction->setChecked(true);
 }
 
@@ -932,6 +938,7 @@ void MainWindow::logSlot()
 void MainWindow::commentShortcutsSlots()
 {
     this->widgetContainer->commentsWidget->show();
+    this->widgetContainer->commentsWidget->adjustSize();
     commentShortcutsAction->setChecked(true);
 }
 
@@ -1085,6 +1092,8 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
+
+
 }
 
 void MainWindow::clearSettings() {

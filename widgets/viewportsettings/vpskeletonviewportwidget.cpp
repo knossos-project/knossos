@@ -72,10 +72,9 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     gridLayout->addWidget(showXYPlaneCheckBox, 2, 0);
     gridLayout->addWidget(wholeSkeletonRadioButton, 2, 1);
     gridLayout->addWidget(showXZPlaneCheckBox, 3, 0);
-    gridLayout->addWidget(onlyCurrentCubeRadioButton, 3, 1);
+    gridLayout->addWidget(onlyActiveTreeRadioButton, 3, 1);
     gridLayout->addWidget(showYZPlaneCheckBox, 4, 0);
-    gridLayout->addWidget(onlyActiveTreeRadioButton, 4, 1);
-    gridLayout->addWidget(hideSkeletonRadioButton, 5, 1);
+    gridLayout->addWidget(hideSkeletonRadioButton, 4, 1);
 
     gridLayout->addWidget(view3dlabel, 7, 0);
     gridLayout->addWidget(line3, 8, 0);

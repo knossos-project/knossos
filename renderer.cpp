@@ -215,6 +215,7 @@ uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType
 
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
+
     if(viewportType == VIEWPORT_XY)
         reference->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_YZ)
@@ -349,9 +350,6 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
             }
         }
-
-
-
 
     return true;
 
@@ -543,8 +541,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glBindTexture (GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
             glEnable(GL_DEPTH_TEST);
-
-
 
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
@@ -1386,7 +1382,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                     glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLLx, state->viewerState->vpConfigs[i].texture.texLLy);
                     glVertex3f(0., -dataPxX, dataPxY);
                 glEnd();
-                glBindTexture (GL_TEXTURE_2D, 0);
+                glBindTexture (GL_TEXTURE_2D, 0);                
                 break;
             case VIEWPORT_ARBITRARY:
                 /* @arb */

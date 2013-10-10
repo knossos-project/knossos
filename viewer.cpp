@@ -42,8 +42,12 @@ Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
     window = new MainWindow();
+    window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    QDesktopWidget *desktop = QApplication::desktop();
+
     window->show();
     state->console = window->widgetContainer->console;
+
 
     vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
@@ -60,6 +64,8 @@ Viewer::Viewer(QObject *parent) :
     vp2->show();
     vp3->show();
     vp4->show();
+
+    window->setGeometry(500, 300, 200, 200);
 
     timer = new QTimer();
 
@@ -704,15 +710,15 @@ bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
 
     if(state->viewerState->datasetAdjustmentOn) {
         /* Texture type GL_RGB and we need to adjust coloring */
-        QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
-        future.waitForFinished();
-        //sliceExtract_adjust(datacube, slice, vpConfig);
+        //QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
+        //future.waitForFinished();
+        sliceExtract_adjust(datacube, slice, vpConfig);
     }
     else {
         /* Texture type GL_RGB and we don't need to adjust anything*/
-       QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
-       future.waitForFinished();
-       //sliceExtract_standard(datacube, slice, vpConfig);
+       //QFuture<bool> future = QtConcurrent::run(this, &Viewer::sliceExtract_adjust, datacube, slice, vpConfig);
+       //future.waitForFinished();
+       sliceExtract_standard(datacube, slice, vpConfig);
     }
     return true;
 }
@@ -2197,7 +2203,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 NO_MAG_CHANGE);
     }
 
-    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
+    //QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
 
     return true;

@@ -32,6 +32,7 @@ extern struct stateInfo *state;
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
 {
+    grap = false;
 }
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
@@ -39,6 +40,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     uint clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
+
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
@@ -1062,8 +1064,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
         }
     } else if(event->key() == Qt::Key_G) {
-        emit genTestNodesSignal(50000);
-        emit updateTools();
+        //emit genTestNodesSignal(50000);
+        //emit updateTools();
+        grap = !grap;
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             emit nextCommentlessNodeSignal();

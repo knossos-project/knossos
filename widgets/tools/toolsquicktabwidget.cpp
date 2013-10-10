@@ -261,6 +261,9 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
 
 void ToolsQuickTabWidget::commentChanged(QString comment) {
 
+    if(!state->skeletonState->activeNode)
+        return;
+
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
 

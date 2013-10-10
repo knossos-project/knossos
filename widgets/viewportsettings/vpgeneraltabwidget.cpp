@@ -150,9 +150,11 @@ void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
 
     if(on) {
         this->edgeNodeRadiusRatioSpinBox->setEnabled(true);
+        this->edgeNodeRadiusRatioLabel->setStyleSheet("color: black");
 
     } else {
         this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
+        this->edgeNodeRadiusRatioLabel->setStyleSheet("color: gray");
     }
 }
 
