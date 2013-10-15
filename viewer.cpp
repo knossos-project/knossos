@@ -48,7 +48,12 @@ Viewer::Viewer(QObject *parent) :
     window->show();
     state->console = window->widgetContainer->console;
 
+    vp = window->viewports[0];
+    vp2 = window->viewports[1];
+    vp3 = window->viewports[2];
+    vp4 = window->viewports[3];
 
+    /*
     vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
     vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
@@ -66,7 +71,7 @@ Viewer::Viewer(QObject *parent) :
     vp4->show();
 
     window->setGeometry(500, 300, 200, 200);
-
+    */
     timer = new QTimer();
 
     /* order of the initialization of the rendering system is
@@ -82,6 +87,7 @@ Viewer::Viewer(QObject *parent) :
     renderer = new Renderer();
 
     // This is needed for the viewport text rendering
+
     vp->delegate->reference = vp2->delegate->reference = vp3->delegate->reference = vp4->delegate->reference = renderer;
     vp->reference = vp2->reference = vp3->reference = vp4->reference = renderer;
 
@@ -2203,7 +2209,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 NO_MAG_CHANGE);
     }
 
-    //QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
+    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
 
     return true;

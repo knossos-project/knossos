@@ -62,7 +62,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
@@ -129,7 +128,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));    
     updateTitlebar(false);
 
-
+    createViewports();
 }
 
 void MainWindow::createViewports() {
@@ -139,10 +138,10 @@ void MainWindow::createViewports() {
     viewports[2] = new Viewport(this, VIEWPORT_XZ, VIEWPORT_XZ);
     viewports[3] = new Viewport(this, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
 
-    viewports[0]->setGeometry(5, 40, 350,350);
-    viewports[1]->setGeometry(355, 40, 350, 350);
-    viewports[2]->setGeometry(5, 400, 350, 350);
-    viewports[3]->setGeometry(355, 400, 350, 350);
+    viewports[0]->setGeometry(5, this->toolBar->geometry().bottom() + 5, 350,350);
+    viewports[1]->setGeometry(360, this->toolBar->geometry().bottom() + 5, 350, 350);
+    viewports[2]->setGeometry(5, viewports[0]->geometry().bottom() + 5, 350, 350);
+    viewports[3]->setGeometry(360, viewports[0]->geometry().bottom() + 5, 350, 350);
 }
 
 MainWindow::~MainWindow()
@@ -169,7 +168,7 @@ void MainWindow:: createToolBar() {
     pasteButton->setIcon(QIcon(":/images/icons/edit-paste.png"));
 
     this->toolBar = new QToolBar();
-    this->toolBar->setMaximumHeight(80);
+    this->toolBar->setMaximumHeight(45);
     this->addToolBar(toolBar);
     this->toolBar->addWidget(open);
     this->toolBar->addWidget(save);

@@ -58,7 +58,6 @@ public:
 
     static bool cpBaseDirectory(char *target, char *path, size_t len);
     static void reloadDataSizeWin();
-
     static void datasetColorAdjustmentsChanged();
     void showSplashScreen();
 
