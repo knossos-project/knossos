@@ -129,6 +129,7 @@ MainWindow::MainWindow(QWidget *parent) :
     updateTitlebar(false);
 
     createViewports();
+    setAcceptDrops(true);
 }
 
 void MainWindow::createViewports() {
@@ -269,10 +270,10 @@ void MainWindow:: createToolBar() {
 void MainWindow::updateTitlebar(bool useFilename) {
     QString title;
     if(!state->skeletonState->skeletonFileAsQString.isNull()) {
-        title = QString("KNOSSOS %1 showing %2").arg(KVERSION).arg(state->skeletonState->skeletonFileAsQString);
+        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
 
     } else {
-        title = QString("KNOSSOS %1 showing %2").arg(KVERSION).arg("no skeleton file");
+        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
     }
 
     setWindowTitle(title);
@@ -629,6 +630,38 @@ void MainWindow::openSlot() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     state->skeletonState->skeletonFileAsQString = fileName;
 
+    if(!fileName.isNull()) {
+        QApplication::processEvents();
+        QFileInfo info(fileName);
+        QString path = info.canonicalPath();
+
+        int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
+
+        if(ret == QMessageBox::Yes) {
+            state->skeletonState->mergeOnLoadFlag = true;
+
+        } else {
+            state->skeletonState->mergeOnLoadFlag = false;
+        }
+
+        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        future.waitForFinished();
+
+
+        emit updateCommentsTableSignal();
+        updateTitlebar(true);
+        linkWithActiveNodeSlot();
+
+        if(!alreadyInMenu(fileName)) {
+            addRecentFile(fileName);
+        }
+
+        emit updateToolsSignal();
+
+    }
+}
+
+void MainWindow::openSlot(const QString &fileName) {
     if(!fileName.isNull()) {
         QApplication::processEvents();
         QFileInfo info(fileName);
@@ -1181,3 +1214,34 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
         qDebug() << "gnaaa";
     }
 }
+
+void MainWindow::dropEvent(QDropEvent *event) {
+    if(event->mimeData()->hasFormat("text/uri-list")) {
+        QList<QUrl> urls = event->mimeData()->urls();
+        if(urls.size() != 1) {
+            qDebug() << "error";
+            return;
+        }
+
+        QUrl url = urls.first();
+        QString fileName(url.path());
+        qDebug()<< fileName;
+
+        if(!fileName.endsWith(".nml")) {
+            return;
+        } else {
+            openSlot(fileName);
+            event->accept();
+        }
+
+    }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+    event->accept();
+}
+
+void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
+    qDebug() << "drag leave";
+}
+

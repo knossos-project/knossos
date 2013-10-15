@@ -68,7 +68,6 @@ protected:
     int lastY; //last y position
 
     bool entered;
-
     QPushButton *moveButton, *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
 
@@ -86,6 +85,7 @@ signals:
     void runSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void updateZoomAndMultiresWidget();
+    void loadSkeleton(const QString &path);
 public slots:
     void zoomOrthogonals(float step);
     void moveButtonClicked();

@@ -44,7 +44,7 @@ public:
     static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);   
     bool initStates();
-    static void securityCheck();
+    static void revisionCheck();
 
     static bool unlockSkeleton(int increment);
     static bool lockSkeleton(uint targetRevision);

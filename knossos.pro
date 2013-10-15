@@ -198,6 +198,7 @@ OTHER_FILES += \
     customCursor.xpm \
     config.y
 
+DEFINES += REVISION=\\\"$$system(svnversion)\\\"
 
 mac {
     INCLUDEPATH += /usr/include/Python2.7 \

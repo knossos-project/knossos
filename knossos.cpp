@@ -65,7 +65,7 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 int main(int argc, char *argv[])
 {
     QApplication::setStyle("CDE Style");
-    Knossos::securityCheck();
+    Knossos::revisionCheck();
     char tempPath[MAX_PATH] = {0};
     const char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
@@ -1206,9 +1206,37 @@ void rewire() {
 
 }
 
-void Knossos::securityCheck() {
-    char *username = getenv("USERNAME");
-    if(QString(username).contains("My-Tien"), Qt::CaseInsensitive or QString(username).contains("Mytien")) {
-        exit(0x5);
+void Knossos::revisionCheck() {
+
+    system("cd ..\n");
+    system("svn info | grep Revision > revision");
+#ifdef Q_OS_MAC
+
+    QFile file("revision");
+    if(!file.exists()) {
+        return;
     }
+
+    if(!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    QTextStream stream(&file);
+    QString content = stream.readLine();
+    QStringList list = content.split(":");
+    if(list.size() != 2) {
+        file.close();
+        return;
+    }
+
+    QVariant variant = list.at(1).trimmed();
+    if(variant.canConvert(QVariant::UInt))
+        state->svnRevision = list.at(1).trimmed().toUInt();
+
+    file.close();
+
+
+
+#endif
+
 }

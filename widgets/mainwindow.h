@@ -27,6 +27,7 @@
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 #include <QMainWindow>
+#include <QDropEvent>
 #include <QQueue>
 
 namespace Ui {
@@ -78,7 +79,9 @@ signals:
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 protected:
-
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void dropEvent(QDropEvent *event);
 public:
     Ui::MainWindow *ui;
 
@@ -175,6 +178,7 @@ public slots:
 
     /* file menu */
     void openSlot();
+    void openSlot(const QString &fileName);
     void saveSlot();
     void saveAsSlot();
     void quitSlot();
@@ -186,8 +190,6 @@ public slots:
     void skeletonStatisticsSlot();
     void clearSkeletonSlot();
     void clearSkeletonWithoutConfirmation();
-
-
 
     /* view menu */
     void dragDatasetSlot();

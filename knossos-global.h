@@ -472,6 +472,8 @@ struct assignment {
 
 struct stateInfo {
 
+    uint svnRevision;
+
     bool singleLogging;
 
     Console *console;

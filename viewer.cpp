@@ -2990,6 +2990,7 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(vp3->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(vp4->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
+
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
