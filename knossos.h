@@ -26,6 +26,7 @@
 
 #include <qobject.h>
 #include <QtOpenGL>
+
 #include "widgets/mainwindow.h"
 
 class Knossos : public QObject {
