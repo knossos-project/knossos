@@ -202,7 +202,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
     if(!fileName.isEmpty()) {
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strcpy(state->viewerState->gui->datasetLUTFile, cname);
-        MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
+        //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
 
 
         if(loadDataSetColortableSignal(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {

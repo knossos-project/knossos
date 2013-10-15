@@ -1660,6 +1660,7 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
     uint readBytes = 0, i = 0;
     uint size = RGB_LUTSIZE;
 
+    qDebug() << "entered  loadDatasetColorTable";
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
     LOG("Reading Dataset LUT at %s\n", path)

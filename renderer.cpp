@@ -46,7 +46,7 @@ extern stateInfo *state;
 Renderer::Renderer(QObject *parent) :
     QObject(parent)
 {
-    font = QFont("Helvetica", 12, QFont::Normal);   
+    font = QFont("Helvetica", 10, QFont::Normal);
 
     uint i;
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
