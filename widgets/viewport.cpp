@@ -50,6 +50,7 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
     this->setAutoBufferSwap(true);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
 
+    /*
     moveButton = new QPushButton("Move", this);
     moveButton->setGeometry(323, 298, 25, 25);
 
@@ -61,7 +62,8 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
 
     connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
     connect(resizeButton, SIGNAL(clicked()), this, SLOT(resizeButtonClicked()));
-
+    */
+    /*
     if(widgetNumber == VIEWPORT_SKELETON) {
         xyButton = new QPushButton("xy", this);
         xyButton->setGeometry(113, 2, 35, 20);
@@ -82,7 +84,7 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
         connect(r90Button, SIGNAL(clicked()), this, SLOT(r90ButtonClicked()));
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
-    }
+    }*/
 
 }
 
@@ -182,6 +184,7 @@ void Viewport::initializeOverlayGL() {
 
 void Viewport::resizeGL(int w, int h) {
 
+
     LOG("resizing")
     glViewport(0, 0, width(), height());
     glMatrixMode(GL_PROJECTION);
@@ -238,7 +241,6 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
         handleMouseMotionRightHold(event, plane);
         clickEvent = true;
     }
-
 
     if(clickEvent) {
         delegate->mouseX = event->x();

@@ -46,6 +46,8 @@ Viewer::Viewer(QObject *parent) :
     QDesktopWidget *desktop = QApplication::desktop();
 
     window->show();
+    window->setGeometry(desktop->availableGeometry().center().x(), desktop->availableGeometry().center().y(), 1024, 800);
+    window->adjustSize();
     state->console = window->widgetContainer->console;
 
     vp = window->viewports[0];

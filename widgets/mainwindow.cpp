@@ -143,6 +143,9 @@ void MainWindow::createViewports() {
     viewports[1]->setGeometry(360, this->toolBar->geometry().top() + 60, 350, 350);
     viewports[2]->setGeometry(5, viewports[0]->geometry().bottom() + 5, 350, 350);
     viewports[3]->setGeometry(360, viewports[0]->geometry().bottom() + 5, 350, 350);
+
+    QDockWidget *widget = new QDockWidget();
+    this->addDockWidget(Qt::RightDockWidgetArea, widget);
 }
 
 MainWindow::~MainWindow()
@@ -918,7 +921,7 @@ void MainWindow::defaultPreferencesSlot() {
             emit loadTreeLUTFallback();
             treeColorAdjustmentsChanged();
             datasetColorAdjustmentsChanged();
-            this->setGeometry(0, 0, 1024, 768);
+            this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2, QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
             break;
     case QMessageBox::No:
            break;
@@ -930,6 +933,7 @@ void MainWindow::datatasetNavigationSlot()
 {
     this->widgetContainer->navigationWidget->show();
     this->widgetContainer->navigationWidget->adjustSize();
+    this->widgetContainer->navigationWidget->move(100, 450);
     datasetNavigationAction->setChecked(true);
 }
 
@@ -949,6 +953,7 @@ void MainWindow::viewportSettingsSlot()
 {
     this->widgetContainer->viewportSettingsWidget->show();
     this->widgetContainer->viewportSettingsWidget->adjustSize();
+    this->widgetContainer->viewportSettingsWidget->move(100, 100);
     viewportSettingsAction->setChecked(true);
 }
 
@@ -1215,6 +1220,34 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
     }
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event) {
+    int width = event->size().width();
+    int height = event->size().height();
+
+    int sizeW = (width - 15)  / 2 ;
+    int sizeH = (height - 70) / 2;
+
+    if(width < height) {
+        viewports[0]->move(5, 60);
+        viewports[1]->move(10 + sizeW, 60);
+        viewports[2]->move(5, sizeW+60+5);
+        viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
+        for(int i = 0; i < 4; i++) {
+            viewports[i]->resize(sizeW, sizeW);
+
+        }
+    } else if(width > height) {
+        viewports[0]->move(5, 60);
+        viewports[1]->move(10 + sizeH, 60);
+        viewports[2]->move(5, sizeH+60+5);
+        viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
+        for(int i = 0; i < 4; i++) {
+            viewports[i]->resize(sizeH, sizeH);
+        }
+    }
+}
+
+
 void MainWindow::dropEvent(QDropEvent *event) {
     if(event->mimeData()->hasFormat("text/uri-list")) {
         QList<QUrl> urls = event->mimeData()->urls();
@@ -1244,4 +1277,5 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
     qDebug() << "drag leave";
 }
+
 

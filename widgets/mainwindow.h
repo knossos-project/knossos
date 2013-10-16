@@ -79,9 +79,13 @@ signals:
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 protected:
+
+    void resizeEvent(QResizeEvent *event);
+
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
+
 public:
     Ui::MainWindow *ui;
 
@@ -172,6 +176,8 @@ public:
 
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);
+
+
 
 public slots:
     void setCoordinates(int x, int y, int z);
