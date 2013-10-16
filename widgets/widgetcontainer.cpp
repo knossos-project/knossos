@@ -64,6 +64,7 @@ void WidgetContainer::createViewportSettingsWidget() {
     viewportSettingsWidget = new ViewportSettingsWidget();
     viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     viewportSettingsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    viewportSettingsWidget->setGeometry(QRect(100, 100, 500, 500));
 }
 
 void WidgetContainer::createDataSavingWidget() {
