@@ -13,7 +13,6 @@ void Scripting::run() {
     font.setPixelSize(12);
     font.setBold(true);
 
-
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
@@ -21,7 +20,6 @@ void Scripting::run() {
     console->setWindowTitle("Knossos Scripting Console");
 
     ctx.addObject("Skeleton", reference);
-
 
     console->setFont(font);
     console->appendCommandPrompt(true);

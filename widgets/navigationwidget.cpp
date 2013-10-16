@@ -201,15 +201,71 @@ void NavigationWidget::loadSettings() {
 
     setGeometry(x, y, width, height);
 
-    this->movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED).toInt());
-    this->jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES).toInt());
-    this->walkFramesSpinBox->setValue(settings.value(WALK_FRAMES).toInt());
-    this->recenterTimeParallelSpinBox->setValue(settings.value(RECENTERING_TIME_PARALLEL).toInt());
-    this->recenterTimeOrthoSpinBox->setValue(settings.value(RECENTERING_TIME_ORTHO).toInt());
-    this->normalModeButton->setChecked(settings.value(NORMAL_MODE).toBool());
-    this->additionalViewportDirectionMoveButton->setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).toBool());
-    this->additionalTracingDirectionMoveButton->setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).toBool());
-    this->additionalMirroredMoveButton->setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE).toBool());
+    if(!settings.value(MOVEMENT_SPEED).isNull()) {
+        this->movementSpeedSpinBox->setValue(settings.value(MOVEMENT_SPEED).toInt());
+    } else {
+        this->movementSpeedSpinBox->setValue(40);
+    }
+
+    if(!settings.value(JUMP_FRAMES).isNull()) {
+        this->jumpFramesSpinBox->setValue(settings.value(JUMP_FRAMES).toInt());
+    } else {
+        this->jumpFramesSpinBox->setValue(1);
+    }
+
+    if(!settings.value(WALK_FRAMES).isNull()) {
+        this->walkFramesSpinBox->setValue(settings.value(WALK_FRAMES).toInt());
+    } else {
+        this->walkFramesSpinBox->setValue(10);
+    }
+
+    if(!settings.value(RECENTERING_TIME_PARALLEL).isNull()) {
+        this->recenterTimeParallelSpinBox->setValue(settings.value(RECENTERING_TIME_PARALLEL).toInt());
+    } else {
+
+    }
+
+    if(!settings.value(RECENTERING_TIME_ORTHO).isNull()) {
+        this->recenterTimeOrthoSpinBox->setValue(settings.value(RECENTERING_TIME_ORTHO).toInt());
+    } else {
+        this->recenterTimeOrthoSpinBox->setValue(500);
+    }
+
+    if(!settings.value(NORMAL_MODE).isNull()) {
+        this->normalModeButton->setChecked(settings.value(NORMAL_MODE).toBool());
+    } else {
+        this->normalModeButton->setVisible(true);
+    }
+
+    if(!settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).isNull()) {
+        this->additionalViewportDirectionMoveButton->setChecked(settings.value(ADDITIONAL_VIEWPORT_DIRECTION_MOVE).toBool());
+    } else {
+
+    }
+
+    if(!settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).isNull()) {
+        this->additionalTracingDirectionMoveButton->setChecked(settings.value(ADDITIONAL_TRACING_DIRECTION_MOVE).toBool());
+    } else {
+
+    }
+
+    if(!settings.value(ADDITIONAL_MIRRORED_MOVE).isNull()) {
+         this->additionalMirroredMoveButton->setChecked(settings.value(ADDITIONAL_MIRRORED_MOVE).toBool());
+    } else {
+
+    }
+
+    if(!settings.value(DELAY_TIME_PER_STEP).isNull()) {
+        this->delayTimePerStepSpinBox->setValue(settings.value(DELAY_TIME_PER_STEP).toInt());
+    } else {
+        this->delayTimePerStepSpinBox->setValue(50);
+    }
+
+    if(!settings.value(NUMBER_OF_STEPS).isNull()) {
+        this->numberOfStepsSpinBox->setValue(settings.value(NUMBER_OF_STEPS).toInt());
+    } else {
+        this->numberOfStepsSpinBox->setValue(10);
+    }
 
     settings.endGroup();
 
