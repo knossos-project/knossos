@@ -283,6 +283,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
+
     if(event->delta() > 0) {
         handleMouseWheelForward(event, plane);
     } else {

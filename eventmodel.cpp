@@ -558,14 +558,21 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
+    const bool SHIFT = QApplication::keyboardModifiers() == Qt::ShiftModifier;
+    const bool CONTROL = QApplication::keyboardModifiers() == Qt::ControlModifier;
+
     float radius;
 
     if(VPfound == -1)
         return true;
 
-    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
 
-    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
+
+
+    if((state->skeletonState->activeNode) and (SHIFT)) {
+        qDebug() << state->skeletonState->activeNode->radius << " Radius";
+
+
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -578,8 +585,8 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
                  state->magnification);
 
 
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
-            state->skeletonState->defaultNodeRadius = radius;
+        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+           // state->skeletonState->defaultNodeRadius = radius;
 
 
     } else {
@@ -595,7 +602,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(keyMod.testFlag(Qt::ControlModifier)) {
+            if(CONTROL) {
                 emit zoomOrthoSignal(-0.1);
 
 
