@@ -81,7 +81,7 @@ void DataSavingWidget::loadSettings() {
     this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
    settings.endGroup();
 
-   //setGeometry(x, y, width, height);
+   setGeometry(x, y, width, height);
 
 }
 

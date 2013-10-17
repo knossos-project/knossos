@@ -101,7 +101,6 @@ Viewer::Viewer(QObject *parent) :
     rewire();
     frames = 0;
 
-    window->loadSettings();
     window->setCoordinates(state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
 
     state->alpha = 0;

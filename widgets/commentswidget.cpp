@@ -109,7 +109,7 @@ void CommentsWidget::loadSettings() {
 
     settings.endGroup();
 
-    //this->setGeometry(x, y, width, height);
+    this->setGeometry(x, y, width, height);
 
 }
 
