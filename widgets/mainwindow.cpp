@@ -639,9 +639,10 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
 
         if(prompt.clickedButton() == merge) {
             state->skeletonState->mergeOnLoadFlag = true;
-
-        } else {
+        } else if(prompt.clickedButton() == override) {
             state->skeletonState->mergeOnLoadFlag = false;
+        } else {
+            return;
         }
 
         QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);

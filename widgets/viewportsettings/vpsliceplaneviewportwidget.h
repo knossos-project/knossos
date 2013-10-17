@@ -40,10 +40,10 @@ class VPSlicePlaneViewportWidget : public QWidget
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
 signals:
-    bool loadDataSetColortableSignal(const char *path, GLuint *table, int type);
+    bool loadDataSetColortableSignal(QString path, GLuint *table, int type);
     void showIntersectionsSignal(bool value);
     void updateViewerStateSignal();
-    bool loadTreeColorTableSignal(const char *path, float *table, int type);
+    bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
 public slots:
     void enableOverlayChecked(bool on);

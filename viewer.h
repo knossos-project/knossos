@@ -63,7 +63,7 @@ public:
 
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
-    static bool loadDatasetColorTable(const char *path, GLuint *table, int type);
+
 
     bool initialized;
     bool moveVPonTop(uint currentVP);
@@ -125,7 +125,8 @@ public slots:
     void showFrames();
     void run();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
-    bool loadTreeColorTable(const char *path, float *table, int type);
+    bool loadTreeColorTable(QString path, float *table, int type);
+    static bool loadDatasetColorTable(QString path, GLuint *table, int type);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

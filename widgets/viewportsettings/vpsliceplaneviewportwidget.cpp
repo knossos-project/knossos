@@ -35,6 +35,7 @@
 #include <QFileDialog>
 #include "knossos-global.h"
 #include "widgets/mainwindow.h"
+#include "viewer.h"
 
 extern struct stateInfo *state;
 
@@ -198,14 +199,18 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.*)"));
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
+
+
     if(!fileName.isEmpty()) {
-        char *cname = const_cast<char *>(fileName.toStdString().c_str());
+        const char *cname = fileName.toStdString().c_str();
         strcpy(state->viewerState->gui->datasetLUTFile, cname);
+        //qDebug() << cname;
+        qDebug() << fileName << " <<<";
         //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
+        bool result = loadDataSetColortableSignal(fileName, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
 
-
-        if(loadDataSetColortableSignal(cname, &(state->viewerState->datasetColortable[0][0]), GL_RGB) != true) {
+        if(!result) {
             LOG("Error loading Dataset LUT.\n")
             memcpy(&(state->viewerState->datasetColortable[0][0]),
                            &(state->viewerState->neutralDatasetTable[0][0]),
@@ -221,13 +226,13 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.*)"));
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
     if(!fileName.isEmpty()) {
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strcpy(state->viewerState->gui->treeLUTFile, cname);
-        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
+        //MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
         state->viewerState->treeLutSet = true;
-        if(loadTreeColorTableSignal(cname, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
+        if(loadTreeColorTableSignal(fileName, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
             LOG("Error loading Tree LUT.\n")
             memcpy(&(state->viewerState->treeColortable[0]),
                    &(state->viewerState->defaultTreeTable[0]),
@@ -240,7 +245,6 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
 
     }
 }
-
 
 void VPSlicePlaneViewportWidget::biasSliderMoved(int value) {
     state->viewerState->luminanceBias = value;

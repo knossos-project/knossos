@@ -642,7 +642,6 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
     float radius;
-
     state->directionSign = -1;
 
     if(VPfound == -1)
@@ -650,8 +649,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
     Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
 
-
-    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::ShiftModifier))) {
+    if((state->skeletonState->activeNode) && (keyMod.testFlag(Qt::AltModifier))) {
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -728,6 +726,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
+
+
 
     if(event->key() == Qt::Key_Space) {
         state->singleLogging = true;

@@ -45,7 +45,7 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
     this->viewportType = viewportType;
     this->plane = widgetNumber;
 
-    this->setMouseTracking(true);
+    //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
     this->setAutoBufferSwap(true);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
@@ -295,6 +295,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 void Viewport::keyPressEvent(QKeyEvent *event) {
     qDebug() << "keypress";
     this->delegate->handleKeyboard(event, focus);
+
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {

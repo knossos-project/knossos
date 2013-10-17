@@ -89,7 +89,6 @@ Viewer::Viewer(QObject *parent) :
     renderer = new Renderer();
 
     // This is needed for the viewport text rendering
-
     vp->delegate->reference = vp2->delegate->reference = vp3->delegate->reference = vp4->delegate->reference = renderer;
     vp->reference = vp2->reference = vp3->reference = vp4->reference = renderer;
 
@@ -1655,20 +1654,22 @@ bool Viewer::initViewer() {
 
 
 // from knossos-global.h
-bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
+bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGBA_LUTSIZE];
     uint readBytes = 0, i = 0;
     uint size = RGB_LUTSIZE;
 
-    qDebug() << "entered  loadDatasetColorTable";
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-    LOG("Reading Dataset LUT at %s\n", path)
 
-    lutFile = fopen(path, "rb");
+    const char *cpath = path.toStdString().c_str();
+
+    LOG("Reading Dataset LUT at %s\n", cpath);
+
+    lutFile = fopen(cpath, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Dataset LUT at %s.", path)
+        LOG("Unable to open Dataset LUT at %s.", cpath)
         return false;
     }
 
@@ -1685,7 +1686,7 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size)
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size)
         if(fclose(lutFile) != 0) {
             LOG("Additionally, an error occured closing the file.")
         }
@@ -1712,22 +1713,24 @@ bool Viewer::loadDatasetColorTable(const char *path, GLuint *table, int type) {
             table[3 * 256 + i] = (GLuint)lutBuffer[i + 768];
         }
     }
+
     return true;
 }
 
-bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
+bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     FILE *lutFile = NULL;
     uint8_t lutBuffer[RGB_LUTSIZE];
     uint readBytes = 0, i = 0;
     uint size = RGB_LUTSIZE;
 
+    const char *cpath = path.toStdString().c_str();
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
-    LOG("Reading Tree LUT at %s\n", path)
+    LOG("Reading Tree LUT at %s\n", cpath)
 
-    lutFile = fopen(path, "rb");
+    lutFile = fopen(cpath, "rb");
     if(lutFile == NULL) {
-        LOG("Unable to open Tree LUT at %s.", path)
+        LOG("Unable to open Tree LUT at %s.", cpath)
         return false;
     }
     if(type != GL_RGB) {
@@ -1738,7 +1741,7 @@ bool Viewer::loadTreeColorTable(const char *path, float *table, int type) {
 
     readBytes = (uint)fread(lutBuffer, 1, size, lutFile);
     if(readBytes != size) {
-        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, path, size)
+        LOG("Could read only %d bytes from LUT file %s. Expected %d bytes", readBytes, cpath, size)
         if(fclose(lutFile) != 0) {
             LOG("Additionally, an error occured closing the file.")
         }
@@ -2926,7 +2929,8 @@ void Viewer::rewire() {
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)), skeletonizer, SLOT(setZoomLevel(float)));
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)), skeletonizer, SLOT(setShowIntersections(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(treeColorAdjustmentsChangedSignal()), window, SLOT(treeColorAdjustmentsChanged()));
-    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(loadTreeColorTableSignal(const char*,float*,int)), this, SLOT(loadTreeColorTable(const char*,float*,int)));
+    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(loadTreeColorTableSignal(QString,float*,int)), this, SLOT(loadTreeColorTable(QString,float*,int)));
+    connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(loadDataSetColortableSignal(QString,GLuint*,int)), this, SLOT(loadDatasetColorTable(QString,GLuint*,int)));
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
@@ -2946,7 +2950,6 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)), skeletonizer, SLOT(mergeTrees(int,int,int,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int, int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int, int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
