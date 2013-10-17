@@ -585,8 +585,8 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
                  state->magnification);
 
 
-        //if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
-           // state->skeletonState->defaultNodeRadius = radius;
+        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+           state->skeletonState->defaultNodeRadius = radius;
 
 
     } else {

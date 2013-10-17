@@ -242,3 +242,5 @@ RESOURCES += \
     Resources.qrc
 
 include(test/config.pri)
+
+QMAKE_CFLAGS_RELEASE += -O3

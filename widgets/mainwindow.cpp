@@ -622,25 +622,22 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 //file menu functionality
 
-/**
-  * This method opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
-  * the skeletonFileHistory Queue is updated with the file name entry. The history entries are compared to the the
-  * selected file names. If the file is already loaded it will not be put to the queue
-  * @todo lookup in skeleton directory, extend the file dialog with merge option
-  *
-  */
-void MainWindow::openSlot() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-    state->skeletonState->skeletonFileAsQString = fileName;
-
+void MainWindow::fileDialogForSkeletonAndAsyncLoading
+(const QString &fileName) {
     if(!fileName.isNull()) {
         QApplication::processEvents();
         QFileInfo info(fileName);
         QString path = info.canonicalPath();
 
-        int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
+        QMessageBox prompt;
+        prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
+        QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
+        QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
+        QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
 
-        if(ret == QMessageBox::Yes) {
+        prompt.exec();
+
+        if(prompt.clickedButton() == merge) {
             state->skeletonState->mergeOnLoadFlag = true;
 
         } else {
@@ -649,7 +646,6 @@ void MainWindow::openSlot() {
 
         QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         future.waitForFinished();
-
 
         emit updateCommentsTableSignal();
         updateTitlebar(true);
@@ -664,36 +660,25 @@ void MainWindow::openSlot() {
     }
 }
 
+/**
+  * This method opens the file dialog and receives a skeleton file name path. If the file dialog is not cancelled
+  * the skeletonFileHistory Queue is updated with the file name entry. The history entries are compared to the the
+  * selected file names. If the file is already loaded it will not be put to the queue
+  * @todo lookup in skeleton directory, extend the file dialog with merge option
+  *
+  */
+void MainWindow::openSlot() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    state->skeletonState->skeletonFileAsQString = fileName;
+
+    fileDialogForSkeletonAndAsyncLoading(fileName);
+
+
+}
+
 void MainWindow::openSlot(const QString &fileName) {
-    if(!fileName.isNull()) {
-        QApplication::processEvents();
-        QFileInfo info(fileName);
-        QString path = info.canonicalPath();
+    fileDialogForSkeletonAndAsyncLoading(fileName);
 
-        int ret = QMessageBox::question(this, "", "Do you like to merge the new skeleton into the currently loaded one?", QMessageBox::Yes | QMessageBox::No);
-
-        if(ret == QMessageBox::Yes) {
-            state->skeletonState->mergeOnLoadFlag = true;
-
-        } else {
-            state->skeletonState->mergeOnLoadFlag = false;
-        }
-
-        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
-        future.waitForFinished();
-
-
-        emit updateCommentsTableSignal();
-        updateTitlebar(true);
-        linkWithActiveNodeSlot();
-
-        if(!alreadyInMenu(fileName)) {
-            addRecentFile(fileName);
-        }
-
-        emit updateToolsSignal();
-
-    }
 }
 
 bool MainWindow::alreadyInMenu(const QString &path) {
