@@ -976,6 +976,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     }
     memset(currentCoordinate, '\0', sizeof(currentCoordinate));
 
+    qDebug() << fileName;
+
     QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");

@@ -1243,8 +1243,8 @@ void MainWindow::dropEvent(QDropEvent *event) {
         }
 
         QUrl url = urls.first();
-        QString fileName(url.path());
-        qDebug()<< fileName;
+        QString fileName(url.toLocalFile());
+        qDebug() << fileName;
 
         if(!fileName.endsWith(".nml")) {
             return;
