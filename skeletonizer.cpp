@@ -4822,8 +4822,8 @@ void Skeletonizer::undo() {
     qDebug() << " entered : undo";
     /*if(state->skeletonState->serialSkeletonCounter > 0){
         deserializeSkeleton();
-        deleteLastSerialSkeleton();*/
-    }
+        deleteLastSerialSkeleton();
+    }*/
 
 }
 
