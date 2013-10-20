@@ -5068,7 +5068,7 @@ Byte* serializeSkeleton() {
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockPositions);
     memPosition+=sizeof(int32_t);
     integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockRadius);
-    memPosition+=sizeof(int32_t);
+    memPosition+=sizeof(long unsigned int);
     integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->onCommentLock));
     memPosition+=sizeof(int32_t);
     strncpy(&serialSkeleton[memPosition], state->skeletonState->onCommentLock, strlen(state->skeletonState->onCommentLock));
@@ -5248,7 +5248,7 @@ void deserializeSkeleton() {
     uint32_t i = 0, j = 0, totalTreeNumber = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0, totalBranchPointNumber;
     serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
     int32_t memPosition = 0, inMag = 0, time = 0, activeNodeID = 0, activeTreeID = 0, neuronID = 0, nodeID = 0, sourceNodeID = 0, targetNodeID = 0;
-    int stringLength = 0;
+    int32_t stringLength = 0;
     char temp[10000];
     color4F neuronColor;
     struct treeListElement *currentTree;
@@ -5315,7 +5315,7 @@ void deserializeSkeleton() {
     state->viewerState->ag->commentLockCheckbox->state = state->skeletonState->lockPositions;
     memPosition+=sizeof(state->skeletonState->lockPositions);
     state->skeletonState->lockRadius = bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->lockRadius);
+    memPosition+=sizeof(long unsigned int);
 
     stringLength = bytesToInt(&serialSkeleton[memPosition]);
     memPosition+=sizeof(stringLength);
