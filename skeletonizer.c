@@ -4893,7 +4893,7 @@ int32_t getTreeBlockSize(){
         treeBlockSize+=2*sizeof(uint32_t);
         treeBlockSize*=state->skeletonState->treeElements;
         while(currentTree){
-            treeBlockSize+=sizeof(strlen(currentTree->comment));
+            treeBlockSize+=sizeof(int32_t);
             treeBlockSize+=strlen(currentTree->comment);
             currentTree = currentTree->next;
         }
@@ -4932,7 +4932,7 @@ int32_t getCommentBlockSize(){
          if(state->skeletonState->currentComment != NULL) {
             do {
                 commentBlockSize+=sizeof(currentComment->node->nodeID);
-                commentBlockSize+=sizeof(strlen(currentComment->content));
+                commentBlockSize+=sizeof(int32_t);
                 commentBlockSize+=strlen(currentComment->content);
                 currentComment = currentComment->next;
             } while (currentComment != state->skeletonState->currentComment);
@@ -4943,17 +4943,17 @@ int32_t getCommentBlockSize(){
 
 int32_t getVariableBlockSize(){
     int32_t variablesBlockSize = 0;
-    variablesBlockSize+=sizeof(strlen(state->name));
+    variablesBlockSize+=sizeof(int32_t);
     variablesBlockSize+=strlen(state->name);
-    variablesBlockSize+=sizeof(strlen(KVERSION));
+    variablesBlockSize+=sizeof(int32_t);
     variablesBlockSize+=strlen(KVERSION);
-    variablesBlockSize+=sizeof(strlen(state->skeletonState->skeletonCreatedInVersion));
+    variablesBlockSize+=sizeof(int32_t);
     variablesBlockSize+=strlen(state->skeletonState->skeletonCreatedInVersion);
-    variablesBlockSize+=sizeof(strlen(state->skeletonState->skeletonLastSavedInVersion));
+    variablesBlockSize+=sizeof(int32_t);
     variablesBlockSize+=strlen(state->skeletonState->skeletonLastSavedInVersion);
     variablesBlockSize+=3*sizeof(state->scale.x / state->magnification);
     variablesBlockSize+=3*sizeof(state->offset.x / state->magnification);
-    variablesBlockSize+=sizeof(state->skeletonState->lockPositions)+sizeof(state->skeletonState->lockRadius)+sizeof(strlen(state->skeletonState->onCommentLock))+strlen(state->skeletonState->onCommentLock);
+    variablesBlockSize+=sizeof(state->skeletonState->lockPositions)+sizeof(state->skeletonState->lockRadius)+sizeof(int32_t)+strlen(state->skeletonState->onCommentLock);
     variablesBlockSize+=sizeof(state->skeletonState->displayMode);
     variablesBlockSize+=sizeof(state->skeletonState->workMode);
     variablesBlockSize+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + SDL_GetTicks());
