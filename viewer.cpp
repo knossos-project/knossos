@@ -45,10 +45,13 @@ Viewer::Viewer(QObject *parent) :
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QDesktopWidget *desktop = QApplication::desktop();
 
-    window->show();
-    window->setGeometry(desktop->availableGeometry().center().x(), desktop->availableGeometry().center().y(), 1024, 800);
-    window->adjustSize();
     window->loadSettings();
+    window->show();
+    if(window->pos().x() <= 0 or window->pos().y() <= 0) {
+        window->setGeometry(desktop->availableGeometry().center().x(), desktop->availableGeometry().center().y(), 1024, 800);
+    }
+
+
     state->console = window->widgetContainer->console;
 
     vp = window->viewports[0];

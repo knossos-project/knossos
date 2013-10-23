@@ -849,12 +849,19 @@ void MainWindow::recenterOnClickSlot()
 
 void MainWindow::zoomAndMultiresSlot()
 {
-    this->widgetContainer->zoomAndMultiresWidget->show();    
+
+    this->widgetContainer->zoomAndMultiresWidget->show();
+    this->widgetContainer->zoomAndMultiresWidget->adjustSize();
+    if(this->widgetContainer->zoomAndMultiresWidget->pos().x() <= 0 or this->widgetContainer->zoomAndMultiresWidget->pos().y() <= 0)
+        this->widgetContainer->zoomAndMultiresWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
 }
 
 void MainWindow::tracingTimeSlot()
 {
-    this->widgetContainer->tracingTimeWidget->show();    
+    this->widgetContainer->tracingTimeWidget->show();
+    this->widgetContainer->tracingTimeWidget->adjustSize();
+    if(this->widgetContainer->tracingTimeWidget->pos().x() <= 0 or this->widgetContainer->tracingTimeWidget->pos().y() <= 0)
+        this->widgetContainer->zoomAndMultiresWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
 }
 
 /* preference menu functionality */
@@ -905,27 +912,36 @@ void MainWindow::datatasetNavigationSlot()
 {
     this->widgetContainer->navigationWidget->show();
     this->widgetContainer->navigationWidget->adjustSize();
-    this->widgetContainer->navigationWidget->move(100, 450);
+    if(this->widgetContainer->navigationWidget->pos().x() <= 0 or this->widgetContainer->navigationWidget->pos().y() <= 0)
+        this->widgetContainer->navigationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     datasetNavigationAction->setChecked(true);
 }
 
 void MainWindow::synchronizationSlot()
 {
     this->widgetContainer->synchronizationWidget->show();
+    this->widgetContainer->synchronizationWidget->adjustSize();
+    if(this->widgetContainer->synchronizationWidget->pos().x() <= 0 or this->widgetContainer->synchronizationWidget->pos().y() <= 0)
+        this->widgetContainer->synchronizationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+    this->widgetContainer->synchronizationWidget->move(QWidget::mapFromGlobal(mainWidget->pos()));
     synchronizationAction->setChecked(true);
 }
 
 void MainWindow::dataSavingOptionsSlot()
 {
     this->widgetContainer->dataSavingWidget->show();
-    dataSavingOptionsAction->setChecked(true);
+    this->widgetContainer->dataSavingWidget->adjustSize();
+    if(widgetContainer->dataSavingWidget->pos().x() <= 0 or this->widgetContainer->dataSavingWidget->pos().y() <= 0)
+        this->widgetContainer->dataSavingWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+        dataSavingOptionsAction->setChecked(true);
 }
 
 void MainWindow::viewportSettingsSlot()
 {
     this->widgetContainer->viewportSettingsWidget->show();
     this->widgetContainer->viewportSettingsWidget->adjustSize();
-    this->widgetContainer->viewportSettingsWidget->move(100, 100);
+    if(widgetContainer->viewportSettingsWidget->pos().x() <= 0 or this->widgetContainer->viewportSettingsWidget->pos().y() <= 0)
+        this->widgetContainer->viewportSettingsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     viewportSettingsAction->setChecked(true);
 }
 
@@ -935,12 +951,17 @@ void MainWindow::toolsSlot()
 {
     this->widgetContainer->toolsWidget->show();
     this->widgetContainer->toolsWidget->adjustSize();
+    if(widgetContainer->toolsWidget->pos().x() <= 0 or this->widgetContainer->toolsWidget->pos().y() <= 0)
+        this->widgetContainer->toolsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     toolsAction->setChecked(true);
 }
 
 void MainWindow::logSlot()
 {
     this->widgetContainer->console->show();
+    this->widgetContainer->console->adjustSize();
+    if(widgetContainer->console->pos().x() <= 0 or this->widgetContainer->console->pos().y() <= 0)
+        this->widgetContainer->console->move(QWidget::mapToGlobal(mainWidget->pos()));
     logAction->setChecked(true);
 }
 
@@ -948,6 +969,8 @@ void MainWindow::commentShortcutsSlots()
 {
     this->widgetContainer->commentsWidget->show();
     this->widgetContainer->commentsWidget->adjustSize();
+    if(widgetContainer->commentsWidget->pos().x() <= 0 or this->widgetContainer->commentsWidget->pos().y() <= 0)
+        this->widgetContainer->commentsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     commentShortcutsAction->setChecked(true);
 }
 
