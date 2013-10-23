@@ -1162,6 +1162,7 @@ bool Loader::load() {
     When we finished calculating the cubes that need to be loaded now, their datacube field would
     be different than NULL.
     */
+
     mergeCube2Pointer = Hashtable::ht_new(state->cubeSetElements * 20);
     if(mergeCube2Pointer == HT_FAILURE) {
         LOG("Unable to create the temporary cube2pointer table.");

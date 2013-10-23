@@ -60,7 +60,10 @@
 struct stateInfo *state = NULL;
 char logFilename[MAX_PATH] = {0};
 
+Loader *loader;
+
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
+
 
 int main(int argc, char *argv[])
 {
@@ -126,7 +129,7 @@ int main(int argc, char *argv[])
     Knossos::printConfigValues();
 
     Viewer *viewer = new Viewer();
-    Loader *loader = new Loader();
+    loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
     //Scripting *scripts = new Scripting();
@@ -185,6 +188,8 @@ int main(int argc, char *argv[])
     viewer->run();
     remote->start();
     client->start();
+
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(resetLoaderSignal()), loader, SLOT(initLoader()));
     //scripts->run();
 
     /* TEST */
@@ -199,11 +204,12 @@ int main(int argc, char *argv[])
     tools.reference = viewer;
     QTest::qExec(&tools);
     */
+    /*
     KnossosTestRunner runner;
     runner.reference = viewer;
     runner.addTestClasses();
     runner.show();
-
+    */
 
 
     /*

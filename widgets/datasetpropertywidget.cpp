@@ -114,9 +114,13 @@ void DatasetPropertyWidget::processButtonClicked() {
         strcpy(state->path, dir.toStdString().c_str());
         state->M = supercubeSize->currentText().toInt();
 
-        if(Knossos::readConfigFile(conf.toStdString().c_str())) {
+        if(Knossos::readConfigFile(conf.toStdString().c_str())) {            
            emit clearSkeletonSignal();
+
+            resetHashtable();
+            //state->loadSignal = true;
            emit resetLoaderSignal();
+
            Knossos::findAndRegisterAvailableDatasets();
         } else {
 
@@ -139,4 +143,23 @@ void DatasetPropertyWidget::connectButtonClicked() {
         downloadFile(curlPath, NULL);
     }
 
+}
+
+void DatasetPropertyWidget::resetHashtable() {
+    state->protectLoadSignal->lock();
+
+    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
+        Hashtable::ht_rmtable(state->Dc2Pointer[Knossos::log2uint32(i)]);
+        Hashtable::ht_rmtable(state->Oc2Pointer[Knossos::log2uint32(i)]);
+        if(i == 0) i = 1;
+    }
+
+    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
+        state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+        state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+        if(i == 0) i = 1;
+    }
+
+
+    state->protectLoadSignal->unlock();
 }

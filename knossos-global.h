@@ -391,6 +391,7 @@ typedef struct Hashtable{
 
     static uint nextpow2(uint a);
     static uint lastpow2(uint a);
+
 } Hashtable;
 
 // This is used for a linked list of datacube slices that have to be processed for a given viewport.

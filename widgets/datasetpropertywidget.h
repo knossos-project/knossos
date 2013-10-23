@@ -13,6 +13,7 @@ class DatasetPropertyWidget : public QWidget
 public:
     explicit DatasetPropertyWidget(QWidget *parent = 0);
 
+
 protected:
     QGroupBox *localGroup;
     QString dir;
@@ -30,7 +31,7 @@ protected:
     QLineEdit *url;
     QPushButton *remoteCancelButton;
     QPushButton *connectButton;
-
+    void resetHashtable();
     void closeEvent(QCloseEvent *event);
 signals:
     void clearSkeletonSignal();

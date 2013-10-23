@@ -144,6 +144,7 @@ signals:
     void finished();
 public slots:
     bool load();
+    bool initLoader();
 protected:    
     bool initialized;
     uint prevLoaderMagnification;
@@ -157,7 +158,7 @@ protected:
     bool slotListDel(CubeSlotList *delList);
     int slotListAddElement(CubeSlotList *slotList, Byte *datacube);
     CubeSlotList *slotListNew();
-    bool initLoader();
+    //bool initLoader();
     uint removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
 };
