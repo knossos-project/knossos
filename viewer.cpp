@@ -130,6 +130,13 @@ Viewer::Viewer(QObject *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(15);
 
+    field1 = new QLineEdit();
+    field2 = new QLineEdit();
+    field1->show();
+    field2->show();
+
+    temp1 = temp2 = 0;
+
     bench1.start();
     bench2.start();
 
@@ -1877,7 +1884,13 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
-    qDebug() << "run-method" << bench1.elapsed();
+    if(temp1 != 0) {
+        int div = bench1.elapsed() - temp1;
+        field1->setText(QString::number(div));
+    }
+
+    temp1 = bench1.elapsed();
+    //qDebug() << "run-method" << bench1.elapsed();
 
 
     // Event and rendering loop.
@@ -2157,7 +2170,15 @@ bool Viewer::updateZoomCube() {
 }
 
 bool Viewer::userMove(int x, int y, int z, int serverMovement) {
-    qDebug() << "user move " << bench2.elapsed();
+
+    if(temp2 != 0) {
+        int div = bench2.elapsed() - temp2;
+        qDebug()  << "userMove " << div;
+        //field2->setText(QString::number(div));
+    }
+    temp2 = bench2.elapsed();
+
+
 
     struct viewerState *viewerState = state->viewerState;
 

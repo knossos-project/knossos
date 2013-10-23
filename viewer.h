@@ -30,6 +30,7 @@
 #include <QDebug>
 #include <QCursor>
 #include <QTimer>
+#include <QLineEdit>
 #include "knossos-global.h"
 
 /**
@@ -132,9 +133,11 @@ protected:
     bool initViewer();
 
     QTime bench1;
-    int b1last, b1;
+    int temp1, temp2;
     QTime bench2;
-    int b2last, b2;
+
+    QLineEdit *field1;
+    QLineEdit *field2;
 };
 
 #endif // VIEWER_H
