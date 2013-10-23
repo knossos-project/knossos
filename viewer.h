@@ -131,6 +131,10 @@ protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
 
+    QTime bench1;
+    int b1last, b1;
+    QTime bench2;
+    int b2last, b2;
 };
 
 #endif // VIEWER_H
