@@ -56,8 +56,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
             return true;
         }
 
-        return false;
-
         if(VPfound == VIEWPORT_SKELETON) {
             return false;
         }
@@ -1310,6 +1308,8 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
         SET_COORDINATE((*foundCoordinate), x, y, z);
         return foundCoordinate;
     }
+
+    free(foundCoordinate);
     return NULL;
 }
 

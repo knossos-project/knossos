@@ -28,7 +28,7 @@
 
 #include "widgets/zoomandmultireswidget.h"
 #include "widgets/navigationwidget.h"
-#include "widgets/coordinatebarwidget.h"
+#include "widgets/datasetpropertywidget.h"
 
 class Viewport;
 class MainWindow;
@@ -52,8 +52,8 @@ public:
     void createDataSavingWidget();
     void createSychronizationWidget();
     void showSplashScreenWidget();
+    void createDatasetPropertyWidget();
     void createWidgets();
-    void createCoordBarWidget();
 
     Console *console;
     TracingTimeWidget *tracingTimeWidget;
@@ -62,10 +62,11 @@ public:
     NavigationWidget *navigationWidget;
     ToolsWidget *toolsWidget;
     ViewportSettingsWidget *viewportSettingsWidget;
-    CoordinateBarWidget *coordBarWidget;
     DataSavingWidget *dataSavingWidget;
     SynchronizationWidget *synchronizationWidget;
     SplashScreenWidget *splashWidget;
+    DatasetPropertyWidget *datasetPropertyWidget;
+
 
 signals:
     

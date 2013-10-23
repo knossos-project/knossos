@@ -48,6 +48,7 @@ Viewer::Viewer(QObject *parent) :
     window->show();
     window->setGeometry(desktop->availableGeometry().center().x(), desktop->availableGeometry().center().y(), 1024, 800);
     window->adjustSize();
+    window->loadSettings();
     state->console = window->widgetContainer->console;
 
     vp = window->viewports[0];
@@ -2985,7 +2986,6 @@ void Viewer::rewire() {
     connect(vp4->delegate, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setJumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
@@ -2994,6 +2994,8 @@ void Viewer::rewire() {
     connect(vp2->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(vp3->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(vp4->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
+
+    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonSlot()));
 
 }
 

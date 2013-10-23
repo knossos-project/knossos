@@ -80,13 +80,14 @@ void WidgetContainer::createSychronizationWidget() {
 
 }
 
+void WidgetContainer::createDatasetPropertyWidget() {
+    datasetPropertyWidget = new DatasetPropertyWidget();
+    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+}
+
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
     splashWidget->show();
-}
-
-void WidgetContainer::createCoordBarWidget() {
-    this->coordBarWidget = new CoordinateBarWidget();
 }
 
 void WidgetContainer::createWidgets() {
@@ -99,6 +100,6 @@ void WidgetContainer::createWidgets() {
     createToolWidget();
     createDataSavingWidget();
     createSychronizationWidget();
-    createCoordBarWidget();
+    createDatasetPropertyWidget();
     rewire();
 }

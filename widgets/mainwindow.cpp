@@ -21,10 +21,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "GUIConstants.h"
 #include <QEvent>
 #include <QMenu>
 #include <QAction>
@@ -48,7 +44,9 @@
 #include <QRegExp>
 #include <QToolButton>
 #include <QtConcurrent/QtConcurrentRun>
-
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "GUIConstants.h"
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
@@ -112,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent) :
     widgetContainer = new WidgetContainer(this);
     widgetContainer->createWidgets();
 
-    createToolBar(); /* @todo make a CoordBarWidget class and push it to widgetContainer */
+    createToolBar();
 
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
@@ -125,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));    
+    //connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));
     updateTitlebar(false);
 
     createViewports();
@@ -144,8 +142,6 @@ void MainWindow::createViewports() {
     viewports[2]->setGeometry(5, viewports[0]->geometry().bottom() + 5, 350, 350);
     viewports[3]->setGeometry(360, viewports[0]->geometry().bottom() + 5, 350, 350);
 
-    QDockWidget *widget = new QDockWidget();
-    this->addDockWidget(Qt::RightDockWidgetArea, widget);
 }
 
 MainWindow::~MainWindow()
@@ -438,7 +434,6 @@ void MainWindow::datasetColorAdjustmentsChanged() {
        state->viewerState->datasetAdjustmentOn = doAdjust;
 }
 
-//-- private methods --//
 
 void MainWindow::createActions()
 {
@@ -547,7 +542,11 @@ void MainWindow::recentFileSelected() {
 
 void MainWindow::createMenus()
 {
-    fileMenu = menuBar()->addMenu("&File");
+
+    dataSetMenu = menuBar()->addMenu("&Dataset");
+    dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "&Open", this, SLOT(openDatasetSlot()));
+
+    fileMenu = menuBar()->addMenu("&Skeleton");
     fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("&Recent File(s)"));
 
@@ -597,24 +596,12 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
-
-        prompt = new QMessageBox(this);
-        prompt->setWindowTitle("Confirmation");
-        prompt->setText("There are unsaved changes. Really Quit?");
-
-        QPushButton *yesButton = prompt->addButton(tr("Yes"), QMessageBox::ActionRole);
-        QPushButton *noButton = prompt->addButton(tr("No"), QMessageBox::ActionRole);
-        prompt->exec();
-
-        if((QPushButton *) prompt->clickedButton() == yesButton) {            
-            event->accept();
-            QApplication::quit();
-        }
-
-        if((QPushButton *) prompt->clickedButton() == noButton) {
-            event->ignore();
-            prompt->close();
-        }
+         int retValue = QMessageBox::question(this, "Confirmation required.", "There are unsaved changes. Really Quit?", QMessageBox::Yes, QMessageBox::No);
+         if(retValue == QMessageBox::Yes) {
+             event->accept();
+         } else {
+             event->ignore();
+         }
     }
 }
 
@@ -757,9 +744,8 @@ void MainWindow::saveAsSlot()
 
 void MainWindow::quitSlot()
 {
-   saveSettings();
-   QApplication::closeAllWindows();
-   QApplication::quit();
+   this->close();
+
 }
 
 /* edit skeleton functionality */
@@ -1264,4 +1250,7 @@ void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
     qDebug() << "drag leave";
 }
 
+void MainWindow::openDatasetSlot() {
+   this->widgetContainer->datasetPropertyWidget->show();
+}
 

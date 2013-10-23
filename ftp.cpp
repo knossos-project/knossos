@@ -76,6 +76,7 @@ int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], i
         eh = eh_array[C];
         currentCube = cubeArray[C];
         snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, currentCube->fullpath_filename);
+        qDebug() << remoteURL << "!!!";
         curl_easy_setopt(eh, CURLOPT_URL, remoteURL);
         curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
         curl_easy_setopt(eh, CURLOPT_WRITEDATA, currentCube);

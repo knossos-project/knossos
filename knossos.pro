@@ -43,7 +43,6 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
-    widgets/coordinatebarwidget.cpp \
     functions.cpp \
     widgets/widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
@@ -84,7 +83,8 @@ SOURCES += widgets/mainwindow.cpp \
     test/testorthogonalviewport.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
-    test/knossostestrunner.cpp
+    test/knossostestrunner.cpp \
+    widgets/datasetpropertywidget.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -152,7 +152,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
-    widgets/coordinatebarwidget.h \
     functions.h \
     GUIConstants.h \
     widgets/widgetcontainer.h \
@@ -169,7 +168,8 @@ HEADERS  += widgets/mainwindow.h \
     test/testorthogonalviewport.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
-    test/knossostestrunner.h
+    test/knossostestrunner.h \
+    widgets/datasetpropertywidget.h
 
 
 FORMS    += mainwindow.ui

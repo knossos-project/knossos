@@ -29,6 +29,7 @@
 #include <QMainWindow>
 #include <QDropEvent>
 #include <QQueue>
+#include <QComboBox>
 
 namespace Ui {
     class MainWindow;
@@ -86,6 +87,8 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
+
+
 public:
     Ui::MainWindow *ui;
 
@@ -140,6 +143,7 @@ public:
     QAction *aboutAction;
 
     /* Qmenu-points */
+    QMenu *dataSetMenu;
     QMenu *fileMenu;
     QMenu *recentFileMenu;
     QMenu *editMenu;
@@ -153,7 +157,6 @@ public:
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
-    QLabel *lol;
 
     QToolButton *open, *save;
     QToolButton *pythonButton;
@@ -182,9 +185,11 @@ public:
 public slots:
     void setCoordinates(int x, int y, int z);
 
-    /* file menu */
+    /* dataset */
+    void openDatasetSlot();
+    /* skeleton menu */
     void openSlot();
-    void openSlot(const QString &fileName);
+    void openSlot(const QString &fileName); // for the drag n drop version
     void saveSlot();
     void saveAsSlot();
     void quitSlot();
