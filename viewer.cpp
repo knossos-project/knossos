@@ -130,6 +130,9 @@ Viewer::Viewer(QObject *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->start(15);
 
+    bench1.start();
+    bench2.start();
+
 }
 
 vpList *Viewer::vpListNew() {
@@ -1873,9 +1876,8 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   *
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
-void Viewer::run() {    
-
-    QTime bench;
+void Viewer::run() {
+    qDebug() << "run-method" << bench1.elapsed();
 
 
     // Event and rendering loop.
@@ -2032,6 +2034,7 @@ void Viewer::run() {
         //qDebug() << frames << " frames";
 
         //qDebug() << bench.elapsed() << " ms";
+
 }
 
 void Viewer::logSingle() {
@@ -2154,7 +2157,8 @@ bool Viewer::updateZoomCube() {
 }
 
 bool Viewer::userMove(int x, int y, int z, int serverMovement) {
-    //qDebug() << frames << " t1";
+    qDebug() << "user move " << bench2.elapsed();
+
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -2217,6 +2221,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                 viewerState->currentPosition.z,
                                 NO_MAG_CHANGE);
     }
+
 
     QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
