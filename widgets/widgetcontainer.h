@@ -29,6 +29,8 @@
 #include "widgets/zoomandmultireswidget.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/datasetpropertywidget.h"
+#include "widgets/taskloginwidget.h"
+#include "widgets/taskmanagementwidget.h"
 
 class Viewport;
 class MainWindow;
@@ -53,6 +55,8 @@ public:
     void createSychronizationWidget();
     void showSplashScreenWidget();
     void createDatasetPropertyWidget();
+    void createTaskLoginWidget();
+    //void createTaskManagementWidget();
     void createWidgets();
 
     Console *console;
@@ -66,7 +70,8 @@ public:
     SynchronizationWidget *synchronizationWidget;
     SplashScreenWidget *splashWidget;
     DatasetPropertyWidget *datasetPropertyWidget;
-
+    TaskLoginWidget *taskLoginWidget;
+    //TaskManagementWidget *taskManagementWidget;
 
 signals:
     

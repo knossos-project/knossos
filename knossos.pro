@@ -84,7 +84,9 @@ SOURCES += widgets/mainwindow.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
-    widgets/datasetpropertywidget.cpp
+    widgets/datasetpropertywidget.cpp \
+    widgets/taskloginwidget.cpp \
+    widgets/taskmanagementwidget.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -169,7 +171,9 @@ HEADERS  += widgets/mainwindow.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \
-    widgets/datasetpropertywidget.h
+    widgets/datasetpropertywidget.h \
+    widgets/taskloginwidget.h \
+    widgets/taskmanagementwidget.h
 
 
 FORMS    += mainwindow.ui

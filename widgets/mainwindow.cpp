@@ -505,12 +505,15 @@ void MainWindow::createActions()
     /* window actions */
     toolsAction = new QAction(tr("&Tools"), this);
     toolsAction->setCheckable(true);
+    taskLoginAction = new QAction(tr("&Task"), this);
+    taskLoginAction->setCheckable(true);
     logAction = new QAction(tr("&Log"), this);
     logAction->setCheckable(true);
     commentShortcutsAction = new QAction(tr("&Comment Shortcuts"), this);
     commentShortcutsAction->setCheckable(true);
 
-    connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));    
+    connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
+    connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
 
     /* Help actions */
     //aboutAction = new QAction(tr("&About"), this);
@@ -582,8 +585,8 @@ void MainWindow::createMenus()
     viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "&Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
     windowMenu = menuBar()->addMenu("&Windows");
-    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "&Tools", this, SLOT(toolsSlot()));
-
+    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "&Tools", this, SLOT(toolsSlot()));    
+    windowMenu->addAction(taskLoginAction);
     windowMenu->addAction(logAction);
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "&Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
 
@@ -1275,5 +1278,12 @@ void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
 
 void MainWindow::openDatasetSlot() {
    this->widgetContainer->datasetPropertyWidget->show();
+}
+
+void MainWindow::taskLoginSlot() {
+    this->widgetContainer->taskLoginWidget->show();
+    this->widgetContainer->taskLoginWidget->adjustSize();
+    if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
+        this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
 }
 

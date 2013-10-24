@@ -240,7 +240,6 @@ void ZoomAndMultiresWidget::loadSettings() {
     y = settings.value(POS_Y).toInt();
     visible = settings.value(VISIBLE).toBool();
 
-    setGeometry(x, y, width, height);
 
     if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble()) {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());

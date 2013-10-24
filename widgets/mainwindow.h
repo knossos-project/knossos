@@ -136,6 +136,7 @@ public:
 
     /* window actions */
     QAction *toolsAction;
+    QAction *taskLoginAction;
     QAction *logAction;
     QAction *commentShortcutsAction;
 
@@ -219,6 +220,7 @@ public slots:
 
     /* window menu */
     void toolsSlot();
+    void taskLoginSlot();
     void logSlot();
     void commentShortcutsSlots();
 
