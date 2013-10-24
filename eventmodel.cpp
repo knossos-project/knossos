@@ -905,6 +905,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
         }
     } else if(event->key() == Qt::Key_R) {
+        eventReference = event;
         state->viewerState->walkOrth = 1;
         switch(VPfound) {
             case VIEWPORT_XY:
@@ -946,6 +947,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     break;
         }
     } else if(event->key() == Qt::Key_E) {
+        eventReference = event;
         state->viewerState->walkOrth = 1;
         switch(VPfound) {
             case VIEWPORT_XY:
@@ -986,6 +988,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             break;
         }
     } else if(event->key() == Qt::Key_F) {
+        eventReference = event;
+
+
         if(shift) {
             switch(VPfound) {
                 case VIEWPORT_XY:
@@ -998,15 +1003,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    /* @arb */
+                    // @arb
                    emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
                     TELL_COORDINATE_CHANGE);
                    break;
             }
+
         } else {
             switch(VPfound) {
+              case VIEWPORT_XY:
+                eventCoordinate[0] = 0;
+                eventCoordinate[1] = 0;
+                eventCoordinate[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification;
+                eventViewport[0] = 0;
+                clicked = true;
+                break;
+            }
+
+             /*
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
                     break;
@@ -1017,17 +1033,18 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    /* @arb */
+                    /* @arb
                     emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
                      state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
                      state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
                      TELL_COORDINATE_CHANGE);
                       break;
 
-            }
+            }*/
 
         }
     } else if(event->key() == Qt::Key_D) {
+        eventReference = event;
         state->directionSign = -1;
         if(shift) {
             switch(VPfound) {

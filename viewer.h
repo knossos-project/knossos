@@ -70,6 +70,10 @@ public:
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
     void logSingle();
+
+    QKeyEvent *keyEvent;
+    int eventCoordinate[3];
+    int eventViewport[0];
 signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);

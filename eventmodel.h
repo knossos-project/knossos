@@ -70,6 +70,10 @@ public:
     int mouseX;
     int mouseY;
     bool grap;
+    QKeyEvent *eventReference;
+    int eventCoordinate[3];
+    int eventViewport[0];
+    bool clicked;
 protected:
 
 signals:

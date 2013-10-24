@@ -60,6 +60,12 @@ Viewer::Viewer(QObject *parent) :
     vp4 = window->viewports[3];
 
     /*
+    for(int i = 0; i < 4; i++) {
+        window->viewports[i]->delegate->eventReference = keyEvent;
+        window->viewports[i]->delegate->eventCoordinate = eventCoordinate;
+        window->viewports[i]->delegate->eventViewport = eventViewport;
+    }*/
+    /*
     vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
     vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
@@ -125,6 +131,8 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
+
+
 
 
     connect(timer, SIGNAL(timeout()), this, SLOT(run()));
@@ -1884,6 +1892,10 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
+    if(vp[0].delegate->clicked) {
+        userMove(vp[0].delegate->eventCoordinate[0], vp[0].delegate->eventCoordinate[1], vp[0].delegate->eventCoordinate[2] ,TELL_COORDINATE_CHANGE);
+    }
+
     if(temp1 != 0) {
         int div = bench1.elapsed() - temp1;
         field1->setText(QString::number(div));
