@@ -266,6 +266,8 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
+    qDebug() << "mouse release";
+
     if(state->viewerState->moveVP != -1)
         state->viewerState->moveVP = -1;
     if(state->viewerState->resizeVP != -1)
@@ -279,6 +281,27 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
     }
+
+}
+
+void Viewport::keyReleaseEvent(QKeyEvent *event) {
+
+        if(state->keyD) {
+            state->keyD = false;
+            qDebug() << "D released";
+        }else if(state->keyF) {
+            state->keyF = false;
+            qDebug() << "F released";
+        } else if(state->keyE){
+            state->keyE = false;
+            qDebug() << "E released";
+        } else if(state->keyR){
+            state->keyR = false;
+            qDebug() << "R released";
+        }
+        state->newCoord[0] = 0;
+        state->newCoord[1] = 0;
+        state->newCoord[2] = 0;
 
 }
 
@@ -298,12 +321,13 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     }
     qDebug() << "keypress";
     this->delegate->handleKeyboard(event, focus);
+    if(event->isAutoRepeat()) {
+        event->ignore();
+    }
 
 }
 
-void Viewport::keyReleaseEvent(QKeyEvent *event) {
-    delegate->clicked = false;
-}
+
 
 void Viewport::drawViewport(int plane) {
     reference->renderOrthogonalVP(plane);
@@ -348,21 +372,23 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return delegate->handleMouseWheelBackward(event, VPfound);
 }
 
+
 void Viewport::enterEvent(QEvent *event) {
     entered = true;
     focus = this->plane;
     this->setCursor(Qt::CrossCursor);
 }
-
+/*
 void Viewport::paintEvent(QPaintEvent *event) {
 
-}
+}*/
 
+/*
 void Viewport::leaveEvent(QEvent *event) {
     entered = false;    
 
 }
-
+*/
 
 void Viewport::zoomOrthogonals(float step){
 

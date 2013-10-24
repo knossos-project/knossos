@@ -58,8 +58,8 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void enterEvent(QEvent *event);
-    void leaveEvent(QEvent *event);
-    void paintEvent(QPaintEvent *event);
+    //void leaveEvent(QEvent *event);
+
     int xrel(int x);
     int yrel(int y);
     int viewportType;

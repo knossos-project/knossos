@@ -129,6 +129,7 @@ public slots:
     bool updateViewerState();
     void showFrames();
     void run();
+    void runrun();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);

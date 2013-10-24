@@ -60,12 +60,6 @@ Viewer::Viewer(QObject *parent) :
     vp4 = window->viewports[3];
 
     /*
-    for(int i = 0; i < 4; i++) {
-        window->viewports[i]->delegate->eventReference = keyEvent;
-        window->viewports[i]->delegate->eventCoordinate = eventCoordinate;
-        window->viewports[i]->delegate->eventViewport = eventViewport;
-    }*/
-    /*
     vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
     vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
     vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
@@ -134,10 +128,8 @@ Viewer::Viewer(QObject *parent) :
 
 
 
-
-    connect(timer, SIGNAL(timeout()), this, SLOT(run()));
-    timer->start(15);
-
+   //connect(timer, SIGNAL(timeout()), this, SLOT(run()));
+    timer->singleShot(10, this, SLOT(run()));
     field1 = new QLineEdit();
     field2 = new QLineEdit();
     field1->show();
@@ -1890,11 +1882,8 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   *   - userMove
   *
   */
-//Entry point for viewer thread, general viewer coordination, "main loop"
-void Viewer::run() {
-    if(vp[0].delegate->clicked) {
-        userMove(vp[0].delegate->eventCoordinate[0], vp[0].delegate->eventCoordinate[1], vp[0].delegate->eventCoordinate[2] ,TELL_COORDINATE_CHANGE);
-    }
+void Viewer::runrun() {
+    //QFuture<void> future = QtConcurrent::run(this, &Viewer::run);
 
     if(temp1 != 0) {
         int div = bench1.elapsed() - temp1;
@@ -1902,6 +1891,24 @@ void Viewer::run() {
     }
 
     temp1 = bench1.elapsed();
+    Viewer::run();
+
+}
+
+//Entry point for viewer thread, general viewer coordination, "main loop"
+void Viewer::run() {
+    if(state->keyF or state->keyD) {
+        qDebug() << state->newCoord[0] << " x";
+        qDebug() << state->newCoord[1] << " y";
+        qDebug() << state->newCoord[2] << " z";
+        userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+    }
+   /* if(temp1 != 0) {
+        int div = bench1.elapsed() - temp1;
+        field1->setText(QString::number(div));
+    }
+
+    temp1 = bench1.elapsed();*/
     //qDebug() << "run-method" << bench1.elapsed();
 
 
@@ -2035,6 +2042,10 @@ void Viewer::run() {
                 vp2->updateGL();
                 vp3->updateGL();
                 vp4->updateGL();
+
+
+
+                timer->singleShot(10, this, SLOT(runrun()));
 
                 return;
 
@@ -2742,7 +2753,7 @@ void Viewer::rewire() {
 
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
-    connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
+    connect(vp->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
     connect(vp2->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(vp3->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
 

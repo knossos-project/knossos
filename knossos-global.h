@@ -655,6 +655,9 @@ struct stateInfo {
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
+
+    bool keyD, keyR, keyE, keyF;
+    int newCoord[3];
 };
 
 class StateClass : public QObject, public stateInfo {
@@ -701,6 +704,7 @@ struct viewportTexture {
 
 	// Current zoom level. 1: no zoom; near 0: maximum zoom.
 	float zoomLevel;
+
 };
 
 /**
@@ -763,6 +767,7 @@ struct guiConfig {
   *        as well as flags about user interaction with the widget
   */
 struct vpConfig {
+
     floatCoordinate n;
     floatCoordinate v1;
     floatCoordinate v2;
