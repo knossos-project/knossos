@@ -98,7 +98,6 @@ uint32_t lll_calculate_filename(C_Element *elem) {
     char compressionExtension[8] = "";
     FILE *cubeFile = NULL;
     int32_t readBytes = 0;
-    int32_t compressionRatio = 6;
     int32_t boergens_param_1 = 0, boergens_param_2 = 0, boergens_param_3 = 0;
     char *boergens_param_1_name = "", *boergens_param_2_name = "", *boergens_param_3_name = "";
     char *local_cache_path_builder = NULL, *local_cache_path_total = NULL;
@@ -136,12 +135,14 @@ uint32_t lll_calculate_filename(C_Element *elem) {
     compressionExtension with ""
     then everthing should be fine as before.
     */
-    strncpy(typeExtension, "jp2", 4);
-    snprintf(compressionExtension, sizeof(compressionExtension), "%d.", compressionRatio);
-    /*
-    strncpy(typeExtension, "raw", 4);
-    compressionExtension[0] =  NULL;
-    */
+    if (0 != state->compressionRatio) {
+        strncpy(typeExtension, "jp2", 4);
+        snprintf(compressionExtension, sizeof(compressionExtension), "%d.", state->compressionRatio);
+    }
+    else {
+        strncpy(typeExtension, "raw", 4);
+        compressionExtension[0] =  NULL;
+    }
 
     elem->filename = malloc(filenameSize);
     if(elem->filename == NULL) {
@@ -614,6 +615,8 @@ _quicksort (
     int32_t retVal = TRUE;
     CubeSlot *currentDcSlot;
     char *filename;
+    FILE *cubeFile = NULL;
+    int32_t readBytes = 0;
     //uint32_t tickCount = GetTickCount();
 
     /*
@@ -657,9 +660,35 @@ _quicksort (
     }
 
     filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
-    if (EXIT_SUCCESS != jp2_decompress_main(filename, currentDcSlot->cube, state->cubeBytes)) {
-        LOG("Decompression function failed!");
-        goto loadcube_fail;
+    if (0 != state->compressionRatio) {
+        if (EXIT_SUCCESS != jp2_decompress_main(filename, currentDcSlot->cube, state->cubeBytes)) {
+            LOG("Decompression function failed!");
+            goto loadcube_fail;
+        }
+    }
+    else {
+        // The b is for compatibility with non-UNIX systems and denotes a
+        // binary file.
+        cubeFile = fopen(filename, "rb");
+        //LOG("succesfully loaded: %s", filename);
+        if(cubeFile == NULL) {
+            //LOG("failed to load %s", filename);
+            goto loadcube_fail;
+        }
+        readBytes = (int32_t)fread(currentDcSlot->cube, 1, state->cubeBytes, cubeFile);
+        if(readBytes != state->cubeBytes) {
+            LOG("Could read only %d / %d bytes from DC file %s.",
+                readBytes,
+                state->cubeBytes,
+                filename);
+            if(fclose(cubeFile) != 0) {
+                LOG("Additionally, an error occured closing the file");
+            }
+            goto loadcube_fail;
+        }
+        if(fclose(cubeFile) != 0) {
+            LOG("Error closing cube file %s.", filename);
+        }
     }
     goto loadcube_manage;
 

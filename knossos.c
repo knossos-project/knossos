@@ -676,6 +676,7 @@ static int32_t initStates() {
     SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
     state->loadLocalSystem = LS_WINDOWS;
+    state->compressionRatio = 0;
     //Switch here between flags LM_LOCAL and LM_FTP;
     state->loadMode = LM_LOCAL;
     if (LM_FTP == state->loadMode) {

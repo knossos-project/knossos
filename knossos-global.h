@@ -659,6 +659,7 @@ struct stateInfo {
 
         // Cube loader affairs
         int32_t    loadMode;
+        int32_t    compressionRatio;
         int32_t    loadLocalSystem;
         char       *loadFtpCachePath;
         char       *ftpBasePath;
