@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QThread>
 
-#include <PythonQT/PythonQt.h>
-#include <PythonQT/gui/PythonQtScriptingConsole.h>
+#include <PythonQt/PythonQt.h>
+#include <PythonQt/gui/PythonQtScriptingConsole.h>
 #include "skeletonizer.h"
 
 

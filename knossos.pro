@@ -216,10 +216,14 @@ mac {
 linux {
     LIBS += -lGL \
             -lGLU \
+            -lPythonQt \
+            -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
 
-    INCLUDEPATH += /home/knossos/Dokumente/libxml \
-                   /usr/include/GL/
+    INCLUDEPATH += /usr/include/GL/ \
+            /usr/local/include/ \
+            /usr/local/include/PythonQt/ \
+            /usr/include/python2.7/
 }
 
 win32 {
