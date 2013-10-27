@@ -3,14 +3,21 @@
 
 #include <QWidget>
 
+#include "taskloginwidget.h"
+
 class QPushButton;
 class QLabel;
 class QCheckBox;
 class TaskManagementWidget : public QWidget
 {
-    Q_OBJECT    
+    Q_OBJECT
+
 public:
-    explicit TaskManagementWidget(QWidget *parent = 0);
+    explicit TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget *parent = 0);
+    void setResponse(QString message);
+    void setActiveUser(QString username);
+    void setTask(QString task);
+
 protected:
     QLabel *statusLabel;
     QLabel *loggedAsLabel;
@@ -20,16 +27,19 @@ protected:
     QPushButton *loadLastSubmitButton;
     QPushButton *startNewTaskButton;
     QPushButton *submitButton;
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *);
+    TaskLoginWidget *taskLoginWidget;
+
+    void resetSession(QString message);
 
 signals:
-    
+    void saveSkeletonSignal();
+
 public slots:
     void submitButtonClicked();
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
     void logoutButtonClicked();
-    void finalCheckboxChecked(bool on);
 };
 
 #endif // TASKMANAGEMENTWIDGET_H

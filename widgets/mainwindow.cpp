@@ -21,6 +21,11 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+
+#include <curl/curl.h>
+#include <QXmlStreamReader>
+#include <QXmlAttributes>
+
 #include <QEvent>
 #include <QMenu>
 #include <QAction>
@@ -44,6 +49,7 @@
 #include <QRegExp>
 #include <QToolButton>
 #include <QtConcurrent/QtConcurrentRun>
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "GUIConstants.h"
@@ -75,6 +81,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     state->viewerState->gui->activeTreeID = 1;
     state->viewerState->gui->activeNodeID = 1;
+
+    // for task management
+    state->taskState->cookieFile = (char*)calloc(1, sizeof("cookie"));
+    strcpy(state->taskState->cookieFile, "cookie");
+    state->taskState->taskFile = (char*)calloc(1, 1024 * sizeof(char));
+    state->taskState->host = (char*)calloc(1, 10240 * sizeof(char));
+    strcpy(state->taskState->host, "127.0.0.1:8000");
 
     /* init here instead of initSkeletonizer to fix some init order issue */
     state->skeletonState->displayMode = 0;
@@ -1281,9 +1294,73 @@ void MainWindow::openDatasetSlot() {
 }
 
 void MainWindow::taskLoginSlot() {
-    this->widgetContainer->taskLoginWidget->show();
-    this->widgetContainer->taskLoginWidget->adjustSize();
-    if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
-        this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+    CURLcode code = (CURLcode)-2;
+    long httpCode = 0;
+    struct httpResponse response;
+    char url[1024];
+
+    // build url to send to
+    memset(url, '\0', 1024);
+    sprintf(url, "%s%s", state->taskState->host, "/knossos/session/");
+    // prepare http response object
+    response.length = 0;
+    response.content = (char*)calloc(1, response.length+1);
+
+    code = taskState::httpGET(url, &response, &httpCode, state->taskState->cookieFile);
+
+    if(code != CURLE_OK) {
+        widgetContainer->taskLoginWidget->setResponse("Please login.");
+        widgetContainer->taskLoginWidget->show();
+        free(response.content);
+        return;
+    }
+    if(httpCode != 200) {
+        widgetContainer->taskLoginWidget->setResponse(QString("<font color='red'>%1</font>").arg(response.content));
+        widgetContainer->taskLoginWidget->show();
+        free(response.content);
+        return;
+    }
+    // find out, which user is logged in
+    QXmlStreamReader xml(response.content);
+    if(xml.hasError()) { // response is broke.
+        widgetContainer->taskLoginWidget->setResponse("Please login.");
+        widgetContainer->taskLoginWidget->show();
+        return;
+    }
+    xml.readNextStartElement();
+    if(xml.isStartElement() == false) { // response is broke.
+        widgetContainer->taskLoginWidget->setResponse("Please login.");
+        widgetContainer->taskLoginWidget->show();
+        free(response.content);
+        return;
+    }
+    bool activeUser = false;
+    if(xml.name() == "session") {
+        QXmlStreamAttributes attributes = xml.attributes();
+        QString attribute = attributes.value("username").toString();
+        if(attribute.isNull() == false) {
+            activeUser = true;
+            widgetContainer->taskManagementWidget->setActiveUser(attribute);
+            widgetContainer->taskManagementWidget->setResponse("Hello " + attribute + "!");
+        }
+        attribute = attributes.value("task").toString();
+        if(attribute.isNull() == false) {
+            widgetContainer->taskManagementWidget->setTask(attribute);
+        }
+        attribute = attributes.value("taskFile").toString();
+        if(attribute.isNull() == false) {
+            memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
+            strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
+        }
+    }
+    if(activeUser) {
+        widgetContainer->taskManagementWidget->show();
+        free(response.content);
+        return;
+    }
+    widgetContainer->taskLoginWidget->setResponse("Please login.");
+    widgetContainer->taskLoginWidget->show();
+    free(response.content);
+    return;
 }
 

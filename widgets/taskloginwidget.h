@@ -10,8 +10,11 @@ class TaskManagementWidget;
 class TaskLoginWidget : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit TaskLoginWidget(QWidget *parent = 0);
+    void setResponse(QString message);
+    void setTaskManagementWidget(TaskManagementWidget *w);
 protected:
     QLabel *serverStatus;
     QLineEdit *urlField;
@@ -20,10 +23,14 @@ protected:
     QPushButton *loginButton;
     TaskManagementWidget *taskManagementWidget;
     void closeEvent(QCloseEvent *event);
+
 signals:
-    
+    void taskResponseChanged();
+    void loginResponseChanged();
+
 public slots:
     void loginButtonClicked();
+    void urlEditingFinished();
 };
 
 #endif // TASKLOGINWIDGET_H

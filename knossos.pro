@@ -43,6 +43,9 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
+    widgets/datasetpropertywidget.cpp \
+    widgets/taskloginwidget.cpp \
+    widgets/taskmanagementwidget.cpp \
     functions.cpp \
     widgets/widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
@@ -84,9 +87,7 @@ SOURCES += widgets/mainwindow.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
-    widgets/datasetpropertywidget.cpp \
-    widgets/taskloginwidget.cpp \
-    widgets/taskmanagementwidget.cpp
+    task.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -154,12 +155,15 @@ HEADERS  += widgets/mainwindow.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
+    widgets/datasetpropertywidget.h \
+    widgets/taskloginwidget.h \
+    widgets/taskmanagementwidget.h \
+    widgets/commentshortcuts/commentsnodecommentstab.h \
     functions.h \
     GUIConstants.h \
     widgets/widgetcontainer.h \
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \
-    widgets/commentshortcuts/commentsnodecommentstab.h \
     scripting.h \
     ftp.h \
     test/testcommentswidget.h \    
@@ -171,9 +175,6 @@ HEADERS  += widgets/mainwindow.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \
-    widgets/datasetpropertywidget.h \
-    widgets/taskloginwidget.h \
-    widgets/taskmanagementwidget.h
 
 
 FORMS    += mainwindow.ui

@@ -55,8 +55,7 @@ public:
     void createSychronizationWidget();
     void showSplashScreenWidget();
     void createDatasetPropertyWidget();
-    void createTaskLoginWidget();
-    //void createTaskManagementWidget();
+    void createTaskWidgets();
     void createWidgets();
 
     Console *console;
@@ -71,7 +70,7 @@ public:
     SplashScreenWidget *splashWidget;
     DatasetPropertyWidget *datasetPropertyWidget;
     TaskLoginWidget *taskLoginWidget;
-    //TaskManagementWidget *taskManagementWidget;
+    TaskManagementWidget *taskManagementWidget;
 
 signals:
     

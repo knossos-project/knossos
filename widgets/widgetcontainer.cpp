@@ -84,19 +84,18 @@ void WidgetContainer::createDatasetPropertyWidget() {
     datasetPropertyWidget = new DatasetPropertyWidget();
     synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
 }
-void WidgetContainer::createTaskLoginWidget() {
+
+void WidgetContainer::createTaskWidgets() {
     taskLoginWidget = new TaskLoginWidget();
     taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     taskLoginWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-}
 
-/*
-void WidgetContainer::createTaskManagementWidget() {
-    taskManagementWidget = new TaskManagementWidget();
+    taskManagementWidget = new TaskManagementWidget(taskLoginWidget);
     taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     taskManagementWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+    taskLoginWidget->setTaskManagementWidget(taskManagementWidget);
 }
-*/
 
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
@@ -114,7 +113,6 @@ void WidgetContainer::createWidgets() {
     createDataSavingWidget();
     createSychronizationWidget();
     createDatasetPropertyWidget();
-    createTaskLoginWidget();
-    //createTaskManagementWidget();
+    createTaskWidgets();
     rewire();
 }

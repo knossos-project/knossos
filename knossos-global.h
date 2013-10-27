@@ -655,13 +655,35 @@ struct stateInfo {
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
-
+    struct taskState *taskState;
     bool keyD, keyR, keyE, keyF;
     int newCoord[3];
+
 };
 
 class StateClass : public QObject, public stateInfo {
 
+};
+
+struct httpResponse {
+    char *content;
+    size_t length;
+};
+
+struct taskState {
+    char *host;
+    char *cookieFile;
+    char *taskFile;
+
+    static CURLcode httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath);
+    static CURLcode httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath);
+    static CURLcode httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath);
+    static CURLcode httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath);
+    static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
+    static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
+    static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
+    static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
+    static void removeCookie();
 };
 
 struct trajectory {

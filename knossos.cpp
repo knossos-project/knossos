@@ -646,7 +646,7 @@ struct stateInfo *Knossos::emptyState() {
     state->clientState = new clientState();
 
     state->skeletonState = new skeletonState();
-
+    state->taskState = new taskState();
     return state;
 }
 
