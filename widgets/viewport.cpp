@@ -84,7 +84,6 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }*/
-
 }
 
 void Viewport::initializeGL() {
@@ -232,6 +231,10 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
+        if(QApplication::keyboardModifiers() == Qt::CTRL) {
+            moveVP(event);
+            return;
+        }
         handleMouseMotionLeftHold(event, plane);
         clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
@@ -254,6 +257,12 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     delegate->mouseY = event->y();
 
     if(event->button() == Qt::LeftButton) {
+        if(QApplication::keyboardModifiers() == Qt::CTRL) { // user wants to drag vp
+            setCursor(Qt::ClosedHandCursor);
+            lastX= event->x();
+            lastY = event->y();
+            return;
+        }
         //this->move(event->x() - this->pos().x(), event->y() - pos().y());
         handleMouseButtonLeft(event, plane);
     }
@@ -265,9 +274,13 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     }
 }
 
-void Viewport::mouseReleaseEvent(QMouseEvent *event) {
-    qDebug() << "mouse release";
-
+void Viewport::mouseReleaseEvent(QMouseEvent *) {
+    if(QApplication::keyboardModifiers() == Qt::CTRL) {
+        setCursor(Qt::OpenHandCursor);
+    }
+    else if(cursor().shape() != Qt::CrossCursor) {
+        setCursor(Qt::CrossCursor);
+    }
     if(state->viewerState->moveVP != -1)
         state->viewerState->moveVP = -1;
     if(state->viewerState->resizeVP != -1)
@@ -285,23 +298,25 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
-
-        if(state->keyD) {
-            state->keyD = false;
-            qDebug() << "D released";
-        }else if(state->keyF) {
-            state->keyF = false;
-            qDebug() << "F released";
-        } else if(state->keyE){
-            state->keyE = false;
-            qDebug() << "E released";
-        } else if(state->keyR){
-            state->keyR = false;
-            qDebug() << "R released";
-        }
-        state->newCoord[0] = 0;
-        state->newCoord[1] = 0;
-        state->newCoord[2] = 0;
+    if(event->key() == Qt::Key_Control) {
+        setCursor(Qt::CrossCursor);
+    }
+    if(state->keyD) {
+        state->keyD = false;
+        qDebug() << "D released";
+    }else if(state->keyF) {
+        state->keyF = false;
+        qDebug() << "F released";
+    } else if(state->keyE){
+        state->keyE = false;
+        qDebug() << "E released";
+    } else if(state->keyR){
+        state->keyR = false;
+        qDebug() << "R released";
+    }
+    state->newCoord[0] = 0;
+    state->newCoord[1] = 0;
+    state->newCoord[2] = 0;
 
 }
 
@@ -316,17 +331,16 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
-    if(event->isAutoRepeat()) {
-
+    qDebug("pressed");
+    if(event->key() == Qt::Key_Control) {
+        setCursor(Qt::OpenHandCursor);
     }
-    qDebug() << "keypress";
     this->delegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
         event->ignore();
     }
 
 }
-
 
 
 void Viewport::drawViewport(int plane) {
@@ -435,6 +449,22 @@ void Viewport::zoomOrthogonals(float step){
 
    emit recalcTextureOffsetsSignal();
 
+}
+
+void Viewport::moveVP(QMouseEvent *event) {
+    raise();
+    int x = pos().x() + xrel(event->x());
+    int y = pos().y() + yrel(event->y());
+    if(x >= 0 && x <= (parentWidget()->width() - width())
+       && y >= 0 && y <= (parentWidget()->height() - height())) {
+        move(x, y);
+    }
+    else if(x >= 0 && x <= (parentWidget()->width() - width())) {
+        move(x, pos().y());
+    }
+    else if(y >= 0 && y <= (parentWidget()->height() - height())) {
+        move(pos().x(), y);
+    }
 }
 
 void Viewport::moveButtonClicked() {

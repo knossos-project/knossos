@@ -53,7 +53,7 @@ protected:
     void paintGL();
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *);
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -72,6 +72,7 @@ protected:
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
 
 private:
+    void moveVP(QMouseEvent *event);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
