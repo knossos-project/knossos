@@ -36,12 +36,22 @@ static int focus; /* This variable is needed to distinguish the viewport in case
 
 class QPushButton;
 class Renderer;
+
+class ResizeButton : public QPushButton {
+public:
+    static const int SIZE = 22;
+    explicit ResizeButton(QWidget *parent);
+protected:
+    void enterEvent(QEvent *);
+    void leaveEvent(QEvent *);
+};
+
 class Viewport : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit Viewport(QWidget *parent, int viewportType, int widgetNumber);
-    void drawViewport(int plane);
+    explicit Viewport(QWidget *parent, int viewportType);
+    void drawViewport(int viewportType);
     void drawSkeletonViewport();
     Renderer *reference;
     EventModel *delegate;
@@ -62,16 +72,17 @@ protected:
 
     int xrel(int x);
     int yrel(int y);
-    int viewportType;
-    int plane; // XY_VIEWPORT, ...
+    int viewportType; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
 
     bool entered;
-    QPushButton *moveButton, *resizeButton;
+    QPushButton *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
 
 private:
+    bool resizeButtonHold;
+    void resizeVP(QMouseEvent *event);
     void moveVP(QMouseEvent *event);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);

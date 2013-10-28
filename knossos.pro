@@ -55,7 +55,6 @@ SOURCES += widgets/mainwindow.cpp \
     qsort.cpp \
     ftp.cpp \
     task.cpp \
-    viewportscene.cpp \
     openjpeg/cio.c \
     openjpeg/bio.c \
     openjpeg/color.c \
@@ -160,7 +159,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/taskloginwidget.h \
     widgets/taskmanagementwidget.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
-    viewportscene.h \
     functions.h \
     GUIConstants.h \
     widgets/widgetcontainer.h \
@@ -203,7 +201,8 @@ OTHER_FILES += \
     ChangeLog.txt \
     defaultSettings.xml \
     customCursor.xpm \
-    config.y
+    config.y \
+    resize.gif
 
 DEFINES += REVISION=\\\"$$system(svnversion)\\\"
 

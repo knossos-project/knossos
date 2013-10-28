@@ -35,33 +35,37 @@
 
 extern stateInfo *state;
 
+ResizeButton::ResizeButton(QWidget *parent) : QPushButton(parent) {}
 
-Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
-    QGLWidget(parent) {
+void ResizeButton::enterEvent(QEvent *) {
+    setCursor(Qt::SizeFDiagCursor);
+}
+
+void ResizeButton::leaveEvent(QEvent *) {
+    setCursor(Qt::CrossCursor);
+}
+
+Viewport::Viewport(QWidget *parent, int viewportType) :
+    QGLWidget(parent), resizeButtonHold(false) {
     delegate = new EventModel();
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
     this->viewportType = viewportType;
-    this->plane = widgetNumber;
 
     //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
 
-    /*
-    moveButton = new QPushButton("Move", this);
-    moveButton->setGeometry(323, 298, 25, 25);
 
-    resizeButton = new QPushButton("Resize", this);
-    resizeButton->setGeometry(322, 322, 25, 25);
+    //moveButton = new QPushButton(this);
+   // moveButton->setGeometry(323, 298, 25, 25);
 
-    moveButton->show();
+    resizeButton = new ResizeButton(this);
+    resizeButton->setIcon(QIcon("resize.gif"));
     resizeButton->show();
-
-    connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
-    connect(resizeButton, SIGNAL(clicked()), this, SLOT(resizeButtonClicked()));
-    */
+    //connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
+    connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
     /*
     if(widgetNumber == VIEWPORT_SKELETON) {
         xyButton = new QPushButton("xy", this);
@@ -87,12 +91,14 @@ Viewport::Viewport(QWidget *parent, int viewportType, int widgetNumber) :
 }
 
 void Viewport::initializeGL() {
-    if(plane < VIEWPORT_SKELETON) {
+    // button geometry has to be defined here, because width() and height() return wrong information before initializeGL
+    resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
+    if(viewportType < VIEWPORT_SKELETON) {
 
-        glGenTextures(1, &state->viewerState->vpConfigs[plane].texture.texHandle);
+        glGenTextures(1, &state->viewerState->vpConfigs[viewportType].texture.texHandle);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[plane].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[viewportType].texture.texHandle);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -109,8 +115,8 @@ void Viewport::initializeGL() {
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
-                     state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
-                     state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                     state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
+                     state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
                      0,
                      GL_RGB,
                      GL_UNSIGNED_BYTE,
@@ -123,18 +129,18 @@ void Viewport::initializeGL() {
 
     // The following code configures openGL to draw into the current VP
     //set the drawing area in the window to our actually processed view port.
-    glViewport(state->viewerState->vpConfigs[plane].upperLeftCorner.x,
-               state->viewerState->vpConfigs[plane].upperLeftCorner.y,
-               state->viewerState->vpConfigs[plane].edgeLength,
-               state->viewerState->vpConfigs[plane].edgeLength);
+    glViewport(state->viewerState->vpConfigs[viewportType].upperLeftCorner.x,
+               state->viewerState->vpConfigs[viewportType].upperLeftCorner.y,
+               state->viewerState->vpConfigs[viewportType].edgeLength,
+               state->viewerState->vpConfigs[viewportType].edgeLength);
     //select the projection matrix
     glMatrixMode(GL_PROJECTION);
     //reset it
     glLoadIdentity();
     //define coordinate system for our viewport: left right bottom top near far
     //coordinate values
-    glOrtho(0, state->viewerState->vpConfigs[plane].edgeLength,
-            state->viewerState->vpConfigs[plane].edgeLength, 0, 25, -25);
+    glOrtho(0, state->viewerState->vpConfigs[viewportType].edgeLength,
+            state->viewerState->vpConfigs[viewportType].edgeLength, 0, 25, -25);
     //select the modelview matrix for modification
     glMatrixMode(GL_MODELVIEW);
     //reset it
@@ -151,12 +157,12 @@ void Viewport::initializeGL() {
 }
 
 void Viewport::initializeOverlayGL() {
-    if(plane < VIEWPORT_SKELETON) {
+    if(viewportType < VIEWPORT_SKELETON) {
         if(state->overlay) {
-            glGenTextures(1, &state->viewerState->vpConfigs[plane].texture.overlayHandle);
+            glGenTextures(1, &state->viewerState->vpConfigs[viewportType].texture.overlayHandle);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[plane].texture.overlayHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[viewportType].texture.overlayHandle);
 
             //Set the parameters for the texture.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -170,8 +176,8 @@ void Viewport::initializeOverlayGL() {
             glTexImage2D(GL_TEXTURE_2D,
                          0,
                          GL_RGBA,
-                         state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
-                         state->viewerState->vpConfigs[plane].texture.edgeLengthPx,
+                         state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
+                         state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
                          0,
                          GL_RGBA,
                          GL_UNSIGNED_BYTE,
@@ -181,10 +187,7 @@ void Viewport::initializeOverlayGL() {
 }
 
 void Viewport::resizeGL(int w, int h) {
-
-
-    LOG("resizing")
-    glViewport(0, 0, width(), height());
+    glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
@@ -192,13 +195,11 @@ void Viewport::resizeGL(int w, int h) {
     glFrustum(-x, +x, -1.0, + 1.0, 0.1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
-    SET_COORDINATE(state->viewerState->vpConfigs[plane].upperLeftCorner,
+    SET_COORDINATE(state->viewerState->vpConfigs[viewportType].upperLeftCorner,
                    geometry().topLeft().x(),
                    geometry().topLeft().y(),
                    0);
-    state->viewerState->vpConfigs[plane].edgeLength = width();
-
-
+    state->viewerState->vpConfigs[viewportType].edgeLength = width();
 }
 
 void Viewport::paintGL() {
@@ -207,8 +208,8 @@ void Viewport::paintGL() {
 
 
     if(state->viewerState->viewerReady) {
-        if(this->plane < VIEWPORT_SKELETON) {
-           this->drawViewport(plane);
+        if(this->viewportType < VIEWPORT_SKELETON) {
+           this->drawViewport(viewportType);
         }  else {
             this->drawSkeletonViewport();
         }
@@ -226,22 +227,24 @@ int Viewport::yrel(int y) {
 
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
-    qDebug() << "mouse move";
-
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
-        if(QApplication::keyboardModifiers() == Qt::CTRL) {
+        if(QApplication::keyboardModifiers() == Qt::CTRL) { // drag viewport around
             moveVP(event);
-            return;
         }
-        handleMouseMotionLeftHold(event, plane);
-        clickEvent = true;
+        else if(resizeButtonHold) {// resize viewport
+            resizeVP(event);
+        }
+        else {// delegate behaviour
+            handleMouseMotionLeftHold(event, viewportType);
+            clickEvent = true;
+        }
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
-        handleMouseMotionMiddleHold(event, plane);
+        handleMouseMotionMiddleHold(event, viewportType);
         clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::RightButton) {
-        handleMouseMotionRightHold(event, plane);
+        handleMouseMotionRightHold(event, viewportType);
         clickEvent = true;
     }
 
@@ -264,17 +267,18 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
             return;
         }
         //this->move(event->x() - this->pos().x(), event->y() - pos().y());
-        handleMouseButtonLeft(event, plane);
+        handleMouseButtonLeft(event, viewportType);
     }
     else if(event->button() == Qt::MidButton) {
-        handleMouseButtonMiddle(event, plane);
+        handleMouseButtonMiddle(event, viewportType);
     }
     else if(event->button() == Qt::RightButton) {
-        handleMouseButtonRight(event, plane);
+        handleMouseButtonRight(event, viewportType);
     }
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *) {
+    resizeButtonHold = false; // can only be true, when left mouse button is pressed
     if(QApplication::keyboardModifiers() == Qt::CTRL) {
         setCursor(Qt::OpenHandCursor);
     }
@@ -323,15 +327,14 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 void Viewport::wheelEvent(QWheelEvent *event) {
 
     if(event->delta() > 0) {
-        handleMouseWheelForward(event, plane);
+        handleMouseWheelForward(event, viewportType);
     } else {
-        handleMouseWheelBackward(event, plane);
+        handleMouseWheelBackward(event, viewportType);
     }
 
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
-    qDebug("pressed");
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::OpenHandCursor);
     }
@@ -343,8 +346,8 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 }
 
 
-void Viewport::drawViewport(int plane) {
-    reference->renderOrthogonalVP(plane);
+void Viewport::drawViewport(int viewportType) {
+    reference->renderOrthogonalVP(viewportType);
 
 }
 
@@ -389,7 +392,7 @@ bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
 void Viewport::enterEvent(QEvent *event) {
     entered = true;
-    focus = this->plane;
+    focus = this->viewportType;
     this->setCursor(Qt::CrossCursor);
 }
 /*
@@ -451,6 +454,28 @@ void Viewport::zoomOrthogonals(float step){
 
 }
 
+void Viewport::resizeVP(QMouseEvent *event) {
+    if(event->x() >= event->y()) {
+        resize(event->x(), event->x());
+    }
+    else {
+        resize(event->y(), event->y());
+    }
+    if(height() < 50) {
+        resize(50, 50);
+    }
+    else if(height() > parentWidget()->height() - 60) {
+        resize(parentWidget()->height() - 60, parentWidget()->height() - 60);
+    }
+    if(width() < 50) {
+        resize(50, 50);
+    }
+    else if(width() > parentWidget()->width()) {
+        resize(parentWidget()->width(), parentWidget()->width());
+    }
+    resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
+}
+
 void Viewport::moveVP(QMouseEvent *event) {
     raise();
     int x = pos().x() + xrel(event->x());
@@ -472,7 +497,8 @@ void Viewport::moveButtonClicked() {
 }
 
 void Viewport::resizeButtonClicked() {
-
+    resizeButtonHold = true;
+    raise();
 }
 
 void Viewport::xyButtonClicked() {

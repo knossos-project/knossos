@@ -145,10 +145,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::createViewports() {
     viewports = new Viewport*[4];
-    viewports[0] = new Viewport(this, VIEWPORT_XY, VIEWPORT_XY);
-    viewports[1] = new Viewport(this, VIEWPORT_YZ, VIEWPORT_YZ);
-    viewports[2] = new Viewport(this, VIEWPORT_XZ, VIEWPORT_XZ);
-    viewports[3] = new Viewport(this, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    viewports[0] = new Viewport(this, VIEWPORT_XY);
+    viewports[1] = new Viewport(this, VIEWPORT_YZ);
+    viewports[2] = new Viewport(this, VIEWPORT_XZ);
+    viewports[3] = new Viewport(this, VIEWPORT_SKELETON);
 
     viewports[0]->setGeometry(5, this->toolBar->geometry().top() + 60, 350,350);
     viewports[1]->setGeometry(360, this->toolBar->geometry().top() + 60, 350, 350);
@@ -1232,7 +1232,7 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-    int width = event->size().width();
+   /* int width = event->size().width();
     int height = event->size().height();
 
     int sizeW = (width - 15)  / 2 ;
@@ -1255,7 +1255,7 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(sizeH, sizeH);
         }
-    }
+    }*/
 }
 
 
