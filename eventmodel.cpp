@@ -315,16 +315,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
-
     uint i;
-
     for(i = 0; i < state->viewerState->numberViewports; i++) {
-        /*
-        if(state->viewerState->moveVP != -1
-                   || state->viewerState->resizeVP != -1) {
-               moveOrResizeVP(event);
-           } */ /*@todo */
-
         // motion tracking mode is active for viewport i
         if(state->viewerState->vpConfigs[i].motionTracking == true) {
             switch(state->viewerState->vpConfigs[i].type) {

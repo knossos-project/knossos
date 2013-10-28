@@ -97,6 +97,10 @@
 This is used for LOD rendering, since all ortho VPs have the (about) the same screenPxPerDataPx
 values. The XY vp always used. */
 #define VIEWPORT_ORTHO 0
+// default position of xy viewport and default viewport size
+#define DEFAULT_VP_MARGIN 5
+#define DEFAULT_VP_Y_OFFSET 60 //distance from the top of the mainwindow
+#define DEFAULT_VP_SIZE 350
 
 #define X_AXIS 0
 #define Y_AXIS 1
@@ -977,12 +981,6 @@ struct viewerState {
     int autoTracingDelay;
     int autoTracingSteps;
 
-    // flags for changing vp position or size. Can be
-    // VIEWPORT_XY, ...,
-    // -1 for default position and size,
-    // 10 for knossos start
-    int moveVP;
-    int resizeVP;
     int saveCoords;
     Coordinate clickedCoordinate;
     float cumDistRenderThres;

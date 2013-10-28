@@ -144,15 +144,15 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)), viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
 
-    QObject::connect(viewer->vp->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->vp2->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->vp3->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->vp4->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vpXY->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vpXZ->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vpYZ->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->vpSkel->delegate, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
 
-    QObject::connect(viewer->vp->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
-    QObject::connect(viewer->vp2->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
-    QObject::connect(viewer->vp3->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
-    QObject::connect(viewer->vp4->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vpXY->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vpXZ->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vpYZ->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->vpSkel->delegate, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
 
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
@@ -271,15 +271,15 @@ bool Knossos::initStates() {
    floatCoordinate v1, v2, v3;
    Viewer::getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
-   CPY_COORDINATE(state->viewerState->vpConfigs[0].v1 , v1);
-   CPY_COORDINATE(state->viewerState->vpConfigs[0].v2 , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[0].n , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[1].v1 , v1);
-   CPY_COORDINATE(state->viewerState->vpConfigs[1].v2 , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[1].n , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[2].v1 , v3);
-   CPY_COORDINATE(state->viewerState->vpConfigs[2].v2 , v2);
-   CPY_COORDINATE(state->viewerState->vpConfigs[2].n , v1);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v2 , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].n , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v1 , v1);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].v2 , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XZ].n , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
+   CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
    /**/
 
@@ -967,8 +967,6 @@ bool Knossos::configDefaults() {
     state->viewerState->autoTracingSteps = 10;
     state->viewerState->recenteringTimeOrth = 500;
     state->viewerState->walkOrth = false;
-    state->viewerState->moveVP = 10;
-    state->viewerState->resizeVP = 10;
     state->viewerState->showPosSizButtons = true;
 
     state->viewerState->vpConfigs = (vpConfig *) malloc(state->viewerState->numberViewports * sizeof(struct vpConfig));

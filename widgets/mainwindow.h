@@ -167,6 +167,7 @@ public:
     QToolButton *viewportSettingsButton;
     QToolButton *toolsButton;
     QToolButton *commentShortcutsButton;
+    QPushButton *resetVPsButton;
 
     void updateFileHistoryMenu();
     void createActions();
@@ -243,6 +244,9 @@ public slots:
     void updateCoordinateBar(int x, int y, int z);  
     void recentFileSelected();
     void treeColorAdjustmentsChanged();
+    // viewports
+    void resetViewports();
+    void showVPDecorationClicked();
 
 };
 

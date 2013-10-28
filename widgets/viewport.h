@@ -53,8 +53,15 @@ public:
     explicit Viewport(QWidget *parent, int viewportType);
     void drawViewport(int viewportType);
     void drawSkeletonViewport();
+    void reset();
+    void hideButtons();
+    void showButtons();
     Renderer *reference;
     EventModel *delegate;
+
+    static const int MIN_VP_SIZE = 50;
+    static const int SKELVPBUTTON_W = 35;
+    static const int SKELVPBUTTON_H = 20;
 
 protected:
     void initializeGL();
@@ -83,6 +90,7 @@ protected:
 private:
     bool resizeButtonHold;
     void resizeVP(QMouseEvent *event);
+    void updateButtonPositions();
     void moveVP(QMouseEvent *event);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);

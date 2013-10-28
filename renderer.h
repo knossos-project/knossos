@@ -34,7 +34,7 @@ class Renderer : public QObject
     Q_OBJECT
 public:
     explicit Renderer(QObject *parent = 0);    
-    Viewport *reference, *ref2, *ref3, *ref4;
+    Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     QFont font;
 
 protected:

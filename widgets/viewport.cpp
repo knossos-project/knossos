@@ -46,12 +46,10 @@ void ResizeButton::leaveEvent(QEvent *) {
 }
 
 Viewport::Viewport(QWidget *parent, int viewportType) :
-    QGLWidget(parent), resizeButtonHold(false) {
+    QGLWidget(parent), viewportType(viewportType), resizeButtonHold(false) {
     delegate = new EventModel();
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
-
-    this->viewportType = viewportType;
 
     //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
@@ -66,20 +64,14 @@ Viewport::Viewport(QWidget *parent, int viewportType) :
     resizeButton->show();
     //connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
     connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
-    /*
-    if(widgetNumber == VIEWPORT_SKELETON) {
+
+    if(viewportType == VIEWPORT_SKELETON) {
         xyButton = new QPushButton("xy", this);
-        xyButton->setGeometry(113, 2, 35, 20);
         xzButton = new QPushButton("xz", this);
-        xzButton->setGeometry(153, 2, 35, 20);
         yzButton = new QPushButton("yz", this);
-        yzButton->setGeometry(193, 2, 35, 20);
         r90Button = new QPushButton("r90", this);
-        r90Button->setGeometry(233, 2, 35, 20);
         r180Button = new QPushButton("r180", this);
-        r180Button->setGeometry(273, 2, 35, 20);
         resetButton = new QPushButton("reset", this);
-        resetButton->setGeometry(313, 2, 35, 20);
 
         connect(xyButton, SIGNAL(clicked()), this, SLOT(xyButtonClicked()));
         connect(xzButton, SIGNAL(clicked()), this, SLOT(xzButtonClicked()));
@@ -87,12 +79,12 @@ Viewport::Viewport(QWidget *parent, int viewportType) :
         connect(r90Button, SIGNAL(clicked()), this, SLOT(r90ButtonClicked()));
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
-    }*/
+    }
 }
 
 void Viewport::initializeGL() {
     // button geometry has to be defined here, because width() and height() return wrong information before initializeGL
-    resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
+    updateButtonPositions();
     if(viewportType < VIEWPORT_SKELETON) {
 
         glGenTextures(1, &state->viewerState->vpConfigs[viewportType].texture.texHandle);
@@ -255,7 +247,7 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
-
+    raise(); //bring this viewport to front
     delegate->mouseX = event->x();
     delegate->mouseY = event->y();
 
@@ -285,10 +277,6 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
     else if(cursor().shape() != Qt::CrossCursor) {
         setCursor(Qt::CrossCursor);
     }
-    if(state->viewerState->moveVP != -1)
-        state->viewerState->moveVP = -1;
-    if(state->viewerState->resizeVP != -1)
-        state->viewerState->resizeVP = -1;
 
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
@@ -298,7 +286,6 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
     }
-
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -461,25 +448,38 @@ void Viewport::resizeVP(QMouseEvent *event) {
     else {
         resize(event->y(), event->y());
     }
-    if(height() < 50) {
-        resize(50, 50);
+    if(height() < MIN_VP_SIZE) {
+        resize(MIN_VP_SIZE, MIN_VP_SIZE);
     }
-    else if(height() > parentWidget()->height() - 60) {
-        resize(parentWidget()->height() - 60, parentWidget()->height() - 60);
+    else if(pos().y() + height() > parentWidget()->height() - 60) {
+        resize(parentWidget()->height()- pos().y(), parentWidget()->height() - pos().y());
     }
-    if(width() < 50) {
-        resize(50, 50);
+    if(width() < MIN_VP_SIZE) {
+        resize(MIN_VP_SIZE, MIN_VP_SIZE);
     }
-    else if(width() > parentWidget()->width()) {
-        resize(parentWidget()->width(), parentWidget()->width());
+    else if(pos().x() + width() > parentWidget()->width()) {
+        resize(parentWidget()->width() - pos().x(), parentWidget()->width() - pos().x());
     }
+    updateButtonPositions();
+}
+
+void Viewport::updateButtonPositions() {
     resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
+    if(viewportType == VIEWPORT_SKELETON) {
+        xyButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*6, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        xzButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*5, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        yzButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*4, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        r90Button->setGeometry(width() - (SKELVPBUTTON_W - 2)*3, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        r180Button->setGeometry(width() - (SKELVPBUTTON_W - 2)*2, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        resetButton->setGeometry(width() - SKELVPBUTTON_W - 2, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+    }
 }
 
 void Viewport::moveVP(QMouseEvent *event) {
     raise();
     int x = pos().x() + xrel(event->x());
     int y = pos().y() + yrel(event->y());
+
     if(x >= 0 && x <= (parentWidget()->width() - width())
        && y >= 0 && y <= (parentWidget()->height() - height())) {
         move(x, y);
@@ -489,6 +489,48 @@ void Viewport::moveVP(QMouseEvent *event) {
     }
     else if(y >= 0 && y <= (parentWidget()->height() - height())) {
         move(pos().x(), y);
+    }
+}
+
+void Viewport::reset() {
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+        break;
+    case VIEWPORT_XZ:
+        setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+        break;
+    case VIEWPORT_YZ:
+        setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+        break;
+    case VIEWPORT_SKELETON:
+        setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+        break;
+    }
+    updateButtonPositions();
+}
+
+void Viewport::hideButtons() {
+    resizeButton->hide();
+    if(viewportType == VIEWPORT_SKELETON) {
+        xyButton->hide();
+        xzButton->hide();
+        yzButton->hide();
+        r90Button->hide();
+        r180Button->hide();
+        resetButton->hide();
+    }
+}
+
+void Viewport::showButtons() {
+    resizeButton->show();
+    if(viewportType == VIEWPORT_SKELETON) {
+        xyButton->show();
+        xzButton->show();
+        yzButton->show();
+        r90Button->show();
+        r180Button->show();
+        resetButton->show();
     }
 }
 

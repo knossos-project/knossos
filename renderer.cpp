@@ -217,13 +217,13 @@ uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType
     glRasterPos3d(pos->x, pos->y, pos->z);
 
     if(viewportType == VIEWPORT_XY)
-        reference->renderText(pos->x, pos->y, pos->z, QString(string), font);
-    else if(viewportType == VIEWPORT_YZ)
-        ref2->renderText(pos->x, pos->y, pos->z, QString(string), font);
+        refVPXY->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_XZ)
-         ref3->renderText(pos->x, pos->y, pos->z, QString(string), font);
+        refVPXZ->renderText(pos->x, pos->y, pos->z, QString(string), font);
+    else if(viewportType == VIEWPORT_YZ)
+         refVPYZ->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_SKELETON)
-        ref4->renderText(pos->x, pos->y, pos->z, QString(string), font);
+        refVPSkel->renderText(pos->x, pos->y, pos->z, QString(string), font);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -387,14 +387,14 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     }
     glLineWidth(3.);
     glBegin(GL_LINES);
-        glVertex3d(2, 1, 0);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, 0);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, 0);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, 0);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, 0);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, 0);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, 0);
-        glVertex3d(2, 1, 0);
+        glVertex3d(2, 1, -1);
+        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
+        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
+        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
+        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
+        glVertex3d(2, 1, -1);
     glEnd();
 
     if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
@@ -402,14 +402,14 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
         glColor4f(1., 0.3, 0., 1.);
         glBegin(GL_LINES);
-            glVertex3d(5, 4, 0);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, 0);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, 0);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, 0);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, 0);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, 0);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, 0);
-            glVertex3d(5, 4, 0);
+            glVertex3d(5, 4, -1);
+            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
+            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
+            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
+            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
+            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
+            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
+            glVertex3d(5, 4, -1);
         glEnd();
     }
 
@@ -428,6 +428,10 @@ static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
+    //for displaying data size
+    float width, height;
+    char label[1024];
+    Coordinate pos;
 
     floatCoordinate *n, *v1, *v2;
 
@@ -608,7 +612,15 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, dataPxY, -0.0001);
                 glEnd();
             }
-
+            if(state->viewerState->showVPLabels) {
+                glColor4f(0, 0, 0, 1);
+                width = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmX*0.001;
+                height = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmY*0.001;
+                SET_COORDINATE(pos, -dataPxX + 30, -dataPxY + 30, -0.0001);
+                memset(label, '\0', 1024);
+                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+                renderText(&pos, label, VIEWPORT_XY);
+            }
             break;
 
         case VIEWPORT_XZ:
@@ -743,7 +755,15 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, 0.0001, dataPxY);
                 glEnd();
             }
-
+            if(state->viewerState->showVPLabels) {
+                glColor4f(0, 0, 0, 1);
+                width = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmX*0.001;
+                height = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmY*0.001;
+                SET_COORDINATE(pos, -dataPxX + 30, 0.0001, -dataPxY + 30);
+                memset(label, '\0', 1024);
+                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+                renderText(&pos, label, VIEWPORT_XZ);
+            }
             break;
         case VIEWPORT_YZ:
             if(!state->viewerState->selectModeFlag) {
@@ -866,7 +886,15 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(-0.0001, 0.5, dataPxX);
                 glEnd();
             }
-
+            if(state->viewerState->showVPLabels) {
+                glColor4f(0, 0, 0, 1);
+                width = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmX*0.001;
+                height = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmY*0.001;
+                SET_COORDINATE(pos, -0.0001, -dataPxX + 30, -dataPxX + 30);
+                memset(label, '\0', 1024);
+                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+                renderText(&pos, label, VIEWPORT_YZ);
+            }
             break;
         case VIEWPORT_ARBITRARY:
         /* @arb */
@@ -1758,21 +1786,21 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     GLuint names, *ptr, minZ, *ptrName;
     ptrName = NULL;
 
-    if(currentVP == 0) {
-        reference->makeCurrent();
+    if(currentVP == VIEWPORT_XY) {
+        refVPXY->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == 1) {
-        ref3->makeCurrent();
+    } else if(currentVP == VIEWPORT_XZ) {
+        refVPXZ->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == 2) {
-        ref2->makeCurrent();
+    } else if(currentVP == VIEWPORT_YZ) {
+        refVPYZ->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == 3) {
-        ref4->makeCurrent();
+    } else if(currentVP == VIEWPORT_SKELETON) {
+        refVPSkel->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
     }
 
-    glGetIntegerv(GL_VIEWPORT, openGLviewport);
+   // glGetIntegerv(GL_VIEWPORT, openGLviewport);
 
     glSelectBuffer(8192, selectionBuffer);
 
@@ -1787,7 +1815,10 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     glLoadIdentity();
 
 
-    gluPickMatrix(x, reference->height() - y, width, width, openGLviewport);
+    gluPickMatrix(x, refVPXY->height() - y, width, width, openGLviewport);
+
+
+
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);

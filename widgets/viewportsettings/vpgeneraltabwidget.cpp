@@ -71,8 +71,9 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
         this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
     }
 
-    this->showPosAndResizeCheckBox = new QCheckBox("Show Position and Resize Button");
-    this->useStandardPosAndSizeButton = new QPushButton("Use Standard Positions And Sizes");
+    this->showVPDecorationCheckBox = new QCheckBox("Show Viewport Decorations");
+    this->showVPDecorationCheckBox->setChecked(true);
+    this->resetVPsButton = new QPushButton("Reset Viewports");
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -104,8 +105,8 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     hLayout3->addWidget(this->edgeNodeRadiusRatioSpinBox);
     mainLayout->addLayout(hLayout3);
 
-    mainLayout->addWidget(this->showPosAndResizeCheckBox);
-    mainLayout->addWidget(this->useStandardPosAndSizeButton);
+    mainLayout->addWidget(this->showVPDecorationCheckBox);
+    mainLayout->addWidget(this->resetVPsButton);
 
     setLayout(mainLayout);
     mainLayout->addStretch(50);
@@ -118,8 +119,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(overrideNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(overrideNodeRadiusChanged(double)));
 
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
-    connect(showPosAndResizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showPosAndSizeChecked(bool)));
-    connect(useStandardPosAndSizeButton, SIGNAL(clicked()), this, SLOT(useStandardPosAndSizeClicked()));
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
@@ -173,24 +172,4 @@ void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
 
 void VPGeneralTabWidget::renderingQualityChanged(int value) {
     state->viewerState->cumDistRenderThres = value;
-}
-
-/* @todo */
-void VPGeneralTabWidget::showPosAndSizeChecked(bool on) {
-    if(on) {
-        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
-        }
-    } else {
-        for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
-        }
-    }
-
-
-}
-
-/* @tood */
-void VPGeneralTabWidget::useStandardPosAndSizeClicked() {
-
 }

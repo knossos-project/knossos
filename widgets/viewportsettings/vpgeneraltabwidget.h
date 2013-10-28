@@ -39,7 +39,8 @@ class VPGeneralTabWidget : public QWidget
     Q_OBJECT
 public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
-
+    QPushButton *resetVPsButton;
+    QCheckBox *showVPDecorationCheckBox;
 signals:
     void overrideNodeRadiusSignal(bool on);
     void highlightActiveTreeSignal(bool on);
@@ -54,8 +55,7 @@ public slots:
     void overrideNodeRadiusChanged(double value);
     void edgeNodeRadiusRatioChanged(double value);
     void renderingQualityChanged(int value);
-    void showPosAndSizeChecked(bool on);
-    void useStandardPosAndSizeClicked();
+
 protected:
     QLabel *skeletonVisualizationLabel;
     QLabel *renderingQualityLabel;
@@ -68,9 +68,6 @@ protected:
 
     QDoubleSpinBox *edgeNodeRadiusRatioSpinBox;
     QLabel *edgeNodeRadiusRatioLabel;
-
-    QCheckBox *showPosAndResizeCheckBox;
-    QPushButton *useStandardPosAndSizeButton;
 };
 
 #endif // VPGENERALTABWIDGET_H

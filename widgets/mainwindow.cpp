@@ -120,6 +120,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
 
+
     widgetContainer = new WidgetContainer(this);
     widgetContainer->createWidgets();
 
@@ -138,23 +139,21 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     //connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));
     updateTitlebar(false);
-
     createViewports();
     setAcceptDrops(true);
 }
 
 void MainWindow::createViewports() {
-    viewports = new Viewport*[4];
-    viewports[0] = new Viewport(this, VIEWPORT_XY);
-    viewports[1] = new Viewport(this, VIEWPORT_YZ);
-    viewports[2] = new Viewport(this, VIEWPORT_XZ);
-    viewports[3] = new Viewport(this, VIEWPORT_SKELETON);
+    viewports = new Viewport*[NUM_VP];
+    viewports[VIEWPORT_XY] = new Viewport(this, VIEWPORT_XY);
+    viewports[VIEWPORT_XZ] = new Viewport(this, VIEWPORT_XZ);
+    viewports[VIEWPORT_YZ] = new Viewport(this, VIEWPORT_YZ);
+    viewports[VIEWPORT_SKELETON] = new Viewport(this, VIEWPORT_SKELETON);
 
-    viewports[0]->setGeometry(5, this->toolBar->geometry().top() + 60, 350,350);
-    viewports[1]->setGeometry(360, this->toolBar->geometry().top() + 60, 350, 350);
-    viewports[2]->setGeometry(5, viewports[0]->geometry().bottom() + 5, 350, 350);
-    viewports[3]->setGeometry(360, viewports[0]->geometry().bottom() + 5, 350, 350);
-
+    viewports[VIEWPORT_XY]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VIEWPORT_XZ]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VIEWPORT_YZ]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VIEWPORT_SKELETON]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
 }
 
 MainWindow::~MainWindow()
@@ -260,6 +259,10 @@ void MainWindow:: createToolBar() {
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
 
+    resetVPsButton = new QPushButton("Reset Viewports", this);
+    resetVPsButton->setToolTip("Reset viewport positions and sizes");
+    this->toolBar->addWidget(resetVPsButton);
+
     connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
@@ -276,7 +279,9 @@ void MainWindow:: createToolBar() {
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
-
+    connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
+    connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
+    connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
 
 void MainWindow::updateTitlebar(bool useFilename) {
@@ -345,12 +350,12 @@ bool MainWindow::addRecentFile(const QString &fileName) {
   * Maybe functionality of Viewport
   */
 void MainWindow::reloadDataSizeWin(){
-    float heightxy = state->viewerState->vpConfigs[0].displayedlengthInNmY*0.001;
-    float widthxy = state->viewerState->vpConfigs[0].displayedlengthInNmX*0.001;
-    float heightxz = state->viewerState->vpConfigs[1].displayedlengthInNmY*0.001;
-    float widthxz = state->viewerState->vpConfigs[1].displayedlengthInNmX*0.001;
-    float heightyz = state->viewerState->vpConfigs[2].displayedlengthInNmY*0.001;
-    float widthyz = state->viewerState->vpConfigs[2].displayedlengthInNmX*0.001;
+    float heightxy = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmY*0.001;
+    float widthxy = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmX*0.001;
+    float heightxz = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmY*0.001;
+    float widthxz = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmX*0.001;
+    float heightyz = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmY*0.001;
+    float widthyz = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmX*0.001;
 
     if ((heightxy > 1.0) && (widthxy > 1.0)){
         //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
@@ -1364,3 +1369,22 @@ void MainWindow::taskLoginSlot() {
     return;
 }
 
+
+void MainWindow::resetViewports() {
+    for(int i = 0; i < NUM_VP; i++) {
+        viewports[i]->reset();
+    }
+}
+
+void MainWindow::showVPDecorationClicked() {
+    if(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox->checkState() == Qt::Checked) {
+        for(int i = 0; i < NUM_VP; i++) {
+            viewports[i]->hideButtons();
+        }
+    }
+    else {
+        for(int i = 0; i < NUM_VP; i++) {
+            viewports[i]->showButtons();
+        }
+    }
+}

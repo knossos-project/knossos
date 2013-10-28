@@ -7,7 +7,7 @@ TestSkeletonViewport::TestSkeletonViewport(QObject *parent) :
 }
 
 void TestSkeletonViewport::testTranslation() {
-    Viewport *skeletonViewport = reference->vp4;
+    Viewport *skeletonViewport = reference->vpSkel;
     int x = skeletonViewport->geometry().x() + 5;
     int y = skeletonViewport->geometry().y() + 5;
 
