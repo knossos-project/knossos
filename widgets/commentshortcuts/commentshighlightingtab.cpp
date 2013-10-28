@@ -1,4 +1,4 @@
-#include "commentspreferencestab.h"
+#include "commentshighlightingtab.h"
 
 /*
  *  This file is a part of KNOSSOS.
@@ -43,7 +43,7 @@ extern struct stateInfo *state;
 
 static const int N = 5;
 
-CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
+CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     QWidget(parent)
 {
 
@@ -116,7 +116,7 @@ CommentsPreferencesTab::CommentsPreferencesTab(QWidget *parent) :
 
 }
 
-void CommentsPreferencesTab::enableCondColoringChecked(bool on) {
+void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
     if(on) {
         state->skeletonState->userCommentColoringOn = true;
         qDebug() << "enabled";
@@ -126,7 +126,7 @@ void CommentsPreferencesTab::enableCondColoringChecked(bool on) {
     }
 }
 
-void CommentsPreferencesTab::enableCondRadiusChecked(bool on) {
+void CommentsHighlightingTab::enableCondRadiusChecked(bool on) {
     if(on) {
         state->skeletonState->commentNodeRadiusOn = true;
         qDebug() << "enabled";
@@ -137,7 +137,7 @@ void CommentsPreferencesTab::enableCondRadiusChecked(bool on) {
 }
 
 
-void CommentsPreferencesTab::substringEntered() {
+void CommentsHighlightingTab::substringEntered() {
     QLineEdit *field = (QLineEdit*) sender();
     for(int i = 0; i < N; i++) {
         if(field == substringFields[i]) {
@@ -146,7 +146,7 @@ void CommentsPreferencesTab::substringEntered() {
     }
 }
 
-void CommentsPreferencesTab::colorChanged(QString color) {
+void CommentsHighlightingTab::colorChanged(QString color) {
 
     QComboBox *colorBox = (QComboBox*) sender();
     for(int i = 0; i < N; i++) {
@@ -172,7 +172,7 @@ void CommentsPreferencesTab::colorChanged(QString color) {
     }
 }
 
-void CommentsPreferencesTab::radiusChanged(double value) {
+void CommentsHighlightingTab::radiusChanged(double value) {
     QDoubleSpinBox *spinBox = (QDoubleSpinBox*) sender();
     for(int i = 0; i < N; i++) {
         if(spinBox == radiusSpinBox[i]) {

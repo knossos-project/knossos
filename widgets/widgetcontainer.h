@@ -13,7 +13,7 @@
 
 #include "widgets/commentswidget.h"
 #include "widgets/commentshortcuts/commentshortcutstab.h"
-#include "widgets/commentshortcuts/commentspreferencestab.h"
+#include "widgets/commentshortcuts/commentshighlightingtab.h"
 #include "widgets/commentshortcuts/commentsnodecommentstab.h"
 
 #include "widgets/toolswidget.h"

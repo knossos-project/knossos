@@ -123,7 +123,7 @@ void TestCommentsWidget::testAddNodeComment() {
 */
 void TestCommentsWidget::testEnableConditionalColoring() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
-    CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
+    CommentsHighlightingTab *highlightingTab = reference->window->widgetContainer->commentsWidget->highlightingTab;
     commentsWidget->setVisible(true);
 
     Viewport *firstViewport = reference->vp;
@@ -143,10 +143,10 @@ void TestCommentsWidget::testEnableConditionalColoring() {
 
         int random = rand() % 5;
 
-        preferenceTab->substringFields[i]->setText("T");
-        preferenceTab->colorComboBox[i]->setCurrentIndex(random);
-        if(!preferenceTab->enableCondColoringCheckBox->isChecked())
-            preferenceTab->enableCondColoringCheckBox->setChecked(true);
+        highlightingTab ->substringFields[i]->setText("T");
+        highlightingTab ->colorComboBox[i]->setCurrentIndex(random);
+        if(!highlightingTab ->enableCondColoringCheckBox->isChecked())
+            highlightingTab ->enableCondColoringCheckBox->setChecked(true);
 
         // check the color declared in the skeleton Model
         color4F *color = state->skeletonState->commentColors;
@@ -191,7 +191,7 @@ void TestCommentsWidget::testEnableConditionalColoring() {
 /** This testcase checks the conditional radius */
 void TestCommentsWidget::testEnableConditionalRadius() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
-    CommentsPreferencesTab *preferenceTab = reference->window->widgetContainer->commentsWidget->preferencesTab;
+    CommentsHighlightingTab *highlightingTab = reference->window->widgetContainer->commentsWidget->highlightingTab;
     commentsWidget->setVisible(true);
 
     Viewport *firstViewport = reference->vp;
@@ -210,11 +210,11 @@ void TestCommentsWidget::testEnableConditionalRadius() {
         reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
 
         // the coloring checkbox will be enabled and a corresponding substring will be defined
-        preferenceTab->substringFields[i]->setText("T");
+        highlightingTab->substringFields[i]->setText("T");
 
-        preferenceTab->radiusSpinBox[i]->setValue(random[i]);
-        if(!preferenceTab->enableCondRadiusCheckBox->isChecked())
-            preferenceTab->enableCondRadiusCheckBox->setChecked(true);
+        highlightingTab->radiusSpinBox[i]->setValue(random[i]);
+        if(!highlightingTab->enableCondRadiusCheckBox->isChecked())
+            highlightingTab->enableCondRadiusCheckBox->setChecked(true);
 
         // check the resulting radius size
         QVERIFY(random[i] == state->skeletonState->commentNodeRadii[i]);

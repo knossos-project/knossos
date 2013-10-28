@@ -30,7 +30,7 @@
 class QEvent;
 class QTabWidget;
 class CommentShortCutsTab;
-class CommentsPreferencesTab;
+class CommentsHighlightingTab;
 class CommentsNodeCommentsTab;
 class CommentsWidget : public QDialog
 {
@@ -40,7 +40,7 @@ public:
     void loadSettings();
     void saveSettings();
     CommentShortCutsTab *shortcutTab;
-    CommentsPreferencesTab *preferencesTab;
+    CommentsHighlightingTab *highlightingTab;
     CommentsNodeCommentsTab *nodeCommentsTab;
 signals:
     void uncheckSignal();

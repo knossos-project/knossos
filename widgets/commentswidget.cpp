@@ -24,7 +24,7 @@
 
 #include "commentswidget.h"
 #include "commentshortcuts/commentshortcutstab.h"
-#include "commentshortcuts/commentspreferencestab.h"
+#include "commentshortcuts/commentshighlightingtab.h"
 #include "commentshortcuts/commentsnodecommentstab.h"
 #include "GUIConstants.h"
 #include <QSettings>
@@ -45,13 +45,13 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
 {
     setWindowTitle("Comments Shortcuts");
     this->shortcutTab = new CommentShortCutsTab();
-    this->preferencesTab = new CommentsPreferencesTab();
+    this->highlightingTab = new CommentsHighlightingTab();
     this->nodeCommentsTab = new CommentsNodeCommentsTab();
 
     tabs = new QTabWidget(this);
-    tabs->addTab(shortcutTab, "shortcuts");
-    tabs->addTab(preferencesTab, "preferences");
-    tabs->addTab(nodeCommentsTab, "node comments");
+    tabs->addTab(shortcutTab, "Shortcuts");
+    tabs->addTab(highlightingTab, "Highlighting");
+    tabs->addTab(nodeCommentsTab, "Node Comments");
 
 }
 
@@ -85,27 +85,27 @@ void CommentsWidget::loadSettings() {
     }
 
     if(!settings.value(SUBSTR1).isNull())
-        this->preferencesTab->substringFields[0]->setText(settings.value(SUBSTR1).toString());
+        this->highlightingTab->substringFields[0]->setText(settings.value(SUBSTR1).toString());
     if(!settings.value(SUBSTR2).isNull())
-        this->preferencesTab->substringFields[1]->setText(settings.value(SUBSTR2).toString());
+        this->highlightingTab->substringFields[1]->setText(settings.value(SUBSTR2).toString());
     if(!settings.value(SUBSTR3).isNull())
-        this->preferencesTab->substringFields[2]->setText(settings.value(SUBSTR3).toString());
+        this->highlightingTab->substringFields[2]->setText(settings.value(SUBSTR3).toString());
     if(!settings.value(SUBSTR4).isNull())
-        this->preferencesTab->substringFields[3]->setText(settings.value(SUBSTR4).toString());
+        this->highlightingTab->substringFields[3]->setText(settings.value(SUBSTR4).toString());
     if(!settings.value(SUBSTR5).isNull())
-        this->preferencesTab->substringFields[4]->setText(settings.value(SUBSTR5).toString());
+        this->highlightingTab->substringFields[4]->setText(settings.value(SUBSTR5).toString());
 
-    this->preferencesTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());
-    this->preferencesTab->colorComboBox[1]->setCurrentIndex(settings.value(COLOR2).toInt());
-    this->preferencesTab->colorComboBox[2]->setCurrentIndex(settings.value(COLOR3).toInt());
-    this->preferencesTab->colorComboBox[3]->setCurrentIndex(settings.value(COLOR4).toInt());
-    this->preferencesTab->colorComboBox[4]->setCurrentIndex(settings.value(COLOR5).toInt());
+    this->highlightingTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());
+    this->highlightingTab->colorComboBox[1]->setCurrentIndex(settings.value(COLOR2).toInt());
+    this->highlightingTab->colorComboBox[2]->setCurrentIndex(settings.value(COLOR3).toInt());
+    this->highlightingTab->colorComboBox[3]->setCurrentIndex(settings.value(COLOR4).toInt());
+    this->highlightingTab->colorComboBox[4]->setCurrentIndex(settings.value(COLOR5).toInt());
 
-    this->preferencesTab->radiusSpinBox[0]->setValue(settings.value(RADIUS1).toDouble());
-    this->preferencesTab->radiusSpinBox[1]->setValue(settings.value(RADIUS2).toDouble());
-    this->preferencesTab->radiusSpinBox[2]->setValue(settings.value(RADIUS3).toDouble());
-    this->preferencesTab->radiusSpinBox[3]->setValue(settings.value(RADIUS4).toDouble());
-    this->preferencesTab->radiusSpinBox[4]->setValue(settings.value(RADIUS5).toDouble());
+    this->highlightingTab->radiusSpinBox[0]->setValue(settings.value(RADIUS1).toDouble());
+    this->highlightingTab->radiusSpinBox[1]->setValue(settings.value(RADIUS2).toDouble());
+    this->highlightingTab->radiusSpinBox[2]->setValue(settings.value(RADIUS3).toDouble());
+    this->highlightingTab->radiusSpinBox[3]->setValue(settings.value(RADIUS4).toDouble());
+    this->highlightingTab->radiusSpinBox[4]->setValue(settings.value(RADIUS5).toDouble());
 
     settings.endGroup();
 
@@ -128,23 +128,23 @@ void CommentsWidget::saveSettings() {
     settings.setValue(COMMENT4, this->shortcutTab->textFields[3]->text());
     settings.setValue(COMMENT5, this->shortcutTab->textFields[4]->text());
 
-    settings.setValue(SUBSTR1, this->preferencesTab->substringFields[0]->text());
-    settings.setValue(SUBSTR2, this->preferencesTab->substringFields[1]->text());
-    settings.setValue(SUBSTR3, this->preferencesTab->substringFields[2]->text());
-    settings.setValue(SUBSTR4, this->preferencesTab->substringFields[3]->text());
-    settings.setValue(SUBSTR5, this->preferencesTab->substringFields[4]->text());
+    settings.setValue(SUBSTR1, this->highlightingTab->substringFields[0]->text());
+    settings.setValue(SUBSTR2, this->highlightingTab->substringFields[1]->text());
+    settings.setValue(SUBSTR3, this->highlightingTab->substringFields[2]->text());
+    settings.setValue(SUBSTR4, this->highlightingTab->substringFields[3]->text());
+    settings.setValue(SUBSTR5, this->highlightingTab->substringFields[4]->text());
 
-    settings.setValue(COLOR1, this->preferencesTab->colorComboBox[0]->currentIndex());
-    settings.setValue(COLOR2, this->preferencesTab->colorComboBox[1]->currentIndex());
-    settings.setValue(COLOR3, this->preferencesTab->colorComboBox[2]->currentIndex());
-    settings.setValue(COLOR4, this->preferencesTab->colorComboBox[3]->currentIndex());
-    settings.setValue(COLOR5, this->preferencesTab->colorComboBox[4]->currentIndex());
+    settings.setValue(COLOR1, this->highlightingTab->colorComboBox[0]->currentIndex());
+    settings.setValue(COLOR2, this->highlightingTab->colorComboBox[1]->currentIndex());
+    settings.setValue(COLOR3, this->highlightingTab->colorComboBox[2]->currentIndex());
+    settings.setValue(COLOR4, this->highlightingTab->colorComboBox[3]->currentIndex());
+    settings.setValue(COLOR5, this->highlightingTab->colorComboBox[4]->currentIndex());
 
-    settings.setValue(RADIUS1, this->preferencesTab->radiusSpinBox[0]->value());
-    settings.setValue(RADIUS2, this->preferencesTab->radiusSpinBox[1]->value());
-    settings.setValue(RADIUS3, this->preferencesTab->radiusSpinBox[2]->value());
-    settings.setValue(RADIUS4, this->preferencesTab->radiusSpinBox[3]->value());
-    settings.setValue(RADIUS5, this->preferencesTab->radiusSpinBox[4]->value());
+    settings.setValue(RADIUS1, this->highlightingTab->radiusSpinBox[0]->value());
+    settings.setValue(RADIUS2, this->highlightingTab->radiusSpinBox[1]->value());
+    settings.setValue(RADIUS3, this->highlightingTab->radiusSpinBox[2]->value());
+    settings.setValue(RADIUS4, this->highlightingTab->radiusSpinBox[3]->value());
+    settings.setValue(RADIUS5, this->highlightingTab->radiusSpinBox[4]->value());
 
     settings.endGroup();
 }

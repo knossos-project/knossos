@@ -1,5 +1,5 @@
-#ifndef COMMENTSPREFERENCESTAB_H
-#define COMMENTSPREFERENCESTAB_H
+#ifndef COMMENTSHIGHLIGHTINGTAB_H
+#define COMMENTSHIGHLIGHTINGTAB_H
 
 /*
  *  This file is a part of KNOSSOS.
@@ -31,13 +31,13 @@
 class QLabel;
 class QCheckBox;
 class QLineEdit;
-class CommentsPreferencesTab : public QWidget
+class CommentsHighlightingTab : public QWidget
 {
     friend class TestCommentsWidget;
     friend class CommentsWidget;
     Q_OBJECT
 public:
-    explicit CommentsPreferencesTab(QWidget *parent = 0);
+    explicit CommentsHighlightingTab(QWidget *parent = 0);
 
 signals:
 
@@ -62,4 +62,4 @@ protected:
 
 };
 
-#endif // COMMENTSPREFERENCESTAB_H
+#endif // COMMENTSHIGHLIGHTINGTAB_H

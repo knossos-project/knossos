@@ -102,7 +102,7 @@ const QString LOCKING_RADIUS = "locking_radius";
 const QString ENABLE_COMMENT_LOCKING = "enable_comment_locking";
 const QString LOCK_TO_NODES_WITH_COMMENT = "lock_to_nodes_with_comment";
 
-/* Comments Preferences */
+/* Comments Highlighting */
 const QString GREEN = "green";
 const QString ROSE = "rose";
 const QString AZURE = "azure";

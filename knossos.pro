@@ -29,7 +29,7 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/tracingtimewidget.cpp \
     widgets/commentswidget.cpp \
     widgets/commentshortcuts/commentshortcutstab.cpp \
-    widgets/commentshortcuts/commentspreferencestab.cpp \
+    widgets/commentshortcuts/commentshighlightingtab.cpp \
     widgets/zoomandmultireswidget.cpp \
     widgets/datasavingwidget.cpp \
     widgets/navigationwidget.cpp \
@@ -54,6 +54,8 @@ SOURCES += widgets/mainwindow.cpp \
     scripting.cpp \
     qsort.cpp \
     ftp.cpp \
+    task.cpp \
+    viewportscene.cpp \
     openjpeg/cio.c \
     openjpeg/bio.c \
     openjpeg/color.c \
@@ -87,7 +89,6 @@ SOURCES += widgets/mainwindow.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
-    task.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -141,7 +142,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tracingtimewidget.h \
     widgets/commentswidget.h \
     widgets/commentshortcuts/commentshortcutstab.h \
-    widgets/commentshortcuts/commentspreferencestab.h \
+    widgets/commentshortcuts/commentshighlightingtab.h \
     widgets/zoomandmultireswidget.h \
     widgets/datasavingwidget.h \
     widgets/navigationwidget.h \
@@ -159,6 +160,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/taskloginwidget.h \
     widgets/taskmanagementwidget.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
+    viewportscene.h \
     functions.h \
     GUIConstants.h \
     widgets/widgetcontainer.h \
