@@ -249,7 +249,10 @@ treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
     return NULL;
 }
 
+// remove this function
 bool Skeletonizer::addNodeToSkeletonStruct(nodeListElement *node) {
+
+    return false;
     skeletonDC *currentSkeletonDC;
     skeletonDCnode *currentNewSkeletonDCnode;
     Coordinate currentMagPos;
@@ -283,7 +286,9 @@ bool Skeletonizer::addNodeToSkeletonStruct(nodeListElement *node) {
     return true;
 }
 
+// remove this function
 bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
+        return false;
     int i;
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *currentNewSkeletonDCsegment;
@@ -372,7 +377,9 @@ bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
     return true;
 }
 
+// remove this function
 bool Skeletonizer::delNodeFromSkeletonStruct(nodeListElement *node) {
+
     skeletonDC *currentSkeletonDC;
     skeletonDCnode *currentSkeletonDCnode, *lastSkeletonDCnode = NULL;
     Coordinate curMagPos;
@@ -385,7 +392,7 @@ bool Skeletonizer::delNodeFromSkeletonStruct(nodeListElement *node) {
                                              Coordinate::Px2DcCoord(curMagPos));
     if(currentSkeletonDC == HT_FAILURE) {
         //A skeleton DC is missing
-        LOG("Error: a skeleton DC is missing that should be available. You may encounter other errors.")
+        LOG("Hans: Error: a skeleton DC is missing that should be available. You may encounter other errors.")
         return false;
     }
 
@@ -411,6 +418,7 @@ bool Skeletonizer::delNodeFromSkeletonStruct(nodeListElement *node) {
     return true;
 }
 
+// remove this function
 bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
     int i;
     skeletonDC *currentSkeletonDC;
@@ -1634,11 +1642,6 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     nodeToDel->firstSegment = NULL;
 
 
-     // Delete the node out of the visualization structure
-
-
-    delNodeFromSkeletonStruct(nodeToDel);
-
     if(state->skeletonState->selectedCommentNode == nodeToDel) {
         state->skeletonState->selectedCommentNode = NULL;
     }
@@ -2202,18 +2205,18 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
     state->skeletonState->skeletonTime = 0;
     //state->skeletonState->skeletonTimeCorrection = SDL_GetTicks(); SDL TODO
 
-    Hashtable::ht_rmtable(state->skeletonState->skeletonDCs);
+    //Hashtable::ht_rmtable(state->skeletonState->skeletonDCs);
     delDynArray(state->skeletonState->nodeCounter);
     delDynArray(state->skeletonState->nodesByNodeID);
     delStack(state->skeletonState->branchStack);
 
     //Create a new hash-table that holds the skeleton datacubes
-    state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
-    if(state->skeletonState->skeletonDCs == HT_FAILURE) {
-        LOG("Unable to create skeleton hash-table.")
-        Knossos::unlockSkeleton(false);
-        return false;
-    }
+    //state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
+    //if(state->skeletonState->skeletonDCs == HT_FAILURE) {
+    //    LOG("Unable to create skeleton hash-table.")
+    //    Knossos::unlockSkeleton(false);
+    //    return false;
+    //}
 
     //Generate empty tree structures
     state->skeletonState->firstTree = NULL;
@@ -2746,15 +2749,6 @@ bool Skeletonizer::editNode(int targetRevision,
 
     nodeID = node->nodeID;
 
-    //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    /*
-    delNodeFromSkeletonStruct(node);
-    currentSegment = node->firstSegment;
-    while(currentSegment) {
-        delSegmentFromSkeletonStruct(currentSegment);
-        currentSegment = currentSegment->next;
-    }*/
-
     if(!((newXPos < 0) || (newXPos > state->boundary.x)
        || (newYPos < 0) || (newYPos > state->boundary.y)
        || (newZPos < 0) || (newZPos > state->boundary.z))) {
@@ -2765,15 +2759,6 @@ bool Skeletonizer::editNode(int targetRevision,
         node->radius = newRadius;
     }
     node->createdInMag = inMag;
-
-    //Since the position can change, we have to rebuild the corresponding spatial skeleton structure
-    /*
-    addNodeToSkeletonStruct(node);
-    currentSegment = node->firstSegment;
-    while(currentSegment) {
-        addSegmentToSkeletonStruct(currentSegment);
-        currentSegment = currentSegment->next;
-    }*/
 
     updateCircRadius(node);
     state->skeletonState->skeletonChanged = true;

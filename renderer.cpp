@@ -525,7 +525,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 1.);
-
+               // LOG("ortho VP tex XY id: %d", state->viewerState->vpConfigs[currentVP].texture.texHandle)
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
@@ -1329,11 +1329,21 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
                 * 0.5;
 
+
             switch(state->viewerState->vpConfigs[i].type) {
             case VIEWPORT_XY:
                 if(!state->skeletonState->showXYplane) break;
 
+
+                glEnable(GL_TEXTURE_2D);
+                //glDisable(GL_DEPTH_TEST);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glColor4f(1., 1., 1., 1.);
+
+
                 glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
+
+                //LOG("skeleton VP tex XY id: %d", state->viewerState->vpConfigs[i].texture.texHandle)
                 glLoadName(VIEWPORT_XY);
                 glBegin(GL_QUADS);
                     glNormal3i(0,0,1);
@@ -1560,11 +1570,11 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
      // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
     glEnable(GL_BLEND);
 
-    // Now we draw the data volume box. use display list for that...very static TDitem
+    // Now we draw the data volume box.
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLoadName(3);
-    glColor4f(0., 0., 0., 1); // HERE
+    glColor4f(0.8, 0.8, 0.8, 1.0);
     glBegin(GL_QUADS);
         glNormal3i(0,0,1);
         glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
@@ -1609,15 +1619,23 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glVertex3i(state->boundary.x / 2, (state->boundary.y / 2), -(state->boundary.z / 2));
     glEnd();
 
-    glColor4f(0., 0., 0.,1.); // HERE
+    glColor4f(0., 0., 0., 1.);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glPushMatrix();
+    /*
+    glLineWidth(2.f);
+    glBegin(GL_LINES);
+        glVertex3i(-(state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+        glVertex3i((state->boundary.x / 2), -(state->boundary.y / 2), -(state->boundary.z / 2));
+    glEnd();
+    glLineWidth(1.f);
+*/
     glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
     gluCylObj = gluNewQuadric();
     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-    gluCylinder(gluCylObj, 3., 3. , state->boundary.z, 5, 5);
+    gluCylinder(gluCylObj, 5., 5. , state->boundary.z, 5, 5);
     gluDeleteQuadric(gluCylObj);
 
     glPushMatrix();
@@ -1633,7 +1651,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
     glRotatef(90., 0., 1., 0.);
-    gluCylinder(gluCylObj, 3., 3. , state->boundary.x, 5, 5);
+    gluCylinder(gluCylObj, 5., 5. , state->boundary.x, 5, 5);
     gluDeleteQuadric(gluCylObj);
 
     glPushMatrix();
@@ -1649,7 +1667,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
     glRotatef(-90., 1., 0., 0.);
-    gluCylinder(gluCylObj, 3., 3. , state->boundary.y, 5, 5);
+    gluCylinder(gluCylObj, 5., 5. , state->boundary.y, 5, 5);
     gluDeleteQuadric(gluCylObj);
 
     glPushMatrix();
