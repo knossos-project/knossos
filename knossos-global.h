@@ -102,6 +102,15 @@ values. The XY vp always used. */
 #define DEFAULT_VP_Y_OFFSET 60 //distance from the top of the mainwindow
 #define DEFAULT_VP_SIZE 350
 
+// skeleton vp orientation
+#define SKELVP_XY_VIEW 1
+#define SKELVP_XZ_VIEW 2
+#define SKELVP_YZ_VIEW 3
+#define SKELVP_R90 4
+#define SKELVP_R180 5
+#define SKELVP_RESET 6
+
+
 #define X_AXIS 0
 #define Y_AXIS 1
 #define Z_AXIS 3

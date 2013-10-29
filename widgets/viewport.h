@@ -108,7 +108,6 @@ signals:
     void loadSkeleton(const QString &path);
 public slots:
     void zoomOrthogonals(float step);
-    void moveButtonClicked();
     void resizeButtonClicked();
     void xyButtonClicked();
     void xzButtonClicked();

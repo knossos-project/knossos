@@ -534,35 +534,43 @@ void Viewport::showButtons() {
     }
 }
 
-void Viewport::moveButtonClicked() {
-
-}
-
 void Viewport::resizeButtonClicked() {
     resizeButtonHold = true;
     raise();
 }
 
 void Viewport::xyButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_XY_VIEW;
+    }
 }
 
 void Viewport::xzButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
+    }
 }
 
 void Viewport::yzButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_YZ_VIEW;
+    }
 }
 
 void Viewport::r90ButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_R90;
+    }
 }
 
 void Viewport::r180ButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_R180;
+    }
 }
 
 void Viewport::resetButtonClicked() {
-
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+    }
 }
