@@ -1870,9 +1870,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     state->skeletonState->unsavedChanges = true;
 
     state->viewerState->gui->activeTreeID = currentTree->treeID;
-
-    qDebug() << " new active tree id is " << state->skeletonState->activeTree->treeID;
-
     return true;
 }
 
@@ -2658,7 +2655,6 @@ segmentListElement* Skeletonizer::findSegmentByNodeIDs(int sourceNodeID, int tar
     currentNode = findNodeByNodeID(sourceNodeID);
 
     if(!currentNode) { return NULL;}
-
     currentSegment = currentNode->firstSegment;
     while(currentSegment) {
         if(currentSegment->flag == SEGMENT_BACKWARD) {

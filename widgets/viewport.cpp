@@ -256,7 +256,6 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
     delegate->mouseX = event->x();
     delegate->mouseY = event->y();
-
     if(event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers() == Qt::CTRL) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
@@ -267,7 +266,7 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
         //this->move(event->x() - this->pos().x(), event->y() - pos().y());
         handleMouseButtonLeft(event, viewportType);
     }
-    else if(event->button() == Qt::MidButton) {
+    else if(event->button() == Qt::MiddleButton) {
         handleMouseButtonMiddle(event, viewportType);
     }
     else if(event->button() == Qt::RightButton) {

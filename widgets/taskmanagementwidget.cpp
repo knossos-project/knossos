@@ -138,7 +138,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
         rename(state->taskState->taskFile, filepath);
     #endif
     }
-    //MainWindow::fileDialogForSkeletonAndAsyncLoading(filepath);
+    emit loadSkeletonSignal(state->taskState->taskFile);
     statusLabel->setText("<font color='green'>Loaded last submit successfully.</font>");
 }
 
@@ -158,17 +158,17 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
 
     QDir taskDir("task-files");
     if(taskDir.exists() == false) {
-    #ifdef LINUX
-        taskDir.mkdir("task-files");
+    #ifdef UNIX
+        taskDir.mkdir(".");
     #else
-        taskDir.mkdir("task-files");
+        taskDir.mkdir(".");
     #endif
     }
     memset(state->taskState->taskFile, '\0', 1024);
-#ifdef LINUX
+#ifdef UNIX
     sprintf(state->taskState->taskFile, "task-files/task.tmp.nml");
 #else
-    sprintf(state->taskState->taskFile, "task-files\\task.tmp.nml");
+    sprintf(state->taskState->taskFile, "task-files/task.tmp.nml");
 #endif
 
     tasknml = fopen(state->taskState->taskFile, "w");
@@ -225,7 +225,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     #endif
     }
 
-    //MainWindow::fileDialogForSkeletonAndAsyncLoading(state->taskState->taskFile);
+    emit loadSkeletonSignal(state->taskState->taskFile);
 
     // also update the task name for display
     char taskName[1024];

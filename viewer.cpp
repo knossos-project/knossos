@@ -2905,6 +2905,8 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vpXY, SLOT(updateGL()));
 
+    connect(window->widgetContainer->taskManagementWidget, SIGNAL(loadSkeletonSignal(const QString &fileName)), window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString &fileName)));
+
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
 
@@ -2917,6 +2919,11 @@ void Viewer::rewire() {
     connect(vpXZ->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(vpYZ->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(vpSkel->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
+
+    connect(vpXY->delegate, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
+    connect(vpXZ->delegate, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
+    connect(vpYZ->delegate, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
+    connect(vpSkel->delegate, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
 
     connect(vpXY->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
     connect(vpXZ->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));

@@ -34,6 +34,7 @@ protected:
 
 signals:
     void saveSkeletonSignal();
+    void loadSkeletonSignal(const QString &fileName);
 
 public slots:
     void submitButtonClicked();
