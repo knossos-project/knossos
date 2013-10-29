@@ -654,6 +654,8 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
             return;
         }
 
+        state->skeletonState->skeletonFileAsQString = fileName;
+
         QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         future.waitForFinished();
 
