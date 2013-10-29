@@ -356,7 +356,8 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 }
 
 uint Renderer::renderViewportBorders(uint currentVP) {
-
+    Coordinate pos;
+    char label[1024];
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -411,6 +412,17 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
             glVertex3d(5, 4, -1);
         glEnd();
+    }
+
+    if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
+        glColor4f(0, 0, 0, 1);
+        float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
+        float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
+        SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
+
+        memset(label, '\0', 1024);
+        sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+        renderText(&pos, label, currentVP);
     }
 
     glLineWidth(1.);
@@ -612,15 +624,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, dataPxY, -0.0001);
                 glEnd();
             }
-            if(state->viewerState->showVPLabels) {
-                glColor4f(0, 0, 0, 1);
-                width = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmX*0.001;
-                height = state->viewerState->vpConfigs[VIEWPORT_XY].displayedlengthInNmY*0.001;
-                SET_COORDINATE(pos, -dataPxX + 30, -dataPxY + 30, -0.0001);
-                memset(label, '\0', 1024);
-                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
-                renderText(&pos, label, VIEWPORT_XY);
-            }
             break;
 
         case VIEWPORT_XZ:
@@ -755,15 +758,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, 0.0001, dataPxY);
                 glEnd();
             }
-            if(state->viewerState->showVPLabels) {
-                glColor4f(0, 0, 0, 1);
-                width = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmX*0.001;
-                height = state->viewerState->vpConfigs[VIEWPORT_XZ].displayedlengthInNmY*0.001;
-                SET_COORDINATE(pos, -dataPxX + 30, 0.0001, -dataPxY + 30);
-                memset(label, '\0', 1024);
-                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
-                renderText(&pos, label, VIEWPORT_XZ);
-            }
             break;
         case VIEWPORT_YZ:
             if(!state->viewerState->selectModeFlag) {
@@ -885,15 +879,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(-0.0001, 0.5, -dataPxX);
                     glVertex3f(-0.0001, 0.5, dataPxX);
                 glEnd();
-            }
-            if(state->viewerState->showVPLabels) {
-                glColor4f(0, 0, 0, 1);
-                width = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmX*0.001;
-                height = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmY*0.001;
-                SET_COORDINATE(pos, -0.0001, -dataPxX + 30, -dataPxX + 30);
-                memset(label, '\0', 1024);
-                sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
-                renderText(&pos, label, VIEWPORT_YZ);
             }
             break;
         case VIEWPORT_ARBITRARY:
@@ -1832,7 +1817,6 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     }
 
     hits = glRenderMode(GL_RENDER);
-    qDebug() << hits << " collision";
     glLoadIdentity();
 
     ptr = (GLuint *)selectionBuffer;
