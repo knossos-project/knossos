@@ -188,6 +188,7 @@ void ToolsWidget::updateDisplayedTree() {
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
     this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->greatestNodeID);
     this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(state->skeletonState->greatestNodeID);
+    this->toolsNodesTabWidget->idSpinBox->setMaximum(state->skeletonState->greatestNodeID);
 
     if(state->skeletonState->activeNode) {
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
@@ -220,6 +221,7 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(0);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(0);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(0);
+        this->toolsNodesTabWidget->idSpinBox->setMaximum(0);
 
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(0));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(0));

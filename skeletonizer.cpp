@@ -1666,7 +1666,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
 
         setActiveNode(CHANGE_NOSYNC, newActiveNode, 0);
     }
-
+    state->skeletonState->greatestNodeID--;
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;

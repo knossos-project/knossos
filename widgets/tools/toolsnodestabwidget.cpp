@@ -52,6 +52,8 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
     idLabel = new QLabel("ID:");
     idSpinBox = new QSpinBox();
+    idSpinBox->setMaximum(0); // no nodes on start-up
+    idSpinBox->setMinimum(0);
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -187,11 +189,7 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
-         if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true)) {
-
-         } else {
-
-         }
+         emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true);
     }
 }
 

@@ -123,7 +123,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-
     int clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
