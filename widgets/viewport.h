@@ -46,6 +46,18 @@ protected:
     void leaveEvent(QEvent *);
 };
 
+class ViewportButton : public QPushButton {
+public:
+    static const int WIDTH = 35;
+    static const int HEIGHT = 20;
+
+    explicit ViewportButton(QString label, QWidget *parent);
+
+protected:
+    void enterEvent(QEvent *);
+    void leaveEvent(QEvent *);
+};
+
 class Viewport : public QGLWidget
 {
     Q_OBJECT
@@ -60,8 +72,6 @@ public:
     EventModel *delegate;
 
     static const int MIN_VP_SIZE = 50;
-    static const int SKELVPBUTTON_W = 35;
-    static const int SKELVPBUTTON_H = 20;
 
 protected:
     void initializeGL();

@@ -45,6 +45,16 @@ void ResizeButton::leaveEvent(QEvent *) {
     setCursor(Qt::CrossCursor);
 }
 
+ViewportButton::ViewportButton(QString label, QWidget *parent) : QPushButton(label, parent) {}
+
+void ViewportButton::enterEvent(QEvent *) {
+    setCursor(Qt::ArrowCursor);
+}
+
+void ViewportButton::leaveEvent(QEvent *) {
+    setCursor(Qt::CrossCursor);
+}
+
 Viewport::Viewport(QWidget *parent, int viewportType) :
     QGLWidget(parent), viewportType(viewportType), resizeButtonHold(false) {
     delegate = new EventModel();
@@ -55,23 +65,19 @@ Viewport::Viewport(QWidget *parent, int viewportType) :
     this->setCursor(Qt::CrossCursor);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
 
-
-    //moveButton = new QPushButton(this);
-   // moveButton->setGeometry(323, 298, 25, 25);
-
     resizeButton = new ResizeButton(this);
     resizeButton->setIcon(QIcon("resize.gif"));
     resizeButton->show();
-    //connect(moveButton, SIGNAL(clicked()), this, SLOT(moveButtonClicked()));
+
     connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
 
     if(viewportType == VIEWPORT_SKELETON) {
-        xyButton = new QPushButton("xy", this);
-        xzButton = new QPushButton("xz", this);
-        yzButton = new QPushButton("yz", this);
-        r90Button = new QPushButton("r90", this);
-        r180Button = new QPushButton("r180", this);
-        resetButton = new QPushButton("reset", this);
+        xyButton = new ViewportButton("xy", this);
+        xzButton = new ViewportButton("xz", this);
+        yzButton = new ViewportButton("yz", this);
+        r90Button = new ViewportButton("r90", this);
+        r180Button = new ViewportButton("r180", this);
+        resetButton = new ViewportButton("reset", this);
 
         connect(xyButton, SIGNAL(clicked()), this, SLOT(xyButtonClicked()));
         connect(xzButton, SIGNAL(clicked()), this, SLOT(xzButtonClicked()));
@@ -466,12 +472,12 @@ void Viewport::resizeVP(QMouseEvent *event) {
 void Viewport::updateButtonPositions() {
     resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
     if(viewportType == VIEWPORT_SKELETON) {
-        xyButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*6, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
-        xzButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*5, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
-        yzButton->setGeometry(width() - (SKELVPBUTTON_W - 2)*4, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
-        r90Button->setGeometry(width() - (SKELVPBUTTON_W - 2)*3, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
-        r180Button->setGeometry(width() - (SKELVPBUTTON_W - 2)*2, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
-        resetButton->setGeometry(width() - SKELVPBUTTON_W - 2, 2, SKELVPBUTTON_W, SKELVPBUTTON_H);
+        xyButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*6, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
+        xzButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*5, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
+        yzButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*4, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
+        r90Button->setGeometry(width() - (ViewportButton::WIDTH - 2)*3, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
+        r180Button->setGeometry(width() - (ViewportButton::WIDTH - 2)*2, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
+        resetButton->setGeometry(width() - ViewportButton::WIDTH - 2, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
     }
 }
 
