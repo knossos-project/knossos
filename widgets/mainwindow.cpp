@@ -545,21 +545,9 @@ void MainWindow::recentFileSelected() {
 
     QString fileName = action->text();
     if(!fileName.isNull()) {
+        this->fileDialogForSkeletonAndAsyncLoading(fileName);
 
-        state->skeletonState->skeletonFileAsQString = fileName;
-        char *cname = const_cast<char *>(fileName.toStdString().c_str());
-        strncpy(state->skeletonState->skeletonFile, cname, 8192);
-
-        QApplication::processEvents();
-        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
-        future.waitForFinished();
-
-        updateTitlebar(true);
-        linkWithActiveNodeSlot();
-
-        emit updateToolsSignal();
     }
-
 }
 
 void MainWindow::createMenus()
