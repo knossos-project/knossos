@@ -274,7 +274,7 @@ void MainWindow:: createToolBar() {
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 
-    connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
+    //connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
     connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));

@@ -1814,10 +1814,14 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-
-    gluPickMatrix(x, refVPXY->height() - y, width, width, openGLviewport);
-
-
+    if(currentVP == this->refVPXY)
+        gluPickMatrix(x, refVPXY->height() - y, width, width, openGLviewport);
+    else if(currentVp == this->refVPXZ)
+        gluPickMatrix(x, refVPXZ->height() - y, width, width, openGLviewport);
+    else if(currentVp == this->refVPYZ)
+        gluPickMatrix(x, refVPYZ->height() - y, width, width, openGLviewport);
+    else if(currentVp == this->refVPSkel)
+       gluPickMatrix(x, this->refVPSkel->height() - y, width, width, openGLviewport);
 
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
