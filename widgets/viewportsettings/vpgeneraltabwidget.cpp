@@ -47,7 +47,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->lightEffectsCheckBox = new QCheckBox("Light Effects");
     this->lightEffectsCheckBox->setChecked(state->viewerState->lightOnOff);
 
-    this->hightlightActiveTreeCheckBox = new QCheckBox("Hilight Active Tree");
+    this->hightlightActiveTreeCheckBox = new QCheckBox("Highlight Active Tree");
     this->hightlightActiveTreeCheckBox->setChecked(state->viewerState->highlightVp);
 
     this->showAllNodeIdsCheckBox = new QCheckBox("Show All Node IDs");
