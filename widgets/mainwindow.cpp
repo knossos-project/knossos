@@ -379,8 +379,7 @@ void MainWindow::reloadDataSizeWin(){
     }
 }
 
-void MainWindow::treeColorAdjustmentsChanged(){
-    qDebug() << "HHAHAAAAAAAAAAAA";
+void MainWindow::treeColorAdjustmentsChanged() {
     //user lut activated
         if(state->viewerState->treeColortableOn) {
             //user lut selected
@@ -416,8 +415,7 @@ void MainWindow::datasetColorAdjustmentsChanged() {
                    state->viewerState->datasetColortable,
                    RGB_LUTSIZE * sizeof(GLuint));
             doAdjust = true;
-        }
-        else {
+        } else {
             memcpy(state->viewerState->datasetAdjustmentTable,
                    state->viewerState->neutralDatasetTable,
                    RGB_LUTSIZE * sizeof(GLuint));

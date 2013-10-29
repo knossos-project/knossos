@@ -1165,6 +1165,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             emit updateZoomWidgetSignal();
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+            qDebug() << state->skeletonState->zoomLevel << " ";
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
             state->skeletonState->viewChanged = true;
         }

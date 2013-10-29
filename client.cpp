@@ -407,7 +407,7 @@ uint Client::parseInBuffer() {
                 treeCol.g = f[1];
                 treeCol.b = f[2];
                 treeCol.a = 1.;
-                Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol, false);
+                //Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol, false);
 
                 break;
 
@@ -440,7 +440,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::splitConnectedComponent(d[0], d[1], false);
+                //Skeletonizer::splitConnectedComponent(d[0], d[1], false);
                 LOG("Called splitcc with %d %d", d[0], d[1])
 
                 break;

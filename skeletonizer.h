@@ -292,8 +292,9 @@ public slots:
     static nodeListElement *findNodeByNodeID(int nodeID);
     static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     static void restoreDefaultTreeColor();
-    static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+
+    int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);

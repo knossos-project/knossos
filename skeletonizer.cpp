@@ -1266,11 +1266,11 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                 if(!merge) {
                     currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
-                    setActiveTreeByID(neuronID);
+                    //setActiveTreeByID(neuronID);
                 } else {
                     neuronID += greatestTreeIDbeforeLoading;
                     currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
-                    setActiveTreeByID(currentTree->treeID);
+                   // setActiveTreeByID(currentTree->treeID);
                     neuronID = currentTree->treeID;
                 }
 
@@ -2517,21 +2517,19 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
 
-        qDebug() << state->viewerState->defaultTreeTable[index];
-        qDebug() << state->viewerState->defaultTreeTable[index + 256];
-        qDebug() << state->viewerState->defaultTreeTable[index + 512];
-
         newElement->color.r =  state->viewerState->treeAdjustmentTable[index];
         newElement->color.g =  state->viewerState->treeAdjustmentTable[index + 256];
         newElement->color.b =  state->viewerState->treeAdjustmentTable[index + 512];
         newElement->color.a = 1.;
 
-        qDebug() << "r:" << newElement->color.r << "g:" << newElement->color.g << "b:" << newElement->color.b;
+
     }
     else {
         newElement->color = color;
     }
     newElement->colorSetManually = false;
+
+    emit updateToolsSignal();
 
     memset(newElement->comment, '\0', 8192);
 
