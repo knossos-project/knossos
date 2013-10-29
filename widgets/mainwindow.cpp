@@ -715,20 +715,17 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-    //emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+
     qDebug() << " saveBegin ";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
-            QString skelName = QString(state->skeletonState->skeletonFile);
             if(state->skeletonState->autoFilenameIncrementBool) {
-                updateSkeletonFileName(skelName);
+                updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
             }
-
             emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
             updateTitlebar(true);
             state->skeletonState->unsavedChanges = false;           
-
         }
     }
 }
