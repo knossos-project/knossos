@@ -130,10 +130,6 @@ Viewer::Viewer(QObject *parent) :
 
    //connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->singleShot(10, this, SLOT(run()));
-    field1 = new QLineEdit();
-    field2 = new QLineEdit();
-    field1->show();
-    field2->show();
 
     temp1 = temp2 = 0;
 
@@ -1882,26 +1878,36 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   *   - userMove
   *
   */
-void Viewer::runrun() {
-    //QFuture<void> future = QtConcurrent::run(this, &Viewer::run);
-
-    if(temp1 != 0) {
-        int div = bench1.elapsed() - temp1;
-        field1->setText(QString::number(div));
-    }
-
-    temp1 = bench1.elapsed();
+void Viewer::runrun() {   
     Viewer::run();
 
 }
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
+
     if(state->keyF or state->keyD) {
-        qDebug() << state->newCoord[0] << " x";
-        qDebug() << state->newCoord[1] << " y";
-        qDebug() << state->newCoord[2] << " z";
-        userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+
+        int time = bench1.elapsed();
+
+        qDebug() << "ms" << time;
+        qDebug() << "ar" << state->autorepeat;
+
+        if(time > 200)
+            bench1.restart();
+
+        qDebug() << div;
+        if(time >= 200 and !state->autorepeat) {
+            qDebug() << "case1";
+            qDebug() << time;
+            qDebug() << state->autorepeat;
+            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+        } else if(state->autorepeat) {
+            qDebug() << "case2";
+                        qDebug() << time;
+                        qDebug() << state->autorepeat;
+           userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+        }
     }
    /* if(temp1 != 0) {
         int div = bench1.elapsed() - temp1;

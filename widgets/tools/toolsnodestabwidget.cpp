@@ -80,13 +80,16 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     useLastRadiusBox = new QCheckBox("Use Last Radius as Default");
     activeNodeRadiusLabel = new QLabel("Active Node Radius(SHIFT + wheel):");
     activeNodeRadiusSpinBox = new QDoubleSpinBox();
+    activeNodeRadiusSpinBox->setMaximum(100000);
     defaultNodeRadiusLabel = new QLabel("Default Node Radius:");
     defaultNodeRadiusSpinBox = new QDoubleSpinBox();
+    defaultNodeRadiusSpinBox->setMaximum(100000);
 
     enableCommentLockingCheckBox = new QCheckBox("Enable comment locking");
     lockingRadiusLabel = new QLabel("Locking Radius:");
     lockToNodesWithCommentLabel = new QLabel("Lock To Nodes With Comment:");
     lockingRadiusSpinBox = new QSpinBox();
+    lockingRadiusSpinBox->setMaximum(100000);
     lockingToNodesWithCommentField = new QLineEdit("seed");
     lockToActiveNodeButton = new QPushButton("Lock to Active Node");
     disableLockingButton = new QPushButton("Disable Locking");
@@ -180,7 +183,7 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     reference->updateDisplayedTree();
 }
 
-/* @todo */
+
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
          if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true)) {

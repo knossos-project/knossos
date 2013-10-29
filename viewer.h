@@ -141,8 +141,9 @@ protected:
     int temp1, temp2;
     QTime bench2;
 
-    QLineEdit *field1;
-    QLineEdit *field2;
+
+
+    bool gas;
 };
 
 #endif // VIEWER_H

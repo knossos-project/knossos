@@ -705,7 +705,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
+bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {  
 
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
@@ -716,8 +716,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
-
-
 
     if(event->key() == Qt::Key_Space) {
         state->singleLogging = true;

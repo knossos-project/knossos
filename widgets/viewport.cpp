@@ -295,15 +295,18 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
+
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::CrossCursor);
     }
     if(state->keyD) {
         state->keyD = false;
         qDebug() << "D released";
+        state->autorepeat = false;
     }else if(state->keyF) {
         state->keyF = false;
         qDebug() << "F released";
+        state->autorepeat = false;
     } else if(state->keyE){
         state->keyE = false;
         qDebug() << "E released";
@@ -333,7 +336,8 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     }
     this->delegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
-        event->ignore();
+        state->autorepeat = true;
+        //event->ignore();
     }
 
 }

@@ -671,6 +671,7 @@ struct stateInfo {
     struct taskState *taskState;
     bool keyD, keyR, keyE, keyF;
     int newCoord[3];
+    bool autorepeat;
 
 };
 
