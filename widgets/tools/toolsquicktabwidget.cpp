@@ -287,7 +287,7 @@ void ToolsQuickTabWidget::searchForChanged(QString comment) {
 
 void ToolsQuickTabWidget::findNextButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
-    emit nextCommentSignal(searchStr);
+    emit nextCommentSignal(searchStr);    
 }
 
 void ToolsQuickTabWidget::findPreviousButtonClicked() {

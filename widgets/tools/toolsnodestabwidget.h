@@ -27,6 +27,7 @@
 
 #include <QWidget>
 #include <QCheckBox>
+#include <QPushButton>
 #include "knossos-global.h"
 #include "../toolswidget.h"
 #include "toolsquicktabwidget.h"
@@ -34,7 +35,7 @@
 class QLabel;
 class QSpinBox;
 class QDoubleSpinBox;
-class QPushButton;
+//class QPushButton;
 class QLineEdit;
 
 class ToolsNodesTabWidget : public QWidget

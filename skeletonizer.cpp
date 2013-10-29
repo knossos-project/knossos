@@ -3413,7 +3413,7 @@ commentListElement* Skeletonizer::nextComment(char *searchString) {
         }
 
     }
-
+    emit updateToolsSignal();
     return state->skeletonState->currentComment;
 }
 
@@ -3466,6 +3466,7 @@ commentListElement* Skeletonizer::previousComment(char *searchString) {
             }
         }
     }
+    emit updateToolsSignal();
     return state->skeletonState->currentComment;
 }
 

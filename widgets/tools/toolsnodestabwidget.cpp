@@ -149,6 +149,8 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     connect(idSpinBox, SIGNAL(valueChanged(int)), this, SLOT(idChanged(int)));
     //connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
     //connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
+    //connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
+       //connect(fin)
     connect(useLastRadiusBox, SIGNAL(clicked(bool)), this, SLOT(useLastRadiusChecked(bool)));
     connect(activeNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(activeNodeRadiusChanged(double)));
     connect(defaultNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(defaultNodeRadiusChanged(double)));
@@ -183,7 +185,6 @@ void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     reference->updateDisplayedTree();
 }
 
-
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
     if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
          if(addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true)) {
@@ -197,11 +198,13 @@ void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
 
 void ToolsNodesTabWidget::findNextButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    qDebug() << searchStr;
     emit nextCommentSignal(searchStr);
 }
 
 void ToolsNodesTabWidget::findPreviousButtonClicked() {
     char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
+    qDebug() << searchStr;
     emit previousCommentSignal(searchStr);
 }
 

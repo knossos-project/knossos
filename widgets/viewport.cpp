@@ -295,9 +295,11 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
 
+    /*
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::CrossCursor);
-    }
+    } */
+
     if(state->keyD) {
         state->keyD = false;
         qDebug() << "D released";
@@ -330,15 +332,16 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::OpenHandCursor);
     }
     this->delegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
+        qDebug() << " AUTO REPEAT = TRUE";
         state->autorepeat = true;
         //event->ignore();
     }
-
 }
 
 
