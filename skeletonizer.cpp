@@ -86,7 +86,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->showYZplane = false;
     state->skeletonState->showNodeIDs = false;
     state->skeletonState->highlightActiveTree = true;
-    state->skeletonState->rotateAroundActiveNode = false;
+    state->skeletonState->rotateAroundActiveNode = true;
     state->skeletonState->showIntersections = false;
 
     state->skeletonState->displayListSkeletonSkeletonizerVP = 0;

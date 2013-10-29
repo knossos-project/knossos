@@ -86,7 +86,6 @@ protected:
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
-    void fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
 
 
 public:
@@ -247,7 +246,7 @@ public slots:
     // viewports
     void resetViewports();
     void showVPDecorationClicked();
-
+    void fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
 };
 
 #endif // MAINWINDOW_H

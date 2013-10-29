@@ -44,7 +44,7 @@ const QString RENDERING_QUALITY = "rendering_quality";
 const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
-const QString SHOW_POS_AND_SIZE_CHECKED = "show_pos_and_size_checked";
+const QString SHOW_VP_DECORATION = "show_vp_decoration";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";

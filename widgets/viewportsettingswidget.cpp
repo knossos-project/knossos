@@ -112,9 +112,8 @@ void ViewportSettingsWidget::loadSettings() {
     }
 
 
-    if(!settings.value(SHOW_POS_AND_SIZE_CHECKED).isNull()) {
-        this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_POS_AND_SIZE_CHECKED).toBool());
-        // @todo the state->xy is missing
+    if(!settings.value(SHOW_VP_DECORATION).isNull()) {
+        this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
     }
 
     if(!settings.value(ENABLE_OVERLAY).isNull()) {
@@ -197,6 +196,9 @@ void ViewportSettingsWidget::loadSettings() {
     if(!settings.value(ROTATE_AROUND_ACTIVE_NODE).isNull()) {
         this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool());
         state->skeletonState->rotateAroundActiveNode = settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool();
+    } else {
+        this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(true);
+        state->skeletonState->rotateAroundActiveNode = true;
     }
 
     if(!settings.value(WHOLE_SKELETON).isNull()) {
@@ -252,7 +254,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(RENDERING_QUALITY, this->generalTabWidget->renderingQualitySpinBox->value());
     settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, this->generalTabWidget->overrideNodeRadiusCheckBox->isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, this->generalTabWidget->overrideNodeRadiusSpinBox->value());
-    settings.setValue(SHOW_POS_AND_SIZE_CHECKED, this->generalTabWidget->showVPDecorationCheckBox->isChecked());
+    settings.setValue(SHOW_VP_DECORATION, this->generalTabWidget->showVPDecorationCheckBox->isChecked());
 
     settings.setValue(ENABLE_OVERLAY, this->slicePlaneViewportWidget->enableOverlayCheckBox->isChecked());
     settings.setValue(HIGHLIGHT_INTERSECTIONS, this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->isChecked());

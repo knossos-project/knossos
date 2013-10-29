@@ -52,6 +52,7 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
 
     view3dlabel = new QLabel("View 3D");
     rotateAroundActiveNodeCheckBox = new QCheckBox("Rotate Around Active Node");
+    rotateAroundActiveNodeCheckBox->setChecked(true);
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
