@@ -1168,24 +1168,26 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         return true;
 
     } else if(event->key() == Qt::Key_I) {
-        emit zoomOrthoSignal(-0.1);
-        emit updateZoomWidgetSignal();
-
-        if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+        if(VPfound != VIEWPORT_SKELETON) {
+            emit zoomOrthoSignal(-0.1);
+            emit updateZoomWidgetSignal();
+        }
+        else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
             state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
             state->skeletonState->viewChanged = true;
         }
 
     } else if(event->key() == Qt::Key_O) {
-
-        emit zoomOrthoSignal(0.1);
-        emit updateZoomWidgetSignal();
-
-        if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+        if(VPfound != VIEWPORT_SKELETON) {
+            emit zoomOrthoSignal(0.1);
+            emit updateZoomWidgetSignal();
+        }
+        else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
-            if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
+            if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
+                state->skeletonState->zoomLevel = SKELZOOMMIN;
+            }
             state->skeletonState->viewChanged = true;
-
         }
     } else if(event->key() == Qt::Key_S) {
         if(control) {
