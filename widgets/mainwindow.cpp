@@ -137,7 +137,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    //connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(quitSlot()));
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
@@ -239,10 +238,12 @@ void MainWindow:: createToolBar() {
     zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
     this->toolBar->addWidget(zoomAndMultiresButton);
 
+    /*
     syncButton = new QToolButton();
     syncButton->setToolTip("Dataset Synchronization Widget");
     syncButton->setIcon(QIcon(":images/icons/network-connect.png"));
     this->toolBar->addWidget(syncButton);
+    */
 
     viewportSettingsButton = new QToolButton();
     viewportSettingsButton->setToolTip("Viewport Settings Widget");
@@ -597,7 +598,7 @@ void MainWindow::createMenus()
     preferenceMenu->addAction(saveCustomPreferencesAction);
     preferenceMenu->addAction(defaultPreferencesAction);
     preferenceMenu->addAction(datasetNavigationAction);
-    synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "&Synchronization", this, SLOT(synchronizationSlot()));
+    //synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "&Synchronization", this, SLOT(synchronizationSlot()));
     preferenceMenu->addAction(dataSavingOptionsAction);
 
     viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "&Viewport Settings", this, SLOT(viewportSettingsSlot()));

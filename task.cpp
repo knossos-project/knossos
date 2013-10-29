@@ -159,7 +159,7 @@ int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char 
     char *pos = strstr(header->content, info);
 
     if(pos == NULL) {
-        return FALSE;
+        return false;
     }
 
     for(i = 0; i <= strlen(pos + strlen(info)+1); i++) { // +1 for "="
@@ -170,7 +170,7 @@ int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char 
     }
     strncpy(dest, pos + strlen(info)+1, numChars);
 
-    return TRUE;
+    return true;
 }
 
 void taskState::removeCookie() {
