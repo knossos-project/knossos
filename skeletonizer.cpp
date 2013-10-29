@@ -2516,10 +2516,17 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
-        newElement->color.r = state->viewerState->treeAdjustmentTable[index];
-        newElement->color.g = state->viewerState->treeAdjustmentTable[index + 256];
-        newElement->color.b = state->viewerState->treeAdjustmentTable[index + 512];
+
+        qDebug() << state->viewerState->defaultTreeTable[index];
+        qDebug() << state->viewerState->defaultTreeTable[index + 256];
+        qDebug() << state->viewerState->defaultTreeTable[index + 512];
+
+        newElement->color.r =  state->viewerState->treeAdjustmentTable[index];
+        newElement->color.g =  state->viewerState->treeAdjustmentTable[index + 256];
+        newElement->color.b =  state->viewerState->treeAdjustmentTable[index + 512];
         newElement->color.a = 1.;
+
+        qDebug() << "r:" << newElement->color.r << "g:" << newElement->color.g << "b:" << newElement->color.b;
     }
     else {
         newElement->color = color;
@@ -3685,6 +3692,8 @@ void Skeletonizer::UI_popBranchNode() {
 void Skeletonizer::restoreDefaultTreeColor() {
     if(state->skeletonState->activeTree) {
         int index = (state->skeletonState->activeTree->treeID - 1) % 256;
+
+
         state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
         state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
         state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];

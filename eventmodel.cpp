@@ -123,16 +123,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-<<<<<<< .mine
-    qDebug() << (event->button() == Qt::MiddleButton);
 
-    int clickedNode;
-
-    clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), (state->viewerState->screenSizeY - event->y()), 1);
-
-=======
     int clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
->>>>>>> .r658
+
     if(clickedNode) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {

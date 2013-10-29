@@ -121,13 +121,13 @@ int main(int argc, char *argv[])
         }
     }
 
+
     if(knossos->initStates() != true) {
        LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
 
     Knossos::printConfigValues();
-
     Viewer *viewer = new Viewer();
     loader = new Loader();
     Remote *remote = new Remote();
@@ -136,7 +136,10 @@ int main(int argc, char *argv[])
     //scripts->reference = viewer->skeletonizer;
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
-    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(const char*,float*,int)), viewer, SLOT(loadTreeColorTable(const char*,float*,int)));
+    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)), viewer, SLOT(loadTreeColorTable(QString,float*,int)));
+
+
+    knossos->loadDefaultTreeLUT();
 
     QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
@@ -1201,8 +1204,10 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 void Knossos::loadDefaultTreeLUT() {
 
     if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
+        qDebug() << "loadtreecolortablesignal == false";
         Knossos::loadTreeLUTFallback();
         emit treeColorAdjustmentChangedSignal();
+
     }
 }
 

@@ -61,7 +61,7 @@ public:
 signals:
     void calcDisplayedEdgeLengthSignal();
     void treeColorAdjustmentChangedSignal();
-    bool loadTreeColorTableSignal(const char *path, float *table, int type);
+    bool loadTreeColorTableSignal(QString path, float *table, int type);
 public slots:
     void loadTreeLUTFallback();
 

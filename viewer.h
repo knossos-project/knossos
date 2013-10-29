@@ -140,10 +140,6 @@ protected:
     QTime bench1;
     int temp1, temp2;
     QTime bench2;
-
-
-
-    bool gas;
 };
 
 #endif // VIEWER_H

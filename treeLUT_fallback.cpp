@@ -28,6 +28,8 @@
 extern stateInfo *state;
 
 void Knossos::loadTreeLUTFallback() {
+    qDebug() << "entered load tree LUT fallback";
+
     state->viewerState->defaultTreeTable[256] = 0.074510;
     state->viewerState->defaultTreeTable[512] = 0.301961;
     state->viewerState->defaultTreeTable[1] = 1.000000;

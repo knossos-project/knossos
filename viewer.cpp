@@ -2905,7 +2905,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vpXY, SLOT(updateGL()));
 
-    connect(window->widgetContainer->taskManagementWidget, SIGNAL(loadSkeletonSignal(const QString &fileName)), window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString &fileName)));
+    connect(window->widgetContainer->taskManagementWidget, SIGNAL(loadSkeletonSignal(const QString)), window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString)));
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));

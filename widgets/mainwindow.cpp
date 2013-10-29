@@ -380,6 +380,7 @@ void MainWindow::reloadDataSizeWin(){
 }
 
 void MainWindow::treeColorAdjustmentsChanged(){
+    qDebug() << "HHAHAAAAAAAAAAAA";
     //user lut activated
         if(state->viewerState->treeColortableOn) {
             //user lut selected
@@ -397,7 +398,7 @@ void MainWindow::treeColorAdjustmentsChanged(){
         }
         //use of default lut
         else {
-                memcpy(state->viewerState->treeAdjustmentTable,
+            memcpy(state->viewerState->treeAdjustmentTable,
             state->viewerState->defaultTreeTable,
             RGB_LUTSIZE * sizeof(float));
                     emit updateTreeColorsSignal();
