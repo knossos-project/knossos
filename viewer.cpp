@@ -1887,19 +1887,20 @@ void Viewer::run() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 
+#ifndef Q_OS_MAC
+
         if(time > 200)
             delay.restart();
+#endif
+#ifdef Q_OS_MAC
+        state->autorepeat = true;
+#endif
 
         qDebug() << div;
         if(time >= 200 and !state->autorepeat) {
-            qDebug() << "case1";
-            qDebug() << time;
-            qDebug() << state->autorepeat;
             userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         } else if(state->autorepeat) {
             qDebug() << "case2";
-                        qDebug() << time;
-                        qDebug() << state->autorepeat;
            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         }
     }
