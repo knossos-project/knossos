@@ -295,10 +295,9 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
 
-    /*
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::CrossCursor);
-    } */
+    }
 
     if(state->keyD) {
         state->keyD = false;
@@ -319,6 +318,12 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
     state->newCoord[1] = 0;
     state->newCoord[2] = 0;
 
+    if(state->modCtrl)
+        state->modCtrl = false;
+    if(state->modAlt)
+        state->modAlt = false;
+    if(state->modShift)
+        state->modAlt = false;
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {

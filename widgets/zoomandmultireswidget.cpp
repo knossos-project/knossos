@@ -256,10 +256,11 @@ void ZoomAndMultiresWidget::loadSettings() {
         state->skeletonState->zoomLevel = settings.value(SKELETON_VIEW).toDouble();
     }
 
-    if(!settings.value(LOCK_DATASET_TO_CURRENT_MAG).toDouble()) {
-        this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
-        state->viewerState->datasetMagLock = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
-    }
+
+    this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
+    state->viewerState->datasetMagLock = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
+
+
     settings.endGroup();
 }
 

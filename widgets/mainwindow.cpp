@@ -911,6 +911,7 @@ void MainWindow::defaultPreferencesSlot() {
         case QMessageBox::Yes:
             clearSettings();
             loadSettings();
+            widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
             emit loadTreeLUTFallback();
             treeColorAdjustmentsChanged();
             datasetColorAdjustmentsChanged();

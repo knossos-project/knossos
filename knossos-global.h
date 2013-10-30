@@ -667,6 +667,7 @@ struct stateInfo {
     struct trajectory *trajectories;
     struct taskState *taskState;
     bool keyD, keyR, keyE, keyF;
+    bool modCtrl, modAlt, modShift;
     int newCoord[3];
     bool autorepeat;
 

@@ -85,13 +85,21 @@ void ToolsWidget::loadSettings() {
     this->toolsTreesTabWidget->bSpinBox->setValue(settings.value(B).toDouble());
     this->toolsTreesTabWidget->aSpinBox->setValue(settings.value(A).toDouble());
 
-
     this->toolsNodesTabWidget->commentField->setText(settings.value(COMMENT).toString());
     if(!settings.value(SEARCH_FOR).toString().isNull())
         this->toolsNodesTabWidget->searchForField->setText(settings.value(SEARCH_FOR).toString());
     this->toolsNodesTabWidget->useLastRadiusBox->setChecked(settings.value(USE_LAST_RADIUS_AS_DEFAULT).toBool());
-    this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(settings.value(ACTIVE_NODE_RADIUS).toDouble());
-    this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(settings.value(DEFAULT_NODE_RADIUS).toDouble());
+
+    if(!settings.value(ACTIVE_NODE_RADIUS).isNull())
+        this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(settings.value(ACTIVE_NODE_RADIUS).toDouble());
+    else
+        this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(1);
+
+    if(!settings.value(DEFAULT_NODE_RADIUS).isNull())
+        this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(settings.value(DEFAULT_NODE_RADIUS).toDouble());
+    else
+        this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
+
     this->toolsNodesTabWidget->enableCommentLockingCheckBox->setChecked(settings.value(ENABLE_COMMENT_LOCKING).toBool());
     this->toolsNodesTabWidget->lockingRadiusSpinBox->setValue(settings.value(LOCKING_RADIUS).toInt());
     if(!settings.value(LOCK_TO_NODES_WITH_COMMENT).toString().isNull())
@@ -205,6 +213,8 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
+
+        this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(state->skeletonState->activeNode->radius);
 
         if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
             this->toolsQuickTabWidget->blockSignals(true);

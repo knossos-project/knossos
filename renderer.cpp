@@ -1771,6 +1771,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     GLuint names, *ptr, minZ, *ptrName;
     ptrName = NULL;
 
+
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);

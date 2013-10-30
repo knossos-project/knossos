@@ -36,6 +36,7 @@ class QPushButton;
 class ZoomAndMultiresWidget : public QDialog
 {
     friend class TestZoomAndMultiresWidget;
+    friend class MainWindow;
     Q_OBJECT
 public:
     explicit ZoomAndMultiresWidget(QWidget *parent = 0);

@@ -617,6 +617,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
         pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID, false);
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, false);
+        emit updateToolsSignal();
         /* @todo checkIdleTime */
     }
 
