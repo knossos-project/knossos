@@ -648,8 +648,9 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
-        QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
-        future.waitForFinished();
+        emit loadSkeletonSignal(fileName);
+        //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
+        //future.waitForFinished();
 
         emit updateCommentsTableSignal();
         updateTitlebar(true);

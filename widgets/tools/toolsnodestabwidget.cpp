@@ -149,10 +149,7 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
     connect(linkNodeWithButton, SIGNAL(clicked()), this, SLOT(linkNodeWithButtonClicked()));
     connect(idSpinBox, SIGNAL(valueChanged(int)), this, SLOT(idChanged(int)));
-    //connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
-    //connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
-    //connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
-       //connect(fin)
+
     connect(useLastRadiusBox, SIGNAL(clicked(bool)), this, SLOT(useLastRadiusChecked(bool)));
     connect(activeNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(activeNodeRadiusChanged(double)));
     connect(defaultNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(defaultNodeRadiusChanged(double)));
@@ -206,13 +203,20 @@ void ToolsNodesTabWidget::findPreviousButtonClicked() {
     emit previousCommentSignal(searchStr);
 }
 
-void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {
-    state->viewerState->gui->useLastActNodeRadiusAsDefault = on;
+void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {    
+    if(on) {
+        state->skeletonState->defaultNodeRadius = activeNodeIdSpinBox->value();
+    } else {
+        state->skeletonState->defaultNodeRadius = defaultNodeRadiusSpinBox->value();
+    }
 }
 
 void ToolsNodesTabWidget::activeNodeRadiusChanged(double value) {
+    if(state->skeletonState->activeNode) {
+        state->skeletonState->defaultNodeRadius = value;
+        state->skeletonState->activeNode->radius = value;
+    }
 
-    state->viewerState->gui->actNodeRadius = value;
 }
 
 void ToolsNodesTabWidget::defaultNodeRadiusChanged(double value) {

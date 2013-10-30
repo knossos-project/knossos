@@ -1196,6 +1196,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
             else if(xml.name() == "comments") {
                 xml.readNextStartElement();
 
+
                 while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "comments")) {
 
                     QXmlStreamAttributes attributes = xml.attributes();

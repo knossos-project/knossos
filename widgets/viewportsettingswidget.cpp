@@ -231,7 +231,8 @@ void ViewportSettingsWidget::loadSettings() {
         }
     }
 
-
+    if(!this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() and !this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked() and !this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked())
+        this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
     settings.endGroup();
 
     setGeometry(x, y, width, height);

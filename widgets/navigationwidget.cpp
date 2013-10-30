@@ -255,6 +255,9 @@ void NavigationWidget::loadSettings() {
 
     }
 
+    if(!normalModeButton->isChecked() and !additionalMirroredMoveButton->isChecked() and !additionalTracingDirectionMoveButton->isChecked() and !additionalTracingDirectionMoveButton->isChecked())
+        normalModeButton->setChecked(true);
+
     if(!settings.value(DELAY_TIME_PER_STEP).isNull()) {
         this->delayTimePerStepSpinBox->setValue(settings.value(DELAY_TIME_PER_STEP).toInt());
     } else {
