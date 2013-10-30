@@ -1204,7 +1204,6 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
 void Knossos::loadDefaultTreeLUT() {
 
     if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
-        qDebug() << "loadtreecolortablesignal == false";
         Knossos::loadTreeLUTFallback();
         emit treeColorAdjustmentChangedSignal();
 

@@ -131,10 +131,8 @@ Viewer::Viewer(QObject *parent) :
    //connect(timer, SIGNAL(timeout()), this, SLOT(run()));
     timer->singleShot(10, this, SLOT(run()));
 
-    temp1 = temp2 = 0;
+    delay.start();
 
-    bench1.start();
-    bench2.start();
 
 }
 
@@ -1887,14 +1885,10 @@ void Viewer::runrun() {
 void Viewer::run() {
 
     if(state->keyF or state->keyD) {
-
-        int time = bench1.elapsed();
-
-        qDebug() << "ms" << time;
-        qDebug() << "ar" << state->autorepeat;
+        int time = delay.elapsed();
 
         if(time > 200)
-            bench1.restart();
+            delay.restart();
 
         qDebug() << div;
         if(time >= 200 and !state->autorepeat) {
@@ -1909,13 +1903,6 @@ void Viewer::run() {
            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         }
     }
-   /* if(temp1 != 0) {
-        int div = bench1.elapsed() - temp1;
-        field1->setText(QString::number(div));
-    }
-
-    temp1 = bench1.elapsed();*/
-    //qDebug() << "run-method" << bench1.elapsed();
 
 
     // Event and rendering loop.
@@ -2076,52 +2063,9 @@ void Viewer::run() {
         vpListDel(viewports);
 
         viewerState->userMove = false;
-        frames += 4;
-        logSingle();
-        //qDebug() << frames << " frames";
-
-        //qDebug() << bench.elapsed() << " ms";
 
 }
 
-void Viewer::logSingle() {
-    if(state->singleLogging) {
-
-        viewportTexture tex = state->viewerState->vpConfigs[0].texture;
-
-        QPlainTextEdit *editor = new QPlainTextEdit();
-        editor->insertPlainText(QString("DEBUGGING TEXTURE DATA\n"));
-        editor->insertPlainText(QString("texHandle: %1\n").arg(tex.texHandle));
-        editor->insertPlainText(QString("overlayHandle: %1\n").arg(tex.overlayHandle));
-        editor->insertPlainText(QString("leftUpperPxInAbsPx: %1, %2, %3\n").arg(tex.leftUpperPxInAbsPx.x).arg(tex.leftUpperPxInAbsPx.y).arg(tex.leftUpperPxInAbsPx.z));
-        editor->insertPlainText(QString("edgeLengthDC: %1\n").arg(tex.edgeLengthDc));
-        editor->insertPlainText(QString("edgeLengthPx: %1\n").arg(tex.edgeLengthPx));
-        editor->insertPlainText(QString("displayedEdgeLengthX: %1\n").arg(tex.displayedEdgeLengthX));
-        editor->insertPlainText(QString("displayedEdgeLengthY: %1\n").arg(tex.displayedEdgeLengthY));
-        editor->insertPlainText(QString("texUnitsPerDataPx: %1\n").arg(tex.texUnitsPerDataPx));
-
-        editor->insertPlainText(QString("texLUx: %1\n").arg(tex.texLUx));
-        editor->insertPlainText(QString("texLUy: %1\n").arg(tex.texLUy));
-        editor->insertPlainText(QString("texLLx: %1\n").arg(tex.texLLx));
-        editor->insertPlainText(QString("texLLy: %1\n").arg(tex.texLLy));
-        editor->insertPlainText(QString("texRUx: %1\n").arg(tex.texRUx));
-        editor->insertPlainText(QString("texRUy: %1\n").arg(tex.texRUy));
-        editor->insertPlainText(QString("texRLx: %1\n").arg(tex.texRLx));
-        editor->insertPlainText(QString("texRLy: %1\n").arg(tex.texRLy));
-
-        editor->insertPlainText(QString("xOffset: %1\n").arg(tex.xOffset));
-        editor->insertPlainText(QString("yOffset: %1\n").arg(tex.yOffset));
-        editor->insertPlainText(QString("zoomLevel: %1\n").arg(tex.zoomLevel));
-
-        editor->show();
-        state->singleLogging = false;
-    }
-}
-
-void Viewer::showFrames() {
-    qDebug() << "frames :" << frames;
-    frames = 0;
-}
 
 bool Viewer::updateViewerState() {
 
@@ -2204,14 +2148,6 @@ bool Viewer::updateZoomCube() {
 }
 
 bool Viewer::userMove(int x, int y, int z, int serverMovement) {
-
-    if(temp2 != 0) {
-        int div = bench2.elapsed() - temp2;
-        //field2->setText(QString::number(div));
-    }
-    temp2 = bench2.elapsed();
-
-
 
     struct viewerState *viewerState = state->viewerState;
 

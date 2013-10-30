@@ -4682,7 +4682,7 @@ void Skeletonizer::deleteLastSerialSkeleton(){
 }
 
 void Skeletonizer::saveSerializedSkeleton(){
-    /*
+
     struct serialSkeletonListElement *serialSkeleton = NULL;
     serialSkeleton = (serialSkeletonListElement *)malloc(sizeof(*serialSkeleton));
     serialSkeleton->content = (Byte *)serializeSkeleton();
@@ -4708,7 +4708,7 @@ void Skeletonizer::saveSerializedSkeleton(){
         free(state->skeletonState->firstSerialSkeleton->previous);
         state->skeletonState->serialSkeletonCounter--;
     }
-    */
+
 }
 
 int Skeletonizer::getTreeBlockSize(){
@@ -4809,11 +4809,9 @@ int Skeletonizer::getBranchPointBlockSize(){
 
 void Skeletonizer::undo() {
     qDebug() << " entered : undo";
-    /*if(state->skeletonState->serialSkeletonCounter > 0){
+    if(state->skeletonState->serialSkeletonCounter > 0){
         deleteLastSerialSkeleton();
-    }*/
-
-
+    }
 
 }
 

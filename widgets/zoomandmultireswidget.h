@@ -35,6 +35,7 @@ class QPushButton;
 
 class ZoomAndMultiresWidget : public QDialog
 {
+    friend class TestZoomAndMultiresWidget;
     Q_OBJECT
 public:
     explicit ZoomAndMultiresWidget(QWidget *parent = 0);
@@ -51,7 +52,7 @@ public slots:
     void saveSettings();
 protected:
     void closeEvent(QCloseEvent *event);
-public:
+protected:
     // top layout
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewportLabel;

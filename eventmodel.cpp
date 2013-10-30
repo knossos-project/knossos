@@ -32,7 +32,7 @@ extern struct stateInfo *state;
 EventModel::EventModel(QObject *parent) :
     QObject(parent)
 {
-    grap = false;
+
 }
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
@@ -711,10 +711,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
 
-    if(event->key() == Qt::Key_Space) {
-        state->singleLogging = true;
-    }
-
     // new qt version
     if(event->key() == Qt::Key_Left) {
         if(shift) {
@@ -889,7 +885,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
         }
     } else if(event->key() == Qt::Key_R) {
-        eventReference = event;
+
         state->viewerState->walkOrth = 1;
         switch(VPfound) {
             case VIEWPORT_XY:
@@ -931,7 +927,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     break;
         }
     } else if(event->key() == Qt::Key_E) {
-        eventReference = event;
+
         state->viewerState->walkOrth = 1;
         switch(VPfound) {
             case VIEWPORT_XY:
@@ -1105,7 +1101,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
         //emit updateTools();
-        grap = !grap;
     } else if(event->key() == Qt::Key_N) {
         if(shift) {
             emit nextCommentlessNodeSignal();
@@ -1357,3 +1352,5 @@ int EventModel::xrel(int x) {
 int EventModel::yrel(int y) {
     return (y - this->mouseY);
 }
+
+

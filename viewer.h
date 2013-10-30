@@ -69,11 +69,7 @@ public:
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
-    void logSingle();
 
-    QKeyEvent *keyEvent;
-    int eventCoordinate[3];
-    int eventViewport[0];
 signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
@@ -126,8 +122,7 @@ public slots:
     static bool updatePosition(int serverMovement);
     bool recalcTextureOffsets();
     bool calcDisplayedEdgeLength();    
-    bool updateViewerState();
-    void showFrames();
+    bool updateViewerState();    
     void run();
     void runrun();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
@@ -137,9 +132,8 @@ protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
 
-    QTime bench1;
-    int temp1, temp2;
-    QTime bench2;
+    QTime delay;
+
 };
 
 #endif // VIEWER_H

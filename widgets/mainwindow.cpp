@@ -1133,7 +1133,6 @@ void MainWindow::loadSettings() {
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
 
-
 }
 
 void MainWindow::clearSettings() {

@@ -30,6 +30,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
+#include <QShortcut>
 
 /**
   * @class EventModel
@@ -70,10 +71,6 @@ public:
     int mouseX;
     int mouseY;
     bool grap;
-    QKeyEvent *eventReference;
-    int eventCoordinate[3];
-    int eventViewport[0];
-    bool clicked;
 protected:
 
 signals:
@@ -127,6 +124,7 @@ signals:
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
 
     void undoSignal();
+
 public slots:
 
 };
