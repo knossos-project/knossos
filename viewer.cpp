@@ -2832,7 +2832,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
@@ -2881,10 +2881,10 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(vpSkel->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
 
-    connect(vpXY->delegate, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
-    connect(vpXZ->delegate, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
-    connect(vpYZ->delegate, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
-    connect(vpSkel->delegate, SIGNAL(popBranchNodeSignal(int,int)), skeletonizer, SLOT(popBranchNode(int,int)));
+    connect(vpXY->delegate, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
+    connect(vpXZ->delegate, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
+    connect(vpYZ->delegate, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
+    connect(vpSkel->delegate, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
 
     connect(vpXY->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(vpXZ->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));

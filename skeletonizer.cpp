@@ -531,10 +531,8 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
 
 /** @todo cleanup */
 void Skeletonizer::WRAP_popBranchNode() {
-    /*
-    Skeletonizer::popBranchNode(CHANGE_MANUAL);
+    popBranchNode(CHANGE_MANUAL, false);
     state->skeletonState->askingPopBranchConfirmation = false;
-    */
 }
 
 void Skeletonizer::popBranchNodeCanceled() {
@@ -3666,20 +3664,24 @@ bool Skeletonizer::jumpToActiveNode() {
 }
 
 void Skeletonizer::UI_popBranchNode() {
-    // Inconsistency:
-    // Confirmation will not be asked when no branch points remain, except if the remaining
-    //  branch point nodes don't exist anymore (nodes have been deleted).
-
-    // This is workaround around agar bug #171
+    qDebug("slot reached");
     if(state->skeletonState->askingPopBranchConfirmation == false) {
         state->skeletonState->askingPopBranchConfirmation = true;
 
         if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
-            //yesNoPrompt(NULL,
-            //            "No node was added after jumping to the last branch point. Do you really want to jump?",
-            //            WRAP_popBranchNode,
-            //            popBranchNodeCanceled);
+            QMessageBox prompt;
+            prompt.setText("No node was added after jumping to the last branch point. Do you really want to jump?");
+            QPushButton *jump = prompt.addButton("Jump", QMessageBox::ActionRole);
+            QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
+            prompt.exec();
 
+            if(prompt.clickedButton() == jump) {
+                WRAP_popBranchNode();
+            } else if(prompt.clickedButton() == cancel) {
+                popBranchNodeCanceled();
+            } else {
+                return;
+            }
         }
         else {
             WRAP_popBranchNode();
@@ -4682,7 +4684,7 @@ void Skeletonizer::deleteLastSerialSkeleton(){
 }
 
 void Skeletonizer::saveSerializedSkeleton(){
-
+/*
     struct serialSkeletonListElement *serialSkeleton = NULL;
     serialSkeleton = (serialSkeletonListElement *)malloc(sizeof(*serialSkeleton));
     serialSkeleton->content = (Byte *)serializeSkeleton();
@@ -4708,7 +4710,7 @@ void Skeletonizer::saveSerializedSkeleton(){
         free(state->skeletonState->firstSerialSkeleton->previous);
         state->skeletonState->serialSkeletonCounter--;
     }
-
+*/
 }
 
 int Skeletonizer::getTreeBlockSize(){
@@ -4808,11 +4810,11 @@ int Skeletonizer::getBranchPointBlockSize(){
 }
 
 void Skeletonizer::undo() {
-    qDebug() << " entered : undo";
+    /*qDebug() << " entered : undo";
     if(state->skeletonState->serialSkeletonCounter > 0){
         deleteLastSerialSkeleton();
     }
-
+*/
 }
 
 void Skeletonizer::redo() {

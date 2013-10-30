@@ -1122,7 +1122,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         emit updateSlicePlaneWidgetSignal();
     } else if(event->key() == Qt::Key_J) {
-        emit popBranchNodeSignal(CHANGE_MANUAL, true);
+        qDebug("emitting");
+        emit popBranchNodeSignal();
         emit updateTools();
     } else if(event->key() == Qt::Key_B) {
         emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);

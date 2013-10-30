@@ -51,7 +51,7 @@ signals:
     void setActiveTreeSignal(int id);
     bool setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void updateToolsSignal();
-    void popBranchNodeSignal(int targetRevision, int serialize);
+    void popBranchNodeSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
 
     void setRemoteStateTypeSignal(int type);

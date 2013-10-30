@@ -110,7 +110,7 @@ signals:
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
-    void popBranchNodeSignal(int targetRevision, int serialize);
+    void popBranchNodeSignal();
 
     void moveToNextTreeSignal();
     void moveToPrevTreeSignal();

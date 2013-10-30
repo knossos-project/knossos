@@ -101,7 +101,7 @@ signals:
     void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
-    void popBranchNodeSignal(int targetRevision, int serialize);
+    void popBranchNodeSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void sendConnectedState();
     void sendDisconnectedState();

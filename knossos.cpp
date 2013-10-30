@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
-    QObject::connect(client, SIGNAL(popBranchNodeSignal(int,int)), viewer->skeletonizer, SLOT(popBranchNode(int,int)));
+    QObject::connect(client, SIGNAL(popBranchNodeSignal()), viewer->skeletonizer, SLOT(UI_popBranchNode()));
     QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     QObject::connect(client, SIGNAL(sendConnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
     QObject::connect(client, SIGNAL(sendDisconnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));

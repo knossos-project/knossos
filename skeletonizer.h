@@ -63,14 +63,13 @@ public:
     static bool setDynArray(dynArray *array, int pos, void *value);
     static dynArray *newDynArray(int size);
 
-    static void UI_popBranchNode();
     static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
     static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
     static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
-    static void WRAP_popBranchNode();
+    void WRAP_popBranchNode();
     static void setColorFromNode(struct nodeListElement *node, color4F *color);
     static void setRadiusFromNode(struct nodeListElement *node, float *radius);
     bool delSkelState(skeletonState *skelState);
@@ -86,6 +85,7 @@ public:
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
+    bool popBranchNode(int targetRevision, int serialize);
     static bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
     static int xorInt(int xorMe);    
@@ -240,6 +240,7 @@ signals:
     void setRecenteringPositionSignal(int x, int y, int z);
 
 public slots:
+    void UI_popBranchNode();
     static bool delTree(int targetRevision, int treeID, int serialize);
     bool delActiveTree();
     static bool clearSkeleton(int targetRevision, int loadingSkeleton);
@@ -281,7 +282,6 @@ public slots:
     bool loadXmlSkeleton(QString fileName);
     bool saveXmlSkeleton(QString fileName);
 
-    bool popBranchNode(int targetRevision, int serialize);
     static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     bool moveToNextTree();
     bool moveToPrevTree();

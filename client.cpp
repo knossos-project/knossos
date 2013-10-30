@@ -463,7 +463,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit popBranchNodeSignal(d[0], false);
+                emit popBranchNodeSignal();
 
 
                 break;

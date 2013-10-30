@@ -301,6 +301,6 @@ void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
 }
 
 void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
-    emit popBranchNodeSignal(CHANGE_MANUAL, true);
+    emit popBranchNodeSignal();
     this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }
