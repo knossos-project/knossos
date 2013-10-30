@@ -625,20 +625,25 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
         QFileInfo info(fileName);
         QString path = info.canonicalPath();
 
-        QMessageBox prompt;
-        prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
-        QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
-        QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
-        QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
+        if(state->skeletonState->treeElements > 0) {
 
-        prompt.exec();
+            QMessageBox prompt;
+            prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
+            QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
+            QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
+            QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
 
-        if(prompt.clickedButton() == merge) {
-            state->skeletonState->mergeOnLoadFlag = true;
-        } else if(prompt.clickedButton() == override) {
-            state->skeletonState->mergeOnLoadFlag = false;
-        } else {
-            return;
+            prompt.exec();
+
+
+            if(prompt.clickedButton() == merge) {
+                state->skeletonState->mergeOnLoadFlag = true;
+            } else if(prompt.clickedButton() == override) {
+                state->skeletonState->mergeOnLoadFlag = false;
+            } else {
+                return;
+            }
+
         }
 
         state->skeletonState->skeletonFileAsQString = fileName;
@@ -1265,8 +1270,8 @@ void MainWindow::dropEvent(QDropEvent *event) {
         if(!fileName.endsWith(".nml")) {
             return;
         } else {
-            openSlot(fileName);
-            event->accept();
+           openSlot(fileName);
+           event->accept();
         }
 
     }

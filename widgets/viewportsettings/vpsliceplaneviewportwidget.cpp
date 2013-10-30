@@ -196,6 +196,7 @@ void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {
     state->viewerState->datasetColortableOn = on;
+    MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
@@ -223,6 +224,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
     state->viewerState->treeColortableOn = on;
+    emit treeColorAdjustmentsChangedSignal();
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
@@ -230,7 +232,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     if(!fileName.isEmpty()) {
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strcpy(state->viewerState->gui->treeLUTFile, cname);
-        //MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
+        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
         state->viewerState->treeLutSet = true;
         if(loadTreeColorTableSignal(fileName, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
             LOG("Error loading Tree LUT.\n")
@@ -279,10 +281,7 @@ void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {
     state->viewerState->drawVPCrosshairs = on;
 }
 
-/**
-  * @todo in GUI.c there are some AG_Widget Show/Hide Commands, but for which widget
-  * what happens if the option is selected
-  */
+
 void VPSlicePlaneViewportWidget::showViewPortsSizeChecked(bool on) {
     state->viewerState->showVPLabels = on;
 }
