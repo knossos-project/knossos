@@ -54,7 +54,6 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 }
 
 void TaskLoginWidget::urlEditingFinished() {
-    qDebug("url finished");
     memset(state->taskState->host, '\0', sizeof(state->taskState->host));
     strcpy(state->taskState->host, urlField->text().toStdString().c_str());
     // cut off trailing slash
@@ -97,7 +96,7 @@ void TaskLoginWidget::loginButtonClicked() {
     code = taskState::httpPOST(url, postdata, &response, &httpCode, state->taskState->cookieFile);
     if(code == CURLE_OK) {
         if(httpCode == 200) {
-            qDebug("response: %s", response.content);
+
             QXmlStreamReader xml(response.content);
             if(xml.hasError()) {
                 serverStatus->setText("<font color='red'>Error in transmission. Please try again.</font>");
@@ -111,7 +110,6 @@ void TaskLoginWidget::loginButtonClicked() {
             // transmission successful
             this->hide();
             if(xml.name() == "task") {
-                qDebug("xml task");
                 QString attribute;
                 QXmlStreamAttributes attributes = xml.attributes();
                 attribute = attributes.value("taskname").toString();

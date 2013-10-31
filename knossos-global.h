@@ -696,6 +696,7 @@ struct taskState {
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
     static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
     static void removeCookie();
+    static const char *CSRFToken();
 };
 
 struct trajectory {
@@ -1138,15 +1139,13 @@ struct skeletonState {
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
     //    skeletonTimeCorrection is the time that has to be subtracted from
-    //    SDL_GetTicks() to yield the number of milliseconds the current skeleton
+    //    state->time->elapsed() to yield the number of milliseconds the current skeleton
     //    was loaded in the current knossos instance.
 
     bool unsavedChanges;
     int skeletonTime;
     int skeletonTimeCorrection;
 
-    int idleTimeTicksOffset;
-    int idleTimeLoadOffset;
     int idleTimeSession;
     int idleTime;
     int idleTimeNow;

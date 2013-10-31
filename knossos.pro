@@ -88,6 +88,7 @@ SOURCES += widgets/mainwindow.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
+    sha256.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -175,6 +176,7 @@ HEADERS  += widgets/mainwindow.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \
+    sha256.h
 
 
 FORMS    += mainwindow.ui

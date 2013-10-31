@@ -40,7 +40,7 @@
     (b)[(i) + 3] = (uint8) ( (n)       );       \
 }
 
-void sha256_starts( sha256_context *ctx )
+void sha256::sha256_starts( sha256_context *ctx )
 {
     ctx->total[0] = 0;
     ctx->total[1] = 0;
@@ -186,7 +186,7 @@ void sha256_process( sha256_context *ctx, uint8 data[64] )
     ctx->state[7] += H;
 }
 
-void sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
+void sha256::sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
 {
     uint32 left, fill;
 
@@ -233,7 +233,7 @@ static uint8 sha256_padding[64] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void sha256_finish( sha256_context *ctx, uint8 digest[32] )
+void sha256::sha256_finish( sha256_context *ctx, uint8 digest[32] )
 {
     uint32 last, padn;
     uint32 high, low;

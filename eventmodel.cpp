@@ -204,7 +204,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID, true);
-                emit idleTimeSignal();
             }
             break;
         }
@@ -215,8 +214,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                                                state->viewerState->vpConfigs[VPfound].type,
                                                true) == false) { //could not add node
             break;
-        } else {
-             emit idleTimeSignal();
         }
 
         /* Highlight the viewport with the biggest movement component and set
@@ -528,15 +525,12 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
            state->skeletonState->rotdx += xrel(event->x());
            state->skeletonState->rotdy += yrel(event->y());
            state->skeletonState->viewChanged = true;
            emit idleTimeSignal();
        }
-
-
     return true;
 }
 

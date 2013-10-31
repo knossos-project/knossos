@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos *knossos = new Knossos();
-    Knossos::loadStyleSheet();
     // The idea behind all this is that we have four sources of
     // configuration data:
     //
@@ -360,6 +359,7 @@ bool Knossos::initStates() {
    SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
    state->loadLocalSystem = LS_UNIX;
+   curl_global_init(CURL_GLOBAL_DEFAULT);
    if (LM_FTP == state->loadMode) {
 
        state->loadFtpCachePath = (char*)malloc(MAX_PATH);
@@ -367,7 +367,6 @@ bool Knossos::initStates() {
        const char *tmp = "/Users/amos/temp/";
        strcpy(state->loadFtpCachePath, tmp);
 
-       curl_global_init(CURL_GLOBAL_DEFAULT);
    }
 
    // We're not doing stuff in parallel, yet. So we skip the locking
@@ -1037,7 +1036,7 @@ bool Knossos::configDefaults() {
     state->skeletonState->autoSaveBool = true;
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->skeletonTime = 0;
-    state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
+    state->skeletonState->skeletonTimeCorrection = 0;
     state->skeletonState->definedSkeletonVpView = 0;
 
     //This number is currently arbitrary, but high values ensure a good performance

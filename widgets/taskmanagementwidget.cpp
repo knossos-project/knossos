@@ -100,7 +100,6 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
 
     header.length = 0;
     header.content = (char*)calloc(1, header.length + 1);
-    memset(header.content, '\0', sizeof(header.content));
 
     lastNml = fopen(tmpfilepath, "w");
     if(lastNml == NULL) {
@@ -135,7 +134,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
         rename(tmpfilepath, filepath);
     #else
         sprintf(filepath, "task-files\\%s", filename);
-        rename(state->taskState->taskFile, filepath);
+        rename(tmpfilepath, filepath);
     #endif
     }
     emit loadSkeletonSignal(state->taskState->taskFile);
@@ -154,7 +153,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     char postdata[1024];
 
     memset(postdata, '\0', 1024);
-    sprintf(postdata, "<currentTask>%s</currentTask>", state->taskState->taskFile);
+    sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken(), state->taskState->taskFile);
 
     QDir taskDir("task-files");
     if(taskDir.exists() == false) {
@@ -204,6 +203,7 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     }
     else if(httpCode == 403) {
         statusLabel->setText("<font color='red'>You are not authenticated. Permission denied.</font>");
+        qDebug(header.content);
         remove(state->taskState->taskFile);
         free(header.content);
         return;
@@ -212,14 +212,16 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
     // 200 - success. Retrieve the filename from response header and rename the previously created tmp.nml
     memset(filename, '\0', sizeof(filename));
     if(taskState::copyInfoFromHeader(filename, &header, "filename")) {
-    #ifdef LINUX
+    #ifdef Q_OS_LINUX
         sprintf(filepath, "task-files/%s", filename);
-        rename(state->taskState->taskFile, filepath);
+        QFile tmpFile(state->taskState->taskFile);
+        tmpFile.rename(filepath);
         memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
         sprintf(state->taskState->taskFile, "task-files/%s", filename);
     #else
         sprintf(filepath, "task-files\\%s", filename);
-        rename(state->taskState->taskFile, filepath);
+        QFile tmpFile(state->taskState->taskFile);
+        tmpFile.rename(filepath);
         memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
         sprintf(state->taskState->taskFile, "task-files\\%s", filename);
     #endif
@@ -259,7 +261,6 @@ void TaskManagementWidget::submitButtonClicked() {
     long curl_timeo = -1;
 
     FILE *cookie;
-    qDebug("submitbutton clicked");
     cookie = fopen(state->taskState->cookieFile, "r");
     if(cookie == NULL) {
         resetSession("<font color='red'>Could not find session cookie. Please login again.</font>");
@@ -271,9 +272,13 @@ void TaskManagementWidget::submitButtonClicked() {
     Skeletonizer::setDefaultSkelFileName();
     emit saveSkeletonSignal(); //increment true
 
+    handle = curl_easy_init();
+    multihandle = curl_multi_init();
+
     // fill the multipart post form. TDItem: comments are not supported, yet.
-    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file", CURLFORM_FILE, state->skeletonState->skeletonFile, CURLFORM_END);
-    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename", CURLFORM_COPYCONTENTS, state->skeletonState->skeletonFile, CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken", CURLFORM_COPYCONTENTS, taskState::CSRFToken(), CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file", CURLFORM_FILE, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename", CURLFORM_COPYCONTENTS, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
     if(finalCheckbox->isChecked()) {
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal", CURLFORM_COPYCONTENTS, "True", CURLFORM_END);
     }
@@ -281,22 +286,18 @@ void TaskManagementWidget::submitButtonClicked() {
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal", CURLFORM_COPYCONTENTS, "False", CURLFORM_END);
     }
 
-    handle = curl_easy_init();
-    multihandle = curl_multi_init();
-
     headerlist = curl_slist_append(headerlist, buf);
     if(handle == NULL || multihandle == NULL) {
         setResponse("<font color='red'>Failed to initialize request. Please tell the developers!</font>");
         return;
     }
-
+    qDebug("i'm here");
     memset(url, '\0', 1024);
     strcpy(url, state->taskState->host);
     strcat(url, "/knossos/activeTask/");
 
     response.length = 0;
     response.content =(char *) calloc(1, response.length + 1);
-    memset(response.content, '\0', sizeof(response));
 
     curl_easy_setopt(handle, CURLOPT_URL, url);
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headerlist);
@@ -359,7 +360,7 @@ void TaskManagementWidget::submitButtonClicked() {
     if(code == CURLM_OK) {
         setResponse(QString("<font color='green'>%1</font>").arg(response.content));
     }
-
+    qDebug("now i'm here");
     curl_multi_cleanup(multihandle);
     curl_easy_cleanup(handle);
     curl_formfree(formpost);

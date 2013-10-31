@@ -232,7 +232,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     if(!fileName.isEmpty()) {
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strcpy(state->viewerState->gui->treeLUTFile, cname);
-        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, cname, 2048);
+        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
         state->viewerState->treeLutSet = true;
         if(loadTreeColorTableSignal(fileName, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
             LOG("Error loading Tree LUT.\n")

@@ -182,3 +182,26 @@ void taskState::removeCookie() {
         }
     }
 }
+
+const char *taskState::CSRFToken() {
+    QFile cookie(state->taskState->cookieFile);
+    if(cookie.exists() == false) {
+        return NULL;
+    }
+    if(cookie.open(QIODevice::ReadOnly|QIODevice::Text) == false) {
+        qDebug("failed to open cookie file");
+        return NULL;
+    }
+    QString content;
+    QTextStream in(&cookie);
+    int index;
+    while(in.atEnd() == false) {
+        content = in.readLine();
+        if((index = content.indexOf("csrftoken")) == -1) {
+            continue;
+        }
+        return content.mid(index + strlen("csrftoken ")).toStdString().c_str();
+    }
+    qDebug("no csrf token found!");
+    return NULL;
+}

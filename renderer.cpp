@@ -1773,7 +1773,6 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     GLuint names, *ptr, minZ, *ptrName;
     ptrName = NULL;
 
-
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
         glGetIntegerv(GL_VIEWPORT, openGLviewport);
@@ -1828,7 +1827,7 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
 
     for(int i = 49; i < 100; i++) {
         if(selectionBuffer[i] != 0) {
-            qDebug() << i << " " << selectionBuffer[i];
+            qDebug() << "in selectionbuffer. index " << i << " " << selectionBuffer[i];
         }
 
     }

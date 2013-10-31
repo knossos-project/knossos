@@ -312,33 +312,23 @@ void MainWindow::showSplashScreen() {
 
 // -- static methods -- //
 
-bool MainWindow::cpBaseDirectory(char *target, char *path, size_t len){
-
-    char *hit;
-        int baseLen;
-
-    #ifdef Q_OS_UNIX
-        hit = strrchr(path, '/');
-    #else
-        hit = strrchr(path, '\\');
-    #endif
-
-        if(hit == NULL) {
-            LOG("Cannot find a path separator char in %s\n", path)
-            return false;
-        }
-
-        baseLen = (int)(hit - path);
-        if(baseLen > 2047) {
-            LOG("Path too long\n")
-            return false;
-        }
-
-        strncpy(target, path, baseLen);
-        target[baseLen] = '\0';
-
-        return true;
-
+bool MainWindow::cpBaseDirectory(char *target, QString path){
+    int hit;
+#ifdef Q_OS_UNIX
+    hit = path.indexOf('/');
+#else
+    hit = path.indexOf('\\');
+#endif
+    if(hit == -1) {
+        qDebug() << "no path separator in " << path;
+        return false;
+    }
+    if(hit > 2047) {
+        qDebug("Path too long.");
+        return false;
+    }
+    sprintf(target, "%s\0", path.mid(0, hit).toStdString().c_str());
+    return true;
 }
 
 bool MainWindow::addRecentFile(const QString &fileName) {
@@ -784,8 +774,6 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-
-    qDebug() << " saveBegin ";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
@@ -797,6 +785,7 @@ void MainWindow::saveSlot()
             state->skeletonState->unsavedChanges = false;           
         }
     }
+    emit idleTimeSignal();
 }
 
 void MainWindow::saveAsSlot()
@@ -1268,9 +1257,9 @@ void MainWindow::setCoordinates(int x, int y, int z) {
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
 void MainWindow::updateSkeletonFileName(QString &fileName) {
-
-    QRegExp withVersion("^[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
-    QRegExp withoutVersion("^[a-zA-Z0-9/_-\]+.nml$");
+    qDebug() <<"string to parse: " << fileName;
+    QRegExp withVersion("[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
+    QRegExp withoutVersion("[a-zA-Z0-9/_-\]+.nml$");
 
     if(fileName.contains(withVersion)) {
         QString versionString = fileName.section("", fileName.length() - 6, fileName.length() - 4);

@@ -50,6 +50,7 @@ public slots:
     void hideSkeletonSelected();
     void rotateAroundActiveNodeChecked(bool on);
     void resetDisplayMode();
+    void updateDisplayModeRadio();
 
 protected:
     QLabel *datasetVisualizationLabel, *skeletonDisplayModesLabel;

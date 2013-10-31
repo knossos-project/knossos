@@ -80,7 +80,10 @@ public:
     bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
+    static char *integerChecksum(int32_t in);
+    static bool isObfuscatedTime(int time);
 
+    static void resetSkeletonMeta();
 public:
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
@@ -101,8 +104,6 @@ public:
     int skeletonTime;
     int skeletonTimeCorrection;
 
-    int idleTimeTicksOffset;
-    int idleTimeLoadOffset;
     int idleTimeSession;
     int idleTime;
     int idleTimeNow;
@@ -238,6 +239,7 @@ signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
+    void displayModeChangedSignal();
 
 public slots:
     void UI_popBranchNode();

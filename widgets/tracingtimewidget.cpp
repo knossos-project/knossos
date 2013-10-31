@@ -97,7 +97,6 @@ void TracingTimeWidget::refreshTime() {
 }
 
 void TracingTimeWidget::checkIdleTime() {
-
     int time = state->time.elapsed();
 
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
@@ -123,5 +122,3 @@ void TracingTimeWidget::checkIdleTime() {
     QString tracingString = QString().sprintf("Tracing Time: \t%02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
     this->tracingTimeLabel->setText(tracingString);
 }
-
-

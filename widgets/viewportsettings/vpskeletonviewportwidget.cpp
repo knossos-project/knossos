@@ -143,3 +143,14 @@ void VPSkeletonViewportWidget::resetDisplayMode() {
             ~DSP_SKEL_VP_CURRENTCUBE);
 }
 
+void VPSkeletonViewportWidget::updateDisplayModeRadio() {
+    if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
+        wholeSkeletonRadioButton->setChecked(true);
+    }
+    if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
+        onlyActiveTreeRadioButton->setChecked(true);
+    }
+    if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
+        hideSkeletonRadioButton->setChecked(true);
+    }
+}

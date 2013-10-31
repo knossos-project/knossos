@@ -59,7 +59,7 @@ public:
     void closeEvent(QCloseEvent *event);
     void updateTitlebar(bool useFilename);
 
-    static bool cpBaseDirectory(char *target, char *path, size_t len);
+    static bool cpBaseDirectory(char *target, QString path);
     static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
     void showSplashScreen();
@@ -91,6 +91,7 @@ signals:
     void popBranchNodeSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
+    void idleTimeSignal();
 
     bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
