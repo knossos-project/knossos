@@ -45,6 +45,8 @@ class ToolsNodesTabWidget : public QWidget
     friend class ToolsQuickTabWidget;
     friend class TestCommentsWidget;
     friend class TestToolsWidget;
+    friend class MainWindow;
+    friend class OMO;
     Q_OBJECT
 public:
     explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);

@@ -80,6 +80,10 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos *knossos = new Knossos();
+<<<<<<< .mine
+    //Knossos::loadStyleSheet();
+=======
+>>>>>>> .r678
     // The idea behind all this is that we have four sources of
     // configuration data:
     //
@@ -121,11 +125,15 @@ int main(int argc, char *argv[])
         }
     }
 
-
     if(knossos->initStates() != true) {
        LOG("Error during initialization of the state struct.")
         _Exit(false);
     }
+
+    QSplashScreen screen(QPixmap(":/images/splash.png"));
+    //screen.setGraphicsEffect(QGraphicsEffect());
+    screen.show();
+    a.processEvents();
 
     Knossos::printConfigValues();
     Viewer *viewer = new Viewer();
@@ -137,7 +145,6 @@ int main(int argc, char *argv[])
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
     QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)), viewer, SLOT(loadTreeColorTable(QString,float*,int)));
-
 
     knossos->loadDefaultTreeLUT();
 
@@ -191,6 +198,8 @@ int main(int argc, char *argv[])
     viewer->run();
     remote->start();
     client->start();
+
+
 
     QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(resetLoaderSignal()), loader, SLOT(initLoader()));
     //scripts->run();

@@ -306,7 +306,7 @@ void MainWindow::updateTitlebar(bool useFilename) {
 }
 
 void MainWindow::showSplashScreen() {
-    QSplashScreen splashScreen(QPixmap("../splash"), Qt::WindowStaysOnTopHint);
+    QSplashScreen splashScreen(QPixmap(":/splashy"), Qt::WindowStaysOnTopHint);
     splashScreen.show();
 }
 
@@ -916,11 +916,11 @@ void MainWindow::recenterOnClickSlot()
 
 void MainWindow::zoomAndMultiresSlot()
 {
-
     this->widgetContainer->zoomAndMultiresWidget->show();
     this->widgetContainer->zoomAndMultiresWidget->adjustSize();
     if(this->widgetContainer->zoomAndMultiresWidget->pos().x() <= 0 or this->widgetContainer->zoomAndMultiresWidget->pos().y() <= 0)
         this->widgetContainer->zoomAndMultiresWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+    this->widgetContainer->zoomAndMultiresWidget->setFixedSize(this->widgetContainer->zoomAndMultiresWidget->size());
 }
 
 void MainWindow::tracingTimeSlot()
@@ -928,7 +928,8 @@ void MainWindow::tracingTimeSlot()
     this->widgetContainer->tracingTimeWidget->show();
     this->widgetContainer->tracingTimeWidget->adjustSize();
     if(this->widgetContainer->tracingTimeWidget->pos().x() <= 0 or this->widgetContainer->tracingTimeWidget->pos().y() <= 0)
-        this->widgetContainer->zoomAndMultiresWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+        this->widgetContainer->tracingTimeWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+    this->widgetContainer->tracingTimeWidget->setFixedSize(this->widgetContainer->tracingTimeWidget->size());
 }
 
 /* preference menu functionality */
@@ -965,6 +966,7 @@ void MainWindow::defaultPreferencesSlot() {
             clearSettings();
             loadSettings();
             widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
+            widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
             emit loadTreeLUTFallback();
             treeColorAdjustmentsChanged();
             datasetColorAdjustmentsChanged();
@@ -983,6 +985,7 @@ void MainWindow::datatasetNavigationSlot()
     if(this->widgetContainer->navigationWidget->pos().x() <= 0 or this->widgetContainer->navigationWidget->pos().y() <= 0)
         this->widgetContainer->navigationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     datasetNavigationAction->setChecked(true);
+    this->widgetContainer->navigationWidget->setFixedSize(this->widgetContainer->navigationWidget->size());
 }
 
 void MainWindow::synchronizationSlot()
@@ -993,6 +996,7 @@ void MainWindow::synchronizationSlot()
         this->widgetContainer->synchronizationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     this->widgetContainer->synchronizationWidget->move(QWidget::mapFromGlobal(mainWidget->pos()));
     synchronizationAction->setChecked(true);
+    //this->widgetContainer->synchronizationWidget->setFixedSize(this->widgetContainer->);
 }
 
 void MainWindow::dataSavingOptionsSlot()
@@ -1001,7 +1005,8 @@ void MainWindow::dataSavingOptionsSlot()
     this->widgetContainer->dataSavingWidget->adjustSize();
     if(widgetContainer->dataSavingWidget->pos().x() <= 0 or this->widgetContainer->dataSavingWidget->pos().y() <= 0)
         this->widgetContainer->dataSavingWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-        dataSavingOptionsAction->setChecked(true);
+    dataSavingOptionsAction->setChecked(true);
+    this->widgetContainer->dataSavingWidget->setFixedSize(this->widgetContainer->dataSavingWidget->size());
 }
 
 void MainWindow::viewportSettingsSlot()
@@ -1011,6 +1016,7 @@ void MainWindow::viewportSettingsSlot()
     if(widgetContainer->viewportSettingsWidget->pos().x() <= 0 or this->widgetContainer->viewportSettingsWidget->pos().y() <= 0)
         this->widgetContainer->viewportSettingsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     viewportSettingsAction->setChecked(true);
+    this->widgetContainer->viewportSettingsWidget->setFixedSize(this->widgetContainer->viewportSettingsWidget->size());
 }
 
 /* window menu functionality */
@@ -1022,6 +1028,7 @@ void MainWindow::toolsSlot()
     if(widgetContainer->toolsWidget->pos().x() <= 0 or this->widgetContainer->toolsWidget->pos().y() <= 0)
         this->widgetContainer->toolsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     toolsAction->setChecked(true);
+    this->widgetContainer->toolsWidget->setFixedSize(this->widgetContainer->toolsWidget->size());
 }
 
 void MainWindow::logSlot()
@@ -1040,6 +1047,7 @@ void MainWindow::commentShortcutsSlots()
     if(widgetContainer->commentsWidget->pos().x() <= 0 or this->widgetContainer->commentsWidget->pos().y() <= 0)
         this->widgetContainer->commentsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     commentShortcutsAction->setChecked(true);
+    this->widgetContainer->commentsWidget->setFixedSize(this->widgetContainer->commentsWidget->size());
 }
 
 /* help menu functionality */

@@ -162,7 +162,6 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 }
 
 
-
 void ToolsNodesTabWidget::idChanged(int value) {
     state->viewerState->gui->activeNodeID = value;
 }
