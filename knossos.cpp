@@ -80,10 +80,9 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos *knossos = new Knossos();
-<<<<<<< .mine
+
     //Knossos::loadStyleSheet();
-=======
->>>>>>> .r678
+
     // The idea behind all this is that we have four sources of
     // configuration data:
     //
