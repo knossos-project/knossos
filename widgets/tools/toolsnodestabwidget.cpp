@@ -224,7 +224,11 @@ void ToolsNodesTabWidget::defaultNodeRadiusChanged(double value) {
 }
 
 void ToolsNodesTabWidget::enableCommentLockingChecked(bool on) {
-    state->skeletonState->lockPositions = on;
+    state->skeletonState->positionLocked = on;
+    if(on and lockingToNodesWithCommentField->text().isEmpty())
+        state->viewerState->gui->lockComment = lockingToNodesWithCommentField->text();
+       // state->skeletonState->commentBuffer = const_cast<char *>(lockingToNodesWithCommentField->text().toStdString().c_str());
+    //
 }
 
 void ToolsNodesTabWidget::lockingRadiusChanged(int value) {
@@ -232,14 +236,14 @@ void ToolsNodesTabWidget::lockingRadiusChanged(int value) {
 }
 
 void ToolsNodesTabWidget::lockToNodesWithCommentChanged(QString comment) {
-    strncpy(state->skeletonState->onCommentLock, comment.toStdString().c_str(), sizeof(comment.size()));
+    state->viewerState->gui->lockComment = comment;
 }
 
 void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
     Coordinate activeNodePosition;
 
     if(state->skeletonState->activeNode) {
-        LOG("Locking to active node")
+        qDebug("Locking to active node");
 
         activeNodePosition.x = state->skeletonState->activeNode->position.x;
         activeNodePosition.y = state->skeletonState->activeNode->position.y;
@@ -248,7 +252,7 @@ void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
         emit lockPositionSignal(activeNodePosition);
 
     } else {
-        LOG("There is not active node to lock")
+        qDebug("There is not active node to lock");
     }
 }
 

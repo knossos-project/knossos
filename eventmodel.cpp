@@ -1103,7 +1103,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
         //emit updateTools();
-    } else if(event->key() == Qt::Key_N) {
+    } else if(event->key() == Qt::Key_N) { /*!*/
         if(shift) {
             emit nextCommentlessNodeSignal();
         } else {
@@ -1191,12 +1191,14 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit workModeAddSignal();
     } else if(event->key() == Qt::Key_W) {
         emit workModeLinkSignal();
-    } else if(event->key() == Qt::Key_C) {
+   /* } else if(event->key() == Qt::Key_C) {
+
         treeCol.r = -1.;
         emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
         emit updateTreeCountSignal();
         emit workModeDropSignal();
         state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+        */
     } else if(event->key() == Qt::Key_V) {
        if(control) {
            emit pasteCoordinateSignal();

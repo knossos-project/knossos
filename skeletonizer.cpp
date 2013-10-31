@@ -1949,6 +1949,7 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
 
     /* */
 
+
     return true;
 }
 
@@ -1980,16 +1981,27 @@ int Skeletonizer::addNode(int targetRevision,
      // disallow tracing areas further than a certain distance away from a specific point in the
      // dataset.
 
+    //qDebug() << state->skeletonState->lockedPosition.x  << " " << state->skeletonState->lockedPosition.y  << " " << state->skeletonState->lockedPosition.z;
+
+
 
     if(respectLocks) {
+
         if(state->skeletonState->positionLocked) {
+
+            if(state->viewerState->gui->lockComment == QString(state->skeletonState->onCommentLock)) {
+                unlockPosition();
+                return false;
+            }
+
+
             lockVector.x = (float)position->x - (float)state->skeletonState->lockedPosition.x;
             lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
             lockVector.z = (float)position->z - (float)state->skeletonState->lockedPosition.z;
 
             lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
-                LOG("Node is too far away from lock point (%d), not adding.", lockDistance)
+                qDebug("Node is too far away from lock point (%d), not adding.", lockDistance);
                 Knossos::unlockSkeleton(false);
                 return false;
             }

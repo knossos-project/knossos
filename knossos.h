@@ -54,7 +54,7 @@ public:
     static bool sendServerSignal();
     static uint log2uint32(register uint x);
     static uint ones32(register uint x);
-
+    static void loadStyleSheet();
     void loadDefaultTreeLUT();
 
 

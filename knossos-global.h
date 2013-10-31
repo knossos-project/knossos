@@ -760,6 +760,7 @@ struct guiConfig {
     int activeNodeID;
     int activeTreeID;
 
+    QString lockComment;
     char *commentBuffer;
     char *commentSearchBuffer;
     char *treeCommentBuffer;

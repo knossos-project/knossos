@@ -68,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
+    this->setUnifiedTitleAndToolBarOnMac(true);
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
@@ -120,12 +121,10 @@ MainWindow::MainWindow(QWidget *parent) :
     createActions();
     createMenus();
 
-
     widgetContainer = new WidgetContainer(this);
     widgetContainer->createWidgets();
 
     createToolBar();
-
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
 
@@ -464,15 +463,11 @@ void MainWindow::createActions()
     /* edit skeleton actions */
     addNodeAction = new QAction(tr("Add Node"), this);
     addNodeAction->setCheckable(true);
-    linkWithActiveNodeAction = new QAction(tr("Link with Active Node"), this);
+    linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), this);
     linkWithActiveNodeAction->setCheckable(true);
-    dropNodesAction = new QAction(tr("&Drop Nodes(C)"), this);
+    dropNodesAction = new QAction(tr("Drop Nodes(C)"), this);
     dropNodesAction->setCheckable(true);
-    skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
-
-
-
-
+    skeletonStatisticsAction = new QAction(tr("Skeleton Statistics"), this);
 
 
     if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {
@@ -490,10 +485,10 @@ void MainWindow::createActions()
 
 
     /* view actions */
-    workModeViewAction = new QAction(tr("&Work Mode"), this);
-    dragDatasetAction = new QAction(tr("&Drag Dataset"), this);
+    workModeViewAction = new QAction(tr("Work Mode"), this);
+    dragDatasetAction = new QAction(tr("Drag Dataset"), this);
     dragDatasetAction->setCheckable(true);
-    recenterOnClickAction = new QAction(tr("&Recenter on Click"), this);
+    recenterOnClickAction = new QAction(tr("Recenter on Click"), this);
     recenterOnClickAction->setCheckable(true);
 
     if(state->viewerState->workMode == ON_CLICK_DRAG) {
@@ -506,15 +501,15 @@ void MainWindow::createActions()
     connect(recenterOnClickAction, SIGNAL(triggered()), this, SLOT(recenterOnClickSlot()));
 
     /* preferences actions */
-    loadCustomPreferencesAction = new QAction(tr("&Load Custom Preferences"), this);
-    saveCustomPreferencesAction = new QAction(tr("&Save Custom Preferences"), this);
-    defaultPreferencesAction = new QAction(tr("&Default Preferences"), this);
-    datasetNavigationAction = new QAction(tr("&Dataset Navigation"), this);
-    synchronizationAction = new QAction(tr("&Synchronization"), this);
+    loadCustomPreferencesAction = new QAction(tr("Load Custom Preferences"), this);
+    saveCustomPreferencesAction = new QAction(tr("Save Custom Preferences"), this);
+    defaultPreferencesAction = new QAction(tr("Default Preferences"), this);
+    datasetNavigationAction = new QAction(tr("Dataset Navigation"), this);
+    synchronizationAction = new QAction(tr("Synchronization"), this);
     synchronizationAction->setCheckable(true);
-    dataSavingOptionsAction = new QAction(tr("&Data Saving Options"), this);
+    dataSavingOptionsAction = new QAction(tr("Data Saving Options"), this);
     dataSavingOptionsAction->setCheckable(true);
-    viewportSettingsAction = new QAction(tr("&Viewport Settings"), this);
+    viewportSettingsAction = new QAction(tr("Viewport Settings"), this);
     viewportSettingsAction->setCheckable(true);
 
     connect(loadCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(loadCustomPreferencesSlot()));
@@ -525,20 +520,20 @@ void MainWindow::createActions()
 
 
     /* window actions */
-    toolsAction = new QAction(tr("&Tools"), this);
+    toolsAction = new QAction(tr("Tools"), this);
     toolsAction->setCheckable(true);
-    taskLoginAction = new QAction(tr("&Task"), this);
+    taskLoginAction = new QAction(tr("Task"), this);
     taskLoginAction->setCheckable(true);
-    logAction = new QAction(tr("&Log"), this);
+    logAction = new QAction(tr("Log"), this);
     logAction->setCheckable(true);
-    commentShortcutsAction = new QAction(tr("&Comment Shortcuts"), this);
+    commentShortcutsAction = new QAction(tr("Comment Shortcuts"), this);
     commentShortcutsAction->setCheckable(true);
 
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
     connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
 
     /* Help actions */
-    //aboutAction = new QAction(tr("&About"), this);
+    //aboutAction = new QAction(tr("About"), this);
     //connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutSlot()));
 
 }
@@ -556,52 +551,61 @@ void MainWindow::recentFileSelected() {
 void MainWindow::createMenus()
 {
 
-    dataSetMenu = menuBar()->addMenu("&Dataset");
-    dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "&Open", this, SLOT(openDatasetSlot()));
 
-    fileMenu = menuBar()->addMenu("&Skeleton");
-    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "&Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("&Recent File(s)"));
+    dataSetMenu = menuBar()->addMenu("Dataset");
+    dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openDatasetSlot()));
 
-    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "&Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "&Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
+    fileMenu = menuBar()->addMenu("Skeleton File");
+    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
+
+    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
     fileMenu->addSeparator();
-    fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "&Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
-    editMenu = menuBar()->addMenu("&Edit Skeleton");
-    workModeEditMenu = editMenu->addMenu("&Work Mode");
+    editMenu = menuBar()->addMenu("Edit Skeleton");
+    workModeEditMenu = editMenu->addMenu("Work Mode");
         workModeEditMenu->addAction(addNodeAction);
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
     editMenu->addAction(skeletonStatisticsAction);
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "&Clear Skeleton", this, SLOT(clearSkeletonSlot()));
 
-    viewMenu = menuBar()->addMenu("&View");
-    workModeViewMenu = viewMenu->addMenu("&Work Mode");
+    newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
+    newTreeAction->setShortcut(QKeySequence(tr("c")));
+    newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    nextCommentAction = editMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentSlot()));
+    nextCommentAction->setShortcut(QKeySequence(tr("N")));
+    nextCommentAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()), QKeySequence(tr("CTRL+C", "File|Clear Skeleton")));
+
+    viewMenu = menuBar()->addMenu("View");
+    workModeViewMenu = viewMenu->addMenu("Work Mode");
         workModeViewMenu->addAction(dragDatasetAction);
         workModeViewMenu->addAction(recenterOnClickAction);
-    this->zoomAndMultiresAction = viewMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "&Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
-    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "&Tracing Time", this, SLOT(tracingTimeSlot()));
+    this->zoomAndMultiresAction = viewMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
+    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 
-
-    preferenceMenu = menuBar()->addMenu("&Preferences");
+    preferenceMenu = menuBar()->addMenu("Preferences");
     preferenceMenu->addAction(loadCustomPreferencesAction);
     preferenceMenu->addAction(saveCustomPreferencesAction);
     preferenceMenu->addAction(defaultPreferencesAction);
     preferenceMenu->addAction(datasetNavigationAction);
-    //synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "&Synchronization", this, SLOT(synchronizationSlot()));
+    //synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Synchronization", this, SLOT(synchronizationSlot()));
     preferenceMenu->addAction(dataSavingOptionsAction);
 
-    viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "&Viewport Settings", this, SLOT(viewportSettingsSlot()));
+    viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
-    windowMenu = menuBar()->addMenu("&Windows");
-    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "&Tools", this, SLOT(toolsSlot()));    
+    windowMenu = menuBar()->addMenu("Windows");
+    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
     windowMenu->addAction(taskLoginAction);
     windowMenu->addAction(logAction);
-    commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "&Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
+    commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
 
-    helpMenu = menuBar()->addMenu("&Help");
-    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "&About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "&File|About")));
+    helpMenu = menuBar()->addMenu("Help");
+    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "File|About")));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -1383,5 +1387,25 @@ void MainWindow::showVPDecorationClicked() {
         for(int i = 0; i < NUM_VP; i++) {
             viewports[i]->hideButtons();
         }
+    }
+}
+
+void MainWindow::newTreeSlot() {
+    color4F treeCol;
+    treeCol.r = -1.;
+    emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
+    widgetContainer->toolsWidget->updateTreeCount();
+    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+}
+
+
+void MainWindow::nextCommentNodeSlot() {
+    qDebug() << "in";
+    qDebug() << QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
+
+    if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)) {
+        emit nextCommentlessNodeSignal();
+    } else {
+        emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
     }
 }

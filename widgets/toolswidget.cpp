@@ -51,6 +51,7 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
     tabs->addTab(toolsTreesTabWidget, "Trees");
     tabs->addTab(toolsNodesTabWidget, "Nodes");
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void ToolsWidget::closeEvent(QCloseEvent *event) {

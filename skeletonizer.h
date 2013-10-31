@@ -252,8 +252,8 @@ public slots:
     static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);
     static bool addTreeComment(int targetRevision, int treeID, char *comment);
     bool setSkeletonWorkMode(int targetRevision, uint workMode);
-    bool unlockPosition();
-    bool lockPosition(Coordinate lockCoordinate);
+    static bool unlockPosition();
+    static bool lockPosition(Coordinate lockCoordinate);
     commentListElement *nextComment(char *searchString);
     commentListElement *previousComment(char *searchString);
     bool previousCommentlessNode();

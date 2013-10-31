@@ -202,7 +202,9 @@ OTHER_FILES += \
     defaultSettings.xml \
     customCursor.xpm \
     config.y \
-    resize.gif
+    resize.gif \
+    style.qss
+
 
 DEFINES += REVISION=\\\"$$system(svnversion)\\\"
 

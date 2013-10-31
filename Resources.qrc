@@ -29,4 +29,7 @@
         <file>icons/network-connect.png</file>
         <file>icons/network-disconnect.png</file>
     </qresource>
+    <qresource prefix="/misc">
+        <file>style.qss</file>
+    </qresource>
 </RCC>

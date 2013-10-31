@@ -2739,11 +2739,6 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(vpSkel->delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
-    connect(vpXY->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
-    connect(vpXZ->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
-    connect(vpYZ->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
-    connect(vpSkel->delegate, SIGNAL(updateTreeCountSignal()), window->widgetContainer->toolsWidget, SLOT(updateTreeCount()));
-
     connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
 
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
@@ -2754,6 +2749,7 @@ void Viewer::rewire() {
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
+    connect(window, SIGNAL(addTreeListElementElementSignal(int,int,int,color4F,int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
 
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
@@ -2799,10 +2795,12 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(vpSkel->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
-    connect(vpXY->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
-    connect(vpXZ->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(window, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    connect(window, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    /*connect(vpXZ->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(vpYZ->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(vpSkel->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
+    */
 
     connect(vpXY->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
     connect(vpXZ->delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
@@ -2846,6 +2844,8 @@ void Viewer::rewire() {
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
+    connect(window, SIGNAL(addTreeListElement(bool,int,int,color4F, int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+
 
     connect(vpXY->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(vpXZ->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));

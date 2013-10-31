@@ -78,8 +78,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-    Knossos *knossos = new Knossos();
 
+    Knossos *knossos = new Knossos();
+    Knossos::loadStyleSheet();
     // The idea behind all this is that we have four sources of
     // configuration data:
     //
@@ -1246,5 +1247,17 @@ void Knossos::revisionCheck() {
 
 
 #endif
+
+}
+
+void Knossos::loadStyleSheet() {
+    QFile file(":/misc/style.qss");
+    if(!file.open(QIODevice::ReadOnly)) {
+        qErrnoWarning("Error reading the knossos style sheet file");
+    }
+
+    QString design(file.readAll());
+    qApp->setStyleSheet(design);
+    file.close();
 
 }

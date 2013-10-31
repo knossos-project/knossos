@@ -30,6 +30,7 @@
 #include <QDropEvent>
 #include <QQueue>
 #include <QComboBox>
+#include "knossos-global.h"
 
 namespace Ui {
     class MainWindow;
@@ -79,14 +80,17 @@ signals:
     void startRenderTimerSignal(int frequency);
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
+
+    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    void nextCommentSignal(char *searchString);
+    void nextCommentlessNodeSignal();
+
 protected:
 
     void resizeEvent(QResizeEvent *event);
-
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
-
 
 public:
     Ui::MainWindow *ui;
@@ -117,6 +121,10 @@ public:
     QAction *skeletonStatisticsAction;
     QAction *clearSkeletonAction;
 
+    QAction *newTreeAction;
+    QAction *nextCommentAction;
+    QAction *previousCommentAction;
+
     /* view actions */
     QAction *workModeViewAction;
     QAction *dragDatasetAction;
@@ -143,6 +151,7 @@ public:
     QAction *aboutAction;
 
     /* Qmenu-points */
+    QMenuBar *customBar;
     QMenu *dataSetMenu;
     QMenu *fileMenu;
     QMenu *recentFileMenu;
@@ -247,6 +256,12 @@ public slots:
     void resetViewports();
     void showVPDecorationClicked();
     void fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
+
+    // from the event handler
+    void newTreeSlot();
+    void nextCommentNodeSlot();
+
+
 };
 
 #endif // MAINWINDOW_H

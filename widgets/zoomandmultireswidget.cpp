@@ -250,17 +250,13 @@ void ZoomAndMultiresWidget::loadSettings() {
         this->orthogonalDataViewportSpinBox->setValue(1);
     }
 
-
     if(!settings.value(SKELETON_VIEW).toDouble()) {
         this->skeletonViewportSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
         state->skeletonState->zoomLevel = settings.value(SKELETON_VIEW).toDouble();
     }
 
-
     this->lockDatasetCheckBox->setChecked(settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool());
     state->viewerState->datasetMagLock = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
-
-
     settings.endGroup();
 }
 

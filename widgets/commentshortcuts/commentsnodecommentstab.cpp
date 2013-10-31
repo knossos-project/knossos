@@ -25,6 +25,7 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 
     nodeTable = new QTableWidget();
     nodeTable->setColumnCount(2);
+    nodeTable->setAlternatingRowColors(true);
 
     nodeTable->setHorizontalHeaderItem(0, left);    
     nodeTable->setHorizontalHeaderItem(1, right);
