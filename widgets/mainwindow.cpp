@@ -462,13 +462,17 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
-    addNodeAction = new QAction(tr("&Add Node(A)"), this);
+    addNodeAction = new QAction(tr("Add Node"), this);
     addNodeAction->setCheckable(true);
-    linkWithActiveNodeAction = new QAction(tr("&Link with Active Node(W)"), this);
+    linkWithActiveNodeAction = new QAction(tr("Link with Active Node"), this);
     linkWithActiveNodeAction->setCheckable(true);
     dropNodesAction = new QAction(tr("&Drop Nodes(C)"), this);
     dropNodesAction->setCheckable(true);
     skeletonStatisticsAction = new QAction(tr("&Skeleton Statistics"), this);
+
+
+
+
 
 
     if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {

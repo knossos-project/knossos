@@ -1444,6 +1444,8 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
         glDisable(GL_TEXTURE_2D);
 
+
+
         for(i = 0; i < state->viewerState->numberViewports; i++) {
             dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx

@@ -53,7 +53,8 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     deleteActiveTreeButton = new QPushButton("Delete Active Tree");
-    newTreeButton = new QPushButton("New Tree (C)");
+    newTreeButton = new QPushButton("New Tree (c)");
+    newTreeButton->setShortcut(Qt::Key_V);
 
     commentLabel = new QLabel("Comment");
     commentField = new QLineEdit();
