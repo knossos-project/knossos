@@ -83,8 +83,17 @@ signals:
 
     treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
     void nextCommentSignal(char *searchString);
-    void nextCommentlessNodeSignal();
+    void previousCommentSignal(char *searchString);
+    /* */
+    void moveToPrevNodeSignal();
+    void moveToNextNodeSignal();
+    void updateTools();
+    void popBranchNodeSignal();
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    void jumpToActiveNodeSignal();
 
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
 protected:
 
     void resizeEvent(QResizeEvent *event);
@@ -124,6 +133,11 @@ public:
     QAction *newTreeAction;
     QAction *nextCommentAction;
     QAction *previousCommentAction;
+    QAction *pushBranchNodeAction;
+    QAction *popBranchNodeAction;
+    QAction *moveToPrevNodeAction;
+    QAction *moveToNextNodeAction;
+    QAction *jumpToActiveNodeAction;
 
     /* view actions */
     QAction *workModeViewAction;
@@ -140,6 +154,11 @@ public:
     QAction *synchronizationAction;
     QAction *dataSavingOptionsAction;
     QAction *viewportSettingsAction;
+    QAction *F1Action;
+    QAction *F2Action;
+    QAction *F3Action;
+    QAction *F4Action;
+    QAction *F5Action;
 
     /* window actions */
     QAction *toolsAction;
@@ -176,6 +195,7 @@ public:
     QToolButton *toolsButton;
     QToolButton *commentShortcutsButton;
     QPushButton *resetVPsButton;
+    QToolButton *taskManagementButton;
 
     void updateFileHistoryMenu();
     void createActions();
@@ -260,6 +280,17 @@ public slots:
     // from the event handler
     void newTreeSlot();
     void nextCommentNodeSlot();
+    void previousCommentNodeSlot();
+    void pushBranchNodeSlot();
+    void popBranchNodeSlot();
+    void moveToPrevNodeSlot();
+    void moveToNextNodeSlot();
+    void jumpToActiveNodeSlot();
+    void F1Slot();
+    void F2Slot();
+    void F3Slot();
+    void F4Slot();
+    void F5Slot();
 
 
 };

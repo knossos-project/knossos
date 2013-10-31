@@ -1102,19 +1102,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
-        //emit updateTools();
-    } else if(event->key() == Qt::Key_N) { /*!*/
-        if(shift) {
-            emit nextCommentlessNodeSignal();
-        } else {
-            emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
-        }
-    } else if(event->key() == Qt::Key_P) {
-        if(shift) {
-            emit previousCommentlessNodeSignal();
-        } else {
-            emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
-        }
+        //emit updateTools();   
+
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
            state->viewerState->drawVPCrosshairs = false;
@@ -1123,39 +1112,39 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
            state->viewerState->drawVPCrosshairs = true;
         }
         emit updateSlicePlaneWidgetSignal();
-    } else if(event->key() == Qt::Key_J) {
-        qDebug("emitting");
-        emit popBranchNodeSignal();
-        emit updateTools();
-    } else if(event->key() == Qt::Key_B) {
-        emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-        emit updateTools();
-    } else if(event->key() == Qt::Key_X) {
-        if(shift) {
-            emit moveToPrevNodeSignal();
-            emit updateTools();
-            return true;
-        }
+     //else if(event->key() == Qt::Key_J) {
 
-        emit moveToNextNodeSignal();
-        emit updateTools();
-        return true;
+       // qDebug("emitting");
+       // emit popBranchNodeSignal();
+       // emit updateTools(); */
+     //else if(event->key() == Qt::Key_B) {
+      //  emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
+     //   emit updateTools();
+   // } else if(event->key() == Qt::Key_X) {
+        //if(shift) {
+           // emit moveToPrevNodeSignal();
+           // emit updateTools();
+          //  return true;
+        //}
 
-    } else if(event->key() == Qt::Key_Z) {
+        //emit moveToNextNodeSignal();
+        //emit updateTools();
+       // return true;
 
-        if(control) {
-            emit undoSignal();
-            return true;
-        }
+    //} else if(event->key() == Qt::Key_Z) {
 
-        if(shift) {
-            emit moveToNextTreeSignal();
-            emit updateTools();
-            return true;
-        }
-        emit moveToPrevTreeSignal();
-        emit updateTools();
-        return true;
+       // if(control) {
+          //  emit undoSignal();
+       //     return true;
+       // }
+
+       // if(shift) {
+         //   emit moveToNextTreeSignal();
+        //    emit updateTools();
+       //     return true;
+      //  }
+       // emit moveToPrevTreeSignal();
+      //  return true;
 
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
@@ -1181,12 +1170,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             state->skeletonState->viewChanged = true;
         }
         emit updateZoomWidgetSignal();
-    } else if(event->key() == Qt::Key_S) {
-        if(control) {
-            emit saveSkeletonSignal();
-            return true;
-        }
-        emit jumpToActiveNodeSignal();
+     //else if(event->key() == Qt::Key_S) {
+        //if(control) {
+          //  emit saveSkeletonSignal();
+         //   return true;
+       // }
+       // emit jumpToActiveNodeSignal();
     } else if(event->key() == Qt::Key_A) {
         emit workModeAddSignal();
     } else if(event->key() == Qt::Key_W) {
@@ -1203,7 +1192,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
        if(control) {
            emit pasteCoordinateSignal();
        }
-    } else if(event->key() == Qt::Key_1) {
+    } else if(event->key() == Qt::Key_1) { // !
         if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
             state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
         }
@@ -1215,7 +1204,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Delete) {
         emit deleteActiveNodeSignal();
         emit updateTools();
-    } else if(event->key() == Qt::Key_F1) {        
+    } else if(event->key() == Qt::Key_F1) {
+        /*
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
         } else{
@@ -1225,7 +1215,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         emit updateTools();
         emit updateCommentsTable();
+        */
     } else if(event->key() == Qt::Key_F2) {
+        /*
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
         }
@@ -1235,7 +1227,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         emit updateTools();
         emit updateCommentsTable();
+        */
     } else if(event->key() == Qt::Key_F3) {
+        /*
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
         }
@@ -1245,11 +1239,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         emit updateTools();
         emit updateCommentsTable();
+        */
     } else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
             QApplication::quit();
-        } else {
+        } /*else {
             if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
                 emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
             }
@@ -1259,8 +1254,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
             emit updateTools();
             emit updateCommentsTable();
-        }
-    } else if(event->key() == Qt::Key_F5) {
+        } */
+    } /*else if(event->key() == Qt::Key_F5) {
+
         if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
             emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
         }
@@ -1272,7 +1268,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit updateCommentsTable();
     }
 
-    return true;
+    return true; */
 }
 
 Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {

@@ -220,10 +220,17 @@ void MainWindow:: createToolBar() {
     this->toolBar->addWidget(zField);    
     this->toolBar->addSeparator();
 
+    /*
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
     pythonButton->setIcon(QIcon(":/images/python.png"));        
     this->toolBar->addWidget(pythonButton);    
+    */
+
+    taskManagementButton = new QToolButton();
+    taskManagementButton->setToolTip("Task Management Widget");
+    taskManagementButton->setIcon(QIcon(":/images/icons/network-connect.png"));
+    this->toolBar->addWidget(taskManagementButton);
 
     tracingTimeButton = new QToolButton();
     tracingTimeButton->setToolTip("Tracing Time Widget");
@@ -279,6 +286,7 @@ void MainWindow:: createToolBar() {
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
+    connect(taskManagementButton, SIGNAL(clicked()), this, SLOT(taskLoginSlot()));
     connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
@@ -465,7 +473,7 @@ void MainWindow::createActions()
     addNodeAction->setCheckable(true);
     linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), this);
     linkWithActiveNodeAction->setCheckable(true);
-    dropNodesAction = new QAction(tr("Drop Nodes(C)"), this);
+    dropNodesAction = new QAction(tr("Drop Nodes"), this);
     dropNodesAction->setCheckable(true);
     skeletonStatisticsAction = new QAction(tr("Skeleton Statistics"), this);
 
@@ -518,19 +526,18 @@ void MainWindow::createActions()
     connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));    
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
 
-
     /* window actions */
     toolsAction = new QAction(tr("Tools"), this);
     toolsAction->setCheckable(true);
-    taskLoginAction = new QAction(tr("Task"), this);
-    taskLoginAction->setCheckable(true);
+    //taskLoginAction = new QAction(tr("Task Management"), this);
+    //taskLoginAction->setCheckable(true);
     logAction = new QAction(tr("Log"), this);
     logAction->setCheckable(true);
     commentShortcutsAction = new QAction(tr("Comment Shortcuts"), this);
     commentShortcutsAction->setCheckable(true);
 
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
-    connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
+    //connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
 
     /* Help actions */
     //aboutAction = new QAction(tr("About"), this);
@@ -551,7 +558,6 @@ void MainWindow::recentFileSelected() {
 void MainWindow::createMenus()
 {
 
-
     dataSetMenu = menuBar()->addMenu("Dataset");
     dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openDatasetSlot()));
 
@@ -560,7 +566,7 @@ void MainWindow::createMenus()
     recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
 
     fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As", this, SLOT(saveAsSlot()), QKeySequence(tr("CTRL+?", "File|Save As")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As", this, SLOT(saveAsSlot()));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
@@ -569,30 +575,76 @@ void MainWindow::createMenus()
         workModeEditMenu->addAction(addNodeAction);
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
-    editMenu->addAction(skeletonStatisticsAction);
+    //editMenu->addAction(skeletonStatisticsAction);
 
     newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
-    newTreeAction->setShortcut(QKeySequence(tr("c")));
+    newTreeAction->setShortcut(QKeySequence(tr("C")));
     newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    nextCommentAction = editMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentSlot()));
+    moveToNextNodeAction = editMenu->addAction(QIcon(""), "Move To Next Node", this, SLOT(moveToNextNodeSlot()));
+    moveToNextNodeAction->setShortcut(QKeySequence(tr("Z")));
+    moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    moveToPrevNodeAction = editMenu->addAction(QIcon(""), "Move To Previous Node", this, SLOT(moveToPrevNodeSlot()));
+    moveToPrevNodeAction->setShortcut(QKeySequence(tr("X")));
+    moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    pushBranchNodeAction = editMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()));
+    pushBranchNodeAction->setShortcut(QKeySequence(tr("B")));
+    pushBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    popBranchNodeAction = editMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()));
+    popBranchNodeAction->setShortcut(QKeySequence(tr("J")));
+    popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    jumpToActiveNodeAction = editMenu->addAction(QIcon(""), "Jump To Active Node", this, SLOT(jumpToActiveNodeSlot()));
+    jumpToActiveNodeAction->setShortcut(QKeySequence(tr("S")));
+    jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    editMenu->addSeparator();
+
+    nextCommentAction = editMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()));
     nextCommentAction->setShortcut(QKeySequence(tr("N")));
     nextCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()), QKeySequence(tr("CTRL+C", "File|Clear Skeleton")));
+    previousCommentAction = editMenu->addAction(QIcon(""), "Previous Comment", this, SLOT(previousCommentNodeSlot()));
+    previousCommentAction->setShortcut(QKeySequence(tr("P")));
+    previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    viewMenu = menuBar()->addMenu("View");
+    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
+    F1Action->setShortcut(tr("F1"));
+    F1Action->setShortcutContext(Qt::ApplicationShortcut);
+
+    F2Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
+    F2Action->setShortcut(tr("F2"));
+    F2Action->setShortcutContext(Qt::ApplicationShortcut);
+
+    F3Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
+    F3Action->setShortcut(tr("F3"));
+    F3Action->setShortcutContext(Qt::ApplicationShortcut);
+
+    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
+    F1Action->setShortcut(tr("F5"));
+    F1Action->setShortcutContext(Qt::ApplicationShortcut);
+
+    F5Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
+    F5Action->setShortcut(tr("F5"));
+    F5Action->setShortcutContext(Qt::ApplicationShortcut);
+
+    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
+
+    viewMenu = menuBar()->addMenu("Navigation");
     workModeViewMenu = viewMenu->addMenu("Work Mode");
         workModeViewMenu->addAction(dragDatasetAction);
         workModeViewMenu->addAction(recenterOnClickAction);
-    this->zoomAndMultiresAction = viewMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
-    this->tracingTimeAction = viewMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
+
+    viewMenu->addAction(datasetNavigationAction);
+
 
     preferenceMenu = menuBar()->addMenu("Preferences");
     preferenceMenu->addAction(loadCustomPreferencesAction);
     preferenceMenu->addAction(saveCustomPreferencesAction);
     preferenceMenu->addAction(defaultPreferencesAction);
-    preferenceMenu->addAction(datasetNavigationAction);
     //synchronizationAction = preferenceMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Synchronization", this, SLOT(synchronizationSlot()));
     preferenceMenu->addAction(dataSavingOptionsAction);
 
@@ -600,9 +652,13 @@ void MainWindow::createMenus()
 
     windowMenu = menuBar()->addMenu("Windows");
     toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
-    windowMenu->addAction(taskLoginAction);
-    windowMenu->addAction(logAction);
+    taskLoginAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskLoginSlot()));
+
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
+
+    this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
+    this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
+
 
     helpMenu = menuBar()->addMenu("Help");
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "File|About")));
@@ -1366,6 +1422,12 @@ void MainWindow::taskLoginSlot() {
     }
     widgetContainer->taskLoginWidget->setResponse("Please login.");
     widgetContainer->taskLoginWidget->show();
+    this->widgetContainer->taskLoginWidget->adjustSize();
+    if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
+        this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
+
+
+
     free(response.content);
     return;
 }
@@ -1396,16 +1458,98 @@ void MainWindow::newTreeSlot() {
     emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     widgetContainer->toolsWidget->updateTreeCount();
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    qDebug() << state->skeletonState->treeElements << " __";
 }
 
-
 void MainWindow::nextCommentNodeSlot() {
-    qDebug() << "in";
-    qDebug() << QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier);
+    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
+}
 
-    if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)) {
-        emit nextCommentlessNodeSignal();
-    } else {
-        emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
+void MainWindow::previousCommentNodeSlot() {
+    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
+}
+
+void MainWindow::pushBranchNodeSlot() {
+   emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
+   emit updateTools();
+}
+
+void MainWindow::popBranchNodeSlot() {
+    emit popBranchNodeSignal();
+    emit updateTools();
+}
+
+void MainWindow::moveToNextNodeSlot() {
+    emit moveToNextNodeSignal();
+    emit updateTools();
+}
+
+void MainWindow::moveToPrevNodeSlot() {
+    emit moveToPrevNodeSignal();
+    emit updateTools();
+}
+
+void MainWindow::jumpToActiveNodeSlot() {
+    emit jumpToActiveNodeSignal();
+}
+
+void MainWindow::F1Slot() {
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
+    } else{
+        if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
+        }
     }
+    emit updateTools();
+    emit updateCommentsTableSignal();
+}
+
+void MainWindow::F2Slot() {
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
+    }
+    else{
+        if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
+    }
+    emit updateTools();
+    emit updateCommentsTableSignal();
+}
+
+void MainWindow::F3Slot() {
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
+    }
+    else{
+       if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
+    }
+    emit updateTools();
+    emit updateCommentsTableSignal();
+}
+
+void MainWindow::F4Slot() {
+
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
+    }
+    else{
+       if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
+        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
+    }
+    emit updateTools();
+    emit updateCommentsTableSignal();
+}
+
+void MainWindow::F5Slot() {
+    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
+    }
+    else {
+        if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
+        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
+    }
+    emit updateTools();
+    emit updateCommentsTableSignal();
 }
