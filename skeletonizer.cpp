@@ -754,6 +754,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     int r;
     int time;
+    char *checksum;
 
     //  This function should always be called through UI_saveSkeleton
     // for proper error and file name display to the user.
