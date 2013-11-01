@@ -44,8 +44,10 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
     widgets/datasetpropertywidget.cpp \
-    widgets/taskloginwidget.cpp \
-    widgets/taskmanagementwidget.cpp \
+    widgets/task/taskloginwidget.cpp \
+    widgets/task/taskmanagementwidget.cpp \
+    widgets/task/taskmanagementmaintab.cpp \
+    widgets/task/taskmanagementdetailstab.cpp \
     functions.cpp \
     widgets/widgetcontainer.cpp \
     decorators/skeletonizerdecorator.cpp \
@@ -88,7 +90,7 @@ SOURCES += widgets/mainwindow.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
-    sha256.cpp
+    sha256.cpp \
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -157,8 +159,10 @@ HEADERS  += widgets/mainwindow.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
     widgets/datasetpropertywidget.h \
-    widgets/taskloginwidget.h \
-    widgets/taskmanagementwidget.h \
+    widgets/task/taskloginwidget.h \
+    widgets/task/taskmanagementwidget.h \
+    widgets/task/taskmanagementmaintab.h \
+    widgets/task/taskmanagementdetailstab.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     functions.h \
     GUIConstants.h \
@@ -176,7 +180,7 @@ HEADERS  += widgets/mainwindow.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \
-    sha256.h
+    sha256.h \
 
 
 FORMS    += mainwindow.ui

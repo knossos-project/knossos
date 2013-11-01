@@ -250,7 +250,7 @@ public slots:
 
     /* window menu */
     void toolsSlot();
-    void taskLoginSlot();
+    void taskSlot();
     void logSlot();
     void commentShortcutsSlots();
 

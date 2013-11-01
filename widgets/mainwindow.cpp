@@ -87,8 +87,9 @@ MainWindow::MainWindow(QWidget *parent) :
     state->taskState->cookieFile = (char*)calloc(1, sizeof("cookie"));
     strcpy(state->taskState->cookieFile, "cookie");
     state->taskState->taskFile = (char*)calloc(1, 1024 * sizeof(char));
+    state->taskState->taskName = (char*)calloc(1, 1024 *sizeof(char));
     state->taskState->host = (char*)calloc(1, 10240 * sizeof(char));
-    strcpy(state->taskState->host, "127.0.0.1:8000");
+    strcpy(state->taskState->host, "149.217.51.57:8000");
 
     /* init here instead of initSkeletonizer to fix some init order issue */
     state->skeletonState->displayMode = 0;
@@ -286,7 +287,7 @@ void MainWindow:: createToolBar() {
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
-    connect(taskManagementButton, SIGNAL(clicked()), this, SLOT(taskLoginSlot()));
+    connect(taskManagementButton, SIGNAL(clicked()), this, SLOT(taskSlot()));
     connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
@@ -642,7 +643,7 @@ void MainWindow::createMenus()
 
     windowMenu = menuBar()->addMenu("Windows");
     toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
-    taskLoginAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskLoginSlot()));
+    taskLoginAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
 
@@ -1352,8 +1353,8 @@ void MainWindow::openDatasetSlot() {
    this->widgetContainer->datasetPropertyWidget->show();
 }
 
-void MainWindow::taskLoginSlot() {
-    CURLcode code = (CURLcode)-2;
+void MainWindow::taskSlot() {
+    CURLcode code;
     long httpCode = 0;
     struct httpResponse response;
     char url[1024];
@@ -1365,8 +1366,12 @@ void MainWindow::taskLoginSlot() {
     response.length = 0;
     response.content = (char*)calloc(1, response.length+1);
 
-    code = taskState::httpGET(url, &response, &httpCode, state->taskState->cookieFile);
-
+    if(taskState::httpGET(url, &response, &httpCode, state->taskState->cookieFile, &code) == false) {
+        widgetContainer->taskLoginWidget->setResponse("Please login.");
+        widgetContainer->taskLoginWidget->show();
+        free(response.content);
+        return;
+    }
     if(code != CURLE_OK) {
         widgetContainer->taskLoginWidget->setResponse("Please login.");
         widgetContainer->taskLoginWidget->show();
@@ -1399,12 +1404,12 @@ void MainWindow::taskLoginSlot() {
         QString attribute = attributes.value("username").toString();
         if(attribute.isNull() == false) {
             activeUser = true;
-            widgetContainer->taskManagementWidget->setActiveUser(attribute);
-            widgetContainer->taskManagementWidget->setResponse("Hello " + attribute + "!");
+            widgetContainer->taskManagementWidget->mainTab->setActiveUser(attribute);
+            widgetContainer->taskManagementWidget->mainTab->setResponse("Hello " + attribute + "!");
         }
         attribute = attributes.value("task").toString();
         if(attribute.isNull() == false) {
-            widgetContainer->taskManagementWidget->setTask(attribute);
+            widgetContainer->taskManagementWidget->mainTab->setTask(attribute);
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {
@@ -1422,8 +1427,6 @@ void MainWindow::taskLoginSlot() {
     this->widgetContainer->taskLoginWidget->adjustSize();
     if(widgetContainer->taskLoginWidget->pos().x() <= 0 or this->widgetContainer->taskLoginWidget->pos().y() <= 0)
         this->widgetContainer->taskLoginWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-
-
 
     free(response.content);
     return;

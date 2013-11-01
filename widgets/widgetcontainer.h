@@ -29,8 +29,8 @@
 #include "widgets/zoomandmultireswidget.h"
 #include "widgets/navigationwidget.h"
 #include "widgets/datasetpropertywidget.h"
-#include "widgets/taskloginwidget.h"
-#include "widgets/taskmanagementwidget.h"
+#include "widgets/task/taskloginwidget.h"
+#include "widgets/task/taskmanagementwidget.h"
 
 class Viewport;
 class MainWindow;

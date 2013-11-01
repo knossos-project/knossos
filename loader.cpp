@@ -590,7 +590,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
-            LOG("fopen failed for %s!", filename);
+            //LOG("fopen failed for %s!", filename);
             goto loadcube_fail;
         }
 

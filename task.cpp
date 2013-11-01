@@ -6,15 +6,17 @@
 
 extern struct stateInfo *state;
 
-CURLcode taskState::httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath) {
+// for looking up CURLcode: http://curl.haxx.se/libcurl/c/libcurl-errors.html
+
+bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code) {
     FILE *cookie;
     CURL *handle;
-    CURLcode code;
 
     if(cookiePath) {
         cookie = fopen(cookiePath, "r");
         if(cookie == NULL) {
-            return (CURLcode)-2;
+            qDebug("no cookie");
+            return false;
         }
         fclose(cookie);
     }
@@ -27,24 +29,28 @@ CURLcode taskState::httpGET(char *url, struct httpResponse *response, long *http
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
-    code = curl_easy_perform(handle); // send the request
+    *code = curl_easy_perform(handle); // send the request
 
-    if(code == CURLE_OK) {
+    if(*code == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        curl_easy_cleanup(handle);
+        return true;
     }
-    curl_easy_cleanup(handle);
-    return code;
+    else {
+        qDebug("curle not ok. %i", *code);
+        curl_easy_cleanup(handle);
+        return false;
+    }
 }
 
-CURLcode taskState::httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath) {
+bool taskState::httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code) {
     CURL *handle;
-    CURLcode code;
     FILE *cookie;
 
     if(cookiePath) {
         cookie = fopen(cookiePath, "r");
         if(cookie == NULL) {
-            return (CURLcode)-2;
+            return false;
         }
     }
 
@@ -57,24 +63,25 @@ CURLcode taskState::httpPOST(char *url, char *postdata, struct httpResponse *res
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
-    code = curl_easy_perform(handle); // send the request
+    *code = curl_easy_perform(handle); // send the request
 
-    if(code == CURLE_OK) {
+    if(*code == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        curl_easy_cleanup(handle);
+        return true;
     }
     curl_easy_cleanup(handle);
-    return code;
+    return true;
 }
 
-CURLcode taskState::httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath) {
+bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code) {
     CURL *handle;
-    CURLcode code;
     FILE *cookie;
 
     if(cookiePath) {
         cookie = fopen(cookiePath, "r");
         if(cookie == NULL) {
-            return (CURLcode)-2;
+            return true; // no cookie means logged out anyway
         }
     }
 
@@ -87,24 +94,25 @@ CURLcode taskState::httpDELETE(char *url, struct httpResponse *response, long *h
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
-    code = curl_easy_perform(handle);
+    *code = curl_easy_perform(handle);
 
-    if(code == CURLE_OK) {
+    if(*code == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
+        curl_easy_cleanup(handle);
+        return true;
     }
     curl_easy_cleanup(handle);
-    return code;
+    return false;
 }
 
-CURLcode taskState::httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath) {
+bool taskState::httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code) {
     CURL *handle;
-    CURLcode code;
     FILE *cookie;
 
     if(cookiePath) {
         cookie = fopen(cookiePath, "r");
         if(cookie == NULL) {
-            return (CURLcode)-2;
+            return false;
         }
         fclose(cookie);
     }
@@ -122,13 +130,13 @@ CURLcode taskState::httpFileGET(char *url, char *postdata, FILE *file, struct ht
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
     curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
-    code = curl_easy_perform(handle);
+    *code = curl_easy_perform(handle);
 
-    if(code == CURLE_OK) {
+    if(*code == CURLE_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, httpCode);
     }
     curl_easy_cleanup(handle);
-    return code;
+    return true;
 }
 
 // for writing http response to memory
@@ -157,7 +165,6 @@ size_t taskState::readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
 int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char *info) {
     int i, numChars = 0;
     char *pos = strstr(header->content, info);
-
     if(pos == NULL) {
         return false;
     }
@@ -168,18 +175,14 @@ int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char 
             break;
         }
     }
-    strncpy(dest, pos + strlen(info)+1, numChars);
 
+    strncpy(dest, pos + strlen(info)+1, numChars);
     return true;
 }
 
 void taskState::removeCookie() {
-    FILE *cookie;
-    if(QFile::remove(state->taskState->cookieFile) != 0) {
-        cookie = fopen(state->taskState->cookieFile, "w");
-        if(cookie) {
-            fclose(cookie);
-        }
+    if(remove(state->taskState->cookieFile) != 0) {
+        perror("Failed to delete file.");
     }
 }
 
@@ -203,5 +206,23 @@ const char *taskState::CSRFToken() {
         return content.mid(index + strlen("csrftoken ")).toStdString().c_str();
     }
     qDebug("no csrf token found!");
+    return NULL;
+}
+
+QString taskState::getCategory() {
+    QString taskName = state->taskState->taskName;
+    int index = taskName.indexOf("/");
+    if(index != -1) {
+        return taskName.mid(0, index-1);
+    }
+    return NULL;
+}
+
+QString taskState::getTask() {
+    QString taskName = state->taskState->taskName;
+    int index = taskName.indexOf("/");
+    if(index != -1) {
+        return taskName.mid(index+2);
+    }
     return NULL;
 }

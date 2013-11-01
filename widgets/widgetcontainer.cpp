@@ -89,12 +89,13 @@ void WidgetContainer::createDatasetPropertyWidget() {
 
 void WidgetContainer::createTaskWidgets() {
     taskLoginWidget = new TaskLoginWidget();
-    taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    //taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     taskLoginWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     taskManagementWidget = new TaskManagementWidget(taskLoginWidget);
-    taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    //taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
     taskManagementWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    taskManagementWidget->resize(300, 240);
 
     taskLoginWidget->setTaskManagementWidget(taskManagementWidget);
 }

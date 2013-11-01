@@ -686,17 +686,20 @@ struct taskState {
     char *host;
     char *cookieFile;
     char *taskFile;
+    char *taskName;
 
-    static CURLcode httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath);
-    static CURLcode httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath);
-    static CURLcode httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath);
-    static CURLcode httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath);
+    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
+    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
+    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
+    static bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code);
     static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
     static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
     static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
     static void removeCookie();
     static const char *CSRFToken();
+    static QString getCategory();
+    static QString getTask();
 };
 
 struct trajectory {
