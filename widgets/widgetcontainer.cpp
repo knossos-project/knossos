@@ -39,7 +39,7 @@ void WidgetContainer::createTracingTimeWidget() {
 
 void WidgetContainer::createCommentsWidget() {
     commentsWidget = new CommentsWidget();
-    commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
     commentsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
@@ -102,7 +102,9 @@ void WidgetContainer::createTaskWidgets() {
 
 void WidgetContainer::showSplashScreenWidget() {
     splashWidget = new SplashScreenWidget();
+    splashWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
     splashWidget->show();
+    //splashWidget->raise();
 }
 
 void WidgetContainer::createWidgets() {

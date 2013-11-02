@@ -687,6 +687,7 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
             QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
             QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
             QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
+            //prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
 
             prompt.exec();
 
@@ -728,6 +729,7 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
   *
   */
 void MainWindow::openSlot() {
+
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     state->skeletonState->skeletonFileAsQString = fileName;
 
@@ -1012,7 +1014,9 @@ void MainWindow::dataSavingOptionsSlot()
 
 void MainWindow::viewportSettingsSlot()
 {
+
     this->widgetContainer->viewportSettingsWidget->show();
+    //this->widgetContainer->viewportSettingsWidget->setWindowFlags(Qt::Window);
     this->widgetContainer->viewportSettingsWidget->adjustSize();
     if(widgetContainer->viewportSettingsWidget->pos().x() <= 0 or this->widgetContainer->viewportSettingsWidget->pos().y() <= 0)
         this->widgetContainer->viewportSettingsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
