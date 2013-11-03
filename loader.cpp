@@ -1100,7 +1100,6 @@ uint Loader::loadCubes() {
   */
 
 void Loader::run() {
-    qDebug() << "Loader: start begin";
     state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
@@ -1114,14 +1113,12 @@ void Loader::run() {
             state->conditionLoadSignal->wait(state->protectLoadSignal);
         }
 
-        qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
-        qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
+        //qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
+        //qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
         if (true == load()) {
             break;
         }
     }
-
-    qDebug() << "Loader: start ended";
 }
 
 /**
@@ -1135,7 +1132,6 @@ void Loader::run() {
 bool Loader::load() {
     uint funcRetVal;
 
-    qDebug() << "Load: load begin";
     if(!initialized) {
         qDebug() << "Warning, Loader was not initialized";
         qDebug() << "Load: begin ended";
@@ -1222,7 +1218,6 @@ bool Loader::load() {
     state->protectLoadSignal->lock();
 
     //state = true;
-    qDebug() << "Loader: load ended";
 
     return false;
 }

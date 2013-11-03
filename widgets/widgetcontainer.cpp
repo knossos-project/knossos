@@ -29,95 +29,82 @@ void WidgetContainer::createConsoleWidget() {
 
 }
 
-void WidgetContainer::createTracingTimeWidget() {
-    tracingTimeWidget = new TracingTimeWidget();
-    tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
+    tracingTimeWidget = new TracingTimeWidget(parent);
+    //tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
     tracingTimeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     tracingTimeWidget->setMinimumSize(200, 100);
-
 }
 
-void WidgetContainer::createCommentsWidget() {
-    commentsWidget = new CommentsWidget();
-    commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+void WidgetContainer::createCommentsWidget(QWidget *parent) {
+    commentsWidget = new CommentsWidget(parent);
     commentsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
-void WidgetContainer::createZoomAndMultiresWidget() {
-    zoomAndMultiresWidget = new ZoomAndMultiresWidget();
-    zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
+    zoomAndMultiresWidget = new ZoomAndMultiresWidget(parent);
     zoomAndMultiresWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
-void WidgetContainer::createNavigationWidget() {
-    navigationWidget = new NavigationWidget();
-    navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createNavigationWidget(QWidget *parent) {
+    navigationWidget = new NavigationWidget(parent);
     navigationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
-void WidgetContainer::createToolWidget() {
-    toolsWidget = new ToolsWidget();
-    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createToolWidget(QWidget *parent) {
+    toolsWidget = new ToolsWidget(parent);
     toolsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
 }
 
-void WidgetContainer::createViewportSettingsWidget() {
-    viewportSettingsWidget = new ViewportSettingsWidget();
-    viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
+    viewportSettingsWidget = new ViewportSettingsWidget(parent);
     viewportSettingsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     viewportSettingsWidget->setGeometry(QRect(100, 100, 500, 500));
 }
 
-void WidgetContainer::createDataSavingWidget() {
-    dataSavingWidget = new DataSavingWidget();
-    dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createDataSavingWidget(QWidget *parent) {
+    dataSavingWidget = new DataSavingWidget(parent);
     dataSavingWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
-void WidgetContainer::createSychronizationWidget() {
-    synchronizationWidget = new SynchronizationWidget();
-    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createSychronizationWidget(QWidget *parent) {
+    synchronizationWidget = new SynchronizationWidget(parent);
     synchronizationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
 }
 
-void WidgetContainer::createDatasetPropertyWidget() {
-    datasetPropertyWidget = new DatasetPropertyWidget();
-    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createDatasetPropertyWidget(QWidget *parent) {
+    datasetPropertyWidget = new DatasetPropertyWidget(parent);
 }
 
-void WidgetContainer::createTaskWidgets() {
-    taskLoginWidget = new TaskLoginWidget();
-    //taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+void WidgetContainer::createTaskWidgets(QWidget *parent) {
+    taskLoginWidget = new TaskLoginWidget(parent);
     taskLoginWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    taskManagementWidget = new TaskManagementWidget(taskLoginWidget);
-    //taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint);
+    taskManagementWidget = new TaskManagementWidget(taskLoginWidget, parent);
     taskManagementWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     taskManagementWidget->resize(300, 240);
 
     taskLoginWidget->setTaskManagementWidget(taskManagementWidget);
 }
 
-void WidgetContainer::showSplashScreenWidget() {
-    splashWidget = new SplashScreenWidget();
-    splashWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
-    splashWidget->show();
-    //splashWidget->raise();
+void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
+    splashWidget = new SplashScreenWidget(parent);
 }
 
-void WidgetContainer::createWidgets() {
+void WidgetContainer::createWidgets(QWidget *parent) {
     createConsoleWidget();
-    createTracingTimeWidget();
-    createCommentsWidget();
-    createViewportSettingsWidget();
-    createZoomAndMultiresWidget();
-    createNavigationWidget();
-    createToolWidget();
-    createDataSavingWidget();
-    createSychronizationWidget();
-    createDatasetPropertyWidget();
-    createTaskWidgets();
+    createTracingTimeWidget(parent);
+    createCommentsWidget(parent);
+    createViewportSettingsWidget(parent);
+    createZoomAndMultiresWidget(parent);
+    createNavigationWidget(parent);
+    createToolWidget(parent);
+    createDataSavingWidget(parent);
+    createSychronizationWidget(parent);
+    createDatasetPropertyWidget(parent);
+    createTaskWidgets(parent);
+    createSplashScreenWidget(parent);
     rewire();
 }

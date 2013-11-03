@@ -731,7 +731,6 @@ void Client::run() {
     while(true) {
         state->protectClientSignal->lock();
         while(!state->clientSignal) {
-            qDebug() << "waiting for the next client signal";
             state->conditionClientSignal->wait(state->protectClientSignal);
         }
 

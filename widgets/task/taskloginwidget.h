@@ -1,13 +1,13 @@
 #ifndef TASKLOGINWIDGET_H
 #define TASKLOGINWIDGET_H
 
-#include <QWidget>
+#include <QDialog>
 
 class QLabel;
 class QLineEdit;
 class QPushButton;
 class TaskManagementWidget;
-class TaskLoginWidget : public QWidget
+class TaskLoginWidget : public QDialog
 {
     Q_OBJECT
 

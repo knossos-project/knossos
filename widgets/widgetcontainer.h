@@ -42,21 +42,21 @@ public:
     void rewire();
     void createConsoleWidget();
     void showConsoleWidget();
-    void createTracingTimeWidget();
+    void createTracingTimeWidget(QWidget *parent);
     void showTracingTimeWidget();
-    void createCommentsWidget();
+    void createCommentsWidget(QWidget *parent);
     void showCommentsWidget();
-    void createZoomAndMultiresWidget();
+    void createZoomAndMultiresWidget(QWidget *parent);
 
-    void createNavigationWidget();
-    void createViewportSettingsWidget();
-    void createToolWidget();
-    void createDataSavingWidget();
-    void createSychronizationWidget();
-    void showSplashScreenWidget();
-    void createDatasetPropertyWidget();
-    void createTaskWidgets();
-    void createWidgets();
+    void createNavigationWidget(QWidget *parent);
+    void createViewportSettingsWidget(QWidget *parent);
+    void createToolWidget(QWidget *parent);
+    void createDataSavingWidget(QWidget *parent);
+    void createSychronizationWidget(QWidget *parent);
+    void createSplashScreenWidget(QWidget *parent);
+    void createDatasetPropertyWidget(QWidget *parent);
+    void createTaskWidgets(QWidget *parent);
+    void createWidgets(QWidget *parent);
 
     Console *console;
     TracingTimeWidget *tracingTimeWidget;
@@ -73,7 +73,7 @@ public:
     TaskManagementWidget *taskManagementWidget;
 
 signals:
-    
+
 public slots:
     
 };

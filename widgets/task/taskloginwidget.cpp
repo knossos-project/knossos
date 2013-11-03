@@ -1,4 +1,3 @@
-#include "taskloginwidget.h"
 #include <QLabel>
 #include <QLineEdit>
 #include <QVBoxLayout>
@@ -7,14 +6,17 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamAttributes>
 #include <QString>
+
+#include <curl/curl.h>
+
+#include "taskloginwidget.h"
 #include "taskmanagementwidget.h"
 #include "knossos-global.h"
-#include <curl/curl.h>
 
 extern stateInfo *state;
 
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
-    QWidget(parent), taskManagementWidget(NULL)
+    QDialog(parent), taskManagementWidget(NULL)
 {
     setWindowTitle("Task Login");
 

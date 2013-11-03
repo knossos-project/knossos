@@ -62,7 +62,6 @@ public:
     static bool cpBaseDirectory(char *target, QString path);
     static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
-    void showSplashScreen();
 
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
@@ -163,7 +162,7 @@ public:
 
     /* window actions */
     QAction *toolsAction;
-    QAction *taskLoginAction;
+    QAction *taskAction;
     QAction *logAction;
     QAction *commentShortcutsAction;
 

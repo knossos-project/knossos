@@ -16,17 +16,16 @@
 extern stateInfo *state;
 
 TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget *parent) :
-    QWidget(parent)
+    QDialog(parent)
 {
-    mainTab = new TaskManagementMainTab(loginWidget);
-    detailsTab = new TaskManagementDetailsTab();
+    mainTab = new TaskManagementMainTab(loginWidget, this);
+    detailsTab = new TaskManagementDetailsTab(this);
     tabs = new QTabWidget(this);
     tabs->addTab(mainTab, "General");
     tabs->addTab(detailsTab, "Description");
 
     QHBoxLayout *layout = new QHBoxLayout(); // add in layout, so that tabs resize, too
     layout->addWidget(tabs);
-
     setWindowTitle("Task Management");
     setLayout(layout);
     connect(mainTab, SIGNAL(hideSignal()), this, SLOT(hide()));

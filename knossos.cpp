@@ -129,9 +129,6 @@ int main(int argc, char *argv[])
         _Exit(false);
     }
 
-    QSplashScreen screen(QPixmap(":/images/splash.png"));
-    //screen.setGraphicsEffect(QGraphicsEffect());
-    screen.show();
     a.processEvents();
 
     Knossos::printConfigValues();

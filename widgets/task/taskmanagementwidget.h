@@ -1,7 +1,7 @@
 #ifndef TASKMANAGEMENTWIDGET_H
 #define TASKMANAGEMENTWIDGET_H
 
-#include <QWidget>
+#include <QDialog>
 #include <QTabWidget>
 
 #include "taskmanagementmaintab.h"
@@ -11,7 +11,7 @@
 class QPushButton;
 class QLabel;
 class QCheckBox;
-class TaskManagementWidget : public QWidget
+class TaskManagementWidget : public QDialog
 {
     Q_OBJECT
     friend class Viewer;

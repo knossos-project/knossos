@@ -41,6 +41,10 @@ extern stateInfo *state;
 Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
+
+    QSplashScreen screen(QPixmap(":/images/splash.png"), Qt::WindowStaysOnTopHint);
+    screen.show();
+
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QDesktopWidget *desktop = QApplication::desktop();
@@ -48,9 +52,9 @@ Viewer::Viewer(QObject *parent) :
     window->loadSettings();
     window->show();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
-        window->setGeometry(desktop->availableGeometry().center().x(), desktop->availableGeometry().center().y(), 1024, 800);
+        window->setGeometry(desktop->availableGeometry().topLeft().x() + 20, desktop->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
-
+    screen.finish(window);
 
     state->console = window->widgetContainer->console;
 
@@ -1562,11 +1566,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
   *
   */
 bool Viewer::initViewer() {
-
-    qDebug() << "Viewer: initViewer begin";
     calcLeftUpperTexAbsPx();
-
-
 
     if(state->overlay) {
         LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]))
@@ -2658,7 +2658,6 @@ bool Viewer::recalcTextureOffsets() {
 }
 
 bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
-    qDebug() << "Viewer: sendLoadSignal begin";
     state->protectLoadSignal->lock();
     state->loadSignal = true;  
     state->datasetChangeSignal = magChanged;
@@ -2680,7 +2679,6 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
-    qDebug() << "Viewer: sendLoadSignal ended";
     return true;
 }
 
@@ -2751,7 +2749,7 @@ void Viewer::rewire() {
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
-    connect(window, SIGNAL(addTreeListElementElementSignal(int,int,int,color4F,int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(window, SIGNAL(addTreeListElementSignal(int,int,int,color4F,int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
 
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
@@ -2797,7 +2795,6 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(vpSkel->delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
-    connect(window, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
     connect(window, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     /*connect(vpXZ->delegate, SIGNAL(nextCommentlessNodeSignal()), skeletonizer, SLOT(nextCommentlessNode()));
@@ -2968,8 +2965,8 @@ void Viewer::rewire() {
     connect(window, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
 
-    connect(window, SIGNAL(addComment(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window, SIGNAL(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    connect(window, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
 
     connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));

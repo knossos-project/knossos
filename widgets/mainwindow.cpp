@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createMenus();
 
     widgetContainer = new WidgetContainer(this);
-    widgetContainer->createWidgets();
+    widgetContainer->createWidgets(this);
 
     createToolBar();
     mainWidget = new QWidget(this);
@@ -304,11 +304,6 @@ void MainWindow::updateTitlebar(bool useFilename) {
 
     setWindowTitle(title);
 
-}
-
-void MainWindow::showSplashScreen() {
-    QSplashScreen splashScreen(QPixmap(":/splashy"), Qt::WindowStaysOnTopHint);
-    splashScreen.show();
 }
 
 // -- static methods -- //
@@ -643,7 +638,7 @@ void MainWindow::createMenus()
 
     windowMenu = menuBar()->addMenu("Windows");
     toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
-    taskLoginAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
+    taskAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
 
@@ -656,12 +651,16 @@ void MainWindow::createMenus()
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-
     saveSettings();
 
     if(state->skeletonState->unsavedChanges) {
-         int retValue = QMessageBox::question(this, "Confirmation required.", "There are unsaved changes. Really Quit?", QMessageBox::Yes, QMessageBox::No);
-         if(retValue == QMessageBox::Yes) {
+         QMessageBox question;
+         question.setWindowTitle("Confirmation required.");
+         question.setText("There are unsaved changes. Really Quit?");
+         QPushButton *yes = question.addButton("Yes", QMessageBox::ActionRole);
+         question.addButton("No", QMessageBox::ActionRole);
+         question.exec();
+         if(question.clickedButton() == yes) {
              event->accept();
          } else {
              event->ignore();
@@ -681,16 +680,12 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
         QString path = info.canonicalPath();
 
         if(state->skeletonState->treeElements > 0) {
-
             QMessageBox prompt;
             prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
             QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
             QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
-            QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);
-            //prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-
+            prompt.addButton("Cancel", QMessageBox::ActionRole);
             prompt.exec();
-
 
             if(prompt.clickedButton() == merge) {
                 state->skeletonState->mergeOnLoadFlag = true;
@@ -760,7 +755,6 @@ bool MainWindow::alreadyInMenu(const QString &path) {
 void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
     int i = 0;
-    qDebug() << "skel history size: " << skeletonFileHistory->size();
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
         QString path = *it;
 
@@ -814,8 +808,7 @@ void MainWindow::saveAsSlot()
 
 void MainWindow::quitSlot()
 {
-   this->close();
-
+    this->close();
 }
 
 /* edit skeleton functionality */
@@ -1059,7 +1052,7 @@ void MainWindow::commentShortcutsSlots()
 
 void MainWindow::aboutSlot()
 {
-    this->widgetContainer->showSplashScreenWidget();
+    this->widgetContainer->splashWidget->show();
 }
 
 /* toolbar slots */
@@ -1091,7 +1084,7 @@ void MainWindow::pasteClipboardCoordinates(){
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
-
+          qDebug("calling this");
             emit userMoveSignal(extractedCoords->x - state->viewerState->currentPosition.x,
                                 extractedCoords->y - state->viewerState->currentPosition.y,
                                 extractedCoords->z - state->viewerState->currentPosition.z,
@@ -1108,13 +1101,12 @@ void MainWindow::pasteClipboardCoordinates(){
     }
 }
 
-void MainWindow::coordinateEditingFinished() {    
+void MainWindow::coordinateEditingFinished() {
     emit userMoveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
 }
 
 void MainWindow::saveSettings() {
     QSettings settings;
-    qDebug() << settings.fileName();
 
     settings.beginGroup(MAIN_WINDOW);
     settings.setValue(WIDTH, this->width());
@@ -1123,8 +1115,6 @@ void MainWindow::saveSettings() {
     settings.setValue(POS_Y, this->y());
 
     for(int i = 0; i < skeletonFileHistory->size(); i++) {
-        qDebug() << skeletonFileHistory->at(i);
-        qDebug() << QString("loaded_file%1").arg(i+1);
         settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
     }
 
@@ -1144,7 +1134,6 @@ void MainWindow::saveSettings() {
  * this method is a proposal for the qsettings variant
  */
 void MainWindow::loadSettings() {
-    qDebug() << "load Settings";
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
     int width = settings.value(WIDTH).toInt();
@@ -1152,15 +1141,11 @@ void MainWindow::loadSettings() {
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
 
-    qDebug() << settings.value(LOADED_FILE1).toString() << " loaded file 1";
-
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
-        qDebug() << settings.value(LOADED_FILE1);
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
 
     }
     if(!settings.value(LOADED_FILE2).toString().isNull() and !settings.value(LOADED_FILE2).toString().isEmpty()) {
-        qDebug() << settings.value(LOADED_FILE2);
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE2).toString());
 
     }
