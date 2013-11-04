@@ -1,13 +1,13 @@
 #ifndef DATASETPROPERTYWIDGET_H
 #define DATASETPROPERTYWIDGET_H
 
-#include <QWidget>
+#include <QDialog>
 class QLineEdit;
 class QComboBox;
 class QPushButton;
 class QLabel;
 class QGroupBox;
-class DatasetPropertyWidget : public QWidget
+class DatasetPropertyWidget : public QDialog
 {
     Q_OBJECT
 public:

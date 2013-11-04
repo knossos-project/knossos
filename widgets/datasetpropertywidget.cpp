@@ -13,7 +13,7 @@
 extern struct stateInfo *state;
 
 DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
-    QWidget(parent)
+    QDialog(parent)
 {
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
