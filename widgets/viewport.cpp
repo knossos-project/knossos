@@ -455,7 +455,29 @@ void Viewport::zoomOrthogonals(float step){
         emit changeDatasetMagSignal(triggerMagChange);
 
    emit recalcTextureOffsetsSignal();
+   emit updateZoomAndMultiresWidget();
 
+}
+
+void Viewport::zoomOutSkeletonVP() {
+    if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
+        state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
+        if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
+            state->skeletonState->zoomLevel = SKELZOOMMIN;
+        }
+        state->skeletonState->viewChanged = true;
+        emit updateZoomAndMultiresWidget();
+    }
+}
+void Viewport::zoomInSkeletonVP() {
+    if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+        state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
+        if(state->skeletonState->zoomLevel > SKELZOOMMAX) {
+            state->skeletonState->zoomLevel = SKELZOOMMAX;
+        }
+        state->skeletonState->viewChanged = true;
+        emit updateZoomAndMultiresWidget();
+    }
 }
 
 void Viewport::resizeVP(QMouseEvent *event) {

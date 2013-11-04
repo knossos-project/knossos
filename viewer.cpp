@@ -2714,10 +2714,13 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(zoomOrthoSignal(float)), vpYZ, SLOT(zoomOrthogonals(float)));
     connect(vpSkel->delegate, SIGNAL(zoomOrthoSignal(float)), vpSkel, SLOT(zoomOrthogonals(float)));
 
-    connect(vpXY->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpXZ->delegate, SIGNAL(updateZoomWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpYZ->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpSkel->delegate, SIGNAL(updateZoomWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpSkel->delegate, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
+    connect(vpSkel->delegate, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
+
+    connect(vpXY, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpXZ, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpYZ, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpSkel, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
     connect(vpXY, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     connect(vpXZ, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));

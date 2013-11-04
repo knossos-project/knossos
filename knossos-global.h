@@ -141,7 +141,7 @@ values. The XY vp always used. */
 
 #define VPZOOMMAX  0.02
 #define VPZOOMMIN   1.0
-#define SKELZOOMMAX 0.4999
+#define SKELZOOMMAX 0.47
 #define SKELZOOMMIN 0.0
 
 #define NUM_COMMSHORTCUTS 5 //number of shortcut places for comments

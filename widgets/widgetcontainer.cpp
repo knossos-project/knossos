@@ -84,7 +84,6 @@ void WidgetContainer::createTaskWidgets(QWidget *parent) {
 
     taskManagementWidget = new TaskManagementWidget(taskLoginWidget, parent);
     taskManagementWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    taskManagementWidget->resize(300, 240);
 
     taskLoginWidget->setTaskManagementWidget(taskManagementWidget);
 }

@@ -73,13 +73,13 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->skeletonViewportSlider->setTickPosition(QSlider::TicksBelow);
 
     this->orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    this->orthogonalDataViewportSpinBox->setMaximum(1);
-    this->orthogonalDataViewportSpinBox->setMinimum(0.02);
+    this->orthogonalDataViewportSpinBox->setMaximum(VPZOOMMIN);
+    this->orthogonalDataViewportSpinBox->setMinimum(VPZOOMMAX);
     this->orthogonalDataViewportSpinBox->setSingleStep(0.01);
 
     this->skeletonViewportSpinBox = new QDoubleSpinBox();
-    this->skeletonViewportSpinBox->setMaximum(0.5);
-    this->skeletonViewportSpinBox->setMinimum(0.0);
+    this->skeletonViewportSpinBox->setMaximum(SKELZOOMMAX);
+    this->skeletonViewportSpinBox->setMinimum(SKELZOOMMIN);
     this->skeletonViewportSpinBox->setSingleStep(0.01);
 
     topLayout->addWidget(this->orthogonalDataViewportLabel, 0, 1);

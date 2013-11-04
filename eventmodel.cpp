@@ -547,7 +547,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
 
 
-    if((state->skeletonState->activeNode) and (state->modShift)) {
+    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -567,21 +567,13 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
     } else {
         // Skeleton VP
         if(VPfound == VIEWPORT_SKELETON) {
-
-            if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
-                state->skeletonState->zoomLevel += (0.1 * (0.5 - state->skeletonState->zoomLevel));
-                state->skeletonState->viewChanged = true;
-                state->skeletonState->skeletonChanged = true;
-            }
+            emit zoomInSkeletonVPSignal();
         }
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(state->modCtrl) {
+            if(QApplication::keyboardModifiers() == Qt::CTRL) {
                 emit zoomOrthoSignal(-0.1);
-
-
-
             } else { // move otherwiese
                 switch(VPfound) {
                     case VIEWPORT_XY:
@@ -623,7 +615,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     if(VPfound == -1)
         return true;
 
-    if((state->skeletonState->activeNode) and (state->modShift)) {
+    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -642,18 +634,12 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     } else {
         // Skeleton VP
         if(VPfound == VIEWPORT_SKELETON) {
-
-            if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-                state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
-                if (state->skeletonState->zoomLevel < SKELZOOMMIN) state->skeletonState->zoomLevel = SKELZOOMMIN;
-                state->skeletonState->viewChanged = true;
-                state->skeletonState->skeletonChanged = true;
-            }
+            emit zoomOutSkeletonVPSignal();
         }
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(state->modCtrl) {
+            if(QApplication::keyboardModifiers() == Qt::CTRL) {
                 emit zoomOrthoSignal(0.1);
             }
             // Move otherwise
@@ -1146,24 +1132,15 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
         }
         else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
-            qDebug() << state->skeletonState->zoomLevel << " ";
-            state->skeletonState->zoomLevel += 0.05;/*(0.1 * (0.5 - state->skeletonState->zoomLevel));*/
-            state->skeletonState->viewChanged = true;
+            emit zoomInSkeletonVPSignal();
         }
-        emit updateZoomWidgetSignal();
     } else if(event->key() == Qt::Key_O) {
         if(VPfound != VIEWPORT_SKELETON) {
             emit zoomOrthoSignal(0.1);
-            emit updateZoomWidgetSignal();
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-            state->skeletonState->zoomLevel -= 0.05;/*(0.1* (0.5 - state->skeletonState->zoomLevel));*/
-            if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
-                state->skeletonState->zoomLevel = SKELZOOMMIN;
-            }
-            state->skeletonState->viewChanged = true;
+            emit zoomOutSkeletonVPSignal();
         }
-        emit updateZoomWidgetSignal();
      //else if(event->key() == Qt::Key_S) {
         //if(control) {
           //  emit saveSkeletonSignal();

@@ -8,9 +8,9 @@ extern struct stateInfo *state;
 TaskManagementDetailsTab::TaskManagementDetailsTab(QWidget *parent) :
     QWidget(parent)
 {
-    categoryDescriptionLabel.setText("Category description");
+    categoryDescriptionLabel.setText("Category description: ");
     categoryDescriptionLabel.setWordWrap(true);
-    taskCommentLabel.setText("Task Comment:");
+    taskCommentLabel.setText("Task comment: ");
     taskCommentLabel.setWordWrap(true);
 
     QVBoxLayout *layout = new QVBoxLayout();
@@ -21,7 +21,6 @@ TaskManagementDetailsTab::TaskManagementDetailsTab(QWidget *parent) :
 }
 
 void TaskManagementDetailsTab::updateDescriptionSlot(QString description, QString comment) {
-    qDebug("caught slot");
     categoryDescriptionLabel.setText(QString("<b>Category %1:</b> %2").arg(taskState::getCategory()).arg(description));
     taskCommentLabel.setText(QString("<b>Task %1:</b> %2").arg(taskState::getTask()).arg(comment));
 }

@@ -79,6 +79,8 @@ signals:
     void updatePositionSignal(int serverMovement);
     void pasteCoordinateSignal();
     void zoomOrthoSignal(float step);
+    void zoomInSkeletonVPSignal();
+    void zoomOutSkeletonVPSignal();
     void updateViewerStateSignal();
 
     void updateWidgetSignal();
@@ -106,7 +108,6 @@ signals:
     void idleTimeSignal();
     void updateTools();
     void updateTreeCountSignal();
-    void updateZoomWidgetSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
