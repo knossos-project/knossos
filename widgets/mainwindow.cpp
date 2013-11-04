@@ -1310,28 +1310,7 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
         // don't resize viewports when user positioned and resized them manually
         int width = event->size().width();
         int height = event->size().height();
-
-        int sizeW = (width - 15)  / 2 ;
-        int sizeH = (height - 70) / 2;
-
-        if(width < height) {
-            viewports[0]->move(5, 60);
-            viewports[1]->move(10 + sizeW, 60);
-            viewports[2]->move(5, sizeW+60+5);
-            viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
-            for(int i = 0; i < 4; i++) {
-                viewports[i]->resize(sizeW, sizeW);
-
-            }
-        } else if(width > height) {
-            viewports[0]->move(5, 60);
-            viewports[1]->move(10 + sizeH, 60);
-            viewports[2]->move(5, sizeH+60+5);
-            viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
-            for(int i = 0; i < 4; i++) {
-                viewports[i]->resize(sizeH, sizeH);
-            }
-        }
+        resizeViewports(width, height);
     }
 }
 
@@ -1459,9 +1438,7 @@ void MainWindow::taskSlot() {
 
 
 void MainWindow::resetViewports() {
-    for(int i = 0; i < NUM_VP; i++) {
-        viewports[i]->reset();
-    }
+    resizeViewports(width(), height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
@@ -1578,4 +1555,29 @@ void MainWindow::F5Slot() {
     }
     emit updateTools();
     emit updateCommentsTableSignal();
+}
+
+void MainWindow::resizeViewports(int width, int height) {
+    int sizeW = (width - 15)  / 2 ;
+    int sizeH = (height - 70) / 2;
+
+    if(width < height) {
+        viewports[0]->move(5, 60);
+        viewports[1]->move(10 + sizeW, 60);
+        viewports[2]->move(5, sizeW+60+5);
+        viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
+        for(int i = 0; i < 4; i++) {
+            viewports[i]->resize(sizeW, sizeW);
+
+        }
+    } else if(width > height) {
+        viewports[0]->move(5, 60);
+        viewports[1]->move(10 + sizeH, 60);
+        viewports[2]->move(5, sizeH+60+5);
+        viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
+        for(int i = 0; i < 4; i++) {
+            viewports[i]->resize(sizeH, sizeH);
+            viewports[i]->updateButtonPositions();
+        }
+    }
 }

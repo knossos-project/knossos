@@ -535,24 +535,6 @@ void Viewport::moveVP(QMouseEvent *event) {
     }
 }
 
-void Viewport::reset() {
-    switch(viewportType) {
-    case VIEWPORT_XY:
-        setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-        break;
-    case VIEWPORT_XZ:
-        setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-        break;
-    case VIEWPORT_YZ:
-        setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-        break;
-    case VIEWPORT_SKELETON:
-        setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-        break;
-    }
-    updateButtonPositions();
-}
-
 void Viewport::hideButtons() {
     resizeButton->hide();
     if(viewportType == VIEWPORT_SKELETON) {
