@@ -17,9 +17,9 @@ public:
 protected:
     QGroupBox *localGroup;
     QString dir;
-    QLabel *supercubeSizeLabel;
+    //QLabel *supercubeSizeLabel;
     QLineEdit *path;
-    QComboBox *supercubeSize;
+    //QComboBox *supercubeSize;
     QPushButton *datasetfileDialog;
     QPushButton *cancelButton;
     QPushButton *processButton;

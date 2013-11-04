@@ -32,10 +32,10 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    for(int i = 3; i < 9; i+=2) {
+    /*for(int i = 3; i < 9; i+=2) {
 
         supercubeSize->addItem(QVariant::fromValue(i).toString());
-    }
+    }*/
 
     localLayout->addWidget(path, 0, 0);
     localLayout->addWidget(datasetfileDialog, 0, 1);
