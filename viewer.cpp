@@ -2843,7 +2843,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vpXY, SLOT(updateGL()));
 
-    connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(loadSkeletonSignal(const QString)), window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString)));
+
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
@@ -2854,7 +2854,6 @@ void Viewer::rewire() {
     connect(vpXZ->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(vpYZ->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(vpSkel->delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
-    connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
 
     connect(vpXY->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(vpXZ->delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
@@ -2982,6 +2981,11 @@ void Viewer::rewire() {
     connect(vpSkel->delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
 
     connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonSlot()));
+
+    connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(loadSkeletonSignal(const QString)), window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString)));
+    connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+    connect(window, SIGNAL(updateTaskDescriptionSignal(QString)), window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
+    connect(window, SIGNAL(updateTaskCommentSignal(QString)), window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setComment(QString)));
 
 }
 

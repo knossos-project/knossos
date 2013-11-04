@@ -20,7 +20,10 @@ TaskManagementDetailsTab::TaskManagementDetailsTab(QWidget *parent) :
     setLayout(layout);
 }
 
-void TaskManagementDetailsTab::updateDescriptionSlot(QString description, QString comment) {
+void TaskManagementDetailsTab::setDescription(QString description) {
     categoryDescriptionLabel.setText(QString("<b>Category %1:</b> %2").arg(taskState::getCategory()).arg(description));
+}
+
+void TaskManagementDetailsTab::setComment(QString comment) {
     taskCommentLabel.setText(QString("<b>Task %1:</b> %2").arg(taskState::getTask()).arg(comment));
 }

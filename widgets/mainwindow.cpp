@@ -672,7 +672,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 //file menu functionality
 
-void MainWindow::fileDialogForSkeletonAndAsyncLoading
+bool MainWindow::fileDialogForSkeletonAndAsyncLoading
 (const QString &fileName) {
     if(!fileName.isNull()) {
         QApplication::processEvents();
@@ -692,14 +692,14 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
             } else if(prompt.clickedButton() == override) {
                 state->skeletonState->mergeOnLoadFlag = false;
             } else {
-                return;
+                return false;
             }
 
         }
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
-        emit loadSkeletonSignal(fileName);
+        bool result = loadSkeletonSignal(fileName);
         //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         //future.waitForFinished();
 
@@ -710,9 +710,8 @@ void MainWindow::fileDialogForSkeletonAndAsyncLoading
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
         }
-
         emit updateToolsSignal();
-
+        return result;
     }
 }
 
@@ -1433,6 +1432,14 @@ void MainWindow::taskSlot() {
         if(attribute.isNull() == false) {
             memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
             strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
+        }
+        attribute = attributes.value("description").toString();
+        if(attribute.isNull() == false) {
+            emit updateTaskDescriptionSignal(attribute);
+        }
+        attribute = attributes.value("comment").toString();
+        if(attribute.isNull() == false) {
+            emit updateTaskCommentSignal(attribute);
         }
     }
     if(activeUser) {

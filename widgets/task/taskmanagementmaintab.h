@@ -32,9 +32,10 @@ protected:
 
 signals:
     void hideSignal();
-    void updateDescriptionSignal(QString description, QString comment);
     void saveSkeletonSignal();
     bool loadSkeletonSignal(const QString &fileName);
+    void setDescriptionSignal(QString description);
+    void setCommentSignal(QString comment);
 
 public slots:
     void submitButtonClicked();

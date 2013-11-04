@@ -7,6 +7,8 @@
 class TaskManagementDetailsTab : public QWidget
 {
     Q_OBJECT
+    friend class TaskLoginWidget;
+    friend class TaskManagementWidget;
 public:
     explicit TaskManagementDetailsTab(QWidget *parent = 0);
 
@@ -17,7 +19,8 @@ protected:
 signals:
     
 public slots:
-    void updateDescriptionSlot(QString description, QString comment);
+    void setDescription(QString description);
+    void setComment(QString comment);
     
 };
 

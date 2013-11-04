@@ -29,7 +29,9 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget
     setWindowTitle("Task Management");
     setLayout(layout);
     connect(mainTab, SIGNAL(hideSignal()), this, SLOT(hide()));
-    connect(mainTab, SIGNAL(updateDescriptionSignal(QString, QString)), detailsTab, SLOT(updateDescriptionSlot(QString, QString)));
+    connect(mainTab, SIGNAL(setDescriptionSignal(QString)), detailsTab, SLOT(setDescription(QString)));
+    connect(mainTab, SIGNAL(setCommentSignal(QString)), detailsTab, SLOT(setComment(QString)));
+
 }
 
 void TaskManagementWidget::closeEvent(QCloseEvent *) {

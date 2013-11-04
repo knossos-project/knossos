@@ -127,6 +127,14 @@ void TaskLoginWidget::loginButtonClicked() {
                     memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
                     strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
                 }
+                attribute = attributes.value("description").toString();
+                if(attribute.isNull() == false) {
+                    taskManagementWidget->detailsTab->setDescription(attribute);
+                }
+                attribute = attributes.value("comment").toString();
+                if(attribute.isNull() == false) {
+                    taskManagementWidget->detailsTab->setComment(attribute);
+                }
             }
             this->hide();
             taskManagementWidget->mainTab->setResponse(QString("Hello %1!").arg(username));

@@ -94,6 +94,9 @@ signals:
 
     bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+
+    void updateTaskDescriptionSignal(QString description);
+    void updateTaskCommentSignal(QString comment);
 protected:
 
     void resizeEvent(QResizeEvent *event);
@@ -275,7 +278,7 @@ public slots:
     // viewports
     void resetViewports();
     void showVPDecorationClicked();
-    void fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
+    bool fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
 
     // from the event handler
     void newTreeSlot();

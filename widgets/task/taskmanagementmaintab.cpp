@@ -136,7 +136,6 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
     #endif
     }
     state->skeletonState->skeletonFileAsQString = filepath;
-    qDebug() << state->skeletonState->skeletonFileAsQString;
     if(loadSkeletonSignal(state->skeletonState->skeletonFileAsQString) == false) {
         statusLabel->setText("<font color='red'>Failed to load skeleton.</font>");
     }
@@ -252,7 +251,8 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     prompt.addButton("Ok", QMessageBox::ActionRole); // closes prompt by default
     prompt.resize(400, 300);
     prompt.exec();
-    emit updateDescriptionSignal(description, comment);
+    emit setDescriptionSignal(description);
+    emit setCommentSignal(comment);
     emit loadSkeletonSignal(state->taskState->taskFile);
     setResponse("<font color='green'>Loaded task successfully.</font>");
     free(header.content);
@@ -397,6 +397,10 @@ void TaskManagementMainTab::resetSession(QString message) {
     taskState::removeCookie();
     memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
     taskLoginWidget->setResponse(message);
+    setTask("Current: ");
+    setActiveUser("Logged in as: ");
+    emit setDescriptionSignal("Category description: ");
+    emit setDescriptionSignal("Task comment: ");
     emit hideSignal();
     taskLoginWidget->show();
 }
