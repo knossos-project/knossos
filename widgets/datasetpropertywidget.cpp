@@ -26,8 +26,8 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
     this->path = new QLineEdit();
-    supercubeSize = new QComboBox();
-    supercubeSizeLabel = new QLabel("Supercube Size");
+    //supercubeSize = new QComboBox();
+    //supercubeSizeLabel = new QLabel("Supercube Size");
 
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
@@ -39,8 +39,8 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
 
     localLayout->addWidget(path, 0, 0);
     localLayout->addWidget(datasetfileDialog, 0, 1);
-    localLayout->addWidget(supercubeSizeLabel, 1, 0);
-    localLayout->addWidget(supercubeSize, 1, 1);
+    //localLayout->addWidget(supercubeSizeLabel, 1, 0);
+    //localLayout->addWidget(supercubeSize, 1, 1);
     localLayout->addWidget(processButton, 2,0);
     localLayout->addWidget(cancelButton, 2, 1);
 
@@ -112,7 +112,7 @@ void DatasetPropertyWidget::processButtonClicked() {
         }
 
         strcpy(state->path, dir.toStdString().c_str());
-        state->M = supercubeSize->currentText().toInt();
+        //state->M = supercubeSize->currentText().toInt();
 
         if(Knossos::readConfigFile(conf.toStdString().c_str())) {            
            emit clearSkeletonSignal();
