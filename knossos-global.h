@@ -999,6 +999,8 @@ struct viewerState {
     float cumDistRenderThres;
     int showPosSizButtons;
     int viewportOrder[4];
+
+    bool defaultVPSizeAndPos;
 };
 
 struct commentListElement {
