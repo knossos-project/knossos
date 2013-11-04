@@ -105,7 +105,7 @@ void TracingTimeWidget::checkIdleTime() {
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
     }
-    qDebug("checking the idle time");
+
     state->skeletonState->unsavedChanges = true;
 
     int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 3600.0);

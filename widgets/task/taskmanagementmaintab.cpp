@@ -23,7 +23,7 @@ TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, Q
     statusLabel = new QLabel("");
     statusLabel->setWordWrap(true);
     loggedAsLabel = new QLabel("Logged in As: ");
-    loggedAsLabel->setWordWrap(true);
+   // loggedAsLabel->setWordWrap(true);
     logoutButton = new QPushButton("Logout");
     currentTaskLabel = new QLabel("Current: ");
     currentTaskLabel->setWordWrap(true);
@@ -32,17 +32,13 @@ TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, Q
     finalCheckbox = new QCheckBox("final");
     submitButton = new QPushButton("Submit");
 
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(statusLabel);
     QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow(statusLabel);
     formLayout->addRow(loggedAsLabel, logoutButton);
     formLayout->addRow(loadLastSubmitButton, startNewTaskButton);
-    formLayout->addWidget(currentTaskLabel);
-    formLayout->addRow(finalCheckbox);
-    mainLayout->addLayout(formLayout);
-    mainLayout->addWidget(submitButton);
-
-    setLayout(mainLayout);
+    formLayout->addRow(currentTaskLabel);
+    formLayout->addRow(finalCheckbox, submitButton);
+    setLayout(formLayout);
 
     connect(logoutButton, SIGNAL(clicked()), this, SLOT(logoutButtonClicked()));
     connect(loadLastSubmitButton, SIGNAL(clicked()), this, SLOT(loadLastSubmitButtonClicked()));
