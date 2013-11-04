@@ -45,6 +45,15 @@ const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
 const QString SHOW_VP_DECORATION = "show_vp_decoration";
+const QString VP_DEFAULT_POS_SIZE = "vp_default_pos_size";
+const QString VPXY_COORD = "vpxy_coord";
+const QString VPXY_SIZE = "vpxy_size";
+const QString VPXZ_COORD = "vpxz_coord";
+const QString VPXZ_SIZE = "vpxz_size";
+const QString VPYZ_COORD = "vpyz_coord";
+const QString VPYZ_SIZE = "vpyz_size";
+const QString VPSKEL_COORD = "vpskel_coord";
+const QString VPSKEL_SIZE = "vpskel_size";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";

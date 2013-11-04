@@ -500,6 +500,7 @@ void Viewport::resizeVP(QMouseEvent *event) {
         resize(parentWidget()->width() - pos().x(), parentWidget()->width() - pos().x());
     }
     updateButtonPositions();
+    state->viewerState->defaultVPSizeAndPos = false;
 }
 
 void Viewport::updateButtonPositions() {
@@ -522,12 +523,15 @@ void Viewport::moveVP(QMouseEvent *event) {
     if(x >= 0 && x <= (parentWidget()->width() - width())
        && y >= 0 && y <= (parentWidget()->height() - height())) {
         move(x, y);
+        state->viewerState->defaultVPSizeAndPos = false;
     }
     else if(x >= 0 && x <= (parentWidget()->width() - width())) {
         move(x, pos().y());
+        state->viewerState->defaultVPSizeAndPos = false;
     }
     else if(y >= 0 && y <= (parentWidget()->height() - height())) {
         move(pos().x(), y);
+        state->viewerState->defaultVPSizeAndPos = false;
     }
 }
 

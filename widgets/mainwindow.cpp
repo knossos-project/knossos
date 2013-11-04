@@ -1114,6 +1114,18 @@ void MainWindow::saveSettings() {
     settings.setValue(POS_X, this->x());
     settings.setValue(POS_Y, this->y());
 
+    // viewport position and sizes
+    settings.setValue(VP_DEFAULT_POS_SIZE, state->viewerState->defaultVPSizeAndPos);
+    settings.setValue(VPXY_SIZE, viewports[VIEWPORT_XY]->size().height());
+    settings.setValue(VPXZ_SIZE, viewports[VIEWPORT_XZ]->size().height());
+    settings.setValue(VPYZ_SIZE, viewports[VIEWPORT_YZ]->size().height());
+    settings.setValue(VPSKEL_SIZE, viewports[VIEWPORT_SKELETON]->size().height());
+
+    settings.setValue(VPXY_COORD, viewports[VIEWPORT_XY]->pos());
+    settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->pos());
+    settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
+    settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
+
     for(int i = 0; i < skeletonFileHistory->size(); i++) {
         settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
     }
@@ -1140,6 +1152,20 @@ void MainWindow::loadSettings() {
     int height = settings.value(HEIGHT).toInt();
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
+
+    state->viewerState->defaultVPSizeAndPos = true;
+    state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE).toBool();
+    if(state->viewerState->defaultVPSizeAndPos == false) {
+        viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toInt(), settings.value(VPXY_SIZE).toInt());
+        viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toInt(), settings.value(VPXZ_SIZE).toInt());
+        viewports[VIEWPORT_YZ]->resize(settings.value(VPYZ_SIZE).toInt(), settings.value(VPYZ_SIZE).toInt());
+        viewports[VIEWPORT_SKELETON]->resize(settings.value(VPSKEL_SIZE).toInt(), settings.value(VPSKEL_SIZE).toInt());
+
+        viewports[VIEWPORT_XY]->move(settings.value(VPXY_COORD).toPoint());
+        viewports[VIEWPORT_XZ]->move(settings.value(VPXZ_COORD).toPoint());
+        viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
+        viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
+    }
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
@@ -1281,30 +1307,33 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-   /* int width = event->size().width();
-    int height = event->size().height();
+    if(state->viewerState->defaultVPSizeAndPos) {
+        // don't resize viewports when user positioned and resized them manually
+        int width = event->size().width();
+        int height = event->size().height();
 
-    int sizeW = (width - 15)  / 2 ;
-    int sizeH = (height - 70) / 2;
+        int sizeW = (width - 15)  / 2 ;
+        int sizeH = (height - 70) / 2;
 
-    if(width < height) {
-        viewports[0]->move(5, 60);
-        viewports[1]->move(10 + sizeW, 60);
-        viewports[2]->move(5, sizeW+60+5);
-        viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeW, sizeW);
+        if(width < height) {
+            viewports[0]->move(5, 60);
+            viewports[1]->move(10 + sizeW, 60);
+            viewports[2]->move(5, sizeW+60+5);
+            viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
+            for(int i = 0; i < 4; i++) {
+                viewports[i]->resize(sizeW, sizeW);
 
+            }
+        } else if(width > height) {
+            viewports[0]->move(5, 60);
+            viewports[1]->move(10 + sizeH, 60);
+            viewports[2]->move(5, sizeH+60+5);
+            viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
+            for(int i = 0; i < 4; i++) {
+                viewports[i]->resize(sizeH, sizeH);
+            }
         }
-    } else if(width > height) {
-        viewports[0]->move(5, 60);
-        viewports[1]->move(10 + sizeH, 60);
-        viewports[2]->move(5, sizeH+60+5);
-        viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
-        for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeH, sizeH);
-        }
-    }*/
+    }
 }
 
 
@@ -1426,6 +1455,7 @@ void MainWindow::resetViewports() {
     for(int i = 0; i < NUM_VP; i++) {
         viewports[i]->reset();
     }
+    state->viewerState->defaultVPSizeAndPos = true;
 }
 
 void MainWindow::showVPDecorationClicked() {
