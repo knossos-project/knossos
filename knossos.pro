@@ -251,7 +251,7 @@ win32 {
             -lwsock32
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
-                   C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\ \
+                   C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
 
 }

@@ -544,9 +544,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
     if(VPfound == -1)
         return true;
 
-
-
-#ifdef Q_OS_MACX
+#ifdef Q_OS_UNIX
     if((state->skeletonState->activeNode) and (state->modShift)) {
 #endif
 #ifdef Q_OS_WIN
@@ -575,7 +573,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
         }
         // Orthogonal VP or outside VP
         else {
-#ifdef Q_OS_MACX
+#ifdef Q_OS_UNIX
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
                 emit zoomOrthoSignal(-0.1);
@@ -631,7 +629,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 #ifdef Q_OS_WIN
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
 #endif
-#ifdef Q_OS_MACX
+#ifdef Q_OS_UNIX
         if((state->skeletonState->activeNode) and (state->modShift)) {
 #endif
 
@@ -657,7 +655,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
         }
         // Orthogonal VP or outside VP
         else {
-#ifdef Q_OS_MACX
+#ifdef Q_OS_UNIX
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
 #endif
