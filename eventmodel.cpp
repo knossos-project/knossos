@@ -546,8 +546,12 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 
 
 
-
+#ifdef Q_OS_MACX
+    if((state->skeletonState->activeNode) and (state->modShift)) {
+#endif
+#ifdef Q_OS_WIN
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
+#endif
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -571,9 +575,18 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
         }
         // Orthogonal VP or outside VP
         else {
+#ifdef Q_OS_MACX
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
                 emit zoomOrthoSignal(-0.1);
+
+#endif
+#ifdef Q_OS_WIN
+                if(QApplication::keyboardModifiers() == Qt::CTRL) {
+                   emit zoomOrthoSignal(-0.1);
+
+#endif
+
             } else { // move otherwiese
                 switch(VPfound) {
                     case VIEWPORT_XY:
@@ -615,7 +628,13 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     if(VPfound == -1)
         return true;
 
+#ifdef Q_OS_WIN
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
+#endif
+#ifdef Q_OS_MACX
+        if((state->skeletonState->activeNode) and (state->modShift)) {
+#endif
+
         radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -638,8 +657,13 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
         }
         // Orthogonal VP or outside VP
         else {
+#ifdef Q_OS_MACX
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
+#endif
+#ifdef Q_OS_WIN
+                if(QApplication::keyboardModifiers() == Qt::CTRL) {
+#endif
                 emit zoomOrthoSignal(0.1);
             }
             // Move otherwise
