@@ -655,6 +655,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
     if(state->skeletonState->unsavedChanges) {
          QMessageBox question;
+         question.setWindowFlags(Qt::WindowStaysOnTopHint);
+         question.setIcon(QMessageBox::Question);
          question.setWindowTitle("Confirmation required.");
          question.setText("There are unsaved changes. Really Quit?");
          QPushButton *yes = question.addButton("Yes", QMessageBox::ActionRole);
@@ -681,6 +683,8 @@ bool MainWindow::fileDialogForSkeletonAndAsyncLoading
 
         if(state->skeletonState->treeElements > 0) {
             QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
             prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
             QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
             QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
@@ -864,7 +868,13 @@ void MainWindow::dropNodesSlot()
 
 void MainWindow::skeletonStatisticsSlot()
 {
-    QMessageBox::information(this, "Information", "This feature is not yet implemented", QMessageBox::Ok);
+    QMessageBox info;
+    info.setIcon(QMessageBox::Information);
+    info.setWindowTitle("Information");
+    info.setText("This feature is not yet implemented");
+    info.setWindowFlags(Qt::WindowStaysOnTopHint);
+    info.addButton(QMessageBox::Ok);
+    info.exec();
 }
 
 
@@ -876,19 +886,19 @@ void MainWindow::clearSkeletonWithoutConfirmation() {
 
 void MainWindow::clearSkeletonSlot()
 {
-
-    int ret = QMessageBox::question(this, "", "Really clear the skeleton (you can not undo this) ?", QMessageBox::Ok | QMessageBox::No);
-    switch(ret) {
-        case QMessageBox::Ok:
-            emit clearSkeletonSignal(CHANGE_MANUAL, false);
-            updateTitlebar(false);
-            emit updateToolsSignal();
+    QMessageBox question;
+    question.setWindowFlags(Qt::WindowStaysOnTopHint);
+    question.setIcon(QMessageBox::Question);
+    question.setWindowTitle("Confirmation required");
+    question.setText("Really clear skeleton (you cannot undo this)?");
+    QPushButton *ok = question.addButton(QMessageBox::Ok);
+    question.addButton(QMessageBox::No);
+    question.exec();
+    if(question.clickedButton() == ok) {
+        emit clearSkeletonSignal(CHANGE_MANUAL, false);
+        updateTitlebar(false);
+        emit updateToolsSignal();
     }
-
-    emit clearSkeletonSignal(CHANGE_MANUAL, false);
-    updateTitlebar(false);
-    emit updateToolsSignal();
-
 }
 
 /* view menu functionality */
@@ -954,23 +964,25 @@ void MainWindow::saveCustomPreferencesSlot()
 
 
 void MainWindow::defaultPreferencesSlot() {
-    int ret = QMessageBox::question(this, "", "Do you really want to load the default preferences ?", QMessageBox::Yes | QMessageBox::No);
+    QMessageBox question;
+    question.setWindowFlags(Qt::WindowStaysOnTopHint);
+    question.setIcon(QMessageBox::Question);
+    question.setWindowTitle("Confirmation required");
+    question.setText("Do you really want to load the default preferences?");
+    QPushButton *yes = question.addButton(QMessageBox::Yes);
+    question.addButton(QMessageBox::No);
+    question.exec();
 
-    switch(ret) {
-        case QMessageBox::Yes:
-            clearSettings();
-            loadSettings();
-            widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
-            widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
-            emit loadTreeLUTFallback();
-            treeColorAdjustmentsChanged();
-            datasetColorAdjustmentsChanged();
-            this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2, QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
-            break;
-    case QMessageBox::No:
-           break;
+    if(question.clickedButton() == yes) {
+        clearSettings();
+        loadSettings();
+        widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
+        widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
+        emit loadTreeLUTFallback();
+        treeColorAdjustmentsChanged();
+        datasetColorAdjustmentsChanged();
+        this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2, QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
     }
-
 }
 
 void MainWindow::datatasetNavigationSlot()

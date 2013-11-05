@@ -72,12 +72,18 @@ void CommentShortCutsTab::deleteCommentsWithoutConfirmation() {
 }
 
 void CommentShortCutsTab::deleteComments() {
-    int retValue = QMessageBox::warning(this, "Warning", "Do you really want to clear all comment boxes?", QMessageBox::Yes, QMessageBox::No);
-    switch(retValue) {
-        case QMessageBox::Yes:
-            for(int i = 0; i < NUM; i++) {
-                textFields[i]->clear();
-            }
+    QMessageBox warning;
+    warning.setIcon(QMessageBox::Warning);
+    warning.setWindowFlags(Qt::WindowStaysOnTopHint);
+    warning.setWindowTitle("Warning");
+    warning.setText("Do you really want to clear all comment boxes?");
+    QPushButton *yes = warning.addButton("Yes", QMessageBox::AcceptRole);
+    warning.addButton("No", QMessageBox::RejectRole);
+    warning.exec();
+    if(warning.clickedButton() == yes) {
+        for(int i = 0; i < NUM; i++) {
+            textFields[i]->clear();
+        }
     }
 }
 

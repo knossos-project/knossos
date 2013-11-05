@@ -175,12 +175,16 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
-    int retValue = QMessageBox::warning(this, "Warning", "Do you really want to delete the active tree", QMessageBox::Yes, QMessageBox::No);
-    switch(retValue) {
-        case QMessageBox::Yes:
-            emit delActiveTreeSignal();
-            emit updateToolsSignal();
-
+    QMessageBox warning;
+    warning.setWindowFlags(Qt::WindowStaysOnTopHint);
+    warning.setWindowTitle("Warning");
+    warning.setText("Do you really want to delete the active tree?");
+    QPushButton *yes = warning.addButton(QMessageBox::Yes);
+    warning.addButton(QMessageBox::No);
+    warning.exec();
+    if(warning.clickedButton() == yes) {
+        emit delActiveTreeSignal();
+        emit updateToolsSignal();
     }
 }
 

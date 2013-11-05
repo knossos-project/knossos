@@ -3717,6 +3717,9 @@ void Skeletonizer::UI_popBranchNode() {
 
         if(state->skeletonState->branchpointUnresolved && state->skeletonState->branchStack->stackpointer != -1) {
             QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
+            prompt.setWindowTitle("Cofirmation required");
             prompt.setText("No node was added after jumping to the last branch point. Do you really want to jump?");
             QPushButton *jump = prompt.addButton("Jump", QMessageBox::ActionRole);
             QPushButton *cancel = prompt.addButton("Cancel", QMessageBox::ActionRole);

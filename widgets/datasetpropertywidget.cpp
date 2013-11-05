@@ -107,7 +107,13 @@ void DatasetPropertyWidget::processButtonClicked() {
         QString conf = QString(dir).append("/knossos.conf");
         QFile confFile(conf);
         if(!confFile.exists()) {
-            QMessageBox::information(this, "Attention", "There is no knossos.conf", QMessageBox::Ok);
+            QMessageBox info;
+            info.setWindowFlags(Qt::WindowStaysOnTopHint);
+            info.setIcon(QMessageBox::Information);
+            info.setWindowTitle("Information");
+            info.setText("There is no knossos.conf");
+            info.addButton(QMessageBox::Ok);
+            info.exec();
             return;
         }
 

@@ -242,6 +242,8 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     taskState::copyInfoFromHeader(comment, &header, "comment");
 
     QMessageBox prompt;
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Information);
     prompt.setWindowTitle(state->taskState->taskName);
     prompt.setText(QString("<p style='width:200px;'><b>Category %1:</b> %2<br><br><b>Task %3:</b> %4</p>")
                    .arg(taskState::getCategory())
