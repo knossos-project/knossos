@@ -36,12 +36,8 @@ extern stateInfo *state;
 ToolsWidget::ToolsWidget(QWidget *parent) :
     QDialog(parent)
 {
-
     this->setWindowTitle("Tools");
     tabs = new QTabWidget(this);
-
-    this->trees = new QList<int>();
-    this->nodes = new QList<int>();
 
     this->toolsQuickTabWidget = new ToolsQuickTabWidget(this);
     this->toolsNodesTabWidget = new ToolsNodesTabWidget(this);
@@ -252,24 +248,5 @@ void ToolsWidget::updateTreeCount() {
    this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
    this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
    this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
-}
-
-int ToolsWidget::findTreeIndex(int value) {
-    for(int index = 0; index < trees->size(); index++) {
-        if(trees->at(index) == value)
-            return index;
-    }
-
-    return 0;
-}
-
-int ToolsWidget::findNodeIndex(int value) {
-
-    for(int index = 0; index < nodes->size(); index++) {
-        if(trees->at(index) == value)
-            return index;
-    }
-
-    return 0;
 }
 

@@ -43,10 +43,7 @@ public:
     ToolsTreesTabWidget *toolsTreesTabWidget;
     void loadSettings();
     void saveSettings();
-    int findTreeIndex(int value);
-    int findNodeIndex(int value);
-    QList<int> *trees;
-    QList<int> *nodes;
+
 signals:
     void uncheckSignal();
     void setActiveTreeSignal(int id);

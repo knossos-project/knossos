@@ -42,9 +42,6 @@ Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
 
-    QSplashScreen screen(QPixmap(":/images/splash.png"), Qt::WindowStaysOnTopHint);
-    screen.show();
-
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QDesktopWidget *desktop = QApplication::desktop();
@@ -54,10 +51,10 @@ Viewer::Viewer(QObject *parent) :
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20, desktop->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
-    screen.finish(window);
+
+
 
     state->console = window->widgetContainer->console;
-
     vpXY = window->viewports[VIEWPORT_XY];
     vpXZ = window->viewports[VIEWPORT_XZ];
     vpYZ = window->viewports[VIEWPORT_YZ];
@@ -2044,7 +2041,7 @@ void Viewer::run() {
 
 
 
-                timer->singleShot(10, this, SLOT(runrun()));
+                timer->singleShot(10, this, SLOT(run()));
 
                 return;
 
@@ -2749,6 +2746,13 @@ void Viewer::rewire() {
     /* @todo check *///connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window->viewports[VIEWPORT_XY]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window->viewports[VIEWPORT_XZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window->viewports[VIEWPORT_YZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window->viewports[VIEWPORT_SKELETON]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+
+
+
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
@@ -2870,24 +2874,6 @@ void Viewer::rewire() {
     connect(vpYZ->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
     connect(vpSkel->delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
 
-    /*
-    connect(vpXY->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(vpXZ->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(vpYZ->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(vpSkel->delegate, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-
-    connect(vpXY->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    connect(vpXZ->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    connect(vpYZ->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    connect(vpSkel->delegate, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    */
-
-    /*
-    connect(vpXY->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
-    connect(vpXZ->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
-    connect(vpYZ->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
-    connect(vpSkel->delegate, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
-    */
 
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,

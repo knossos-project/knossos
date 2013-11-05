@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+    Knossos::showSplashScreen();
+
 
     Knossos *knossos = new Knossos();
 
@@ -129,7 +131,6 @@ int main(int argc, char *argv[])
         _Exit(false);
     }
 
-    a.processEvents();
 
     Knossos::printConfigValues();
     Viewer *viewer = new Viewer();
@@ -1264,4 +1265,16 @@ void Knossos::loadStyleSheet() {
     qApp->setStyleSheet(design);
     file.close();
 
+}
+
+void Knossos::showSplashScreen() {
+    QSplashScreen screen(QPixmap(":/images/splash.png"), Qt::WindowStaysOnTopHint);
+    screen.show();
+
+    QTime time;
+    time.start();
+    while(time.elapsed() < 1000) {
+    }
+
+    screen.close();
 }

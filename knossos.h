@@ -56,7 +56,7 @@ public:
     static uint ones32(register uint x);
     static void loadStyleSheet();
     void loadDefaultTreeLUT();
-
+    static void showSplashScreen();
 
 signals:
     void calcDisplayedEdgeLengthSignal();

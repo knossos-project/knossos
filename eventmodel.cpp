@@ -1091,40 +1091,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        emit updateSlicePlaneWidgetSignal();
-     //else if(event->key() == Qt::Key_J) {
-
-       // qDebug("emitting");
-       // emit popBranchNodeSignal();
-       // emit updateTools(); */
-     //else if(event->key() == Qt::Key_B) {
-      //  emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-     //   emit updateTools();
-   // } else if(event->key() == Qt::Key_X) {
-        //if(shift) {
-           // emit moveToPrevNodeSignal();
-           // emit updateTools();
-          //  return true;
-        //}
-
-        //emit moveToNextNodeSignal();
-        //emit updateTools();
-       // return true;
-
-    //} else if(event->key() == Qt::Key_Z) {
-
-       // if(control) {
-          //  emit undoSignal();
-       //     return true;
-       // }
-
-       // if(shift) {
-         //   emit moveToNextTreeSignal();
-        //    emit updateTools();
-       //     return true;
-      //  }
-       // emit moveToPrevTreeSignal();
-      //  return true;
+        emit updateSlicePlaneWidgetSignal();    
 
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
@@ -1140,25 +1107,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             emit zoomOutSkeletonVPSignal();
-        }
-     //else if(event->key() == Qt::Key_S) {
-        //if(control) {
-          //  emit saveSkeletonSignal();
-         //   return true;
-       // }
-       // emit jumpToActiveNodeSignal();
+        }    
     } else if(event->key() == Qt::Key_A) {
         emit workModeAddSignal();
     } else if(event->key() == Qt::Key_W) {
         emit workModeLinkSignal();
-   /* } else if(event->key() == Qt::Key_C) {
 
-        treeCol.r = -1.;
-        emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
-        emit updateTreeCountSignal();
-        emit workModeDropSignal();
-        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-        */
     } else if(event->key() == Qt::Key_V) {
        if(control) {
            emit pasteCoordinateSignal();
@@ -1175,71 +1129,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Delete) {
         emit deleteActiveNodeSignal();
         emit updateTools();
-    } else if(event->key() == Qt::Key_F1) {
-        /*
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
-        } else{
-            if (strncmp(state->viewerState->gui->comment1, "", 1) != 0) {
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
-            }
-        }
-        emit updateTools();
-        emit updateCommentsTable();
-        */
-    } else if(event->key() == Qt::Key_F2) {
-        /*
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
-        }
-        else{
-            if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
-        }
-        emit updateTools();
-        emit updateCommentsTable();
-        */
-    } else if(event->key() == Qt::Key_F3) {
-        /*
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
-        }
-        else{
-           if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
-        }
-        emit updateTools();
-        emit updateCommentsTable();
-        */
     } else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
             QApplication::quit();
-        } /*else {
-            if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-                emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
-            }
-            else{
-               if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
-                emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
-            }
-            emit updateTools();
-            emit updateCommentsTable();
-        } */
-    } /*else if(event->key() == Qt::Key_F5) {
-
-        if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-            emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
         }
-        else{
-            if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
-        }
-        emit updateTools();
-        emit updateCommentsTable();
     }
-
-    return true; */
 }
 
 Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound) {

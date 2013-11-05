@@ -42,15 +42,6 @@ extern struct stateInfo *state;
 static const float MIN_ZOOM = 0.02;
 static const float MAX_ZOOM = 1;
 
-/**
-  * In GUI.c some labels are changed:
-  * highest Available Mag = lowest Avaible Mag and otherwise. Why ??
-  *
-  * In zoomDefaults the vpConfigs are reset to ZOOM_MIN and ZOOM_MAX
-  * but if the spinboxes are changed it is state->viewerState->zoomOrthoVps, why ??
-  */
-
-
 ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent)
 {
