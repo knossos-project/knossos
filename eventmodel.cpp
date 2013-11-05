@@ -572,7 +572,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
+            if(state->modCtrl) {
                 emit zoomOrthoSignal(-0.1);
             } else { // move otherwiese
                 switch(VPfound) {
@@ -639,7 +639,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
         // Orthogonal VP or outside VP
         else {
             // Zoom when CTRL is pressed
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
+            if(state->modCtrl) {
                 emit zoomOrthoSignal(0.1);
             }
             // Move otherwise

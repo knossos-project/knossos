@@ -44,7 +44,7 @@ public:
     void showConsoleWidget();
     void createTracingTimeWidget(QWidget *parent);
     void showTracingTimeWidget();
-    void createCommentsWidget(QWidget *parent);
+    void    createCommentsWidget(QWidget *parent);
     void showCommentsWidget();
     void createZoomAndMultiresWidget(QWidget *parent);
 

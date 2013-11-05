@@ -161,6 +161,8 @@ void ZoomAndMultiresWidget::orthogonalSpinBoxChanged(double value) {
   */
 void ZoomAndMultiresWidget::skeletonSliderMoved(int value) {
     float result = value / 200.0;
+
+
     this->skeletonViewportSpinBox->setValue(result);
     state->skeletonState->zoomLevel = result;
     emit zoomLevelSignal(value);
