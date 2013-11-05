@@ -29,6 +29,7 @@ bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 5LL);
     *code = curl_easy_perform(handle); // send the request
 
     if(*code == CURLE_OK) {
@@ -63,6 +64,7 @@ bool taskState::httpPOST(char *url, char *postdata, struct httpResponse *respons
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response); // write response into this struct
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 5LL);
     *code = curl_easy_perform(handle); // send the request
 
     if(*code == CURLE_OK) {
@@ -94,6 +96,7 @@ bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpC
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 5LL);
     *code = curl_easy_perform(handle);
 
     if(*code == CURLE_OK) {
@@ -130,6 +133,7 @@ bool taskState::httpFileGET(char *url, char *postdata, FILE *file, struct httpRe
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
     curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
+    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 5LL);
     *code = curl_easy_perform(handle);
 
     if(*code == CURLE_OK) {

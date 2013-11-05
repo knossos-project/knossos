@@ -21,7 +21,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
+#define GLUT_DISABLE_ATEXIT_HACK
 #include "renderer.h"
 #include "functions.h"
 #include "widgets/viewport.h"
@@ -37,6 +37,7 @@
 #endif
 #ifdef Q_OS_WIN
     #include <GL/glu.h>
+    #include <GL/glut.h>
 #endif
 #include "skeletonizer.h"
 #include "viewer.h"
@@ -211,11 +212,10 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint v
 }
 
 
-uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType) {
+uint Renderer::renderText(Coordinate *pos, char *string, uint viewportType) {
 
-    glDisable(GL_DEPTH_TEST);
+    /*glDisable(GL_DEPTH_TEST);
     //glRasterPos3d(pos->x, pos->y, pos->z);
-
     if(viewportType == VIEWPORT_XY)
         refVPXY->renderText(pos->x, pos->y, pos->z, QString(string), font);
     else if(viewportType == VIEWPORT_XZ)
@@ -226,9 +226,17 @@ uint Renderer::renderText(Coordinate *pos, const char *string, uint viewportType
         refVPSkel->renderText(pos->x, pos->y, pos->z, QString(string), font);
 
     glEnable(GL_DEPTH_TEST);
-
+    return true;*/
+    char *c = string;
+    glDisable(GL_DEPTH_TEST);
+    glRasterPos3d(pos->x, pos->y, pos->z);
+    for (; *c != '\0'; c++) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+    }
+    glEnable(GL_DEPTH_TEST);
 
     return true;
+
 }
 
 uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
@@ -357,7 +365,7 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
 uint Renderer::renderViewportBorders(uint currentVP) {
     Coordinate pos;
-    char label[1024];
+    char label[1024] = {'\0'};
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -420,7 +428,6 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-        memset(label, '\0', 1024);
         sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
         renderText(&pos, label, currentVP);
     }
@@ -586,7 +593,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
                 glVertex3f(-dataPxX, dataPxY, 1.);
             glEnd();
-
             /* Draw the overlay textures */
             if(state->overlay) {
                 if(state->viewerState->overlayVisible) {
@@ -611,7 +617,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-
             if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
@@ -1063,6 +1068,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     }
 
     glDisable(GL_BLEND);
+
     renderViewportBorders(currentVP);
 
     return true;
@@ -1810,7 +1816,6 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     else if(currentVP == VIEWPORT_SKELETON)
        gluPickMatrix(x, this->refVPSkel->height() - y, width, width, openGLviewport);
 
-
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
     } else {
@@ -2271,11 +2276,6 @@ void Renderer::renderSkeleton(uint viewportType) {
                     memset(textBuffer, '\0', 32);
                     sprintf(textBuffer, "%d", currentNode->nodeID);
                     renderText(&(currentNode->position), textBuffer, viewportType);
-
-
-
-
-
                 }
                 lastRenderedNode = currentNode;
             }

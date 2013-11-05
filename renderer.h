@@ -44,7 +44,7 @@ protected:
     uint renderViewportBorders(uint currentVP);
 
     uint renderSegPlaneIntersection(struct segmentListElement *segment);
-    uint renderText(Coordinate *pos,const char *string, uint viewportType);
+    uint renderText(Coordinate *pos, char *string, uint viewportType);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint viewportType);
     void renderSkeleton(uint viewportType);

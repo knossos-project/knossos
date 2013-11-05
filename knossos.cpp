@@ -21,7 +21,7 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
+#define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
 #include <QTest>
 #include <QMutex>
@@ -49,7 +49,7 @@
 #include "test/testtoolswidget.h"
 #include "test/testnavigationwidget.h"
 #include "test/testorthogonalviewport.h"
-
+#include <GL/glut.h>
 
 #ifdef Q_OS_WIN
     #include "windows.h"
@@ -68,6 +68,7 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 int main(int argc, char *argv[])
 {
 
+    glutInit(&argc, argv);
     //Knossos::revisionCheck();
     char tempPath[MAX_PATH] = {0};
     const char *file = "/Users/amos/log.txt";
