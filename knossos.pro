@@ -219,6 +219,7 @@ mac {
                    /usr/lib/
                    /usr/include
     LIBS += -framework Python \
+            -framework GLUT \
             -lPythonQt \
             -lcurl
 }
@@ -263,3 +264,5 @@ RESOURCES += \
 include(test/config.pri)
 
 QMAKE_CFLAGS_RELEASE += -O3
+
+

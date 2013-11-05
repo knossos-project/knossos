@@ -30,6 +30,8 @@
 #include <qgl.h>
 #ifdef Q_OS_MACX
     #include <glu.h>
+    #include <GLUT/glut.h>
+
 #endif
 #ifdef Q_OS_LINUX
     #include <GL/gl.h>
