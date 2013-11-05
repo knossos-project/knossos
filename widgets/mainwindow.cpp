@@ -1562,19 +1562,19 @@ void MainWindow::resizeViewports(int width, int height) {
     int sizeH = (height - 70) / 2;
 
     if(width < height) {
-        viewports[0]->move(5, 60);
-        viewports[1]->move(10 + sizeW, 60);
-        viewports[2]->move(5, sizeW+60+5);
-        viewports[3]->move(10 + sizeW, sizeW + 60 + 5);
+        viewports[VIEWPORT_XY]->move(5, 60);
+        viewports[VIEWPORT_XZ]->move(5, sizeW+60+5);
+        viewports[VIEWPORT_YZ]->move(10 + sizeW, 60);
+        viewports[VIEWPORT_SKELETON]->move(10 + sizeW, sizeW + 60 + 5);
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(sizeW, sizeW);
 
         }
     } else if(width > height) {
-        viewports[0]->move(5, 60);
-        viewports[1]->move(10 + sizeH, 60);
-        viewports[2]->move(5, sizeH+60+5);
-        viewports[3]->move(10 + sizeH, sizeH + 60 + 5);
+        viewports[VIEWPORT_XY]->move(5, 60);
+        viewports[VIEWPORT_XZ]->move(5, sizeH+60+5);
+        viewports[VIEWPORT_YZ]->move(10 + sizeH, 60);
+        viewports[VIEWPORT_SKELETON]->move(10 + sizeH, sizeH + 60 + 5);
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(sizeH, sizeH);
             viewports[i]->updateButtonPositions();
