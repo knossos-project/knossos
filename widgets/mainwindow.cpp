@@ -1152,8 +1152,7 @@ void MainWindow::loadSettings() {
     int x = settings.value(POS_X).toInt();
     int y = settings.value(POS_Y).toInt();
 
-    state->viewerState->defaultVPSizeAndPos = true;
-    state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE).toBool();
+    state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
     if(state->viewerState->defaultVPSizeAndPos == false) {
         viewports[VIEWPORT_XY]->resize(settings.value(VPXY_SIZE).toInt(), settings.value(VPXY_SIZE).toInt());
         viewports[VIEWPORT_XZ]->resize(settings.value(VPXZ_SIZE).toInt(), settings.value(VPXZ_SIZE).toInt());
