@@ -49,10 +49,13 @@
 #include "test/testtoolswidget.h"
 #include "test/testnavigationwidget.h"
 #include "test/testorthogonalviewport.h"
-#include <GL/glut.h>
 
+#ifdef Q_OS_MAC
+#include <GLUT/glut.h>
+#endif
 #ifdef Q_OS_WIN
-    #include "windows.h"
+#include <GL/glut.h>
+#include "windows.h"
 #endif
 
 #define NUMTHREADS 4
