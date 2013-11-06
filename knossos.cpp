@@ -62,16 +62,15 @@
 
 struct stateInfo *state = NULL;
 char logFilename[MAX_PATH] = {0};
-
 Loader *loader;
-
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 
 int main(int argc, char *argv[])
 {
-
+#ifdef Q_OS_WIN | Q_OS_LINUX
     glutInit(&argc, argv);
+#endif
     //Knossos::revisionCheck();
     char tempPath[MAX_PATH] = {0};
     const char *file = "/Users/amos/log.txt";

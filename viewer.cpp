@@ -52,33 +52,12 @@ Viewer::Viewer(QObject *parent) :
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20, desktop->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
 
-
-
     state->console = window->widgetContainer->console;
     vpXY = window->viewports[VIEWPORT_XY];
     vpXZ = window->viewports[VIEWPORT_XZ];
     vpYZ = window->viewports[VIEWPORT_YZ];
     vpSkel = window->viewports[VIEWPORT_SKELETON];
 
-    /*
-    vp = new Viewport(window, VIEWPORT_XY, VIEWPORT_XY);
-    vp2 = new Viewport(window, VIEWPORT_YZ, VIEWPORT_YZ);
-    vp3 = new Viewport(window, VIEWPORT_XZ, VIEWPORT_XZ);
-    vp4 = new Viewport(window, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
-
-    vp->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 5, 350, 350);
-    vp2->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 5, 350, 350);
-    vp3->setGeometry(5, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
-    vp4->setGeometry(360, window->toolBar->geometry().top() + window->toolBar->height() + 10 + 350, 350, 350);
-    state->viewerState->screenSizeY = vp4->geometry().bottom();
-
-    vp->show();
-    vp2->show();
-    vp3->show();
-    vp4->show();
-
-    window->setGeometry(500, 300, 200, 200);
-    */
     timer = new QTimer();
 
     /* order of the initialization of the rendering system is

@@ -49,7 +49,6 @@
 #include <QRegExp>
 #include <QToolButton>
 #include <QtConcurrent/QtConcurrentRun>
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "GUIConstants.h"
@@ -598,23 +597,23 @@ void MainWindow::createMenus()
     previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
     F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
-    F1Action->setShortcut(tr("F1"));
+    F1Action->setShortcut(Qt::Key_F1);
     F1Action->setShortcutContext(Qt::ApplicationShortcut);
 
     F2Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
-    F2Action->setShortcut(tr("F2"));
+    F2Action->setShortcut(Qt::Key_F2);
     F2Action->setShortcutContext(Qt::ApplicationShortcut);
 
     F3Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
-    F3Action->setShortcut(tr("F3"));
+    F3Action->setShortcut(Qt::Key_F3);
     F3Action->setShortcutContext(Qt::ApplicationShortcut);
 
     F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
-    F1Action->setShortcut(tr("F5"));
+    F1Action->setShortcut(Qt::Key_F4);
     F1Action->setShortcutContext(Qt::ApplicationShortcut);
 
     F5Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
-    F5Action->setShortcut(tr("F5"));
+    F5Action->setShortcut(Qt::Key_F5);
     F5Action->setShortcutContext(Qt::ApplicationShortcut);
 
     editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
@@ -1095,7 +1094,7 @@ void MainWindow::pasteClipboardCoordinates(){
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
-          qDebug("calling this");
+            qDebug("calling this");
             emit userMoveSignal(extractedCoords->x - state->viewerState->currentPosition.x,
                                 extractedCoords->y - state->viewerState->currentPosition.y,
                                 extractedCoords->z - state->viewerState->currentPosition.z,
@@ -1508,6 +1507,7 @@ void MainWindow::jumpToActiveNodeSlot() {
 }
 
 void MainWindow::F1Slot() {
+
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
     } else{
@@ -1515,11 +1515,12 @@ void MainWindow::F1Slot() {
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
         }
     }
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateCommentsTableSignal();
 }
 
 void MainWindow::F2Slot() {
+
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
     }
@@ -1527,11 +1528,12 @@ void MainWindow::F2Slot() {
         if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
     }
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateCommentsTableSignal();
 }
 
 void MainWindow::F3Slot() {
+
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
     }
@@ -1539,7 +1541,7 @@ void MainWindow::F3Slot() {
        if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
     }
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -1552,11 +1554,12 @@ void MainWindow::F4Slot() {
        if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
     }
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateCommentsTableSignal();
 }
 
 void MainWindow::F5Slot() {
+
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
     }
@@ -1564,7 +1567,7 @@ void MainWindow::F5Slot() {
         if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
     }
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateCommentsTableSignal();
 }
 

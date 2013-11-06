@@ -96,11 +96,11 @@ bool CommentShortCutsTab::eventFilter(QObject *obj, QEvent *event) {
 
     for(int i = 0; i < NUM; i++) {
         if(textFields[i] == obj) {
-            if(event->type() == QEvent::KeyPress) {
+            if(event->type() == QEvent::KeyPress) {               
                 QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
                 if(keyEvent->key() == Qt::Key_Return) {
                     if(!textFields[i]->text().isEmpty()) {
-                        if(i == 0) {
+                        if(i == 0) {                            
                             strcpy(state->viewerState->gui->comment1, textFields[i]->text().toStdString().c_str());
                             return true;
                         } else if(i == 1) {
