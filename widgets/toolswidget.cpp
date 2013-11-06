@@ -158,7 +158,7 @@ void ToolsWidget::updateDisplayedTree() {
         this->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
         this->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
         this->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
-        this->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.r);
+        this->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
 
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
         this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);

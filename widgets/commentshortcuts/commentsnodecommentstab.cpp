@@ -113,7 +113,6 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
                     flags &= ~Qt::ItemIsEditable;
                     nodeID->setFlags(flags);
 
-                    qDebug() << QString(node->comment->content);
                     QTableWidgetItem *comment = new QTableWidgetItem(QString(node->comment->content));
                     nodeTable->setItem(tableIndex, 0, nodeID);
                     nodeTable->setItem(tableIndex, 1, comment);

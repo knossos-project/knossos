@@ -1371,8 +1371,10 @@ void MainWindow::taskSlot() {
     // prepare http response object
     response.length = 0;
     response.content = (char*)calloc(1, response.length+1);
-
-    if(taskState::httpGET(url, &response, &httpCode, state->taskState->cookieFile, &code) == false) {
+    setCursor(Qt::WaitCursor);
+    bool result = taskState::httpGET(url, &response, &httpCode, state->taskState->cookieFile, &code, 2);
+    setCursor(Qt::ArrowCursor);
+    if(result == false) {
         widgetContainer->taskLoginWidget->setResponse("Please login.");
         widgetContainer->taskLoginWidget->show();
         free(response.content);
@@ -1471,7 +1473,6 @@ void MainWindow::newTreeSlot() {
     emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     widgetContainer->toolsWidget->updateTreeCount();
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-    qDebug() << state->skeletonState->treeElements << " __";
 }
 
 void MainWindow::nextCommentNodeSlot() {

@@ -86,7 +86,7 @@ void TaskLoginWidget::loginButtonClicked() {
     memset(url, '\0', 1024);
     strcpy(url, state->taskState->host);
     strcat(url, "/knossos/session/");
-    qDebug("url: %s", url);
+
     // prepare http response object
     response.length = 0;
     response.content = (char *)calloc(1, response.length+1);
@@ -96,8 +96,10 @@ void TaskLoginWidget::loginButtonClicked() {
     if(cookie) {
         fclose(cookie);
     }
-
-    if(taskState::httpPOST(url, postdata, &response, &httpCode, state->taskState->cookieFile, &code) == false) {
+    setCursor(Qt::WaitCursor);
+    bool result = taskState::httpPOST(url, postdata, &response, &httpCode, state->taskState->cookieFile, &code, 5);
+    setCursor(Qt::ArrowCursor);
+    if( result == false) {
         serverStatus->setText("<font color='red'>Failed to create cookie. Please check your folder permissions.</font>");
     }
     else if(code == CURLE_OK) {

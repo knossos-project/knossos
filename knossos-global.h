@@ -688,10 +688,10 @@ struct taskState {
     char *taskFile;
     char *taskName;
 
-    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
-    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
-    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code);
-    static bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code);
+    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
     static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);

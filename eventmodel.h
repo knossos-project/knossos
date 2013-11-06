@@ -89,7 +89,7 @@ signals:
     void workModeDropSignal();
     void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
-    void addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
+    bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setRemoteStateTypeSignal(int type);

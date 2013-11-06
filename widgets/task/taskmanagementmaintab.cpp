@@ -59,8 +59,10 @@ void TaskManagementMainTab::logoutButtonClicked() {
 
     response.length = 0;
     response.content = (char *)calloc(1, 10240);
-
-    if(taskState::httpDELETE(url, &response, &httpCode, state->taskState->cookieFile, &code) == false) {
+    setCursor(Qt::WaitCursor);
+    bool result = taskState::httpDELETE(url, &response, &httpCode, state->taskState->cookieFile, &code, 5);
+    setCursor(Qt::ArrowCursor);
+    if(result == false) {
         setResponse("<font color='red'>Request failed. Please check your connection.</font>");
     }
     if(code == CURLE_OK) {
@@ -106,7 +108,9 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
         statusLabel->setText("<font color='red'>Failed to get submit. No write permission in this folder.</font>");
         return;
     }
-    success = taskState::httpFileGET(url, NULL, lastNml, &header, &httpCode, state->taskState->cookieFile, &code);
+    setCursor(Qt::WaitCursor);
+    success = taskState::httpFileGET(url, NULL, lastNml, &header, &httpCode, state->taskState->cookieFile, &code, 10);
+    setCursor(Qt::ArrowCursor);
     fclose(lastNml);
     if(success == false) {
         resetSession("<font color='red'>Could not find session cookie. Please login again.</font>");
@@ -187,7 +191,9 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     header.length = 0;
     header.content = (char *)calloc(1, header.length + 1);
 
-    success = taskState::httpFileGET(url, postdata, tasknml, &header, &httpCode, state->taskState->cookieFile, &code);
+    setCursor(Qt::WaitCursor);
+    success = taskState::httpFileGET(url, postdata, tasknml, &header, &httpCode, state->taskState->cookieFile, &code, 5);
+    setCursor(Qt::ArrowCursor);
     fclose(tasknml);
     if(success == false) {
         resetSession("<font color='red'>Could not find session cookie. Please login again.</font>");
@@ -328,6 +334,7 @@ void TaskManagementMainTab::submitButtonClicked() {
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, taskState::writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response); // write response into this struct
     curl_multi_add_handle(multihandle, handle);
+    setCursor(Qt::WaitCursor);
     code = curl_multi_perform(multihandle, &still_running);
 
     do {
@@ -378,7 +385,7 @@ void TaskManagementMainTab::submitButtonClicked() {
             break;
         }
     } while(still_running);
-
+    setCursor(Qt::ArrowCursor);
     if(code == CURLM_OK) {
         curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &httpCode);
         if(httpCode >= 400) {

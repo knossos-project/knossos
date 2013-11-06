@@ -1978,7 +1978,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
 
     if(node) {
         state->skeletonState->activeNode= node;
-        qDebug() << node->nodeID;
     }
 
     /* */
@@ -2557,7 +2556,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         }
     }
 
-
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
         int index = (newElement->treeID - 1) % 256; //first index is 0
@@ -2566,8 +2564,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         newElement->color.g =  state->viewerState->treeAdjustmentTable[index + 256];
         newElement->color.b =  state->viewerState->treeAdjustmentTable[index + 512];
         newElement->color.a = 1.;
-
-
     }
     else {
         newElement->color = color;

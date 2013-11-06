@@ -48,8 +48,6 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 
         clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
-        qDebug() << " clickedNode:" << clickedNode;
-
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
             emit updateTools();
@@ -178,20 +176,20 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(clickedCoordinate == NULL) {
         return true;
     }
-
+    bool newNode = false;
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
-        emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         emit workModeDropSignal();
         break;
     case SKELETONIZER_ON_CLICK_ADD_NODE:
-        emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+        newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         emit workModeLinkSignal();
         break;
     case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
         if(state->skeletonState->activeNode == NULL) {
             //1. no node to link with
-            emit addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
+            newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         }
 
@@ -209,10 +207,10 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
         //3. Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
-
-        if(addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
-                                               state->viewerState->vpConfigs[VPfound].type,
-                                               true) == false) { //could not add node
+        newNode = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
+                                                         state->viewerState->vpConfigs[VPfound].type,
+                                                         true);
+        if(newNode == false) { //could not add node
             break;
         }
 
@@ -297,7 +295,9 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
     /* Move to the new node position */
     emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-    emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+    if(newNode) {
+        emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+    }
     emit updateViewerStateSignal();
     Knossos::sendRemoteSignal();
     emit updateTools();
