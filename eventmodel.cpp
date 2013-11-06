@@ -63,6 +63,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         if(clickedCoordinate) {
             newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
             if(newActiveNode != NULL) {
+                free(clickedCoordinate);
                 emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                 emit updateTools();
                 return true;
@@ -117,6 +118,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         }
     }
 
+    free(clickedCoordinate);
     return true;
 }
 
@@ -302,6 +304,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Knossos::sendRemoteSignal();
     emit updateTools();
 
+    free(clickedCoordinate);
     return true;
 }
 
@@ -1170,9 +1173,10 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
     // upper border from the user mouse click to the VP boundaries.
     uint xDistance, yDistance;
 
-    if((VPfound == -1)
-        || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON))
+    if((VPfound == -1) || (state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON)) {
+            free(foundCoordinate);
             return NULL;
+    }
 
     xDistance = event->x();
     yDistance = event->y();

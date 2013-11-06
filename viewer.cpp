@@ -42,6 +42,8 @@ Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
 
+    QThread other;
+
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QDesktopWidget *desktop = QApplication::desktop();
@@ -51,6 +53,9 @@ Viewer::Viewer(QObject *parent) :
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20, desktop->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
+
+    window->moveToThread(&other);
+    other.start();
 
     state->console = window->widgetContainer->console;
     vpXY = window->viewports[VIEWPORT_XY];
@@ -1860,27 +1865,7 @@ void Viewer::runrun() {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
 
-    if(state->keyF or state->keyD) {
-        int time = delay.elapsed();
-
-#ifndef Q_OS_MAC
-
-        if(time > 200)
-            delay.restart();
-#endif
-#ifdef Q_OS_MAC
-        state->autorepeat = true;
-#endif
-
-        qDebug() << div;
-        if(time >= 200 and !state->autorepeat) {
-            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
-        } else if(state->autorepeat) {
-            qDebug() << "case2";
-           userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
-        }
-    }
-
+    processUserMove();
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -2019,9 +2004,10 @@ void Viewer::run() {
                 vpSkel->updateGL();
 
 
-
                 timer->singleShot(10, this, SLOT(run()));
 
+                vpListDel(viewports);
+                viewerState->userMove = false;
                 return;
 
             }
@@ -2037,9 +2023,7 @@ void Viewer::run() {
             currentVp = nextVp;
 
         }//end while(viewports->elements > 0)
-        vpListDel(viewports);
 
-        viewerState->userMove = false;
 
 }
 
@@ -2962,4 +2946,26 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
         SET_COORDINATE((*v3), (cos(alpha)*sin(beta)), (sin(alpha)*sin(beta)), (cos(beta)));
 
         return true;
+}
+
+bool Viewer::processUserMove() {
+    if(state->keyF or state->keyD) {
+        int time = delay.elapsed();
+
+#ifndef Q_OS_MAC
+        if(time > 200)
+            delay.restart();
+#endif
+#ifdef Q_OS_MAC
+        state->autorepeat = true;
+#endif
+
+        if(time >= 200 and !state->autorepeat) {
+            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+        } else if(state->autorepeat) {
+            qDebug() << "case2";
+           userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
+        }
+    }
+
 }

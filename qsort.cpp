@@ -92,9 +92,11 @@ _quicksort (
   char *pivot_buffer = (char *) malloc (size);
   const size_t max_thresh = MAX_THRESH * size;
 
-  if (total_elems == 0)
+  if (total_elems == 0) {
+      free(pivot_buffer);
     /* Avoid lossage with unsigned arithmetic below.  */
     return;
+  }
 
   if (total_elems > MAX_THRESH)
     {

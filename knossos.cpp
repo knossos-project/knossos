@@ -86,6 +86,10 @@ int main(int argc, char *argv[])
 
     Knossos *knossos = new Knossos();
 
+    qDebug() << sizeof(struct treeListElement);
+    qDebug() << sizeof(struct nodeListElement);
+    qDebug() << sizeof(struct segmentListElement);
+
     //Knossos::loadStyleSheet();
 
     // The idea behind all this is that we have four sources of

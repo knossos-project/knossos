@@ -3586,7 +3586,7 @@ bool Skeletonizer::popBranchNode(int targetRevision, int serialize) {
 
         setActiveNode(CHANGE_NOSYNC, branchNode, 0);
 
-        branchNode->isBranchNode--;
+        branchNode->isBranchNode = 0;
         state->skeletonState->skeletonChanged = true;
 
         emit userMoveSignal(branchNode->position.x - state->viewerState->currentPosition.x,

@@ -1036,7 +1036,7 @@ struct nodeListElement {
 
     //can be VIEWPORT_XY, ...
     Byte createdInVp;
-    int createdInMag;
+    Byte createdInMag;
     int timestamp;
 
     struct commentListElement *comment;
@@ -1044,12 +1044,12 @@ struct nodeListElement {
     // counts forward AND backward segments!!!
     int numSegs;
 
-   // circumsphere radius - max. of length of all segments and node radius.
-   //Used for frustum culling
-   float circRadius;
+    // circumsphere radius - max. of length of all segments and node radius.
+    //Used for frustum culling
+    float circRadius;
     uint nodeID;
     Coordinate position;
-    int isBranchNode;
+    bool isBranchNode;
 };
 
 
@@ -1062,9 +1062,9 @@ struct segmentListElement {
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
-    int flag;
+    Byte flag;
     float length;
-    char *comment;
+    //char *comment;
 
     //Those coordinates are not the same as the coordinates of the source / target nodes
     //when a segment crosses the skeleton DC boundaries. Then these coordinates
