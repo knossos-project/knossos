@@ -567,12 +567,20 @@ void MainWindow::createMenus()
     newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
     moveToNextNodeAction = editMenu->addAction(QIcon(""), "Move To Next Node", this, SLOT(moveToNextNodeSlot()));
-    moveToNextNodeAction->setShortcut(QKeySequence(tr("Z")));
+    moveToNextNodeAction->setShortcut(QKeySequence(tr("X")));
     moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
     moveToPrevNodeAction = editMenu->addAction(QIcon(""), "Move To Previous Node", this, SLOT(moveToPrevNodeSlot()));
-    moveToPrevNodeAction->setShortcut(QKeySequence(tr("X")));
+    moveToPrevNodeAction->setShortcut(QKeySequence(tr("SHIFT+X")));
     moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    moveToNextTreeAction = editMenu->addAction(QIcon(""), "Move To Next Tree", this, SLOT(moveToNextTreeSlot()));
+    moveToNextTreeAction->setShortcut(QKeySequence(tr("Z")));
+    moveToNextTreeAction->setShortcutContext(Qt::ApplicationShortcut);
+
+    moveToPrevTreeAction = editMenu->addAction(QIcon(""), "Move To Previous Tree", this, SLOT(moveToPrevTreeSlot()));
+    moveToPrevTreeAction->setShortcut(QKeySequence(tr("SHIFT+Z")));
+    moveToPrevTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
     pushBranchNodeAction = editMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()));
     pushBranchNodeAction->setShortcut(QKeySequence(tr("B")));
@@ -647,6 +655,7 @@ void MainWindow::createMenus()
 
     helpMenu = menuBar()->addMenu("Help");
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "File|About")));
+    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", this, SLOT(documentationSlot()));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -1063,6 +1072,10 @@ void MainWindow::commentShortcutsSlots()
 void MainWindow::aboutSlot()
 {
     this->widgetContainer->splashWidget->show();
+}
+
+void MainWindow::documentationSlot() {
+    this->widgetContainer->docWidget->show();
 }
 
 /* toolbar slots */
@@ -1503,12 +1516,21 @@ void MainWindow::moveToPrevNodeSlot() {
     emit updateTools();
 }
 
+void MainWindow::moveToPrevTreeSlot() {
+    emit moveToPrevTreeSignal();
+    emit updateTools();
+}
+
+void MainWindow::moveToNextTreeSlot() {
+    emit moveToNextTreeSignal();
+    emit updateTools();
+}
+
 void MainWindow::jumpToActiveNodeSlot() {
     emit jumpToActiveNodeSignal();
 }
 
 void MainWindow::F1Slot() {
-
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment1, "", 1) != 0)) {
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
     } else{
@@ -1521,7 +1543,6 @@ void MainWindow::F1Slot() {
 }
 
 void MainWindow::F2Slot() {
-
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
     }
@@ -1534,7 +1555,6 @@ void MainWindow::F2Slot() {
 }
 
 void MainWindow::F3Slot() {
-
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
     }
@@ -1547,7 +1567,6 @@ void MainWindow::F3Slot() {
 }
 
 void MainWindow::F4Slot() {
-
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
     }
@@ -1560,7 +1579,6 @@ void MainWindow::F4Slot() {
 }
 
 void MainWindow::F5Slot() {
-
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
         emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
     }

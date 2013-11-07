@@ -31,6 +31,7 @@
 #include "widgets/datasetpropertywidget.h"
 #include "widgets/task/taskloginwidget.h"
 #include "widgets/task/taskmanagementwidget.h"
+#include "widgets/documentationwidget.h"
 
 class Viewport;
 class MainWindow;
@@ -56,6 +57,7 @@ public:
     void createSplashScreenWidget(QWidget *parent);
     void createDatasetPropertyWidget(QWidget *parent);
     void createTaskWidgets(QWidget *parent);
+    void createDocumentationWidget(QWidget *parent);
     void createWidgets(QWidget *parent);
 
     Console *console;
@@ -71,6 +73,7 @@ public:
     DatasetPropertyWidget *datasetPropertyWidget;
     TaskLoginWidget *taskLoginWidget;
     TaskManagementWidget *taskManagementWidget;
+    DocumentationWidget *docWidget;
 
 signals:
 

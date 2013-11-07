@@ -176,6 +176,9 @@ int main(int argc, char *argv[])
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
     QObject::connect(viewer->window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
 
+    QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
+
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));

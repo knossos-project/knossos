@@ -18,9 +18,9 @@ void WidgetContainer::rewire() {
     connect(this->toolsWidget->toolsNodesTabWidget->findPreviousButton, SIGNAL(clicked()), this->toolsWidget->toolsQuickTabWidget, SLOT(findPreviousButtonClicked()));
     connect(this->toolsWidget->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(commentChanged(QString)));
     connect(this->toolsWidget->toolsNodesTabWidget->searchForField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(searchForChanged(QString)));
-    connect(this->commentsWidget->nodeCommentsTab, SIGNAL(updateTools()), this->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(this->commentsWidget->nodeCommentsTab, SIGNAL(updateTools()), this->toolsWidget, SLOT(updateToolsSlot()));
+    connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateToolsSlot()));
+    connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateToolsSlot()));
     connect(this->toolsWidget->toolsNodesTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
     connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
 }
@@ -130,6 +130,14 @@ void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
 #endif
 }
 
+void WidgetContainer::createDocumentationWidget(QWidget *parent) {
+    docWidget = new DocumentationWidget(parent);
+    docWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+#ifdef Q_OS_MAC
+    docWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+#endif
+}
+
 void WidgetContainer::createWidgets(QWidget *parent) {
     createConsoleWidget();
     createTracingTimeWidget(parent);
@@ -143,5 +151,6 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createDatasetPropertyWidget(parent);
     createTaskWidgets(parent);
     createSplashScreenWidget(parent);
+    createDocumentationWidget(parent);
     rewire();
 }

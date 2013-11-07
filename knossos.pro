@@ -8,7 +8,7 @@ QT       += core gui opengl network xml testlib
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qtestlib
+CONFIG += qtestlib help
 CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -91,6 +91,7 @@ SOURCES += widgets/mainwindow.cpp \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \
     sha256.cpp \
+    widgets/documentationwidget.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -181,6 +182,7 @@ HEADERS  += widgets/mainwindow.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \
     sha256.h \
+    widgets/documentationwidget.h
 
 
 FORMS    += mainwindow.ui

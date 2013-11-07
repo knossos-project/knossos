@@ -1980,9 +1980,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
         state->skeletonState->activeNode= node;
     }
 
-    /* */
-
-
     return true;
 }
 
@@ -2535,7 +2532,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         return NULL;
     }
     if(serialize){
-
         saveSerializedSkeleton();
     }
 
@@ -2570,8 +2566,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     }
     newElement->colorSetManually = false;
 
-    emit updateToolsSignal();
-
     memset(newElement->comment, '\0', 8192);
 
     //Insert the new tree at the beginning of the tree list
@@ -2590,7 +2584,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
     }
-
+    emit updateToolsSignal();
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
@@ -4065,10 +4059,16 @@ bool Skeletonizer::moveToPrevTree() {
                                          node->position.z);
 
             Knossos::sendRemoteSignal();
+            emit updateToolsSignal();
         }
         return true;
     }
-    LOG("Reached first tree.")
+    QMessageBox info;
+    info.setIcon(QMessageBox::Information);
+    info.setWindowFlags(Qt::WindowStaysOnTopHint);
+    info.setWindowTitle("Information");
+    info.setText("You reached the first tree.");
+    info.exec();
 
     return false;
 }
@@ -4097,12 +4097,16 @@ bool Skeletonizer::moveToNextTree() {
                                              node->position.y,
                                              node->position.z);
                 Knossos::sendRemoteSignal();
-
-
+                emit updateToolsSignal();
         }
         return true;
     }
-    LOG("Reached last tree.")
+    QMessageBox info;
+    info.setIcon(QMessageBox::Information);
+    info.setWindowFlags(Qt::WindowStaysOnTopHint);
+    info.setWindowTitle("Information");
+    info.setText("You reached the last tree.");
+    info.exec();
 
     return false;
 
@@ -4122,6 +4126,7 @@ bool Skeletonizer::moveToPrevNode() {
                                      prevNode->position.y,
                                      prevNode->position.z);
         Knossos::sendRemoteSignal();
+        emit updateToolsSignal();
         return true;
     }
 
@@ -4142,6 +4147,7 @@ bool Skeletonizer::moveToNextNode() {
                                      nextNode->position.y,
                                      nextNode->position.z);
         Knossos::sendRemoteSignal();
+        emit updateToolsSignal();
         return true;
     }
 

@@ -2708,11 +2708,11 @@ void Viewer::rewire() {
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
     /* @todo check *///connect(window, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
 
-    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(window->viewports[VIEWPORT_XY]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(window->viewports[VIEWPORT_XZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(window->viewports[VIEWPORT_YZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
-    connect(window->viewports[VIEWPORT_SKELETON]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window->viewports[VIEWPORT_XY]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window->viewports[VIEWPORT_XZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window->viewports[VIEWPORT_YZ]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window->viewports[VIEWPORT_SKELETON]->delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
 
 
 
@@ -2839,7 +2839,7 @@ void Viewer::rewire() {
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
 
-    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateDisplayedTree()));
+    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     //connect(skeletonizer, SIGNAL(saveSkeletonSignal(int)), window, SLOT(saveSlot()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
@@ -2911,6 +2911,9 @@ void Viewer::rewire() {
     connect(window, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(window, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+
+    connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
+    connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
 
     connect(window, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
     connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));

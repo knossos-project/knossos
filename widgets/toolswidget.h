@@ -48,7 +48,7 @@ signals:
     void uncheckSignal();
     void setActiveTreeSignal(int id);
 public slots:
-    void updateDisplayedTree();
+    void updateToolsSlot();
     void updateTreeCount();
 
 protected:

@@ -216,7 +216,7 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {    
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value(), true)) {
-        reference->updateDisplayedTree();
+        reference->updateToolsSlot();
     }
 }
 
@@ -224,7 +224,7 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
         if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, true)) {
-            reference->updateDisplayedTree();
+            reference->updateToolsSlot();
         }
     }
 }

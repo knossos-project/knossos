@@ -140,7 +140,7 @@ void ToolsWidget::saveSettings() {
     settings.endGroup();
 }
 
-void ToolsWidget::updateDisplayedTree() {
+void ToolsWidget::updateToolsSlot() {
 
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
     if(state->skeletonState->treeElements == 0) {

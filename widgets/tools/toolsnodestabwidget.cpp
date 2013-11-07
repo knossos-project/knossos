@@ -180,7 +180,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
 
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     emit deleteActiveNodeSignal();
-    reference->updateDisplayedTree();
+    reference->updateToolsSlot();
 }
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {

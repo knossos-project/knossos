@@ -86,6 +86,8 @@ signals:
     /* */
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
+    void moveToPrevTreeSignal();
+    void moveToNextTreeSignal();
     void updateTools();
     void popBranchNodeSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
@@ -141,6 +143,8 @@ public:
     QAction *popBranchNodeAction;
     QAction *moveToPrevNodeAction;
     QAction *moveToNextNodeAction;
+    QAction *moveToPrevTreeAction;
+    QAction *moveToNextTreeAction;
     QAction *jumpToActiveNodeAction;
 
     /* view actions */
@@ -259,6 +263,7 @@ public slots:
 
     /* help menu */
     void aboutSlot();
+    void documentationSlot();
 
     /* toolbar slots */
     void copyClipboardCoordinates();
@@ -289,6 +294,8 @@ public slots:
     void popBranchNodeSlot();
     void moveToPrevNodeSlot();
     void moveToNextNodeSlot();
+    void moveToPrevTreeSlot();
+    void moveToNextTreeSlot();
     void jumpToActiveNodeSlot();
     void F1Slot();
     void F2Slot();
