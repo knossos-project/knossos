@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <QtHelpProject version="1.0">
+     <namespace>max-planck-institut-for-medical-research.knossos.4.0</namespace>
+     <virtualFolder>doc</virtualFolder>
+     <customFilter name="KNOSSOS 4.0">
+         <filterAttribute>KNOSSOS</filterAttribute>
+         <filterAttribute>4.0</filterAttribute>
+     </customFilter>
+     <filterSection>
+         <filterAttribute>KNOSSOS</filterAttribute>
+         <filterAttribute>4.0</filterAttribute>
+         <toc>
+            <section title="KNOSSOS 4 Manual" ref="documentation.html">
+              <section title="Quickstart" ref="documentation.html#quickstart">
+                <section title="Start and Main Window" ref="documentation.html#start"/>
+                <section title="Saving/Autosaving/Loading" ref="documentation.html#saving"/>
+                <section title="Basic Viewport Handling" ref="documentation.html#viewports"/>
+                <section title="Skeleton Tracing" ref="documentation.html#tracing"/>
+                <section title="Comments" ref="documentation.html#comments"/>
+                <section title="Shortcuts" ref="documentation.html#shortcuts"/>
+              </section>
+              <section title="Full Documentation" ref="documentation.html#full"/>
+            </section>
+         </toc>
+         <keywords>
+             <keyword name="branchnode" id="KNOSSOS::branchnode" ref="blatt2A3.htm#Rindfleisch"/>
+         </keywords>
+         <files>
+             <file>documentation.html</file>
+             <file>images/500px-Tut_exp_01.jpg</file>
+             <file>images/900px-Keyboard_Layout.jpg</file>
+             <file>images/900px-Tut_07s_new.jpg</file>
+             <file>images/backgrndTile.jpg</file>
+             <file>images/top.jpg</file>
+             <file>images/top2.jpg</file>
+             <file>images/Tut_02.jpg</file>
+             <file>images/Tut_exp_05.jpg</file>
+             <file>images/Tut_exp_06.jpg</file>
+             <file>images/Tut_KnossosStarter.jpg</file>
+             <file>images/Tut_commentsWindow.png</file>
+             <file>images/Tut_Coordinates.png</file>
+             <file>images/Tut_KnossosStarter.png</file>
+             <file>images/Tut_toolsWindow.png</file>
+             <file>images/Tut_Viewports.png</file>
+         </files>
+     </filterSection>
+ </QtHelpProject>

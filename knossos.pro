@@ -210,7 +210,6 @@ OTHER_FILES += \
     defaultSettings.xml \
     customCursor.xpm \
     config.y \
-    resize.gif \
     style.qss
 
 

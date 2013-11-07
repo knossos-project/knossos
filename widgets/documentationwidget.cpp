@@ -26,7 +26,11 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) :
     splitter = new QSplitter();
     splitter->addWidget(contentWidget);
     splitter->addWidget(helpBrowser);
-
+    helpBrowser->setSource(QUrl("qthelp://max-planck-institut-for-medical-research.knossos.4.0/doc/documentation.html"));
+    QList<int> sizeList;
+    sizeList.append(223);
+    sizeList.append(788);
+    splitter->setSizes(sizeList);
     contentWidget->setModel(contentModel);
 
     QVBoxLayout *layout = new QVBoxLayout();

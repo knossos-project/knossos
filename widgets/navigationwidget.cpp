@@ -41,7 +41,7 @@ extern struct stateInfo *state;
 NavigationWidget::NavigationWidget(QWidget *parent) :
     QDialog(parent)
 {
-    this->setWindowTitle("Navigation Settings");
+    this->setWindowTitle("Dataset Navigation");
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     QGroupBox *generalGroup = new QGroupBox("General");

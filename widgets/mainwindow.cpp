@@ -1107,7 +1107,7 @@ void MainWindow::pasteClipboardCoordinates(){
             this->xField->setValue(extractedCoords->x);
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
-            qDebug("calling this");
+
             emit userMoveSignal(extractedCoords->x - state->viewerState->currentPosition.x,
                                 extractedCoords->y - state->viewerState->currentPosition.y,
                                 extractedCoords->z - state->viewerState->currentPosition.z,

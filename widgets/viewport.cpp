@@ -66,7 +66,7 @@ Viewport::Viewport(QWidget *parent, int viewportType) :
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
 
     resizeButton = new ResizeButton(this);
-    resizeButton->setIcon(QIcon("resize.gif"));
+    resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
     resizeButton->show();
 
     connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));

@@ -102,9 +102,9 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 
 
     //Set Connection between Active Node and Clicked Node
-    if(QApplication::keyboardModifiers() == Qt::AltModifier) {
+    if(QApplication::keyboardModifiers() == Qt::ALT) {
         int clickedNode;
-        clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), (state->viewerState->screenSizeY - event->y()), 10);
+        clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {

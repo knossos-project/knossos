@@ -132,7 +132,7 @@ void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
 
 void WidgetContainer::createDocumentationWidget(QWidget *parent) {
     docWidget = new DocumentationWidget(parent);
-    docWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    docWidget->resize(1112, 600);
 #ifdef Q_OS_MAC
     docWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif

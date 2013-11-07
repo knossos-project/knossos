@@ -28,6 +28,7 @@
         <file>icons/network-connect.png</file>
         <file>icons/network-disconnect.png</file>
         <file>splash.png</file>
+        <file>icons/resize.gif</file>
     </qresource>
     <qresource prefix="/misc">
         <file>style.qss</file>
