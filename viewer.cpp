@@ -2912,6 +2912,11 @@ void Viewer::rewire() {
     connect(window, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
 
+    connect(vpXY->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+    connect(vpXZ->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+    connect(vpYZ->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+    connect(vpSkel->delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
 

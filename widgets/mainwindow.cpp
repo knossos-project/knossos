@@ -654,8 +654,8 @@ void MainWindow::createMenus()
 
 
     helpMenu = menuBar()->addMenu("Help");
-    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "About", this, SLOT(aboutSlot()), QKeySequence(tr("CTRL+A", "File|About")));
-    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", this, SLOT(documentationSlot()));
+    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "About", this, SLOT(aboutSlot()));
+    helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", this, SLOT(documentationSlot()), QKeySequence(tr("CTRL+H")));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
