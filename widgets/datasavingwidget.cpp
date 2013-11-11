@@ -43,7 +43,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     autosaveCheckbox = new QCheckBox("Auto-Saving");
-    autosaveIntervalLabel = new QLabel("Autosave Interval");
+    autosaveIntervalLabel = new QLabel("Saving interval [min]");
     autosaveIntervalSpinBox = new QSpinBox();
 
     QFormLayout *formLayout = new QFormLayout();

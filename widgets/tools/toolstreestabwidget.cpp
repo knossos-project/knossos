@@ -53,7 +53,7 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     deleteActiveTreeButton = new QPushButton("Delete Active Tree");
-    newTreeButton = new QPushButton("New Tree (c)");
+    newTreeButton = new QPushButton("New Tree (C)");
     newTreeButton->setShortcut(Qt::Key_V);
 
     commentLabel = new QLabel("Comment");
@@ -67,7 +67,7 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     id2SpinBox = new QSpinBox();
     id2SpinBox->setMinimum(1);
 
-    splitByConnectedComponentsButton = new QPushButton("Split By Connected Components");
+    splitByConnectedComponentsButton = new QPushButton("Split Last Component From Tree");
     rLabel = new QLabel("R:");
     gLabel = new QLabel("G:");
     bLabel = new QLabel("B:");

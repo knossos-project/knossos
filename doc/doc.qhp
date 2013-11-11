@@ -10,16 +10,35 @@
          <filterAttribute>KNOSSOS</filterAttribute>
          <filterAttribute>4.0</filterAttribute>
          <toc>
-            <section title="KNOSSOS 4 Manual" ref="documentation.html">
-              <section title="Quickstart" ref="documentation.html#quickstart">
-                <section title="Start and Main Window" ref="documentation.html#start"/>
-                <section title="Saving/Autosaving/Loading" ref="documentation.html#saving"/>
-                <section title="Basic Viewport Handling" ref="documentation.html#viewports"/>
-                <section title="Skeleton Tracing" ref="documentation.html#tracing"/>
-                <section title="Comments" ref="documentation.html#comments"/>
-                <section title="Shortcuts" ref="documentation.html#shortcuts"/>
+            <section title="KNOSSOS Quickstart" ref="documentation.html#quickstart">
+              <section title="Start and Main Window" ref="documentation.html#start"/>
+              <section title="Saving/Autosaving/Loading" ref="documentation.html#saving"/>
+              <section title="Basic Viewport Handling" ref="documentation.html#viewports"/>
+              <section title="Skeleton Tracing" ref="documentation.html#tracing"/>
+              <section title="Comments" ref="documentation.html#comments"/>
+              <section title="Shortcuts" ref="documentation.html#shortcuts"/>
+            </section>
+            <section title="Full Documentation" ref="documentation.html#full">
+              <section title="1 Preparing your dataset" ref="documentation.html#Dataset_Preparation"/>
+              <section title="2 KNOSSOS Starter" ref="documentation.html#Knossos_Starter"/>
+              <section title="3 KNOSSOS" ref="documentation.html#Knossos">
+                <section title="3.1 Branchpoints" ref="documentation.html#Branch_points_.5Bbranchpoints.5D"/>
+                <section title="3.2 Coordinates" ref="documentation.html#Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"/>
+                <section title="3.3 Edit Skeleton (menu)" ref="documentation.html#Edit_Skeleton_.28menu.29"/>
+                <section title="3.4 Skeleton File (menu)" ref="documentation.html#File_.28menu.29"/>
+                <section title="3.5 Help (menu)" ref="documentation.html#Help_.28menu.29"/>
+                <section title="3.6 Hot Keys" ref="documentation.html#Hot_keys_.5BHotkey.2C_Shortcuts.2C_Short_cuts.5D"/>
+                <section title="3.8 Moving" ref="documentation.html#Moving_.5Bscrolling.2C_panning.5D"/>
+                <section title="3.9 Nodes" ref="documentation.html#Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D"/>
+                <section title="3.10 Preferences (menu)" ref="documentation.html#Preferences_.28menu.29"/>
+                <section title="3.11 Synchronization" ref="documentation.html#Synchronization_.5Bsynchronize_Knossos.5D"/>
+                <section title="3.12 Tools window" ref="documentation.html#Tools_window"/>
+                <section title="3.13 Trees" ref="documentation.html#Trees_.5BSkeleton.5D"/>
+                <section title="3.14 Navigation (menu)" ref="documentation.html#Navigation_.28menu.29"/>
+                <section title="3.15 Viewport" ref="documentation.html#Viewport"/>
+                <section title="3.16 Viewport Settings" ref="documentation.html#Viewport_Settings"/>
+                <section title="3.17 Windows (menu)" ref="documentation.html#Windows_.28menu.29"/>
               </section>
-              <section title="Full Documentation" ref="documentation.html#full"/>
             </section>
          </toc>
          <keywords>
@@ -27,21 +46,16 @@
          </keywords>
          <files>
              <file>documentation.html</file>
-             <file>images/500px-Tut_exp_01.jpg</file>
-             <file>images/900px-Keyboard_Layout.jpg</file>
-             <file>images/900px-Tut_07s_new.jpg</file>
-             <file>images/backgrndTile.jpg</file>
              <file>images/top.jpg</file>
-             <file>images/top2.jpg</file>
-             <file>images/Tut_02.jpg</file>
-             <file>images/Tut_exp_05.jpg</file>
-             <file>images/Tut_exp_06.jpg</file>
              <file>images/Tut_KnossosStarter.jpg</file>
              <file>images/Tut_commentsWindow.png</file>
              <file>images/Tut_Coordinates.png</file>
              <file>images/Tut_KnossosStarter.png</file>
              <file>images/Tut_toolsWindow.png</file>
              <file>images/Tut_Viewports.png</file>
+             <file>images/Tut_full_LinkNodes.png</file>
+             <file>images/Tut_full_skelVP.jpg</file>
+             <file>images/Tut_full_VPsettings.png</file>
          </files>
      </filterSection>
  </QtHelpProject>

@@ -43,7 +43,7 @@ extern struct stateInfo *state;
 CommentsWidget::CommentsWidget(QWidget *parent) :
     QDialog(parent)
 {
-    setWindowTitle("Comments Shortcuts");
+    setWindowTitle("Comment Settings");
     this->shortcutTab = new CommentShortCutsTab();
     this->highlightingTab = new CommentsHighlightingTab();
     this->nodeCommentsTab = new CommentsNodeCommentsTab();

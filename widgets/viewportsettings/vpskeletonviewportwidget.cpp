@@ -50,7 +50,7 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     onlyActiveTreeRadioButton = new QRadioButton("Only Active Tree");
     hideSkeletonRadioButton = new QRadioButton("Hide Skeleton (fast)");
 
-    view3dlabel = new QLabel("View 3D");
+    view3dlabel = new QLabel("3D View");
     rotateAroundActiveNodeCheckBox = new QCheckBox("Rotate Around Active Node");
     rotateAroundActiveNodeCheckBox->setChecked(true);
 

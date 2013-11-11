@@ -518,7 +518,7 @@ void MainWindow::createActions()
     //taskLoginAction->setCheckable(true);
     logAction = new QAction(tr("Log"), this);
     logAction->setCheckable(true);
-    commentShortcutsAction = new QAction(tr("Comment Shortcuts"), this);
+    commentShortcutsAction = new QAction(tr("Comment Settings"), this);
     commentShortcutsAction->setCheckable(true);
 
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
@@ -547,11 +547,11 @@ void MainWindow::createMenus()
     dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openDatasetSlot()));
 
     fileMenu = menuBar()->addMenu("Skeleton File");
-    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
 
     fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As", this, SLOT(saveAsSlot()));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As...", this, SLOT(saveAsSlot()));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
@@ -647,7 +647,7 @@ void MainWindow::createMenus()
     toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
     taskAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
 
-    commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Shortcuts", this, SLOT(commentShortcutsSlots()));
+    commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
 
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));

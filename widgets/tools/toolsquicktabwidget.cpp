@@ -123,7 +123,7 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     mainLayout->addWidget(onStackLabel);
 
     pushBranchNodeButton = new QPushButton("Push (B)ranch Node");
-    popBranchNodeButton = new QPushButton("Pop & (J)ump ");
+    popBranchNodeButton = new QPushButton("Pop && (J)ump ");
 
     QGridLayout *gridLayout4 = new QGridLayout();
     gridLayout4->addWidget(pushBranchNodeButton, 1, 1);

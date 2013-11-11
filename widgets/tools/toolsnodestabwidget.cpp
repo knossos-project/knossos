@@ -59,8 +59,8 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     activeNodeYSpin->setMaximum(state->boundary.y);
     activeNodeZSpin->setMaximum(state->boundary.z);
 
-    jumpToNodeButton = new QPushButton("Jump to node(s)");
-    deleteNodeButton = new QPushButton("Delete Node(Del)");
+    jumpToNodeButton = new QPushButton("Jump to node (S)");
+    deleteNodeButton = new QPushButton("Delete Node (Del)");
     linkNodeWithButton = new QPushButton("Link Node with(Shift + Click)");
 
     idLabel = new QLabel("ID:");

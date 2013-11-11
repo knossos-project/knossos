@@ -23,28 +23,8 @@
                         <tbody>
                           <tr>
                             <td>
-                              <h2> </h2>
-                              <div style="text-align: center;"> Click on one of
-                                the following links to jump to corresponding
-                                documentation:</div>
-                              <br />
-                              <h2 style="       text-align: center; background-color: white;"><a
-
-                                  href="#Tutorial">Quickstart</a><br />
-                                <span style="color: red;"><span style="text-decoration: underline;"><span
-
-                                      style="font-weight: bold;"></span></span></span></h2>
-                              <h2 style="       text-align: center; background-color: white;"><a
-
-                                  href="#Manual">Full Documentation</a></h2>
-                              <p><br />
-                              </p>
-                              <hr style="color: black;" />
-                              <h2 style="       text-align: center; background-color: white;"><a
-
-                                  name="Tutorial"></a></h2>
-                              <h2 id="quickstart" style="       text-align: center; background-color: white;">
-                                Quickstart</h2>
+                              <h1 id="quickstart" style="       text-align: center; background-color: white;">
+                                KNOSSOS Quickstart</h1>
                               <hr style="color: black;" />
                               <h2 style="       text-align: center; background-color: white;"><span
 
@@ -419,11 +399,19 @@
                                           <td>Jump 10 steps left/right in active viewport</td>
                                           </tr>
                                         <tr>
-                                          <td align="right">F/D<br>(equal to Up/Down arrow keys<br>or mouse wheel forward/backward)</td>
+                                          <td align="right">Up/Down arrow key</td>
+                                          <td>Jump [Jump Frames] steps up/down in active viewport</td>
+                                          </tr>
+                                        <tr>
+                                          <td align="right">SHIFT + Up/Down arrow key</td>
+                                          <td>Jump 10 steps up/down in active viewport</td>
+                                          </tr>
+                                        <tr>
+                                          <td align="right">F/D<br>(equal to mouse wheel forward/backward)</td>
                                           <td>Jump [Jump Frames] steps forward/backward in active viewport<br>(Jump Frames can be defined at "Preferences"&gt;"Dataset Navigation")</td>
                                           </tr>
                                         <tr>
-                                          <td align="right">SHIFT + F/D<br>(equal to SHIFT + Up/Down arrow keys)</td>
+                                          <td align="right">SHIFT + F/D</td>
                                           <td>Jump 10 steps forward/backward in active viewport</td>
                                           </tr>   
                                         <tr>
@@ -458,14 +446,12 @@
                               <h2 style="       text-align: center; background-color: white;"><a
 
                                   name="Manual"></a></h2>
-                              <h2 id="full" style="       text-align: center; background-color: white;">Full Documentation</h2>
+                              <h1 id="full" style="       text-align: center; background-color: white;">Full Documentation</h1>
                               <hr style="color: black;" />
                               <h2>Contents</h2>
                               <ul>
-                                <li><a href="#Dataset_Preparation">0 Preparing
+                                <li><a href="#Dataset_Preparation">1 Preparing
                                     your Dataset</a></li>
-                                <li><a href="#Knossos_Installation">1 Knossos
-                                    Installation</a></li>
                                 <li><a href="#Knossos_Starter">2 Knossos Starter</a>
                                   <ul>
                                     <li><a href="#Add_Dataset">2.1 Add Dataset</a></li>
@@ -521,7 +507,7 @@
                                             Clear Skeleton</a></li>
                                       </ul>
                                     </li>
-                                    <li><a href="#File_.28menu.29">3.4 File
+                                    <li><a href="#File_.28menu.29">3.4 Skeleton File
                                         (menu)</a>
                                       <ul>
                                         <li><a href="#Open..._-.3E_Open_Skeleton_File_.5Bopen_file.5D">3.4.1
@@ -557,7 +543,7 @@
                                     <li><a href="#Hot_keys_.5BHotkey.2C_Shortcuts.2C_Short_cuts.5D">3.6
                                         Hot keys [Hotkey, Shortcuts, Short cuts]</a></li>
                                     <li><a href="#Keyboard_layout_.5BKeys.2C_functional_keys.5D">3.7
-                                        Keyboard layout [Keys, functional keys]</a></li>
+                                        All available shortcuts</a></li>
                                     <li><a href="#Moving_.5Bscrolling.2C_panning.5D">3.8
                                         Moving [scrolling, panning]</a></li>
                                     <li><a href="#Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D">3.9
@@ -670,7 +656,7 @@
                                         <li><a href="#Tree_ID">3.13.5 Tree ID</a></li>
                                       </ul>
                                     </li>
-                                    <li><a href="#View_.28menu.29">3.14 View
+                                    <li><a href="#Navigation_.28menu.29">3.14 Navigation
                                         (menu)</a>
                                       <ul>
                                         <li><a href="#Work_Mode_2">3.14.1 Work
@@ -684,12 +670,6 @@
                                         </li>
                                         <li><a href="#Dataset_Statistics">3.14.2
                                             Dataset Statistics</a></li>
-                                        <li><a href="#Zoom...">3.14.3 Zoom...</a>
-                                          <ul>
-                                            <li><a href="#Viewport_Zooming">3.14.3.1
-                                                Viewport Zooming</a></li>
-                                          </ul>
-                                        </li>
                                       </ul>
                                     </li>
                                     <li><a href="#Viewport">3.15 Viewport</a>
@@ -712,7 +692,7 @@
                                             <li><a href="#Skeleton_Visualization">3.16.1.1
                                                 Skeleton Visualization</a></li>
                                             <li><a href="#Skeleton_Rendering_Model">3.16.1.2
-                                                Skeleton Rendering Model</a></li>
+                                                Rendering Quality</a></li>
                                           </ul>
                                         </li>
                                         <li><a href="#Slice_Plane_Viewports">3.16.2
@@ -733,9 +713,7 @@
                                         <li><a href="#Skeleton_Viewport">3.16.3
                                             Skeleton Viewport</a>
                                           <ul>
-                                            <li><a href="#Dataset_Visualization">3.16.3.1
-                                                Dataset Visualization</a></li>
-                                            <li><a href="#Skeleton_Display_Modes">3.16.3.2
+                                            <li><a href="#Skeleton_Display_Modes">3.16.3.1
                                                 Skeleton Display Modes</a></li>
                                             <li><a href="#3D_View">3.16.3.3 3D
                                                 View</a></li>
@@ -748,16 +726,28 @@
                                       <ul>
                                         <li><a href="#Tools_window_2">3.17.1
                                             Tools window</a></li>
-                                        <li><a href="#Log_window">3.17.2 Log
-                                            window</a></li>
-                                      </ul>
-                                    </li>
-                                    <li><a href="#Zooming">3.18 Zooming</a>
-                                      <ul>
-                                        <li><a href="#Zooming_Slice_Viewports">3.18.1
-                                            Zooming Slice Viewports</a></li>
-                                        <li><a href="#Zooming_3D_Viewport">3.18.2
-                                            Zooming 3D Viewport</a></li>
+                                        <li><a href="#Comment_Settings">3.17.2
+                                            Comment Settings</a></li>
+                                        <ul>
+                                          <li><a href="#Comment_Shortcuts">3.17.2.1
+                                            Comment Shortcuts</a></li>
+                                          <li><a href="#Comment_Highlighting">3.17.2.2
+                                            Comment Highlighting</a></li>
+                                          <li><a href="#Comment_Listing">3.17.2.3
+                                            Node Comments</a></li>
+                                        </ul>
+                                        <li><a href="#Tracing_Time">3.17.3
+                                          Tracing Time</a></li>
+                                        <li><a href="#Task_Management">3.17.4
+                                          Task Management</a></li>
+                                        <li><a href="#Zooming">3.17.5 Zoom and Multiresolution</a>
+                                          <ul>
+                                            <li><a href="#Zooming_Slice_Viewports">3.18.1
+                                              Zooming Slice Viewports</a></li>
+                                            <li><a href="#Zooming_3D_Viewport">3.18.2
+                                              Zooming 3D Viewport</a></li>
+                                          </ul>
+                                        </li>
                                       </ul>
                                     </li>
                                   </ul>
@@ -770,7 +760,7 @@
                       <a name="Dataset_Preparation" id="Dataset_Preparation"></a>
                       <h1>Preparing your Dataset </h1>
                       MATLAB™ code that automates the following steps is
-                      available on the <a href="get.html">download page</a>.<br />
+                      available on the download page: http://www.knossostool.org/get.html.<br />
                       <br />
                       Datasets have to be in a cube format, that is, split into
                       raw 8-bit binary files, 128 * 128 * 128 bytes = 2 MiB
@@ -786,7 +776,7 @@
                       is in the tools\ folder in your knossos install directory
                       to generate the knossos.conf configuration file. A file
                       called knossos.conf has to be generated and placed in the
-                      YourData\ directory, and should looks like this:
+                      YourData\ directory, and should look like this:
                       <div class="code"> experiment name "YourData";<br />
                         boundary x 10000;<br />
                         boundary y 10000;<br />
@@ -800,9 +790,9 @@
                       voxels and the scales are the size of your voxels in
                       nanometers. Set magnification to 1 unless you have
                       multiple downscaled versions of the same dataset that you
-                      want to work with simultaneously. <a name="Knossos_Starter"
-
-                        id="Knossos_Starter"></a>
+                      want to work with simultaneously.
+                      <hr style="color: black;" />
+                      <a name="Knossos_Starter" id="Knossos_Starter"></a>
                       <h1>Knossos Starter </h1>
                       When starting Knossos, you are asked in the Knossos
                       Starter window to select a dataset, give a profile name
@@ -895,6 +885,7 @@
                             title="#Synchronization_.5Bsynchronize_Knossos.5D" rel="nofollow">here</a>.
                         </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Knossos" id="Knossos"></a>
                       <h1>Knossos </h1>
                       <a name="Branch_points_.5Bbranchpoints.5D" id="Branch_points_.5Bbranchpoints.5D"></a>
@@ -951,14 +942,15 @@
                         <li> A branch point is removed at the time you jump to
                           it. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"
 
                         id="Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"></a>
                       <h2>Coordinates [enter coordinates, enter seedpoint, paste
                         seedpoint, paste coordinates]</h2>
-                      <img width="460" height="245" border="0" alt="" src="images/Tut_02.jpg" />
+                      <img border="0" alt="" src="images/Tut_Coordinates.png" />
                       <ul>
-                        <li> In the upper right section of Knossos, you can
+                        <li> In the upper left section of Knossos, you can
                           enter the x-,y-,z-coordinates of a location you want
                           to move to, e.g. to find the seedpoint of your
                           tracing. </li>
@@ -977,6 +969,7 @@
                           left from the coordinate fields. The coordinates will
                           be copied to your clipboard, separated with blanks. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Edit_Skeleton_.28menu.29" id="Edit_Skeleton_.28menu.29"></a>
                       <h2>Edit Skeleton (menu)</h2>
                       <a name="Work_Mode" id="Work_Mode"></a>
@@ -1018,21 +1011,21 @@
                       <ul>
                         <li> This menu item will clear the whole cube from any
                           skeleton you traced/loaded. You will be asked by a
-                          dialog if you really want to do this. =) </li>
+                          dialog if you really want to do this. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="File_.28menu.29" id="File_.28menu.29"></a>
-                      <h2>File (menu)</h2>
+                      <h2>Skeleton File (menu)</h2>
                       <a name="Open..._-.3E_Open_Skeleton_File_.5Bopen_file.5D"
 
                         id="Open..._-.3E_Open_Skeleton_File_.5Bopen_file.5D"></a>
                       <h3> Open... -&gt; Open Skeleton File [open file]</h3>
                       <ul>
-                        <li> Under "File" -&gt; "Open..." a window opens where
+                        <li> Under "Skeleton File" -&gt; "Open..." a window opens where
                           you can choose a skeleton file from your computer to
                           be loaded into Knossos.
                           <ul>
-                            <li> Browse through your folders on the left side
-                              and choose a file on the right side. Then click on
+                            <li> Browse through your folders and choose a file. Then click on
                               "OK" </li>
                           </ul>
                         </li>
@@ -1041,8 +1034,8 @@
                       <h4>Merge with Open Skeleton</h4>
                       <ul>
                         <li> If you do not want the current skeleton to be
-                          replaced by the one you are opening, choose <b>Merge
-                            with Open Skeleton</b> below the "OK"-button.
+                          replaced by the one you are opening, choose <b>Merge</b>
+                          in the appearing prompt.
                           <ul>
                             <li> Note: The two skeletons will have the same tree
                               IDs! If you want to give them again different IDs,
@@ -1056,19 +1049,11 @@
                       <a name="Open_recent_Skeleton_File_.28open_recent_file.29"
 
                         id="Open_recent_Skeleton_File_.28open_recent_file.29"></a>
-                      <h3>Open recent Skeleton File (open recent file)</h3>
+                      <h3>Open recent Skeleton File (Recent File(s))</h3>
                       <ul>
                         <li> This menu item will show you a list of recently
                           loaded skeleton files (with the directory where they
                           lie).
-                          <ul>
-                            <li> Note: Here you don't have the option to merge
-                              this skeleton with the currently loaded one. If
-                              you like to do that, see <a href="#Merge_with_Open_Skeleton"
-
-                                title="#Merge_with_Open_Skeleton" rel="nofollow">here</a>
-                            </li>
-                          </ul>
                         </li>
                       </ul>
                       <a name="Save_.28CTRL.2Bs.29_-.3E_Save_Skeleton_File_.5Bsave_file.5D"
@@ -1085,7 +1070,7 @@
                       <ul>
                         <li> If you haven't saved a file yet using <a href="#Save_as..."
 
-                            title="#Save_as..." rel="nofollow">Save as...</a>
+                            title="#Save_as..." rel="nofollow">Save As...</a>
                           the file will be stored in the <b>skeletonFiles</b>
                           folder of your Knossos installation directory using as
                           file name a combination of the date and time when you
@@ -1103,14 +1088,14 @@
                             rel="nofollow">Data Saving Options</a> </li>
                       </ul>
                       <a name="Save_as" id="Save_as"></a>
-                      <h3>Save as...</h3>
+                      <h3>Save As...</h3>
                       <ul>
                         <li> To specify the file name and the folder for your
                           skeleton file, choose this menu item.
                           <ul>
                             <li> A window will open where you can browse to the
-                              desired folder (has already to be existent!) and
-                              save the file under the name given in the field <b>File:</b>.
+                              desired folder and
+                              save the file under the name given in the field <b>Filename:</b>.
                             </li>
                           </ul>
                         </li>
@@ -1119,12 +1104,9 @@
                       <h3>Quit</h3>
                       <ul>
                         <li> This menu item will quit Knossos.
-                          <ul>
-                            <li> Warning: Since there is no warning dialog, be
-                              sure you have saved your proceedings! </li>
-                          </ul>
                         </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Help_.28menu.29" id="Help_.28menu.29"></a>
                       <h2>Help (menu)</h2>
                       <a name="About" id="About"></a>
@@ -1133,6 +1115,14 @@
                         <li> This menu item opens a window containing some
                           developer information about Knossos. </li>
                       </ul>
+                      <h4>Documentation</h4>
+                      <ul>
+                        <li> Here you can find this documentation</li>
+                        <li> When clicking on the question marks in the various widgets, 
+                         corresponding parts of this documentation will open to give you a 
+                         fast explanation of the widget.</li>
+                      </ul>
+                      <hr style="color: black;" />
                       <a name="Hot_keys_.5BHotkey.2C_Shortcuts.2C_Short_cuts.5D"
 
                         id="Hot_keys_.5BHotkey.2C_Shortcuts.2C_Short_cuts.5D"></a>
@@ -1145,7 +1135,7 @@
                               the corresponding direction instead of 1. For
                               faster scrolling. </li>
                             <li>SHIFT + F / D: Moves dataset 10 planes forwards
-                              / backwards instead of 1. For faster perpendicular
+                              / backwards. For faster perpendicular
                               scrolling. </li>
                             <li>CTRL + S: Saves your skeleton in the same way as
                               the autosaving feature does (auto increment
@@ -1163,9 +1153,8 @@
                                 title="#Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"
 
                                 rel="nofollow">Paste coordinates</a>. </li>
-                            <li>CTRL + mouse wheel: Zoom in and out of the three
-                              viewports or the 3D viewport (depending on where
-                              your mouse cursor currently is). </li>
+                            <li>CTRL + mouse wheel: Zoom in and out of the three orthogonal
+                              viewports. In the skeleton viewport you don't need to hold CTRL</li>
                             <li>SHIFT + mouse wheel: Changes the node radius of
                               the active node. See <a href="#Node_Radius" title="#Node_Radius"
 
@@ -1190,16 +1179,166 @@
                                 rel="nofollow">Connect nodes</a>. </li>
                           </ul>
                         </li>
-                        <li> The keyboard layout including the other functional
-                          keys can be found <a href="#Keyboard_layout_.5BKeys.2C_functional_keys.5D"
-
-                            title="#Keyboard_layout_.5BKeys.2C_functional_keys.5D"
-
-                            rel="nofollow">here</a>. </li>
                       </ul>
                       <a name="Keyboard_layout_.5BKeys.2C_functional_keys.5D" id="Keyboard_layout_.5BKeys.2C_functional_keys.5D"></a>
-                      <h2>Keyboard layout [Keys, functional keys]</h2>
-                      <img width="100%" border="0" alt="" src="images/900px-Keyboard_Layout.jpg" />
+                      <h2>All available shortcuts</h2>
+                        <table border="1" cellpadding="5">
+                          <caption>Application Shortcuts</caption>
+                          <tr>
+                            <th align="right">Shortcut</th>
+                            <th align="left">Action</th>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + O</td>
+                            <td>Load skeleton from file</td>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + S</td>
+                            <td>Save skeleton</td>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + C</td>
+                            <td>Copy current coordinates</td>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + V</td>
+                            <td>Paste coordinates</td>
+                            </tr>    
+                          <tr>
+                            <td align="right">CTRL + H</td>
+                            <td>Open this documentation</td>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + Q<br>(equal to ALT + F4)</td>
+                            <td>Close KNOSSOS</td>
+                            </tr>
+                        </table>
+                        <br>
+                        <table border="1" cellpadding="5">
+                          <caption>Tree Shortcuts</caption>
+                          <tr>
+                            <th align="right">Shortcut</th>
+                            <th align="left">Action</th>
+                            </tr>
+                          <tr>
+                            <td align="right">C</td>
+                            <td>Create a new tree</td>
+                            </tr>
+                          <tr>
+                            <td align="right">Z/SHIFT + Z</td>
+                            <td>Move to next/previous tree (by tree ID)</td>
+                            </tr>
+                          <tr>
+                            <td align="right">X/SHIFT + X</td>
+                            <td>Move to next/previous node (by node ID)</td>
+                            </tr>
+                          <tr>
+                        </table>
+                        <br>
+                        <table border="1" cellpadding="5">
+                          <caption>Node Shortcuts</caption>
+                          <tr>
+                            <th align="right">Shortcut</th>
+                            <th align="left">Action</th>
+                            </tr>
+                          <tr>
+                            <td align="right">S</td>
+                            <td>Jump to active node</td>
+                            </tr>   
+                          <tr>
+                            <td align="right">DEL</td>
+                            <td>Delete active node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">B</td>
+                            <td>Mark active node as branch node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">J</td>
+                            <td>Jump to last branch node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">SHIFT + left click on node</td>
+                            <td>Mark clicked node as active node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">ALT + left click on node<br>(equal to SHIFT + mouse wheel click on node)</td>
+                            <td>Add/delete segment between clicked node and active node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">Mouse wheel hold and drag on node</td>
+                            <td>Move node to new position</td>
+                            </tr>
+                          <tr>
+                            <td align="right">A</td>
+                            <td>Change to work mode "Add node"</td>
+                            </tr>
+                          <tr>
+                            <td align="right">W</td>
+                            <td>Change to work mode "Link node"</td>
+                            </tr>  
+                          <tr>
+                            <td align="right">N/P</td>
+                            <td>Jump to next/previous comment node</td>
+                            </tr>
+                          <tr>
+                            <td align="right">F1 - F5</td>
+                            <td>Custom comment shortcuts</td>
+                            </tr>
+                        </table>
+                        <br>
+                        <table border="1" cellpadding="5">
+                          <caption>Viewport Shortcuts</caption>
+                          <tr>
+                            <th align="right">Shortcut</th>
+                            <th align="left">Action</th>
+                            </tr>
+                          <tr>
+                            <td align="right">Left/Right arrow key</td>
+                            <td>Jump [Jump Frames] steps left/right in active viewport<br>(Jump Frames can be defined at "Preferences"&gt;"Dataset Navigation")</td>
+                            </tr>
+                          <tr>
+                            <td align="right">SHIFT + Left/Right arrow key</td>
+                            <td>Jump 10 steps left/right in active viewport</td>
+                            </tr>
+                          <tr>
+                            <td align="right">Up/Down arrow key</td>
+                            <td>Jump [Jump Frames] steps up/down in active viewport</td>
+                            </tr>
+                          <tr>
+                            <td align="right">SHIFT + Up/Down arrow key</td>
+                            <td>Jump 10 steps up/down in active viewport</td>
+                            </tr>
+                          <tr>
+                            <td align="right">F/D<br>(equal to mouse wheel forward/backward)</td>
+                            <td>Jump [Jump Frames] steps forward/backward in active viewport<br>(Jump Frames can be defined at "Preferences"&gt;"Dataset Navigation")</td>
+                            </tr>
+                          <tr>
+                            <td align="right">SHIFT + F/D</td>
+                            <td>Jump 10 steps forward/backward in active viewport</td>
+                            </tr>   
+                          <tr>
+                            <td align="right">R/E</td>
+                            <td>Move [Walk Frames] steps forward/backward in active viewport<br>(Walk Frames can be defined at "Preferences"&gt;"Dataset Navigation")</td>
+                            </tr>
+                          <tr>
+                            <td align="right">SHIFT + R/E</td>
+                            <td>Move 10 steps forward/backward in active viewport</td>
+                            </tr>
+                          <tr>
+                            <td align="right">I/O in orthogonal viewports<br>(equal to CTRL + mouse scroll)</td>
+                            <td>Zoom in and out of orthogonal viewports</td>
+                            </tr>
+                          <tr>
+                            <td align="right">CTRL + left mouse drag</td>
+                            <td>drag viewport<br>(restore original position by clicking on "reset viewports" in the tool bar)</td>
+                            </tr>
+                          <tr>
+                            <td align="right">3</td>
+                            <td>Toggle viewport crosshairs</td>
+                            </tr>
+                        </table>
+                        <hr style="color: black;" />
                       <a name="Moving_.5Bscrolling.2C_panning.5D" id="Moving_.5Bscrolling.2C_panning.5D"></a>
                       <h2>Moving [scrolling, panning]</h2>
                       <ul>
@@ -1219,17 +1358,18 @@
                               positioned).
                               <ul>
                                 <li>Using the arrow keys while holding down
-                                  SHIFT will move 10 planes instead of 1. </li>
+                                  SHIFT will move 10 planes. </li>
                               </ul>
                             </li>
                             <li>Use your mouse wheels to move perpendicularly to
                               the viewport where your mouse cursor is currently
                               positioned. </li>
                             <li>Using D and F on your keyboard will also move
-                              the dataset perpendicularly.
+                              the dataset perpendicularly [Jump Frames] planes, 
+                              [Jump Frames] can be defined under "Preferences" --&gt; "Navigation Settings".
                               <ul>
                                 <li> Using F/D while holding down SHIFT will
-                                  perpendicularly move 10 planes instead of 1. </li>
+                                  perpendicularly move 10 planes. </li>
                               </ul>
                             </li>
                             <li>Placing a node using your right mouse button
@@ -1240,7 +1380,7 @@
 
                                 title="#Jump_to_Node_.28s.29" rel="nofollow">here</a>
                               for further information. </li>
-                            <li>By entering a coordinate in the upper right
+                            <li>By entering a coordinate in the upper left
                               coordinate fields you can jump to a desired
                               location. See <a href="#Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"
 
@@ -1252,11 +1392,11 @@
                               branch point using J on your keyboard or using
                               your <a href="#Branch_Points" title="#Branch_Points"
 
-                                rel="nofollow">Tool window</a>. </li>
+                                rel="nofollow">Tools window</a>. </li>
                             <li>You can search for nodes with comments using N
                               and P on your keyboard or your <a href="#Comments"
 
-                                title="#Comments" rel="nofollow">Tool window</a>.
+                                title="#Comments" rel="nofollow">Tools window</a>.
                               <ul>
                                 <li>There you can also search for a specific
                                   comment by typing it into the field <b>Search
@@ -1266,6 +1406,7 @@
                           </ul>
                         </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D" id="Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D"></a>
                       <h2>Nodes [skeleton nodes, skeleton points]</h2>
                       <a name="Activate_nodes_.5Bactive_node.2C_reactivate_nodes.5D"
@@ -1280,13 +1421,13 @@
 
                             title="#Link_with_active_node_.28w.29" rel="nofollow">Link
                             with active node</a> is enabled (default). </li>
-                        <li> Furthermore, several functions such as <a href="#"
+                        <li> Furthermore, several functions such as <a href="#Delete_node_.5Bremove_node.5D"
 
-                            title="#" rel="nofollow">Delete node</a>, <a href="#"
+                            title="#" rel="nofollow">Delete node</a>, <a href="#Connect_nodes_.5Bmake_segment.5D"
 
                             title="#" rel="nofollow">Connect nodes/Make segment</a>,
-                          <a href="#" title="#" rel="nofollow">Delete segment</a>
-                          and <a href="#Branchpoints" title="#Branchpoints" rel="nofollow">Branchpoint</a>
+                          <a href="#Delete_segment_.5Bremove_segment.5D" title="#" rel="nofollow">Delete segment</a>
+                          and <a href="#Branch_points_.5Bbranchpoints.5D" title="#Branchpoints" rel="nofollow">Branchpoint</a>
                           are related to the currently active node. </li>
                         <li> You activate a node by clicking on it with your
                           left mouse button while simultaneously having the
@@ -1295,7 +1436,7 @@
                             <li> Another possibility is to choose the desired
                               node ID in the tools window (see <a href="#Active_Node_ID_2"
 
-                                title="#Active_Node_ID_2" rel="nofollow">Tool
+                                title="#Active_Node_ID_2" rel="nofollow">Tools
                                 Window</a>). </li>
                           </ul>
                         </li>
@@ -1313,7 +1454,7 @@
                               on the node you have just placed. </li>
                             <li> Further nodes you place will be automatically
                               connected with the previously placed (or
-                              activated) node, given that the option <a href="#Link_with_active_node"
+                              activated) node, given that the option <a href="#Link_with_active_node_.28w.29"
 
                                 title="#Link_with_active_node" rel="nofollow">Link
                                 with active node</a> is enabled (default). </li>
@@ -1344,7 +1485,7 @@
                           </ul>
                         </li>
                       </ul>
-                      <img width="100%" border="0" alt="" src="images/900px-Tut_07s_new.jpg" />
+                      <img width="100%" border="0" alt="" src="images/Tut_full_linkNodes.png" />
                       <a name="Delete_node_.5Bremove_node.5D" id="Delete_node_.5Bremove_node.5D"></a>
                       <h3>Delete node [remove node]</h3>
                       <ul>
@@ -1382,7 +1523,7 @@
                         <li> If you want to move a node (e.g. to bring it to the
                           center of the cell), simply click on the node with the
                           middle mouse button and drag it to another position.
-                          The node does not have to be your active node. </li>
+                          The node does not have to be your active node.  </li>
                       </ul>
                       <a name="Node_ID" id="Node_ID"></a>
                       <h3>Node ID</h3>
@@ -1395,6 +1536,7 @@
 
                             rel="nofollow">Jump to node</a>). </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Preferences_.28menu.29" id="Preferences_.28menu.29"></a>
                       <h2>Preferences (menu)</h2>
                       <a name="Load_Custom_Preferences" id="Load_Custom_Preferences"></a>
@@ -1402,7 +1544,7 @@
                       <ul>
                         <li> Here, you can load your previously saved custom GUI
                           preferences. A window will open and you are asked for
-                          the location of the xml-file. </li>
+                          the location of the settings-file. </li>
                         <li> Custom preferences contain your last used file and
                           folder, the position of your windows, the size of
                           Knossos, the look of your viewports etc. </li>
@@ -1412,9 +1554,9 @@
                       <ul>
                         <li> Here, you can save your current custom GUI
                           preferences. A window will open and you are asked
-                          where to save the xml-file containing your
+                          where to save the settings-file containing your
                           preferences. </li>
-                        <li> The xml-file contains your last used file and
+                        <li> The settings-file contains your last used file and
                           folder, the position of your windows, the size of
                           Knossos, the look of your viewports etc. </li>
                       </ul>
@@ -1430,15 +1572,15 @@
                           moving. </li>
                         <li> <b>Jump Frames</b> represents the amount of planes
                           which will be moved when pressing once on your arrow
-                          keys. For example, a value of 100 will jump 100 planes
+                          keys or D/F. For example, a value of 100 will jump 100 planes
                           into the direction according to your arrow key. </li>
                         <li> Remember, these two settings will only change the
-                          way of moving with your arrow keys. </li>
+                          way of moving with your arrow keys and D/F. </li>
                         <li> <b>Recentering Time [ms]</b> sets the time it
                           takes for the viewport to move from the current center
-                          position to the position you choosed with your left
+                          position to the position you chose with your left
                           mouse button. Remember, this will only work if you
-                          choosed "Recenter on Click" as your preferred work
+                          chose "Recenter on Click" as your preferred work
                           mode (see <a href="#Recenter_on_Click" title="#Recenter_on_Click"
 
                             rel="nofollow">[1]</a>). </li>
@@ -1469,7 +1611,7 @@
                           synchronization connection to the other computer.
                           <ul>
                             <li>The other computer must also have Knossos
-                              openened and a connection established to the first
+                              opened and a connection established to the first
                               computer. </li>
                           </ul>
                         </li>
@@ -1501,6 +1643,7 @@
 
                             rel="nofollow">Viewport Settings</a>. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Synchronization_.5Bsynchronize_Knossos.5D" id="Synchronization_.5Bsynchronize_Knossos.5D"></a>
                       <h2>Synchronization [synchronize Knossos]</h2>
                       <ul>
@@ -1538,7 +1681,7 @@
                                   starter menu has to stay opened in the
                                   background! </li>
                                 <li> In the preferences menu you then have to
-                                  open the <a href="#Synchronization" title="#Synchronization"
+                                  open the <a href="#Synchronization_.5Bsynchronize_Knossos.5D" title="#Synchronization"
 
                                     rel="nofollow">Synchronization Settings</a>
                                   on both computers and enter in each case the
@@ -1554,6 +1697,7 @@
                           </ul>
                         </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Tools_window" id="Tools_window"></a>
                       <h2>Tools window</h2>
                       <ul>
@@ -1576,16 +1720,14 @@
                         <li> This shows you the currently active tree ID. This
                           is the three which is also highlighted in red in all
                           viewports. You can switch to another tree by typing in
-                          or toggling to another ID. However, if you want to go
-                          on tracing there, you still have to activate a node
-                          from this tree. </li>
+                          or toggling to another ID. Using Z/SHIFT+Z will do the same.</li>
                       </ul>
                       <a name="Active_Node_ID" id="Active_Node_ID"></a>
                       <h4>Active Node ID</h4>
                       <ul>
                         <li> This shows you the currently active node ID. You
                           can switch to another node by typing in or toggling to
-                          another ID. </li>
+                          another ID. Using X/SHIFT+X will do the same.</li>
                         <li> Below that you see the coordinates of the currently
                           active node. </li>
                       </ul>
@@ -1596,7 +1738,8 @@
                           the comment of the currently active node.
                           <ul>
                             <li> If you want to make a comment, just type it
-                              into the field <b>Comments:</b>. </li>
+                              into the field <b>Comment:</b>. Comment nodes appear yellow, 
+                              but if they are also branch nodes, they will be blue.</li>
                             <li> If you want to search for a specific comment
                               type it into the field <b>Search for:</b> and
                               click on <b>Find (N)ext</b> or <b>Find
@@ -1611,13 +1754,13 @@
                       <a name="Branch_Points" id="Branch_Points"></a>
                       <h4>Branch Points</h4>
                       <ul>
-                        <li> Under <b>#Nodes on Stack</b> you can see how many
+                        <li> Under <b>Nodes on Stack</b> you can see how many
                           branchpoints there have been placed yet. </li>
                         <li> Clicking on <b>Push (B)ranch Node</b> will
                           transform the currently active node into a
                           branchpoint. Pressing B on your keyboard will do the
                           same. </li>
-                        <li> Clicking on <b>Pop and (J)ump</b> will lead you to
+                        <li> Clicking on <b>Pop &amp; (J)ump</b> will lead you to
                           the last placed branchpoint which simultaneously
                           becomes again a normal node. Pressing J on your
                           keyboard will do the same. </li>
@@ -1625,31 +1768,23 @@
                           is always automatically transformed into a
                           branchpoint. </li>
                       </ul>
+
                       <a name="Trees" id="Trees"></a>
                       <h3>Trees</h3>
-                      <ul>
-                        <li> <b>Tree Count</b> shows you the overall number of
-                          trees loaded or/and traced by you in the current
-                          dataset. </li>
-                      </ul>
                       <a name="Active_Tree_ID_2" id="Active_Tree_ID_2"></a>
                       <h4>Active Tree ID</h4>
                       <ul>
                         <li> This shows you the currently active tree ID. This
-                          is the three which is also highlighted in red in all
+                          is the tree which is also highlighted in red in all
                           viewports. You can switch to another tree by typing in
-                          or toggling to another ID. However, if you want to go
-                          on tracing there, you still have to activate a node
-                          from this tree. </li>
+                          or toggling to another ID. Using Z/SHIFT+Z will do the same.</li>
                       </ul>
                       <a name="Delete_Active_Tree" id="Delete_Active_Tree"></a>
                       <h4>Delete Active Tree</h4>
                       <ul>
                         <li> Clicking on <b>Delete Active Tree</b> will -
                           suprisingly - delete the whole currently active tree.
-                          Since there will be no warning dialog and there is
-                          also no "Undo" feature, please be sure that you are
-                          doing the right. </li>
+                        </li>
                       </ul>
                       <a name="New_Tree_.28C.29" id="New_Tree_.28C.29"></a>
                       <h4>New Tree (C)</h4>
@@ -1671,12 +1806,12 @@
                       <a name="Split_Trees_By_Connected_Components" id="Split_Trees_By_Connected_Components"></a>
                       <h4>Split Trees By Connected Components</h4>
                       <ul>
-                        <li> Clicking on <b>Split Trees By Connected Components</b>
+                        <li> Clicking on <b>Split Last Component From Tree</b>
                           checks if the currently active tree consists of
-                          several separated trees (i.e. one group of nodes is
+                          at least two separate components (i.e. one group of nodes is
                           not connected with another group of nodes). If this is
-                          the case, then each of these trees will get an
-                          individual (new) ID. For example, this feature can be
+                          the case, then the last component will become a new tree with 
+                          an individual (new) ID. For example, this feature can be
                           used if you traced a very long branch and afterwards
                           you recognize that this branch does not belong to your
                           cell. It is easier to delete the first segment at the
@@ -1696,10 +1831,10 @@
                       <ul>
                         <li> This shows you the currently active node ID. You
                           can switch to another node by typing in or toggling to
-                          another ID. </li>
+                          another ID. Using X/SHIFT+X will do the same.</li>
                       </ul>
                       <a name="Jump_to_Node_.28s.29" id="Jump_to_Node_.28s.29"></a>
-                      <h4>Jump to Node (s)</h4>
+                      <h4>Jump to Node (S)</h4>
                       <ul>
                         <li> This button will center the viewports on the
                           currently active node. In this way you can enter a
@@ -1730,12 +1865,13 @@
                           again later on.
                           <ul>
                             <li> If you want to make a comment, just type it
-                              into the field <b>Comments:</b>. </li>
+                              into the field <b>Comment:</b>. </li>
                             <li> If you want to search for a specific comment
                               type it into the field <b>Search for:</b> and
                               click on <b>Find (N)ext</b> or <b>Find
                                 (P)revious</b>. Pressing N or P on your keyboard
                               will do the same. </li>
+                            <li> Comment nodes appear in yellow. But if they are also branchnodes, they will be blue.</li>
                             <li> Note: The first node of a tree you begin to
                               trace has always automatically the comment "First
                               Node". </li>
@@ -1751,7 +1887,7 @@
                         <li> You can change the radius of the current node by
                           either typing it into the field <b>Active Node
                             Radius(SHIFT+wheel)</b> or by holding down the SHIFT
-                          key and turning the mouse wheel. </li>
+                          key and scrolling the mouse wheel. </li>
                         <li> You can change the default node radius (when new
                           nodes are placed) by typing in another value in the
                           field <b>Default Node Radius</b> or by clicking on <b>Use
@@ -1774,12 +1910,13 @@
                             to Nodes With Comment</b> is searched using the
                           comment search feature. </li>
                         <li> Another possibility is to <b>Lock to Active Node</b>.
-                          By clicking on this buton you are only able to place
+                          By clicking on this button you are only able to place
                           nodes in the defined radius around the currently
                           active node. </li>
                         <li> Clicking on <b>Disable Locking</b> will disable
                           the Locking feature. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Trees_.5BSkeleton.5D" id="Trees_.5BSkeleton.5D"></a>
                       <h2>Trees [Skeleton] </h2>
                       <a name="Add_tree_.5Bnew_tree.2C_new_skeleton.5D" id="Add_tree_.5Bnew_tree.2C_new_skeleton.5D"></a>
@@ -1811,10 +1948,7 @@
 
                             rel="nofollow">Delete Active Tree</a>).
                           <ul>
-                            <li> Warning 1:Since there will be no warning dialog
-                              and there is also no "Undo" feature, please be
-                              sure that you are doing the right. </li>
-                            <li> Warning 2: If two skeletons/trees have the same
+                            <li> Warning: If two skeletons/trees have the same
                               ID (if you did not separate them by <a href="#Split_Trees_By_Connected_Components"
 
                                 title="#Split_Trees_By_Connected_Components" rel="nofollow">Split
@@ -1877,12 +2011,13 @@
                             title="#Active_Tree_ID" rel="nofollow">Active Tree
                             ID</a> </li>
                       </ul>
-                      <a name="View_.28menu.29" id="View_.28menu.29"></a>
-                      <h2>View (menu)</h2>
+                      <hr style="color: black;" />
+                      <a name="Navigation_.28menu.29" id="Navigation_.28menu.29"></a>
+                      <h2>Navigation (menu)</h2>
                       <a name="Work_Mode_2" id="Work_Mode_2"></a>
                       <h3>Work Mode</h3>
                       <ul>
-                        <li> Here you can change the kind of moving through the
+                        <li> Here you can change the way of moving through the
                           stacks with your left mouse button. Choose the one
                           which is more pleasant to you. </li>
                       </ul>
@@ -1907,37 +2042,11 @@
                       <ul>
                         <li> This feature is not yet implemented. </li>
                       </ul>
-                      <a name="Zoom..." id="Zoom..."></a>
-                      <h3>Zoom...</h3>
-                      <ul>
-                        <li> This menu item opens a new window (Viewport
-                          Zooming) where you can change the zoom for each
-                          viewport. </li>
-                        <li> Using your mouse wheel on a viewport while holding
-                          down the CTRL key on your keyboard or pressing the I
-                          or O key on your keyboard will do the same, but
-                          simultaneaously for each slice viewport. </li>
-                      </ul>
-                      <a name="Viewport_Zooming" id="Viewport_Zooming"></a>
-                      <h4>Viewport Zooming</h4>
-                      <ul>
-                        <li> Moving the bars right from <b>Viewport XY</b>, <b>Viewport
-                            XZ</b> or <b>Viewport YZ</b> to the left will zoom
-                          into the images. You can also enter a value between
-                          0.02 and 1.00 in the field right from the bar. </li>
-                        <li> Moving the bar right from <b>Skeleton View</b> to
-                          the right will zoom into the 3D skeleton viewport. You
-                          can also enter a value between 0.00 and 0.49 in the
-                          field right from the bar. You can also zoom further
-                          into the picture with CTRL + mouse wheel. </li>
-                        <li> Clicking on <b>All Defaults</b> will set the zoom
-                          of each viewport back to default (1.00 or 0.00
-                          respectively). </li>
-                      </ul>
+                      <hr style="color: black;" />
                       <a name="Viewport" id="Viewport"></a>
                       <h2>Viewport </h2>
                       <ul>
-                        <li> When Knossos opens, the data can be observed by
+                        <li> When Knossos opens, the data can be observed in
                           four different viewports. </li>
                         <li> The viewports show the black-white-grey volume
                           image data. The dark area is the Extracellulary Matrix
@@ -1974,7 +2083,7 @@
                       </ul>
                       <a name="3D_Viewport" id="3D_Viewport"></a>
                       <h3>3D Viewport</h3>
-                      <img width="500" height="488" border="0" alt="" src="images/500px-Tut_exp_01.jpg" />
+                      <img width="500" height="488" border="0" alt="" src="images/Tut_full_skelVP.jpg" />
                       <ul>
                         <li> The lower right viewport (with a black border)
                           represents the 3D viewport. </li>
@@ -1987,9 +2096,9 @@
                           around the current viewports' center. </li>
                         <li> By scrolling you move in and out of the dataset,
                           with the left mouse button you can pan through the
-                          stack and with the right mouse button you turn the
-                          stack around the currently active node. </li>
+                          stack and with the right mouse button you rotate the stack. </li>
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Viewport_Settings" id="Viewport_Settings"></a>
                       <h2>Viewport Settings</h2>
                       <ul>
@@ -1998,7 +2107,7 @@
                       </ul>
                       <a name="General" id="General"></a>
                       <h3>General</h3>
-                      <img width="490" height="322" border="0" alt="" src="images/Tut_exp_05.jpg" />
+                      <img width="490" height="322" border="0" alt="" src="images/Tut_full_VPsettings.png" />
                       <a name="Skeleton_Visualization" id="Skeleton_Visualization"></a>
                       <h4>Skeleton Visualization</h4>
                       <ul>
@@ -2009,7 +2118,7 @@
                         <li> The feature <b>Highlight Active Tree</b> is
                           helpful if you have loaded multiple skeletons at the
                           same time, because the currently active one is
-                          highlighted in turquoise. </li>
+                          highlighted in red. </li>
                         <li> The feature <b>Show All Node IDs</b> shows every
                           node ID in the stack (and also in the 3D-Viewport).
                           Hence, the active node is worse recognizable but maybe
@@ -2025,21 +2134,20 @@
                           the segments or vice versa. </li>
                       </ul>
                       <a name="Skeleton_Rendering_Model" id="Skeleton_Rendering_Model"></a>
-                      <h4>Skeleton Rendering Model</h4>
+                      <h4>Rendering Quality</h4>
                       <ul>
-                        <li> You can use this to switch between the <b>3D
-                            Skeleton</b> (default setting) and simple <b>Lines
-                            and Points (fast)</b>. The latter is faster, but the
-                          first one is more helpful for orientation. </li>
+                        <li> You can use this to adjust the quality of the rendered skeleton. 
+                          A higher quality reduces speed and vice versa, where a value of 1
+                          ensures best quality and a value of 20 yields fastest rendering.</li>
                       </ul>
                       <a name="Slice_Plane_Viewports" id="Slice_Plane_Viewports"></a>
                       <h3>Slice Plane Viewports</h3>
                       <a name="Skeleton_Overlay" id="Skeleton_Overlay"></a>
                       <h4>Skeleton Overlay</h4>
                       <ul>
-                        <li> The option <b>Enable Overlay (1)</b> turns the
-                          rendering in the 3 slice plane viewports on (default)
-                          and off. Pressing 1 on your keyboard will do the same.
+                        <li> The option <b>Enable Overlay</b> turns the
+                          skeleton rendering in the 3 slice plane viewports on (default)
+                          and off.
                         </li>
                         <li> If you enable <b>Highlight Intersections</b> then
                           the points at the skeleton where it intersects one of
@@ -2057,21 +2165,19 @@
                           image looks smoother when this option is enabled. </li>
                       </ul>
                       <a name="Dataset_color_lookup_table" id="Dataset_color_lookup_table"></a>
-                      <h4>Dataset color lookup table</h4>
+                      <h4>Color lookup table</h4>
                       <ul>
-                        <li> This feature enables you to change the grey values
-                          of the data set into color values according to a
-                          "Color Lookup Table" (LUT). The format of this table
-                          is the ImageJ-format, supporting only 768 byte tables
+                        <li> This feature enables you to change the grey values of the dataset and
+                          the default tree colors into color values according to a "Color Lookup Table" (LUT).
+                          The format of this table is the ImageJ-format, supporting only 768 byte tables
                           (3 bytes RGB colors for each of the 256 grey values) </li>
-                        <li> To use this feature, first load a adequat lookup
-                          table by clicking on <b>Load Color Lookup Table</b>.
-                          A window will open where you are asked for the
-                          directory and file of the table.
+                        <li> To use this feature, first load an adequat lookup
+                          table by clicking on <b>Load</b>.
+                          A window will open where you are asked for the LUT-file.
                           <ul>
-                            <li> Then click on <b>Enable LUT</b> and the
-                              dataset should change its color according to the
-                              table </li>
+                            <li> Then check on <b>Use Own Dataset Colors</b> or <b>Use Own Tree Colors</b> and the
+                              dataset or the trees should change their color according to the
+                              table. </li>
                           </ul>
                         </li>
                       </ul>
@@ -2090,6 +2196,17 @@
                           </ul>
                         </li>
                       </ul>
+                      <a name="Viewport_Objects" id="Viewport_Objects"></a>
+                      <h4>Viewport Objects</h4>
+                      <ul>
+                        <li> Here you can toggle the display of the intersection crosshairs, 
+                          which show you the intersections of the three slice plane viewports.
+                          The color of an intersecting line corresponds to the viewport border
+                          of the respective viewport, i.e red for XY, green for XZ and blue for YZ.
+                        </li>
+                        <li> You can also toggle the display of the size label in each slice plane
+                          viewport. The label shows you the size of the displayed dataset in &mu;m.
+                      </ul>
                       <a name="Object_ID_Overlay" id="Object_ID_Overlay"></a>
                       <h4>Object ID Overlay</h4>
                       <ul>
@@ -2103,28 +2220,17 @@
                       </ul>
                       <a name="Skeleton_Viewport" id="Skeleton_Viewport"></a>
                       <h3>Skeleton Viewport</h3>
-                      <img width="482" height="307" border="0" alt="" src="images/Tut_exp_06.jpg" />
-                      <a name="Dataset_Visualization" id="Dataset_Visualization"></a>
-                      <h4>Dataset Visualization</h4>
-                      <ul>
-                        <li> The buttons <b>Show XY Plane</b>, <b>Show XZ
-                            Plane</b> and <b>Show YZ Plane</b> switch the
-                          rendering of the grey planes in the 3D viewport around
-                          the current center of view on or off. </li>
-                      </ul>
+                      <img width="482" height="307" border="0" alt="" src="images/Tut_full_skelVPsettings.png" />
                       <a name="Skeleton_Display_Modes" id="Skeleton_Display_Modes"></a>
                       <h4>Skeleton Display Modes</h4>
                       <ul>
                         <li> Under "Skeleton Viewport" in the "Viewport
                           Settings" you have the option to change the rendering
-                          of the skeleotn in the 3D viewport
+                          of the skeleotn in the 3D viewport.
                           <ul>
                             <li> <b>Whole Skeleton</b> displays all
                               loaded/traced skeletons at full length in the 3D
                               viewport. </li>
-                            <li> <b>Only Current Cube</b> displays all
-                              loaded/traced skeletons, but only the part which
-                              lies in the current super cube. </li>
                             <li> <b>Only Active Tree</b> displays the complete
                               tree of the skeleton which is currently active. </li>
                             <li> <b>Hide Skeleton (fast)</b> does not render
@@ -2139,17 +2245,20 @@
                       <a name="3D_View" id="3D_View"></a>
                       <h4>3D View</h4>
                       <ul>
-                        <li> If <b>Rotate Around Active node</b> is activated
-                          (default) then the rotation in the 3D viewport (when
-                          holding down the right mouse button and moving) will
+                        <li> If <b>Rotate Around Active Node</b> is activated
+                          (default) then the rotation in the 3D viewport will
                           be around the currently active node. Otherwise the
                           view will rotate around the center of the dataset. </li>
+                        <li> You rotate in the skeleton viewport by dragging with
+                          the right mouse button or using the r90, r180 buttons in the 
+                          skeleton viewport to rotate 90 or 180 degrees.
                       </ul>
+                      <hr style="color: black;" />
                       <a name="Windows_.28menu.29" id="Windows_.28menu.29"></a>
                       <h2>Windows (menu)</h2>
                       <ul>
-                        <li> Under "Windows" you can open the Tools window or
-                          the Log window. </li>
+                        <li> Under "Windows" you can open the Tools window, Task Management,
+                          Comments, Zoom and Multiresolution Settings and the Tracing Time window.</li>
                       </ul>
                       <a name="Tools_window_2" id="Tools_window_2"></a>
                       <h3>Tools window</h3>
@@ -2159,23 +2268,74 @@
                             rel="nofollow">here</a> for information about the
                           Tools window </li>
                       </ul>
-                      <a name="Log_window" id="Log_window"></a>
-                      <h3>Log window</h3>
+                      <a name="Comment_Settings" id="Comment_Settings"></a>
+                      <h3>Comment Settings</h3>
                       <ul>
-                        <li> In this window, everything you are doing is logged
-                          (except moving around and other minor events).
-                          <ul>
-                            <li> If an error occurs it will also be displayed
-                              there. This can be very helpful if you don't know
-                              why something is not working or goes wrong at the
-                              moment. </li>
-                          </ul>
-                        </li>
+                        <li> In the Comment Settings you can define comment shortcuts, customize 
+                          the way comments are highlighted and search in a list of all comments in the skeleton.</li>
+                      </ul>
+                      <a name="Comment_Shortcuts" id="Comment_Shortcuts"></a>
+                      <h4>Shortcuts</h4>
+                        <ul>
+                          <li> Place comments on the F1 - F5 shortcuts. When pressing a comment shortcut,
+                            the currently active node will receive the corresponding comment.</li>
+                          <li> The shortcuts will be saved for you on closing KNOSSOS.</li>
+                        </ul>
+                      <a name="Comment_Highlighting" id="Comment_Highlighting"></a>
+                      <h4>Highlighting</h4>
+                        <ul>
+                          <li> Define in which way comments with certain substrings are highlighted.</li>
+                          <li> With the checkboxes "Enable cond. coloring" and "Enable cond. radius" you 
+                            can toggle the usage of your highlighting definitions.
+                            Don't forget to check them if you want to use comment highlighting.</li>
+                          <li> In the text box enter the substring you would like to highlight. Then choose a color 
+                          and a radius and all nodes with comments containing that substring will appear in the 
+                          defined color and will have the defined radius.</li>
+                          <li> Note that if a comment matches several substrings, only the first substring will
+                            be considered. So place your most important substring into the first text box, the second 
+                            most important into the second text box and so on.</li>
+                        </ul>
+                      <a name="Comment_Listing" id="Comment_Listing"></a>
+                      <h4>Node Comments</h4>
+                        <ul>
+                          <li> The "Node Comments" tab gives you a fast overview over all existing comment nodes.
+                            You can filter by branchnodes by checking the "Branch nodes only" checkbox and you can filter
+                            for a specific substring. </li>
+                          <li> By clicking on one table entry, the corresponding node will be activated and
+                            the view recenters on its position.</li>
+                        </ul>
+                      <a name="Tracing_Time" id "Tracing_Time"></a>
+                      <h3>Tracing Time</h3>
+                        <ul>
+                          <li> The Tracing Time window is an informative widget to show you your time spent on the loaded Skeleton.</li>
+                          <li> <b>Running time</b> shows how long this KNOSSOS session is running already.</li>
+                          <li> <b>Tracing Time</b> shows how much from that time you have been tracing.</li>
+                          <li> <b>Idle Time</b> shows how much of this time you have been idle, i.e. have done nothing.</li>
+                        </ul>
+                      <a name="Task_Management" id="Task_Management"></a>
+                      <h3>Task Management</h3>
+                      <ul>
+                        <li> Here you can manage your tracing tasks. Tracing tasks are skeleton files with 
+                          a starting node and task information. Note that you need a network connection,
+                          as this feature connects to a task host.</li>
+                        <li> First you have to login at your task host with your username and password.</li>
+                        <li> On successful login, you will reach the task management widget which 
+                          displays to you your current task if you have already activated one. If not, you
+                          can load one via <b>Load New Task</b>. The task file will be saved in a task-files folder.
+                          Please read the task category's description and the task's comment carefully.</li>
+                        <li> Now you can trace as usual. You can submit your work every now and then by clicking on
+                          <b>Submit</b>. If you check the <b>final</b> checkbox first, your submit will be marked as final, that is,
+                          as finished work.</li>
+                        <li> Through <b>Load Last Submit</b> you can load your latest submit to your task into KNOSSOS to continue
+                          tracing. If you haven't submitted anything, yet, the task file will be loaded instead.</li>
+                        <li> In the <b>Description</b> tab, you can reread the information for your task any time.</li>
+                        <li> You can logout to login as another user or to change the task host. If you do not logout,
+                          you will remain logged in as long as the session cookie is valid.</li>
                       </ul>
                       <a name="Zooming" id="Zooming"></a>
-                      <h2>Zooming</h2>
+                      <h3>Zoom and Multiresolution</h2>
                       <a name="Zooming_Slice_Viewports" id="Zooming_Slice_Viewports"></a>
-                      <h3>Zooming Slice Viewports</h3>
+                      <h4>Zooming Slice Viewports</h3>
                       <ul>
                         <li> You can zoom into a slice viewport by either
                           pressing I on your keyboard or holding down CTRL and
@@ -2183,23 +2343,17 @@
                         <li> You can zoom out of a slice viewport by either
                           pressing O on your keyboard or holding down CTRL and
                           moving your mouse wheel backward. </li>
-                        <li> The mouse cursor has to be placed over the viewport
-                          you want to zoom. </li>
-                        <li> Another possibility to zoom is to use the <a href="#Viewport_Zooming"
-
-                            title="#Viewport_Zooming" rel="nofollow">Viewport
-                            Zooming</a> window. </li>
+                        <li> The mouse cursor has to be placed over one of the slice viewports</li>
+                        <li> Another possibility to zoom is to use the <b>Zoom and Multiresolution Settings</b> window. </li>
+                        <li> If you have a dataset with several magnifications, KNOSSOS will dynamically switch between these 
+                             magnifications while zooming. You can prevent this by checking "Lock dataset to current mag".</li>
                       </ul>
                       <a name="Zooming_3D_Viewport" id="Zooming_3D_Viewport"></a>
-                      <h3>Zooming 3D Viewport</h3>
+                      <h4>Zooming 3D Viewport</h3>
                       <ul>
-                        <li> You can zoom in or out of the 3D viewport by
-                          holding down CTRL and moving your mouse wheel forward
+                        <li> You can zoom in or out of the 3D viewport by moving your mouse wheel forward
                           or backward respectively. </li>
-                        <li> Another possibility to zoom is to use the <a href="#Viewport_Zooming"
-
-                            title="#Viewport_Zooming" rel="nofollow">Viewport
-                            Zooming</a> window. </li>
+                        <li> Another possibility to zoom is to use the <br>Zoom and Multiresolution Settings</br> window. </li>
                       </ul>
                     </div>
                   </td>
