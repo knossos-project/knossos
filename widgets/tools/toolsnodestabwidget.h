@@ -68,7 +68,10 @@ signals:
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
 public slots:
-    void idChanged(int value);    
+    void idChanged(int value);
+    void activeNodeXSpinChanged(int value);
+    void activeNodeYSpinChanged(int value);
+    void activeNodeZSpinChanged(int value);
     void jumpToNodeButtonClicked();
     void deleteNodeButtonClicked();
     void linkNodeWithButtonClicked();
@@ -84,7 +87,8 @@ public slots:
     void disableLockingButtonClicked();
 
 protected:
-    QLabel *activeNodeIdLabel, *idLabel;
+    QLabel *activeNodeIdLabel, *idLabel, *activeNodeXLabel, *activeNodeYLabel, *activeNodeZLabel;
+    QSpinBox *activeNodeXSpin, *activeNodeYSpin, *activeNodeZSpin;
     QSpinBox *activeNodeIdSpinBox, *idSpinBox;
     QPushButton *jumpToNodeButton, *deleteNodeButton, *linkNodeWithButton;
 

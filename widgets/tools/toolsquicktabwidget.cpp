@@ -145,9 +145,6 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
 
 
 void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-
-    qDebug() << value << "_" << activeTreeSpinBox->value();
-
     if(!state->skeletonState->activeTree) {
         return;
     }
@@ -175,9 +172,9 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
        That´s the reason we have to disconnect the signal and reconnect it after the value it set.
        Unfortunately it´s a special case here which makes this necessary.
     */
-    reference->toolsTreesTabWidget->disconnect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
+    reference->toolsTreesTabWidget->disconnect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
     reference->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
-    reference->toolsTreesTabWidget->connect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), reference->toolsTreesTabWidget, SLOT(activeTreeIDChanged(int)));
+    reference->toolsTreesTabWidget->connect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
 
     activeTreeSpinBox->setValue(value);
     emit setActiveTreeSignal(value);

@@ -1492,7 +1492,7 @@ bool Skeletonizer::delActiveNode() {
     else {
         return false;
     }
-
+    emit updateToolsSignal();
     return true;
 }
 
@@ -1693,14 +1693,12 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     }
 
     setDynArray(state->skeletonState->nodesByNodeID, nodeToDel->nodeID, NULL);
-
     if(state->skeletonState->activeNode == nodeToDel) {
         newActiveNode = findNearbyNode(nodeToDel->correspondingTree,
                                        nodeToDel->position);
 
         setActiveNode(CHANGE_NOSYNC, newActiveNode, 0);
     }
-    state->skeletonState->greatestNodeID--;
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
@@ -1722,7 +1720,6 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     else {
 
     }
-
     Knossos::unlockSkeleton(true);
     return true;
 }

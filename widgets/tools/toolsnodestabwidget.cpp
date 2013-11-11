@@ -46,6 +46,19 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     activeNodeIdSpinBox->setMaximum(0);
     activeNodeIdSpinBox->setMinimum(0);
 
+    activeNodeXLabel = new QLabel("x:");
+    activeNodeYLabel = new QLabel("y:");
+    activeNodeZLabel = new QLabel("z:");
+    activeNodeXSpin = new QSpinBox();
+    activeNodeYSpin = new QSpinBox();
+    activeNodeZSpin = new QSpinBox();
+    activeNodeXSpin->setMinimum(0);
+    activeNodeYSpin->setMinimum(0);
+    activeNodeZSpin->setMinimum(0);
+    activeNodeXSpin->setMaximum(state->boundary.x);
+    activeNodeYSpin->setMaximum(state->boundary.y);
+    activeNodeZSpin->setMaximum(state->boundary.z);
+
     jumpToNodeButton = new QPushButton("Jump to node(s)");
     deleteNodeButton = new QPushButton("Delete Node(Del)");
     linkNodeWithButton = new QPushButton("Link Node with(Shift + Click)");
@@ -55,29 +68,13 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     idSpinBox->setMaximum(0); // no nodes on start-up
     idSpinBox->setMinimum(0);
 
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-
     commentLabel = new QLabel("Comment:");
     searchForLabel = new QLabel("Search For:");
     commentField = new QLineEdit();
     searchForField = new QLineEdit();
 
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-
     findNextButton = new QPushButton("Find (n)ext");
     findPreviousButton = new QPushButton("Find (p)revious");
-
-    QFrame *line3 = new QFrame();
-    line3->setFrameShape(QFrame::HLine);
-    line3->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line4 = new QFrame();
-    line4->setFrameShape(QFrame::HLine);
-    line4->setFrameShadow(QFrame::Sunken);
 
     useLastRadiusBox = new QCheckBox("Use Last Radius as Default");
     activeNodeRadiusLabel = new QLabel("Active Node Radius(SHIFT + wheel):");
@@ -96,59 +93,82 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     lockToActiveNodeButton = new QPushButton("Lock to Active Node");
     disableLockingButton = new QPushButton("Disable Locking");
 
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(activeNodeIdLabel, activeNodeIdSpinBox);
+    QFormLayout *formLayout;
+    QGridLayout *gridLayout;
+    QFrame *line;
 
-    QGridLayout *gridLayout = new QGridLayout();
+    formLayout = new QFormLayout();
+    formLayout->addRow(activeNodeIdLabel, activeNodeIdSpinBox);
+    mainLayout->addLayout(formLayout);
+
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(activeNodeXLabel, 1, 1);
+    gridLayout->addWidget(activeNodeXSpin, 1, 2);
+    gridLayout->addWidget(activeNodeYLabel, 1, 3);
+    gridLayout->addWidget(activeNodeYSpin, 1, 4);
+    gridLayout->addWidget(activeNodeZLabel, 1, 5);
+    gridLayout->addWidget(activeNodeZSpin, 1, 6);
+    mainLayout->addLayout(gridLayout);
+
+    gridLayout = new QGridLayout();
     gridLayout->addWidget(jumpToNodeButton, 1, 1);
     gridLayout->addWidget(deleteNodeButton, 1, 2);
     gridLayout->addWidget(linkNodeWithButton, 2, 1);
     gridLayout->addWidget(idSpinBox, 2,2);
-
-    //QFormLayout *formLayout2 = new QFormLayout();
-    //formLayout2->addRow(idLabel, idSpinBox);
-
-    QFormLayout *formLayout3 = new QFormLayout();
-    formLayout3->addRow(commentLabel, commentField);
-    formLayout3->addRow(searchForLabel, searchForField);
-
-    QGridLayout *gridLayout2 = new QGridLayout();
-    gridLayout2->addWidget(findNextButton, 1 ,1);
-    gridLayout2->addWidget(findPreviousButton, 1, 2);
-
-    QGridLayout *gridLayout3 = new QGridLayout();
-    gridLayout3->addWidget(useLastRadiusBox, 1, 1);
-    gridLayout3->addWidget(activeNodeRadiusLabel, 2, 1);
-    gridLayout3->addWidget(activeNodeRadiusSpinBox, 2, 2);
-    gridLayout3->addWidget(defaultNodeRadiusLabel, 3, 1);
-    gridLayout3->addWidget(defaultNodeRadiusSpinBox, 3, 2);
-
-    QGridLayout *gridLayout4 = new QGridLayout();
-    gridLayout4->addWidget(enableCommentLockingCheckBox, 1, 1);
-    gridLayout4->addWidget(lockingRadiusLabel, 2, 1);
-    gridLayout4->addWidget(lockingRadiusSpinBox, 2, 2);
-    gridLayout4->addWidget(lockToNodesWithCommentLabel, 3, 1);
-    gridLayout4->addWidget(lockingToNodesWithCommentField, 4, 1);
-    gridLayout4->addWidget(lockToActiveNodeButton, 5, 1);
-    gridLayout4->addWidget(disableLockingButton, 5, 2);
-
-    mainLayout->addLayout(formLayout);
     mainLayout->addLayout(gridLayout);
-    //mainLayout->addLayout(formLayout2);
-    mainLayout->addWidget(line);
-    mainLayout->addLayout(formLayout3);
-    mainLayout->addWidget(line2);
-    mainLayout->addLayout(gridLayout2);
-    mainLayout->addWidget(line3);
-    mainLayout->addLayout(gridLayout3);
-    mainLayout->addWidget(line4);
-    mainLayout->addLayout(gridLayout4);
 
-    setLayout(mainLayout);    
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
+
+    formLayout = new QFormLayout();
+    formLayout->addRow(commentLabel, commentField);
+    formLayout->addRow(searchForLabel, searchForField);
+    mainLayout->addLayout(formLayout);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(findNextButton, 1 ,1);
+    gridLayout->addWidget(findPreviousButton, 1, 2);
+    mainLayout->addLayout(gridLayout);
+
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
+
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(useLastRadiusBox, 1, 1);
+    gridLayout->addWidget(activeNodeRadiusLabel, 2, 1);
+    gridLayout->addWidget(activeNodeRadiusSpinBox, 2, 2);
+    gridLayout->addWidget(defaultNodeRadiusLabel, 3, 1);
+    gridLayout->addWidget(defaultNodeRadiusSpinBox, 3, 2);
+    mainLayout->addLayout(gridLayout);
+
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
+
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(enableCommentLockingCheckBox, 1, 1);
+    gridLayout->addWidget(lockingRadiusLabel, 2, 1);
+    gridLayout->addWidget(lockingRadiusSpinBox, 2, 2);
+    gridLayout->addWidget(lockToNodesWithCommentLabel, 3, 1);
+    gridLayout->addWidget(lockingToNodesWithCommentField, 4, 1);
+    gridLayout->addWidget(lockToActiveNodeButton, 5, 1);
+    gridLayout->addWidget(disableLockingButton, 5, 2);
+    mainLayout->addLayout(gridLayout);
+
+    setLayout(mainLayout);
+
     connect(jumpToNodeButton, SIGNAL(clicked()), this, SLOT(jumpToNodeButtonClicked()));
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
     connect(linkNodeWithButton, SIGNAL(clicked()), this, SLOT(linkNodeWithButtonClicked()));
     connect(idSpinBox, SIGNAL(valueChanged(int)), this, SLOT(idChanged(int)));
+
+    connect(activeNodeXSpin, SIGNAL(valueChanged(int)), this, SLOT(activeNodeXSpinChanged(int)));
+    connect(activeNodeYSpin, SIGNAL(valueChanged(int)), this, SLOT(activeNodeYSpinChanged(int)));
+    connect(activeNodeZSpin, SIGNAL(valueChanged(int)), this, SLOT(activeNodeZSpinChanged(int)));
 
     connect(useLastRadiusBox, SIGNAL(clicked(bool)), this, SLOT(useLastRadiusChecked(bool)));
     connect(activeNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(activeNodeRadiusChanged(double)));
@@ -166,6 +186,17 @@ void ToolsNodesTabWidget::idChanged(int value) {
     state->viewerState->gui->activeNodeID = value;
 }
 
+void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
+    state->skeletonState->activeNode->position.x = value;
+}
+
+void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
+    state->skeletonState->activeNode->position.y = value;
+}
+
+void ToolsNodesTabWidget::activeNodeZSpinChanged(int value) {
+    state->skeletonState->activeNode->position.z = value;
+}
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
     if(state->skeletonState->activeNode) {

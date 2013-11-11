@@ -46,6 +46,7 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
     tabs->addTab(toolsQuickTabWidget, "Quick");
     tabs->addTab(toolsTreesTabWidget, "Trees");
     tabs->addTab(toolsNodesTabWidget, "Nodes");
+    toggleAllWidgets(false);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -141,7 +142,6 @@ void ToolsWidget::saveSettings() {
 }
 
 void ToolsWidget::updateToolsSlot() {
-
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
     if(state->skeletonState->treeElements == 0) {
         this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(0);
@@ -153,6 +153,7 @@ void ToolsWidget::updateToolsSlot() {
     }
 
     if(state->skeletonState->activeTree) {
+        toggleAllWidgets(true); // enable all widgets
         this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(true);
         this->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
         this->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
@@ -175,22 +176,25 @@ void ToolsWidget::updateToolsSlot() {
 
     } else {
         this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(0));
-
         this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
-
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(0);
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(0);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(0);
+        this->toolsQuickTabWidget->commentField->setText("");
 
+        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
+        this->toolsTreesTabWidget->commentField->setText("");
+
+        this->toolsNodesTabWidget->commentField->setText("");
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(0);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(0);
+        this->toolsNodesTabWidget->activeNodeXSpin->setValue(0);
+        this->toolsNodesTabWidget->activeNodeYSpin->setValue(0);
+        this->toolsNodesTabWidget->activeNodeZSpin->setValue(0);
 
+        toggleAllWidgets(false); // disable widgets
         return;
-
     }
 
     this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
@@ -202,10 +206,12 @@ void ToolsWidget::updateToolsSlot() {
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
+        this->toolsNodesTabWidget->activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x);
+        this->toolsNodesTabWidget->activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y);
+        this->toolsNodesTabWidget->activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z);
 
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(1);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
-
 
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
         this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
@@ -213,35 +219,71 @@ void ToolsWidget::updateToolsSlot() {
 
         this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(state->skeletonState->activeNode->radius);
 
-        if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
-            this->toolsQuickTabWidget->blockSignals(true);
-            this->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            this->toolsQuickTabWidget->blockSignals(false);
+        if(state->skeletonState->activeNode->comment) {
+            if(state->skeletonState->activeNode->comment->content) {
+                this->toolsQuickTabWidget->blockSignals(true);
+                this->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+                this->toolsQuickTabWidget->blockSignals(false);
 
-            this->toolsNodesTabWidget->blockSignals(true);
-            this->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            this->toolsNodesTabWidget->blockSignals(false);
-
+                this->toolsNodesTabWidget->blockSignals(true);
+                this->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
+                this->toolsNodesTabWidget->blockSignals(false);
+            }
         }
-
     } else {
-        this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(0);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(0);
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(0);
         this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(0);
-        this->toolsNodesTabWidget->idSpinBox->setMaximum(0);
 
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(0));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(0));
         this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(0));
     }
-
     this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+}
 
+void ToolsWidget::toggleAllWidgets(bool enabled) {
+    this->toolsQuickTabWidget->activeTreeSpinBox->setEnabled(enabled);
+    this->toolsQuickTabWidget->activeNodeSpinBox->setEnabled(enabled);
 
+    this->toolsQuickTabWidget->commentField->setEnabled(enabled);
+    this->toolsQuickTabWidget->searchForField->setEnabled(enabled);
+    this->toolsQuickTabWidget->findNextButton->setEnabled(enabled);
+    this->toolsQuickTabWidget->findPreviousButton->setEnabled(enabled);
+    this->toolsQuickTabWidget->pushBranchNodeButton->setEnabled(enabled);
+    this->toolsQuickTabWidget->popBranchNodeButton->setEnabled(enabled);
 
+    // disable tree tab widgets
+    this->toolsTreesTabWidget->activeTreeSpinBox->setEnabled(enabled);
+
+    this->toolsTreesTabWidget->deleteActiveTreeButton->setEnabled(enabled);
+    this->toolsTreesTabWidget->commentField->setEnabled(enabled);
+    this->toolsTreesTabWidget->mergeTreesButton->setEnabled(enabled);
+    this->toolsTreesTabWidget->id1SpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->id2SpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->splitByConnectedComponentsButton->setEnabled(enabled);
+    this->toolsTreesTabWidget->rSpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->gSpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->bSpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->aSpinBox->setEnabled(enabled);
+    this->toolsTreesTabWidget->restoreDefaultColorButton->setEnabled(enabled);
+
+    // disabled node tab widgets
+    this->toolsNodesTabWidget->activeNodeIdSpinBox->setEnabled(enabled);
+    this->toolsNodesTabWidget->activeNodeXSpin->setEnabled(enabled);
+    this->toolsNodesTabWidget->activeNodeYSpin->setEnabled(enabled);
+    this->toolsNodesTabWidget->activeNodeZSpin->setEnabled(enabled);
+
+    this->toolsNodesTabWidget->jumpToNodeButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->deleteNodeButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->linkNodeWithButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->idSpinBox->setEnabled(enabled);
+    this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setEnabled(enabled);
+    this->toolsNodesTabWidget->commentField->setEnabled(enabled);
+    this->toolsNodesTabWidget->searchForField->setEnabled(enabled);
+    this->toolsNodesTabWidget->findNextButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->findPreviousButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->lockToActiveNodeButton->setEnabled(enabled);
+    this->toolsNodesTabWidget->disableLockingButton->setEnabled(enabled);
 }
 
 void ToolsWidget::updateTreeCount() {

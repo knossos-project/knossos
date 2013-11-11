@@ -53,6 +53,7 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
+    void toggleAllWidgets(bool enabled);
     QTabWidget *tabs;
 };
 
