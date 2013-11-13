@@ -1,6 +1,7 @@
 #include "knossostestrunner.h"
 #include <QVBoxLayout>
 #include <QTreeWidget>
+#include <QCheckBox>
 #include <QTreeWidgetItem>
 #include <QGroupBox>
 #include <QLabel>
@@ -16,7 +17,6 @@
 KnossosTestRunner::KnossosTestRunner(QWidget *parent) :
     QWidget(parent)
 {
-
     setWindowTitle("Test Runner");
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
@@ -53,6 +53,7 @@ KnossosTestRunner::KnossosTestRunner(QWidget *parent) :
 
     mainLayout->addWidget(editor);
     connect(treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(testcaseSelected(QTreeWidgetItem*,int)));
+
 }
 
 /**
@@ -92,20 +93,21 @@ void KnossosTestRunner::addTestClasses() {
     testclassList->append(testZoomAndMultiresWidget);
 
     const QMetaObject *metaObj;
-    for(int a = 0; a < testclassList->size(); a++) {
+    for(int a = 0; a < testclassList->size() ; a++) {
         metaObj = testclassList->at(a)->metaObject();
 
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setText(0, metaObj->className());
         item->setCheckState(0, Qt::Checked);
-
         treeWidget->addTopLevelItem(item);
 
+
         for(int i = 0; i < metaObj->methodCount(); i++) {
-            qDebug() << "_" << a << "_" << i;
+            //qDebug() << "_" << a << "_" << i;
             QMetaMethod method = metaObj->method(i);
             QVariant variant(method.name());
             QString text = variant.toString();
+
             if(text.startsWith("t")) {
                 QTreeWidgetItem *child = new QTreeWidgetItem();
                 child->setText(0, text);
@@ -119,14 +121,24 @@ void KnossosTestRunner::startTest() {
     QStringList args;
     args << "-silent" << "-o" << "RESULT.xml" << "-xml";
 
+    fail = pass = total = 0;
+
     for(int i = 0; i < testclassList->size(); i++) {
-        QTest::qExec(testclassList->at(i), args);
-        checkResults();
-    }
+        const QMetaObject *meta = testclassList->at(i)->metaObject();
+        QTreeWidgetItem *item = this->findItem(meta->className());
+        if(item) {
+            if(item->checkState(0) == Qt::Checked) {
+                QTest::qExec(testclassList->at(i), args);
+                checkResults();
+            }
+        } else {
+            qDebug() << "not found";
+        }
+
+    }    
 }
 
 void KnossosTestRunner::checkResults() {
-    QDir dir = QDir::current();
     QString fileName = ("RESULT.xml");
     QFile file(fileName);
 
@@ -138,65 +150,62 @@ void KnossosTestRunner::checkResults() {
     QXmlStreamAttributes attributes;
     QString attribute;
     QString currentTestCase;
+    QString lastMessage;
 
     QXmlStreamReader xml(&file);
-    while(!xml.atEnd() and !xml.hasError()) {
-        if(xml.readNextStartElement()) {
 
-            if(xml.name() == "TestFunction") {
+    while(!xml.atEnd() and !xml.hasError()) {
+        if(xml.readNext()) {
+            if(xml.name() == "TestFunction" and xml.isStartElement()) {
                 attributes = xml.attributes();
                 attribute = attributes.value("name").toString();
+                if(!attribute.isNull()) {
+                    if(attribute == "initTestCase" or attribute == "endTestCase" or attribute == "cleanupTestCase")
+                        continue;
 
-                if(attribute.isEmpty()) {
-
-                } else {
-                    qDebug() << attribute;
-                    total += 1;
                     currentTestCase = attribute;
+                    attribute = attributes.value("type").toString();
+                    total += 1;
                 }
 
-            } else if(xml.name() == "Incident") {
-                qDebug() << xml.name();
+            } else if(xml.name() == "Incident" and xml.isStartElement()) {
                 attributes = xml.attributes();
                 attribute = attributes.value("type").toString();
 
-                qDebug() << currentTestCase << " _ ";
-
                 if(attribute == "pass") {
-                    pass += 1;
-                    QTreeWidgetItem *item = findItem(currentTestCase);
-                    if(item) {
-                        item->setIcon(0, QIcon(":/images/icons/dialog-ok.png"));
-                    }
+                   QTreeWidgetItem *item = findItem(currentTestCase);
+                   if(item and item->icon(0).isNull()) {
+                       pass += 1;
+                       item->setIcon(0, QIcon(":/images/icons/dialog-ok.png"));
+                   }
 
                 } else if(attribute == "fail") {
 
-                    fail += 1;
                     QTreeWidgetItem *item = findItem(currentTestCase);
-                    if(item)
+                    if(item) {
+                        fail += 1;
                         item->setIcon(0, QIcon(":/images/icons/application-exit.png"));
-
-                    attribute = xml.attributes().value("line").toString();
-                    if(attribute.isEmpty()) {
-
-                    } else {
-                        qDebug() << attribute;
-                        QString message = QString("Line:%1").arg(attribute);
-                        item->setText(1, message);
                     }
 
-                    // TODO Message to editor
+                    attribute = xml.attributes().value("line").toString();
+                    if(!attribute.isNull()) {
+                        QString message = QString("%1 at Line:%2").arg(lastMessage).arg(attribute);
+                        item->setText(1, message);
 
+                    }
                 }
 
-            } else if(xml.name() == "Message") {
-                xml.skipCurrentElement();
+            } else if(xml.isCharacters()) {
+                QString message = xml.text().toString().trimmed();
+                if(!message.isEmpty()) {
+                    lastMessage = message;
+                }
             }
-
         } else {
             xml.readNext();
         }
     }
+
     passLabel->setText(QString("Pass: %1/%2").arg(pass).arg(total));
     failLabel->setText(QString("Fail: %1").arg(fail));
 }
@@ -205,6 +214,8 @@ void KnossosTestRunner::checkResults() {
 QTreeWidgetItem *KnossosTestRunner::findItem(const QString &name) {
     for(int i = 0; i < treeWidget->topLevelItemCount(); i++) {
         QTreeWidgetItem *topLevelWidget = treeWidget->topLevelItem(i);
+        if(topLevelWidget->text(0) == name)
+            return topLevelWidget;
         for(int k = 0; k < topLevelWidget->childCount(); k++) {
             QTreeWidgetItem *child = topLevelWidget->child(k);
             if(child->text(0) == name) {
@@ -218,4 +229,8 @@ QTreeWidgetItem *KnossosTestRunner::findItem(const QString &name) {
 void KnossosTestRunner::testcaseSelected(QTreeWidgetItem *item, int col) {
     editor->clear();
     editor->insertPlainText(item->text(1));
+
+
+
+
 }

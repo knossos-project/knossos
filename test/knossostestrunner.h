@@ -22,12 +22,14 @@ class KnossosTestRunner : public QWidget
     Q_OBJECT
 public:
     explicit KnossosTestRunner(QWidget *parent = 0);
+    Viewer *reference;
+    void addTestClasses();
+protected:
     QTreeWidget *treeWidget;
     QLabel *passLabel;
     QLabel *failLabel;
     int pass, fail, total;
 
-    Viewer *reference;
     QList<QObject *> *testclassList;
     TestCommentsWidget *testCommentsWidget;
     TestDataSavingWidget *testDataSavingWidget;
@@ -36,9 +38,7 @@ public:
     TestSkeletonViewport *testSkeletonViewport;
     TestToolsWidget *testToolsWidget;
     TestZoomAndMultiresWidget *testZoomAndMultiresWidget;
-
-    QTreeWidgetItem *findItem(const QString &name);
-    void addTestClasses();
+    QTreeWidgetItem *findItem(const QString &name);    
     QPlainTextEdit *editor;
 signals:
     
