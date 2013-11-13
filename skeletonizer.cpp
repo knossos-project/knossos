@@ -1003,7 +1003,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     QProgressDialog progress(QString("Parsing %1").arg(fileName), 0, 0, lines);
     progress.setWindowTitle("Loading Skeleton File");
     progress.setWindowModality(Qt::WindowModal);
-    QApplication::processEvents();
+    progress.show();
 
     if(state->skeletonState->mergeOnLoadFlag == false) {
         merge = false;
@@ -1030,17 +1030,16 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     file.reset();
     QXmlStreamReader xml(&file);
     bench.start();
+    QXmlStreamAttributes attributes;
+    QStringRef attribute;
+    float temp;
     while(!xml.atEnd() and !xml.hasError()) {
-        if(xml.lineNumber() % 10 == 0) {
-            progress.setValue(xml.lineNumber());
-        }
-        xml.readNextStartElement();
-        if(xml.isStartElement()) {
-            if(xml.name() == "things") {
-                continue;
+
+        if(xml.readNextStartElement()) {
+            if(xml.lineNumber() % 10 == 0) {
+                progress.setValue(xml.lineNumber());
             }
-            QXmlStreamAttributes attributes = xml.attributes();
-            QStringRef attribute;
+
             if(xml.name() == "parameters") {
                 while(xml.readNextStartElement()) {
                     attributes = xml.attributes();
@@ -1048,7 +1047,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     if(xml.name() == "createdin") {
                         attribute = attributes.value("version");
                         if(attribute.isNull() == false) {
-                            strcpy(state->skeletonState->skeletonCreatedInVersion, const_cast<char *>(attribute.toString().toStdString().c_str()));
+                            strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toLocal8Bit().data());
                         }
                         else {
                             strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
@@ -1057,7 +1056,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     else if(xml.name() == "lastsavedin") {
                         attribute = attributes.value("version");
                         if(attribute.isNull() == false) {
-                            strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toString().toStdString().c_str());
+                            strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
                         }
                     }
                     else if(xml.name() == "magnification" and xml.isStartElement()) {
@@ -1067,7 +1066,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                          // or not specified at all.
                          // A magnification factor of 0 shall represent an unknown magnification.
                         if(attribute.isNull() == false) {
-                            magnification = attribute.toString().toInt();
+                            magnification = attribute.toLocal8Bit().toInt();
                             globalMagnificationSpecified = true;
                         }
                         else {
@@ -1077,21 +1076,21 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     else if(xml.name() == "offset") {
                         attribute = attributes.value("x");
                         if(attribute.isNull() == false) {
-                            offset.x = attribute.toString().toInt();
+                            offset.x = attribute.toLocal8Bit().toInt();
                         }
                         attribute = attributes.value("y");
                         if(attribute.isNull() == false) {
-                            offset.y = attribute.toString().toInt();
+                            offset.y = attribute.toLocal8Bit().toInt();
                         }
                         attribute = attributes.value("z");
                         if(attribute.isNull() == false) {
-                            offset.z = attribute.toString().toInt();
+                            offset.z = attribute.toLocal8Bit().toInt();
                         }
                     }
                     else if(xml.name() == "time" && merge == false) {
                         attribute = attributes.value("ms");
                         if(attribute.isNull() == false) {
-                            state->skeletonState->skeletonTime = attribute.toString().toInt();
+                            state->skeletonState->skeletonTime = attribute.toLocal8Bit().toInt();
                             if(Skeletonizer::isObfuscatedTime(state->skeletonState->skeletonTime)) {
                                 state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                             }
@@ -1101,38 +1100,38 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         if(merge == false) {
                             attribute = attributes.value("id");
                             if(attribute.isNull() == false) {
-                                activeNodeID = attribute.toString().toInt();
+                                activeNodeID = attribute.toLocal8Bit().toInt();
                             }
                         }
                     }
                     else if(xml.name() == "scale") {
                         attribute = attributes.value("x");
                         if(attribute.isNull() == false) {
-                            scale.x = attribute.toString().toFloat();
+                            scale.x = attribute.toLocal8Bit().toFloat();
                         }
 
                         attribute = attributes.value("y");
                         if(attribute.isNull() == false) {
-                            scale.y = attribute.toString().toFloat();
+                            scale.y = attribute.toLocal8Bit().toFloat();
                         }
 
                         attribute = attributes.value("z");
                         if(attribute.isNull() == false) {
-                            scale.z = attribute.toString().toFloat();
+                            scale.z = attribute.toLocal8Bit().toFloat();
                         }
                     }
                     else if(xml.name() == "editPosition") {
                         attribute = attributes.value("x");
                         if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toString().toInt();
+                            loadedPosition.x = attribute.toLocal8Bit().toInt();
 
                         attribute = attributes.value("y");
                         if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toString().toInt();
+                            loadedPosition.x = attribute.toLocal8Bit().toInt();
 
                         attribute = attributes.value("z");
                         if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toString().toInt();
+                            loadedPosition.x = attribute.toLocal8Bit().toInt();
 
                     }
                     else if(xml.name() == "skeletonVPState") {
@@ -1209,15 +1208,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 xml.readNextStartElement();
                 while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "branchpoints")) {
                     if(xml.name() == "branchpoint" and xml.isStartElement()) {
-                        QXmlStreamAttributes attributes = xml.attributes();
-                        QString attribute;
-
-                        attribute = attributes.value("id").toString();
+                        attributes = xml.attributes();
+                        attribute = attributes.value("id");
                         if(!attribute.isNull()) {
                             if(!merge) {
-                                nodeID = attribute.toInt();
+                                nodeID = attribute.toLocal8Bit().toInt();
                             } else {
-                                nodeID = attribute.toInt() + greatestNodeIDbeforeLoading;
+                                nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                             }
                             currentNode = findNodeByNodeID(nodeID);
                             if(currentNode)
@@ -1225,44 +1222,43 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         }
                     }
                     while(xml.readNext() == QXmlStreamReader::Characters) {
-
                     }
                 }
             }
             else if(xml.name() == "comments") {
                 xml.readNextStartElement();
                 while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "comments")) {
-                    QXmlStreamAttributes attributes = xml.attributes();
-                    QString attribute;
+                    attributes = xml.attributes();
 
                     if(xml.name() == "comment" and xml.isStartElement()) {
-                        attribute = attributes.value("node").toString();
+                        attribute = attributes.value("node");
                         if(!attribute.isNull()) {
                             if(!merge) {
-                                nodeID = attribute.toInt();
+                                nodeID = attribute.toLocal8Bit().toInt();
                             }
                             else {
-                                nodeID = attribute.toInt() + greatestNodeIDbeforeLoading;
+                                nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                             }
                             currentNode = findNodeByNodeID(nodeID);
                         }
-                        attribute = attributes.value("content").toString();
+                        attribute = attributes.value("content");
                         if(!attribute.isNull() && currentNode) {
-                            addComment(CHANGE_MANUAL, attribute.toStdString().c_str(), currentNode, 0, false);
+                            addComment(CHANGE_MANUAL, attribute.toLocal8Bit().data(), currentNode, 0, false);
                         }
                     }
+
                     while(xml.readNext() == QXmlStreamReader::Characters) {
 
                     }
                 }
 
             }
-            else if(xml.name() == "thing") {
+            else if(xml.name() == "thing") {              
                 attributes = xml.attributes();
 
                 attribute = attributes.value("id");
                 if(attribute.isNull() == false) {
-                    neuronID = attribute.toString().toInt();
+                    neuronID = attribute.toLocal8Bit().toInt();
                 }
                 else {
                     neuronID = 0; // whatever
@@ -1270,28 +1266,28 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 // color: -1 causes default color assignment
                 attribute = attributes.value("color.r");
                 if(attribute.isNull() == false) {
-                    neuronColor.r = attribute.toString().toFloat();
+                    neuronColor.r = attribute.toLocal8Bit().toFloat();
                 }
                 else {
                     neuronColor.r = -1;
                 }
                 attribute = attributes.value("color.g");
                 if(attribute.isNull() == false) {
-                    neuronColor.g = attribute.toString().toFloat();
+                    neuronColor.g = attribute.toLocal8Bit().toFloat();
                 }
                 else {
                     neuronColor.g = -1;
                 }
                 attribute = attributes.value("color.b");
                 if(attribute.isNull() == false) {
-                    neuronColor.b = attribute.toString().toFloat();
+                    neuronColor.b = attribute.toLocal8Bit().toFloat();
                 }
                 else {
                     neuronColor.b = -1;
                 }
                 attribute = attributes.value("color.a");
                 if(attribute.isNull() == false) {
-                    neuronColor.a = attribute.toString().toFloat();
+                    neuronColor.a = attribute.toLocal8Bit().toFloat();
                 }
                 else {
                     neuronColor.a = -1;
@@ -1310,7 +1306,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                 attribute = attributes.value("comment"); // the three comment
                 if(attribute.isNull() == false) {
-                    addTreeComment(CHANGE_MANUAL, currentTree->treeID, const_cast<char *>(attribute.toString().toStdString().c_str()));
+                    addTreeComment(CHANGE_MANUAL, currentTree->treeID, attribute.toLocal8Bit().data());
                 }
             }
             else if(xml.name() == "nodes") {
@@ -1320,21 +1316,21 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                         attribute = attributes.value("id");
                         if(attribute.isNull() == false) {
-                            nodeID = attribute.toString().toInt();
+                            nodeID = attribute.toLocal8Bit().toInt();
                         } else {
                             nodeID = 0;
                         }
 
                         attribute = attributes.value("radius");
                         if(attribute.isNull() == false) {
-                            radius = attribute.toString().toFloat();
+                            radius = attribute.toLocal8Bit().toFloat();
                         } else {
                             radius = state->skeletonState->defaultNodeRadius;
                         }
 
                         attribute = attributes.value("x");
                         if(attribute.isNull() == false) {
-                            currentCoordinate->x = attribute.toString().toInt() - 1;
+                            currentCoordinate->x = attribute.toLocal8Bit().toInt() - 1;
                             if(globalMagnificationSpecified) {
                                 currentCoordinate->x = currentCoordinate->x * magnification;
                             }
@@ -1344,7 +1340,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                         attribute = attributes.value("y");
                         if(attribute.isNull() == false) {
-                            currentCoordinate->y = attribute.toString().toInt() - 1;
+                            currentCoordinate->y = attribute.toLocal8Bit().toInt() - 1;
                             if(globalMagnificationSpecified) {
                                 currentCoordinate->y = currentCoordinate->y * magnification;
                             }
@@ -1354,7 +1350,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                         attribute = attributes.value("z");
                         if(attribute.isNull() == false) {
-                            currentCoordinate->z = attribute.toString().toInt() - 1;
+                            currentCoordinate->z = attribute.toLocal8Bit().toInt() - 1;
                             if(globalMagnificationSpecified) {
                                 currentCoordinate->z = currentCoordinate->z * magnification;
                             }
@@ -1364,20 +1360,20 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                         attribute = attributes.value("inVp");
                         if(attribute.isNull() == false) {
-                            VPtype = attribute.toString().toInt();
+                            VPtype = attribute.toLocal8Bit().toInt();
                         } else {
                             VPtype = VIEWPORT_UNDEFINED;
                         }
 
                         attribute = attributes.value("inMag");
                         if(attribute.isNull() == false) {
-                            inMag = attribute.toString().toInt();
+                            inMag = attribute.toLocal8Bit().toInt();
                         } else {
                             inMag = magnification; // For legacy skeleton files
                         }
                         attribute = attributes.value("time");
                         if(attribute.isNull() == false) {
-                            time = attribute.toString().toInt();
+                            time = attribute.toLocal8Bit().toInt();
                         } else {
                             time = skeletonTime; // For legacy skeleton files
                         }
@@ -1399,14 +1395,14 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         // Add edge
                         attribute = attributes.value("source");
                         if(attribute.isNull() == false) {
-                            nodeID1 = attribute.toString().toInt();
+                            nodeID1 = attribute.toLocal8Bit().toInt();
                         }
                         else {
                             nodeID1 = 0;
                         }
                         attribute = attributes.value("target");
                         if(attribute.isNull() == false) {
-                            nodeID2 = attribute.toString().toInt();
+                            nodeID2 = attribute.toLocal8Bit().toInt();
                         }
                          else {
                             nodeID2 = 0;
