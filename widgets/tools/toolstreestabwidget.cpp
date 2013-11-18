@@ -232,6 +232,7 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
 void ToolsTreesTabWidget::rChanged(double value) {
     if(state->skeletonState->activeTree)
         state->skeletonState->activeTree->color.r = value;
+
 }
 
 void ToolsTreesTabWidget::gChanged(double value) {
@@ -250,7 +251,7 @@ void ToolsTreesTabWidget::aChanged(double value) {
 }
 
 void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {
-    emit restoreDefaultTreeColorSignal();
+    //emit restoreDefaultTreeColorSignal();
     rSpinBox->setValue(0);
     gSpinBox->setValue(0);
     bSpinBox->setValue(0);

@@ -46,7 +46,7 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
     tabs->addTab(toolsQuickTabWidget, "Quick");
     tabs->addTab(toolsTreesTabWidget, "Trees");
     tabs->addTab(toolsNodesTabWidget, "Nodes");
-    toggleAllWidgets(false);
+    //toggleAllWidgets(false);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -143,31 +143,18 @@ void ToolsWidget::saveSettings() {
 
 void ToolsWidget::updateToolsSlot() {
     this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    if(state->skeletonState->treeElements == 0) {
-        this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(0);
-
-    } else {
-        this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->greatestTreeID);
-    }
+    this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
 
     if(state->skeletonState->activeTree) {
-        toggleAllWidgets(true); // enable all widgets
-        this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(true);
-        this->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
+        //toggleAllWidgets(true); // enable all widgets
+        this->toolsQuickTabWidget->activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
+        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+
         this->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
         this->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
         this->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
         this->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
-
-        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-        this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(1);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(1);
-
-        this->toolsQuickTabWidget->activeTreeSpinBox->blockSignals(false);
-        this->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
 
         if(state->skeletonState->activeTree->comment)
             this->toolsTreesTabWidget->commentField->setText(QString(state->skeletonState->activeTree->comment));
@@ -175,47 +162,38 @@ void ToolsWidget::updateToolsSlot() {
             this->toolsTreesTabWidget->commentField->setText("");
 
     } else {
-        this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(0));
-        this->toolsQuickTabWidget->activeTreeSpinBox->setMinimum(0);
+        this->toolsQuickTabWidget->activeTreeSpinBox->setRange(0, 0);
+        this->toolsTreesTabWidget->activeTreeSpinBox->setRange(0, 0);
         this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(0);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setValue(0);
-        this->toolsQuickTabWidget->commentField->setText("");
 
-        this->toolsTreesTabWidget->activeTreeSpinBox->setMinimum(0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setValue(0);
+        this->toolsQuickTabWidget->commentField->setText("");
         this->toolsTreesTabWidget->commentField->setText("");
+        this->toolsTreesTabWidget->rSpinBox->setValue(0);
+        this->toolsTreesTabWidget->gSpinBox->setValue(0);
+        this->toolsTreesTabWidget->bSpinBox->setValue(0);
+        this->toolsTreesTabWidget->aSpinBox->setValue(0);
 
         this->toolsNodesTabWidget->commentField->setText("");
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(0);
         this->toolsNodesTabWidget->activeNodeXSpin->setValue(0);
         this->toolsNodesTabWidget->activeNodeYSpin->setValue(0);
         this->toolsNodesTabWidget->activeNodeZSpin->setValue(0);
 
-        toggleAllWidgets(false); // disable widgets
-        return;
+       //toggleAllWidgets(false); // disable widgets
     }
 
-    this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
-    this->toolsQuickTabWidget->activeNodeSpinBox->setMaximum(state->skeletonState->greatestNodeID);
-    this->toolsNodesTabWidget->activeNodeIdSpinBox->setMaximum(state->skeletonState->greatestNodeID);
     this->toolsNodesTabWidget->idSpinBox->setMaximum(state->skeletonState->greatestNodeID);
 
     if(state->skeletonState->activeNode) {
+       this->toolsQuickTabWidget->activeNodeSpinBox->setRange(1, state->skeletonState->greatestNodeID);
+       this->toolsNodesTabWidget->activeNodeIdSpinBox->setRange(1, state->skeletonState->greatestNodeID);
+       this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
         this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
         this->toolsNodesTabWidget->activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x);
         this->toolsNodesTabWidget->activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y);
         this->toolsNodesTabWidget->activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z);
-
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setMinimum(1);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
-
-        this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setMinimum(1);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
 
         this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(state->skeletonState->activeNode->radius);
 
@@ -231,8 +209,9 @@ void ToolsWidget::updateToolsSlot() {
             }
         }
     } else {
+        this->toolsQuickTabWidget->activeNodeSpinBox->setRange(0, 0);
+        this->toolsNodesTabWidget->activeNodeIdSpinBox->setRange(0, 0);
         this->toolsQuickTabWidget->activeNodeSpinBox->setValue(0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(0);
 
         this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(0));
         this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(0));
