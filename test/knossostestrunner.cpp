@@ -121,6 +121,8 @@ void KnossosTestRunner::startTest() {
     QStringList args;
     args << "-silent" << "-o" << "RESULT.xml" << "-xml";
 
+
+
     fail = pass = total = 0;
 
     for(int i = 0; i < testclassList->size(); i++) {

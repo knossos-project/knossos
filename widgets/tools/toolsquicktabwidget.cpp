@@ -168,15 +168,21 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
         }
     }
 
+
     /* As setting also the value of the activeTreeSpinBox in the TreeTabWidget(which in turn set the value of this widget). This would cause an infinite recursion.
        That´s the reason we have to disconnect the signal and reconnect it after the value it set.
        Unfortunately it´s a special case here which makes this necessary.
     */
-    reference->toolsTreesTabWidget->disconnect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
-    reference->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
-    reference->toolsTreesTabWidget->connect(reference->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
+    activeTreeSpinBox->blockSignals(true);
+    reference->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
 
     activeTreeSpinBox->setValue(value);
+    reference->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
+
+    activeTreeSpinBox->blockSignals(false);
+    reference->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
+
+
     emit setActiveTreeSignal(value);
 
     reference->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
@@ -209,30 +215,21 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             value += 1;
         }
 
-        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));        
-        this->activeNodeSpinBox->setValue(value);
-        reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
-        connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
 
-        if(!node) {
-            return;
-        }
     } else if(value < state->skeletonState->activeNode->nodeID) {
         while((node = findNodeByNodeIDSignal(value)) == 0 and value > 0) {
             value -= 1;
         }
-
-        disconnect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-        this->activeNodeSpinBox->setValue(value);
-        reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
-        connect(this->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-
-
-
-        if(!node) {
-            return;
-        }
     }
+
+    this->activeNodeSpinBox->blockSignals(true);
+    reference->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
+
+    activeNodeSpinBox->setValue(value);
+    reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
+
+    this->activeNodeSpinBox->blockSignals(false);
+    reference->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
 
     if(setActiveNodeSignal(CHANGE_MANUAL, 0, value)) {
 
@@ -241,7 +238,6 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
             this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
             this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
 
-            reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
 
             if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
                 this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
@@ -263,7 +259,6 @@ void ToolsQuickTabWidget::commentChanged(QString comment) {
 
     char *ccomment = const_cast<char *>(comment.toStdString().c_str());
     if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-
         emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0, true);
     }
     else{

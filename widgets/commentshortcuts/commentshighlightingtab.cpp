@@ -40,8 +40,8 @@
 #include "knossos-global.h"
 
 extern struct stateInfo *state;
-
 static const int N = 5;
+static QMap<QString, color4F> colorMap;
 
 CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     QWidget(parent)
@@ -50,8 +50,25 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     state->viewerState->gui->commentSubstr = new QStringList();
     state->viewerState->gui->commentColors = new char*[N];
 
-    QStringList list;
-    list << GREEN << ROSE << AZURE << PURPLE << BROWN;
+    color4F color;
+    SET_COLOR(color, 0.13, 0.69, 0.3, 1.);
+    colorMap.insert(GREEN, color);
+    SET_COLOR(color, 0.94, 0.89, 0.69, 1.);
+    colorMap.insert(ROSE, color);
+    SET_COLOR(color, 0.6, 0.85, 0.92, 1.);
+    colorMap.insert(AZURE, color);
+    SET_COLOR(color, 0.64, 0.29, 0.64, 1.);
+    colorMap.insert(PURPLE, color);
+    SET_COLOR(color, 0.73, 0.48, 0.34, 1.);
+    colorMap.insert(BROWN, color);
+
+    /*
+    for(int i = 0; i < N; i++) {
+        for(int k = 0; k < N; k++) {
+
+        }
+    }*/
+
 
     QVBoxLayout *layout = new QVBoxLayout();
 
@@ -73,7 +90,7 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
 
     QGridLayout *gridLayout = new QGridLayout();
 
-    numLabel = new QLabel*[5];
+    numLabel = new QLabel*[N];
     substringFields = new QLineEdit*[N];
     colorComboBox = new QComboBox*[N];
     radiusSpinBox = new QDoubleSpinBox*[N];
@@ -86,10 +103,10 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
         substringFields[i] = new QLineEdit();
         substringFields[i]->setObjectName(QString("%1").arg(i));
         colorComboBox[i] = new QComboBox();
-        colorComboBox[i]->addItems(list);
+        colorComboBox[i]->addItems(QStringList(colorMap.keys()));
 
         connect(substringFields[i], SIGNAL(editingFinished()), this, SLOT(substringEntered()));
-        connect(colorComboBox[i], SIGNAL(currentTextChanged(QString)), this, SLOT(colorChanged(QString)));
+        connect(colorComboBox[i], SIGNAL(currentIndexChanged(QString)), this, SLOT(colorChanged(QString)));
 
         radiusSpinBox[i] = new QDoubleSpinBox();       
         radiusSpinBox[i]->setSingleStep(0.25);
@@ -114,15 +131,17 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     connect(enableCondColoringCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCondColoringChecked(bool)));
     connect(enableCondRadiusCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCondRadiusChecked(bool)));
 
+    for(int i = 0; i < N; i++) {
+        state->viewerState->gui->commentSubstr->replace(i, substringFields[i]->text());
+    }
+
 }
 
 void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
     if(on) {
-        state->skeletonState->userCommentColoringOn = true;
-        qDebug() << "enabled";
+        state->skeletonState->userCommentColoringOn = true;        
     } else {
-        state->skeletonState->userCommentColoringOn = false;
-        qDebug() << "disabled";
+        state->skeletonState->userCommentColoringOn = false;       
     }
 }
 
@@ -146,8 +165,9 @@ void CommentsHighlightingTab::substringEntered() {
     }
 }
 
-void CommentsHighlightingTab::colorChanged(QString color) {
 
+void CommentsHighlightingTab::colorChanged(QString color) {
+    qDebug() << color;
     QComboBox *colorBox = (QComboBox*) sender();
     for(int i = 0; i < N; i++) {
         if(colorBox == colorComboBox[i]) {

@@ -68,6 +68,7 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
     QTableWidgetItem *left, *right;
     left = new QTableWidgetItem(QString("Node ID"));
+
     right = new QTableWidgetItem(QString("Comment"));
 
     nodeTable->verticalHeader()->setVisible(false);
@@ -84,39 +85,45 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
         node = tree->firstNode;
 
         while(node) {
-            if(!node->comment) {
+            if(!node->comment or !node->nodeID) {
                 node = node->next;
                 continue;
             }           
 
             if(filtered) {               
                 if(strstr(node->comment->content, filter) != NULL) {
+                    qDebug() << node->comment->content;
+
                     if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
 
-                        QTableWidgetItem *nodeID = new QTableWidgetItem(QString("%1").arg(node->nodeID));
+                        QTableWidgetItem *nodeID = new QTableWidgetItem(QString::number(node->nodeID));
                         Qt::ItemFlags flags = nodeID->flags();
                         flags |= Qt::ItemIsSelectable;
                         flags &= ~Qt::ItemIsEditable;
                         nodeID->setFlags(flags);
 
                         QTableWidgetItem *comment = new QTableWidgetItem(QString(node->comment->content));
+                        if(node->nodeID and node->comment) {
                         nodeTable->setItem(tableIndex, 0, nodeID);
                         nodeTable->setItem(tableIndex, 1, comment);
                         tableIndex += 1;
+                        }
                     }
                 }
             } else {
-                if(branchNodesOnlyCheckbox->isChecked() && node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
-                    QTableWidgetItem *nodeID = new QTableWidgetItem(QString("%1").arg(node->nodeID));
+                if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
+                    QTableWidgetItem *nodeID = new QTableWidgetItem(QString::number(node->nodeID));
                     Qt::ItemFlags flags = nodeID->flags();
                     flags |= Qt::ItemIsSelectable;
                     flags &= ~Qt::ItemIsEditable;
                     nodeID->setFlags(flags);
 
                     QTableWidgetItem *comment = new QTableWidgetItem(QString(node->comment->content));
+                    if(node->nodeID and node->comment) {
                     nodeTable->setItem(tableIndex, 0, nodeID);
                     nodeTable->setItem(tableIndex, 1, comment);
                     tableIndex += 1;
+                    }
                 }
             }
             node = node->next;

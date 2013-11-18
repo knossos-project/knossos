@@ -38,15 +38,16 @@ class CommentShortCutsTab : public QWidget
 public:
     explicit CommentShortCutsTab(QWidget *parent = 0);
     QLineEdit **textFields;
-    bool eventFilter(QObject *obj, QEvent *event);
 signals:
 public slots:
     void deleteComments();
     void deleteCommentsWithoutConfirmation();
+    void commentChanged(QString comment);
 protected:
     static const int NUM = 5;
     QLabel **labels;
     QPushButton *button;
+
     
 };
 

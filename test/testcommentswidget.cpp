@@ -24,7 +24,7 @@ void TestCommentsWidget::testDeleteComments() {
     commentsWidget->setVisible(true);
 
     for(int i = 0; i < 5; i++) {
-        QTest::keyClicks(tab->textFields[i], QString("A comment %1").arg(i));
+        QTest::keyClicks(tab->textFields[i], QString("A comment %1").arg(QString::number(i)));
     }
 
    tab->deleteCommentsWithoutConfirmation();
@@ -44,8 +44,7 @@ void TestCommentsWidget::testEnterComments() {
     commentsWidget->setVisible(true);
 
     for(int i = 0; i < 5; i++) {
-        QTest::keyClicks(tab->textFields[i], QString("A comment %1").arg(i));
-        QTest::keyClick(tab->textFields[i], Qt::Key_Return);
+        QTest::keyClicks(tab->textFields[i], QString("A comment %1").arg(QString::number(i)));
 
         if(i == 0) {
             QCOMPARE(QString(state->viewerState->gui->comment1), tab->textFields[i]->text());
@@ -93,20 +92,27 @@ void TestCommentsWidget::testAddNodeComment() {
         else if(i == 4)
             QTest::keyClick(firstViewport, Qt::Key_F5);
 
+
         QString usedString = tab->textFields[i]->text();
+        qDebug() << usedString << "_" << tools->toolsQuickTabWidget->commentField->text() << "_" << tools->toolsNodesTabWidget->commentField->text();
 
         QCOMPARE(tools->toolsQuickTabWidget->commentField->text(), usedString);
         QCOMPARE(tools->toolsNodesTabWidget->commentField->text(), usedString);
+
 
         bool found;
         // get the id of the node from the quick tab spinbox
         int nodeID = tools->toolsQuickTabWidget->activeNodeSpinBox->value();
         // iterate through the table and find the entry of this node
+
+
         for(int k = 0; k < commentsWidget->nodeCommentsTab->nodeTable->rowCount(); k++) {
             QTableWidgetItem *idColumn = commentsWidget->nodeCommentsTab->nodeTable->item(k, 0);
-            if(idColumn->text().toInt() == nodeID) {
-                QCOMPARE(usedString, commentsWidget->nodeCommentsTab->nodeTable->item(k, 1)->text());
-                found = true;
+            if(idColumn) {
+                if(idColumn->text().toInt() == nodeID) {
+                    QCOMPARE(usedString, commentsWidget->nodeCommentsTab->nodeTable->item(k, 1)->text());
+                    found = true;
+                }
             }
         }
 
@@ -141,18 +147,23 @@ void TestCommentsWidget::testEnableConditionalColoring() {
         reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
         // the coloring checkbox will be enabled and a corresponding substring will be defined
 
-        int random = rand() % 5;
+        int random = i /*rand() % 5 */;
 
-        highlightingTab ->substringFields[i]->setText("T");
-        highlightingTab ->colorComboBox[i]->setCurrentIndex(random);
-        if(!highlightingTab ->enableCondColoringCheckBox->isChecked())
-            highlightingTab ->enableCondColoringCheckBox->setChecked(true);
+        highlightingTab->substringFields[i]->setText("T");
+        highlightingTab->colorComboBox[i]->currentIndexChanged(random);
+
+        if(!highlightingTab->enableCondColoringCheckBox->isChecked())
+            highlightingTab->enableCondColoringCheckBox->setChecked(true);
+        else {
+            QCOMPARE(state->skeletonState->userCommentColoringOn, highlightingTab->enableCondColoringCheckBox->isChecked());
+        }
 
         // check the color declared in the skeleton Model
         color4F *color = state->skeletonState->commentColors;
 
+
         if(random == 0) {
-            // the reference values are 0.13, 0.69, 0.3, 1.
+            // the reference values are 0.13, 0.69, 0.3, 1.                        
             QVERIFY(color->r == 0.13);
             QVERIFY(color->g == 0.69);
             QVERIFY(color->b == 0.3);
@@ -164,17 +175,17 @@ void TestCommentsWidget::testEnableConditionalColoring() {
             QVERIFY(color->b == 0.69);
             QVERIFY(color->a == 1.F);
         } else if(random == 2) {
-            // the reference values are 0.6, 0.85, 0.92, 1.)
+            // the reference values are 0.6, 0.85, 0.92, 1.)            
             QVERIFY(color->r == 0.6);
             QVERIFY(color->g == 0.85);
             QVERIFY(color->b == 0.92);
-            QVERIFY(color->a == 1);
+            QVERIFY(color->a == 1.F);
         } else if(random == 3) {
             // the reference values are 0.64, 0.29, 0.64, 1.);
             QVERIFY(color->r == 0.64);
             QVERIFY(color->g == 0.29);
             QVERIFY(color->b == 0.64);
-            QVERIFY(color->a == 1);
+            QVERIFY(color->a == 1.F);
         } else if(random == 4) {
             // the reference values are 0.73, 0.48, 0.34, 1.
             QVERIFY(color->r == 0.73F);
@@ -207,7 +218,7 @@ void TestCommentsWidget::testEnableConditionalRadius() {
         // that´s why another node is needed
         QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
         // we need a comment to check the coloring later
-        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
+        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentField->setText("Test");
 
         // the coloring checkbox will be enabled and a corresponding substring will be defined
         highlightingTab->substringFields[i]->setText("T");
@@ -246,11 +257,11 @@ void TestCommentsWidget::testCommentsTable() {
     }
 
     // check if branchnodes are filtered
-    commentsWidget->nodeCommentsTab->branchNodesOnlyCheckbox->setChecked(true);
-
+    commentsWidget->nodeCommentsTab->branchPointOnlyChecked(true);
+    int value = commentsWidget->nodeCommentsTab->nodeTable->rowCount();
     // only one node should be in the table the branchnode (id = 1)
-    QCOMPARE(2, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
-    commentsWidget->nodeCommentsTab->branchNodesOnlyCheckbox->setChecked(false);
+    QCOMPARE(1, commentsWidget->nodeCommentsTab->nodeTable->rowCount());
+    commentsWidget->nodeCommentsTab->branchPointOnlyChecked(false);
 
     // check if the substring filtering works
     commentsWidget->nodeCommentsTab->filterField->setText("R");
@@ -306,9 +317,8 @@ void TestCommentsWidget::testCommentsTablePerformance() {
     reference->window->clearSkeletonWithoutConfirmation();
 }
 
-void TestCommentsWidget::endTestCase() {
+void TestCommentsWidget::cleanupTestCase() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     commentsWidget->hide();
     emit ready();
-    qDebug() << "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
 }

@@ -1,3 +1,4 @@
+
 #include "datasetpropertywidget.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
@@ -103,6 +104,8 @@ void DatasetPropertyWidget::cancelButtonClicked() {
 }
 
 void DatasetPropertyWidget::processButtonClicked() {
+    qDebug() << dir;
+
     if(!dir.isNull()) {
         QString conf = QString(dir).append("/knossos.conf");
         QFile confFile(conf);

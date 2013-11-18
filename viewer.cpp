@@ -42,8 +42,6 @@ Viewer::Viewer(QObject *parent) :
     QThread(parent)
 {
 
-    QThread other;
-
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QDesktopWidget *desktop = QApplication::desktop();
@@ -53,9 +51,6 @@ Viewer::Viewer(QObject *parent) :
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20, desktop->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
-
-    window->moveToThread(&other);
-    other.start();
 
     state->console = window->widgetContainer->console;
     vpXY = window->viewports[VIEWPORT_XY];
@@ -1864,8 +1859,16 @@ void Viewer::runrun() {
 
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
-
     processUserMove();
+    /*
+    if(!state->viewerState->userMove) {
+        if(QApplication::hasPendingEvents()) {
+            QApplication::processEvents();
+        }
+        timer->singleShot(20 , this, SLOT(run()));
+        return;
+
+    }*/
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -2023,8 +2026,6 @@ void Viewer::run() {
             currentVp = nextVp;
 
         }//end while(viewports->elements > 0)
-
-
 }
 
 
@@ -2965,7 +2966,7 @@ bool Viewer::processUserMove() {
             delay.restart();
 #endif
 #ifdef Q_OS_MAC
-        state->autorepeat = true;
+            state->autorepeat = true;
 #endif
 
         if(time >= 200 and !state->autorepeat) {

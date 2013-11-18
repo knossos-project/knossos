@@ -23,6 +23,6 @@ private slots:
     void testCommentsTable();
     void testCommentsTablePerformance();
     void testDeleteComments(); // this slot should be called at the end.
-    void endTestCase();
+    void cleanupTestCase();
 };
 #endif // TESTCOMMENTSWIDGET_H

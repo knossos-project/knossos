@@ -232,8 +232,8 @@ void TestToolsWidget::testDeleteActiveTreeCaseZero() {
     QCOMPARE(state->skeletonState->treeElements, tools->toolsTreesTabWidget->activeTreeSpinBox->text().toInt());
 
     QVERIFY(state->skeletonState->totalNodeElements == 0);
-    QCOMPARE(state->skeletonState->treeElements, tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
-    QCOMPARE(state->skeletonState->treeElements, tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
+    QCOMPARE(state->skeletonState->totalNodeElements, tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
+    QCOMPARE(state->skeletonState->totalNodeElements, tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
 
     reference->window->clearSkeletonWithoutConfirmation();
 }
@@ -244,7 +244,7 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
     Viewport *firstViewport = reference->vpXY;
 
     // lets add a tree and at least two nodes
-    QTest::keyClick(firstViewport, Qt::Key_C);
+    //QTest::keyClick(firstViewport, Qt::Key_C);
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
@@ -259,8 +259,9 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
 
     // now we delete the last tree and check the node ID
     tools->toolsTreesTabWidget->deleteActiveTreeWithoutConfirmation();
-    QVERIFY(2 == tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
-    QVERIFY(2 == tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
+
+    QCOMPARE(QString("Tree Count: 1"), tools->toolsQuickTabWidget->treeCountLabel->text());
+    QCOMPARE(QString("Node Count: 2"), tools->toolsQuickTabWidget->nodeCountLabel->text());
 
     reference->window->clearSkeletonWithoutConfirmation();
 
@@ -274,12 +275,15 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
 
     pos = firstViewport->pos();
     // and a node for tree no n
-    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos, 50);
 
     // now we delete the last tree and check the node ID
     tools->toolsTreesTabWidget->deleteActiveTreeWithoutConfirmation();
-    QVERIFY(0 == tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
-    QVERIFY(0 == tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
+
+
+    QCOMPARE(0 ,tools->toolsQuickTabWidget->activeNodeSpinBox->text().toInt());
+    QCOMPARE(0 ,tools->toolsNodesTabWidget->activeNodeIdSpinBox->text().toInt());
+
 
     reference->window->clearSkeletonWithoutConfirmation();
 }
@@ -288,22 +292,20 @@ void TestToolsWidget::testMergeTrees() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
     Viewport *firstViewport = reference->vpXY;
 
-    // lets create 2 trees with 1 one
-    QTest::keyClick(firstViewport, Qt::Key_C);
+    // lets create 2 trees with 1 node
+    //QTest::keyClick(firstViewport, Qt::Key_C);
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
 
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
-
     QTest::keyClick(firstViewport, Qt::Key_C);
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 
-    // lets push the merge button
     tools->toolsTreesTabWidget->id1SpinBox->setValue(1);
     tools->toolsTreesTabWidget->id2SpinBox->setValue(2);
-
+    // lets push the merge button
     tools->toolsTreesTabWidget->mergeTreesButton->click();
 
     QVERIFY(1 == state->skeletonState->treeElements);
@@ -327,7 +329,7 @@ void TestToolsWidget::testSplitConnectedComponents() {
     QTest::keyClick(firstViewport, Qt::Key_A);
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
 
-    tools->toolsTreesTabWidget->splitByConnectedComponentsButton->click();
+    tools->toolsTreesTabWidget->splitByConnectedComponentsButtonClicked();
 
     int trees = state->skeletonState->treeElements;
 
@@ -351,7 +353,7 @@ void TestToolsWidget::testRestoreColors() {
     tools->toolsTreesTabWidget->bSpinBox->setValue(b);
     tools->toolsTreesTabWidget->aSpinBox->setValue(a);
 
-    tools->toolsTreesTabWidget->restoreDefaultColorButton->click();
+    tools->toolsTreesTabWidget->restoreDefaultColorButtonClicked();
 
     QCOMPARE(tools->toolsTreesTabWidget->rSpinBox->value(), 0.0);
     QCOMPARE(tools->toolsTreesTabWidget->gSpinBox->value(), 0.0);

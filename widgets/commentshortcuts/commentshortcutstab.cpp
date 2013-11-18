@@ -52,13 +52,16 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
         labels[i] = new QLabel(tmp);
 
         textFields[i] = new QLineEdit();
-        textFields[i]->installEventFilter(this);
         layout->addRow(labels[i], textFields[i]);
     }
 
     button = new QPushButton("Clear Comments Boxes");
     layout->addWidget(button);
     this->setLayout(layout);
+
+    for(int i = 0; i < 5; i++) {
+        connect(textFields[i], SIGNAL(textEdited(QString)), this, SLOT(commentChanged(QString)));
+    }
 
     connect(button, SIGNAL(clicked()), this, SLOT(deleteComments()));
 
@@ -67,7 +70,7 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
 void CommentShortCutsTab::deleteCommentsWithoutConfirmation() {
 
     for(int i = 0; i < NUM; i++) {
-        textFields[i]->clear();
+        textFields[i]->clear();        
     }
 }
 
@@ -87,39 +90,21 @@ void CommentShortCutsTab::deleteComments() {
     }
 }
 
-/**
-  * This method is a replacement for SIGNAL and SLOT. If the user pushs the return button in the respective textField, the method finds out which textField is
-  * clicked and sets the corresponding comment in state->viewerState->gui->
-  * @todo an optical feedback for the user would be a nice feature
-  */
-bool CommentShortCutsTab::eventFilter(QObject *obj, QEvent *event) {
+void CommentShortCutsTab::commentChanged(QString comment) {
+    qDebug() << comment;
 
-    for(int i = 0; i < NUM; i++) {
-        if(textFields[i] == obj) {
-            if(event->type() == QEvent::KeyPress) {               
-                QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-                if(keyEvent->key() == Qt::Key_Return) {
-                    if(!textFields[i]->text().isEmpty()) {
-                        if(i == 0) {                            
-                            strcpy(state->viewerState->gui->comment1, textFields[i]->text().toStdString().c_str());
-                            return true;
-                        } else if(i == 1) {
-                            strcpy(state->viewerState->gui->comment2, textFields[i]->text().toStdString().c_str());
-                            return true;
-                        } else if(i == 2) {
-                           strcpy(state->viewerState->gui->comment3, textFields[i]->text().toStdString().c_str());
-                            return true;
-                        } else if(i == 3) {
-                           strcpy(state->viewerState->gui->comment4, textFields[i]->text().toStdString().c_str());
-                            return true;
-                        } else if(i == 4) {
-                            strcpy(state->viewerState->gui->comment5, textFields[i]->text().toStdString().c_str());
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return false;
+    QObject *emitter = sender();
+
+    if(textFields[0] == emitter) {
+        strcpy(state->viewerState->gui->comment1, comment.toLocal8Bit().data());
+    } else if(textFields[1] == emitter) {
+       strcpy(state->viewerState->gui->comment2, comment.toLocal8Bit().data());
+    } else if(textFields[2] == emitter) {
+        strcpy(state->viewerState->gui->comment3, comment.toLocal8Bit().data());
+     } else if(textFields[3] == emitter) {
+        strcpy(state->viewerState->gui->comment4, comment.toLocal8Bit().data());
+     } else if(textFields[4] == emitter) {
+        strcpy(state->viewerState->gui->comment5, comment.toLocal8Bit().data());
+     }
 }
+

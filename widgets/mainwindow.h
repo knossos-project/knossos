@@ -30,6 +30,7 @@
 #include <QDropEvent>
 #include <QQueue>
 #include <QComboBox>
+#include <QUndoStack>
 #include "knossos-global.h"
 
 namespace Ui {
@@ -217,7 +218,7 @@ public:
 
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);
-
+    QUndoStack *undoStack;
 
 
 public slots:
@@ -302,6 +303,7 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
+
 
 
 };

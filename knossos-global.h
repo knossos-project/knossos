@@ -1180,7 +1180,7 @@ struct skeletonState {
     uint totalComments;
     uint totalBranchpoints;
 
-    uint userCommentColoringOn;
+    bool userCommentColoringOn;
     uint commentNodeRadiusOn;
 
     bool lockPositions;

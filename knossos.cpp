@@ -223,12 +223,13 @@ int main(int argc, char *argv[])
     tools.reference = viewer;
     QTest::qExec(&tools);
     */
-    /*
+
+
     KnossosTestRunner runner;
     runner.reference = viewer;
     runner.addTestClasses();
     runner.show();
-    */
+
 
 
     /*
@@ -248,6 +249,8 @@ int main(int argc, char *argv[])
     navigation.remoteReference = remote;
     QTest::qExec(&navigation);
     */
+
+
 
     return a.exec();
 }

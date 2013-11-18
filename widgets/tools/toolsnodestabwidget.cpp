@@ -187,15 +187,18 @@ void ToolsNodesTabWidget::idChanged(int value) {
 }
 
 void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
-    state->skeletonState->activeNode->position.x = value;
+    if(state->skeletonState->activeNode)
+        state->skeletonState->activeNode->position.x = value;
 }
 
 void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
-    state->skeletonState->activeNode->position.y = value;
+    if(state->skeletonState->activeNode)
+        state->skeletonState->activeNode->position.y = value;
 }
 
 void ToolsNodesTabWidget::activeNodeZSpinChanged(int value) {
-    state->skeletonState->activeNode->position.z = value;
+    if(state->skeletonState->activeNode)
+        state->skeletonState->activeNode->position.z = value;
 }
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
