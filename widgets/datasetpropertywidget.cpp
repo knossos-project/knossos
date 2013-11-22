@@ -1,4 +1,3 @@
-
 #include "datasetpropertywidget.h"
 #include <QVBoxLayout>
 #include <QFileDialog>
@@ -10,87 +9,45 @@
 #include "knossos-global.h"
 #include "knossos.h"
 #include "ftp.h"
+#include "viewer.h"
+#include "mainwindow.h"
 
 extern struct stateInfo *state;
 
 DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     QDialog(parent)
 {
-
     QVBoxLayout *mainLayout = new QVBoxLayout();
-
     QGridLayout *localLayout = new QGridLayout();
 
     localGroup = new QGroupBox("Local Dataset");
 
-    //mainLayout->addWidget(localGroup);
-
     datasetfileDialog = new QPushButton("Select Dataset Path");
     this->path = new QLineEdit();
-    //supercubeSize = new QComboBox();
-    //supercubeSizeLabel = new QLabel("Supercube Size");
-
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    /*for(int i = 3; i < 9; i+=2) {
-
-        supercubeSize->addItem(QVariant::fromValue(i).toString());
-    }*/
-
     localLayout->addWidget(path, 0, 0);
     localLayout->addWidget(datasetfileDialog, 0, 1);
-    //localLayout->addWidget(supercubeSizeLabel, 1, 0);
-    //localLayout->addWidget(supercubeSize, 1, 1);
     localLayout->addWidget(processButton, 2,0);
     localLayout->addWidget(cancelButton, 2, 1);
 
     localGroup->setLayout(localLayout);
     mainLayout->addWidget(localGroup);
 
-    remoteGroup = new QGroupBox("Remote Dataset");
-    QGridLayout *remoteLayout = new QGridLayout();
-
-    QLabel *usernameLabel = new QLabel("Username:");
-    QLabel *passwordLabel = new QLabel("Password");
-    QLabel *urlLabel = new QLabel("Url");
-
-    username = new QLineEdit();
-    password = new QLineEdit();
-    password->setEchoMode(QLineEdit::Password);
-    url = new QLineEdit();
-    remoteCancelButton = new QPushButton("Cancel");
-    connectButton = new QPushButton("Connect");
-
-    remoteLayout->addWidget(usernameLabel, 0, 0);
-    remoteLayout->addWidget(username, 0, 1);
-    remoteLayout->addWidget(passwordLabel, 1, 0);
-    remoteLayout->addWidget(password, 1, 1);
-    remoteLayout->addWidget(urlLabel, 2, 0);
-    remoteLayout->addWidget(url, 2, 1);
-
-    remoteLayout->addWidget(connectButton, 3, 0);
-    remoteLayout->addWidget(remoteCancelButton, 3, 1);
-
-    remoteGroup->setLayout(remoteLayout);
-    mainLayout->addWidget(remoteGroup);
-
     setLayout(mainLayout);
 
     connect(this->datasetfileDialog, SIGNAL(clicked()), this, SLOT(datasetfileDialogClicked()));
     connect(this->cancelButton, SIGNAL(clicked()), this, SLOT(cancelButtonClicked()));
     connect(this->processButton, SIGNAL(clicked()), this, SLOT(processButtonClicked()));
-    connect(this->remoteCancelButton, SIGNAL(clicked()), this, SLOT(cancelButtonClicked()));
-    connect(this->connectButton, SIGNAL(clicked()), this, SLOT(connectButtonClicked()));
 }
 
 void DatasetPropertyWidget::datasetfileDialogClicked() {
     QApplication::processEvents();
-    this->dir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
-    qDebug() << dir;
-    if(!dir.isNull()) {
-        path->setText(dir);
-       //Knossos::configFromCli();
+    QString selectDir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
+    qDebug() << selectDir;
+    if(!selectDir.isNull()) {
+        path->setText(selectDir);
     }
 }
 
@@ -98,77 +55,101 @@ void DatasetPropertyWidget::closeEvent(QCloseEvent *event) {
     this->hide();
 }
 
+void DatasetPropertyWidget::waitForLoader() {
+    state->protectLoadSignal->lock();
+    while (state->loaderBusy) {
+        state->conditionLoadFinished->wait(state->protectLoadSignal);
+    }
+    state->protectLoadSignal->unlock();
+}
+
 void DatasetPropertyWidget::cancelButtonClicked() {
-    this->dir.clear();
     this->hide();
 }
 
 void DatasetPropertyWidget::processButtonClicked() {
-    qDebug() << dir;
-
-    if(!dir.isNull()) {
-        QString conf = QString(dir).append("/knossos.conf");
-        QFile confFile(conf);
-        if(!confFile.exists()) {
-            QMessageBox info;
-            info.setWindowFlags(Qt::WindowStaysOnTopHint);
-            info.setIcon(QMessageBox::Information);
-            info.setWindowTitle("Information");
-            info.setText("There is no knossos.conf");
-            info.addButton(QMessageBox::Ok);
-            info.exec();
-            return;
-        }
-
-        strcpy(state->path, dir.toStdString().c_str());
-        //state->M = supercubeSize->currentText().toInt();
-
-        if(Knossos::readConfigFile(conf.toStdString().c_str())) {            
-           emit clearSkeletonSignal();
-
-            resetHashtable();
-            //state->loadSignal = true;
-           emit resetLoaderSignal();
-
-           Knossos::findAndRegisterAvailableDatasets();
-        } else {
-
-        }
-
-        qDebug() << state->path;
-        qDebug() << state->M;
+    QString dir = this->path->text();
+    if(dir.isNull()) {
+        QMessageBox info;
+        info.setWindowFlags(Qt::WindowStaysOnTopHint);
+        info.setIcon(QMessageBox::Information);
+        info.setWindowTitle("Information");
+        info.setText("No directory specified!");
+        info.addButton(QMessageBox::Ok);
+        info.exec();
+        return;
     }
+
+    QString conf = QString(dir).append("/knossos.conf");
+    QFile confFile(conf);
+    if(!confFile.exists()) {
+        QMessageBox info;
+        info.setWindowFlags(Qt::WindowStaysOnTopHint);
+        info.setIcon(QMessageBox::Information);
+        info.setWindowTitle("Information");
+        info.setText("There is no knossos.conf");
+        info.addButton(QMessageBox::Ok);
+        info.exec();
+        return;
+    }
+
+    // Note:
+    // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
+    // This is a gamble we take, in order to not have possible bugs where the skeleton depends on old configuration values.
+    emit clearSkeletonSignal();
+
+    this->waitForLoader();
+
+    // From now on we don't really want to *load* anything, just mess around with data structures to get things right
+    state->loaderDummy = true;
+
+    while (state->magnification > 1) {
+        emit changeDatasetMagSignal(MAG_DOWN);
+        this->waitForLoader();
+    }
+
+    // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
+    state->viewerState->currentPosition.x =
+            state->viewerState->currentPosition.y =
+            state->viewerState->currentPosition.z = 0;
+    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength, TELL_COORDINATE_CHANGE);
+
+    this->waitForLoader();
+
+    strcpy(state->path, dir.toStdString().c_str());
+
+    if(false == Knossos::readConfigFile(conf.toStdString().c_str())) {
+        QMessageBox info;
+        info.setWindowFlags(Qt::WindowStaysOnTopHint);
+        info.setIcon(QMessageBox::Information);
+        info.setWindowTitle("Information");
+        info.setText(QString("Failed to read config from %s").arg(conf));
+        info.addButton(QMessageBox::Ok);
+        info.exec();
+        return;
+    }
+
+    knossos->commonInitStates();
+
+    this->waitForLoader();
+
+    emit changeDatasetMagSignal(DATA_SET);
+
+    // Back to usual...
+    state->loaderDummy = false;
+
+    // ...beginning with loading the middle of dataset, as upon startup
+    SET_COORDINATE(state->viewerState->currentPosition,
+                   state->boundary.x / 2 - state->cubeEdgeLength,
+                   state->boundary.y / 2 - state->cubeEdgeLength,
+                   state->boundary.z / 2 - state->cubeEdgeLength);
+    emit userMoveSignal(
+                state->cubeEdgeLength,
+                state->cubeEdgeLength,
+                state->cubeEdgeLength,
+                TELL_COORDINATE_CHANGE);
+
+    emit datasetSwitchZoomDefaults();
 
     this->hide();
-}
-
-void DatasetPropertyWidget::connectButtonClicked() {
-    if(!username->text().isEmpty() & !password->text().isEmpty() & !url->text().isEmpty()) {
-
-        char curlPath[MAX_PATH];
-        strcpy(curlPath, this->url->text().toStdString().c_str());
-        strcpy(state->ftpUsername, username->text().toStdString().c_str());
-        strcpy(state->ftpPassword, password->text().toStdString().c_str());
-        downloadFile(curlPath, NULL);
-    }
-
-}
-
-void DatasetPropertyWidget::resetHashtable() {
-    state->protectLoadSignal->lock();
-
-    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-        Hashtable::ht_rmtable(state->Dc2Pointer[Knossos::log2uint32(i)]);
-        Hashtable::ht_rmtable(state->Oc2Pointer[Knossos::log2uint32(i)]);
-        if(i == 0) i = 1;
-    }
-
-    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-        state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-        if(i == 0) i = 1;
-    }
-
-
-    state->protectLoadSignal->unlock();
 }

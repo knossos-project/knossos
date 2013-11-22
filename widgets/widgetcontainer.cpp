@@ -153,4 +153,6 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createSplashScreenWidget(parent);
     createDocumentationWidget(parent);
     rewire();
+
+    connect(this->datasetPropertyWidget, SIGNAL(datasetSwitchZoomDefaults()), this->zoomAndMultiresWidget, SLOT(zoomDefaultsClicked()));
 }

@@ -16,31 +16,21 @@ public:
 
 protected:
     QGroupBox *localGroup;
-    QString dir;
-    //QLabel *supercubeSizeLabel;
     QLineEdit *path;
-    //QComboBox *supercubeSize;
     QPushButton *datasetfileDialog;
     QPushButton *cancelButton;
     QPushButton *processButton;
-
-    /* remote */
-    QGroupBox *remoteGroup;
-    QLineEdit *username;
-    QLineEdit *password;
-    QLineEdit *url;
-    QPushButton *remoteCancelButton;
-    QPushButton *connectButton;
-    void resetHashtable();
     void closeEvent(QCloseEvent *event);
+    void waitForLoader();
 signals:
     void clearSkeletonSignal();
-    void resetLoaderSignal();
+    void changeDatasetMagSignal(uint upOrDownFlag);
+    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void datasetSwitchZoomDefaults();
 public slots:
     void datasetfileDialogClicked();
     void cancelButtonClicked();
     void processButtonClicked();
-    void connectButtonClicked();
 };
 
 #endif // DATASETPROPERTYWIDGET_H

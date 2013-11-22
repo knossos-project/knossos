@@ -66,6 +66,8 @@ Loader *loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 
+Knossos *knossos = NULL;
+
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN | Q_OS_LINUX
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
     Knossos::showSplashScreen();
 
 
-    Knossos *knossos = new Knossos();
+    knossos = new Knossos();
 
     qDebug() << sizeof(struct treeListElement);
     qDebug() << sizeof(struct nodeListElement);
@@ -208,7 +210,7 @@ int main(int argc, char *argv[])
 
 
 
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(resetLoaderSignal()), loader, SLOT(initLoader()));
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)), viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     //scripts->run();
 
     /* TEST */
@@ -255,6 +257,28 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
+/*
+ * This function is common to initStates, which is called when knossos starts,
+ * and to switching to another dataset. Therefore it includes *only* those
+ * actions that are dataset-specific, or that are required for reseting dataset-
+ * derived content, e.g. the actual cube contents
+ */
+bool Knossos::commonInitStates() {
+    // the voxel dim stuff needs an cleanup. this is such a mess. fuck
+    state->viewerState->voxelDimX = state->scale.x;
+    state->viewerState->voxelDimY = state->scale.y;
+    state->viewerState->voxelDimZ = state->scale.z;
+    state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
+    state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
+
+    // searches for multiple mag datasets and enables multires if more
+    //  than one was found
+    if (false == Knossos::findAndRegisterAvailableDatasets()) {
+        return false;
+    }
+
+    return true;
+}
 
 /**
  * This function initializes the values of state with the value of tempConfig
@@ -274,12 +298,6 @@ bool Knossos::initStates() {
    state->viewerState->autoTracingSteps = 10;
    state->skeletonState->idleTimeSession = 0;
 
-   // the voxel dim stuff needs an cleanup. this is such a mess. fuck
-   state->viewerState->voxelDimX = state->scale.x;
-   state->viewerState->voxelDimY = state->scale.y;
-   state->viewerState->voxelDimZ = state->scale.z;
-   state->viewerState->voxelXYRatio = state->scale.x / state->scale.y;
-   state->viewerState->voxelXYtoZRatio = state->scale.x / state->scale.z;
    state->viewerState->depthCutOff = state->viewerState->depthCutOff;
    state->viewerState->cumDistRenderThres = 7.f; //in screen pixels
    Knossos::loadNeutralDatasetLUT(&(state->viewerState->neutralDatasetTable[0][0]));
@@ -377,15 +395,19 @@ bool Knossos::initStates() {
    SET_COORDINATE(state->previousPositionX, 0, 0, 0);
    SET_COORDINATE(state->currentPositionX, 0, 0, 0);
 
-   state->loadLocalSystem = LS_UNIX;
    curl_global_init(CURL_GLOBAL_DEFAULT);
-   if (LM_FTP == state->loadMode) {
-
-       state->loadFtpCachePath = (char*)malloc(MAX_PATH);
-
+   state->loadFtpCachePath = (char*)malloc(MAX_PATH);
+   state->loadLocalSystem = LS_WINDOWS;
+   if (LS_UNIX == state->loadLocalSystem) {
        const char *tmp = "/Users/amos/temp/";
        strcpy(state->loadFtpCachePath, tmp);
-
+   }
+   else if (LS_WINDOWS == state->loadLocalSystem) {
+       GetTempPathA(MAX_PATH, state->loadFtpCachePath);
+   }
+   else {
+       LOG("Unsupported OS %d\n", state->loadLocalSystem);
+       return false;
    }
 
    // We're not doing stuff in parallel, yet. So we skip the locking
@@ -406,15 +428,7 @@ bool Knossos::initStates() {
        if(i == 0) i = 1;
    }
 
-   // searches for multiple mag datasets and enables multires if more
-   //  than one was found
-
-
-   if (false == Knossos::findAndRegisterAvailableDatasets()) {
-       return false;
-   }
-
-   return true;
+   return commonInitStates();
 
 }
 
@@ -547,12 +561,14 @@ bool Knossos::stripNewlines(char *string) {
 }
 
 bool Knossos::readConfigFile(const char *path) {
-
     QFile file(path);
     if(!file.open(QIODevice::ReadOnly)) {
             qDebug("Error reading config file at path:%s", path);
             return false;
     }
+
+    state->loadMode = LM_LOCAL;
+    state->compressionRatio = 0;
 
     QTextStream stream(&file);
     while(!stream.atEnd()) {
@@ -842,6 +858,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
          * Multires might be confusing to untrained tracers! Experts can easily enable it..
          * The loaded gui config might lock K to the current mag later one, which is fine. */
         if(state->highestAvailableMag > 1) {
+            qDebug() << "Decided on datasetMagLock = true";
             state->viewerState->datasetMagLock = true;
         }
 
@@ -913,10 +930,13 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 bool Knossos::configDefaults() {
     state = Knossos::emptyState();
     state->loadSignal = false;
+    state->loaderBusy = false;
+    state->loaderDummy = false;
     state->remoteSignal = false;
     state->quitSignal = false;
     state->clientSignal = false;
     state->conditionLoadSignal = new QWaitCondition();
+    state->conditionLoadFinished = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
     state->conditionClientSignal = new QWaitCondition();
     state->protectSkeleton = new QMutex(QMutex::Recursive);

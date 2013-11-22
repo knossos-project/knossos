@@ -988,6 +988,7 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
+        qDebug() << "MainWindow::defaultPreferencesSlot: lockDatasetCheckBox->setChecked(true)";
         widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
         widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
         emit loadTreeLUTFallback();

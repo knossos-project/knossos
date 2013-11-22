@@ -128,6 +128,7 @@ class Loader : public QThread
 public:
     explicit Loader(QObject *parent = 0);
     void run();
+    void waitTillFinished();
     int CompareLoadOrderMetric(const void * a, const void * b);
 
     C_Element *Dcoi;

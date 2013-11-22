@@ -44,6 +44,7 @@ public:
     static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);   
     bool initStates();
+    bool commonInitStates();
     static void revisionCheck();
 
     static bool unlockSkeleton(int increment);
@@ -66,5 +67,7 @@ public slots:
     void loadTreeLUTFallback();
 
 };
+
+extern Knossos *knossos;
 
 #endif

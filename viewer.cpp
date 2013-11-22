@@ -66,7 +66,7 @@ Viewer::Viewer(QObject *parent) :
      * 3. new Renderer
     */
 
-    SET_COORDINATE(state->viewerState->currentPosition, 830, 1000, 830)
+    SET_COORDINATE(state->viewerState->currentPosition, state->boundary.x / 2, state->boundary.y / 2, state->boundary.z / 2);
 
     initViewer();
     skeletonizer = new Skeletonizer();
@@ -1776,39 +1776,41 @@ bool Viewer::calcDisplayedEdgeLength() {
 /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
 bool Viewer::changeDatasetMag(uint upOrDownFlag) {
     uint i;
+    if (DATA_SET != upOrDownFlag) {
 
-    if(state->viewerState->datasetMagLock) {
-        return false;
-    }
+        if(state->viewerState->datasetMagLock) {
+            return false;
+        }
 
-    switch(upOrDownFlag) {
-    case MAG_DOWN:
-        if(state->magnification > state->lowestAvailableMag) {
-            state->magnification /= 2;
-            for(i = 0; i < state->viewerState->numberViewports; i++) {
-                if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
-                    upsampleVPTexture(&state->viewerState->vpConfigs[i]);
-                    state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
+        switch(upOrDownFlag) {
+        case MAG_DOWN:
+            if(state->magnification > state->lowestAvailableMag) {
+                state->magnification /= 2;
+                for(i = 0; i < state->viewerState->numberViewports; i++) {
+                    if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
+                        upsampleVPTexture(&state->viewerState->vpConfigs[i]);
+                        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
+                    }
                 }
             }
-        }
-        else return false;
-        break;
+            else return false;
+            break;
 
-    case MAG_UP:
-        if(state->magnification < state->highestAvailableMag) {
-            state->magnification *= 2;
-            for(i = 0; i < state->viewerState->numberViewports; i++) {
-                if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
-                    state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
-                    downsampleVPTexture(&state->viewerState->vpConfigs[i]);
-                    state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
+        case MAG_UP:
+            if(state->magnification < state->highestAvailableMag) {
+                state->magnification *= 2;
+                for(i = 0; i < state->viewerState->numberViewports; i++) {
+                    if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
+                        downsampleVPTexture(&state->viewerState->vpConfigs[i]);
+                        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
+                    }
                 }
             }
+            else return false;
+            break;
         }
-        else return false;
-        break;
     }
 
     /* necessary? */

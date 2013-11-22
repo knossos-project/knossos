@@ -462,11 +462,9 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     }
     */
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
-        // LOG("%d\t%d\t%d", state->currentDirections[i].x, state->currentDirections[i].y, state->currentDirections[i].z);
         dx += (float)state->currentDirections[i].x;
         dy += (float)state->currentDirections[i].y;
         dz += (float)state->currentDirections[i].z;
-        // LOG("Progress %f,%f,%f", dx, dy, dz);
     }
     SET_COORDINATE(direction, dx, dy, dz);
     direction = find_close_xyz(direction);
@@ -478,7 +476,6 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         direction_norm = CALC_VECTOR_NORM(direction);
     }
     NORM_VECTOR(direction, direction_norm);
-    /* LOG("Direction %f,%f,%f", direction.x, direction.y, direction.z); */
 
     cubeElemCount = state->cubeSetElements;
     DcArray = (LO_Element*)malloc(sizeof(DcArray[0]) * cubeElemCount);
@@ -508,14 +505,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
                 int (*cmp)(const void*, const void*, const void *),
                 const void *ctx);
     _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric_LoaderWrapper, (const void*)this);
-    //LOG("New Order (%f, %f, %f):", direction.x, direction.y, direction.z);
     for (i = 0; i < cubeElemCount; i++) {
-        /*
-        LOG("%d\t%d\t%d",
-            DcArray[i].coordinate.x - currentOrigin.x,
-            DcArray[i].coordinate.y - currentOrigin.y,
-            DcArray[i].coordinate.z - currentOrigin.z);
-        */
         if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
             return false;
         }
@@ -547,8 +537,6 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
      *
      */
 
-    //LOG("LOADER [%08X] %d started decompressing %d", GetTickCount() - lts->beginTickCount, lts->threadIndex, lts->currentCube->debugVal);
-
     state->protectLoaderSlots->lock();
     currentDcSlot = slotListGetElement(lts->thisPtr->freeDcSlots);
     state->protectLoaderSlots->unlock();
@@ -567,12 +555,10 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     }
     if (LM_FTP == state->loadMode) {
         if (lts->currentCube->isAborted) {
-            //LOG("Aborted while retrieving %d,%d,%d (DEBUG %d)", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, lts->currentCube->debugVal);
             retVal = false;
             goto loadcube_ret;
         }
         if (lts->currentCube->hasError) {
-            //LOG("Error retrieving %d,%d,%d (DEBUG %d)", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, lts->currentCube->debugVal);
             goto loadcube_fail;
         }
     }
@@ -590,7 +576,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
-            //LOG("fopen failed for %s!", filename);
+            LOG("fopen failed for %s!", filename);
             goto loadcube_fail;
         }
 
@@ -605,6 +591,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             fclose(cubeFile);
         }
     }
+
     goto loadcube_manage;
 
 loadcube_fail:
@@ -653,7 +640,6 @@ loadcube_ret:
         //lts->decompTime = GetTickCount() - tickCount;
     }
     lts->isBusy = false;
-    //LOG("LOADER [%08X] %d finished decompressing %d", GetTickCount() - lts->beginTickCount, lts->threadIndex, lts->currentCube->debugVal);
     lts->loadCubeThreadSem->release();
     lts->retVal = retVal;
     return;
@@ -836,7 +822,6 @@ bool Loader::initLoader() {
     }
 
     state->loaderMagnification = Knossos::log2uint32(state->magnification);
-    //LOG("loaderMagnification = %d", state->loaderMagnification);
     strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
     strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 
@@ -949,22 +934,14 @@ uint Loader::loadCubes() {
     int cubeCount = 0, loadedCubeCount = 0;
     int thread_index;
     int isBreak;
-    //DWORD waitTime = 0, decompTime = 0;
-    //DWORD currTick, beginTickCount;
-    //DWORD noDecompCurrent = 0, noDecompTotal = 0;
 
     for (currentCube = this->Dcoi->previous; currentCube != this->Dcoi; currentCube = currentCube->previous) {
         cubeCount++;
-        //currentCube->debugVal = cubeCount;
     }
-    //beginTickCount = GetTickCount();
     if (LM_FTP == state->loadMode) {
         fts.cubeCount = cubeCount;
-        //fts.beginTickCount = beginTickCount;
         fts.ftpThreadSem = new QSemaphore(0);
         fts.loaderThreadSem = new QSemaphore(0);
-        //fts.debugVal = GetTickCount();
-        //LOG("DEBUG CreateThread FTP");
         fts.thisPtr = this;
         ftpThread = new FtpThread((void*)&fts);
         ftpThread->start();
@@ -972,9 +949,7 @@ uint Loader::loadCubes() {
 
     while (true) {
         // Wait on an available decompression thread
-        //LOG("LOADER [%08X] Waiting for decompression threads", GetTickCount() - beginTickCount);
         loadCubeThreadSem->acquire();
-        //LOG("LOADER [%08X] Signalled decompression threads: %d", GetTickCount() - beginTickCount, SDL_SemValue(loadCubeThreadSem));
         for (thread_index = 0; (thread_index < DECOMP_THREAD_NUM) && lts_array[thread_index].isBusy; thread_index++);
         if (DECOMP_THREAD_NUM == thread_index) {
             LOG("All threads occupied, c'est impossible! Au revoir loader!");
@@ -982,9 +957,7 @@ uint Loader::loadCubes() {
             break;
         }
         if (NULL != threadHandle_array[thread_index]) {
-            //LOG("LOADER [%08X] About to wait on vacant thread %d", GetTickCount() - beginTickCount, thread_index);
             threadHandle_array[thread_index]->wait();
-            //LOG("LOADER [%08X] Finihsed waiting on vacant thread %d", GetTickCount() - beginTickCount, thread_index);
             //decompTime += lts_array[thread_index].decompTime;
             loadedDc = lts_array[thread_index].retVal;
             delete threadHandle_array[thread_index];
@@ -992,7 +965,6 @@ uint Loader::loadCubes() {
             lts_array[thread_index] = lts_empty;
             loadedCubeCount++;
             if (!loadedDc) {
-                //LOG("LOADER [%08X] Thread %d finished wrongfully!", GetTickCount() - beginTickCount, thread_index);
                 retVal = false;
                 break;
             }
@@ -1011,23 +983,17 @@ uint Loader::loadCubes() {
             break;
         }
         if (cubeCount == loadedCubeCount) {
-            //LOG("LOADER [%08X] FINISHED!", GetTickCount() - beginTickCount);
             break;
         }
 
         if (LM_FTP == state->loadMode) {
-            //currTick = -GetTickCount();
             fts.loaderThreadSem->acquire();
-            //currTick += GetTickCount();
-            //waitTime += currTick;
-            //LOG("LOADER [%08X] Waited %d, overall %d", GetTickCount() - beginTickCount, currTick, waitTime);
         }
         for (currentCube = this->Dcoi->previous; currentCube != this->Dcoi; currentCube = currentCube->previous) {
             if (currentCube->isLoaded) {
                 continue;
             }
             if ((currentCube->isFinished) || (LM_FTP != state->loadMode)) {
-                //LOG("LOADER [%08X] Found %d", GetTickCount() - beginTickCount, currentCube->debugVal);
                 currentCube->isLoaded = true;
                 break;
             }
@@ -1056,19 +1022,14 @@ uint Loader::loadCubes() {
     }
 
     if (LM_FTP == state->loadMode) {
-        //LOG("LoadCubes posting FTP abort");
         fts.ftpThreadSem->release();
-        //LOG("LoadCubes waiting FTP thread");
         ftpThread->wait();
         delete ftpThread;
         ftpThread = NULL;
-        //LOG("LoadCubes FTP thread finished, destroying semaphore");
         delete fts.ftpThreadSem; fts.ftpThreadSem = NULL;
-        //LOG("LoadCubes FTP semaphore destroyed");
         delete fts.loaderThreadSem; fts.loaderThreadSem = NULL;
 
         if (true == retVal) {
-            //LOG("loadCubes: Util (%08X) %d", fts.debugVal, (100*decompTime)/(1 + GetTickCount() - beginTickCount));
         }
     }
 
@@ -1076,14 +1037,11 @@ uint Loader::loadCubes() {
         if (NULL != threadHandle_array[thread_index]) {
             LOG("LOADER Decompression thread %d was open! Waiting...", thread_index);
             threadHandle_array[thread_index]->wait();
-            //LOG("LOADER [%08X] Decompression thread %d finished.", GetTickCount() - beginTickCount, thread_index);
             delete threadHandle_array[thread_index];
             threadHandle_array[thread_index] = NULL;
         }
     }
     delete loadCubeThreadSem; loadCubeThreadSem = NULL;
-
-    lll_rmlist(this->Dcoi);
 
     return retVal;
 }
@@ -1110,11 +1068,12 @@ void Loader::run() {
     while(true)  {
         // as long the loadSignal is false, the loops waits
         while(state->loadSignal == false) {
+            state->loaderBusy = false;
+            state->conditionLoadFinished->wakeOne();
             state->conditionLoadSignal->wait(state->protectLoadSignal);
+            state->loaderBusy = true;
         }
 
-        //qDebug("loader received load signal: %d, %d, %d", state->currentPositionX.x, state->currentPositionX.y, state->currentPositionX.z);
-        //qDebug("Waiting for the load signal at %ums.\n", state->time.elapsed());
         if (true == load()) {
             break;
         }
@@ -1178,7 +1137,6 @@ bool Loader::load() {
 
     prevLoaderMagnification = state->loaderMagnification;
     state->loaderMagnification = Knossos::log2uint32(state->magnification);
-    //LOG("loaderMagnification = %d", state->loaderMagnification);
     strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
     strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 
@@ -1212,12 +1170,14 @@ bool Loader::load() {
 
     state->protectLoadSignal->unlock();
 
-    if(loadCubes() == false) {
-        qDebug("Loading of all DCOI did not complete.");
+    if (!state->loaderDummy) {
+        if(loadCubes() == false) {
+            qDebug("Loading of all DCOI did not complete.");
+        }
     }
-    state->protectLoadSignal->lock();
+    lll_rmlist(this->Dcoi);
 
-    //state = true;
+    state->protectLoadSignal->lock();
 
     return false;
 }

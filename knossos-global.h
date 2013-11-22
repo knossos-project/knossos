@@ -124,6 +124,7 @@ values. The XY vp always used. */
 // pixel size instead of 20 nm
 #define MAG_DOWN 1
 #define MAG_UP 2
+#define DATA_SET 3
 #define NO_MAG_CHANGE 0
 
 #define CUBE_DATA       0
@@ -495,6 +496,10 @@ struct stateInfo {
     // Tell the loading thread that it should interrupt its work /
     // its sleep and do something new.
     bool loadSignal;
+    // Is loader currently busy
+    bool loaderBusy;
+    // Should loader load real data or just dummy do-nothing
+    bool loaderDummy;
 
     // If loadSignal is true and quitSignal is true, make the
     // loading thread quit. loadSignal == true means the loader
@@ -588,6 +593,9 @@ struct stateInfo {
     // Tell the loading thread to wake up.
 
     QWaitCondition *conditionLoadSignal;
+
+    // Tells another thread that loader has finished
+    QWaitCondition *conditionLoadFinished;
 
     // Tell the remote to wake up.
     QWaitCondition *conditionRemoteSignal;
