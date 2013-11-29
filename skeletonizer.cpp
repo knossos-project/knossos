@@ -3565,7 +3565,7 @@ bool Skeletonizer::popBranchNode(int targetRevision, int serialize) {
 
     if(branchNode && branchNode->isBranchNode) {
 #if QT_POINTER_SIZE == 8
-        LOG("Branch point (node ID %"PRId64") deleted.", branchNodeID)
+        LOG("Branch point (node ID %ld) deleted.", branchNodeID)
 #else
         LOG("Branch point (node ID %d) deleted.", branchNodeID)
 #endif

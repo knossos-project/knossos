@@ -398,17 +398,19 @@ bool Knossos::initStates() {
    curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(MAX_PATH);
    state->loadLocalSystem = LS_WINDOWS;
-   if (LS_UNIX == state->loadLocalSystem) {
-       const char *tmp = "/Users/amos/temp/";
-       strcpy(state->loadFtpCachePath, tmp);
-   }
-   else if (LS_WINDOWS == state->loadLocalSystem) {
-       GetTempPathA(MAX_PATH, state->loadFtpCachePath);
-   }
-   else {
-       LOG("Unsupported OS %d\n", state->loadLocalSystem);
-       return false;
-   }
+
+#ifdef Q_OS_LINUX
+   const char *tmp = "/tmp/";
+   strcpy(state->loadFtpCachePath, tmp);
+#endif
+#ifdef Q_OS_MAC
+   // TODO
+   const char *tmp = "/Users/amos/temp/";
+   strcpy(state->loadFtpCachePath, tmp);
+#endif
+#ifdef Q_OS_WINDOW
+    GetTempPathA(MAX_PATH, state->loadFtpCachePath);
+#endif
 
    // We're not doing stuff in parallel, yet. So we skip the locking
    // part.

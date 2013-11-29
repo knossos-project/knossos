@@ -28,16 +28,16 @@
 #include <math.h>
 
 #include <qgl.h>
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
     #include <glu.h>
     #include <GLUT/glut.h>
-
 #endif
 #ifdef Q_OS_LINUX
     #include <GL/gl.h>
     #include <GL/glu.h>
+    #include <GL/freeglut_std.h>
 #endif
-#ifdef Q_OS_WIN
+#ifdef Q_OS_WIN32
     #include <GL/glu.h>
     #include <GL/glut.h>
 #endif

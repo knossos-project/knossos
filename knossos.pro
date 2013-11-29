@@ -229,6 +229,7 @@ linux {
     LIBS += -lGL \
             -lGLU \
             -lPythonQt \
+            -lglut \
             -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
 
