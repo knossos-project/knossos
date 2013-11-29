@@ -114,7 +114,6 @@ uint lll_calculate_filename(C_Element *elem) {
         return LLL_FAILURE;
     }
 
-
     /*
     To reverse into non-compression, normal raw file read, replace
     typeExtension with "raw"
@@ -172,6 +171,7 @@ uint lll_calculate_filename(C_Element *elem) {
     if (LM_FTP == state->loadMode) {
         snprintf(magnificationStr, filenameSize, "mag%d%s", state->magnification, file_dir_delim);
     }
+
     snprintf(elem->path, filenameSize,
              "%s%s%s%.4d%s%s%.4d%s%s%.4d",
              (LM_FTP == state->loadMode) ? state->ftpBasePath : state->loaderPath,

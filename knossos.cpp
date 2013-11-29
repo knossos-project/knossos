@@ -57,6 +57,9 @@
 #include <GL/glut.h>
 #include "windows.h"
 #endif
+#ifdef Q_OS_LINUX
+#include <GL/freeglut_std.h>
+#endif
 
 #define NUMTHREADS 4
 
@@ -70,7 +73,10 @@ Knossos *knossos = NULL;
 
 int main(int argc, char *argv[])
 {
-#ifdef Q_OS_WIN | Q_OS_LINUX
+#ifdef Q_OS_WIN
+    glutInit(&argc, argv);
+#endif
+#ifdef Q_OS_LINUX
     glutInit(&argc, argv);
 #endif
     //Knossos::revisionCheck();
@@ -397,19 +403,21 @@ bool Knossos::initStates() {
 
    curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(MAX_PATH);
-   state->loadLocalSystem = LS_WINDOWS;
 
 #ifdef Q_OS_LINUX
    const char *tmp = "/tmp/";
    strcpy(state->loadFtpCachePath, tmp);
+   state->loadLocalSystem = LS_UNIX;
 #endif
 #ifdef Q_OS_MAC
    // TODO
    const char *tmp = "/Users/amos/temp/";
    strcpy(state->loadFtpCachePath, tmp);
+   state->loadLocalSystem = LS_UNIX;
 #endif
-#ifdef Q_OS_WINDOW
+#ifdef Q_OS_WIN32
     GetTempPathA(MAX_PATH, state->loadFtpCachePath);
+    state->loadLocalSystem = LS_WINDOWS;
 #endif
 
    // We're not doing stuff in parallel, yet. So we skip the locking
