@@ -46,7 +46,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     autoSaveInterval = 5;
     skeletonTime = 0;
     skeletonTimeCorrection = 0;
-    definedSkeletonVpView = 0;
+    definedSkeletonVpView = -1;
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;

@@ -1198,131 +1198,120 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         }
 
         switch(state->skeletonState->definedSkeletonVpView) {
-            case 0:
-                break;
-            case 1:
-                // XY viewport like view
-                state->skeletonState->definedSkeletonVpView = 0;
+        case SKELVP_XY_VIEW:
+            state->skeletonState->definedSkeletonVpView = -1;
 
-                glLoadIdentity();
-                glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / -2.);
+            glLoadIdentity();
+            glTranslatef((float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / -2.);
 //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+            glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-                glMatrixMode(GL_PROJECTION);
-                glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
 
-                state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
-                state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
+            state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
+            state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
 
-                glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                        state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                        -500,
-                        10 * state->skeletonState->volBoundary);
-                setRotationState(ROTATIONSTATEXY);
-                break;
+            glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
+                    state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
+                    -500,
+                    10 * state->skeletonState->volBoundary);
+            setRotationState(ROTATIONSTATEXY);
+            break;
+        case SKELVP_XZ_VIEW:
+            state->skeletonState->definedSkeletonVpView = -1;
+            glLoadIdentity();
+            glTranslatef((float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / -2.);
+            glRotatef(270, 1., 0., 0.);
+            glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
 
-            case 2:
-                // XZ viewport like view
-                state->skeletonState->definedSkeletonVpView = 0;
+            glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-                glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
 
-                glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / -2.);
+            state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
+            state->skeletonState->translateY = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
 
-                glRotatef(90, 0., 1., 0.);
-                glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+            glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
+                    state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
+                    -500,
+                    10 * state->skeletonState->volBoundary);
+            setRotationState(ROTATIONSTATEXZ);
+            break;
+        //float minrotation[16];
+        //float da;
+        case SKELVP_YZ_VIEW:
+            state->skeletonState->definedSkeletonVpView = -1;
 
-                glMatrixMode(GL_PROJECTION);
-                glLoadIdentity();
+            glLoadIdentity();
 
-                state->skeletonState->translateX = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
-                state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
+            glTranslatef((float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / -2.);
 
-                glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                        state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                        -500,
-                        10 * state->skeletonState->volBoundary);
-                setRotationState(ROTATIONSTATEXZ);
-                break;
+            glRotatef(90, 0., 1., 0.);
+            glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+            glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-            case 3:
-                // YZ viewport like view
-                state->skeletonState->definedSkeletonVpView = 0;
-                glLoadIdentity();
-                glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / -2.);
-                glRotatef(270, 1., 0., 0.);
-                glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
 
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+            state->skeletonState->translateX = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
+            state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
 
-                glMatrixMode(GL_PROJECTION);
-                glLoadIdentity();
-
-                state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
-                state->skeletonState->translateY = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
-
-                glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
-                        state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
-                        state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
-                        -500,
-                        10 * state->skeletonState->volBoundary);
-                setRotationState(ROTATIONSTATEYZ);
-                break;
-            //float minrotation[16];
-            //float da;
-            case 4:
-            //90deg
-                state->skeletonState->rotdx = 10;
-                state->skeletonState->rotationcounter++;
-                if (state->skeletonState->rotationcounter > 15) {
-                    state->skeletonState->rotdx = 7.6;
-                    state->skeletonState->definedSkeletonVpView = 0;
-                    state->skeletonState->rotationcounter = 0;
-                }
-
-                break;
-
-            case 5:
-            //180deg
-                state->skeletonState->rotdx = 10;
-                state->skeletonState->rotationcounter++;
-                if (state->skeletonState->rotationcounter > 31) {
-                    state->skeletonState->rotdx = 5.2;
-                    state->skeletonState->definedSkeletonVpView = 0;
-                    state->skeletonState->rotationcounter = 0;
-                }
-
-                break;
-            case 6:
-                // Resetting
-                state->skeletonState->definedSkeletonVpView = 0;
-                state->skeletonState->translateX = 0;
-                state->skeletonState->translateY = 0;
-                glMatrixMode(GL_MODELVIEW);
-                glLoadIdentity();
-                glTranslatef((float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / 2.,
-                             (float)state->skeletonState->volBoundary / -2.);
-                glScalef(-1., 1., 1.);
-                glRotatef(235., 1., 0., 0.);
-                glRotatef(210., 0., 0., 1.);
-                glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
-                state->skeletonState->zoomLevel = SKELZOOMMIN;
-                setRotationState(ROTATIONSTATERESET);
-                break;
+            glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
+                    state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
+                    state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY,
+                    -500,
+                    10 * state->skeletonState->volBoundary);
+            setRotationState(ROTATIONSTATEYZ);
+            break;
+        case SKELVP_R90:
+            state->skeletonState->rotdx = 10;
+            state->skeletonState->rotationcounter++;
+            if (state->skeletonState->rotationcounter > 15) {
+                state->skeletonState->rotdx = 7.6;
+                state->skeletonState->definedSkeletonVpView = -1;
+                state->skeletonState->rotationcounter = 0;
+            }
+            break;
+        case SKELVP_R180:
+            state->skeletonState->rotdx = 10;
+            state->skeletonState->rotationcounter++;
+            if (state->skeletonState->rotationcounter > 31) {
+                state->skeletonState->rotdx = 5.2;
+                state->skeletonState->definedSkeletonVpView = -1;
+                state->skeletonState->rotationcounter = 0;
+            }
+            break;
+        case SKELVP_RESET:
+            state->skeletonState->definedSkeletonVpView = -1;
+            state->skeletonState->translateX = 0;
+            state->skeletonState->translateY = 0;
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            glTranslatef((float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / 2.,
+                         (float)state->skeletonState->volBoundary / -2.);
+            glScalef(-1., 1., 1.);
+            glRotatef(235., 1., 0., 0.);
+            glRotatef(210., 0., 0., 1.);
+            glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+            state->skeletonState->zoomLevel = SKELZOOMMIN;
+            setRotationState(ROTATIONSTATERESET);
+            break;
+        default:
+            break;
         }
 
 
@@ -1960,8 +1949,7 @@ bool Renderer::rotateSkeletonViewport(){
 
 
 bool Renderer::setRotationState(uint setTo) {
-    if (setTo == 0){
-            //Reset Viewport
+    if (setTo == ROTATIONSTATERESET){
             state->skeletonState->rotationState[0] = 0.866025;
             state->skeletonState->rotationState[1] = 0.286788;
             state->skeletonState->rotationState[2] = 0.409576;
@@ -1979,8 +1967,7 @@ bool Renderer::setRotationState(uint setTo) {
             state->skeletonState->rotationState[14] = 0.0;
             state->skeletonState->rotationState[15] = 1.0;
         }
-        if (setTo == 1){
-            //XY view
+        if (setTo == ROTATIONSTATEXY){
             state->skeletonState->rotationState[0] = 1.0;
             state->skeletonState->rotationState[1] = 0.0;
             state->skeletonState->rotationState[2] = 0.0;
@@ -1998,8 +1985,7 @@ bool Renderer::setRotationState(uint setTo) {
             state->skeletonState->rotationState[14] = 0.0;
             state->skeletonState->rotationState[15] = 1.0;
         }
-        if (setTo == 2){
-            //YZ view
+        if (setTo == ROTATIONSTATEYZ){
             state->skeletonState->rotationState[0] = 1.0;
             state->skeletonState->rotationState[1] = 0.0;
             state->skeletonState->rotationState[2] = 0.0;
@@ -2017,8 +2003,7 @@ bool Renderer::setRotationState(uint setTo) {
             state->skeletonState->rotationState[14] = 0.0;
             state->skeletonState->rotationState[15] = 1.0;
         }
-        if (setTo == 3){
-            //XZ view
+        if (setTo == ROTATIONSTATEXZ){
             state->skeletonState->rotationState[0] = 0.0;
             state->skeletonState->rotationState[1] = 0.0;
             state->skeletonState->rotationState[2] = -1.0;

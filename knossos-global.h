@@ -103,12 +103,12 @@ values. The XY vp always used. */
 #define DEFAULT_VP_SIZE 350
 
 // skeleton vp orientation
-#define SKELVP_XY_VIEW 1
-#define SKELVP_XZ_VIEW 2
-#define SKELVP_YZ_VIEW 3
-#define SKELVP_R90 4
-#define SKELVP_R180 5
-#define SKELVP_RESET 6
+#define SKELVP_XY_VIEW 0
+#define SKELVP_XZ_VIEW 1
+#define SKELVP_YZ_VIEW 2
+#define SKELVP_R90 3
+#define SKELVP_R180 4
+#define SKELVP_RESET 5
 
 
 #define X_AXIS 0
@@ -253,10 +253,10 @@ values. The XY vp always used. */
 #define AUTOTRACING_TRACING 2
 #define AUTOTRACING_MIRROR  3
 
-#define ROTATIONSTATERESET 0
-#define ROTATIONSTATEXY 1
-#define ROTATIONSTATEXZ 3
-#define ROTATIONSTATEYZ 2
+#define ROTATIONSTATEXY    0
+#define ROTATIONSTATEXZ    1
+#define ROTATIONSTATEYZ    2
+#define ROTATIONSTATERESET 3
 
 #define AUTOTRACING_MODE_NORMAL 0
 #define AUTOTRACING_MODE_ADDITIONAL_VIEWPORT_DIRECTION_MOVE 1

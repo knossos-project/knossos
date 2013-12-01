@@ -1086,7 +1086,7 @@ bool Knossos::configDefaults() {
     state->skeletonState->autoSaveInterval = 5;
     state->skeletonState->skeletonTime = 0;
     state->skeletonState->skeletonTimeCorrection = 0;
-    state->skeletonState->definedSkeletonVpView = 0;
+    state->skeletonState->definedSkeletonVpView = -1;
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
