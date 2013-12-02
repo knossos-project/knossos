@@ -768,10 +768,6 @@ struct guiConfig {
     Coordinate oneShiftedCurrPos;
     Coordinate activeNodeCoord;
 
-    // tools win buffer variables
-    int activeNodeID;
-    int activeTreeID;
-
     QString lockComment;
     char *commentBuffer;
     char *commentSearchBuffer;

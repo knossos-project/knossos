@@ -79,9 +79,6 @@ MainWindow::MainWindow(QWidget *parent) :
     state->viewerState->gui->oneShiftedCurrPos.z =
         state->viewerState->currentPosition.z + 1;
 
-    state->viewerState->gui->activeTreeID = 1;
-    state->viewerState->gui->activeNodeID = 1;
-
     // for task management
     state->taskState->cookieFile = (char*)calloc(1, sizeof("cookie"));
     strcpy(state->taskState->cookieFile, "cookie");
@@ -1489,7 +1486,6 @@ void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
     emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
-    widgetContainer->toolsWidget->updateTreeCount();
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 

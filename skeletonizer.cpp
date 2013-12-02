@@ -1440,7 +1440,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     if(activeNodeID) {
         //qDebug("activeNodeID: %i", activeNodeID);
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
-        //emit updateToolsSignal();
     }
     /*  @todo
     if((loadedPosition.x != 0) &&
@@ -1907,7 +1906,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
-    state->viewerState->gui->activeTreeID = currentTree->treeID;
     return true;
 }
 
@@ -1972,11 +1970,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
         }
         Knossos::unlockSkeleton(true);
     }
-
-    if(node) {
-        state->viewerState->gui->activeNodeID= node->nodeID;
-    }
-    //qDebug("active Node %i, active tree: %i", state->skeletonState->activeNode->nodeID, state->skeletonState->activeTree->treeID);
     return true;
 }
 
@@ -2118,11 +2111,6 @@ int Skeletonizer::addNode(int targetRevision,
                                               position->z))
             Client::skeletonSyncBroken();
     }
-
-    else {
-
-    }
-
     Knossos::unlockSkeleton(true);
 
     return nodeID;
@@ -2375,7 +2363,6 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
 
     if(state->skeletonState->activeTree->treeID == tree2->treeID) {
        setActiveTreeByID(tree1->treeID);
-       state->viewerState->gui->activeTreeID = tree1->treeID;
     }
 
     state->skeletonState->treeElements--;
@@ -2395,7 +2382,7 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
     return true;
 }
 
-nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
+nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, bool sameTree) {
     nodeListElement *prevNode = NULL;
     nodeListElement *highestNode = NULL;
     unsigned int minDistance = UINT_MAX;
@@ -2403,42 +2390,62 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
     unsigned int maxID = 0;
 
     if(currentNode == NULL) {
-        qDebug("no valid node provided.");
-        return state->skeletonState->activeNode;
-    }
-    nodeListElement *node = currentNode->correspondingTree->firstNode;
-    while(node) {
-        if(node->nodeID > maxID) {
-            highestNode = node;
-            maxID = node->nodeID;
+        // no current node, return active node
+        if(state->skeletonState->activeNode) {
+            return state->skeletonState->activeNode;
         }
-
-        if(node->nodeID < currentNode->nodeID) {
-            tempMinDistance = currentNode->nodeID - node->nodeID;
-
-            if(tempMinDistance == 1) { //smallest distance possible
-                return node;
+        // no active node, simply return first node found
+        treeListElement *tree = state->skeletonState->firstTree;
+        while(tree) {
+            if(tree->firstNode) {
+                return tree->firstNode;
             }
-
-            if(tempMinDistance < minDistance) {
-                minDistance = tempMinDistance;
-                prevNode = node;
-            }
-
-
+            tree = tree->next;
         }
+        qDebug("no nodes to move to");
+        return NULL;
+    }
+    treeListElement *tree;
+    if(sameTree) {
+         tree = currentNode->correspondingTree;
+    }
+    else {
+        tree = state->skeletonState->firstTree;
+    }
+    nodeListElement *node;
+    while(tree) {
+        node = tree->firstNode;
+        while(node) {
+            if(node->nodeID > maxID) {
+                highestNode = node;
+                maxID = node->nodeID;
+            }
+            if(node->nodeID < currentNode->nodeID) {
+                tempMinDistance = currentNode->nodeID - node->nodeID;
 
-        node = node->next;
+                if(tempMinDistance == 1) { //smallest distance possible
+                    return node;
+                }
+                if(tempMinDistance < minDistance) {
+                    minDistance = tempMinDistance;
+                    prevNode = node;
+                }
+            }
+            node = node->next;
+        }
+        if(sameTree) {
+            break;
+        }
+        tree = tree->next;
     }
 
-    if(!prevNode) {
+    if(!prevNode && sameTree) {
         prevNode = highestNode;
     }
-
     return prevNode;
 }
 
-nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode) {
+nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, bool sameTree) {
     nodeListElement *nextNode = NULL;
     nodeListElement *lowestNode = NULL;
     unsigned int minDistance = UINT_MAX;
@@ -2446,36 +2453,58 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode) {
     unsigned int minID = UINT_MAX;
 
     if(currentNode == NULL) {
-        qDebug("no valid node provided.");
-        return state->skeletonState->activeNode;
-    }
-    nodeListElement *node = currentNode->correspondingTree->firstNode;
-    while(node) {
-        if(node->nodeID < minID) {
-            lowestNode = node;
-            minID = node->nodeID;
+        // no current node, return active node
+        if(state->skeletonState->activeNode) {
+            return state->skeletonState->activeNode;
         }
-
-        if(node->nodeID > currentNode->nodeID) {
-            tempMinDistance = node->nodeID - currentNode->nodeID;
-
-            if(tempMinDistance == 1) { //smallest distance possible
-                return node;
+        // no active node, simply return first node found
+        treeListElement *tree = state->skeletonState->firstTree;
+        while(tree) {
+            if(tree->firstNode) {
+                return tree->firstNode;
             }
-
-            if(tempMinDistance < minDistance) {
-                minDistance = tempMinDistance;
-                nextNode = node;
-            }
+            tree = tree->next;
         }
+        qDebug("no nodes to move to");
+        return NULL;
+    }
+    treeListElement *tree;
+    if(sameTree) {
+         tree = currentNode->correspondingTree;
+    }
+    else {
+        tree = state->skeletonState->firstTree;
+    }
+    nodeListElement *node;
+    while(tree) {
+        node = tree->firstNode;
+        while(node) {
+            if(node->nodeID < minID) {
+                lowestNode = node;
+                minID = node->nodeID;
+            }
+            if(node->nodeID > currentNode->nodeID) {
+                tempMinDistance = node->nodeID - currentNode->nodeID;
 
-        node = node->next;
+                if(tempMinDistance == 1) { //smallest distance possible
+                    return node;
+                }
+                if(tempMinDistance < minDistance) {
+                    minDistance = tempMinDistance;
+                    nextNode = node;
+                }
+            }
+            node = node->next;
+        }
+        if(sameTree) {
+            break;
+        }
+        tree = tree->next;
     }
 
-    if(!nextNode) {
+    if(!nextNode && sameTree) {
         nextNode = lowestNode;
     }
-
     return nextNode;
 }
 
@@ -2589,7 +2618,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
     }
-    emit updateToolsSignal();
+
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
 
@@ -2612,7 +2641,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
     }
-
+    emit updateToolsSignal();
     return newElement;
 }
 
@@ -2622,6 +2651,18 @@ treeListElement* Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
     uint idDistance = state->skeletonState->treeElements;
     uint tempDistance = idDistance;
 
+    if(currentTree == NULL) {
+        // no current tree, return active tree
+        if(state->skeletonState->activeTree) {
+            return state->skeletonState->activeTree;
+        }
+        // no active tree, simply return first tree found
+        if(tree) {
+            return tree;
+        }
+        qDebug("no tree to move to");
+        return NULL;
+    }
     while(tree) {
         if(tree->treeID < currentTree->treeID) {
             tempDistance = currentTree->treeID - tree->treeID;
@@ -2644,6 +2685,18 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
     uint idDistance = state->skeletonState->treeElements;
     uint tempDistance = idDistance;
 
+    if(currentTree == NULL) {
+        // no current tree, return active tree
+        if(state->skeletonState->activeTree) {
+            return state->skeletonState->activeTree;
+        }
+        // no active tree, simply return first tree found
+        if(tree) {
+            return tree;
+        }
+        qDebug("no tree to move to");
+        return NULL;
+    }
     while(tree) {
         if(tree->treeID > currentTree->treeID) {
             tempDistance = tree->treeID - currentTree->treeID;
@@ -3159,7 +3212,6 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
             last = n;
             n->correspondingTree = newTree;
         }
-        state->viewerState->gui->activeTreeID = state->skeletonState->activeTree->treeID;
         state->skeletonState->skeletonChanged = true;
     }
     else {
@@ -3701,12 +3753,10 @@ bool Skeletonizer::jumpToActiveNode() {
                             state->skeletonState->activeNode->position.z - state->viewerState->currentPosition.z,
                             TELL_COORDINATE_CHANGE);
     }
-
     return true;
 }
 
 void Skeletonizer::UI_popBranchNode() {
-    qDebug("slot reached");
     if(state->skeletonState->askingPopBranchConfirmation == false) {
         state->skeletonState->askingPopBranchConfirmation = true;
 
@@ -4118,8 +4168,7 @@ bool Skeletonizer::moveToNextTree() {
 }
 
 bool Skeletonizer::moveToPrevNode() {
-    struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
-
+    struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
         emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
@@ -4130,26 +4179,11 @@ bool Skeletonizer::moveToPrevNode() {
         emit updateToolsSignal();
         return true;
     }
-    if(state->skeletonState->activeTree) {
-        if(state->skeletonState->activeTree->firstNode) {
-            prevNode = state->skeletonState->activeTree->firstNode;
-            setActiveNode(CHANGE_MANUAL, prevNode, 0);
-            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-            emit setRecenteringPositionSignal(prevNode->position.x,
-                                         prevNode->position.y,
-                                         prevNode->position.z);
-            Knossos::sendRemoteSignal();
-            emit updateToolsSignal();
-            return true;
-        }
-    }
     return false;
 }
 
 bool Skeletonizer::moveToNextNode() {
-
-    struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode);
-
+    struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
         emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
@@ -4159,19 +4193,6 @@ bool Skeletonizer::moveToNextNode() {
         Knossos::sendRemoteSignal();
         emit updateToolsSignal();
         return true;
-    }
-    if(state->skeletonState->activeTree) {
-        if(state->skeletonState->activeTree->firstNode) {
-            nextNode = state->skeletonState->activeTree->firstNode;
-            setActiveNode(CHANGE_MANUAL, nextNode, 0);
-           /* emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-            emit setRecenteringPositionSignal(nextNode->position.x,
-                                         nextNode->position.y,
-                                         nextNode->position.z);
-            Knossos::sendRemoteSignal();*/
-            emit updateToolsSignal();
-            return true;
-        }
     }
     return false;
 }
@@ -4393,7 +4414,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     //Idle Time, Tree Elements
     Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->idleTime);
     memPosition+=sizeof(int32_t);
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->viewerState->gui->activeTreeID);
+    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->activeTree->treeID);
     memPosition+=sizeof(int32_t);
     Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->treeElements);
     memPosition+=sizeof(int32_t);
@@ -4869,7 +4890,7 @@ int Skeletonizer::getVariableBlockSize(){
     variablesBlockSize+=2*sizeof(state->skeletonState->translateX);
     variablesBlockSize+=3*sizeof(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel)+sizeof(state->skeletonState->zoomLevel);
     variablesBlockSize+=sizeof(state->skeletonState->idleTime);
-    variablesBlockSize+=sizeof(state->viewerState->gui->activeTreeID); // @todo
+    variablesBlockSize+=sizeof(state->skeletonState->activeTree->treeID);
     variablesBlockSize+=sizeof(state->skeletonState->treeElements);
     return variablesBlockSize;
 }

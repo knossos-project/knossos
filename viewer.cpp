@@ -2654,13 +2654,6 @@ void Viewer::rewire() {
 
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)));
     connect(window, SIGNAL(updateCommentsTableSignal()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    /*
-    connect(this->vpXY->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    connect(this->vpXZ->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    connect(this->vpYZ->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    connect(this->vpSkel->delegate, SIGNAL(updateCommentsTable()), window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    */
-
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
     connect(vpXY->delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)), Qt::DirectConnection);
@@ -2791,26 +2784,32 @@ void Viewer::rewire() {
     connect(vpSkel->delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
 
+    connect(window->widgetContainer->toolsWidget, SIGNAL(findTreeByTreeIDSignal(int)), skeletonizer, SLOT(findTreeByTreeID(int)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)), skeletonizer, SLOT(lockPosition(Coordinate)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+            skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
+            skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
+            skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(jumpToNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(lockPositionSignal(Coordinate)),
+            skeletonizer, SLOT(lockPosition(Coordinate)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(unlockPositionSignal()), skeletonizer, SLOT(unlockPosition()));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+            skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+            skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
 
     connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()), skeletonizer, SLOT(delActiveTree()));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vpXY, SLOT(updateGL()));
 
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
@@ -2882,27 +2881,31 @@ void Viewer::rewire() {
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(loadTreeColorTableSignal(QString,float*,int)), this, SLOT(loadTreeColorTable(QString,float*,int)));
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(loadDataSetColortableSignal(QString,GLuint*,int)), this, SLOT(loadDatasetColorTable(QString,GLuint*,int)));
 
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(showXYPlaneSignal(bool)), skeletonizer, SLOT(setShowXyPlane(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)), skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
-    connect(skeletonizer, SIGNAL(displayModeChangedSignal()), window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)), skeletonizer, SLOT(setOverrideNodeRadius(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(segRadiusToNodeRadiusSignal(float)), skeletonizer, SLOT(setSegRadiusToNodeRadius(float)));
-    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)), skeletonizer, SLOT(setSkeletonChanged(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget,SIGNAL(showXYPlaneSignal(bool)),
+            skeletonizer, SLOT(setShowXyPlane(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(rotateAroundActiveNodeSignal(bool)),
+            skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
+    connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
+            window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)),
+            skeletonizer, SLOT(setOverrideNodeRadius(bool)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(segRadiusToNodeRadiusSignal(float)),
+            skeletonizer, SLOT(setSegRadiusToNodeRadius(float)));
+    connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(skeletonChangedSignal(bool)),
+            skeletonizer, SLOT(setSkeletonChanged(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)), skeletonizer, SLOT(setShowNodeIDs(bool)));
 
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(findTreeByTreeIDSignal(int)), skeletonizer, SLOT(findTreeByTreeID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(findTreeByTreeIDSignal(int)), skeletonizer, SLOT(findTreeByTreeID(int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(restoreDefaultTreeColorSignal()), skeletonizer, SLOT(restoreDefaultTreeColor()));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(splitConnectedComponent(int,int, int)), skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)), skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,char*)), skeletonizer, SLOT(addTreeComment(int,int,char*)));
-    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)), skeletonizer, SLOT(mergeTrees(int,int,int,int)));
-
-    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int, int)), skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int, int)));
+    connect(window->widgetContainer->toolsWidget, SIGNAL(findTreeByTreeIDSignal(int)), skeletonizer, SLOT(findTreeByTreeID(int)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(restoreDefaultTreeColorSignal()),
+            skeletonizer, SLOT(restoreDefaultTreeColor()));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(splitConnectedComponent(int,int, int)),
+            skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)),
+            skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,char*)),
+            skeletonizer, SLOT(addTreeComment(int,int,char*)));
+    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)),
+            skeletonizer, SLOT(mergeTrees(int,int,int,int)));
 
     connect(vpXY->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(vpXZ->delegate, SIGNAL(updateSlicePlaneWidgetSignal()), window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));

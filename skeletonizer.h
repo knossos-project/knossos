@@ -38,8 +38,8 @@ public:
     explicit Skeletonizer(QObject *parent = 0);
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
 
-    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode);
-    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode);
+    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
+    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static nodeListElement *findNodeByCoordinate(Coordinate *position);
     static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
     static treeListElement *getTreeWithNextID(treeListElement *currentTree);

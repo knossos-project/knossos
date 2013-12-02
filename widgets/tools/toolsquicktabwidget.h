@@ -46,33 +46,15 @@ class ToolsQuickTabWidget : public QWidget
 public:
     explicit ToolsQuickTabWidget(ToolsWidget *parent = 0);
 signals:
-    void nextCommentSignal(char *searchString);
-    void previousCommentSignal(char *searchString);
-    void setActiveTreeSignal(int id);
-    bool setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-    void updateToolsSignal();
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
+                              nodeListElement *branchNode, int branchNodeID, int serialize);
     void popBranchNodeSignal();
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
-
-    void setRemoteStateTypeSignal(int type);
-    void setRecenteringPositionSignal(int x, int y, int z);
-    void updateViewerStateSignal();
-    void updateCommentsTableSignal();
-    treeListElement *findTreeByTreeIDSignal(int value);
-    nodeListElement *findNodeByNodeIDSignal(int value);
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    void updateToolsSignal();
 public slots:
-    void activeTreeIdChanged(int value);
-    void activeNodeIdChanged(int value);
-    void commentChanged(QString comment);
-    void searchForChanged(QString comment);
-    void findNextButtonClicked();
-    void findPreviousButtonClicked();
-    void pushBranchNodeButtonClicked();
-    void popBranchNodeButtonClicked();
+    void pushBranchNodeClicked();
+    void popBranchNodeClicked();
+    void updateToolsQuickTab();
 public:
-    ToolsWidget *reference;
     QLabel *treeCountLabel, *nodeCountLabel;
     QLabel *activeTreeLabel, *activeNodeLabel;
     QLabel *xLabel, *yLabel, *zLabel;

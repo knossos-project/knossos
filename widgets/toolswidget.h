@@ -29,6 +29,8 @@
 #include <QTabWidget>
 #include <QList>
 
+#include "knossos-global.h"
+
 class ToolsQuickTabWidget;
 class ToolsTreesTabWidget;
 class ToolsNodesTabWidget;
@@ -47,10 +49,26 @@ public:
 signals:
     void uncheckSignal();
     void setActiveTreeSignal(int id);
-public slots:
-    void updateToolsSlot();
-    void updateTreeCount();
+    void setActiveNodeSignal(int revision, nodeListElement *node, int id);
+    treeListElement *findTreeByTreeIDSignal(int value);
+    nodeListElement *findNodeByNodeIDSignal(int value);
 
+    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID,
+                           char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    void nextCommentSignal(char* searchString);
+    void previousCommentSignal(char* searchString);
+    void updateCommentsTableSignal();
+public slots:
+    void activeTreeSpinChanged(int value);
+    void activeNodeSpinChanged(int value);
+
+    void commentChanged(QString comment);
+    void searchForChanged(QString searchString);
+    void findPreviousCommentClicked();
+    void findNextCommentClicked();
+
+    void updateToolsSlot();
 protected:
     void closeEvent(QCloseEvent *event);
     void toggleAllWidgets(bool enabled);

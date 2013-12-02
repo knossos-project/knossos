@@ -23,7 +23,6 @@
  */
 
 #include "toolstreestabwidget.h"
-#include "widgets/tools/toolsquicktabwidget.h"
 
 #include <QWidget>
 #include <QLabel>
@@ -42,19 +41,15 @@
 extern struct stateInfo *state;
 
 ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
-    QWidget(parent), reference(parent)
+    QWidget(parent)
 {
 
     activeTreeLabel = new QLabel("Active Tree ID:");
     activeTreeSpinBox = new QSpinBox();
-    this->activeTreeSpinBox->setMaximum(0);
-    this->activeTreeSpinBox->setMinimum(0);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-
+    activeTreeSpinBox->setMinimum(0);
+    activeTreeSpinBox->setMaximum(0);
     deleteActiveTreeButton = new QPushButton("Delete Active Tree");
     newTreeButton = new QPushButton("New Tree (C)");
-    newTreeButton->setShortcut(Qt::Key_V);
 
     commentLabel = new QLabel("Comment");
     commentField = new QLineEdit();
@@ -89,79 +84,71 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     mergeTreesButton = new QPushButton("Merge Trees");
     this->restoreDefaultColorButton = new QPushButton("Restore default color");
 
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QGridLayout *gridLayout;
+    QFrame *line;
 
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line3 = new QFrame();
-    line3->setFrameShape(QFrame::HLine);
-    line3->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line4 = new QFrame();
-    line4->setFrameShape(QFrame::HLine);
-    line4->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line5 = new QFrame();
-    line5->setFrameShape(QFrame::HLine);
-    line5->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line6 = new QFrame();
-    line6->setFrameShape(QFrame::HLine);
-    line6->setFrameShadow(QFrame::Sunken);
-
-    QGridLayout *gridLayout = new QGridLayout();
-
+    gridLayout = new QGridLayout();
     gridLayout->addWidget(activeTreeLabel, 1, 1);
     gridLayout->addWidget(activeTreeSpinBox, 1, 2);
-
     mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
     mainLayout->addWidget(line);
 
-    QGridLayout *gridLayout2 = new QGridLayout();
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(deleteActiveTreeButton, 2, 1);
+    gridLayout->addWidget(newTreeButton, 2, 2);
+    mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    gridLayout2->addWidget(deleteActiveTreeButton, 2, 1);
-    gridLayout2->addWidget(newTreeButton, 2, 2);
-    mainLayout->addLayout(gridLayout2);
-    mainLayout->addWidget(line2);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(commentLabel, 1, 1);
+    gridLayout->addWidget(commentField, 1, 2);
+    mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    QGridLayout *gridLayout3 = new QGridLayout();
-    gridLayout3->addWidget(commentLabel, 1, 1);
-    gridLayout3->addWidget(commentField, 1, 2);
-    mainLayout->addLayout(gridLayout3);
-    mainLayout->addWidget(line3);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(mergeTreesButton, 1, 1);
+    gridLayout->addWidget(id1Label, 1, 2);
+    gridLayout->addWidget(id1SpinBox, 1, 3);
+    gridLayout->addWidget(id2Label, 1, 4);
+    gridLayout->addWidget(id2SpinBox, 1, 5);
+    mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    QGridLayout *gridLayout4 = new QGridLayout();
-    gridLayout4->addWidget(mergeTreesButton, 1, 1);
-    gridLayout4->addWidget(id1Label, 1, 2);
-    gridLayout4->addWidget(id1SpinBox, 1, 3);
-    gridLayout4->addWidget(id2Label, 1, 4);
-    gridLayout4->addWidget(id2SpinBox, 1, 5);
-
-    mainLayout->addLayout(gridLayout4);
-    mainLayout->addWidget(line4);
     mainLayout->addWidget(splitByConnectedComponentsButton);
-    mainLayout->addWidget(line5);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    QGridLayout *gridLayout5 = new QGridLayout();
-    gridLayout5->addWidget(rLabel, 1, 1);
-    gridLayout5->addWidget(rSpinBox, 1, 2);
-    gridLayout5->addWidget(gLabel, 1, 3);
-    gridLayout5->addWidget(gSpinBox, 1, 4);
-    gridLayout5->addWidget(bLabel, 1, 5);
-    gridLayout5->addWidget(bSpinBox, 1, 6);
-    gridLayout5->addWidget(aLabel, 1, 7);
-    gridLayout5->addWidget(aSpinBox, 1, 8);
-    mainLayout->addLayout(gridLayout5);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(rLabel, 1, 1);
+    gridLayout->addWidget(rSpinBox, 1, 2);
+    gridLayout->addWidget(gLabel, 1, 3);
+    gridLayout->addWidget(gSpinBox, 1, 4);
+    gridLayout->addWidget(bLabel, 1, 5);
+    gridLayout->addWidget(bSpinBox, 1, 6);
+    gridLayout->addWidget(aLabel, 1, 7);
+    gridLayout->addWidget(aSpinBox, 1, 8);
+    mainLayout->addLayout(gridLayout);
+
     mainLayout->addWidget(restoreDefaultColorButton);
 
     mainLayout->addStretch(20);
     setLayout(mainLayout);
 
-    connect(activeTreeSpinBox, SIGNAL(clicked()), this, SLOT(activeTreeSpinChanged()));
     connect(deleteActiveTreeButton, SIGNAL(clicked()), this, SLOT(deleteActiveTreeButtonClicked()));
     connect(newTreeButton, SIGNAL(clicked()), this, SLOT(newTreeButtonClicked()));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
@@ -172,10 +159,6 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     connect(bSpinBox, SIGNAL(valueChanged(double)), this, SLOT(bChanged(double)));
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
-}
-
-void ToolsTreesTabWidget::activeTreeSpinChanged() {
-    emit setActiveTreeSignal(activeTreeSpinBox->value());
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
@@ -218,7 +201,7 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {    
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value(), true)) {
-        reference->updateToolsSlot();
+        emit updateToolsSignal();
     }
 }
 
@@ -226,7 +209,7 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
 void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
         if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, true)) {
-            reference->updateToolsSlot();
+            emit updateToolsSignal();
         }
     }
 }
@@ -260,4 +243,30 @@ void ToolsTreesTabWidget::restoreDefaultColorButtonClicked() {
     aSpinBox->setValue(0);
 }
 
-
+void ToolsTreesTabWidget::updateToolsTreesTab() {
+    if(state->skeletonState->activeTree) {
+        activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
+        activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+        blockSignals(true);
+        if(state->skeletonState->activeTree->comment) {
+            commentField->setText(state->skeletonState->activeTree->comment);
+        }
+        else {
+            commentField->clear();
+        }
+        blockSignals(false);
+        rSpinBox->setValue(state->skeletonState->activeTree->color.r);
+        gSpinBox->setValue(state->skeletonState->activeTree->color.g);
+        bSpinBox->setValue(state->skeletonState->activeTree->color.b);
+        aSpinBox->setValue(state->skeletonState->activeTree->color.a);
+        return;
+    }
+    // no active tree
+    activeTreeSpinBox->setMinimum(0);
+    activeTreeSpinBox->setValue(0);
+    commentField->clear();
+    rSpinBox->setValue(0);
+    gSpinBox->setValue(0);
+    bSpinBox->setValue(0);
+    aSpinBox->setValue(0);
+}

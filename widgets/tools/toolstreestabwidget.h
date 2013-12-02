@@ -40,7 +40,6 @@ class ToolsTreesTabWidget : public QWidget
     Q_OBJECT
 public:
     explicit ToolsTreesTabWidget(ToolsWidget *parent = 0);
-    ToolsWidget *reference;
     QLabel *activeTreeLabel;
     QSpinBox *activeTreeSpinBox;
 
@@ -61,19 +60,14 @@ signals:
     void setActiveTreeSignal(int id);
     void delActiveTreeSignal();
     void updateToolsSignal();
-    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
 
-    void setRemoteStateTypeSignal(int type);
-    void setRecenteringPositionSignal(int x, int y, int z);
     void updateViewerStateSignal();
-    treeListElement *findTreeByTreeIDSignal(int value);
     void restoreDefaultTreeColorSignal();
     int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     bool addTreeComment(int targetRevision, int treeID, char *comment);
     bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
 public slots:
-    void activeTreeSpinChanged();
     void commentChanged(QString comment);
     void deleteActiveTreeButtonClicked();
     void deleteActiveTreeWithoutConfirmation();
@@ -85,6 +79,7 @@ public slots:
     void bChanged(double value);
     void aChanged(double value);
     void restoreDefaultColorButtonClicked();
+    void updateToolsTreesTab();
 
 protected:
 

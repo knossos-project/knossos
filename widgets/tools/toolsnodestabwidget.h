@@ -40,43 +40,32 @@ class QLineEdit;
 
 class ToolsNodesTabWidget : public QWidget
 {
-    friend class WidgetContainer;
     friend class ToolsWidget;
-    friend class ToolsQuickTabWidget;
     friend class TestCommentsWidget;
     friend class TestToolsWidget;
     friend class MainWindow;
-    friend class OMO;
     Q_OBJECT
 public:
     explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);
-    ToolsWidget *reference;
 signals:
+    void updateToolsSignal();
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();
-    void nextCommentSignal(char *searchString);
-    void previousCommentSignal(char *searchString);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-    void setRemoteStateTypeSignal(int type);
-    void setRecenteringPositionSignal(int x, int y, int z);
+    void jumpToNodeSignal();
     void updateViewerStateSignal();
     void updateCommentsTableSignal();
     nodeListElement *findNodeByNodeIDSignal(int value);
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
 public slots:
-    void idChanged(int value);
     void activeNodeXSpinChanged(int value);
     void activeNodeYSpinChanged(int value);
     void activeNodeZSpinChanged(int value);
     void jumpToNodeButtonClicked();
     void deleteNodeButtonClicked();
     void linkNodeWithButtonClicked();
-    void findNextButtonClicked();
-    void findPreviousButtonClicked();
     void useLastRadiusChecked(bool on);
     void activeNodeRadiusChanged(double value);
     void defaultNodeRadiusChanged(double value);
@@ -85,6 +74,7 @@ public slots:
     void lockToNodesWithCommentChanged(QString comment);
     void lockToActiveNodeButtonClicked();
     void disableLockingButtonClicked();
+    void updateToolsNodesTab();
 
 protected:
     QLabel *activeNodeIdLabel, *idLabel, *activeNodeXLabel, *activeNodeYLabel, *activeNodeZLabel;

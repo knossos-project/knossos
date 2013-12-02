@@ -22,14 +22,15 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <QSettings>
+
+#include "knossos-global.h"
+#include "skeletonizer.h"
 #include "toolswidget.h"
 #include "widgets/tools/toolsquicktabwidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
 #include "GUIConstants.h"
-#include "knossos-global.h"
-#include <QSettings>
-
 
 extern stateInfo *state;
 
@@ -49,11 +50,107 @@ ToolsWidget::ToolsWidget(QWidget *parent) :
     //toggleAllWidgets(false);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setFocusPolicy(Qt::StrongFocus);
+
+    // signals and slots for quick tab widget are handled here to prevent duplicate event handling in the tabs
+    // active tree and active node changes
+    connect(toolsQuickTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeSpinChanged(int)));
+    connect(toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeSpinChanged(int)));
+    connect(toolsQuickTabWidget->activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeSpinChanged(int)));
+    connect(toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeSpinChanged(int)));
+    // comment changes, comment searches
+    connect(toolsQuickTabWidget->commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
+    connect(toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
+    connect(toolsQuickTabWidget->searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
+    connect(toolsNodesTabWidget->searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
+    connect(toolsQuickTabWidget->findNextButton, SIGNAL(clicked()), this, SLOT(findNextCommentClicked()));
+    connect(toolsNodesTabWidget->findNextButton, SIGNAL(clicked()), this, SLOT(findNextCommentClicked()));
+    connect(toolsQuickTabWidget->findPreviousButton, SIGNAL(clicked()), this, SLOT(findPreviousCommentClicked()));
+    connect(toolsNodesTabWidget->findPreviousButton, SIGNAL(clicked()), this, SLOT(findPreviousCommentClicked()));
+
+    connect(toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this, SLOT(updateToolsSlot()));
+    connect(toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this, SLOT(updateToolsSlot()));
+    connect(toolsNodesTabWidget, SIGNAL(updateToolsSignal()), this, SLOT(updateToolsSlot()));
 }
 
 void ToolsWidget::closeEvent(QCloseEvent *event) {
     this->hide();
     emit uncheckSignal();
+}
+
+void ToolsWidget::activeTreeSpinChanged(int value) {
+    treeListElement *tree = findTreeByTreeIDSignal(value);
+    if(tree == NULL) {
+        // no tree with this value.
+        // jump to next or previous tree, depending on wether spin box value is greater or smaller than active tree id
+        if(state->skeletonState->activeTree == NULL) { // no active node, activate first node found
+            tree = Skeletonizer::getTreeWithNextID(NULL);
+        }
+        else {
+            if(value > state->skeletonState->activeTree->treeID) { // move to next node
+                tree = Skeletonizer::getTreeWithNextID(state->skeletonState->activeTree);
+            }
+            else if(value < state->skeletonState->activeTree->treeID) {
+                tree = Skeletonizer::getTreeWithPrevID(state->skeletonState->activeTree);
+            }
+        }
+    }
+    if(tree) {
+        setActiveTreeSignal(tree->treeID);
+    }
+    updateToolsSlot();
+    return;
+}
+
+void ToolsWidget::activeNodeSpinChanged(int value) {
+    nodeListElement *node = findNodeByNodeIDSignal(value);
+    if(node == NULL) {
+        // no node with this value.
+        // jump to next or previous node, depending on wether spin box value is greater or smaller than active node id
+        if(state->skeletonState->activeNode == NULL) { // no active node, activate first node found
+            node = Skeletonizer::getNodeWithNextID(NULL, false);
+        }
+        else {
+            if((uint)value > state->skeletonState->activeNode->nodeID) { // move to next node
+                node = Skeletonizer::getNodeWithNextID(state->skeletonState->activeNode, false);
+            }
+            else if((uint)value < state->skeletonState->activeNode->nodeID) {
+                node = Skeletonizer::getNodeWithPrevID(state->skeletonState->activeNode, false);
+            }
+        }
+    }
+    if(node) {
+        setActiveNodeSignal(CHANGE_MANUAL, node, 0);
+    }
+    updateToolsSlot();
+    return;
+}
+
+void ToolsWidget::commentChanged(QString comment) {
+    if(state->skeletonState->activeNode == NULL) {
+        return;
+    }
+    if(state->skeletonState->activeNode->comment == NULL && comment.length() > 0){
+        emit addCommentSignal(CHANGE_MANUAL, comment.toLocal8Bit().data(), state->skeletonState->activeNode, 0, true);
+    }
+    else if(comment.isEmpty() == false) {
+        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                               comment.toLocal8Bit().data(), state->skeletonState->activeNode, 0, true);
+    }
+    emit updateCommentsTableSignal();
+    updateToolsSlot();
+}
+
+void ToolsWidget::searchForChanged(QString searchString) {
+    toolsNodesTabWidget->searchForField->setText(searchString);
+    toolsQuickTabWidget->searchForField->setText(searchString);
+}
+
+void ToolsWidget::findPreviousCommentClicked() {
+    emit previousCommentSignal(toolsNodesTabWidget->searchForField->text().toLocal8Bit().data());
+}
+
+void ToolsWidget::findNextCommentClicked() {
+    emit nextCommentSignal(toolsNodesTabWidget->searchForField->text().toLocal8Bit().data());
 }
 
 void ToolsWidget::loadSettings() {
@@ -142,82 +239,9 @@ void ToolsWidget::saveSettings() {
 }
 
 void ToolsWidget::updateToolsSlot() {
-    this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    this->toolsQuickTabWidget->nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
-
-    if(state->skeletonState->activeTree) {
-        //toggleAllWidgets(true); // enable all widgets
-        this->toolsQuickTabWidget->activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
-        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-
-        this->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
-        this->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
-        this->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
-        this->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
-
-        if(state->skeletonState->activeTree->comment)
-            this->toolsTreesTabWidget->commentField->setText(QString(state->skeletonState->activeTree->comment));
-        else
-            this->toolsTreesTabWidget->commentField->setText("");
-
-    } else {
-        this->toolsQuickTabWidget->activeTreeSpinBox->setRange(0, 0);
-        this->toolsTreesTabWidget->activeTreeSpinBox->setRange(0, 0);
-        this->toolsQuickTabWidget->activeTreeSpinBox->setValue(0);
-
-        this->toolsQuickTabWidget->commentField->setText("");
-        this->toolsTreesTabWidget->commentField->setText("");
-        this->toolsTreesTabWidget->rSpinBox->setValue(0);
-        this->toolsTreesTabWidget->gSpinBox->setValue(0);
-        this->toolsTreesTabWidget->bSpinBox->setValue(0);
-        this->toolsTreesTabWidget->aSpinBox->setValue(0);
-
-        this->toolsNodesTabWidget->commentField->setText("");
-        this->toolsNodesTabWidget->activeNodeXSpin->setValue(0);
-        this->toolsNodesTabWidget->activeNodeYSpin->setValue(0);
-        this->toolsNodesTabWidget->activeNodeZSpin->setValue(0);
-
-       //toggleAllWidgets(false); // disable widgets
-    }
-
-    this->toolsNodesTabWidget->idSpinBox->setMaximum(state->skeletonState->greatestNodeID);
-
-    if(state->skeletonState->activeNode) {
-       this->toolsQuickTabWidget->activeNodeSpinBox->setRange(1, state->skeletonState->greatestNodeID);
-       this->toolsNodesTabWidget->activeNodeIdSpinBox->setRange(1, state->skeletonState->greatestNodeID);
-       this->toolsQuickTabWidget->activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-
-        this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-        this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-        this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(state->skeletonState->activeNode->position.z));
-        this->toolsNodesTabWidget->activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x);
-        this->toolsNodesTabWidget->activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y);
-        this->toolsNodesTabWidget->activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z);
-
-        this->toolsNodesTabWidget->activeNodeRadiusSpinBox->setValue(state->skeletonState->activeNode->radius);
-
-        if(state->skeletonState->activeNode->comment) {
-            if(state->skeletonState->activeNode->comment->content) {
-                this->toolsQuickTabWidget->blockSignals(true);
-                this->toolsQuickTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-                this->toolsQuickTabWidget->blockSignals(false);
-
-                this->toolsNodesTabWidget->blockSignals(true);
-                this->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-                this->toolsNodesTabWidget->blockSignals(false);
-            }
-        }
-    } else {
-        this->toolsQuickTabWidget->activeNodeSpinBox->setRange(0, 0);
-        this->toolsNodesTabWidget->activeNodeIdSpinBox->setRange(0, 0);
-        this->toolsQuickTabWidget->activeNodeSpinBox->setValue(0);
-
-        this->toolsQuickTabWidget->xLabel->setText(QString("x: %1").arg(0));
-        this->toolsQuickTabWidget->yLabel->setText(QString("y: %1").arg(0));
-        this->toolsQuickTabWidget->zLabel->setText(QString("z: %3").arg(0));
-    }
-    this->toolsQuickTabWidget->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+    toolsNodesTabWidget->updateToolsNodesTab();
+    toolsQuickTabWidget->updateToolsQuickTab();
+    toolsTreesTabWidget->updateToolsTreesTab();
 }
 
 void ToolsWidget::toggleAllWidgets(bool enabled) {
@@ -263,11 +287,5 @@ void ToolsWidget::toggleAllWidgets(bool enabled) {
     this->toolsNodesTabWidget->findPreviousButton->setEnabled(enabled);
     this->toolsNodesTabWidget->lockToActiveNodeButton->setEnabled(enabled);
     this->toolsNodesTabWidget->disableLockingButton->setEnabled(enabled);
-}
-
-void ToolsWidget::updateTreeCount() {
-   this->toolsQuickTabWidget->treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-   this->toolsQuickTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
-   this->toolsTreesTabWidget->activeTreeSpinBox->setMaximum(state->skeletonState->treeElements);
 }
 

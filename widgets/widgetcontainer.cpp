@@ -10,19 +10,11 @@ WidgetContainer::WidgetContainer(MainWindow *parent) :
 
 }
 
+/**
+ * @brief WidgetContainer::rewire connects signals and slots in different widgets with each other
+ */
 void WidgetContainer::rewire() {
-
-    connect(this->toolsWidget->toolsNodesTabWidget->activeNodeIdSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeNodeIdChanged(int)));
-    connect(this->toolsWidget->toolsTreesTabWidget->activeTreeSpinBox, SIGNAL(valueChanged(int)), this->toolsWidget->toolsQuickTabWidget, SLOT(activeTreeIdChanged(int)));
-    connect(this->toolsWidget->toolsNodesTabWidget->findNextButton, SIGNAL(clicked()), this->toolsWidget->toolsQuickTabWidget, SLOT(findNextButtonClicked()));
-    connect(this->toolsWidget->toolsNodesTabWidget->findPreviousButton, SIGNAL(clicked()), this->toolsWidget->toolsQuickTabWidget, SLOT(findPreviousButtonClicked()));
-    connect(this->toolsWidget->toolsNodesTabWidget->commentField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(commentChanged(QString)));
-    connect(this->toolsWidget->toolsNodesTabWidget->searchForField, SIGNAL(textChanged(QString)), this->toolsWidget->toolsQuickTabWidget, SLOT(searchForChanged(QString)));
-    connect(this->commentsWidget->nodeCommentsTab, SIGNAL(updateTools()), this->toolsWidget, SLOT(updateToolsSlot()));
-    connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateToolsSlot()));
-    connect(this->toolsWidget->toolsTreesTabWidget, SIGNAL(updateToolsSignal()), this->toolsWidget, SLOT(updateToolsSlot()));
-    connect(this->toolsWidget->toolsNodesTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    connect(this->toolsWidget->toolsQuickTabWidget, SIGNAL(updateCommentsTableSignal()), this->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(toolsWidget, SIGNAL(updateCommentsTableSignal()), commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
 }
 
 void WidgetContainer::createConsoleWidget() {

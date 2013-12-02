@@ -22,10 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "toolsquicktabwidget.h"
-#include "widgets/tools/toolstreestabwidget.h"
-#include "widgets/tools/toolsnodestabwidget.h"
-
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFormLayout>
@@ -34,255 +30,145 @@
 #include <QSpacerItem>
 
 #include "knossos.h"
+#include "skeletonizer.h"
+#include "widgets/tools/toolstreestabwidget.h"
+#include "widgets/tools/toolsnodestabwidget.h"
+#include "toolsquicktabwidget.h"
 
 extern struct stateInfo *state;
 
 ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
-    QWidget(parent), reference(parent)
+    QWidget(parent)
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-
+    // tree and node count
     treeCountLabel = new QLabel("Tree Count: 0");
     nodeCountLabel = new QLabel("Node Count: 0");
-
-    QGridLayout *gridLayout = new QGridLayout();
-
-    gridLayout->addWidget(treeCountLabel, 1, 1);
-    gridLayout->addWidget(nodeCountLabel, 1, 2);
-    mainLayout->addLayout(gridLayout);
-
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-
-    mainLayout->addWidget(line);
-
+    // active tree
     this->activeTreeLabel = new QLabel("Active Tree ID:");
     this->activeTreeSpinBox = new QSpinBox();
     this->activeTreeSpinBox->setMaximum(0);
-    this->activeTreeSpinBox->setMinimum(0);    
-
-    QFormLayout *formLayout = new QFormLayout();
-    formLayout->addRow(activeTreeLabel, activeTreeSpinBox);
-    mainLayout->addLayout(formLayout);
-
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-
-    mainLayout->addWidget(line2);
-
+    this->activeTreeSpinBox->setMinimum(0);
+    // active node
     activeNodeLabel = new QLabel("Active Node ID:");
     activeNodeSpinBox = new QSpinBox();
     activeNodeSpinBox->setMinimum(0);
-
-    QFormLayout *formLayout2 = new QFormLayout();
-
-    formLayout2->addRow(activeNodeLabel, activeNodeSpinBox);
-    mainLayout->addLayout(formLayout2);
-
     xLabel = new QLabel("x: 0");
     yLabel = new QLabel("y: 0");
     zLabel = new QLabel("z: 0");
-
-    QGridLayout *gridLayout2 = new QGridLayout();
-    gridLayout2->addWidget(xLabel, 1, 1);
-    gridLayout2->addWidget(yLabel, 1, 2);
-    gridLayout2->addWidget(zLabel, 1, 3);
-    mainLayout->addLayout(gridLayout2);
-
+    // node comments
     commentLabel = new QLabel("Comment:");
     commentField = new QLineEdit();
-
     searchForLabel = new QLabel("Search For:");
     searchForField = new QLineEdit();
-
-    QFormLayout *formLayout3 = new QFormLayout();
-    formLayout3->addRow(commentLabel, commentField);
-    formLayout3->addRow(searchForLabel, searchForField);
-    mainLayout->addLayout(formLayout3);
-
     findNextButton = new QPushButton("Find (n)ext");
     findPreviousButton = new QPushButton("Find (p)revious");
-
-    QGridLayout *gridLayout3 = new QGridLayout();
-    gridLayout3->addWidget(findNextButton, 1, 1);
-    gridLayout3->addWidget(findPreviousButton, 1, 2);
-    mainLayout->addLayout(gridLayout3);
-
-    QFrame *line3 = new QFrame();
-    line3->setFrameShape(QFrame::HLine);
-    line3->setFrameShadow(QFrame::Sunken);
-
-    mainLayout->addWidget(line3);
-
+    // branch points
     branchPointLabel = new QLabel("Branchpoints");
-    mainLayout->addWidget(branchPointLabel);
-
     onStackLabel = new QLabel("On Stack: 0");
-    mainLayout->addWidget(onStackLabel);
-
     pushBranchNodeButton = new QPushButton("Push (B)ranch Node");
     popBranchNodeButton = new QPushButton("Pop && (J)ump ");
+    // add to layout
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    QGridLayout *gridLayout;
+    QFormLayout *formLayout;
+    QFrame *line;
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(treeCountLabel, 1, 1);
+    gridLayout->addWidget(nodeCountLabel, 1, 2);
+    mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);  
 
-    QGridLayout *gridLayout4 = new QGridLayout();
-    gridLayout4->addWidget(pushBranchNodeButton, 1, 1);
-    gridLayout4->addWidget(popBranchNodeButton, 1, 2);
+    formLayout = new QFormLayout();
+    formLayout->addRow(activeTreeLabel, activeTreeSpinBox);
+    mainLayout->addLayout(formLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    mainLayout->addLayout(gridLayout4);
+    formLayout = new QFormLayout();
+    formLayout->addRow(activeNodeLabel, activeNodeSpinBox);
+    mainLayout->addLayout(formLayout);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(xLabel, 1, 1);
+    gridLayout->addWidget(yLabel, 1, 2);
+    gridLayout->addWidget(zLabel, 1, 3);
+    mainLayout->addLayout(gridLayout);
+
+    formLayout = new QFormLayout();
+    formLayout->addRow(commentLabel, commentField);
+    formLayout->addRow(searchForLabel, searchForField);
+    mainLayout->addLayout(formLayout);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(findNextButton, 1, 1);
+    gridLayout->addWidget(findPreviousButton, 1, 2);
+    mainLayout->addLayout(gridLayout);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
+
+    mainLayout->addWidget(branchPointLabel);
+    mainLayout->addWidget(onStackLabel);
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(pushBranchNodeButton, 1, 1);
+    gridLayout->addWidget(popBranchNodeButton, 1, 2);
+    mainLayout->addLayout(gridLayout);
+
     mainLayout->addStretch(20);
     this->setLayout(mainLayout);
-
-    connect(activeTreeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeTreeIdChanged(int)));
-    connect(activeNodeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(activeNodeIdChanged(int)));
-    connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
-    connect(searchForField, SIGNAL(textChanged(QString)), this, SLOT(searchForChanged(QString)));
-    connect(findNextButton, SIGNAL(clicked()), this, SLOT(findNextButtonClicked()));
-    connect(findPreviousButton, SIGNAL(clicked()), this, SLOT(findPreviousButtonClicked()));
-    connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeButtonClicked()));
-    connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeButtonClicked()));  
+    // events on shared widgets are connected in the tools widget to prevent duplicate event handling in the tabs
+    connect(pushBranchNodeButton, SIGNAL(clicked()), this, SLOT(pushBranchNodeClicked()));
+    connect(popBranchNodeButton, SIGNAL(clicked()), this, SLOT(popBranchNodeClicked()));
 }
 
-
-void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
-    if(!state->skeletonState->activeTree) {
-        return;
-    }
-
-    treeListElement *tree;
-    if(value > state->skeletonState->activeTree->treeID) {
-        while((tree = findTreeByTreeIDSignal(value)) == 0 and value <= state->skeletonState->greatestTreeID) {
-            value += 1;
-        }
-        if(!tree) {
-            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-            return;
-        }
-    } else if(value < state->skeletonState->activeTree->treeID) {
-        while((tree = findTreeByTreeIDSignal(value)) == 0 and value > 0) {
-            value -= 1;
-        }
-        if(!tree) {
-            activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
-            return;
-        }
-    }
-
-
-    /* As setting also the value of the activeTreeSpinBox in the TreeTabWidget(which in turn set the value of this widget). This would cause an infinite recursion.
-       That´s the reason we have to disconnect the signal and reconnect it after the value it set.
-       Unfortunately it´s a special case here which makes this necessary.
-    */
-    activeTreeSpinBox->blockSignals(true);
-    reference->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(true);
-
-    activeTreeSpinBox->setValue(value);
-    reference->toolsTreesTabWidget->activeTreeSpinBox->setValue(value);
-
-    activeTreeSpinBox->blockSignals(false);
-    reference->toolsTreesTabWidget->activeTreeSpinBox->blockSignals(false);
-
-
-    emit setActiveTreeSignal(value);
-
-    reference->toolsTreesTabWidget->rSpinBox->setValue(state->skeletonState->activeTree->color.r);
-    reference->toolsTreesTabWidget->gSpinBox->setValue(state->skeletonState->activeTree->color.g);
-    reference->toolsTreesTabWidget->bSpinBox->setValue(state->skeletonState->activeTree->color.b);
-    reference->toolsTreesTabWidget->aSpinBox->setValue(state->skeletonState->activeTree->color.a);
-
-    if(state->skeletonState->activeTree->comment)
-        reference->toolsTreesTabWidget->commentField->setText(state->skeletonState->activeTree->comment);
-}
-
-void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
-    if(!state->skeletonState->activeNode)
-        return;
-
-    nodeListElement *node;
-
-    if(value > state->skeletonState->activeNode->nodeID) {
-        while((node = findNodeByNodeIDSignal(value)) == 0 and value <= state->skeletonState->greatestNodeID) {
-            value += 1;
-        }
-
-
-    } else if(value < state->skeletonState->activeNode->nodeID) {
-        while((node = findNodeByNodeIDSignal(value)) == 0 and value > 0) {
-            value -= 1;
-        }
-    }
-
-    this->activeNodeSpinBox->blockSignals(true);
-    reference->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(true);
-
-    activeNodeSpinBox->setValue(value);
-    reference->toolsNodesTabWidget->activeNodeIdSpinBox->setValue(value);
-
-    this->activeNodeSpinBox->blockSignals(false);
-    reference->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
-    //qDebug("spin value: %i", value);
-    if(setActiveNodeSignal(CHANGE_MANUAL, 0, value)) {
-
-        if(state->skeletonState->activeNode) {
-            this->xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-            this->yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-            this->zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
-
-
-            if(state->skeletonState->activeNode->comment and state->skeletonState->activeNode->comment->content) {
-                this->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-                reference->toolsNodesTabWidget->commentField->setText(QString(state->skeletonState->activeNode->comment->content));
-            } else {
-                this->commentField->setText("");
-                reference->toolsNodesTabWidget->commentField->setText("");
-            }
-        }
-    } else {
-
-    }
-}
-
-void ToolsQuickTabWidget::commentChanged(QString comment) {
-
-    if(!state->skeletonState->activeNode)
-        return;
-
-    char *ccomment = const_cast<char *>(comment.toStdString().c_str());
-    if((!state->skeletonState->activeNode->comment) && (strncmp(ccomment, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, ccomment, state->skeletonState->activeNode, 0, true);
-    }
-    else{
-        if(!comment.isEmpty())
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, ccomment, state->skeletonState->activeNode, 0, true);
-    }
-
-    emit updateCommentsTableSignal();
-    this->commentField->setText(comment);
-    reference->toolsNodesTabWidget->commentField->setText(comment);
-
-}
-
-void ToolsQuickTabWidget::searchForChanged(QString comment) {
-    reference->toolsNodesTabWidget->searchForField->setText(comment);
-
-}
-
-void ToolsQuickTabWidget::findNextButtonClicked() {
-    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
-    emit nextCommentSignal(searchStr);    
-}
-
-void ToolsQuickTabWidget::findPreviousButtonClicked() {
-    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
-    emit previousCommentSignal(searchStr);
-}
-
-void ToolsQuickTabWidget::pushBranchNodeButtonClicked() {
+void ToolsQuickTabWidget::pushBranchNodeClicked() {
     emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-    this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+    emit updateToolsSignal();
+}
+void ToolsQuickTabWidget::popBranchNodeClicked() {
+    emit popBranchNodeSignal();
+    emit updateToolsSignal();
 }
 
-void ToolsQuickTabWidget::popBranchNodeButtonClicked() {
-    emit popBranchNodeSignal();
-    this->onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+void ToolsQuickTabWidget::updateToolsQuickTab() {
+    treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
+    nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
+
+    if(state->skeletonState->activeTree) {
+        activeTreeSpinBox->setRange(1, state->skeletonState->greatestTreeID);
+        activeTreeSpinBox->setValue(state->skeletonState->activeTree->treeID);
+    }
+    else { // no active tree
+        activeTreeSpinBox->setMinimum(0);
+        activeTreeSpinBox->setValue(0);
+    }
+    if(state->skeletonState->activeNode) {
+        activeNodeSpinBox->setRange(1, state->skeletonState->greatestNodeID);
+        activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
+        yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
+        zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        blockSignals(true);
+        if(state->skeletonState->activeNode->comment) {
+            commentField->setText(state->skeletonState->activeNode->comment->content);
+        }
+        else {
+            commentField->clear();
+        }
+        blockSignals(false);
+    }
+    else { // no active node
+        activeNodeSpinBox->setMinimum(0);
+        activeNodeSpinBox->setValue(0);
+        xLabel->setText("x: 0");
+        yLabel->setText("y: 0");
+        zLabel->setText("z: 0");
+        commentField->clear();
+    }
+    // branch points on stack
+    onStackLabel->setText(QString("on Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
 }

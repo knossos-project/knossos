@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "toolsnodestabwidget.h"
 #include <QLabel>
 #include <QSpinBox>
 #include <QFrame>
@@ -32,18 +31,20 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QDoubleSpinBox>
+
 #include "knossos.h"
+#include "skeletonizer.h"
+#include "toolsnodestabwidget.h"
 
 extern struct stateInfo *state;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
-    QWidget(parent), reference(parent)
+    QWidget(parent)
 {
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     activeNodeIdLabel = new QLabel("Active Node ID");
     activeNodeIdSpinBox = new QSpinBox();
-    activeNodeIdSpinBox->setMaximum(0);
     activeNodeIdSpinBox->setMinimum(0);
 
     activeNodeXLabel = new QLabel("x:");
@@ -164,7 +165,6 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     connect(jumpToNodeButton, SIGNAL(clicked()), this, SLOT(jumpToNodeButtonClicked()));
     connect(deleteNodeButton, SIGNAL(clicked()), this, SLOT(deleteNodeButtonClicked()));
     connect(linkNodeWithButton, SIGNAL(clicked()), this, SLOT(linkNodeWithButtonClicked()));
-    connect(idSpinBox, SIGNAL(valueChanged(int)), this, SLOT(idChanged(int)));
 
     connect(activeNodeXSpin, SIGNAL(valueChanged(int)), this, SLOT(activeNodeXSpinChanged(int)));
     connect(activeNodeYSpin, SIGNAL(valueChanged(int)), this, SLOT(activeNodeYSpinChanged(int)));
@@ -181,59 +181,40 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 }
 
-
-void ToolsNodesTabWidget::idChanged(int value) {
-    state->viewerState->gui->activeNodeID = value;
-}
-
 void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
-    if(state->skeletonState->activeNode)
+    if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.x = value;
+        emit updateToolsSignal();
+    }
 }
 
 void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
-    if(state->skeletonState->activeNode)
+    if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.y = value;
+        emit updateToolsSignal();
+    }
 }
 
 void ToolsNodesTabWidget::activeNodeZSpinChanged(int value) {
-    if(state->skeletonState->activeNode)
+    if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.z = value;
+        emit updateToolsSignal();
+    }
 }
 
 void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
-    if(state->skeletonState->activeNode) {
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
-                                       state->skeletonState->activeNode->position.y / state->magnification,
-                                       state->skeletonState->activeNode->position.z / state->magnification);
-        emit Knossos::sendRemoteSignal();
-
-    }
+    emit jumpToNodeSignal();
 }
 
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     emit deleteActiveNodeSignal();
-    reference->updateToolsSlot();
+    emit updateToolsSignal();
 }
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {
-    if((state->skeletonState->activeNode) && (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
+    if((state->skeletonState->activeNode) and (findNodeByNodeIDSignal(this->idSpinBox->value()))) {
          emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, this->idSpinBox->value(), true);
     }
-}
-
-
-void ToolsNodesTabWidget::findNextButtonClicked() {
-    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
-    qDebug() << searchStr;
-    emit nextCommentSignal(searchStr);
-}
-
-void ToolsNodesTabWidget::findPreviousButtonClicked() {
-    char *searchStr = const_cast<char *>(this->searchForField->text().toStdString().c_str());
-    qDebug() << searchStr;
-    emit previousCommentSignal(searchStr);
 }
 
 void ToolsNodesTabWidget::useLastRadiusChecked(bool on) {    
@@ -258,10 +239,9 @@ void ToolsNodesTabWidget::defaultNodeRadiusChanged(double value) {
 
 void ToolsNodesTabWidget::enableCommentLockingChecked(bool on) {
     state->skeletonState->positionLocked = on;
-    if(on and lockingToNodesWithCommentField->text().isEmpty())
+    if(on and lockingToNodesWithCommentField->text().isEmpty()) {
         state->viewerState->gui->lockComment = lockingToNodesWithCommentField->text();
-       // state->skeletonState->commentBuffer = const_cast<char *>(lockingToNodesWithCommentField->text().toStdString().c_str());
-    //
+    }
 }
 
 void ToolsNodesTabWidget::lockingRadiusChanged(int value) {
@@ -284,11 +264,42 @@ void ToolsNodesTabWidget::lockToActiveNodeButtonClicked() {
 
         emit lockPositionSignal(activeNodePosition);
 
-    } else {
+    }
+    else {
         qDebug("There is not active node to lock");
     }
 }
 
 void ToolsNodesTabWidget::disableLockingButtonClicked() {
     emit unlockPositionSignal();
+}
+
+void ToolsNodesTabWidget::updateToolsNodesTab() {
+    if(state->skeletonState->activeNode) {
+        activeNodeIdSpinBox->setRange(1, state->skeletonState->greatestNodeID);
+        activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
+        activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x);
+        activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y);
+        activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z);
+        blockSignals(true);
+        if(state->skeletonState->activeNode->comment) {
+            commentField->setText(state->skeletonState->activeNode->comment->content);
+        }
+        else {
+            commentField->clear();
+        }
+        blockSignals(false);
+
+        activeNodeRadiusSpinBox->setValue(state->skeletonState->activeNode->radius);
+    }
+    else {// no active node
+        activeNodeIdSpinBox->setMinimum(0);
+        activeNodeIdSpinBox->setValue(0);
+        activeNodeXSpin->setValue(0);
+        activeNodeYSpin->setValue(0);
+        activeNodeZSpin->setValue(0);
+        commentField->clear();
+        activeNodeRadiusSpinBox->setValue(0);
+    }
+    idSpinBox->setMaximum(state->skeletonState->greatestNodeID);
 }
