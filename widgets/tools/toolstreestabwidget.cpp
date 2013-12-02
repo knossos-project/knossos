@@ -161,6 +161,7 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     mainLayout->addStretch(20);
     setLayout(mainLayout);
 
+    connect(activeTreeSpinBox, SIGNAL(clicked()), this, SLOT(activeTreeSpinChanged()));
     connect(deleteActiveTreeButton, SIGNAL(clicked()), this, SLOT(deleteActiveTreeButtonClicked()));
     connect(newTreeButton, SIGNAL(clicked()), this, SLOT(newTreeButtonClicked()));
     connect(commentField, SIGNAL(textChanged(QString)), this, SLOT(commentChanged(QString)));
@@ -171,7 +172,10 @@ ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     connect(bSpinBox, SIGNAL(valueChanged(double)), this, SLOT(bChanged(double)));
     connect(aSpinBox, SIGNAL(valueChanged(double)), this, SLOT(aChanged(double)));
     connect(restoreDefaultColorButton, SIGNAL(clicked()), this, SLOT(restoreDefaultColorButtonClicked()));
+}
 
+void ToolsTreesTabWidget::activeTreeSpinChanged() {
+    emit setActiveTreeSignal(activeTreeSpinBox->value());
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
@@ -209,8 +213,6 @@ void ToolsTreesTabWidget::commentChanged(QString comment) {
         //qDebug() << comment.toStdString().c_str();
         emit addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
     }
-
-    qDebug() << state->skeletonState->activeTree->comment;
 }
 
 void ToolsTreesTabWidget::mergeTreesButtonClicked() {    

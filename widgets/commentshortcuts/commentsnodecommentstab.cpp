@@ -149,7 +149,6 @@ void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
 }
 
 void CommentsNodeCommentsTab::itemSelected(int row, int col) {
-    qDebug() << "row:" << row;
     QTableWidgetItem *nodeID = nodeTable->item(row, 0);
     QTableWidgetItem *comment = nodeTable->item(row, 1);
 

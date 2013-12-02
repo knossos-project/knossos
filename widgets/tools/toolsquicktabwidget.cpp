@@ -220,7 +220,7 @@ void ToolsQuickTabWidget::activeNodeIdChanged(int value) {
 
     this->activeNodeSpinBox->blockSignals(false);
     reference->toolsNodesTabWidget->activeNodeIdSpinBox->blockSignals(false);
-
+    //qDebug("spin value: %i", value);
     if(setActiveNodeSignal(CHANGE_MANUAL, 0, value)) {
 
         if(state->skeletonState->activeNode) {

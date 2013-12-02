@@ -1029,6 +1029,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int counter = 0;
     file.reset();
     QXmlStreamReader xml(&file);
+    std::vector<std::pair<uint, char*> > comments; // for buffering comments found in the xml
     bench.start();
     QXmlStreamAttributes attributes;
     QStringRef attribute;
@@ -1226,32 +1227,30 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 }
             }
             else if(xml.name() == "comments") {
-                xml.readNextStartElement();
-                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "comments")) {
-                    attributes = xml.attributes();
-
-                    if(xml.name() == "comment" and xml.isStartElement()) {
+                // comments must be buffered and can only be set after thing nodes were parsed
+                // and the skeleton structure was created. This is necessary, because sometimes the
+                // comments node comes before the thing nodes.
+                while(xml.readNextStartElement()) {
+                    if(xml.name() == "comment") {
+                        attributes = xml.attributes();
                         attribute = attributes.value("node");
-                        if(!attribute.isNull()) {
-                            if(!merge) {
+                        if(attribute.isNull() == false) {
+                            if(merge == false) {
                                 nodeID = attribute.toLocal8Bit().toInt();
                             }
                             else {
                                 nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                             }
-                            currentNode = findNodeByNodeID(nodeID);
                         }
                         attribute = attributes.value("content");
-                        if(!attribute.isNull() && currentNode) {
-                            addComment(CHANGE_MANUAL, attribute.toLocal8Bit().data(), currentNode, 0, false);
+                        if(attribute.isNull() == false) {
+                            char *comment = (char*) malloc(1024);
+                            strcpy(comment, attribute.toLocal8Bit().data());
+                            comments.push_back(std::pair<uint, char*>(nodeID, comment));
                         }
                     }
-
-                    while(xml.readNext() == QXmlStreamReader::Characters) {
-
-                    }
+                    xml.skipCurrentElement();
                 }
-
             }
             else if(xml.name() == "thing") {              
                 attributes = xml.attributes();
@@ -1420,6 +1419,18 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         } // end start element
     } // end while
 
+    if(comments.size()) {
+        // if comments were found in the document, add them here,
+        // after the tree structure was created.
+        std::vector<std::pair<uint, char*> >::iterator iter;
+        for(iter = comments.begin(); iter != comments.end(); ++iter) {
+            currentNode = findNodeByNodeID(iter->first);
+            if(currentNode) {
+                addComment(CHANGE_MANUAL,  iter->second, currentNode, 0, false);
+                free(iter->second);
+            }
+        }
+    }
     if(xml.hasError()) {
         qDebug() << xml.errorString() << " at " << xml.lineNumber();
     }
@@ -1427,7 +1438,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     file.close();
 
     if(activeNodeID) {
+        //qDebug("activeNodeID: %i", activeNodeID);
         setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
+        //emit updateToolsSignal();
     }
     /*  @todo
     if((loadedPosition.x != 0) &&
@@ -1884,7 +1897,6 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
 
 bool Skeletonizer::setActiveTreeByID(int treeID) {
     treeListElement *currentTree;
-
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d!", treeID)
@@ -1895,7 +1907,6 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
     state->skeletonState->activeTree = currentTree;
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
-
     state->viewerState->gui->activeTreeID = currentTree->treeID;
     return true;
 }
@@ -1922,7 +1933,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
             return false;
         }
     }
-
     if(node) {
         nodeID = node->nodeID;
     }
@@ -1934,7 +1944,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     if(node) {
         setActiveTreeByID(node->correspondingTree->treeID);
     }
-
     else {
         state->skeletonState->activeTree = NULL;
     }
@@ -1965,9 +1974,9 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     }
 
     if(node) {
-        state->skeletonState->activeNode= node;
+        state->viewerState->gui->activeNodeID= node->nodeID;
     }
-
+    //qDebug("active Node %i, active tree: %i", state->skeletonState->activeNode->nodeID, state->skeletonState->activeTree->treeID);
     return true;
 }
 
@@ -2387,13 +2396,17 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
 }
 
 nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
-    nodeListElement *node = currentNode->correspondingTree->firstNode;
     nodeListElement *prevNode = NULL;
     nodeListElement *highestNode = NULL;
     unsigned int minDistance = UINT_MAX;
     unsigned int tempMinDistance = minDistance;
     unsigned int maxID = 0;
 
+    if(currentNode == NULL) {
+        qDebug("no valid node provided.");
+        return state->skeletonState->activeNode;
+    }
+    nodeListElement *node = currentNode->correspondingTree->firstNode;
     while(node) {
         if(node->nodeID > maxID) {
             highestNode = node;
@@ -2426,13 +2439,17 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode) {
 }
 
 nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode) {
-    nodeListElement *node = currentNode->correspondingTree->firstNode;
     nodeListElement *nextNode = NULL;
     nodeListElement *lowestNode = NULL;
     unsigned int minDistance = UINT_MAX;
     unsigned int tempMinDistance = minDistance;
     unsigned int minID = UINT_MAX;
 
+    if(currentNode == NULL) {
+        qDebug("no valid node provided.");
+        return state->skeletonState->activeNode;
+    }
+    nodeListElement *node = currentNode->correspondingTree->firstNode;
     while(node) {
         if(node->nodeID < minID) {
             lowestNode = node;
@@ -4101,12 +4118,8 @@ bool Skeletonizer::moveToNextTree() {
 }
 
 bool Skeletonizer::moveToPrevNode() {
-
     struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode);
 
-    if(state->skeletonState->activeNode == NULL) {
-        return false;
-    }
     if(prevNode) {
         setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
         emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
@@ -4117,7 +4130,19 @@ bool Skeletonizer::moveToPrevNode() {
         emit updateToolsSignal();
         return true;
     }
-
+    if(state->skeletonState->activeTree) {
+        if(state->skeletonState->activeTree->firstNode) {
+            prevNode = state->skeletonState->activeTree->firstNode;
+            setActiveNode(CHANGE_MANUAL, prevNode, 0);
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(prevNode->position.x,
+                                         prevNode->position.y,
+                                         prevNode->position.z);
+            Knossos::sendRemoteSignal();
+            emit updateToolsSignal();
+            return true;
+        }
+    }
     return false;
 }
 
@@ -4125,9 +4150,6 @@ bool Skeletonizer::moveToNextNode() {
 
     struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode);
 
-    if(state->skeletonState->activeNode == NULL) {
-        return false;
-    }
     if(nextNode) {
         setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
         emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
@@ -4138,9 +4160,20 @@ bool Skeletonizer::moveToNextNode() {
         emit updateToolsSignal();
         return true;
     }
-
+    if(state->skeletonState->activeTree) {
+        if(state->skeletonState->activeTree->firstNode) {
+            nextNode = state->skeletonState->activeTree->firstNode;
+            setActiveNode(CHANGE_MANUAL, nextNode, 0);
+           /* emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(nextNode->position.x,
+                                         nextNode->position.y,
+                                         nextNode->position.z);
+            Knossos::sendRemoteSignal();*/
+            emit updateToolsSignal();
+            return true;
+        }
+    }
     return false;
-
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
