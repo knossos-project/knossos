@@ -192,16 +192,6 @@ void ToolsQuickTabWidget::activeTreeIdChanged(int value) {
 
     if(state->skeletonState->activeTree->comment)
         reference->toolsTreesTabWidget->commentField->setText(state->skeletonState->activeTree->comment);
-
-    nodeListElement *node = state->skeletonState->activeTree->firstNode;
-    if(node) {
-        emit setActiveNodeSignal(CHANGE_MANUAL, node, node->nodeID);
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-        emit setRecenteringPositionSignal(state->skeletonState->activeNode->position.x / state->magnification,
-                                       state->skeletonState->activeNode->position.y / state->magnification,
-                                       state->skeletonState->activeNode->position.z / state->magnification);
-        emit Knossos::sendRemoteSignal();
-    }
 }
 
 void ToolsQuickTabWidget::activeNodeIdChanged(int value) {

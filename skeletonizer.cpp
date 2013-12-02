@@ -1914,7 +1914,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
             return false;
         }
     }
-
     if(nodeID != 0) {
         node = findNodeByNodeID(nodeID);
         if(!node) {
@@ -1928,7 +1927,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
         nodeID = node->nodeID;
     }
 
-
     state->skeletonState->activeNode = node;
     state->skeletonState->viewChanged = true;
     state->skeletonState->skeletonChanged = true;
@@ -1937,9 +1935,9 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
         setActiveTreeByID(node->correspondingTree->treeID);
     }
 
-    else
+    else {
         state->skeletonState->activeTree = NULL;
-
+    }
     if(node) {
         if(node->comment) {
             state->skeletonState->currentComment = node->comment;
@@ -1962,9 +1960,6 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
             if(!Client::syncMessage("brd", KIKI_SETACTIVENODE, nodeID)) {
                 Client::skeletonSyncBroken();
             }
-        }
-        else {
-
         }
         Knossos::unlockSkeleton(true);
     }
