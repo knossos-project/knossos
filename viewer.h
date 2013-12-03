@@ -44,6 +44,7 @@
  */
 class Skeletonizer;
 class Renderer;
+class EventModel;
 class Viewport;
 class MainWindow;
 class Viewer : public QThread
@@ -53,6 +54,7 @@ class Viewer : public QThread
 public:
     explicit Viewer(QObject *parent = 0);
     Skeletonizer *skeletonizer;
+    EventModel *eventModel;
     Renderer *renderer;
     MainWindow *window;
 

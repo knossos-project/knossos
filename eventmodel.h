@@ -52,7 +52,6 @@ class EventModel : public QObject
 {
     Q_OBJECT
 public:
-    Renderer *reference;
     explicit EventModel(QObject *parent = 0);
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
@@ -122,7 +121,7 @@ signals:
     nodeListElement *findNodeByNodeIDSignal(int nodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-
+    uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
     void undoSignal();
 
 public slots:

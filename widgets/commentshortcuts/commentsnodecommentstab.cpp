@@ -92,8 +92,6 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
             if(filtered) {               
                 if(strstr(node->comment->content, filter) != NULL) {
-                    qDebug() << node->comment->content;
-
                     if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
 
                         QTableWidgetItem *nodeID = new QTableWidgetItem(QString::number(node->nodeID));

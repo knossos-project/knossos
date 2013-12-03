@@ -57,13 +57,14 @@ void ViewportButton::leaveEvent(QEvent *) {
 
 Viewport::Viewport(QWidget *parent, int viewportType) :
     QGLWidget(parent), viewportType(viewportType), resizeButtonHold(false) {
-    delegate = new EventModel();
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
     //this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
-    this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus. This solves also the problem that viewports had to be clicked before the widget know in which viewport the mouse click occured.
+    this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus.
+                                          // This solves also the problem that viewports had to be clicked
+                                          // before the widget know in which viewport the mouse click occured.
 
     resizeButton = new ResizeButton(this);
     resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
@@ -247,15 +248,15 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     }
 
     if(clickEvent) {
-        delegate->mouseX = event->x();
-        delegate->mouseY = event->y();
+        eventDelegate->mouseX = event->x();
+        eventDelegate->mouseY = event->y();
     }
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
-    delegate->mouseX = event->x();
-    delegate->mouseY = event->y();
+    eventDelegate->mouseX = event->x();
+    eventDelegate->mouseY = event->y();
     if(event->button() == Qt::LeftButton) {
         if(QApplication::keyboardModifiers() == Qt::CTRL) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
@@ -341,7 +342,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::OpenHandCursor);
     }
-    this->delegate->handleKeyboard(event, focus);
+    this->eventDelegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
         qDebug() << " AUTO REPEAT = TRUE";
         state->autorepeat = true;
@@ -352,7 +353,6 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
 void Viewport::drawViewport(int viewportType) {
     reference->renderOrthogonalVP(viewportType);
-
 }
 
 void Viewport::drawSkeletonViewport() {
@@ -360,37 +360,37 @@ void Viewport::drawSkeletonViewport() {
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseButtonLeft(event, VPfound);
+    return eventDelegate->handleMouseButtonLeft(event, VPfound);
 }
 
 bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseButtonMiddle(event, VPfound);
+    return eventDelegate->handleMouseButtonMiddle(event, VPfound);
 
 }
 
 bool Viewport::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseButtonRight(event, VPfound);
+    return eventDelegate->handleMouseButtonRight(event, VPfound);
 }
 
 
 bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseMotionLeftHold(event, VPfound);
+    return eventDelegate->handleMouseMotionLeftHold(event, VPfound);
 }
 
 bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseMotionMiddleHold(event, VPfound);
+    return eventDelegate->handleMouseMotionMiddleHold(event, VPfound);
 }
 
 bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-    return delegate->handleMouseMotionRightHold(event, VPfound);
+    return eventDelegate->handleMouseMotionRightHold(event, VPfound);
 }
 
 bool Viewport::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
-    return delegate->handleMouseWheelForward(event, VPfound);
+    return eventDelegate->handleMouseWheelForward(event, VPfound);
 }
 
 bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
-    return delegate->handleMouseWheelBackward(event, VPfound);
+    return eventDelegate->handleMouseWheelBackward(event, VPfound);
 }
 
 
@@ -399,17 +399,6 @@ void Viewport::enterEvent(QEvent *event) {
     focus = this->viewportType;
     this->setCursor(Qt::CrossCursor);
 }
-/*
-void Viewport::paintEvent(QPaintEvent *event) {
-
-}*/
-
-/*
-void Viewport::leaveEvent(QEvent *event) {
-    entered = false;    
-
-}
-*/
 
 void Viewport::zoomOrthogonals(float step){
 
@@ -504,7 +493,10 @@ void Viewport::resizeVP(QMouseEvent *event) {
 }
 
 void Viewport::updateButtonPositions() {
-    resizeButton->setGeometry(width() - ResizeButton::SIZE, height() - ResizeButton::SIZE, ResizeButton::SIZE, ResizeButton::SIZE);
+    resizeButton->setGeometry(width() - ResizeButton::SIZE,
+                              height() - ResizeButton::SIZE,
+                              ResizeButton::SIZE,
+                              ResizeButton::SIZE);
     if(viewportType == VIEWPORT_SKELETON) {
         xyButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*6, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
         xzButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*5, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);

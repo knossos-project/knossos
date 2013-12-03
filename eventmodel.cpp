@@ -46,7 +46,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
 
-        clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
@@ -104,7 +104,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::ALT) {
         int clickedNode;
-        clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+        clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
@@ -123,7 +123,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    int clickedNode = reference->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
+    int clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
