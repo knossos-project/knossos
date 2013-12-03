@@ -59,8 +59,8 @@ Viewer::Viewer(QObject *parent) :
     vpXZ = window->viewports[VIEWPORT_XZ];
     vpYZ = window->viewports[VIEWPORT_YZ];
     vpSkel = window->viewports[VIEWPORT_SKELETON];
-    delegate = new EventModel();
-    vpXY->delegate = vpXZ->delegate = vpYZ->delegate = vpSkel->delegate = delegate;
+    eventModel = new EventModel();
+    vpXY->eventDelegate = vpXZ->eventDelegate = vpYZ->eventDelegate = vpSkel->eventDelegate = eventModel;
 
     timer = new QTimer();
 
@@ -2664,45 +2664,45 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     // end skeletonizer signals
     //event model signals
-    connect(delegate, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
-    connect(delegate, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
-    connect(delegate, SIGNAL(zoomOrthoSignal(float)), vpXY, SLOT(zoomOrthogonals(float)));
-    connect(delegate, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
-    connect(delegate, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
-    connect(delegate, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates())); // TIENITODO event handler??
-    connect(delegate, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
-    connect(delegate, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(delegate, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
-    connect(delegate, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(delegate, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(delegate, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
-    connect(delegate, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
-    connect(delegate, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
-    connect(delegate, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(delegate, SIGNAL(addSkeletonNodeAndLinkWithActiveSignal(Coordinate*,Byte,int)),
+    connect(eventModel, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
+    connect(eventModel, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
+    connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpXY, SLOT(zoomOrthogonals(float)));
+    connect(eventModel, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
+    connect(eventModel, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
+    connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates())); // TIENITODO event handler??
+    connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
+    connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
+    connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(eventModel, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
+    connect(eventModel, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(eventModel, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(eventModel, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
+    connect(eventModel, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(eventModel, SIGNAL(addSkeletonNodeAndLinkWithActiveSignal(Coordinate*,Byte,int)),
                     skeletonizer, SLOT(addSkeletonNodeAndLinkWithActive(Coordinate*,Byte,int)));
-    connect(delegate, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+    connect(eventModel, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(delegate, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(delegate, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(delegate, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(delegate, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
-    connect(delegate, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
+    connect(eventModel, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
+    connect(eventModel, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
+    connect(eventModel, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(eventModel, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
+    connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
-    connect(delegate, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
-    connect(delegate, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)),
+    connect(eventModel, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
+    connect(eventModel, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)),
                     skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    connect(delegate, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
-    connect(delegate, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
-    connect(delegate, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(delegate, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    connect(delegate, SIGNAL(updateSlicePlaneWidgetSignal()),
+    connect(eventModel, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
+    connect(eventModel, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
+    connect(eventModel, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(eventModel, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(eventModel, SIGNAL(updateSlicePlaneWidgetSignal()),
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
-    connect(delegate, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+    connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
                     skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    connect(delegate, SIGNAL(retrieveVisibleObjectBeneathSquareSignal(uint,uint,uint,uint)),
+    connect(eventModel, SIGNAL(retrieveVisibleObjectBeneathSquareSignal(uint,uint,uint,uint)),
             renderer, SLOT(retrieveVisibleObjectBeneathSquare(uint,uint,uint,uint)));
-    connect(delegate, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
+    connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     //end event handler signals
     // mainwindow signals
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)));

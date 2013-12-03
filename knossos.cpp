@@ -155,53 +155,71 @@ int main(int argc, char *argv[])
     //Scripting *scripts = new Scripting();
     //scripts->reference = viewer->skeletonizer;
 
-    QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()), viewer->window, SLOT(treeColorAdjustmentsChanged()));
-    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)), viewer, SLOT(loadTreeColorTable(QString,float*,int)));
+    QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()),
+                            viewer->window, SLOT(treeColorAdjustmentsChanged()));
+    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)),
+                            viewer, SLOT(loadTreeColorTable(QString,float*,int)));
 
     knossos->loadDefaultTreeLUT();
 
     QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
-    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)), viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
-    QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)), viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)), viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
+    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
+                            viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
+    QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+                            viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)),
+                            viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
 
     QObject::connect(viewer->eventModel, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->eventModel, SIGNAL(setRecenteringPositionSignal(int,int,int)), remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->eventModel, SIGNAL(setRecenteringPositionSignal(int,int,int)),
+                            remote, SLOT(setRecenteringPosition(int,int,int)));
 
     QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),
+                            remote, SLOT(setRecenteringPosition(int,int,int)));
 
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
-    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)), viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
+    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)),
+                            viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
     QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));
-    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)), viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
-    QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)), viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*,int)), viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*,int)));
+    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
+                            viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
+    QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)),
+                            viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
+    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*,int)),
+                            viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(delTreeSignal(int,int,int)), viewer->skeletonizer, SLOT(delTree(int,int,int)));
-    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)), viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
+    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
+                            viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
+                            viewer->skeletonizer,
+                            SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)),
+                            viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
     QObject::connect(client, SIGNAL(popBranchNodeSignal()), viewer->skeletonizer, SLOT(UI_popBranchNode()));
-    QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)), viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(sendConnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
-    QObject::connect(client, SIGNAL(sendDisconnectedState()), viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
+    QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+                            viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
+    QObject::connect(client, SIGNAL(sendConnectedState()),
+                            viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
+    QObject::connect(client, SIGNAL(sendDisconnectedState()),
+                            viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
 
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
 
-    QObject::connect(remote, SIGNAL(idleTimeSignal()), viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));    
+    QObject::connect(remote, SIGNAL(idleTimeSignal()),
+                            viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)),
+                            viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
 
     loader->start();
     viewer->run();
     remote->start();
     client->start();
 
-
-
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)), viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     //scripts->run();
 
     /* TEST */
