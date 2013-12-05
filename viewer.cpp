@@ -2658,12 +2658,15 @@ void Viewer::rewire() {
     // end viewer signals
     // skeletonizer signals
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(skeletonizer, SIGNAL(updateTreeviewSignal()), window->widgetContainer->treeviewWidget, SLOT(update()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
                     window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
     connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     // end skeletonizer signals
     //event model signals
+    connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->treeviewWidget, SLOT(update()));
     connect(eventModel, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(eventModel, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
     connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpXY, SLOT(zoomOrthogonals(float)));
@@ -2672,7 +2675,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates())); // TIENITODO event handler??
     connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(eventModel, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
     connect(eventModel, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
@@ -2705,12 +2707,13 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     //end event handler signals
     // mainwindow signals
+    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window, SIGNAL(updateTreeviewSignal()), window->widgetContainer->treeviewWidget, SLOT(update()));
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)));
     connect(window, SIGNAL(updateCommentsTableSignal()),
                     window->widgetContainer->commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
     connect(window, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     connect(window, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
@@ -2809,6 +2812,12 @@ void Viewer::rewire() {
     connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(findNodeByNodeIDSignal(int)),
                     skeletonizer, SLOT(findNodeByNodeID(int)));
     //  -- end tools widget signals
+    //  tree view widget signals --
+    connect(window->widgetContainer->treeviewWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+            skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->treeviewWidget, SIGNAL(delActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(window->widgetContainer->treeviewWidget, SIGNAL(JumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
+    //  -- end tree view widget signals
     //  viewport settings widget signals --
     //  general vp settings tab signals
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(overrideNodeRadiusSignal(bool)),

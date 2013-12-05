@@ -172,12 +172,14 @@ void ToolsTreesTabWidget::deleteActiveTreeButtonClicked() {
     if(warning.clickedButton() == yes) {
         emit delActiveTreeSignal();
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
 void ToolsTreesTabWidget::deleteActiveTreeWithoutConfirmation() {
     emit delActiveTreeSignal();
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
 }
 
 void ToolsTreesTabWidget::newTreeButtonClicked() {
@@ -188,7 +190,9 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
     treeCol.a = 1;
     emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    emit updateTreeviewSignal();
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
 }
 
 void ToolsTreesTabWidget::commentChanged(QString comment) {
@@ -202,6 +206,7 @@ void ToolsTreesTabWidget::mergeTreesButtonClicked() {
     qDebug() << id1SpinBox->value() << " [] " << id2SpinBox->value();
     if(mergeTrees(CHANGE_MANUAL, id1SpinBox->value(), id2SpinBox->value(), true)) {
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
@@ -210,6 +215,7 @@ void ToolsTreesTabWidget::splitByConnectedComponentsButtonClicked() {
     if(state->skeletonState->activeNode) {
         if(splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, true)) {
             emit updateToolsSignal();
+            emit updateTreeviewSignal();
         }
     }
 }

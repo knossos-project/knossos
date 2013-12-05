@@ -185,6 +185,7 @@ void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.x = value;
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
@@ -192,6 +193,7 @@ void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.y = value;
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
@@ -199,6 +201,7 @@ void ToolsNodesTabWidget::activeNodeZSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
         state->skeletonState->activeNode->position.z = value;
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
@@ -209,6 +212,7 @@ void ToolsNodesTabWidget::jumpToNodeButtonClicked() {
 void ToolsNodesTabWidget::deleteNodeButtonClicked() {
     emit deleteActiveNodeSignal();
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
 }
 
 void ToolsNodesTabWidget::linkNodeWithButtonClicked() {

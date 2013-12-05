@@ -50,6 +50,7 @@ signals:
                               nodeListElement *branchNode, int branchNodeID, int serialize);
     void popBranchNodeSignal();
     void updateToolsSignal();
+    void updateTreeviewSignal();
 public slots:
     void pushBranchNodeClicked();
     void popBranchNodeClicked();

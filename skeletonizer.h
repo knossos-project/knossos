@@ -28,6 +28,7 @@
 
 #include <QObject>
 #include <QtXml>
+#include <vector>
 #include "knossos-global.h"
 
 class Skeletonizer : public QObject
@@ -80,10 +81,14 @@ public:
     bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
+
+    static bool deleteSelectedTrees();
+
     static char *integerChecksum(int32_t in);
     static bool isObfuscatedTime(int time);
 
     static void resetSkeletonMeta();
+
 public:
     static void setDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
@@ -236,6 +241,7 @@ signals:
     void updatePositionSignal(int serverMovement);        
     void saveSkeletonSignal(int increment);
     void updateToolsSignal();
+    void updateTreeviewSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
@@ -244,9 +250,9 @@ signals:
 public slots:
     void UI_popBranchNode();
     static bool delTree(int targetRevision, int treeID, int serialize);
-    bool delActiveTree();
+    static bool delActiveTree();
     static bool clearSkeleton(int targetRevision, int loadingSkeleton);
-    bool delActiveNode();
+    static bool delActiveNode();
     bool updateSkeletonFileName(int targetRevision, int increment, char *filename);
     bool updateSkeletonState();
     bool genTestNodes(uint number);
@@ -261,7 +267,7 @@ public slots:
     bool previousCommentlessNode();
     bool nextCommentlessNode();
     static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
-    bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    static bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
     static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
     static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
@@ -293,10 +299,11 @@ public slots:
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(int nodeID);
     static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
+    static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
 
-    int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
+    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);

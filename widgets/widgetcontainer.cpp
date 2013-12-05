@@ -15,13 +15,18 @@ WidgetContainer::WidgetContainer(MainWindow *parent) :
  */
 void WidgetContainer::rewire() {
     connect(toolsWidget, SIGNAL(updateCommentsTableSignal()), commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+    connect(toolsWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
+    connect(toolsWidget->toolsQuickTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
+    connect(toolsWidget->toolsNodesTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
+    connect(toolsWidget->toolsTreesTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
+    connect(treeviewWidget, SIGNAL(updateToolsSignal()), toolsWidget, SLOT(updateToolsSlot()));
+    connect(commentsWidget->nodeCommentsTab, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
 }
 
 void WidgetContainer::createConsoleWidget() {
     console = new Console();
     console->setWindowFlags(Qt::WindowStaysOnTopHint);
     console->setMinimumSize(200, 100);
-
 }
 
 void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
@@ -130,6 +135,13 @@ void WidgetContainer::createDocumentationWidget(QWidget *parent) {
 #endif
 }
 
+void WidgetContainer::createTreeviewWidget(QWidget *parent) {
+    treeviewWidget = new Treeview(parent);
+#ifdef Q_OS_MAC
+    treeviewWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+#endif
+}
+
 void WidgetContainer::createWidgets(QWidget *parent) {
     createConsoleWidget();
     createTracingTimeWidget(parent);
@@ -144,6 +156,7 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createTaskWidgets(parent);
     createSplashScreenWidget(parent);
     createDocumentationWidget(parent);
+    createTreeviewWidget(parent);
     rewire();
 
     connect(this->datasetPropertyWidget, SIGNAL(datasetSwitchZoomDefaults()), this->zoomAndMultiresWidget, SLOT(zoomDefaultsClicked()));

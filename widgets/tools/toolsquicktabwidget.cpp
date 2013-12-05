@@ -128,10 +128,12 @@ ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
 void ToolsQuickTabWidget::pushBranchNodeClicked() {
     emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
 }
 void ToolsQuickTabWidget::popBranchNodeClicked() {
     emit popBranchNodeSignal();
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
 }
 
 void ToolsQuickTabWidget::updateToolsQuickTab() {

@@ -106,6 +106,7 @@ signals:
     void saveSkeletonSignal();
     void idleTimeSignal();
     void updateTools();
+    void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
     void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);

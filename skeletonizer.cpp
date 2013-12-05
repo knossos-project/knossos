@@ -619,6 +619,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
         pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID, false);
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, false);
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
         emit idleTimeSignal();
     }
 
@@ -1500,7 +1501,6 @@ bool Skeletonizer::delActiveNode() {
     else {
         return false;
     }
-    emit updateToolsSignal();
     return true;
 }
 
@@ -2641,11 +2641,10 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
     }
-    emit updateToolsSignal();
     return newElement;
 }
 
-treeListElement* Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
+treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
     treeListElement *tree = state->skeletonState->firstTree;
     treeListElement *prevTree = NULL;
     uint idDistance = state->skeletonState->treeElements;
@@ -3511,6 +3510,7 @@ commentListElement* Skeletonizer::nextComment(char *searchString) {
 
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     return state->skeletonState->currentComment;
 }
 
@@ -3564,6 +3564,7 @@ commentListElement* Skeletonizer::previousComment(char *searchString) {
         }
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     return state->skeletonState->currentComment;
 }
 
@@ -3784,20 +3785,25 @@ void Skeletonizer::UI_popBranchNode() {
     }
 }
 
-void Skeletonizer::restoreDefaultTreeColor() {
-    if(state->skeletonState->activeTree) {
-        int index = (state->skeletonState->activeTree->treeID - 1) % 256;
-
-
-        state->skeletonState->activeTree->color.r = state->viewerState->defaultTreeTable[index];
-        state->skeletonState->activeTree->color.g = state->viewerState->defaultTreeTable[index + 256];
-        state->skeletonState->activeTree->color.b = state->viewerState->defaultTreeTable[index + 512];
-        state->skeletonState->activeTree->color.a = 1.;
-
-        state->skeletonState->activeTree->colorSetManually = false;
-        state->skeletonState->skeletonChanged = true;
-        state->skeletonState->unsavedChanges = true;
+void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
+    if(tree == NULL) {
+        return;
     }
+    qDebug("in restore: %i", tree->treeID);
+    int index = (tree->treeID - 1) % 256;
+
+    tree->color.r = state->viewerState->defaultTreeTable[index];
+    tree->color.g = state->viewerState->defaultTreeTable[index + 256];
+    tree->color.b = state->viewerState->defaultTreeTable[index + 512];
+    tree->color.a = 1.;
+
+    tree->colorSetManually = false;
+    state->skeletonState->skeletonChanged = true;
+    state->skeletonState->unsavedChanges = true;
+}
+
+void Skeletonizer::restoreDefaultTreeColor() {
+    restoreDefaultTreeColor(state->skeletonState->activeTree);
 }
 
 bool Skeletonizer::updateTreeColors() {
@@ -4115,6 +4121,7 @@ bool Skeletonizer::moveToPrevTree() {
 
             Knossos::sendRemoteSignal();
             emit updateToolsSignal();
+            emit updateTreeviewSignal();
         }
         return true;
     }
@@ -4153,6 +4160,7 @@ bool Skeletonizer::moveToNextTree() {
                                              node->position.z);
                 Knossos::sendRemoteSignal();
                 emit updateToolsSignal();
+                emit updateTreeviewSignal();
         }
         return true;
     }
@@ -4177,6 +4185,7 @@ bool Skeletonizer::moveToPrevNode() {
                                      prevNode->position.z);
         Knossos::sendRemoteSignal();
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
         return true;
     }
     return false;
@@ -4192,9 +4201,25 @@ bool Skeletonizer::moveToNextNode() {
                                      nextNode->position.z);
         Knossos::sendRemoteSignal();
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
         return true;
     }
     return false;
+}
+
+bool Skeletonizer::deleteSelectedTrees() {
+    std::vector<treeListElement *>::iterator iter;
+    for(iter = state->skeletonState->selectedTrees.begin();
+        iter != state->skeletonState->selectedTrees.end(); ++iter) {
+        if(*iter == state->skeletonState->activeTree) {
+            delActiveTree();
+        }
+        else {
+            delTree(CHANGE_MANUAL, (*iter)->treeID, true);
+        }
+    }
+    state->skeletonState->selectedTrees.clear();
+    return true;
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].

@@ -60,6 +60,7 @@ signals:
     void setActiveTreeSignal(int id);
     void delActiveTreeSignal();
     void updateToolsSignal();
+    void updateTreeviewSignal();
 
     void updateViewerStateSignal();
     void restoreDefaultTreeColorSignal();

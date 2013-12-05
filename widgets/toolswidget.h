@@ -59,6 +59,7 @@ signals:
     void nextCommentSignal(char* searchString);
     void previousCommentSignal(char* searchString);
     void updateCommentsTableSignal();
+    void updateTreeviewSignal();
 public slots:
     void activeTreeSpinChanged(int value);
     void activeNodeSpinChanged(int value);

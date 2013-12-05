@@ -1164,6 +1164,10 @@ struct skeletonState {
     struct treeListElement *firstTree;
     struct treeListElement *activeTree;
     struct nodeListElement *activeNode;
+
+    std::vector<treeListElement *> selectedTrees;
+    std::vector<nodeListElement *> selectedNodes;
+
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;
 

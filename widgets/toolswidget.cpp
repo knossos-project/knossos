@@ -98,6 +98,7 @@ void ToolsWidget::activeTreeSpinChanged(int value) {
         setActiveTreeSignal(tree->treeID);
     }
     updateToolsSlot();
+    emit updateTreeviewSignal();
     return;
 }
 
@@ -122,6 +123,7 @@ void ToolsWidget::activeNodeSpinChanged(int value) {
         setActiveNodeSignal(CHANGE_MANUAL, node, 0);
     }
     updateToolsSlot();
+    emit updateTreeviewSignal();
     return;
 }
 
@@ -138,6 +140,7 @@ void ToolsWidget::commentChanged(QString comment) {
     }
     emit updateCommentsTableSignal();
     updateToolsSlot();
+    emit updateTreeviewSignal();
 }
 
 void ToolsWidget::searchForChanged(QString searchString) {

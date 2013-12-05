@@ -73,6 +73,7 @@ signals:
     bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
+    void updateTreeviewSignal();
     void updateCommentsTableSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
 
@@ -174,6 +175,7 @@ public:
     QAction *taskAction;
     QAction *logAction;
     QAction *commentShortcutsAction;
+    QAction *treeviewAction;
 
     /* help actions */
     QAction *aboutAction;
@@ -205,6 +207,7 @@ public:
     QToolButton *commentShortcutsButton;
     QPushButton *resetVPsButton;
     QToolButton *taskManagementButton;
+    QToolButton *treeviewButton;
 
     void updateFileHistoryMenu();
     void createActions();
@@ -261,6 +264,7 @@ public slots:
     void taskSlot();
     void logSlot();
     void commentShortcutsSlots();
+    void treeviewSlot();
 
     /* help menu */
     void aboutSlot();

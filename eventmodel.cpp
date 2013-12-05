@@ -51,6 +51,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
             emit updateTools();
+            emit updateTreeviewSignal();
             return true;
         }
 
@@ -66,6 +67,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
                 free(clickedCoordinate);
                 emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
                 emit updateTools();
+                emit updateTreeviewSignal();
                 return true;
             }
         }
@@ -303,6 +305,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     emit updateViewerStateSignal();
     Knossos::sendRemoteSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 
     free(clickedCoordinate);
     return true;
@@ -565,6 +568,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
                  state->magnification);
 
         emit updateTools();
+        emit updateTreeviewSignal();
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;
 
@@ -584,7 +588,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 #endif
 #ifdef Q_OS_WIN
                 if(QApplication::keyboardModifiers() == Qt::CTRL) {
-                   emit zoomOrthoSignal(-0.1);
+                    emit zoomOrthoSignal(-0.1);
 
 #endif
 
@@ -648,6 +652,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
                  state->magnification);
 
         emit updateTools();
+        emit updateTreeviewSignal();
 
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;
@@ -1107,7 +1112,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
-        //emit updateTools();   
+        //emit updateTools();
+        // emit updateTreeviewSignal();
 
     } else if(event->key() == Qt::Key_3) {
         if(state->viewerState->drawVPCrosshairs) {
@@ -1154,6 +1160,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_Delete) {
         emit deleteActiveNodeSignal();
         emit updateTools();
+        emit updateTreeviewSignal();
     } else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();

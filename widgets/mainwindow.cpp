@@ -266,6 +266,11 @@ void MainWindow:: createToolBar() {
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
 
+    treeviewButton = new QToolButton();
+    treeviewButton->setToolTip("Tree View");
+    treeviewButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
+    toolBar->addWidget(treeviewButton);
+
     resetVPsButton = new QPushButton("Reset Viewports", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
     this->toolBar->addWidget(resetVPsButton);
@@ -283,6 +288,7 @@ void MainWindow:: createToolBar() {
     //connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
     connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
+    connect(treeviewButton, SIGNAL(clicked()), this, SLOT(treeviewSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
@@ -522,6 +528,9 @@ void MainWindow::createActions()
     commentShortcutsAction->setCheckable(true);
 
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
+
+    treeviewAction = new QAction(tr("Tree View"), this);
+    treeviewAction->setCheckable(true);
     //connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
 
     /* Help actions */
@@ -648,7 +657,7 @@ void MainWindow::createMenus()
     taskAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-
+    treeviewAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Tree View", this, SLOT(treeviewSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 
@@ -723,6 +732,7 @@ bool MainWindow::fileDialogForSkeletonAndAsyncLoading
             addRecentFile(fileName);
         }
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
         return result;
     }
 }
@@ -890,6 +900,7 @@ void MainWindow::clearSkeletonWithoutConfirmation() {
     emit clearSkeletonSignal(CHANGE_MANUAL, false);
     updateTitlebar(false);
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -907,6 +918,7 @@ void MainWindow::clearSkeletonSlot()
         emit clearSkeletonSignal(CHANGE_MANUAL, false);
         updateTitlebar(false);
         emit updateToolsSignal();
+        emit updateTreeviewSignal();
     }
 }
 
@@ -1067,6 +1079,10 @@ void MainWindow::commentShortcutsSlots()
         this->widgetContainer->commentsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     commentShortcutsAction->setChecked(true);
     this->widgetContainer->commentsWidget->setFixedSize(this->widgetContainer->commentsWidget->size());
+}
+
+void MainWindow::treeviewSlot() {
+    this->widgetContainer->treeviewWidget->show();
 }
 
 /* help menu functionality */
@@ -1486,6 +1502,8 @@ void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
     emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
+    emit updateToolsSignal();
+    emit updateTreeviewSignal();
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
@@ -1500,31 +1518,37 @@ void MainWindow::previousCommentNodeSlot() {
 void MainWindow::pushBranchNodeSlot() {
    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
    emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::popBranchNodeSlot() {
     emit popBranchNodeSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToNextNodeSlot() {
     emit moveToNextNodeSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevNodeSlot() {
     emit moveToPrevNodeSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevTreeSlot() {
     emit moveToPrevTreeSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToNextTreeSlot() {
     emit moveToNextTreeSignal();
     emit updateTools();
+    emit updateTreeviewSignal();
 }
 
 void MainWindow::jumpToActiveNodeSlot() {
@@ -1545,6 +1569,7 @@ void MainWindow::F1Slot() {
         }
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -1560,6 +1585,7 @@ void MainWindow::F2Slot() {
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -1575,6 +1601,7 @@ void MainWindow::F3Slot() {
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -1590,6 +1617,7 @@ void MainWindow::F4Slot() {
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 
@@ -1605,6 +1633,7 @@ void MainWindow::F5Slot() {
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
     }
     emit updateToolsSignal();
+    emit updateTreeviewSignal();
     emit updateCommentsTableSignal();
 }
 

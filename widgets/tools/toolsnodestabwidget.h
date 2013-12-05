@@ -49,6 +49,7 @@ public:
     explicit ToolsNodesTabWidget(ToolsWidget *parent = 0);
 signals:
     void updateToolsSignal();
+    void updateTreeviewSignal();
     void updatePositionSignal(int serverMovement);
     void deleteActiveNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
