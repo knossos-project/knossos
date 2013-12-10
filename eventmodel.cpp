@@ -550,13 +550,10 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
     if(VPfound == -1)
         return true;
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     if((state->skeletonState->activeNode) and (state->modShift)) {
 #endif
 #ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_LINUX
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
 #endif
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
@@ -587,14 +584,11 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
                 emit zoomOrthoSignal(-0.1);
-
 #endif
 #ifdef Q_OS_WIN
-                if(QApplication::keyboardModifiers() == Qt::CTRL) {
-                    emit zoomOrthoSignal(-0.1);
-
+            if(QApplication::keyboardModifiers() == Qt::CTRL) {
+                emit zoomOrthoSignal(-0.1);
 #endif
-
             } else { // move otherwiese
                 switch(VPfound) {
                     case VIEWPORT_XY:

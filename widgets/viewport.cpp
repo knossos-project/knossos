@@ -319,12 +319,15 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
     state->newCoord[1] = 0;
     state->newCoord[2] = 0;
 
-    if(state->modCtrl)
+    if(state->modCtrl) {
         state->modCtrl = false;
-    if(state->modAlt)
+    }
+    if(state->modAlt) {
         state->modAlt = false;
-    if(state->modShift)
-        state->modAlt = false;
+    }
+    if(state->modShift) {
+        state->modShift = false;
+    }
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
