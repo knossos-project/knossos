@@ -27,7 +27,6 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QDoubleSpinBox>
-#include <QSlider>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QFrame>
@@ -39,47 +38,32 @@
 
 extern struct stateInfo *state;
 
-static const float MIN_ZOOM = 0.02;
-static const float MAX_ZOOM = 1;
-
 ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent), lastZoomSkel(0), userZoomSkel(true)
 {
     setWindowTitle("Zoom and Multiresolution Settings");
 
 
     // top layout
     QGridLayout *topLayout = new QGridLayout();
-    this->orthogonalDataViewportLabel = new QLabel("Orthogonal Data Viewport");
+    this->orthogonalDataViewportLabel = new QLabel(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
     this->skeletonViewportLabel = new QLabel("Skeleton Viewport");
 
-    this->orthogonalDataViewportSlider = new QSlider(Qt::Horizontal);
-    this->orthogonalDataViewportSlider->setMaximum(100);
-    this->orthogonalDataViewportSlider->setTickInterval(10);
-    this->orthogonalDataViewportSlider->setTickPosition(QSlider::TicksBelow);
-
-    this->skeletonViewportSlider = new QSlider(Qt::Horizontal);
-    this->skeletonViewportSlider->setMaximum(100);
-    this->skeletonViewportSlider->setTickInterval(10);
-    this->skeletonViewportSlider->setTickPosition(QSlider::TicksBelow);
-
     this->orthogonalDataViewportSpinBox = new QDoubleSpinBox();
-    this->orthogonalDataViewportSpinBox->setMaximum(VPZOOMMIN);
-    this->orthogonalDataViewportSpinBox->setMinimum(VPZOOMMAX);
-    this->orthogonalDataViewportSpinBox->setSingleStep(0.01);
+    this->orthogonalDataViewportSpinBox->setMaximum(100);
+    this->orthogonalDataViewportSpinBox->setMinimum(0);
+    this->orthogonalDataViewportSpinBox->setSuffix("\%");
 
     this->skeletonViewportSpinBox = new QDoubleSpinBox();
-    this->skeletonViewportSpinBox->setMaximum(SKELZOOMMAX);
-    this->skeletonViewportSpinBox->setMinimum(SKELZOOMMIN);
-    this->skeletonViewportSpinBox->setSingleStep(0.01);
+    this->skeletonViewportSpinBox->setMaximum(100);
+    this->skeletonViewportSpinBox->setMinimum(0);
+    this->skeletonViewportSpinBox->setSuffix("\%");
 
     topLayout->addWidget(this->orthogonalDataViewportLabel, 0, 1);
-    topLayout->addWidget(this->orthogonalDataViewportSlider, 0, 2);
-    topLayout->addWidget(this->orthogonalDataViewportSpinBox, 0, 3);
+    topLayout->addWidget(this->orthogonalDataViewportSpinBox, 0, 2);
 
     topLayout->addWidget(this->skeletonViewportLabel, 1, 1);
-    topLayout->addWidget(this->skeletonViewportSlider, 1, 2);
-    topLayout->addWidget(this->skeletonViewportSpinBox, 1, 3);
+    topLayout->addWidget(this->skeletonViewportSpinBox, 1, 2);
 
     this->zoomDefaultsButton = new QPushButton("All Zoom defaults");
     topLayout->addWidget(zoomDefaultsButton, 2, 1);
@@ -118,67 +102,66 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 
     setLayout(mainLayout);
 
-    connect(this->orthogonalDataViewportSlider, SIGNAL(valueChanged(int)), this, SLOT(orthogonalSliderMoved(int)));
     connect(this->orthogonalDataViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(orthogonalSpinBoxChanged(double)));
-
-    connect(this->skeletonViewportSlider, SIGNAL(valueChanged(int)), this, SLOT(skeletonSliderMoved(int)));
     connect(this->skeletonViewportSpinBox, SIGNAL(valueChanged(double)), this, SLOT(skeletonSpinBoxChanged(double)));
 
     connect(this->zoomDefaultsButton, SIGNAL(clicked()), this, SLOT(zoomDefaultsClicked()));
     connect(this->lockDatasetCheckBox, SIGNAL(toggled(bool)), this, SLOT(lockDatasetMagChecked(bool)));
-
 }
 
 /**
-  * As Slider works with integer the range from 0.02 to 1.00 is stored in 100 units
-  */
-void ZoomAndMultiresWidget::orthogonalSliderMoved(int value) {
-    float result = value / 100.0;
-    if(result < MIN_ZOOM)
-        result = MIN_ZOOM;
-    this->orthogonalDataViewportSpinBox->setValue(result);
-
-    for(int i = 0; i < 3; i++)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = result;
-
-    emit refreshSignal();
-}
-
-/**
-  * As Slider works with integer the double values from the spinbox are converted with a factor of 100
-  */
+ * @brief ZoomAndMultiresWidget::orthogonalSpinBoxChanged  zooms in and out of ortho viewports with constant step.
+ * @param value increment/decrement zoom by value
+ */
 void ZoomAndMultiresWidget::orthogonalSpinBoxChanged(double value) {
-    this->orthogonalDataViewportSlider->setValue(value * 100);
-
-    for(int i = 0; i < 3; i++)
-        state->viewerState->vpConfigs[i].texture.zoomLevel = value;
-
-    emit refreshSignal();
+    for(int i = 0; i < VIEWPORT_SKELETON; i++) {
+        // conversion from percent to zoom level is inverted, because VPZOOMMAX < VPZOOMMIN,
+        // because zoom level directly translates to displayed edge length
+        float zoomLevel = 1 - value/100*VPZOOMMIN;
+        if(zoomLevel < VPZOOMMAX) {
+            zoomLevel = VPZOOMMAX;
+        }
+        state->viewerState->vpConfigs[i].texture.zoomLevel = zoomLevel;
+    }
 }
-
 /**
-  * Again the slider only works with integer. The range from 0.00 to 0.5 is stored in 200 units
-  */
-void ZoomAndMultiresWidget::skeletonSliderMoved(int value) {
-    float result = value / 200.0;
-
-
-    this->skeletonViewportSpinBox->setValue(result);
-    state->skeletonState->zoomLevel = result;
-    emit zoomLevelSignal(value);
-    emit refreshSignal();
-}
-
-/**
-  * The double values from the spinbox are converted with a factor of 200
-  */
+ * @brief ZoomAndMultiresWidget::skeletonSpinBoxChanged increments or decrements the zoom. The step width is relative to
+ *        the zoom value. A very high zoom level has smaller zoom steps and vice versa to give a smooth impression to the user.
+ * @param value the new value. Used to detect if a zoom in or zoom out is requested.
+ *
+ * 'lastZoomSkel' stores the last spin value and helps detecting if user wants to zoom in or zoom out, since Qt has no way to
+ * know if a value change was an increment or a decrement. Based on that a zoom in or zoom out is performed and the
+ * spin box will be updated to the resulting zoom level in percent.
+ *
+ * But Qt also does not distinguish between value change via the GUI or programmatically. In both cases a signal is emitted,
+ * so that the slot is called repeatedly. 'userZoomSkel' tells us if the value change was done via the GUI
+ * or programmatically. A programmatic change of the spin box value should not lead to another zoom.
+ */
 void ZoomAndMultiresWidget::skeletonSpinBoxChanged(double value) {
-   this->skeletonViewportSlider->setValue(value * 200);
-
-    state->skeletonState->zoomLevel = (float) value;
+    if(userZoomSkel) {
+        userZoomSkel = false;
+        if((value > lastZoomSkel and value < lastZoomSkel + 2
+           or value < lastZoomSkel and value > lastZoomSkel - 2) == false) {
+            // difference at least greater than two,
+            // so user entered a number instead of clicking the up and down buttons
+            state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
+            state->skeletonState->viewChanged = true;
+        }
+        else { // up or down button pressed, find out which.
+            if(value > lastZoomSkel and value < lastZoomSkel + 2) { // user wants to zoom in
+                emit zoomInSkeletonVPSignal();
+            }
+            else if(value < lastZoomSkel and value > lastZoomSkel - 2) { // user wants to zoom out
+                emit zoomOutSkeletonVPSignal();
+            }
+            // the following line will lead to signal emission and another call to this slot,
+            // but since userZoomSkel was set to false above, no further recursion takes place.
+            skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
+        }
+        lastZoomSkel = skeletonViewportSpinBox->value();
+        userZoomSkel = true;
+    }
     emit zoomLevelSignal(value);
-
-    emit refreshSignal();
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
@@ -189,20 +172,18 @@ void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
     }
 }
 
+/**
+ * @brief ZoomAndMultiresWidget::zoomDefaultsClicked restores lowest zoom level on all viewports
+ */
 void ZoomAndMultiresWidget::zoomDefaultsClicked() {
-    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = MAX_ZOOM;
-    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = MAX_ZOOM;
-    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = MAX_ZOOM;
+    orthogonalDataViewportSpinBox->setValue(0);
 
-    orthogonalDataViewportSlider->setValue(MAX_ZOOM);
-    orthogonalDataViewportSpinBox->setValue(MAX_ZOOM);
-    skeletonViewportSlider->setValue(MIN_ZOOM);
-    int value = skeletonViewportSlider->value();
-    skeletonViewportSpinBox->setValue(MIN_ZOOM);
+    userZoomSkel = false;
+    skeletonViewportSpinBox->setValue(100*SKELZOOMMIN/SKELZOOMMAX);
+    state->skeletonState->zoomLevel = SKELZOOMMIN;
+    userZoomSkel = true;
 
-    state->skeletonState->zoomLevel = 0.0;
     emit zoomLevelSignal(0.0);
-    emit refreshSignal();
 }
 
 void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
@@ -210,8 +191,16 @@ void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
 }
 
 void ZoomAndMultiresWidget::update() {
-    orthogonalDataViewportSpinBox->setValue(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
-    skeletonViewportSpinBox->setValue(state->skeletonState->zoomLevel);
+    orthogonalDataViewportLabel->setText(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
+    float vpZoomPercent;
+    if(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel == (float)VPZOOMMAX) {
+        vpZoomPercent = 100;
+    }
+    else {
+        vpZoomPercent = (1 - state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel)*100;
+    }
+    orthogonalDataViewportSpinBox->setValue(vpZoomPercent);
+    skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
 
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
     QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
@@ -237,19 +226,20 @@ void ZoomAndMultiresWidget::loadSettings() {
 
     if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble()) {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
-        for(int i = 0; i < 3; i++)
-            state->viewerState->vpConfigs[i].texture.zoomLevel = settings.value(ORTHO_DATA_VIEWPORTS).toDouble();
     } else {
-        this->orthogonalDataViewportSpinBox->setValue(1);
+        this->orthogonalDataViewportSpinBox->setValue(0);
     }
 
-    if(!settings.value(SKELETON_VIEW).toDouble()) {
+    if(settings.value(SKELETON_VIEW).toDouble()) {
+        userZoomSkel = false;
         this->skeletonViewportSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
-        state->skeletonState->zoomLevel = settings.value(SKELETON_VIEW).toDouble();
+        userZoomSkel = true;
+        lastZoomSkel = this->skeletonViewportSpinBox->value();
+        state->skeletonState->zoomLevel = 0.01*lastZoomSkel * SKELZOOMMAX;
+    } else {
+        this->skeletonViewportSpinBox->setValue(0);
     }
-
     bool lockDatasetValue = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
-    qDebug() << "ZoomAndMultiresWidget::loadSettings: lockDatasetValue is " << lockDatasetValue;
     this->lockDatasetCheckBox->setChecked(lockDatasetValue);
     state->viewerState->datasetMagLock = lockDatasetValue;
     settings.endGroup();

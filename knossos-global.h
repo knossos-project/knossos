@@ -140,9 +140,11 @@ values. The XY vp always used. */
 #define ON_CLICK_SELECT   2
 #define SKELETONIZER      2
 
-#define VPZOOMMAX  0.02
+// vp zoom max < vp zoom min, because vp zoom level translates to displayed edgeLength.
+// close zoom -> smaller displayed edge length
+#define VPZOOMMAX  0.02000
 #define VPZOOMMIN   1.0
-#define SKELZOOMMAX 0.47
+#define SKELZOOMMAX 0.4999
 #define SKELZOOMMIN 0.0
 
 #define NUM_COMMSHORTCUTS 5 //number of shortcut places for comments

@@ -2853,7 +2853,8 @@ void Viewer::rewire() {
                     this, SLOT(updateViewerState()));
     //  -- end viewport settings widget signals
     //  zoom and multires signals --
-    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(refreshSignal()), vpXY, SLOT(updateGL()));
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)),
                     skeletonizer, SLOT(setZoomLevel(float)));
     //  -- end zoom and multires signals

@@ -681,7 +681,6 @@ void Treeview::updateTreesTable() {
     treeTable->clearContents();
     treeTable->setRowCount(state->skeletonState->treeElements);
     treeTable->clearSpans();
-    treeTable->setSpan(0, 0, 1, 1);
     treeTable->verticalHeader()->setVisible(false);
 
     treeListElement *currentTree = state->skeletonState->firstTree;

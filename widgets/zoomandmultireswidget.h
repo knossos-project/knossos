@@ -27,7 +27,6 @@
 
 #include <QDialog>
 
-class QSlider;
 class QLabel;
 class QDoubleSpinBox;
 class QCheckBox;
@@ -44,8 +43,6 @@ public:
 public slots:
     void zoomDefaultsClicked();
     void lockDatasetMagChecked(bool on);
-    void orthogonalSliderMoved(int value);
-    void skeletonSliderMoved(int value);
     void orthogonalSpinBoxChanged(double value);
     void skeletonSpinBoxChanged(double value);
     void update();
@@ -54,11 +51,15 @@ public slots:
 protected:
     void closeEvent(QCloseEvent *event);
 protected:
+    /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
+     * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
+     * See the spinBoxChanged slots for more details. */
+    float lastZoomSkel;
+    bool userZoomSkel;
+
     // top layout
     QLabel *orthogonalDataViewportLabel;
     QLabel *skeletonViewportLabel;
-    QSlider *orthogonalDataViewportSlider;
-    QSlider *skeletonViewportSlider;
     QDoubleSpinBox *orthogonalDataViewportSpinBox;
     QDoubleSpinBox *skeletonViewportSpinBox;
     QPushButton *zoomDefaultsButton;
@@ -70,7 +71,8 @@ protected:
     QLabel *highestActiveMagDatasetLabel;
     QLabel *lowestActiveMagDatasetLabel;
 signals:
-    void refreshSignal();
+    void zoomInSkeletonVPSignal();
+    void zoomOutSkeletonVPSignal();
     void uncheckSignal();
     void zoomLevelSignal(float value);
 };

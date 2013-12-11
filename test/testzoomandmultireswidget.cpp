@@ -15,7 +15,6 @@ TestZoomAndMultiresWidget::TestZoomAndMultiresWidget(QObject *parent) :
 void TestZoomAndMultiresWidget::testZoomOrthoViewport() {
     ZoomAndMultiresWidget *zoomWidget = reference->window->widgetContainer->zoomAndMultiresWidget;
     int random = rand() % 100;
-    zoomWidget->orthogonalDataViewportSlider->setValue(random);
     QVERIFY(random *zoomWidget->orthogonalDataViewportSpinBox->singleStep() == zoomWidget->orthogonalDataViewportSpinBox->value());
 
 }
@@ -29,11 +28,7 @@ void TestZoomAndMultiresWidget::testResetZoomFactors() {
    zoomWidget->zoomDefaultsClicked();
 
    QCOMPARE(zoomWidget->orthogonalDataViewportSpinBox->value(), VPZOOMMIN);
-   QCOMPARE(zoomWidget->orthogonalDataViewportSlider->value(), 100);
-   QCOMPARE(zoomWidget->skeletonViewportSpinBox->value(), VPZOOMMAX);
-   int value = zoomWidget->skeletonViewportSlider->value();
-   //qDebug() << value << "!!!";
-   //QCOMPARE(zoomWidget->skeletonViewportSlider->value(), );
+   QCOMPARE(zoomWidget->skeletonViewportSpinBox->value(), 100.);
 
    for(int i = 0; i < 3; i++)
    QCOMPARE(state->viewerState->vpConfigs[i].texture.zoomLevel, 1.0);

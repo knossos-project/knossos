@@ -404,9 +404,7 @@ void Viewport::enterEvent(QEvent *event) {
 }
 
 void Viewport::zoomOrthogonals(float step){
-
     int triggerMagChange = false;
-
     for(uint i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
 
@@ -434,18 +432,21 @@ void Viewport::zoomOrthogonals(float step){
                 /* performe normal zooming otherwise. This case also covers
                 * the special case of zooming in further than 0.5 on mag1 */
                 if(!triggerMagChange) {
-                    if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < 0.09999) &&
-                       !(state->viewerState->vpConfigs[i].texture.zoomLevel + step > 1.0000)) {
-                        state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                    float zoomLevel = state->viewerState->vpConfigs[i].texture.zoomLevel += step;
+                    if(zoomLevel < VPZOOMMAX) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMAX;
+                    }
+                    else if (zoomLevel > VPZOOMMIN) {
+                        state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
                     }
                 }
             }
         }
     }
 
-   if(triggerMagChange)
+   if(triggerMagChange) {
         emit changeDatasetMagSignal(triggerMagChange);
-
+   }
    emit recalcTextureOffsetsSignal();
    emit updateZoomAndMultiresWidget();
 
@@ -453,7 +454,7 @@ void Viewport::zoomOrthogonals(float step){
 
 void Viewport::zoomOutSkeletonVP() {
     if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
-        state->skeletonState->zoomLevel -= (0.2* (0.5 - state->skeletonState->zoomLevel));
+        state->skeletonState->zoomLevel -= (0.1* (0.5 - state->skeletonState->zoomLevel));
         if (state->skeletonState->zoomLevel < SKELZOOMMIN) {
             state->skeletonState->zoomLevel = SKELZOOMMIN;
         }

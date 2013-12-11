@@ -586,16 +586,14 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 #ifdef Q_OS_MAC
             // Zoom when CTRL is pressed
             if(state->modCtrl) {
-                emit zoomOrthoSignal(-0.1);
 #endif
 #ifdef Q_OS_WIN
             if(QApplication::keyboardModifiers() == Qt::CTRL) {
-                emit zoomOrthoSignal(-0.1);
 #endif
 #ifdef Q_OS_LINUX
             if(QApplication::keyboardModifiers() == Qt::CTRL) {
-                emit zoomOrthoSignal(-0.1);
 #endif
+                emit zoomOrthoSignal(-0.01);
             } else { // move otherwiese
                 switch(VPfound) {
                     case VIEWPORT_XY:
@@ -680,7 +678,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 #ifdef Q_OS_LINUX
                 if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
-                emit zoomOrthoSignal(0.1);
+                emit zoomOrthoSignal(+0.01);
             }
             // Move otherwise
             else {
