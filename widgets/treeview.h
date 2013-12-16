@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QTableWidget>
 
-
 class QTableWidgetItem;
 class QHBoxLayout;
 class QVBoxLayout;
@@ -13,12 +12,41 @@ class QLabel;
 class QRadioButton;
 class QCheckBox;
 class QPushButton;
+class QComboBox;
 class QDoubleSpinBox;
 class QMenu;
 
-class TreeTable;
 struct treeListElement;
 struct nodeListElement;
+
+class TreeTable : public QTableWidget {
+    Q_OBJECT
+public:
+    explicit TreeTable(QWidget *parent);
+
+    int droppedOnTreeID;
+protected:
+    void keyPressEvent(QKeyEvent *event);
+    void dropEvent(QDropEvent *event);
+signals:
+    void updateTreeview();
+public slots:
+    void deleteTreesAction();
+};
+
+class NodeTable : public QTableWidget {
+    Q_OBJECT
+public:
+    explicit NodeTable(QWidget *parent);
+protected:
+    void keyPressEvent(QKeyEvent *event);
+signals:
+    void delActiveNodeSignal();
+    void updateNodesTable();
+public slots:
+    void deleteNodesAction();
+
+};
 
 class Treeview : public QDialog
 {
@@ -26,9 +54,9 @@ class Treeview : public QDialog
 public:
     explicit Treeview(QWidget *parent = 0);
     
-protected:
+
     TreeTable *treeTable;
-    QTableWidget *nodeTable;
+    NodeTable *nodeTable;
 
     QLineEdit *treeSearchField;
     QLineEdit *nodeSearchField;
@@ -38,7 +66,8 @@ protected:
     QRadioButton *allNodesRadio;
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
-
+    QLabel *displayedNodesTable;
+    QComboBox *displayedNodesCombo;
     QMenu *treeContextMenu;
     QMenu *nodeContextMenu;
 
@@ -67,6 +96,7 @@ protected:
 
     // drag'n drop buffers
     int draggedNodeID;
+    int displayedNodes;
 
     void updateTreeColorCells(int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
@@ -84,16 +114,17 @@ public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
 
+    void displayedNodesChanged(int index);
+
     void treeItemChanged(QTableWidgetItem* item);
-    void treeItemSelected(int row, int col);
-    void treeItemDoubleClicked(QTableWidgetItem* item);
+    void treeItemSelected();
     void nodeItemChanged(QTableWidgetItem* item);
-    void nodeItemSelected(int row, int col);
+    void nodeItemSelected();
     void nodeItemDoubleClicked(QTableWidgetItem* item);
     // tree context menu
     void treeContextMenuCalled(QPoint pos);
     void setActiveTreeAction();
-    bool deleteTreesAction();
+    //bool deleteTreesAction();
     bool mergeTreesAction();
     void restoreColorAction();
     void setTreeCommentAction();
@@ -104,7 +135,6 @@ public slots:
     void nodeContextMenuCalled(QPoint pos);
     void setNodeRadiusAction();
     bool splitComponentAction();
-    void deleteNodesAction();
     void setNodeCommentAction();
     void updateNodeCommentBuffer(QString comment);
     void editNodeComments();

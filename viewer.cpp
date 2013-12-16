@@ -2815,7 +2815,7 @@ void Viewer::rewire() {
     //  tree view widget signals --
     connect(window->widgetContainer->treeviewWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
             skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(window->widgetContainer->treeviewWidget, SIGNAL(delActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
+    connect(window->widgetContainer->treeviewWidget->nodeTable, SIGNAL(delActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(window->widgetContainer->treeviewWidget, SIGNAL(JumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     //  -- end tree view widget signals
     //  viewport settings widget signals --

@@ -1647,7 +1647,6 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
         nodeToDel = findNodeByNodeID(nodeID);
 
     nodeID = nodeToDel->nodeID;
-
     if(!nodeToDel) {
         LOG("The given node %d doesn't exist. Unable to delete it.", nodeID)
         Knossos::unlockSkeleton(false);

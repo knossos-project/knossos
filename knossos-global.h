@@ -43,7 +43,7 @@
 
 #include <curl/curl.h>
 
-#define KVERSION "3.4"
+#define KVERSION "4.0"
 
 #define FAIL    -1
 
@@ -52,6 +52,7 @@
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
+
 
 #define NUM_MAG_DATASETS 65536
 

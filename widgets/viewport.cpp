@@ -341,7 +341,6 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
-
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::OpenHandCursor);
     }

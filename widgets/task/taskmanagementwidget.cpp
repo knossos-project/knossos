@@ -18,6 +18,7 @@ extern stateInfo *state;
 TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget *parent) :
     QDialog(parent)
 {
+    resize(335, 186);
     mainTab = new TaskManagementMainTab(loginWidget, this);
     detailsTab = new TaskManagementDetailsTab(this);
     tabs = new QTabWidget(this);

@@ -229,7 +229,7 @@ void MainWindow:: createToolBar() {
 
     taskManagementButton = new QToolButton();
     taskManagementButton->setToolTip("Task Management Widget");
-    taskManagementButton->setIcon(QIcon(":/images/icons/network-connect.png"));
+    taskManagementButton->setIcon(QIcon(":/images/icons/task.png"));
     this->toolBar->addWidget(taskManagementButton);
 
     tracingTimeButton = new QToolButton();
@@ -268,7 +268,8 @@ void MainWindow:: createToolBar() {
 
     treeviewButton = new QToolButton();
     treeviewButton->setToolTip("Tree View");
-    treeviewButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
+    treeviewButton->setIcon(QIcon(":/images/icons/graph.png"));
+    treeviewButton->setToolTip(("Tree View Widget"));
     toolBar->addWidget(treeviewButton);
 
     resetVPsButton = new QPushButton("Reset Viewports", this);
@@ -654,10 +655,10 @@ void MainWindow::createMenus()
 
     windowMenu = menuBar()->addMenu("Windows");
     toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
-    taskAction = windowMenu->addAction(QIcon(":/images/icons/network-connect.png"), "Task Management", this, SLOT(taskSlot()));
+    taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-    treeviewAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Tree View", this, SLOT(treeviewSlot()));
+    treeviewAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tree View", this, SLOT(treeviewSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 

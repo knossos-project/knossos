@@ -23,6 +23,7 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) :
     QHelpContentModel *contentModel = helpEngine->contentModel();
     QHelpContentWidget *contentWidget = helpEngine->contentWidget();
 
+    setWindowTitle("Documentation");
     splitter = new QSplitter();
     splitter->addWidget(contentWidget);
     splitter->addWidget(helpBrowser);

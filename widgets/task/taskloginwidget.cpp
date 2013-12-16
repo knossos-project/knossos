@@ -19,6 +19,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QDialog(parent), taskManagementWidget(NULL)
 {
     setWindowTitle("Task Login");
+    resize(308, 151);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     QFormLayout *formLayout = new QFormLayout();
