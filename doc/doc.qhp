@@ -56,6 +56,7 @@
              <file>images/Tut_full_LinkNodes.png</file>
              <file>images/Tut_full_skelVP.jpg</file>
              <file>images/Tut_full_VPsettings.png</file>
+			 <file>images/Tut_full_skelVPsettings.png</file>
          </files>
      </filterSection>
  </QtHelpProject>

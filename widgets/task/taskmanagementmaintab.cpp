@@ -5,6 +5,7 @@
 #include <QFormLayout>
 #include <QDir>
 #include <QMessageBox>
+#include <QLineEdit>
 
 #include <curl/curl.h>
 
@@ -29,7 +30,7 @@ TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, Q
     currentTaskLabel->setWordWrap(true);
     loadLastSubmitButton = new QPushButton("Load Last Submit");
     startNewTaskButton = new QPushButton("Start new Task");
-    finalCheckbox = new QCheckBox("final");
+
     submitButton = new QPushButton("Submit");
 
     QFormLayout *formLayout = new QFormLayout();
@@ -37,8 +38,27 @@ TaskManagementMainTab::TaskManagementMainTab(TaskLoginWidget *taskLoginWidget, Q
     formLayout->addRow(loggedAsLabel, logoutButton);
     formLayout->addRow(loadLastSubmitButton, startNewTaskButton);
     formLayout->addRow(currentTaskLabel);
-    formLayout->addRow(finalCheckbox, submitButton);
+    formLayout->addRow(submitButton);
     setLayout(formLayout);
+
+    // prepare the work submission dialog
+    submitDialog = new QDialog();
+    submitDialog->setWindowTitle("Submit Your Work");
+    submitDialogCommentField = new QLineEdit();
+    submitDialogCommentField->setPlaceholderText("submission comment (optional)");
+    submitDialogFinalCheckbox = new QCheckBox("final");
+    submitDialogFinalCheckbox->setToolTip("marks your work as finished.");
+    submitDialogCancelButton = new QPushButton("Cancel");
+    submitDialogOkButton = new QPushButton("Submit");
+
+    formLayout = new QFormLayout();
+    formLayout->addRow(submitDialogCommentField);
+    formLayout->addRow(submitDialogFinalCheckbox);
+    formLayout->addRow(submitDialogCancelButton, submitDialogOkButton);
+    submitDialog->setLayout(formLayout);
+
+    connect(submitDialogCancelButton, SIGNAL(clicked()), this, SLOT(submitDialogCanceled()));
+    connect(submitDialogOkButton, SIGNAL(clicked()), this, SLOT(submitDialogOk()));
 
     connect(logoutButton, SIGNAL(clicked()), this, SLOT(logoutButtonClicked()));
     connect(loadLastSubmitButton, SIGNAL(clicked()), this, SLOT(loadLastSubmitButtonClicked()));
@@ -267,6 +287,14 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
 }
 
 void TaskManagementMainTab::submitButtonClicked() {
+    submitDialog->show();
+}
+
+void TaskManagementMainTab::submitDialogCanceled() {
+    submitDialog->hide();
+}
+
+void TaskManagementMainTab::submitDialogOk() {
     // TDItem: write a function for multipart posts
     // for building the multipart formpost
     char url[1024];
@@ -301,18 +329,28 @@ void TaskManagementMainTab::submitButtonClicked() {
     Skeletonizer::setDefaultSkelFileName();
     emit saveSkeletonSignal(); //increment true
 
+    //prompt for entering a comment for the submission
+
+
     handle = curl_easy_init();
     multihandle = curl_multi_init();
 
     // fill the multipart post form. TDItem: comments are not supported, yet.
-    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken", CURLFORM_COPYCONTENTS, taskState::CSRFToken(), CURLFORM_END);
-    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file", CURLFORM_FILE, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
-    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename", CURLFORM_COPYCONTENTS, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
-    if(finalCheckbox->isChecked()) {
-        curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal", CURLFORM_COPYCONTENTS, "True", CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken",
+                 CURLFORM_COPYCONTENTS, taskState::CSRFToken(), CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file",
+                 CURLFORM_FILE, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename",
+                 CURLFORM_COPYCONTENTS, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
+    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_comment",
+                 CURLFORM_COPYCONTENTS, submitDialogCommentField->text().toStdString().c_str(), CURLFORM_END);
+    if(submitDialogFinalCheckbox->isChecked()) {
+        curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal",
+                     CURLFORM_COPYCONTENTS, "True", CURLFORM_END);
     }
     else {
-        curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal", CURLFORM_COPYCONTENTS, "False", CURLFORM_END);
+        curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal",
+                     CURLFORM_COPYCONTENTS, "False", CURLFORM_END);
     }
 
     headerlist = curl_slist_append(headerlist, buf);
@@ -400,6 +438,8 @@ void TaskManagementMainTab::submitButtonClicked() {
     curl_formfree(formpost);
     curl_slist_free_all (headerlist);
     free(response.content);
+
+    submitDialog->hide();
 }
 
 void TaskManagementMainTab::resetSession(QString message) {

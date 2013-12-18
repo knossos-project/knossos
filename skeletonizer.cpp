@@ -650,7 +650,6 @@ bool Skeletonizer::previousCommentlessNode() {
     struct nodeListElement *currNode;
     currNode = state->skeletonState->activeNode->previous;
     if(currNode && (!currNode->comment)) {
-        LOG("yes")
         setActiveNode(CHANGE_MANUAL,
                           currNode,
                           0);

@@ -91,12 +91,7 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
     Knossos::showSplashScreen();
 
-
     knossos = new Knossos();
-
-    qDebug() << sizeof(struct treeListElement);
-    qDebug() << sizeof(struct nodeListElement);
-    qDebug() << sizeof(struct segmentListElement);
 
     //Knossos::loadStyleSheet();
 
@@ -261,8 +256,6 @@ int main(int argc, char *argv[])
     QTest::qExec(&navigation);
     */
 
-
-
     return a.exec();
 }
 
@@ -333,7 +326,6 @@ bool Knossos::initStates() {
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
            / (float)state->magnification;       
@@ -576,13 +568,12 @@ bool Knossos::stripNewlines(char *string) {
 bool Knossos::readConfigFile(const char *path) {
     QFile file(path);
     if(!file.open(QIODevice::ReadOnly)) {
-            qDebug("Error reading config file at path:%s", path);
-            return false;
+        qDebug("Error reading config file at path:%s", path);
+        return false;
     }
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
-
     QTextStream stream(&file);
     while(!stream.atEnd()) {
         QString line = stream.readLine();
@@ -1120,14 +1111,12 @@ bool Knossos::readDataConfAndLocalConf() {
     strcat(configFile, "/knossos.conf");
 
 
-    LOG("Trying to read %s.", configFile)
-
+    LOG("Trying to read %s.", configFile);
     readConfigFile(configFile);
 
     readConfigFile("knossos.conf");
 
     return true;
-
 }
 
 bool Knossos::configFromCli(int argCount, char *arguments[]) {

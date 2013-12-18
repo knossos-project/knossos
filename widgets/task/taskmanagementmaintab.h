@@ -8,6 +8,8 @@
 class QPushButton;
 class QLabel;
 class QCheckBox;
+class QDialog;
+class QLineEdit;
 class TaskManagementMainTab : public QWidget
 {
     Q_OBJECT
@@ -21,12 +23,17 @@ protected:
     QLabel *statusLabel;
     QLabel *loggedAsLabel;
     QLabel *currentTaskLabel;
-    QCheckBox *finalCheckbox;
     QPushButton *logoutButton;
     QPushButton *loadLastSubmitButton;
     QPushButton *startNewTaskButton;
     QPushButton *submitButton;
     TaskLoginWidget *taskLoginWidget;
+
+    QDialog *submitDialog;
+    QLineEdit *submitDialogCommentField;
+    QCheckBox *submitDialogFinalCheckbox;
+    QPushButton *submitDialogCancelButton;
+    QPushButton *submitDialogOkButton;
 
     void resetSession(QString message);
 
@@ -39,6 +46,9 @@ signals:
 
 public slots:
     void submitButtonClicked();
+    void submitDialogCanceled();
+    void submitDialogOk();
+
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
     void logoutButtonClicked();
