@@ -80,40 +80,23 @@ signals:
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
-    int backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset, Byte *slice, uint x_px, uint y_px, uint cubeType);
     bool vpListDel(vpList *list);
     int vpListDelElement( vpList *list,  vpListElement *element);
-    bool backlogDel(vpBacklog *backlog);
-    vpBacklogElement *getBacklogElement(struct vpBacklog *backlog, Coordinate *cube);
-    vpBacklogElement *backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType);
-    pxStripeList *stripesNew();
-    int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element);
     vpList *vpListGenerate(viewerState *viewerState);
-    vpBacklog *backlogNew();
-    int vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog);
+    int vpListAddElement(vpList *vpList, vpConfig *vpConfig);
     vpList* vpListNew();
-
-    bool pxStripeListDelElement(struct pxStripeList *stripes, struct pxStripe *stripe);
-    bool pxStripeListDel(struct pxStripeList *stripes);
-    bool addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
 
     bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
     bool vpGenerateTexture_arb(struct vpListElement *currentVp);
 
-    bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState);
-    bool vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
-
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
 
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool sliceExtract_adjust_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float,  int s, int t1, int t2);
 
     bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
     bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-    bool dcSliceExtract_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2);
 
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     void rewire();
@@ -126,7 +109,6 @@ public slots:
     bool calcDisplayedEdgeLength();    
     bool updateViewerState();    
     void run();
-    void runrun();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);

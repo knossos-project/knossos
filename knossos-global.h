@@ -414,48 +414,10 @@ typedef struct Hashtable{
 
 } Hashtable;
 
-// This is used for a linked list of datacube slices that have to be processed for a given viewport.
-// A backlog is generated when we want to retrieve a specific slice from a dc but that dc
-// is unavailable at that time.
-struct pxStripe {
-    uint s;
-    uint t1;
-    uint t2;
-    floatCoordinate currentPxInDc_float;
-    struct pxStripe *next;
-};
-
-struct pxStripeList {
-    struct pxStripe *entry;
-    uint elements;
-};
-
-// This is used for a linked list of datacube slices that have to be processed for a given viewport.
-// A backlog is generated when we want to retrieve a specific slice from a dc but that dc
-// is unavailable at that time.
-struct vpBacklogElement {
-	Byte *slice;
-    Coordinate cube;
-    pxStripeList *stripes;
-	// I guess those aren't really necessary.
-	uint x_px;
-	uint y_px;
-    uint dcOffset;
-    uint cubeType;
-    struct vpBacklogElement *next;
-    struct vpBacklogElement *previous;
-};
-
-struct vpBacklog {
-    struct vpBacklogElement *entry;
-    uint elements;
-};
-
 // This is used for a (counting) linked list of vpConfigs that have to be handled
 // (their textures put together from datacube slices)
 struct vpListElement {
     struct vpConfig *vpConfig;
-    struct vpBacklog *backlog;
     struct vpListElement *next;
     struct vpListElement *previous;
 };
@@ -816,10 +778,10 @@ struct guiConfig {
   *        as well as flags about user interaction with the widget
   */
 struct vpConfig {
-
+    // s*v1 + t*v2 = px
     floatCoordinate n;
-    floatCoordinate v1;
-    floatCoordinate v2;
+    floatCoordinate v1; // vector in x direction
+    floatCoordinate v2; // vector in y direction
     floatCoordinate leftUpperPxInAbsPx_float;
     floatCoordinate leftUpperDataPxOnScreen_float;
     int s_max;

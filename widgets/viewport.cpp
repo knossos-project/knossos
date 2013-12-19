@@ -107,7 +107,7 @@ void Viewport::initializeGL() {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
         // loads an empty texture into video memory - during user movement, this
-        // texture is updated via glTexSubImage2D in vpGenerateTexture & vpHandleBacklog
+        // texture is updated via glTexSubImage2D in vpGenerateTexture
         // We need GL_RGB as texture internal format to color the textures
 
         glTexImage2D(GL_TEXTURE_2D,

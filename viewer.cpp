@@ -132,20 +132,14 @@ vpList *Viewer::vpListNew() {
     return newVpList;
 }
 
-int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *backlog) {
-    vpListElement *newElement;
-
-    newElement = (vpListElement *) malloc(sizeof(vpListElement));
+int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig) {
+    vpListElement *newElement = (vpListElement *) malloc(sizeof(vpListElement));
     if(newElement == NULL) {
         qDebug("Out of memory\n");
-        // Do not return false here. That's a bug. FAIL is hackish... Is there a
-        // better way? */
-        return FAIL;
+        exit(EXIT_FAILURE);
     }
 
     newElement->vpConfig = vpConfig;
-    newElement->backlog = backlog;
-
     if(vpList->entry != NULL) {
         vpList->entry->next->previous = newElement;
         newElement->next = vpList->entry->next;
@@ -157,29 +151,12 @@ int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig, vpBacklog *back
         vpList->entry->next = newElement;
         vpList->entry->previous = newElement;
     }
-
     vpList->elements = vpList->elements + 1;
-
     return vpList->elements;
-}
-
-vpBacklog *Viewer::backlogNew() {
-    vpBacklog *newBacklog;
-
-    newBacklog = (vpBacklog *) malloc(sizeof( vpBacklog));
-    if(newBacklog == NULL) {
-        LOG("Out of memory.\n")
-        return NULL;
-    }
-    newBacklog->entry = NULL;
-    newBacklog->elements = 0;
-
-    return newBacklog;
 }
 
 vpList *Viewer::vpListGenerate(viewerState *viewerState) {
     vpList *newVpList = NULL;
-    vpBacklog *currentBacklog = NULL;
     uint i = 0;
 
     newVpList = vpListNew();
@@ -192,161 +169,10 @@ vpList *Viewer::vpListGenerate(viewerState *viewerState) {
         if(viewerState->vpConfigs[i].type == VIEWPORT_SKELETON) {
             continue;
         }
-        currentBacklog = backlogNew();
-        if(currentBacklog == NULL) {
-            LOG("Error creating backlog.")
-            _Exit(false);
-        }
-        vpListAddElement(newVpList, &(viewerState->vpConfigs[i]), currentBacklog);
+        vpListAddElement(newVpList, &(viewerState->vpConfigs[i]));
     }
     return newVpList;
 }
-
-int Viewer::backlogDelElement(vpBacklog *backlog, vpBacklogElement *element) {
-    if(element->next == element) {
-        // This is the only element in the list
-        backlog->entry = NULL;
-    }
-    else {
-        element->next->previous = element->previous;
-        element->previous->next = element->next;
-        backlog->entry = element->next;
-    }
-    free(element);
-
-    backlog->elements = backlog->elements - 1;
-
-    return backlog->elements;
-}
-
-pxStripeList *Viewer::stripesNew() {
-    struct pxStripeList *newStripes;
-
-    newStripes = (pxStripeList *)malloc(sizeof(struct pxStripeList));
-    if(newStripes == NULL) {
-        qDebug("Out of memory.\n");
-        return NULL;
-    }
-    newStripes->entry = NULL;
-    newStripes->elements = 0;
-
-    return newStripes;
-}
-
-vpBacklogElement *Viewer::backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType) {
-    struct vpBacklogElement *newElement;
-
-    newElement = (vpBacklogElement *)malloc(sizeof(struct vpBacklogElement));
-    if(newElement == NULL) {
-        LOG("Out of memory.");
-        exit(EXIT_FAILURE);
-    }
-    newElement->slice = NULL;
-    SET_COORDINATE(newElement->cube, dataCube.x, dataCube.y, dataCube.z);
-    newElement->x_px = 0;
-    newElement->y_px = 0;
-    newElement->dcOffset = 0;
-    newElement->cubeType = cubeType;
-
-    newElement->stripes = NULL;
-
-    newElement->stripes = stripesNew();
-    if(newElement->stripes == NULL) {
-        LOG("Error creating stripeList.")
-        exit(EXIT_FAILURE);
-    }
-
-    if(backlog->entry != NULL) {
-        backlog->entry->next->previous = newElement;
-        newElement->next = backlog->entry->next;
-        backlog->entry->next = newElement;
-        newElement->previous = backlog->entry;
-    } else {
-        backlog->entry = newElement;
-        backlog->entry->next = newElement;
-        backlog->entry->previous = newElement;
-    }
-    backlog->elements = backlog->elements + 1;
-    return newElement;
-}
-
-
-
-bool Viewer::pxStripeListDel(pxStripeList *stripes) {
-    while(stripes->elements > 0) {
-        if(pxStripeListDelElement(stripes, stripes->entry) < 0) {
-            LOG("Error deleting stripe element at %p from the slot stripelist %d elements remain in the list.",
-                stripes->entry, stripes->elements)
-            return false;
-        }
-    }
-    free(stripes);
-    return true;
-}
-
-bool Viewer::pxStripeListDelElement(pxStripeList *stripes, pxStripe *stripe) {
-    stripes->entry = stripe->next;
-    free(stripe);
-
-    stripes->elements = stripes->elements - 1;
-
-    return stripes->elements;
-
-}
-
-bool Viewer::addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2) {
-    struct pxStripe *newStripe;
-
-    newStripe = (pxStripe *)malloc(sizeof(struct pxStripe));
-    if(newStripe == NULL) {
-        LOG("Out of memory.");
-        exit(EXIT_FAILURE);
-    }
-
-    newStripe->s = s;
-    newStripe->t1 = t1;
-    newStripe->t2 = t2;
-
-    CPY_COORDINATE(newStripe->currentPxInDc_float, (*currentPxInDc_float));
-
-    newStripe->next = backlogElement->stripes->entry;
-    backlogElement->stripes->entry = newStripe;
-    backlogElement->stripes->elements += 1;
-
-    return backlogElement->stripes->elements;
-}
-
-
-vpBacklogElement *Viewer::getBacklogElement(struct vpBacklog *backlog, Coordinate *cube) {
-
-    struct vpBacklogElement *blElement = NULL;
-     /*@arb */
-    if (backlog->elements != 0){
-        blElement = backlog->entry;
-        for (uint i = 0; i<backlog->elements; i++) {
-            if (COMPARE_COORDINATE(blElement->cube,(*cube))) return blElement;
-            blElement = blElement->next;
-        }
-        return blElement;
-    }
-    else
-    return NULL;
-}
-
-bool Viewer::backlogDel(vpBacklog *backlog) {
-    while(backlog->elements > 0) {
-        if(backlogDelElement(backlog, backlog->entry) < 0) {
-            LOG("Error deleting element at %p from the backlog. %d elements remain in the list.",
-                backlog->entry, backlog->elements)
-            return false;
-        }
-    }
-
-    free(backlog);
-
-    return true;
-}
-
 
 int Viewer::vpListDelElement(vpList *list,  vpListElement *element) {
     if(element->next == element) {
@@ -357,20 +183,10 @@ int Viewer::vpListDelElement(vpList *list,  vpListElement *element) {
         element->previous->next = element->next;
         list->entry = element->next;
     }
-
-    if(backlogDel(element->backlog) == false) {
-        LOG("Error deleting backlog at %p of vpList element at %p.",
-               element->backlog, element);
-        return FAIL;
-    }
     free(element);
-
     list->elements = list->elements - 1;
-
     return list->elements;
 }
-
-
 
 bool Viewer::vpListDel(vpList *list) {
     while(list->elements > 0) {
@@ -382,39 +198,6 @@ bool Viewer::vpListDel(vpList *list) {
     }
 
     return true;
-}
-
-int Viewer::backlogAddElement(vpBacklog *backlog, Coordinate datacube, uint dcOffset,
-                                 Byte *slice, uint x_px, uint y_px, uint cubeType) {
-    vpBacklogElement *newElement;
-
-    newElement = (vpBacklogElement *) malloc(sizeof( vpBacklogElement));
-    if(newElement == NULL) {
-        LOG("Out of memory.")
-        /* Do not return false here. That's a bug. FAIL is hackish... Is there a better way? */
-        return FAIL;
-    }
-
-    newElement->slice = slice;
-    newElement->cube = datacube;
-    newElement->x_px = x_px;
-    newElement->y_px = y_px;
-    newElement->dcOffset = dcOffset;
-    newElement->cubeType = cubeType;
-
-    if(backlog->entry != NULL) {
-        backlog->entry->next->previous = newElement;
-        newElement->next = backlog->entry->next;
-        backlog->entry->next = newElement;
-        newElement->previous = backlog->entry;
-    }
-    else {
-        backlog->entry = newElement;
-        backlog->entry->next = newElement;
-        backlog->entry->previous = newElement;
-    }
-    backlog->elements = backlog->elements + 1;
-    return backlog->elements;
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -501,63 +284,13 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
         SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                       roundFloat(currentPxInDc_float->y),
                                       roundFloat(currentPxInDc_float->z));
+        if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
+        if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
+        if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
+        if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
+        if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
+        if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
     }
-    return true;
-}
-
-bool Viewer::sliceExtract_standard_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2) {
-
-    Byte *slice = viewPort->viewPortData;
-
-    Coordinate currentPxInDc;
-
-    floatCoordinate currentPxInDc_float;
-
-    int sliceIndex = 0, dcIndex = 0;
-
-    floatCoordinate *v2 = &(viewPort->v2);
-
-
-
-    CPY_COORDINATE(currentPxInDc_float, (*startPxInDc_float))
-
-    SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float.x)),
-
-                                  (roundFloat(currentPxInDc_float.y)),
-
-                                  (roundFloat(currentPxInDc_float.z)) );
-
-
-
-    while(t1<=t2){
-
-        SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float.x)),
-
-                                      (roundFloat(currentPxInDc_float.y)),
-
-                                      (roundFloat(currentPxInDc_float.z)) );
-
-        //sliceIndex = 3 * ( (s + viewPort->x_offset) + (t1 + viewPort->y_offset)  *  state->cubeEdgeLength * state->M);
-
-        sliceIndex = 3 * ( s + t1  *  state->cubeEdgeLength * state->M);
-
-        dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
-
-        slice[sliceIndex] = slice[sliceIndex + 1]
-
-                          = slice[sliceIndex + 2]
-
-                          = datacube[dcIndex];
-
-
-
-        t1++;
-
-        ADD_COORDINATE( (currentPxInDc_float), (*v2));
-
-    }
-
-
     return true;
 }
 
@@ -646,40 +379,15 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
         SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                       roundFloat(currentPxInDc_float->y),
                                       roundFloat(currentPxInDc_float->z));
-
+        if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
+        if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
+        if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
+        if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
+        if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
+        if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
     }
     return true;
 }
-
-bool Viewer::sliceExtract_adjust_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2) {
-    Byte *slice = viewPort->viewPortData;
-    Coordinate currentPxInDc;
-    floatCoordinate currentPxInDc_float;
-    int sliceIndex = 0, dcIndex = 0;
-    //floatCoordinate *v1 = &(viewPort->v1);
-    floatCoordinate *v2 = &(viewPort->v2);
-
-    CPY_COORDINATE(currentPxInDc_float, (*startPxInDc_float))
-    SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float.x)),
-                                  (roundFloat(currentPxInDc_float.y)),
-                                  (roundFloat(currentPxInDc_float.z)) );
-
-    while(t1<=t2){
-        SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float.x)),
-                                      (roundFloat(currentPxInDc_float.y)),
-                                      (roundFloat(currentPxInDc_float.z)) );
-        //sliceIndex = 3 * ( (s + viewPort->x_offset) + (t1 + viewPort->y_offset)  *  state->cubeEdgeLength * state->M);
-        sliceIndex = 3 * ( s + t1  *  state->cubeEdgeLength * state->M);
-        dcIndex = currentPxInDc.x + currentPxInDc.y * state->cubeEdgeLength + currentPxInDc.z * state->cubeSliceArea;
-        slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
-        slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
-        slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
-
-        t1++;
-        ADD_COORDINATE( (currentPxInDc_float), (*v2));
-    }
-}
-
 
 bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     datacube += dcOffset;
@@ -707,20 +415,6 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
         // Texture type GL_RGB and we don't need to adjust anything
         sliceExtract_standard_arb(datacube, viewPort, currentPxInDc_float, s, t);
     }
-    return true;
-}
-
-bool Viewer::dcSliceExtract_Backlog_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *startPxInDc_float, int s, int t1, int t2) {
-    /* @arb */
-    if(state->viewerState->datasetAdjustmentOn) {
-        // Texture type GL_RGB and we need to adjust coloring
-        sliceExtract_adjust_Backlog_arb(datacube, viewPort, startPxInDc_float, s, t1, t2);
-    }
-    else {
-        // Texture type GL_RGB and we don't need to adjust anything
-        sliceExtract_standard_Backlog_arb(datacube, viewPort, startPxInDc_float, s, t1, t2);
-    }
-    /**/
     return true;
 }
 
@@ -779,157 +473,6 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
         break;
     }
     return true;
-}
-
-bool Viewer::vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState) {
-    vpBacklogElement *currentElement = NULL,
-                     *nextElement = NULL;
-    Byte *cube = NULL;
-    uint elements = 0,
-              i = 0;
-
-    if(currentVp->backlog->entry == NULL) {
-        qDebug("Called vpHandleBacklog, but there is no backlog.");
-        return false;
-    }
-
-    elements = currentVp->backlog->elements;
-    currentElement = currentVp->backlog->entry;
-    //LOG("starting to handle backlog")
-    for(i = 0; i < elements; i++)  {
-        nextElement = currentElement->next;
-
-        if(currentElement->cubeType == CUBE_DATA) {
-            state->protectCube2Pointer->lock();
-            //qDebug() << currentElement->cube.x << " " << currentElement->cube.y << " " << currentElement->cube.z;
-            cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
-            state->protectCube2Pointer->unlock();
-
-            if(cube == HT_FAILURE) {
-                //qDebug("failed to get cube in backlog");
-
-            } else {
-                dcSliceExtract(cube,
-                               currentElement->slice,
-                               currentElement->dcOffset,
-                               currentVp->vpConfig);
-
-                glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
-                glTexSubImage2D(GL_TEXTURE_2D,
-                                0,
-                                currentElement->x_px,
-                                currentElement->y_px,
-                                state->cubeEdgeLength,
-                                state->cubeEdgeLength,
-                                GL_RGB,
-                                GL_UNSIGNED_BYTE,
-                                currentElement->slice);
-                glBindTexture(GL_TEXTURE_2D, 0);
-                backlogDelElement(currentVp->backlog, currentElement);
-            }
-        }
-        else if(currentElement->cubeType == CUBE_OVERLAY) {
-
-            state->protectCube2Pointer->lock();
-            cube = Hashtable::ht_get((Hashtable*) state->Oc2Pointer, currentElement->cube);
-            state->protectCube2Pointer->unlock();
-
-            if(cube == HT_FAILURE) {
-
-            }
-            else {
-                ocSliceExtract(cube,
-                               currentElement->slice,
-                               currentElement->dcOffset,
-                               currentVp->vpConfig);
-
-                glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.overlayHandle);
-                glTexSubImage2D(GL_TEXTURE_2D,
-                                0,
-                                currentElement->x_px,
-                                currentElement->y_px,
-                                state->cubeEdgeLength,
-                                state->cubeEdgeLength,
-                                GL_RGBA,
-                                GL_UNSIGNED_BYTE,
-                                currentElement->slice);
-                glBindTexture(GL_TEXTURE_2D, 0);
-                backlogDelElement(currentVp->backlog, currentElement);
-            }
-        }
-
-        currentElement = nextElement;
-    }
-
-    if(currentVp->backlog->elements != 0) {
-        return false;
-    }
-    else {
-        return true;
-    }
-}
-
-bool Viewer::vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerState *viewerState) {
-    struct vpBacklogElement *currentElement = NULL,
-                                *nextElement = NULL;
-
-        /* @arb */
-        struct pxStripe *stripe;
-        Byte *cube = NULL;
-        uint elements = 0, i = 0, j = 0;
-
-        if(currentVp->backlog->entry == NULL) {
-            //LOG("Called vpHandleBacklog, but there is no backlog.")
-            return false;
-        }
-
-        elements = currentVp->backlog->elements;
-        currentElement = currentVp->backlog->entry;
-
-        glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
-
-        for(i = 0; i < elements; i++)  {
-            nextElement = currentElement->next;
-            if(currentElement->cubeType == CUBE_DATA) {
-                state->protectCube2Pointer->lock();
-                cube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentElement->cube);
-                state->protectCube2Pointer->unlock();
-
-
-                if(cube == HT_FAILURE) {                   
-                } else {
-
-                    stripe = currentElement->stripes->entry;
-                    for (j = 0; j < currentElement->stripes->elements; j++){
-
-                        dcSliceExtract_Backlog_arb(cube,
-                                                   currentVp->vpConfig,
-                                                   &stripe->currentPxInDc_float,
-                                                   stripe->s,
-                                                   stripe->t1,
-                                                   stripe->t2);
-                        stripe = stripe->next;
-
-                    }
-
-                    backlogDelElement(currentVp->backlog, currentElement);
-                }
-            }
-            else if(currentElement->cubeType == CUBE_OVERLAY) {
-            }
-
-            currentElement = nextElement;
-        }
-
-         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->M*state->cubeEdgeLength, state->M*state->cubeEdgeLength, GL_RGB, GL_UNSIGNED_BYTE, currentVp->vpConfig->viewPortData);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        if(currentVp->backlog->elements != 0)
-            return false;
-        else
-            return true;
-        /**/
 }
 
 static int texIndex(uint x,
@@ -1048,15 +591,6 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             index = texIndex(x_dc, y_dc, 3, &(currentVp->vpConfig->texture));
 
             if(datacube == HT_FAILURE) {
-
-//                backlogAddElement(currentVp->backlog,
-//                                  currentDc,
-//                                  dcOffset,
-//                                  &(viewerState->texData[index]),
-//                                  x_px,
-//                                  y_px,
-//                                  CUBE_DATA);
-
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -1092,13 +626,6 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                 index = texIndex(x_dc, y_dc, 4, &(currentVp->vpConfig->texture));
 
                 if(overlayCube == HT_FAILURE) {
-//                    backlogAddElement(currentVp->backlog,
-//                                      currentDc,
-//                                      dcOffset * OBJID_BYTES,
-//                                      &(viewerState->overlayData[index]),
-//                                      x_px,
-//                                      y_px,
-//                                      CUBE_OVERLAY);
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
@@ -1135,16 +662,13 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
 bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
-    Coordinate lowerRightPxInDc, upperLeftPxInDc, currentDc, currentPx;
+    Coordinate currentDc, currentPx;
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    uint t_old = 0;
     Byte *datacube = NULL, *overlayCube = NULL;
 
-    //struct vpBacklogElement *backlogElement = NULL;
-
-    floatCoordinate *v1 = &(currentVp->vpConfig->v1);
-    floatCoordinate *v2 = &(currentVp->vpConfig->v2);
+    floatCoordinate *v1 = &currentVp->vpConfig->v1;
+    floatCoordinate *v2 = &currentVp->vpConfig->v2;
 
     CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
@@ -1153,7 +677,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
     glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    int s = 0, t = 0;
+    int s = 0, t = 0, t_old = 0;
     while(s < currentVp->vpConfig->s_max) {
         t = 0;
         while(t < currentVp->vpConfig->t_max) {
@@ -1173,105 +697,18 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
-            // a cube should be in the backlog only once
-           // backlogElement = getBacklogElement(currentVp->backlog, &currentDc);
-           /* if(backlogElement != NULL) {
-                // cube already in backlog
-                //qDebug("s: %i, t: %i", s, t);
-                SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x * state->cubeEdgeLength,
-                                                    currentPx_float.y-currentDc.y * state->cubeEdgeLength,
-                                                    currentPx_float.z-currentDc.z * state->cubeEdgeLength);
-
-                // special case: if currentPx_float.x-currentDc.x*state->cubeEdgeLength) == -0.5 then currentPxInDc_float.x
-                // would be 127.5 which would be rounded to 128 <--- not good, should be 127 in this case,
-                // otherwise it would result in a closed loop
-                if(currentPxInDc_float.x == 127.5) { currentPxInDc_float.x -= 0.001; }
-                if(currentPxInDc_float.y == 127.5) { currentPxInDc_float.y -= 0.001; }
-                if(currentPxInDc_float.z == 127.5) { currentPxInDc_float.z -= 0.001; }
-                if(currentPxInDc_float.x == -0.5) { currentPxInDc_float.x += 0.001; }
-                if(currentPxInDc_float.y == -0.5) { currentPxInDc_float.y += 0.001; }
-                if(currentPxInDc_float.z == -0.5) { currentPxInDc_float.z += 0.001; }
-
-                SET_COORDINATE(upperLeftPxInDc, currentDc.x * state->cubeEdgeLength,
-                                                currentDc.y * state->cubeEdgeLength,
-                                                currentDc.z * state->cubeEdgeLength);
-                SET_COORDINATE(lowerRightPxInDc, (currentDc.x + 1) * state->cubeEdgeLength - 1,
-                                                 (currentDc.y + 1) * state->cubeEdgeLength - 1,
-                                                 (currentDc.z + 1) * state->cubeEdgeLength - 1);
-
-                SET_COORDINATE(currentPx,
-                               roundFloat(currentPx_float.x),
-                               roundFloat(currentPx_float.y),
-                               roundFloat(currentPx_float.z));
-
-                t_old = t;
-                while(CONTAINS_COORDINATE(currentPx, upperLeftPxInDc, lowerRightPxInDc)) {
-                    ADD_COORDINATE(currentPx_float, *v2);
-                    SET_COORDINATE(currentPx,
-                                   roundFloat(currentPx_float.x),
-                                   roundFloat(currentPx_float.y),
-                                   roundFloat(currentPx_float.z));
-                    t++;
-                    if(t >= currentVp->vpConfig->t_max) {
-                        break;
-                    }
-                }
-                this->addPxStripe(backlogElement, &currentPxInDc_float, s, t_old, t-1);
-            }*/
-            // datacube not in backlog. In case of retrieval failure, put into backlog
-            //if(datacube == HT_FAILURE) {
-              //  t++;
-                /*backlogElement = backlogAddElement_arb(currentVp->backlog,currentDc,CUBE_DATA);
-                SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x * state->cubeEdgeLength,
-                                                    currentPx_float.y-currentDc.y * state->cubeEdgeLength,
-                                                    currentPx_float.z-currentDc.z*state->cubeEdgeLength);
-
-                if(currentPxInDc_float.x == 127.5) { currentPxInDc_float.x-=0.001; }
-                if(currentPxInDc_float.y == 127.5) { currentPxInDc_float.y-=0.001; }
-                if(currentPxInDc_float.z == 127.5) { currentPxInDc_float.z-=0.001; }
-                if(currentPxInDc_float.x == -0.5) { currentPxInDc_float.x+=0.001; }
-                if(currentPxInDc_float.y == -0.5) { currentPxInDc_float.y+=0.001; }
-                if(currentPxInDc_float.z == -0.5) { currentPxInDc_float.z+=0.001; }
-
-                SET_COORDINATE(upperLeftPxInDc, currentDc.x * state->cubeEdgeLength,
-                                                currentDc.y * state->cubeEdgeLength,
-                                                currentDc.z * state->cubeEdgeLength);
-                SET_COORDINATE(lowerRightPxInDc, (currentDc.x + 1) * state->cubeEdgeLength - 1,
-                                                 (currentDc.y + 1) * state->cubeEdgeLength - 1,
-                                                 (currentDc.z + 1) * state->cubeEdgeLength - 1);
-                SET_COORDINATE(currentPx,
-                               roundFloat(currentPx_float.x),
-                               roundFloat(currentPx_float.y),
-                               roundFloat(currentPx_float.z));
-                t_old = t;
-                while(CONTAINS_COORDINATE(currentPx, upperLeftPxInDc, lowerRightPxInDc)) {
-                    ADD_COORDINATE(currentPx_float, *v2);
-                    SET_COORDINATE(currentPx,
-                                   roundFloat(currentPx_float.x),
-                                   roundFloat(currentPx_float.y),
-                                   roundFloat(currentPx_float.z));
-                    t++;
-                    if(t >= currentVp->vpConfig->t_max) {
-                        break;
-                    }
-                }
-                addPxStripe(backlogElement, &currentPxInDc_float, s, t_old, t-1);*/
-            //}
-            //if(datacube != HT_FAILURE) {
-                // cube is available
-                SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,
-                                                    currentPx_float.y-currentDc.y*state->cubeEdgeLength,
-                                                    currentPx_float.z-currentDc.z*state->cubeEdgeLength);
-
-                t_old = t;
-                dcSliceExtract_arb(datacube,
-                                   currentVp->vpConfig,
-                                   &currentPxInDc_float,
-                                   s, &t);
-
-                SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
-                                                currentPx_float.y + v2->y * (t - t_old),
-                                                currentPx_float.z + v2->z * (t - t_old));
+            SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,
+                                                currentPx_float.y-currentDc.y*state->cubeEdgeLength,
+                                                currentPx_float.z-currentDc.z*state->cubeEdgeLength);
+            t_old = t;
+            dcSliceExtract_arb(datacube,
+                               currentVp->vpConfig,
+                               &currentPxInDc_float,
+                               s, &t);
+            SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
+                                            currentPx_float.y + v2->y * (t - t_old),
+                                            currentPx_float.z + v2->z * (t - t_old));
+             //  Take care of the overlay textures.
             if(state->overlay) {
                 //TDITEM handle overlay
             }
@@ -1779,7 +1216,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   * - The viewer get initialized
   * - The rendering loop starts:
   *   - lists of pending texture parts are iterated and loaded if they are available
-  *   - If not they are added to a backlog which is processed at a later time.
   *   - TODO: The Eventhandling in QT works asnyc, new concept are currently in progress
   * - the loadSignal occurs in three different locations:
   *   - initViewer
@@ -1787,11 +1223,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   *   - userMove
   *
   */
-void Viewer::runrun() {   
-    Viewer::run();
-
-}
-
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
     processUserMove();
@@ -1807,14 +1238,11 @@ void Viewer::run() {
 
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
-    // them if they are available. If they aren't, they are added to a backlog
-    // which is processed at a later time.
+    // them if they are available.
     // While we are loading the textures, we check for events. Some events
-    // might cancel the current loading process. When all textures / backlogs
+    // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
-    //qDebug() << "Viewer: start begin";
     struct viewerState *viewerState = state->viewerState;
-    //struct vpList *viewports = NULL;
     struct vpListElement *currentVp = NULL, *nextVp = NULL;
     uint drawCounter = 0;
 
@@ -1830,10 +1258,10 @@ void Viewer::run() {
     viewports = vpListGenerate(viewerState);
     currentVp = viewports->entry;
 
+    // for arbitrary viewport orientation
     state->alpha += state->viewerState->alphaCache;
     state->beta += state->viewerState->betaCache;
     state->viewerState->alphaCache = state->viewerState->betaCache = 0;
-
     if (state->alpha >= 360) {
         state->alpha -= 360;
     }
@@ -1870,56 +1298,16 @@ void Viewer::run() {
             vpYZ->makeCurrent();
             break;
         }
-
         nextVp = currentVp->next;
-        // printf("currentVp at %p, nextVp at %p.\n", currentVp, nextVp);
-
-        // We iterate over the list and either handle the backlog (a list
-        // of datacubes and associated offsets, see headers) if there is
-        // one or start loading everything from scratch if there is none.
 
         if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
-           /* currentVp->backlog->elements = 0;
-            if(currentVp->backlog->elements == 0) {*/
-                // There is no backlog. That means we haven't yet attempted
-                // to load the texture for this viewport, which is what we
-                // do now. If we can't complete the texture because a Dc
-                // is missing, a backlog is generated.
-                if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
-                     vpGenerateTexture(currentVp, viewerState);
-                }
-                else {
-                    vpGenerateTexture_arb(currentVp);
-                }
-           /* } else {
-                // There is a backlog. We go through its elements
-                if (currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
-                    vpHandleBacklog(currentVp, viewerState);
-                }
-                else {
-                    vpHandleBacklog_arb(currentVp, viewerState);
-                }
-            }*/
-
-            /*if(currentVp->backlog->elements == 0) {
-                // There is no backlog after either handling the backlog
-                // or loading the whole texture. That means the texture is
-                // complete. We can remove the viewport/ from the list.
-
-                //  XXX TODO XXX
-                //  The Dc2Pointer hashtable locking is currently done at pretty high
-                //  frequency by vpHandleBacklog() and might slow down the
-                //  loader.
-                //  We might want to introduce a locked variable that says how many
-                //  yet "unused" (by the viewer) cubes the loader has provided.
-                //  Unfortunately, we can't non-busy wait on the loader _and_
-                //  events, unless the loader generates events itself... So if this
-                //  really is a bottleneck it might be worth to think about it
-                //  again.
-                vpListDelElement(viewports, currentVp);
-            }*/
+            if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
+                 vpGenerateTexture(currentVp, viewerState);
+            }
+            else {
+                vpGenerateTexture_arb(currentVp);
+            }
         }
-
         drawCounter++;
         if(drawCounter == 3) {
             drawCounter = 0;
@@ -1939,17 +1327,9 @@ void Viewer::run() {
             viewerState->userMove = false;
             return;
         }
-        // An incoming user movement event makes the current backlog &
-        // viewport lists obsolete and we regenerate them dependant on
-        // the new position
-
-        // Leaves the loop that checks regularily for new available
-        // texture parts because the whole texture has to be recreated
-        // if the users moves
         currentVp = nextVp;
-    }//end while(viewports->elements > 0)
+    } //end while(viewports->elements > 0)
 }
-
 
 bool Viewer::updateViewerState() {
    uint i;
@@ -2312,8 +1692,16 @@ bool Viewer::recalcTextureOffsets() {
                 calcLeftUpperTexAbsPx();
 
                 //Offsets for crosshair
-                state->viewerState->vpConfigs[i].texture.xOffset = ((float)(state->viewerState->currentPosition.x - state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen.x)) * state->viewerState->vpConfigs[i].screenPxXPerDataPx + 0.5 * state->viewerState->vpConfigs[i].screenPxXPerDataPx;
-                state->viewerState->vpConfigs[i].texture.yOffset = ((float)(state->viewerState->currentPosition.z - state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen.z)) * state->viewerState->vpConfigs[i].screenPxYPerDataPx + 0.5 * state->viewerState->vpConfigs[i].screenPxYPerDataPx;
+                state->viewerState->vpConfigs[i].texture.xOffset =
+                        ((float)(state->viewerState->currentPosition.x
+                                 - state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen.x))
+                        * state->viewerState->vpConfigs[i].screenPxXPerDataPx
+                        + 0.5 * state->viewerState->vpConfigs[i].screenPxXPerDataPx;
+                state->viewerState->vpConfigs[i].texture.yOffset =
+                        ((float)(state->viewerState->currentPosition.z
+                                 - state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen.z))
+                        * state->viewerState->vpConfigs[i].screenPxYPerDataPx
+                        + 0.5 * state->viewerState->vpConfigs[i].screenPxYPerDataPx;
 
                 break;
             case VIEWPORT_YZ:
@@ -2399,11 +1787,10 @@ bool Viewer::recalcTextureOffsets() {
                 break;
             case VIEWPORT_ARBITRARY:
                 //v1: vector in Viewport x-direction, parameter s corresponds to v1
-
                 //v2: vector in Viewport y-direction, parameter t corresponds to v2
 
                 state->viewerState->vpConfigs[i].s_max = state->viewerState->vpConfigs[i].t_max =
-                        (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
+                        (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2.)))/2)*2;
 
                 floatCoordinate *v1 = &(state->viewerState->vpConfigs[i].v1);
                 floatCoordinate *v2 = &(state->viewerState->vpConfigs[i].v2);
@@ -2411,20 +1798,20 @@ bool Viewer::recalcTextureOffsets() {
 
                 //Calculation of new Ratio V1 to V2, V1 is along x
 
-//                   float voxelV1V2Ratio;
+//               float voxelV1V2Ratio;
 
-//                    voxelV1V2Ratio =  sqrtf((powf(state->viewerState->voxelXYtoZRatio * state->viewerState->voxelXYRatio * v1->x, 2)
+//                voxelV1V2Ratio =  sqrtf((powf(state->viewerState->voxelXYtoZRatio * state->viewerState->voxelXYRatio * v1->x, 2)
 
-//                                     +  powf(state->viewerState->voxelXYtoZRatio * v1->y, 2) + powf(v1->z, 2))
+//                                 +  powf(state->viewerState->voxelXYtoZRatio * v1->y, 2) + powf(v1->z, 2))
 
-//                                     / (powf(state->viewerState->voxelXYtoZRatio * state->viewerState->voxelXYRatio * v2->x, 2)
+//                                 / (powf(state->viewerState->voxelXYtoZRatio * state->viewerState->voxelXYRatio * v2->x, 2)
 
-//                                     +  powf(state->viewerState->voxelXYtoZRatio * v2->y, 2) + powf(v2->z, 2)));
+//                                 +  powf(state->viewerState->voxelXYtoZRatio * v2->y, 2) + powf(v2->z, 2)));
 
-//                    if(voxelV1V2Ratio < 1)
-//                        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY *= voxelV1V2Ratio;
-//                    else
-//                        state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX /= voxelV1V2Ratio;
+//                if(voxelV1V2Ratio < 1)
+//                    state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY *= voxelV1V2Ratio;
+//                else
+//                    state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX /= voxelV1V2Ratio;
                 float voxelV1X =
                         sqrtf(powf(v1->x, 2.0) + powf(v1->y / state->viewerState->voxelXYRatio, 2.0)
                         + powf(v1->z / state->viewerState->voxelXYRatio / state->viewerState->voxelXYtoZRatio , 2.0));
