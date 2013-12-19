@@ -42,6 +42,7 @@ class QToolBar;
 class QToolButton;
 class QPushButton;
 class QSpinBox;
+class QCheckBox;
 class QMessageBox;
 class QGridLayout;
 class QFile;
@@ -206,6 +207,8 @@ public:
     QToolButton *toolsButton;
     QToolButton *commentShortcutsButton;
     QPushButton *resetVPsButton;
+    QPushButton *resetVPOrientButton;
+    QCheckBox *lockVPOrientationCheckbox;
     QToolButton *taskManagementButton;
     QToolButton *treeviewButton;
 
@@ -288,7 +291,10 @@ public slots:
     void treeColorAdjustmentsChanged();
     // viewports
     void resetViewports();
+    void resetVPOrientation();
+    void lockVPOrientation(bool lock);
     void showVPDecorationClicked();
+
     bool fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
 
     // from the event handler

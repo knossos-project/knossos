@@ -256,6 +256,8 @@ int main(int argc, char *argv[])
     QTest::qExec(&navigation);
     */
 
+
+
     return a.exec();
 }
 
@@ -326,6 +328,7 @@ bool Knossos::initStates() {
    /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+
        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
            / (float)state->magnification;       
@@ -986,14 +989,12 @@ bool Knossos::configDefaults() {
     state->viewerState->walkFrames = 10;
     state->viewerState->userMove = false;
 
-    /* @arb */
+    /* for arbitrary viewport orientation */
     state->viewerState->moveCache.x = 0.0;
     state->viewerState->moveCache.y = 0.0;
     state->viewerState->moveCache.z = 0.0;
     state->viewerState->alphaCache = 0;
     state->viewerState->betaCache = 0;
-    state->viewerState->modeArbitrary = 0;
-      /* */
 
     state->viewerState->screenSizeX = 1024;
     state->viewerState->screenSizeY = 740;
@@ -1001,6 +1002,9 @@ bool Knossos::configDefaults() {
     state->viewerState->currentPosition.x = 0;
     state->viewerState->currentPosition.y = 0;
     state->viewerState->currentPosition.z = 0;
+    state->viewerState->lastRecenteringPosition.x = state->viewerState->currentPosition.x;
+    state->viewerState->lastRecenteringPosition.y = state->viewerState->currentPosition.y;
+    state->viewerState->lastRecenteringPosition.z = state->viewerState->currentPosition.z;
     state->viewerState->voxelDimX = state->scale.x;
     state->viewerState->voxelDimY = state->scale.y;
     state->viewerState->voxelDimZ = state->scale.z;
@@ -1024,24 +1028,27 @@ bool Knossos::configDefaults() {
 
     for(uint i = 0; i < state->viewerState->numberViewports; i++) {
         switch(i) {
-        case VIEWPORT_XY:
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+        case VP_UPPERLEFT:
             state->viewerState->vpConfigs[i].type = VIEWPORT_XY;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 30, 0);
+            state->viewerState->vpConfigs[i].id = VP_UPPERLEFT;
             break;
-        case VIEWPORT_XZ:
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+        case VP_LOWERLEFT:
             state->viewerState->vpConfigs[i].type = VIEWPORT_XZ;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 5, 385, 0);
+            state->viewerState->vpConfigs[i].id = VP_LOWERLEFT;
             break;
-        case VIEWPORT_YZ:
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+        case VP_UPPERRIGHT:
             state->viewerState->vpConfigs[i].type = VIEWPORT_YZ;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 30, 0);
+            state->viewerState->vpConfigs[i].id = VP_UPPERRIGHT;
             break;
-        case VIEWPORT_SKELETON:
-            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+        case VP_LOWERRIGHT:
             state->viewerState->vpConfigs[i].type = VIEWPORT_SKELETON;
+            SET_COORDINATE(state->viewerState->vpConfigs[i].upperLeftCorner, 360, 385, 0);
+            state->viewerState->vpConfigs[i].id = VP_LOWERRIGHT;
             break;
         }
-
         state->viewerState->vpConfigs[i].draggedNode = NULL;
         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;

@@ -32,6 +32,10 @@
 #include <QFont>
 #include "eventmodel.h"
 
+#define VP_UPPERLEFT 0
+#define VP_LOWERLEFT 1
+#define VP_UPPERRIGHT 2
+#define VP_LOWERRIGHT 3
 static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
 
 class QPushButton;
@@ -62,8 +66,8 @@ class Viewport : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit Viewport(QWidget *parent, int viewportType);
-    void drawViewport(int viewportType);
+    explicit Viewport(QWidget *parent, int viewportType, uint newId);
+    void drawViewport(int vpID);
     void drawSkeletonViewport();
     void hideButtons();
     void showButtons();
@@ -89,6 +93,7 @@ protected:
 
     int xrel(int x);
     int yrel(int y);
+    uint id; // VP_UPPERLEFT, ...
     int viewportType; // XY_VIEWPORT, ...
     int lastX; //last x position
     int lastY; //last y position
@@ -101,14 +106,14 @@ private:
     bool resizeButtonHold;
     void resizeVP(QMouseEvent *event);
     void moveVP(QMouseEvent *event);
-    bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
-    bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);    
+    bool handleMouseButtonLeft(QMouseEvent *event, int vpID);
+    bool handleMouseButtonMiddle(QMouseEvent *event, int vpID);
+    bool handleMouseButtonRight(QMouseEvent *event, int vpID);
+    bool handleMouseMotionLeftHold(QMouseEvent *event, int vpID);
+    bool handleMouseMotionMiddleHold(QMouseEvent *event, int vpID);
+    bool handleMouseMotionRightHold(QMouseEvent *event, int vpID);
+    bool handleMouseWheelForward(QWheelEvent *event, int vpID);
+    bool handleMouseWheelBackward(QWheelEvent *event, int vpID);
 signals:    
     void recalcTextureOffsetsSignal();
     void runSignal();
@@ -126,6 +131,7 @@ public slots:
     void r90ButtonClicked();
     void r180ButtonClicked();
     void resetButtonClicked();
+    bool setOrientation(int orientation);
 };
 
 #endif // VIEWPORT_H

@@ -50,8 +50,6 @@ void Remote::run() {
     // will follow the trajectory given in a file.
 
     while(true) {
-        //qDebug("remote says hello %i", ++i);
-        msleep(50);
         state->protectRemoteSignal->lock();
         while(!state->remoteSignal) {
             state->conditionRemoteSignal->wait(state->protectRemoteSignal);
@@ -67,51 +65,44 @@ void Remote::run() {
         updateRemoteState();
 
         switch(this->type) {
+        case REMOTE_TRAJECTORY:
+            remoteTrajectory(this->activeTrajectory);
+            break;
 
-            case REMOTE_TRAJECTORY:
-                remoteTrajectory(this->activeTrajectory);
-                break;
+        case REMOTE_RECENTERING:
+            SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
+            state->viewerState->currentPosition.y - this->recenteringPosition.y,
+            state->viewerState->currentPosition.z - this->recenteringPosition.z);
+            if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
+                remoteJump(this->recenteringPosition.x,
+                           this->recenteringPosition.y,
+                           this->recenteringPosition.z);
+                           break;
+            }
+            remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
+                       this->recenteringPosition.y - state->viewerState->currentPosition.y,
+                       this->recenteringPosition.z - state->viewerState->currentPosition.z);
+            break;
 
-            case REMOTE_RECENTERING:
-                SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
-                state->viewerState->currentPosition.y - this->recenteringPosition.y,
-                state->viewerState->currentPosition.z - this->recenteringPosition.z);
-
-                if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
-                    remoteJump(this->recenteringPosition.x,
-                                          this->recenteringPosition.y,
-                                          this->recenteringPosition.z);
-                               break;
-                }
-
-                remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
-                           this->recenteringPosition.y - state->viewerState->currentPosition.y,
-                           this->recenteringPosition.z - state->viewerState->currentPosition.z);
-
-                break;
-
-            default:
-                LOG("No such remote type (%d)\n", this->type)
-
+        default:
+            LOG("No such remote type (%d)\n", this->type)
         }
-
         if(state->quitSignal == true) {
             break;
         }
     }
-
 }
 
 bool Remote::newTrajectory(char *trajName, char *trajectory) {
-
     int i = 0;
 
-    if(*trajName == '\0')
+    if(*trajName == '\0') {
         return false;
-
+    }
     if(state->trajectories == NULL) {
         state->trajectories = (struct trajectory*) malloc(this->maxTrajectories * sizeof(struct trajectory));
         if(state->trajectories == NULL) {
+            qDebug("LOLOLOL");
             printf("Out of memory.\n");
             return false;
         }
@@ -160,9 +151,6 @@ bool Remote::remoteTrajectory(int trajNumber) {
 }
 
 bool Remote::updateRemoteState() {
-
-    int i = 0;
-
     /* @CMP
     if(state->trajectories != NULL) {
         free(state->trajectories);
@@ -176,9 +164,9 @@ bool Remote::updateRemoteState() {
     }
     */
 
-    for(int i = 0; i < state->maxTrajectories; i++)
+    for(int i = 0; i < state->maxTrajectories; i++) {
         newTrajectory(state->trajectories[i].name, state->trajectories[i].source);
-
+    }
     return true;
 }
 
@@ -233,7 +221,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
     floatCoordinate singleMove;
     floatCoordinate residuals;
     Coordinate doMove;
-    Coordinate *sendMove = NULL;
     int totalMoves = 0, i = 0;
     int eventDelay = 0;
     floatCoordinate walkVector;
@@ -241,6 +228,18 @@ bool Remote::remoteWalk(int x, int y, int z) {
     uint timePerStep = 0;
     uint recenteringTime = 0;
 
+    float tempAlphaCache =  state->viewerState->alphaCache;
+    float tempAlpha = state->alpha;
+    float tempBetaCache =  state->viewerState->betaCache;
+    float tempBeta = state->beta;
+
+    float alpha, beta, dAlpha, dBeta;
+    int dx = this->recenteringPosition.x - state->viewerState->lastRecenteringPosition.x;
+    int dy = this->recenteringPosition.y -state->viewerState->lastRecenteringPosition.y;
+    int dz = this->recenteringPosition.z -state->viewerState->lastRecenteringPosition.z;
+    state->viewerState->lastRecenteringPosition.x = this->recenteringPosition.x;
+    state->viewerState->lastRecenteringPosition.y = this->recenteringPosition.y;
+    state->viewerState->lastRecenteringPosition.z = this->recenteringPosition.z;
     walkVector.x = (float) x;
     walkVector.y = (float) y;
     walkVector.z = (float) z;
@@ -302,15 +301,42 @@ bool Remote::remoteWalk(int x, int y, int z) {
         totalMoves = abs(z) / state->magnification;
     }
 
-    //qDebug() << totalMoves << "T";
+    if ((dx==0) && (dy==0) && (dz==0))
+        dAlpha = dBeta = 0;
+    else{
+        if (dy <= 0)
+            alpha = 360 - acos((double)dx/sqrtf(powf(dx,2) + powf(dy,2)))/PI *180 ;
+        else
+            alpha = acos((double)dx/sqrtf(powf(dx,2) + powf(dy,2)))/PI *180 ;
+
+        beta = 180 + acos((double)dz/sqrtf(powf(dx,2) + powf(dy,2) + powf(dz,2)))/PI *180;
+
+        if (abs(alpha - tempAlpha) <= 180) dAlpha = alpha - tempAlpha;
+        else
+            if (tempAlpha > alpha) dAlpha = alpha +  360 - tempAlpha;
+            else if (tempAlpha == alpha) dAlpha = 0;
+            else dAlpha = alpha - 360 - tempAlpha;
+
+        if (abs(beta - tempBeta) <= 180) dBeta = beta - tempBeta;
+        else
+            if (tempBeta > beta) dBeta = beta +  360 - tempBeta;
+            else if (tempBeta == beta) dBeta = 0;
+            else dBeta = beta - 360 - tempBeta;
+    }
 
     singleMove.x = (float)x / (float)totalMoves;
     singleMove.y = (float)y / (float)totalMoves;
     singleMove.z = (float)z / (float)totalMoves;
+    dAlpha = dAlpha / (float)totalMoves;
+    dBeta = dBeta / (float)totalMoves;
 
     SET_COORDINATE(residuals, 0, 0, 0);
+    Coordinate sendMove; // next position to move to
     for(i = 0; i < totalMoves; i++) {
         SET_COORDINATE(doMove, 0, 0, 0);
+
+        state->viewerState->betaCache += dBeta;
+        state->viewerState->alphaCache += dAlpha;
 
         residuals.x += singleMove.x;
         residuals.y += singleMove.y;
@@ -344,38 +370,26 @@ bool Remote::remoteWalk(int x, int y, int z) {
         }
 
         if(doMove.x != 0 || doMove.z != 0 || doMove.y != 0) {
-            sendMove = (Coordinate *) malloc(sizeof(Coordinate));
-            if(sendMove == NULL) {
-                LOG("Out of memory.\n")
-                return false;
+            sendMove.x = doMove.x;
+            sendMove.y = doMove.y;
+            sendMove.z = doMove.z;
+
+            if(x == 0) {
+                sendMove.x = 0;
             }
-            memset(sendMove, '\0', sizeof(Coordinate));
-
-            sendMove->x = doMove.x;
-            sendMove->y = doMove.y;
-            sendMove->z = doMove.z;
-
-
-            if(x == 0)
-                sendMove->x = 0;
-            if(y == 0)
-                sendMove->y = 0;
-            if(z == 0)
-                sendMove->z = 0;
-
-
-
-            emit userMoveSignal(sendMove->x, sendMove->y, sendMove->z, TELL_COORDINATE_CHANGE);
-
-
+            if(y == 0) {
+                sendMove.y = 0;
+            }
+            if(z == 0) {
+                sendMove.z = 0;
+            }
+            emit userMoveSignal(sendMove.x, sendMove.y, sendMove.z, TELL_COORDINATE_CHANGE);
         }
-
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()
         // granularity isn't fine enough and it doesn't matter anyway.
         msleep(eventDelay);
     }
-
     emit idleTimeSignal();
     return true;
 }

@@ -48,6 +48,7 @@
 #include <QThread>
 #include <QRegExp>
 #include <QToolButton>
+#include <QCheckBox>
 #include <QtConcurrent/QtConcurrentRun>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -143,15 +144,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::createViewports() {
     viewports = new Viewport*[NUM_VP];
-    viewports[VIEWPORT_XY] = new Viewport(this, VIEWPORT_XY);
-    viewports[VIEWPORT_XZ] = new Viewport(this, VIEWPORT_XZ);
-    viewports[VIEWPORT_YZ] = new Viewport(this, VIEWPORT_YZ);
-    viewports[VIEWPORT_SKELETON] = new Viewport(this, VIEWPORT_SKELETON);
+    viewports[VP_UPPERLEFT] = new Viewport(this, VIEWPORT_XY, VP_UPPERLEFT);
+    viewports[VP_LOWERLEFT] = new Viewport(this, VIEWPORT_XZ, VP_LOWERLEFT);
+    viewports[VP_UPPERRIGHT] = new Viewport(this, VIEWPORT_YZ, VP_UPPERRIGHT);
+    viewports[VP_LOWERRIGHT] = new Viewport(this, VIEWPORT_SKELETON, VP_LOWERRIGHT);
 
-    viewports[VIEWPORT_XY]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VIEWPORT_XZ]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VIEWPORT_YZ]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VIEWPORT_SKELETON]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
 }
 
 MainWindow::~MainWindow()
@@ -205,9 +206,9 @@ void MainWindow:: createToolBar() {
     zField->setValue(state->viewerState->currentPosition.z);
     zField->clearFocus();
 
-    xLabel = new QLabel("x");
-    yLabel = new QLabel("y");
-    zLabel = new QLabel("z");
+    xLabel = new QLabel("<font color='black'>x</font>");
+    yLabel = new QLabel("<font color='black'>y</font>");
+    zLabel = new QLabel("<font color='black'>z</font>");
 
     this->toolBar->setMovable(false);
     this->toolBar->setFloatable(false);
@@ -271,10 +272,17 @@ void MainWindow:: createToolBar() {
     treeviewButton->setIcon(QIcon(":/images/icons/graph.png"));
     treeviewButton->setToolTip(("Tree View Widget"));
     toolBar->addWidget(treeviewButton);
-
-    resetVPsButton = new QPushButton("Reset Viewports", this);
+    this->toolBar->addSeparator();
+    resetVPsButton = new QPushButton("Reset VP Positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
     this->toolBar->addWidget(resetVPsButton);
+
+    resetVPOrientButton = new QPushButton("Reset VP Orientation", this);
+    resetVPOrientButton->setToolTip("Orientate viewports along xy, xz and yz axes.");
+    this->toolBar->addWidget(resetVPOrientButton);
+    lockVPOrientationCheckbox = new QCheckBox("lock VP orientation.");
+    lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
+    this->toolBar->addWidget(lockVPOrientationCheckbox);
 
     connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
@@ -294,7 +302,11 @@ void MainWindow:: createToolBar() {
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
     connect(taskManagementButton, SIGNAL(clicked()), this, SLOT(taskSlot()));
+
     connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
+    connect(resetVPOrientButton, SIGNAL(clicked()), this, SLOT(resetVPOrientation()));
+    connect(lockVPOrientationCheckbox, SIGNAL(clicked(bool)), this, SLOT(lockVPOrientation(bool)));
+
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
@@ -1484,6 +1496,27 @@ void MainWindow::taskSlot() {
 void MainWindow::resetViewports() {
     resizeViewports(width(), height());
     state->viewerState->defaultVPSizeAndPos = true;
+}
+
+void MainWindow::resetVPOrientation() {
+    if(state->viewerState->vpOrientationLocked == false) {
+        viewports[VP_UPPERLEFT]->setOrientation(VIEWPORT_XY);
+        viewports[VP_LOWERLEFT]->setOrientation(VIEWPORT_XZ);
+        viewports[VP_UPPERRIGHT]->setOrientation(VIEWPORT_YZ);
+        state->alpha = state->beta = state->viewerState->alphaCache = state->viewerState->betaCache = 0;
+    }
+    else {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Information);
+        prompt.setWindowTitle("Information");
+        prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+        prompt.exec();
+    }
+}
+
+void MainWindow::lockVPOrientation(bool lock) {
+    state->viewerState->vpOrientationLocked = lock;
 }
 
 void MainWindow::showVPDecorationClicked() {

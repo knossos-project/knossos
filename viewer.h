@@ -84,7 +84,7 @@ protected:
     bool vpListDel(vpList *list);
     int vpListDelElement( vpList *list,  vpListElement *element);
     bool backlogDel(vpBacklog *backlog);
-    vpBacklogElement *isCubeInBacklog(struct vpBacklog *backlog, Coordinate *cube);
+    vpBacklogElement *getBacklogElement(struct vpBacklog *backlog, Coordinate *cube);
     vpBacklogElement *backlogAddElement_arb(vpBacklog *backlog, Coordinate dataCube, uint cubeType);
     pxStripeList *stripesNew();
     int backlogDelElement(vpBacklog *backlog, vpBacklogElement *element);
@@ -98,7 +98,7 @@ protected:
     bool addPxStripe(vpBacklogElement *backlogElement, floatCoordinate *currentPxInDc_float, uint s, uint t1, uint t2);
 
     bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
-    bool vpGenerateTexture_arb(struct vpListElement *currentVp, struct viewerState *viewerState);
+    bool vpGenerateTexture_arb(struct vpListElement *currentVp);
 
     bool vpHandleBacklog(vpListElement *currentVp, viewerState *viewerState);
     bool vpHandleBacklog_arb(struct vpListElement *currentVp, struct viewerState *viewerState);

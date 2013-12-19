@@ -82,6 +82,9 @@
 #define LL_BEFORE   0
 #define LL_AFTER    2
 
+//Slicing Mode
+#define MODE_ORTHO 0
+#define MODE_ARBITRARY 1
  //	For the viewer.
 #define	SLICE_XY	0
 #define SLICE_XZ	1
@@ -852,6 +855,7 @@ struct vpConfig {
 
     // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON}
     Byte type;
+    uint id;
     // CORRECT THIS COMMENT TODO BUG
     //lower left corner of viewport in screen pixel coords (max: window borders)
     //we use here the lower left corner, because the openGL intrinsic coordinate system
@@ -894,10 +898,12 @@ struct viewerState {
 
     //Cache for Movements smaller than pixel coordinate
     floatCoordinate moveCache;
-    //flag for arbitrarySlicing
-    uint modeArbitrary;
-    int alphaCache;
-    int betaCache;
+	//Orientation
+    float alphaCache;
+    float betaCache;
+
+    bool vpOrientationLocked;
+    int slicingMode; // MODE_ORTHO or MODE_ARBITRARY
 
     struct vpConfig *vpConfigs;
     Byte *texData;
@@ -938,6 +944,7 @@ struct viewerState {
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
 	Coordinate currentPosition;
+    Coordinate lastRecenteringPosition;
 
     uint recenteringTime;
     uint recenteringTimeOrth;
@@ -1329,10 +1336,10 @@ struct clientState {
 /* Macros */
 #define SET_COLOR(color, rc, gc, bc, ac) \
         { \
-        color.r = rc; \
-        color.g = gc; \
-        color.b = bc; \
-        color.a = ac; \
+        (color).r = (rc); \
+        (color).g = (gc); \
+        (color).b = (bc); \
+        (color).a = (ac); \
         }
 
 #define ABS(x) (((x) >= 0) ? (x) : -(x))
@@ -1340,35 +1347,62 @@ struct clientState {
 
 #define SET_COORDINATE(coordinate, a, b, c) \
         { \
-        coordinate.x = a; \
-        coordinate.y = b; \
-        coordinate.z = c; \
+        (coordinate).x = (a); \
+        (coordinate).y = (b); \
+        (coordinate).z = (c); \
         }
 
-#define CALC_VECTOR_NORM(v) (sqrt(SQR(v.x) + SQR(v.y) + SQR(v.z)))
+#define CALC_VECTOR_NORM(v) \
+    ( \
+        sqrt(SQR((v).x) + SQR((v).y) + SQR((v).z)) \
+    )
 
 #define NORM_VECTOR(v, norm) \
-        { \
-        v.x /= (norm); \
-        v.y /= (norm); \
-        v.z /= (norm); \
-        }
+    { \
+        (v).x /= (norm); \
+        (v).y /= (norm); \
+        (v).z /= (norm); \
+    }
 
-#define CALC_DOT_PRODUCT(a, b) ((a.x * b.x) + (a.y * b.y) + (a.z * b.z))
-#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) (ABS(CALC_DOT_PRODUCT(point, plane)) / CALC_VECTOR_NORM(plane))
+#define CALC_DOT_PRODUCT(a, b) \
+    ( \
+        ((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z) \
+    )
+#define CALC_POINT_DISTANCE_FROM_PLANE(point, plane) \
+    ( \
+        ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
+    )
 #define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
-        { SET_COORDINATE(coordinate, ox + offset_array[0], oy + offset_array[1], oz + offset_array[2]); }
+    { \
+        SET_COORDINATE((coordinate), \
+                       (ox) + (offset_array)[0], \
+                       (oy) + (offset_array)[1], \
+                       (oz) + (offset_array)[2]); \
+    }
 
 #define SET_OFFSET_ARRAY(offset_array, i, j, k, direction_index) \
-        { \
-            offset_array[direction_index] = k; \
-            offset_array[(direction_index + 1) % 3] = i; \
-            offset_array[(direction_index + 2) % 3] = j; \
-        }
+    { \
+        (offset_array)[(direction_index)] = (k); \
+        (offset_array)[((direction_index) + 1) % 3] = (i); \
+        (offset_array)[((direction_index) + 2) % 3] = (j); \
+    }
 
-#define COMPARE_COORDINATE(c1, c2)  (((c1).x == (c2).x) && ((c1).y == (c2).y) && ((c1).z == (c2).z))
+#define COMPARE_COORDINATE(c1, c2) \
+    ( \
+        (c1).x == (c2).x    \
+        && (c1).y == (c2).y \
+        && (c1).z == (c2).z \
+    )
 
-#define CONTAINS_COORDINATE(c1, c2, c3) ( ((c2).x <= (c1).x) && ((c1).x <= (c3).x) && ((c2).y <= (c1).y)&&((c1).y <= (c3).y) && ((c2).z <= (c1).z) && ((c1).z <= (c3).z) )
+#define CONTAINS_COORDINATE(c1, c2, c3) \
+    ( \
+        (c2).x <= (c1).x    \
+        && (c1).x <= (c3).x \
+        && (c2).y <= (c1).y \
+        && (c1).y <= (c3).y \
+        && (c2).z <= (c1).z \
+        && (c1).z <= (c3).z \
+    )
 
 #define ADD_COORDINATE(c1, c2) \
 	{ \

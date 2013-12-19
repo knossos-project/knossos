@@ -70,6 +70,10 @@ protected:
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
 
+    QLabel *vpOrientationLabel;
+    QCheckBox *lockVpOrientationCheckbox;
+    QPushButton *resetVpOrientationButton;
+
     QLabel *colorLookupTablesLabel;
     QCheckBox *useOwnDatasetColorsCheckBox, *useOwnTreeColorsCheckBox;
     QPushButton *useOwnDatasetColorsButton, *useOwnTreeColorButton;

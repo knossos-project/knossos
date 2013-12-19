@@ -124,6 +124,7 @@ signals:
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
     void undoSignal();
+    void setViewportOrientationSignal(int orientation);
 
 public slots:
 

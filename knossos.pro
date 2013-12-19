@@ -250,9 +250,11 @@ win32 {
     }
 
     LIBS += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\python2.7\config\libpython2.7.dll.a \
-            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt$${DEBUG_EXT}.a \
-            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libPythonQt_QtAll$${DEBUG_EXT}.a \
-            C:\Qt\Qt5.1.0\5.1.0\mingw48_32\lib\libcurl.dll.a \
+            C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libPythonQt$${DEBUG_EXT}.a \
+            C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libPythonQt_QtAll$${DEBUG_EXT}.a \
+            C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libcurl.dll.a \
+            C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libglut32.a \
+            C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libglew32.dll.a \
             -lwsock32
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \

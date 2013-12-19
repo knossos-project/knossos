@@ -26,6 +26,7 @@
 #include "functions.h"
 #include "knossos.h"
 #include "renderer.h"
+#include "widgets/viewport.h"
 
 extern struct stateInfo *state;
 
@@ -235,9 +236,9 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         }
         /* Determine the directions for the f and d keys based on the signs of the movement
            components along the three dimensions. */
-        state->viewerState->vpKeyDirection[VIEWPORT_YZ] = (movement.x >= 0)? 1 : -1;
-        state->viewerState->vpKeyDirection[VIEWPORT_XZ] = (movement.y >= 0)? 1 : -1;
-        state->viewerState->vpKeyDirection[VIEWPORT_XY] = (movement.z >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VP_UPPERLEFT] = (movement.z >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VP_LOWERLEFT] = (movement.y >= 0)? 1 : -1;
+        state->viewerState->vpKeyDirection[VP_UPPERRIGHT] = (movement.x >= 0)? 1 : -1;
 
         //Auto tracing adjustments
 
@@ -595,7 +596,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 #endif
                 emit zoomOrthoSignal(-0.01);
             } else { // move otherwiese
-                switch(VPfound) {
+                switch(state->viewerState->vpConfigs[VPfound].type) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, state->viewerState->dropFrames
                             * state->magnification,
@@ -682,7 +683,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
             }
             // Move otherwise
             else {
-                switch(VPfound) {
+                switch(state->viewerState->vpConfigs[VPfound].type) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, -state->viewerState->dropFrames
                             * state->magnification,
@@ -734,96 +735,91 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     // new qt version
     if(event->key() == Qt::Key_Left) {
         if(shift) {
-            switch(VPfound) {
-            qDebug() << state->viewerState->activeVP;
-                case VIEWPORT_XY:
-                    emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_XZ:
-                    emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_YZ:
-                    emit userMoveSignal(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_ARBITRARY:
-                /* @arb */
-                    emit userMoveArbSignal(-10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
-                             -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
-                             -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification,
-                             TELL_COORDINATE_CHANGE);
-
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_XZ:
+                emit userMoveSignal(-10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, 0, -10 * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(
+                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
+                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
+                         -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification,
+                         TELL_COORDINATE_CHANGE);
                 break;
             }
         } else {
-            switch(VPfound) {
-                case VIEWPORT_XY:
-                    emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_XZ:
-                    emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_YZ:
-                    emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
-                    break;
-            case VIEWPORT_ARBITRARY:
-                /* @arb */
-                emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->viewerState->dropFrames * state->magnification,
-                 -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->viewerState->dropFrames * state->magnification,
-                 -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->viewerState->dropFrames * state->magnification,
-                 TELL_COORDINATE_CHANGE);
-
-
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
                 break;
-
+            case VIEWPORT_XZ:
+                emit userMoveSignal(-state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, 0, -state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x
+                            * state->viewerState->dropFrames * state->magnification,
+                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y
+                            * state->viewerState->dropFrames * state->magnification,
+                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z
+                            * state->viewerState->dropFrames * state->magnification,
+                        TELL_COORDINATE_CHANGE);
+                break;
             }
         }
     } else if(event->key() == Qt::Key_Right) {
-            if(shift) {
-                switch(VPfound) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                        emit userMoveArbSignal(10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
-                        10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
-                        10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification,
-                        TELL_COORDINATE_CHANGE);
-
-
-                         break;
-                }
-            } else {
-                switch(VPfound) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                        emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->viewerState->dropFrames * state->magnification,
-                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->viewerState->dropFrames * state->magnification,
-                        TELL_COORDINATE_CHANGE);
-                        break;
-
-                    }
-                }
-
+        if(shift) {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_XZ:
+                emit userMoveSignal(10 * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x * state->magnification,
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y * state->magnification,
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z * state->magnification,
+                            TELL_COORDINATE_CHANGE);
+                 break;
+            }
+        } else {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_XZ:
+                emit userMoveSignal(state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v1.x
+                            * state->viewerState->dropFrames * state->magnification,
+                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.y
+                            * state->viewerState->dropFrames * state->magnification,
+                        state->viewerState->vpConfigs[state->viewerState->activeVP].v1.z
+                            * state->viewerState->dropFrames * state->magnification,
+                TELL_COORDINATE_CHANGE);
+                break;
+            }
+        }
     } else if(event->key() == Qt::Key_Down) {
         if(shift) {
-            switch(VPfound) {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -845,7 +841,7 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                      break;
             }
         } else {
-            switch(VPfound) {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
@@ -856,188 +852,193 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(0, -state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    /* @arb */
-                    emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->viewerState->dropFrames * state->magnification,
-                     -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->viewerState->dropFrames * state->magnification,
-                     -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->viewerState->dropFrames * state->magnification,
+                    emit userMoveArbSignal(-state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x
+                            * state->viewerState->dropFrames * state->magnification,
+                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y
+                            * state->viewerState->dropFrames * state->magnification,
+                        -state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z
+                            * state->viewerState->dropFrames * state->magnification,
                      TELL_COORDINATE_CHANGE);
                     break;
             }
         }
     } else if(event->key() == Qt::Key_Up) {
         if(shift) {
-            switch(VPfound) {
-                case VIEWPORT_XY:
-                    emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_XZ:
-                    emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_YZ:
-                    emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_ARBITRARY:
-                    /* @arb */
-                    emit userMoveArbSignal(10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
-                     10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
-                     10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification,
-                     TELL_COORDINATE_CHANGE);
-                    break;
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_XZ:
+                emit userMoveSignal(0, 0, 10 * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, 10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
+                            10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification,
+                            TELL_COORDINATE_CHANGE);
+                break;
             }
         } else {
-            switch(VPfound) {
-                case VIEWPORT_XY:
-                    emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_XZ:
-                    emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_YZ:
-                    emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
-                    break;
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_XZ:
+                emit userMoveSignal(0, 0, state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
+                break;
+            case VIEWPORT_YZ:
+                emit userMoveSignal(0, state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
+                break;
             case VIEWPORT_ARBITRARY:
-                /* @arb */
-                emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->viewerState->dropFrames * state->magnification,
-                 state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->viewerState->dropFrames * state->magnification,
-                 state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->viewerState->dropFrames * state->magnification,
-                 TELL_COORDINATE_CHANGE);
-                 break;
+                emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x
+                            * state->viewerState->dropFrames * state->magnification,
+                        state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y
+                            * state->viewerState->dropFrames * state->magnification,
+                        state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z
+                            * state->viewerState->dropFrames * state->magnification,
+                        TELL_COORDINATE_CHANGE);
+                break;
             }
         }
     } else if(event->key() == Qt::Key_R) {
-
         state->viewerState->walkOrth = 1;
-        switch(VPfound) {
-            case VIEWPORT_XY:
-
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
-                                                  state->viewerState->currentPosition.y,
-                                                  state->viewerState->currentPosition.z + state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
-                emit updateViewerStateSignal();
-                Knossos::sendRemoteSignal();
-
-            break;
-            case VIEWPORT_XZ:
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(
-                               state->viewerState->currentPosition.x,
-                        state->viewerState->currentPosition.y + state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
-                               state->viewerState->currentPosition.z);
-                               Knossos::sendRemoteSignal();
-
-            break;
-            case VIEWPORT_YZ:
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
-                               state->viewerState->currentPosition.y,
-                               state->viewerState->currentPosition.z);
+        switch(state->viewerState->vpConfigs[VPfound].type) {
+        case VIEWPORT_XY:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
+                                              state->viewerState->currentPosition.y,
+                                              state->viewerState->currentPosition.z+ state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
+            emit updateViewerStateSignal();
             Knossos::sendRemoteSignal();
-
             break;
-            case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + 10 *state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * state->magnification,
-                state->viewerState->currentPosition.y + 10 * state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * state->magnification,
-                state->viewerState->currentPosition.z + 10 * state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * state->magnification);
-                Knossos::sendRemoteSignal();
-
-
-                    break;
+        case VIEWPORT_XZ:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
+                                              state->viewerState->currentPosition.y + state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
+                                              state->viewerState->currentPosition.z);
+            Knossos::sendRemoteSignal();
+            break;
+        case VIEWPORT_YZ:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
+                           state->viewerState->currentPosition.y,
+                           state->viewerState->currentPosition.z);
+            Knossos::sendRemoteSignal();
+            break;
+        case VIEWPORT_ARBITRARY:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x + state->viewerState->walkFrames
+                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * state->magnification,
+                    state->viewerState->currentPosition.y + state->viewerState->walkFrames
+                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * state->magnification,
+                    state->viewerState->currentPosition.z + state->viewerState->walkFrames
+                            * state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * state->magnification);
+            Knossos::sendRemoteSignal();
+            break;
         }
     } else if(event->key() == Qt::Key_E) {
-
         state->viewerState->walkOrth = 1;
-        switch(VPfound) {
-            case VIEWPORT_XY:
-                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                 emit setRecenteringPositionSignal(
-                               state->viewerState->currentPosition.x,
-                               state->viewerState->currentPosition.y,
-                               state->viewerState->currentPosition.z - state->viewerState->walkFrames * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
-                               Knossos::sendRemoteSignal();
-
-            break;
-            case VIEWPORT_XZ:
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(
-                               state->viewerState->currentPosition.x,
-                               state->viewerState->currentPosition.y - state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
-                               state->viewerState->currentPosition.z);
-                Knossos::sendRemoteSignal();
-
-            break;
-            case VIEWPORT_YZ:
-                 emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                 emit setRecenteringPositionSignal(
-                               state->viewerState->currentPosition.x - state->viewerState->walkFrames * state->magnification  * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
-                               state->viewerState->currentPosition.y,
-                               state->viewerState->currentPosition.z);
-                 Knossos::sendRemoteSignal();
-
-            break;
-            case VIEWPORT_ARBITRARY:
-            /* @arb */
+        switch(state->viewerState->vpConfigs[VPfound].type) {
+        case VIEWPORT_XY:
             emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-            emit setRecenteringPositionSignal(
-                state->viewerState->currentPosition.x - 10 * state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * state->magnification,
-                state->viewerState->currentPosition.y - 10 * state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * state->magnification,
-                state->viewerState->currentPosition.z - 10 * state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * state->magnification);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
+                                              state->viewerState->currentPosition.y,
+                                              state->viewerState->currentPosition.z - state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XY]);
+            Knossos::sendRemoteSignal();
+            break;
+        case VIEWPORT_XZ:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x,
+                                              state->viewerState->currentPosition.y - state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_XZ],
+                                              state->viewerState->currentPosition.z);
+            Knossos::sendRemoteSignal();
+            break;
+        case VIEWPORT_YZ:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(state->viewerState->currentPosition.x - state->viewerState->walkFrames
+                                              * state->magnification * state->viewerState->vpKeyDirection[VIEWPORT_YZ],
+                                              state->viewerState->currentPosition.y,
+                                              state->viewerState->currentPosition.z);
+            Knossos::sendRemoteSignal();
+            break;
+        case VIEWPORT_ARBITRARY:
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal((int)state->viewerState->currentPosition.x - state->viewerState->walkFrames
+                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.x) * state->magnification,
+                        (int)state->viewerState->currentPosition.y - state->viewerState->walkFrames
+                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.y) * state->magnification,
+                        (int)state->viewerState->currentPosition.z - state->viewerState->walkFrames
+                                * roundFloat(state->viewerState->vpConfigs[VPfound].n.z) * state->magnification);
             Knossos::sendRemoteSignal();
             break;
         }
     } else if(event->key() == Qt::Key_F) {
-        qDebug() << " F";
         state->keyF = true;
         state->directionSign = -1;
         if(shift) {
-            switch(VPfound) {
-                case VIEWPORT_XY:
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
                 state->newCoord[0] = 0;
                 state->newCoord[1] = 0;
                 state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification;
                 break;
-
             case VIEWPORT_XZ:
-                 state->newCoord[0] = 0;
-                 state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification;
-                 state->newCoord[2] = 0;
-             break;
+                state->newCoord[0] = 0;
+                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification;
+                state->newCoord[2] = 0;
+                break;
             case VIEWPORT_YZ:
                 state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification;
                 state->newCoord[1] = 0;
                 state->newCoord[2] = 0;
-            break;
-                case VIEWPORT_ARBITRARY:
-                    // @arb
-                   emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
-                    state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
-                    state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * 10.0 * (float)state->magnification,
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(
+                    state->viewerState->vpConfigs[VPfound].n.x * 10.0 * (float)state->magnification,
+                    state->viewerState->vpConfigs[VPfound].n.y * 10.0 * (float)state->magnification,
+                    state->viewerState->vpConfigs[VPfound].n.z * 10.0 * (float)state->magnification,
                     TELL_COORDINATE_CHANGE);
-                   break;
+                break;
             }
-
         } else {
-            switch(VPfound) {
-              case VIEWPORT_XY:
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
                 state->newCoord[0] = 0;
                 state->newCoord[1] = 0;
-                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification;
+                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames
+                                     * state->magnification;
                 break;
-               case VIEWPORT_XZ:
-                    state->newCoord[0] = 0;
-                    state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification;
-                    state->newCoord[2] = 0;
+            case VIEWPORT_XZ:
+                state->newCoord[0] = 0;
+                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames
+                                     * state->magnification;
+                state->newCoord[2] = 0;
                 break;
-                case VIEWPORT_YZ:
-                    state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification;
-                    state->newCoord[1] = 0;
-                    state->newCoord[2] = 0;
+            case VIEWPORT_YZ:
+                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames
+                                     * state->magnification;
+                state->newCoord[1] = 0;
+                state->newCoord[2] = 0;
                 break;
-
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x
+                                       * (float)state->viewerState->dropFrames * (float)state->magnification,
+                                state->viewerState->vpConfigs[VPfound].n.y * (float)state->viewerState->dropFrames
+                                       * (float)state->magnification,
+                                state->viewerState->vpConfigs[VPfound].n.z * (float)state->viewerState->dropFrames
+                                       * (float)state->magnification,
+                                TELL_COORDINATE_CHANGE);
+                 break;
             }
-
              /*
                 case VIEWPORT_XY:
                     emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
@@ -1055,69 +1056,125 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                      state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
                      TELL_COORDINATE_CHANGE);
                       break;
-
             }*/
-
         }
     } else if(event->key() == Qt::Key_D) {
         state->directionSign = -1;
         state->keyD = true;
         if(shift) {
-            switch(VPfound) {
-                case VIEWPORT_XY:
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
                 state->newCoord[0] = 0;
                 state->newCoord[1] = 0;
                 state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification;
                 break;
-
             case VIEWPORT_XZ:
                  state->newCoord[0] = 0;
                  state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification;
                  state->newCoord[2] = 0;
-             break;
+                 break;
             case VIEWPORT_YZ:
                 state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification;
                 state->newCoord[1] = 0;
                 state->newCoord[2] = 0;
+                break;
+            case VIEWPORT_ARBITRARY:
+                emit userMoveArbSignal(
+                    state->viewerState->vpConfigs[VPfound].n.x
+                        * (float)state->viewerState->vpKeyDirection[VPfound]
+                        * -10.0 * (float)state->magnification,
+                    state->newCoord[1] = state->viewerState->vpConfigs[VPfound].n.y
+                        * (float)state->viewerState->vpKeyDirection[VPfound]
+                        * -10.0 * (float)state->magnification,
+                    state->newCoord[2] = state->viewerState->vpConfigs[VPfound].n.z
+                        * (float)state->viewerState->vpKeyDirection[VPfound]
+                        * -10.0 * (float)state->magnification,
+                    TELL_COORDINATE_CHANGE);
+                break;
+            }
+        } else {
+            switch(state->viewerState->vpConfigs[VPfound].type) {
+            case VIEWPORT_XY:
+                state->newCoord[0] = 0;
+                state->newCoord[1] = 0;
+                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames
+                                     * state->magnification;
+                break;
+            case VIEWPORT_XZ:
+                state->newCoord[0] = 0;
+                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames
+                                     * state->magnification;
+                state->newCoord[2] = 0;
+            break;
+            case VIEWPORT_YZ:
+                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames
+                                     * state->magnification;
+                state->newCoord[1] = 0;
+                state->newCoord[2] = 0;
             break;
             case VIEWPORT_ARBITRARY:
-                 emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -10.0 * (float)state->magnification,
-                 state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -10.0 * (float)state->magnification,
-                 state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -10.0 * (float)state->magnification,
-                 TELL_COORDINATE_CHANGE);
-            break;
+                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x
+                        * -(float)state->viewerState->dropFrames * (float)state->magnification,
+                    state->viewerState->vpConfigs[VPfound].n.y * -(float)state->viewerState->dropFrames
+                        * (float)state->magnification,
+                    state->viewerState->vpConfigs[VPfound].n.z * -(float)state->viewerState->dropFrames
+                        * (float)state->magnification,
+                    TELL_COORDINATE_CHANGE);
+                break;
             }
-
-        } else {
-            switch(VPfound) {
-              case VIEWPORT_XY:
-                    state->newCoord[0] = 0;
-                    state->newCoord[1] = 0;
-                    state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames * state->magnification;
-                break;
-               case VIEWPORT_XZ:
-                    state->newCoord[0] = 0;
-                    state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames * state->magnification;
-                    state->newCoord[2] = 0;
-                break;
-                case VIEWPORT_YZ:
-                    state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames * state->magnification;
-                    state->newCoord[1] = 0;
-                    state->newCoord[2] = 0;
-                break;
-                case VIEWPORT_ARBITRARY:
-                    /* @arb */
-                    emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -(float)state->viewerState->dropFrames * (float)state->magnification,
-                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -(float)state->viewerState->dropFrames * (float)state->magnification,
-                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * -(float)state->viewerState->dropFrames * (float)state->magnification,
-                     TELL_COORDINATE_CHANGE);
-                    break;
-
-            }
-
         }
-
-
+    } else if(event->key() == Qt::Key_K) {
+        if(state->viewerState->vpOrientationLocked == false) {
+            state->viewerState->alphaCache += 1;
+            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
+        }
+        else {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+            prompt.exec();
+        }
+    } else if(event->key() == Qt::Key_L) {
+        if(state->viewerState->vpOrientationLocked == false) {
+            state->viewerState->betaCache += 1;
+            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
+        }
+        else {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+            prompt.exec();
+        }
+    } else if(event->key() == Qt::Key_M) {
+        if(state->viewerState->vpOrientationLocked == false) {
+            state->viewerState->alphaCache -= 1;
+            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
+        }
+        else {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+            prompt.exec();
+        }
+    } else if(event->key() == Qt::Key_Comma) {
+        if(state->viewerState->vpOrientationLocked == false) {
+            state->viewerState->betaCache -= 1;
+            emit setViewportOrientationSignal(VIEWPORT_ARBITRARY);
+        }
+        else {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Viewport orientation is still locked. Uncheck 'Lock VP Orientation' first.");
+            prompt.exec();
+        }
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
         //emit updateTools();
@@ -1135,9 +1192,8 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
             emit zoomOrthoSignal(-0.1);
-
         }
-        else if (state->skeletonState->zoomLevel <= SKELZOOMMAX){
+        else if (state->skeletonState->zoomLevel <= SKELZOOMMAX) {
             emit zoomInSkeletonVPSignal();
         }
     } else if(event->key() == Qt::Key_O) {
@@ -1225,28 +1281,33 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
             x = state->viewerState->currentPosition.x;
             break;
         case VIEWPORT_ARBITRARY:
-            /* @arb */
             x = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.x
-                + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx) * state->viewerState->vpConfigs[VPfound].v1.x
-                + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx) * state->viewerState->vpConfigs[VPfound].v2.x );
+                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v1.x
+                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v2.x
+                );
 
             y = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.y
-                + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx) * state->viewerState->vpConfigs[VPfound].v1.y
-                + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx) * state->viewerState->vpConfigs[VPfound].v2.y);
+                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v1.y
+                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v2.y
+                );
 
             z = roundFloat(state->viewerState->vpConfigs[VPfound].leftUpperDataPxOnScreen_float.z
-                + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx) * state->viewerState->vpConfigs[VPfound].v1.z
-                + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx) * state->viewerState->vpConfigs[VPfound].v2.z);
-
-
+                    + ((float)xDistance / state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v1.z
+                    + ((float)yDistance / state->viewerState->vpConfigs[VPfound].screenPxYPerDataPx)
+                    * state->viewerState->vpConfigs[VPfound].v2.z
+                );
             break;
-
     }
     //check if coordinates are in range
     if((x > 0) && (x <= state->boundary.x)
         &&(y > 0) && (y <= state->boundary.y)
         &&(z > 0) && (z <= state->boundary.z)) {
-        SET_COORDINATE((*foundCoordinate), x, y, z);
+        SET_COORDINATE(*foundCoordinate, x, y, z);
         return foundCoordinate;
     }
 

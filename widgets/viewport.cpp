@@ -55,8 +55,8 @@ void ViewportButton::leaveEvent(QEvent *) {
     setCursor(Qt::CrossCursor);
 }
 
-Viewport::Viewport(QWidget *parent, int viewportType) :
-    QGLWidget(parent), viewportType(viewportType), resizeButtonHold(false) {
+Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
+    QGLWidget(parent), viewportType(viewportType), id(newId), resizeButtonHold(false) {
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
@@ -92,12 +92,11 @@ Viewport::Viewport(QWidget *parent, int viewportType) :
 void Viewport::initializeGL() {
     // button geometry has to be defined here, because width() and height() return wrong information before initializeGL
     updateButtonPositions();
-    if(viewportType < VIEWPORT_SKELETON) {
-
-        glGenTextures(1, &state->viewerState->vpConfigs[viewportType].texture.texHandle);
+    if(viewportType != VIEWPORT_SKELETON) {
+        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[viewportType].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -114,32 +113,30 @@ void Viewport::initializeGL() {
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGB,
-                     state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
-                     state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
+                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
+                     state->viewerState->vpConfigs[id].texture.edgeLengthPx,
                      0,
                      GL_RGB,
                      GL_UNSIGNED_BYTE,
                      state->viewerState->defaultTexData);
 
         //Handle overlay textures.
-
     }
 
-
     // The following code configures openGL to draw into the current VP
-    //set the drawing area in the window to our actually processed view port.
-    glViewport(state->viewerState->vpConfigs[viewportType].upperLeftCorner.x,
-               state->viewerState->vpConfigs[viewportType].upperLeftCorner.y,
-               state->viewerState->vpConfigs[viewportType].edgeLength,
-               state->viewerState->vpConfigs[viewportType].edgeLength);
+    //set the drawing area in the window to our actually processed viewport.
+    glViewport(state->viewerState->vpConfigs[id].upperLeftCorner.x,
+               state->viewerState->vpConfigs[id].upperLeftCorner.y,
+               state->viewerState->vpConfigs[id].edgeLength,
+               state->viewerState->vpConfigs[id].edgeLength);
     //select the projection matrix
     glMatrixMode(GL_PROJECTION);
     //reset it
     glLoadIdentity();
     //define coordinate system for our viewport: left right bottom top near far
     //coordinate values
-    glOrtho(0, state->viewerState->vpConfigs[viewportType].edgeLength,
-            state->viewerState->vpConfigs[viewportType].edgeLength, 0, 25, -25);
+    glOrtho(0, state->viewerState->vpConfigs[id].edgeLength,
+            state->viewerState->vpConfigs[id].edgeLength, 0, 25, -25);
     //select the modelview matrix for modification
     glMatrixMode(GL_MODELVIEW);
     //reset it
@@ -150,18 +147,27 @@ void Viewport::initializeGL() {
     glEnable(GL_BLEND);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
 
-
-
+bool Viewport::setOrientation(int orientation) {
+    if(orientation != VIEWPORT_XY
+       && orientation != VIEWPORT_XZ
+       && orientation != VIEWPORT_YZ
+       && orientation != VIEWPORT_ARBITRARY) {
+        return false;
+    }
+    this->viewportType = orientation;
+    state->viewerState->vpConfigs[id].type = orientation;
+    return true;
 }
 
 void Viewport::initializeOverlayGL() {
-    if(viewportType < VIEWPORT_SKELETON) {
+    if(viewportType != VIEWPORT_SKELETON) {
         if(state->overlay) {
-            glGenTextures(1, &state->viewerState->vpConfigs[viewportType].texture.overlayHandle);
+            glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[viewportType].texture.overlayHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
 
             //Set the parameters for the texture.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -175,8 +181,8 @@ void Viewport::initializeOverlayGL() {
             glTexImage2D(GL_TEXTURE_2D,
                          0,
                          GL_RGBA,
-                         state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
-                         state->viewerState->vpConfigs[viewportType].texture.edgeLengthPx,
+                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
+                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
                          0,
                          GL_RGBA,
                          GL_UNSIGNED_BYTE,
@@ -194,26 +200,23 @@ void Viewport::resizeGL(int w, int h) {
     glFrustum(-x, +x, -1.0, + 1.0, 0.1, 15.0);
     glMatrixMode(GL_MODELVIEW);
 
-    SET_COORDINATE(state->viewerState->vpConfigs[viewportType].upperLeftCorner,
+    SET_COORDINATE(state->viewerState->vpConfigs[id].upperLeftCorner,
                    geometry().topLeft().x(),
                    geometry().topLeft().y(),
                    0);
-    state->viewerState->vpConfigs[viewportType].edgeLength = width();
+    state->viewerState->vpConfigs[id].edgeLength = width();
 }
 
 void Viewport::paintGL() {
-
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-
     if(state->viewerState->viewerReady) {
-        if(this->viewportType < VIEWPORT_SKELETON) {
-           this->drawViewport(viewportType);
+        if(this->viewportType != VIEWPORT_SKELETON) {
+           this->drawViewport(id);
         }  else {
             this->drawSkeletonViewport();
         }
     }
-
 }
 
 //functions to determine position x/y relative to last position lastX, lastY
@@ -236,14 +239,14 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
             resizeVP(event);
         }
         else {// delegate behaviour
-            handleMouseMotionLeftHold(event, viewportType);
+            handleMouseMotionLeftHold(event, id);
             clickEvent = true;
         }
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
-        handleMouseMotionMiddleHold(event, viewportType);
+        handleMouseMotionMiddleHold(event, id);
         clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::RightButton) {
-        handleMouseMotionRightHold(event, viewportType);
+        handleMouseMotionRightHold(event, id);
         clickEvent = true;
     }
 
@@ -265,13 +268,13 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
             return;
         }
         //this->move(event->x() - this->pos().x(), event->y() - pos().y());
-        handleMouseButtonLeft(event, viewportType);
+        handleMouseButtonLeft(event, id);
     }
     else if(event->button() == Qt::MiddleButton) {
-        handleMouseButtonMiddle(event, viewportType);
+        handleMouseButtonMiddle(event, id);
     }
     else if(event->button() == Qt::RightButton) {
-        handleMouseButtonRight(event, viewportType);
+        handleMouseButtonRight(event, id);
     }
 }
 
@@ -295,25 +298,20 @@ void Viewport::mouseReleaseEvent(QMouseEvent *) {
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
-
     if(event->key() == Qt::Key_Control) {
         setCursor(Qt::CrossCursor);
     }
 
     if(state->keyD) {
         state->keyD = false;
-        qDebug() << "D released";
         state->autorepeat = false;
     }else if(state->keyF) {
         state->keyF = false;
-        qDebug() << "F released";
         state->autorepeat = false;
     } else if(state->keyE){
         state->keyE = false;
-        qDebug() << "E released";
     } else if(state->keyR){
         state->keyR = false;
-        qDebug() << "R released";
     }
     state->newCoord[0] = 0;
     state->newCoord[1] = 0;
@@ -331,13 +329,11 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
-
     if(event->delta() > 0) {
-        handleMouseWheelForward(event, viewportType);
+        handleMouseWheelForward(event, id);
     } else {
-        handleMouseWheelBackward(event, viewportType);
+        handleMouseWheelBackward(event, id);
     }
-
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
@@ -346,59 +342,58 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     }
     this->eventDelegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
-        qDebug() << " AUTO REPEAT = TRUE";
         state->autorepeat = true;
         //event->ignore();
     }
 }
 
 
-void Viewport::drawViewport(int viewportType) {
-    reference->renderOrthogonalVP(viewportType);
+void Viewport::drawViewport(int vpID) {
+    reference->renderOrthogonalVP(vpID);
 }
 
 void Viewport::drawSkeletonViewport() {
     reference->renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
-bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseButtonLeft(event, VPfound);
+bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseButtonLeft(event, vpID);
 }
 
-bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseButtonMiddle(event, VPfound);
+bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseButtonMiddle(event, vpID);
 
 }
 
-bool Viewport::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseButtonRight(event, VPfound);
+bool Viewport::handleMouseButtonRight(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseButtonRight(event, vpID);
 }
 
 
-bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseMotionLeftHold(event, VPfound);
+bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseMotionLeftHold(event, vpID);
 }
 
-bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseMotionMiddleHold(event, VPfound);
+bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseMotionMiddleHold(event, vpID);
 }
 
-bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
-    return eventDelegate->handleMouseMotionRightHold(event, VPfound);
+bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseMotionRightHold(event, vpID);
 }
 
-bool Viewport::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
-    return eventDelegate->handleMouseWheelForward(event, VPfound);
+bool Viewport::handleMouseWheelForward(QWheelEvent *event, int vpID) {
+    return eventDelegate->handleMouseWheelForward(event, vpID);
 }
 
-bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
-    return eventDelegate->handleMouseWheelBackward(event, VPfound);
+bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int vpID) {
+    return eventDelegate->handleMouseWheelBackward(event, vpID);
 }
 
 
 void Viewport::enterEvent(QEvent *event) {
     entered = true;
-    focus = this->viewportType;
+    focus = this->id;
     this->setCursor(Qt::CrossCursor);
 }
 
@@ -406,7 +401,6 @@ void Viewport::zoomOrthogonals(float step){
     int triggerMagChange = false;
     for(uint i = 0; i < state->viewerState->numberViewports; i++) {
         if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
-
             /* check if mag is locked */
             if(state->viewerState->datasetMagLock) {
                 if(!(state->viewerState->vpConfigs[i].texture.zoomLevel + step < VPZOOMMAX) &&
