@@ -284,12 +284,6 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
         SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                       roundFloat(currentPxInDc_float->y),
                                       roundFloat(currentPxInDc_float->z));
-        if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
-        if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
-        if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
-        if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
-        if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
-        if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
     }
     return true;
 }
@@ -379,12 +373,6 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
         SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                       roundFloat(currentPxInDc_float->y),
                                       roundFloat(currentPxInDc_float->z));
-        if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
-        if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
-        if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
-        if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
-        if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
-        if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
     }
     return true;
 }

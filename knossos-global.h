@@ -454,10 +454,9 @@ struct assignment {
 #include "widgets/console.h"
 
 struct stateInfo {
-
     uint svnRevision;
     Console *console;
-    float alpha, beta;
+    float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
     bool overlay;
