@@ -301,29 +301,62 @@ bool Remote::remoteWalk(int x, int y, int z) {
         totalMoves = abs(z) / state->magnification;
     }
 
-    if ((dx==0) && (dy==0) && (dz==0))
-        dAlpha = dBeta = 0;
-    else{
-        if (dy <= 0)
-            alpha = 360 - acos((double)dx/sqrtf(powf(dx,2) + powf(dy,2)))/PI *180 ;
-        else
-            alpha = acos((double)dx/sqrtf(powf(dx,2) + powf(dy,2)))/PI *180 ;
-
-        beta = 180 + acos((double)dz/sqrtf(powf(dx,2) + powf(dy,2) + powf(dz,2)))/PI *180;
-
-        if (abs(alpha - tempAlpha) <= 180) dAlpha = alpha - tempAlpha;
-        else
-            if (tempAlpha > alpha) dAlpha = alpha +  360 - tempAlpha;
-            else if (tempAlpha == alpha) dAlpha = 0;
-            else dAlpha = alpha - 360 - tempAlpha;
-
-        if (abs(beta - tempBeta) <= 180) dBeta = beta - tempBeta;
-        else
-            if (tempBeta > beta) dBeta = beta +  360 - tempBeta;
-            else if (tempBeta == beta) dBeta = 0;
-            else dBeta = beta - 360 - tempBeta;
+    if(dx == 0 && dy == 0) {
+        dAlpha = 0;
+        if(dz == 0) {
+            dBeta = 0;
+        }
     }
+    else{
+        if(dy <= 0) {
+            alpha = 360 - acos((double)dx/
+                               sqrtf(powf((float)dx, 2.)
+                                     + powf((float)dy, 2.)
+                               )
+                          )
+                        /PI * 180;
+        }
+        else {
+            alpha = acos((double)dx/
+                         sqrtf(powf((float)dx, 2.)
+                               + powf((float)dy, 2.))
+                         )
+                    /PI * 180;
+        }
 
+        beta = 180 + acos((double)dz/
+                          sqrtf(powf((float)dx, 2.)
+                                + powf((float)dy, 2.)
+                                + powf((float)dz, 2.))
+                          )
+                /PI *180;
+
+        if(abs(alpha - tempAlpha) <= 180) {
+            dAlpha = alpha - tempAlpha;
+        }
+        else if(tempAlpha > alpha) {
+            dAlpha = alpha +  360 - tempAlpha;
+        }
+        else if(tempAlpha == alpha) {
+            dAlpha = 0;
+        }
+        else {
+            dAlpha = alpha - 360 - tempAlpha;
+        }
+
+        if(abs(beta - tempBeta) <= 180) {
+            dBeta = beta - tempBeta;
+        }
+        else if(tempBeta > beta) {
+            dBeta = beta +  360 - tempBeta;
+        }
+        else if(tempBeta == beta) {
+            dBeta = 0;
+        }
+        else {
+            dBeta = beta - 360 - tempBeta;
+        }
+    }
     singleMove.x = (float)x / (float)totalMoves;
     singleMove.y = (float)y / (float)totalMoves;
     singleMove.z = (float)z / (float)totalMoves;
@@ -335,9 +368,8 @@ bool Remote::remoteWalk(int x, int y, int z) {
     for(i = 0; i < totalMoves; i++) {
         SET_COORDINATE(doMove, 0, 0, 0);
 
-        state->viewerState->betaCache += dBeta;
         state->viewerState->alphaCache += dAlpha;
-
+        state->viewerState->betaCache += dBeta;
         residuals.x += singleMove.x;
         residuals.y += singleMove.y;
         residuals.z += singleMove.z;

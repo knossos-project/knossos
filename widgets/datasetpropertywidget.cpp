@@ -149,7 +149,10 @@ void DatasetPropertyWidget::processButtonClicked() {
                 state->cubeEdgeLength,
                 state->cubeEdgeLength,
                 TELL_COORDINATE_CHANGE);
-
+    // reset skeleton viewport
+    if(state->skeletonState->rotationcounter == 0) {
+        state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+    }
     emit datasetSwitchZoomDefaults();
     this->hide();
 }

@@ -381,27 +381,33 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                     }
                     break;
                 case VIEWPORT_ARBITRARY:
-                /* @arb */
-                if(state->viewerState->workMode != ON_CLICK_DRAG)
-                    break;
-
+                    if(state->viewerState->workMode != ON_CLICK_DRAG) {
+                        break;
+                    }
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
                     state->viewerState->vpConfigs[i].userMouseSlideY -=
                             ((float)yrel(event->y()) / state->viewerState->vpConfigs[i].screenPxYPerDataPx);
 
-
                     if(fabs(state->viewerState->vpConfigs[i].userMouseSlideX) >= 1
                         || fabs(state->viewerState->vpConfigs[i].userMouseSlideY) >= 1) {
-                        emit userMoveArbSignal((int)(state->viewerState->vpConfigs[i].v1.x * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.x * state->viewerState->vpConfigs[i].userMouseSlideY),
-
-                                 (int)(state->viewerState->vpConfigs[i].v1.y * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.y * state->viewerState->vpConfigs[i].userMouseSlideY),
-                                 (int)(state->viewerState->vpConfigs[i].v1.z * state->viewerState->vpConfigs[i].userMouseSlideX + state->viewerState->vpConfigs[i].v2.z * state->viewerState->vpConfigs[i].userMouseSlideY),
-                                 TELL_COORDINATE_CHANGE);
+                        emit userMoveArbSignal(
+                                (int)(state->viewerState->vpConfigs[i].v1.x
+                                      * state->viewerState->vpConfigs[i].userMouseSlideX
+                                      + state->viewerState->vpConfigs[i].v2.x
+                                      * state->viewerState->vpConfigs[i].userMouseSlideY),
+                                (int)(state->viewerState->vpConfigs[i].v1.y
+                                      * state->viewerState->vpConfigs[i].userMouseSlideX
+                                      + state->viewerState->vpConfigs[i].v2.y
+                                      * state->viewerState->vpConfigs[i].userMouseSlideY),
+                                (int)(state->viewerState->vpConfigs[i].v1.z
+                                      * state->viewerState->vpConfigs[i].userMouseSlideX
+                                      + state->viewerState->vpConfigs[i].v2.z
+                                      * state->viewerState->vpConfigs[i].userMouseSlideY),
+                                TELL_COORDINATE_CHANGE);
                         state->viewerState->vpConfigs[i].userMouseSlideX = 0.;
                         state->viewerState->vpConfigs[i].userMouseSlideY = 0.;
                     }
-
                 break;
             }
 
@@ -830,14 +836,11 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                     emit userMoveSignal(0, -10 * state->magnification, 0, TELL_COORDINATE_CHANGE);
                     break;
                 case VIEWPORT_ARBITRARY:
-                    /* @arb */
-
-                    emit userMoveArbSignal(-10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
-                     -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
-
-                     -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification,
+                    emit userMoveArbSignal(
+                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.x * state->magnification,
+                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.y * state->magnification,
+                        -10 * state->viewerState->vpConfigs[state->viewerState->activeVP].v2.z * state->magnification,
                      TELL_COORDINATE_CHANGE);
-
                      break;
             }
         } else {
@@ -1039,24 +1042,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
                                 TELL_COORDINATE_CHANGE);
                  break;
             }
-             /*
-                case VIEWPORT_XY:
-                    emit userMoveSignal(0, 0, state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames * state->magnification, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_XZ:
-                    emit userMoveSignal(0, state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames * state->magnification, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_YZ:
-                    emit userMoveSignal(state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames * state->magnification, 0, 0, TELL_COORDINATE_CHANGE);
-                    break;
-                case VIEWPORT_ARBITRARY:
-                    /* @arb
-                    emit userMoveArbSignal(state->viewerState->vpConfigs[state->viewerState->activeVP].n.x * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
-                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.y * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
-                     state->viewerState->vpConfigs[state->viewerState->activeVP].n.z * (float)state->viewerState->vpKeyDirection[state->viewerState->activeVP] * (float)state->viewerState->dropFrames * (float)state->magnification,
-                     TELL_COORDINATE_CHANGE);
-                      break;
-            }*/
         }
     } else if(event->key() == Qt::Key_D) {
         state->directionSign = -1;

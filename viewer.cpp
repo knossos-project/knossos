@@ -657,7 +657,6 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
 
     floatCoordinate *v1 = &currentVp->vpConfig->v1;
     floatCoordinate *v2 = &currentVp->vpConfig->v2;
-
     CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
     CPY_COORDINATE(currentPx_float, rowPx_float);
@@ -717,6 +716,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
                     currentVp->vpConfig->viewPortData);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+
     return true;
 }
 
@@ -837,8 +837,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             break;
         case VIEWPORT_ARBITRARY:
             floatCoordinate v1, v2;
-            /* @arb */
-
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
@@ -875,7 +873,6 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.x),
                            roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.y),
                            roundFloat(viewerState->vpConfigs[i].leftUpperDataPxOnScreen.z));
-            /**/
             break;
         default:
             viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.x = 0;
@@ -1262,7 +1259,9 @@ void Viewer::run() {
     else if (state->beta < 0) {
         state->beta += 360;
     }
+
     getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
+
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v1 , v1);
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERLEFT].n , v3);
@@ -1398,7 +1397,6 @@ bool Viewer::updateZoomCube() {
 }
 
 bool Viewer::userMove(int x, int y, int z, int serverMovement) {
-
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -1856,24 +1854,24 @@ bool Viewer::recalcTextureOffsets() {
                     state->magnification;
 
                 state->viewerState->vpConfigs[i].displayedlengthInNmX =
-                    sqrtf(powf(state->viewerState->voxelDimX * v1->x,2)
-                          + powf(state->viewerState->voxelDimY * v1->y,2)
-                          + powf(state->viewerState->voxelDimZ * v1->z,2)
+                    sqrtf(powf(state->viewerState->voxelDimX * v1->x,2.)
+                          + powf(state->viewerState->voxelDimY * v1->y,2.)
+                          + powf(state->viewerState->voxelDimZ * v1->z,2.)
                     )
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX /
                      state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
                 state->viewerState->vpConfigs[i].displayedlengthInNmY =
-                    sqrtf(powf(state->viewerState->voxelDimX * v2->x,2)
-                          + powf(state->viewerState->voxelDimY * v2->y,2)
-                          + powf(state->viewerState->voxelDimZ * v2->z,2)
+                    sqrtf(powf(state->viewerState->voxelDimX * v2->x,2.)
+                          + powf(state->viewerState->voxelDimY * v2->y,2.)
+                          + powf(state->viewerState->voxelDimZ * v2->z,2.)
                     )
                     * (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY /
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                midX = state->viewerState->vpConfigs[i].s_max/2
+                midX = state->viewerState->vpConfigs[i].s_max/2.
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
-                midY = state->viewerState->vpConfigs[i].t_max/2
+                midY = state->viewerState->vpConfigs[i].t_max/2.
                        * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
 
                 //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
@@ -2179,8 +2177,8 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
 
         //alpha: rotation around z-axis
         //beta: rotation around new (rotated) y-axis
-        alpha = alpha * PI/180;
-        beta = beta * PI/180;
+        alpha = alpha * (float)PI/180;
+        beta = beta * (float)PI/180;
 
         SET_COORDINATE((*v1), (cos(alpha)*cos(beta)), (sin(alpha)*cos(beta)), (-sin(beta)));
         SET_COORDINATE((*v2), (-sin(alpha)), (cos(alpha)), (0));

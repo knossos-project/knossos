@@ -888,7 +888,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             }
             break;
         case VIEWPORT_ARBITRARY:
-        /* @arb */
         if(!state->viewerState->selectModeFlag) {
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
@@ -1062,16 +1061,10 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                            0.5 * v1->z + dataPxY * v2->z - 0.0001 * n->z);
             glEnd();
         }
-        /**/
         break;
-
-
     }
-
     glDisable(GL_BLEND);
-
     renderViewportBorders(currentVP);
-
     return true;
 }
 
@@ -1094,7 +1087,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
     }
-
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
 //LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel)
     glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
