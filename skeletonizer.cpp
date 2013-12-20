@@ -826,7 +826,8 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    xml.writeAttribute("ms", tmp.setNum(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed()));
+    time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
+    xml.writeAttribute("ms", tmp.setNum(time));
     checksum = integerChecksum(time);
     xml.writeAttribute("checksum", QString(checksum));
     xml.writeEndElement();

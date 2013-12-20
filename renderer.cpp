@@ -1095,7 +1095,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glLoadIdentity();
     }
 
-
     // left, right, bottom, top, near, far clipping planes; substitute arbitrary vals to something more sensible. TDitem
 //LOG("%f, %f, %f", state->skeletonState->translateX, state->skeletonState->translateY, state->skeletonState->zoomLevel)
     glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,

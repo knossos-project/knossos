@@ -151,6 +151,5 @@ void DatasetPropertyWidget::processButtonClicked() {
                 TELL_COORDINATE_CHANGE);
 
     emit datasetSwitchZoomDefaults();
-
     this->hide();
 }

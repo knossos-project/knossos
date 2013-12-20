@@ -165,7 +165,7 @@ void ZoomAndMultiresWidget::skeletonSpinBoxChanged(double value) {
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
-    lockDatasetCheckBox->setChecked(on);
+    lockDatasetCheckBox->setChecked(on); // neccessary, because this slot is not only connected to the checkbox.
     if(on) {
         state->viewerState->datasetMagLock = true;
     } else {
