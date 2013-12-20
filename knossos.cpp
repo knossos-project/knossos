@@ -149,8 +149,8 @@ int main(int argc, char *argv[])
                             viewer->window, SLOT(treeColorAdjustmentsChanged()));
     QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)),
                             viewer, SLOT(loadTreeColorTable(QString,float*,int)));
-
-    knossos->loadDefaultTreeLUT(); // can only be called, after above signals and slots are connected
+    QObject::connect(knossos, SIGNAL(lockDatasetMag(bool)),
+                            viewer->window->widgetContainer->zoomAndMultiresWidget, SLOT(lockDatasetMagChecked(bool)));
 
     QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
@@ -203,6 +203,9 @@ int main(int argc, char *argv[])
                             viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
     QObject::connect(client, SIGNAL(sendDisconnectedState()),
                             viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
+
+
+    knossos->loadDefaultTreeLUT();
 
     if(datasetLoaded) {
         // don't start loader, when there is no dataset, yet.
@@ -280,7 +283,7 @@ bool Knossos::commonInitStates() {
 
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
-    if (false == Knossos::findAndRegisterAvailableDatasets()) {
+    if(false == findAndRegisterAvailableDatasets()) {
         return false;
     }
 
@@ -327,8 +330,6 @@ bool Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v1 , v3);
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
-
-   /**/
 
    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
 
@@ -866,10 +867,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
         /* Do not enable multires by default, even if more than one dataset was found.
          * Multires might be confusing to untrained tracers! Experts can easily enable it..
-         * The loaded gui config might lock K to the current mag later one, which is fine. */
+         * The loaded gui config might lock K to the current mag later on, which is fine. */
         if(state->highestAvailableMag > 1) {
             qDebug() << "Decided on datasetMagLock = true";
-            state->viewerState->datasetMagLock = true;
+            emit lockDatasetMag(true);
         }
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {

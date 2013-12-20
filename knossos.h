@@ -40,7 +40,7 @@ public:
     static bool loadNeutralDatasetLUT(GLuint *datasetLut);
     static bool readDataConfAndLocalConf();
     static struct stateInfo *emptyState();
-    static bool findAndRegisterAvailableDatasets();    
+    bool findAndRegisterAvailableDatasets();
     static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);   
     bool initStates();
@@ -63,6 +63,7 @@ signals:
     void calcDisplayedEdgeLengthSignal();
     void treeColorAdjustmentChangedSignal();
     bool loadTreeColorTableSignal(QString path, float *table, int type);
+    void lockDatasetMag(bool lock);
 public slots:
     void loadTreeLUTFallback();
     void startLoader();
