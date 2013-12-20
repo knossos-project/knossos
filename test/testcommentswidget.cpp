@@ -72,7 +72,7 @@ void TestCommentsWidget::testAddNodeComment() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
 
     commentsWidget->setVisible(true);
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
@@ -132,7 +132,7 @@ void TestCommentsWidget::testEnableConditionalColoring() {
     CommentsHighlightingTab *highlightingTab = reference->window->widgetContainer->commentsWidget->highlightingTab;
     commentsWidget->setVisible(true);
 
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
@@ -205,7 +205,7 @@ void TestCommentsWidget::testEnableConditionalRadius() {
     CommentsHighlightingTab *highlightingTab = reference->window->widgetContainer->commentsWidget->highlightingTab;
     commentsWidget->setVisible(true);
 
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
@@ -241,7 +241,7 @@ void TestCommentsWidget::testCommentsTable() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
@@ -287,7 +287,7 @@ void TestCommentsWidget::testCommentsTablePerformance() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);

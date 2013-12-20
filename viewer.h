@@ -59,7 +59,7 @@ public:
     MainWindow *window;
 
     floatCoordinate v1, v2, v3;
-    Viewport *vpXY, *vpXZ, *vpYZ, *vpSkel;
+    Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
     vpList *viewports;
     QTimer *timer;    
     int frames;

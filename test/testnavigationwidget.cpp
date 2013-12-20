@@ -16,7 +16,7 @@ void TestNavigationWidget::testMovementSpeed() {
 
     navigationWidget->movementSpeedSpinBox->setValue(20);
 
-    Viewport *firstViewport = viewerReference->vpXY;
+    Viewport *firstViewport = viewerReference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 2);
@@ -42,9 +42,9 @@ void TestNavigationWidget::testJumpFrames() {
     NavigationWidget *navigationWidget = viewerReference->window->widgetContainer->navigationWidget;
     navigationWidget->jumpFramesSpinBox->setValue(20);
 
-    Viewport *firstViewport = viewerReference->vpXY;
-    Viewport *secondViewport = viewerReference->vpXZ;
-    Viewport *thirdViewport = viewerReference->vpYZ;
+    Viewport *firstViewport = viewerReference->vpUpperLeft;
+    Viewport *secondViewport = viewerReference->vpLowerLeft;
+    Viewport *thirdViewport = viewerReference->vpUpperRight;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
@@ -113,9 +113,9 @@ void TestNavigationWidget::testJumpFrames() {
 void TestNavigationWidget::testWalkFrames() {
     NavigationWidget *navigationWidget = viewerReference->window->widgetContainer->navigationWidget;
     navigationWidget->walkFramesSpinBox->setValue(10);
-    Viewport *firstViewport = viewerReference->vpXY;
-    Viewport *secondViewport = viewerReference->vpXZ;
-    Viewport *thirdViewport = viewerReference->vpYZ;
+    Viewport *firstViewport = viewerReference->vpUpperLeft;
+    Viewport *secondViewport = viewerReference->vpLowerLeft;
+    Viewport *thirdViewport = viewerReference->vpUpperRight;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);

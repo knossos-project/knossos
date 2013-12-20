@@ -55,12 +55,12 @@ Viewer::Viewer(QObject *parent) :
     }
 
     state->console = window->widgetContainer->console;
-    vpXY = window->viewports[VIEWPORT_XY];
-    vpXZ = window->viewports[VIEWPORT_XZ];
-    vpYZ = window->viewports[VIEWPORT_YZ];
-    vpSkel = window->viewports[VIEWPORT_SKELETON];
+    vpUpperLeft = window->viewports[VIEWPORT_XY];
+    vpLowerLeft = window->viewports[VIEWPORT_XZ];
+    vpUpperRight = window->viewports[VIEWPORT_YZ];
+    vpLowerRight = window->viewports[VIEWPORT_SKELETON];
     eventModel = new EventModel();
-    vpXY->eventDelegate = vpXZ->eventDelegate = vpYZ->eventDelegate = vpSkel->eventDelegate = eventModel;
+    vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
     timer = new QTimer();
 
@@ -77,10 +77,10 @@ Viewer::Viewer(QObject *parent) :
     renderer = new Renderer();
 
     // This is needed for the viewport text rendering
-    renderer->refVPXY = vpXY;
-    renderer->refVPXZ = vpXZ;
-    renderer->refVPYZ = vpYZ;
-    renderer->refVPSkel = vpSkel;
+    renderer->refVPXY = vpUpperLeft;
+    renderer->refVPXZ = vpLowerLeft;
+    renderer->refVPYZ = vpUpperRight;
+    renderer->refVPSkel = vpLowerRight;
 
     rewire();
     // TODO: to be removed in release version. Jumps to center of e1088_large dataset
@@ -1277,13 +1277,13 @@ void Viewer::run() {
     while(viewports->elements > 0) {
         switch(currentVp->vpConfig->id) {
         case VP_UPPERLEFT:
-            vpXY->makeCurrent();
+            vpUpperLeft->makeCurrent();
             break;
         case VP_LOWERLEFT:
-            vpXZ->makeCurrent();
+            vpLowerLeft->makeCurrent();
             break;
         case VP_UPPERRIGHT:
-            vpYZ->makeCurrent();
+            vpUpperRight->makeCurrent();
             break;
         }
         nextVp = currentVp->next;
@@ -1304,10 +1304,10 @@ void Viewer::run() {
             recalcTextureOffsets();
             skeletonizer->updateSkeletonState();
 
-            vpXY->updateGL();
-            vpXZ->updateGL();
-            vpYZ->updateGL();
-            vpSkel->updateGL();
+            vpUpperLeft->updateGL();
+            vpLowerLeft->updateGL();
+            vpUpperRight->updateGL();
+            vpLowerRight->updateGL();
 
             timer->singleShot(10, this, SLOT(run()));
 
@@ -1324,13 +1324,13 @@ bool Viewer::updateViewerState() {
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
         if(i == VP_UPPERLEFT) {
-            vpXY->makeCurrent();
+            vpUpperLeft->makeCurrent();
         }
         else if(i == VP_LOWERLEFT) {
-            vpXZ->makeCurrent();
+            vpLowerLeft->makeCurrent();
         }
         else if(i == VP_UPPERRIGHT) {
-            vpYZ->makeCurrent();
+            vpUpperRight->makeCurrent();
         }
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
         // Set the parameters for the texture.
@@ -1964,9 +1964,9 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->treeviewWidget, SLOT(update()));
     connect(eventModel, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(eventModel, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
-    connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpXY, SLOT(zoomOrthogonals(float)));
-    connect(eventModel, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
-    connect(eventModel, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
+    connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpUpperLeft, SLOT(zoomOrthogonals(float)));
+    connect(eventModel, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));
+    connect(eventModel, SIGNAL(zoomOutSkeletonVPSignal()), vpLowerRight, SLOT(zoomOutSkeletonVP()));
     connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates())); // TIENITODO event handler??
     connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
@@ -2000,9 +2000,9 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(retrieveVisibleObjectBeneathSquareSignal(uint,uint,uint,uint)),
             renderer, SLOT(retrieveVisibleObjectBeneathSquare(uint,uint,uint,uint)));
     connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
-    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpXY, SLOT(setOrientation(int)));
-    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpXZ, SLOT(setOrientation(int)));
-    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpYZ, SLOT(setOrientation(int)));
+    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
+    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));
+    connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperRight, SLOT(setOrientation(int)));
     //end event handler signals
     // mainwindow signals
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
@@ -2043,20 +2043,20 @@ void Viewer::rewire() {
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setComment(QString)));
     //end mainwindow signals
     //viewport signals
-    connect(vpXY, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpXZ, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpYZ, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(vpSkel, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpUpperLeft, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpLowerLeft, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpUpperRight, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
+    connect(vpLowerRight, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
 
-    connect(vpXY, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(vpXZ, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(vpYZ, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
-    connect(vpSkel, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(vpUpperLeft, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(vpLowerLeft, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(vpUpperRight, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
+    connect(vpLowerRight, SIGNAL(recalcTextureOffsetsSignal()), this, SLOT(recalcTextureOffsets()));
 
-    connect(vpXY, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
-    connect(vpXZ, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
-    connect(vpYZ, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
-    connect(vpSkel, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
+    connect(vpUpperLeft, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
+    connect(vpLowerLeft, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
+    connect(vpUpperRight, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
+    connect(vpLowerRight, SIGNAL(changeDatasetMagSignal(uint)), this, SLOT(changeDatasetMag(uint)));
     // end viewport signals
 
     // --- widget signals ---
@@ -2151,8 +2151,8 @@ void Viewer::rewire() {
                     this, SLOT(updateViewerState()));
     //  -- end viewport settings widget signals
     //  zoom and multires signals --
-    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpSkel, SLOT(zoomInSkeletonVP()));
-    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomOutSkeletonVPSignal()), vpSkel, SLOT(zoomOutSkeletonVP()));
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));
+    connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomOutSkeletonVPSignal()), vpLowerRight, SLOT(zoomOutSkeletonVP()));
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomLevelSignal(float)),
                     skeletonizer, SLOT(setZoomLevel(float)));
     //  -- end zoom and multires signals

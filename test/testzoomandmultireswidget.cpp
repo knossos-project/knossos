@@ -37,7 +37,7 @@ void TestZoomAndMultiresWidget::testResetZoomFactors() {
 }
 
 void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyPressed() {
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
@@ -54,7 +54,7 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyPressed() {
 
 
 void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyAndMouseCombination() {
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);

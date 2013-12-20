@@ -14,7 +14,7 @@ TestOrthogonalViewport::TestOrthogonalViewport(QObject *parent) :
 
 /* how to test the space between left left-border and right and operations between them */
 void TestOrthogonalViewport::testAddNodeAccuracy() {
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);

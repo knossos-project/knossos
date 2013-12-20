@@ -28,7 +28,7 @@ void TestToolsWidget::testAddTreesPerMouseClick() {
         tools->toolsTreesTabWidget->newTreeButton->click();
     }
 
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
@@ -57,9 +57,9 @@ void TestToolsWidget::testAddTreesPerKeyPress() {
     }
 
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
-    Viewport *secondViewport = reference->vpXZ;
-    Viewport *thirdViewport = reference->vpYZ;
+    Viewport *firstViewport = reference->vpUpperLeft;
+    Viewport *secondViewport = reference->vpLowerLeft;
+    Viewport *thirdViewport = reference->vpUpperRight;
 
     // first viewport
     // then the random amount of trees are added
@@ -146,9 +146,9 @@ void TestToolsWidget::testAddNodesPerMouseClick() {
     }
 
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
-    Viewport *secondViewport = reference->vpXZ;
-    Viewport *thirdViewport = reference->vpYZ;
+    Viewport *firstViewport = reference->vpUpperLeft;
+    Viewport *secondViewport = reference->vpLowerLeft;
+    Viewport *thirdViewport = reference->vpUpperRight;
 
     // first viewport
     QPoint pos = firstViewport->pos();
@@ -216,7 +216,7 @@ void TestToolsWidget::testAddNodesPerMouseClick() {
 /* This test case checks if all skeleton information are cleared after using the DeleteActiveTreeButton */
 void TestToolsWidget::testDeleteActiveTreeCaseZero() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
     QPoint pos = firstViewport->pos();
 
     QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
@@ -241,7 +241,7 @@ void TestToolsWidget::testDeleteActiveTreeCaseZero() {
 
 void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     // lets add a tree and at least two nodes
     //QTest::keyClick(firstViewport, Qt::Key_C);
@@ -290,7 +290,7 @@ void TestToolsWidget::testDeleteActiveTreeCaseNotZero() {
 
 void TestToolsWidget::testMergeTrees() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     // lets create 2 trees with 1 node
     //QTest::keyClick(firstViewport, Qt::Key_C);
@@ -317,7 +317,7 @@ void TestToolsWidget::testMergeTrees() {
 
 void TestToolsWidget::testSplitConnectedComponents() {
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
-    Viewport *firstViewport = reference->vpXY;
+    Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
     pos.setX(pos.x() + 10);

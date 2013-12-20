@@ -814,9 +814,8 @@ struct vpConfig {
     float displayedlengthInNmX;
     float displayedlengthInNmY;
 
-    // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON}
-    Byte type;
-    uint id;
+    Byte type; // type e {VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ, VIEWPORT_SKELETON, VIEWPORT_ARBITRARY}
+    uint id; // id e {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT}
     // CORRECT THIS COMMENT TODO BUG
     //lower left corner of viewport in screen pixel coords (max: window borders)
     //we use here the lower left corner, because the openGL intrinsic coordinate system
