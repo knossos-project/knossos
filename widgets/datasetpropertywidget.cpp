@@ -56,6 +56,7 @@ void DatasetPropertyWidget::closeEvent(QCloseEvent *event) {
 }
 
 void DatasetPropertyWidget::waitForLoader() {
+    emit startLoaderSignal();
     state->protectLoadSignal->lock();
     while (state->loaderBusy) {
         state->conditionLoadFinished->wait(state->protectLoadSignal);

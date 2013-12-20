@@ -27,6 +27,7 @@ signals:
     void changeDatasetMagSignal(uint upOrDownFlag);
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void datasetSwitchZoomDefaults();
+    void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
     void cancelButtonClicked();

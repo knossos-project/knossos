@@ -135,12 +135,7 @@ int main(int argc, char *argv[])
             LOG("Error reading configuration from command line.")
         }
     }
-
-    if(knossos->initStates() != true) {
-       LOG("Error during initialization of the state struct.")
-        _Exit(false);
-    }
-
+    bool datasetLoaded = knossos->initStates();
 
     Knossos::printConfigValues();
     Viewer *viewer = new Viewer();
@@ -155,25 +150,34 @@ int main(int argc, char *argv[])
     QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)),
                             viewer, SLOT(loadTreeColorTable(QString,float*,int)));
 
-    knossos->loadDefaultTreeLUT();
+    knossos->loadDefaultTreeLUT(); // can only be called, after above signals and slots are connected
 
     QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
     QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
+    QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)),
+                            viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(startLoaderSignal()),
+                     knossos, SLOT(startLoader()));
+    QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),
+                            remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(viewer->eventModel, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
+    QObject::connect(viewer->eventModel, SIGNAL(setRecenteringPositionSignal(int,int,int)),
+                            remote, SLOT(setRecenteringPosition(int,int,int)));
+
+    QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
+    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+    QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
+    QObject::connect(remote, SIGNAL(idleTimeSignal()),
+                            viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
                             viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
                             viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)),
                             viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
-
-    QObject::connect(viewer->eventModel, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->eventModel, SIGNAL(setRecenteringPositionSignal(int,int,int)),
-                            remote, SLOT(setRecenteringPosition(int,int,int)));
-
-    QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),
-                            remote, SLOT(setRecenteringPosition(int,int,int)));
-
     QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)),
                             viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
@@ -200,17 +204,10 @@ int main(int argc, char *argv[])
     QObject::connect(client, SIGNAL(sendDisconnectedState()),
                             viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
 
-    QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
-    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
-    QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
-
-    QObject::connect(remote, SIGNAL(idleTimeSignal()),
-                            viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-    QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)),
-                            viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-
-    loader->start();
+    if(datasetLoaded) {
+        // don't start loader, when there is no dataset, yet.
+        loader->start();
+    }
     viewer->run();
     remote->start();
     client->start();
@@ -259,6 +256,12 @@ int main(int argc, char *argv[])
 
 
     return a.exec();
+}
+
+void Knossos::startLoader() {
+    if(loader->isRunning() == false) {
+        loader->start();
+    }
 }
 
 /*
@@ -891,7 +894,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         pathLen = strlen(state->path);
         if(!pathLen) {
             LOG("No valid dataset specified.\n");
-            _Exit(false);
+            return false;
         }
 
         if((state->path[pathLen-1] == '\\')
@@ -928,8 +931,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         state->scale.z /= (float)state->magnification;
 
         state->viewerState->datasetMagLock = true;
-
-
     }
     return true;
 }

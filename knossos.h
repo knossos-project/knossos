@@ -65,6 +65,7 @@ signals:
     bool loadTreeColorTableSignal(QString path, float *table, int type);
 public slots:
     void loadTreeLUTFallback();
+    void startLoader();
 
 };
 
