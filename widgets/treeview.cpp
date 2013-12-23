@@ -663,13 +663,25 @@ void Treeview::nodeItemChanged(QTableWidgetItem* item) {
         }
         break;
     case NODE_X:
-        selectedNode->position.x = item->text().toInt();
+        if(item->text().toInt() < 1) { // out of bounds
+            item->setText(QString::number(selectedNode->position.x + 1));
+        } else {
+            selectedNode->position.x = item->text().toInt() - 1;
+        }
         break;
     case NODE_Y:
-        selectedNode->position.y = item->text().toInt();
+        if(item->text().toInt() < 1) { // out of bounds
+            item->setText(QString::number(selectedNode->position.y + 1));
+        } else {
+            selectedNode->position.y = item->text().toInt() - 1;
+        }
         break;
     case NODE_Z:
-        selectedNode->position.z = item->text().toInt();
+        if(item->text().toInt() < 1) { // out of bounds
+            item->setText(QString::number(selectedNode->position.z + 1));
+        } else {
+            selectedNode->position.z = item->text().toInt() - 1;
+        }
         break;
     case NODE_RADIUS:
         selectedNode->radius = item->text().toFloat();
@@ -947,21 +959,21 @@ void Treeview::updateNodesTable() {
                     nodeTable->setItem(nodeIndex, NODE_COMMENT, item);
                 }
             }
-            item = new QTableWidgetItem(QString::number(node->position.x));
+            item = new QTableWidgetItem(QString::number(node->position.x + 1));
             if(node == state->skeletonState->activeNode) {
                 actXItem = item;
             }
             else {
                 nodeTable->setItem(nodeIndex, NODE_X, item);
             }
-            item = new QTableWidgetItem(QString::number(node->position.y));
+            item = new QTableWidgetItem(QString::number(node->position.y + 1));
             if(node == state->skeletonState->activeNode) {
                 actYItem = item;
             }
             else {
                 nodeTable->setItem(nodeIndex, NODE_Y, item);
             }
-            item = new QTableWidgetItem(QString::number(node->position.z));
+            item = new QTableWidgetItem(QString::number(node->position.z + 1));
             if(node == state->skeletonState->activeNode) {
                 actZItem = item;
             }

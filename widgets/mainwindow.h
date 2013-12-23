@@ -228,8 +228,6 @@ public:
 
 
 public slots:
-    void setCoordinates(int x, int y, int z);
-
     /* dataset */
     void openDatasetSlot();
     /* skeleton menu */

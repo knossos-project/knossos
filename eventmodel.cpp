@@ -297,7 +297,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         break;
     }
-
     /* Move to the new node position */
     emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
     if(newNode) {
@@ -600,7 +599,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 #ifdef Q_OS_LINUX
             if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
-                emit zoomOrthoSignal(-0.01);
+                emit zoomOrthoSignal(-0.1);
             } else { // move otherwiese
                 switch(state->viewerState->vpConfigs[VPfound].type) {
                     case VIEWPORT_XY:
@@ -685,7 +684,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 #ifdef Q_OS_LINUX
                 if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
-                emit zoomOrthoSignal(+0.01);
+                emit zoomOrthoSignal(+0.1);
             }
             // Move otherwise
             else {

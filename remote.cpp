@@ -307,6 +307,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             dBeta = 0;
         }
     }
+
     else{
         if(dy <= 0) {
             alpha = 360 - acos((double)dx/
@@ -357,6 +358,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             dBeta = beta - 360 - tempBeta;
         }
     }
+
     singleMove.x = (float)x / (float)totalMoves;
     singleMove.y = (float)y / (float)totalMoves;
     singleMove.z = (float)z / (float)totalMoves;

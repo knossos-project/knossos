@@ -151,9 +151,9 @@ void ToolsQuickTabWidget::updateToolsQuickTab() {
     if(state->skeletonState->activeNode) {
         activeNodeSpinBox->setRange(1, state->skeletonState->greatestNodeID);
         activeNodeSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x));
-        yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y));
-        zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z));
+        xLabel->setText(QString("x: %1").arg(state->skeletonState->activeNode->position.x + 1));
+        yLabel->setText(QString("y: %1").arg(state->skeletonState->activeNode->position.y + 1));
+        zLabel->setText(QString("z: %1").arg(state->skeletonState->activeNode->position.z + 1));
         blockSignals(true);
         if(state->skeletonState->activeNode->comment) {
             commentField->setText(state->skeletonState->activeNode->comment->content);

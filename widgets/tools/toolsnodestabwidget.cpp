@@ -183,7 +183,7 @@ ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
 
 void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->position.x = value;
+        state->skeletonState->activeNode->position.x = value - 1;
         emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
@@ -191,7 +191,7 @@ void ToolsNodesTabWidget::activeNodeXSpinChanged(int value) {
 
 void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->position.y = value;
+        state->skeletonState->activeNode->position.y = value - 1;
         emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
@@ -199,7 +199,7 @@ void ToolsNodesTabWidget::activeNodeYSpinChanged(int value) {
 
 void ToolsNodesTabWidget::activeNodeZSpinChanged(int value) {
     if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->position.z = value;
+        state->skeletonState->activeNode->position.z = value - 1;
         emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
@@ -282,9 +282,9 @@ void ToolsNodesTabWidget::updateToolsNodesTab() {
     if(state->skeletonState->activeNode) {
         activeNodeIdSpinBox->setRange(1, state->skeletonState->greatestNodeID);
         activeNodeIdSpinBox->setValue(state->skeletonState->activeNode->nodeID);
-        activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x);
-        activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y);
-        activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z);
+        activeNodeXSpin->setValue(state->skeletonState->activeNode->position.x + 1);
+        activeNodeYSpin->setValue(state->skeletonState->activeNode->position.y + 1);
+        activeNodeZSpin->setValue(state->skeletonState->activeNode->position.z + 1);
         blockSignals(true);
         if(state->skeletonState->activeNode->comment) {
             commentField->setText(state->skeletonState->activeNode->comment->content);

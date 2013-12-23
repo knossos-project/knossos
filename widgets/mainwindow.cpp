@@ -189,21 +189,24 @@ void MainWindow:: createToolBar() {
 
     xField = new QSpinBox();
     xField->setMaximum(1000000);
+    xField->setMinimum(1);
     xField->setMinimumWidth(75);
     xField->clearFocus();
 
-    xField->setValue(state->viewerState->currentPosition.x);
+    xField->setValue(state->viewerState->currentPosition.x + 1);
     yField = new QSpinBox();
 
     yField->setMaximum(1000000);
+    yField->setMinimum(1);
     yField->setMinimumWidth(75);
-    yField->setValue(state->viewerState->currentPosition.y);
+    yField->setValue(state->viewerState->currentPosition.y + 1);
     yField->clearFocus();
 
     zField = new QSpinBox();
     zField->setMaximum(1000000);
+    zField->setMinimum(1);
     zField->setMinimumWidth(75);
-    zField->setValue(state->viewerState->currentPosition.z);
+    zField->setValue(state->viewerState->currentPosition.z + 1);
     zField->clearFocus();
 
     xLabel = new QLabel("<font color='black'>x</font>");
@@ -1119,9 +1122,9 @@ void MainWindow::copyClipboardCoordinates() {
    snprintf(copyString,
                  8192,
                  "%d, %d, %d",
-                 this->xField->value() + 1,
-                 this->yField->value() + 1,
-                 this->zField->value() + 1);
+                 this->xField->value(),
+                 this->yField->value(),
+                 this->zField->value());
    QString coords(copyString);
    QApplication::clipboard()->setText(coords);
 }
@@ -1139,9 +1142,9 @@ void MainWindow::pasteClipboardCoordinates(){
             this->yField->setValue(extractedCoords->y);
             this->zField->setValue(extractedCoords->z);
 
-            emit userMoveSignal(extractedCoords->x - state->viewerState->currentPosition.x,
-                                extractedCoords->y - state->viewerState->currentPosition.y,
-                                extractedCoords->z - state->viewerState->currentPosition.z,
+            emit userMoveSignal(extractedCoords->x - 1 - state->viewerState->currentPosition.x,
+                                extractedCoords->y - 1 - state->viewerState->currentPosition.y,
+                                extractedCoords->z - 1 - state->viewerState->currentPosition.z,
                                 TELL_COORDINATE_CHANGE);
 
             free(extractedCoords);
@@ -1156,7 +1159,10 @@ void MainWindow::pasteClipboardCoordinates(){
 }
 
 void MainWindow::coordinateEditingFinished() {
-    emit userMoveSignal(xField->value() - state->viewerState->currentPosition.x, yField->value() - state->viewerState->currentPosition.y, zField->value() - state->viewerState->currentPosition.z, TELL_COORDINATE_CHANGE);
+    emit userMoveSignal(xField->value()- 1 - state->viewerState->currentPosition.x,
+                        yField->value()- 1 - state->viewerState->currentPosition.y,
+                        zField->value()- 1 - state->viewerState->currentPosition.z,
+                        TELL_COORDINATE_CHANGE);
 }
 
 void MainWindow::saveSettings() {
@@ -1311,20 +1317,9 @@ void MainWindow::uncheckNavigationAction() {
 }
 
 void MainWindow::updateCoordinateBar(int x, int y, int z) {
-    if(x > 0 or y > 0 or z > 0) {
-        xField->setValue(x);
-        yField->setValue(y);
-        zField->setValue(z);
-    }
-}
-
-void MainWindow::setCoordinates(int x, int y, int z) {
-    if(x > 0 and y > 0 and z > 0) {
-    xField->setValue(x);
-    yField->setValue(y);
-    zField->setValue(z);
-    xField->editingFinished();
-    }
+    xField->setValue(x + 1);
+    yField->setValue(y + 1);
+    zField->setValue(z + 1);
 }
 
 /** This is a replacement for the old updateSkeletonFileName

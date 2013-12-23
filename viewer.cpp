@@ -88,7 +88,7 @@ Viewer::Viewer(QObject *parent) :
                    state->viewerState->currentPosition.y,
                    state->viewerState->currentPosition.z,
                    NO_MAG_CHANGE);
-    window->setCoordinates(state->viewerState->currentPosition.x,
+    updateCoordinatesSignal(state->viewerState->currentPosition.x,
                            state->viewerState->currentPosition.y,
                            state->viewerState->currentPosition.z);
     frames = 0;
@@ -97,7 +97,14 @@ Viewer::Viewer(QObject *parent) :
 
     for (uint i = 0; i < state->viewerState->numberViewports; i++){
         state->viewerState->vpConfigs[i].s_max =  state->viewerState->vpConfigs[i].t_max =
-                (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2)))/2)*2;
+                (
+                    (
+                        (int)((state->M/2 + 1)
+                              * state->cubeEdgeLength
+                              / sqrt(2))
+                        )
+                    / 2)
+                *2;
     }
 
     floatCoordinate v1, v2, v3;
@@ -1455,13 +1462,13 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
         state->viewerState->superCubeChanged = true;
 
         sendLoadSignal(viewerState->currentPosition.x,
-                                viewerState->currentPosition.y,
-                                viewerState->currentPosition.z,
-                                NO_MAG_CHANGE);
+                       viewerState->currentPosition.y,
+                       viewerState->currentPosition.z,
+                       NO_MAG_CHANGE);
     }
 
-
-    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal, viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
+    QtConcurrent::run(this, &Viewer::updateCoordinatesSignal,
+                      viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
     emit idleTimeSignal();
 
     return true;

@@ -856,11 +856,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         LOG("Highest Mag: %d", state->highestAvailableMag);
 
         if(state->lowestAvailableMag == INT_MAX) {
-            /* This can happen if a bug in the string parsing above causes knossos to
-             * search the wrong directories. We exit here to prevent guaranteed
-             * subsequent crashes. */
-            LOG("Unsupported data path format.");
-            _Exit(false);
+            // This can happen if an error in the string parsing above causes knossos to
+            // search the wrong directories or a wrong path was entered
+            LOG("Path does not exist or unsupported data path format.");
+            return false;
         }
 
         /* Do not enable multires by default, even if more than one dataset was found.
