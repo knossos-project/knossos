@@ -1192,6 +1192,7 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
+    widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
     widgetContainer->console->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
@@ -1268,6 +1269,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
+    widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->console->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();

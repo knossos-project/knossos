@@ -4,6 +4,7 @@
 /* Constants for Widget-identification */
 const QString MAIN_WINDOW = "main_window";
 const QString COMMENTS_WIDGET = "comments_widget";
+const QString DATASET_WIDGET = "dataset_widget";
 const QString CONSOLE_WIDGET = "console_widget";
 const QString DATA_SAVING_WIDGET = "data_saving_widget";
 const QString ZOOM_AND_MULTIRES_WIDGET = "zoom_and_multires_widget";
@@ -30,6 +31,9 @@ const QString COMMENT5 = "comment5";
 const QString AUTO_SAVING = "auto_saving";
 const QString SAVING_INTERVAL = "saving_interval";
 const QString AUTOINC_FILENAME = "autoinc_filename";
+
+/* DataSet Switch */
+const QString DATASET_MRU = "dataset_mru";
 
 /* Zoom and Multires */
 const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";

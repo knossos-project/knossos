@@ -12,16 +12,18 @@ class DatasetPropertyWidget : public QDialog
     Q_OBJECT
 public:
     explicit DatasetPropertyWidget(QWidget *parent = 0);
-
+    void loadSettings();
+    void saveSettings();
 
 protected:
     QGroupBox *localGroup;
-    QLineEdit *path;
+    QComboBox *path;
     QPushButton *datasetfileDialog;
     QPushButton *cancelButton;
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
     void waitForLoader();
+    QStringList getRecentDirsItems();
 signals:
     void clearSkeletonSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);

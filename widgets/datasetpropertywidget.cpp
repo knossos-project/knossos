@@ -6,8 +6,10 @@
 #include <QComboBox>
 #include <QMessageBox>
 #include <QLabel>
+#include <QSettings>
 #include "knossos-global.h"
 #include "knossos.h"
+#include "GUIConstants.h"
 #include "ftp.h"
 #include "viewer.h"
 #include "mainwindow.h"
@@ -23,7 +25,10 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     localGroup = new QGroupBox("Local Dataset");
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
-    this->path = new QLineEdit();
+    this->path = new QComboBox();
+    this->path->setInsertPolicy(QComboBox::NoInsert);
+    this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    this->path->setEditable(true);
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
@@ -42,12 +47,39 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     connect(this->processButton, SIGNAL(clicked()), this, SLOT(processButtonClicked()));
 }
 
+QStringList DatasetPropertyWidget::getRecentDirsItems() {
+    QStringList recentDirs;
+    int dirCount = this->path->count();
+    for (int i = 0; i < dirCount; i++) {
+        recentDirs.append(this->path->itemText(i));
+    }
+    return recentDirs;
+}
+
+void DatasetPropertyWidget::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup(DATASET_WIDGET);
+    settings.clear();
+    settings.setValue(DATASET_MRU, getRecentDirsItems());
+    settings.endGroup();
+}
+
+void DatasetPropertyWidget::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup(DATASET_WIDGET);
+    this->path->clear();
+    this->path->insertItems(0, settings.value(DATASET_MRU).toStringList());
+    settings.endGroup();
+}
+
 void DatasetPropertyWidget::datasetfileDialogClicked() {
     QApplication::processEvents();
     QString selectDir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
     qDebug() << selectDir;
     if(!selectDir.isNull()) {
-        path->setText(selectDir);
+        path->setEditText(selectDir);
     }
 }
 
@@ -69,7 +101,7 @@ void DatasetPropertyWidget::cancelButtonClicked() {
 }
 
 void DatasetPropertyWidget::processButtonClicked() {
-    QString dir = this->path->text();
+    QString dir = this->path->currentText();
     if(dir.isNull()) {
         QMessageBox info;
         info.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -93,6 +125,13 @@ void DatasetPropertyWidget::processButtonClicked() {
         info.exec();
         return;
     }
+
+    int dirRecentIndex = this->getRecentDirsItems().indexOf(dir);
+    if (-1 != dirRecentIndex) {
+        this->path->removeItem(dirRecentIndex);
+    }
+    this->path->insertItem(0, dir);
+    this->path->setCurrentIndex(0);
 
     // Note:
     // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
