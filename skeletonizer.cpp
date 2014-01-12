@@ -1439,8 +1439,12 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     file.close();
 
     if(activeNodeID) {
-        //qDebug("activeNodeID: %i", activeNodeID);
-        setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
+        if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false
+           and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
+            if(state->skeletonState->firstTree->firstNode) {
+                setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+            }
+        }
     }
     /*  @todo
     if((loadedPosition.x != 0) &&
