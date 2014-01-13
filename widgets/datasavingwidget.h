@@ -24,6 +24,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+static int count;
+
 
 #include <QDialog>
 
@@ -32,7 +34,7 @@ class QLabel;
 class QSpinBox;
 class DataSavingWidget : public QDialog
 {
-
+    friend class MainWindow;
     Q_OBJECT
 public:
     explicit DataSavingWidget(QWidget *parent = 0);

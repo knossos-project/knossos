@@ -60,6 +60,8 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));
     connect(autosaveIntervalSpinBox, SIGNAL(valueChanged(int)), this, SLOT(autosaveIntervalChanged(int)));
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
+
+
 }
 
 void DataSavingWidget::loadSettings() {
@@ -67,19 +69,18 @@ void DataSavingWidget::loadSettings() {
    bool visible;
 
    QSettings settings;
-   settings.beginGroup(CONSOLE_WIDGET);
+   settings.beginGroup(DATA_SAVING_WIDGET);
    width = settings.value(WIDTH).toInt();
    height = settings.value(HEIGHT).toInt();
    x = settings.value(POS_X).toInt();
    y = settings.value(POS_Y).toInt();
    visible = settings.value(VISIBLE).toBool();
+
    if(settings.value(AUTO_SAVING).toBool())
     this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
 
-   if(!settings.value(SAVING_INTERVAL).toInt())
-    this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
-   else {
-    this->autosaveIntervalSpinBox->setValue(5);
+   if(settings.value(SAVING_INTERVAL).toInt()) {
+        this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
    }
 
    if(settings.value(AUTOINC_FILENAME).toBool())
@@ -92,7 +93,7 @@ void DataSavingWidget::loadSettings() {
 
 void DataSavingWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(CONSOLE_WIDGET);
+    settings.beginGroup(DATA_SAVING_WIDGET);
     settings.setValue(WIDTH, this->width());
     settings.setValue(HEIGHT, this->height());
     settings.setValue(POS_X, this->x());

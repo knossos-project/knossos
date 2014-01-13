@@ -808,6 +808,7 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
+    //qDebug() << state->skeletonState->firstTree->treeID << " ->ID";
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
@@ -824,6 +825,16 @@ void MainWindow::saveSlot()
 
 void MainWindow::saveAsSlot()
 {
+    if(!state->skeletonState->firstTree) {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Information);
+        prompt.setWindowTitle("Information");
+        prompt.setText("No skeleton was found. Not saving!");
+        prompt.exec();
+        return;
+    }
+
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
 
@@ -1012,9 +1023,10 @@ void MainWindow::defaultPreferencesSlot() {
 
     if(question.clickedButton() == yes) {
         clearSettings();
-        loadSettings();
+        saveSettings();
         qDebug() << "MainWindow::defaultPreferencesSlot: lockDatasetCheckBox->setChecked(true)";
         widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
+        widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
         widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
         emit loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
@@ -1046,6 +1058,8 @@ void MainWindow::synchronizationSlot()
 
 void MainWindow::dataSavingOptionsSlot()
 {
+    qDebug() << "hallo";
+    qDebug() << this->widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->value();
     this->widgetContainer->dataSavingWidget->show();
     this->widgetContainer->dataSavingWidget->adjustSize();
     if(widgetContainer->dataSavingWidget->pos().x() <= 0 or this->widgetContainer->dataSavingWidget->pos().y() <= 0)
@@ -1186,13 +1200,22 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
-    for(int i = 0; i < skeletonFileHistory->size(); i++) {
-        settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        if(i < skeletonFileHistory->size()) {
+            settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
+        } else {
+            settings.setValue(QString("loaded_file%1").arg(i+1), "");
+        }
     }
+
+//    for(int i = 0; i < skeletonFileHistory->size(); i++) {
+//        qDebug() << this->skeletonFileHistory->at(i);
+//        settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
+//    }
 
     settings.endGroup();
 
-    widgetContainer->datasetPropertyWidget->saveSettings();
+    //widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
     widgetContainer->console->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
@@ -1226,6 +1249,8 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
+
+
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
@@ -1269,7 +1294,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
-    widgetContainer->datasetPropertyWidget->loadSettings();
+    //widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->console->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
@@ -1287,6 +1312,13 @@ void MainWindow::clearSettings() {
     for(int i = 0; i < keys.size(); i++) {
         settings.remove(keys.at(i));
     }
+
+//    settings.beginGroup(MAIN_WINDOW);
+//    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+//        settings.setValue(QString("loaded_file%1").arg(i+1), "");
+//    }
+//    settings.endGroup();
+
 }
 
 void MainWindow::uncheckToolsAction() {
@@ -1312,7 +1344,6 @@ void MainWindow::uncheckDataSavingAction() {
 void MainWindow::uncheckSynchronizationAction() {
     this->synchronizationAction->setChecked(false);
 }
-
 
 void MainWindow::uncheckNavigationAction() {
     this->datasetNavigationAction->setChecked(false);
