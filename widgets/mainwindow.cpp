@@ -838,6 +838,8 @@ void MainWindow::saveAsSlot()
     QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
 
+        qDebug() << state->skeletonState->autoFilenameIncrementBool;
+
         if(state->skeletonState->autoFilenameIncrementBool) {
             updateSkeletonFileName(fileName);
         }
@@ -1057,9 +1059,7 @@ void MainWindow::synchronizationSlot()
 }
 
 void MainWindow::dataSavingOptionsSlot()
-{
-    qDebug() << "hallo";
-    qDebug() << this->widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->value();
+{    
     this->widgetContainer->dataSavingWidget->show();
     this->widgetContainer->dataSavingWidget->adjustSize();
     if(widgetContainer->dataSavingWidget->pos().x() <= 0 or this->widgetContainer->dataSavingWidget->pos().y() <= 0)
@@ -1379,7 +1379,7 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
         qDebug() << fileName;
 
     } else if(fileName.contains(withoutVersion)) {
-        fileName = fileName.insert(fileName.length() - 3, "001.");
+        //fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
         qDebug() << fileName;
     } else {

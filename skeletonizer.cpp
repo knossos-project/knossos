@@ -79,7 +79,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->mergeOnLoadFlag = 0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
-    state->skeletonState->autoFilenameIncrementBool = true;
+    //state->skeletonState->autoFilenameIncrementBool = true;
     state->skeletonState->greatestNodeID = 0;
 
     state->skeletonState->showXYplane = false;

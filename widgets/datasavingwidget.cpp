@@ -76,17 +76,16 @@ void DataSavingWidget::loadSettings() {
    y = settings.value(POS_Y).toInt();
    visible = settings.value(VISIBLE).toBool();
 
-   if(settings.value(AUTO_SAVING).toBool())
-    this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
+   this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
+   state->skeletonState->autoSaveBool = this->autosaveCheckbox->isChecked();
 
-   if(settings.value(SAVING_INTERVAL).toInt()) {
-        this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
-   }
+   this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
+   state->skeletonState->autoSaveInterval = autosaveIntervalSpinBox->value();
 
-   if(settings.value(AUTOINC_FILENAME).toBool())
-    this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
+   this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
+   state->skeletonState->autoFilenameIncrementBool = autoincrementFileNameButton->isChecked();
+
    settings.endGroup();
-
    setGeometry(x, y, width, height);
 
 }
@@ -120,6 +119,7 @@ void DataSavingWidget::autosaveCheckboxChecked(bool on) {
 }
 
 void DataSavingWidget::autonincrementFileNameButtonPushed(bool on) {
+
     if(on) {
         state->skeletonState->autoFilenameIncrementBool = true;
     } else {
