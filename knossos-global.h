@@ -504,7 +504,7 @@ public:
     // state->magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
-    uint magnification;
+    int magnification;
 
     uint compressionRatio;
 
