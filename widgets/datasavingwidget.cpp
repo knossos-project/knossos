@@ -75,8 +75,13 @@ void DataSavingWidget::loadSettings() {
    visible = settings.value(VISIBLE).toBool();
    if(settings.value(AUTO_SAVING).toBool())
     this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
-   if(settings.value(SAVING_INTERVAL).toInt())
+
+   if(!settings.value(SAVING_INTERVAL).toInt())
     this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
+   else {
+    this->autosaveIntervalSpinBox->setValue(5);
+   }
+
    if(settings.value(AUTOINC_FILENAME).toBool())
     this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
    settings.endGroup();

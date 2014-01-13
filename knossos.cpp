@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
     loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
-    //Scripting *scripts = new Scripting();
-    //scripts->reference = viewer->skeletonizer;
+    Scripting *scripts = new Scripting();
+    scripts->reference = viewer->skeletonizer;
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()),
                             viewer->window, SLOT(treeColorAdjustmentsChanged()));
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
     KnossosTestRunner runner;
     runner.reference = viewer;
     runner.addTestClasses();
-    //runner.show();
+    runner.show();
 
 
 

@@ -224,12 +224,12 @@ void MainWindow:: createToolBar() {
     this->toolBar->addWidget(zField);    
     this->toolBar->addSeparator();
 
-    /*
+
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
     pythonButton->setIcon(QIcon(":/images/python.png"));        
     this->toolBar->addWidget(pythonButton);    
-    */
+
 
     taskManagementButton = new QToolButton();
     taskManagementButton->setToolTip("Task Management Widget");

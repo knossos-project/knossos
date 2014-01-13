@@ -16,15 +16,22 @@ void Scripting::run() {
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
+
     console = new PythonQtScriptingConsole(NULL, ctx);
     console->setWindowTitle("Knossos Scripting Console");
+
 
     ctx.addObject("Skeleton", reference);
 
     console->setFont(font);
     console->appendCommandPrompt(true);
-    console->show();
+
 
     exec();
 
+}
+
+void Scripting::addScriptingObject(const QString &name, QObject *obj) {
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    ctx.addObject(name, obj);
 }

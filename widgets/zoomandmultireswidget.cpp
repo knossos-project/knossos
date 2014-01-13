@@ -43,7 +43,6 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 {
     setWindowTitle("Zoom and Multiresolution Settings");
 
-
     // top layout
     QGridLayout *topLayout = new QGridLayout();
     this->orthogonalDataViewportLabel = new QLabel(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));

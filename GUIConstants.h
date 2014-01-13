@@ -69,6 +69,8 @@ const QString RANGE_DELTA = "range_delta";
 const QString ENABLE_COLOR_OVERLAY = "enable_color_overlay";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
 const QString SHOW_VIEWPORT_SIZE = "draw_viewport_size";
+const QString TREE_LUT_FILE = "tree_lut_file";
+const QString DATASET_LUT_FILE = "dataset_lut_file";
 
 /* Viewport Settings Skeleton Viewport Tab */
 const QString SHOW_XY_PLANE = "show_xy_plane";
@@ -155,7 +157,5 @@ const QString LOADED_FILE7 = "loaded_file7";
 const QString LOADED_FILE8 = "loaded_file8";
 const QString LOADED_FILE9 = "loaded_file9";
 const QString LOADED_FILE10 = "loaded_file10";
-
-
 
 #endif // GUICONSTANTS_H

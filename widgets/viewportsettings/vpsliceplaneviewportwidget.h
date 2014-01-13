@@ -63,6 +63,8 @@ public slots:
     void showViewPortsSizeChecked(bool on);
     void updateIntersection();
 
+    void loadDatasetLUT();
+    void loadTreeLUT();
 
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
@@ -84,6 +86,9 @@ protected:
 
     QLabel *objectIDOverlayLabel, *viewportObjectsLabel;
     QCheckBox *enableColorOverlayCheckBox, *drawIntersectionsCrossHairCheckBox, *showViewPortsSizeCheckBox;
+
+    QLabel *datasetLutFile;
+    QLabel *treeLutFile;
 };
 
 #endif // VPSLICEPLANEVIEWPORTWIDGET_H

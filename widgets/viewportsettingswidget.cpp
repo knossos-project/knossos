@@ -34,7 +34,7 @@
 #include <QRadioButton>
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern stateInfo *state;
 
 ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
     QDialog(parent)
@@ -231,6 +231,19 @@ void ViewportSettingsWidget::loadSettings() {
         }
     }
 
+    if(!settings.value(DATASET_LUT_FILE).isNull()) {
+
+        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());
+        this->slicePlaneViewportWidget->loadDatasetLUT();
+        //this->slicePlaneViewportWidget->useOwnDatasetColorsChecked(true);
+    }
+
+    if(!settings.value(TREE_LUT_FILE).isNull()) {
+        this->slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE).toString());
+        this->slicePlaneViewportWidget->loadTreeLUT();
+        //this->slicePlaneViewportWidget->useOwnTreeColorsChecked(true);
+    }
+
     if(!this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() and !this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked() and !this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked())
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
     settings.endGroup();
@@ -266,6 +279,24 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(ENABLE_COLOR_OVERLAY, this->slicePlaneViewportWidget->enableColorOverlayCheckBox->isChecked());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, this->slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->isChecked());
     settings.setValue(SHOW_VIEWPORT_SIZE, this->slicePlaneViewportWidget->showViewPortsSizeCheckBox->isChecked());
+    settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
+    settings.setValue(TREE_LUT_FILE, this->slicePlaneViewportWidget->treeLutFile->text());
+
+    qDebug() << this->slicePlaneViewportWidget->datasetLutFile->text();
+
+    if(!this->slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
+        settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
+        strcpy(state->viewerState->gui->datasetLUTFile, this->slicePlaneViewportWidget->datasetLutFile->text().toStdString().c_str());
+    } else {
+
+    }
+
+    if(!this->slicePlaneViewportWidget->treeLutFile->text().isEmpty()) {
+        settings.setValue(TREE_LUT_FILE, this->slicePlaneViewportWidget->treeLutFile->text());
+        strcpy(state->viewerState->gui->treeLUTFile, this->slicePlaneViewportWidget->treeLutFile->text().toStdString().c_str());
+    } else {
+
+    }
 
     settings.setValue(SHOW_XY_PLANE, this->skeletonViewportWidget->showXYPlaneCheckBox->isChecked());
     settings.setValue(SHOW_XZ_PLANE, this->skeletonViewportWidget->showXZPlaneCheckBox->isChecked());
@@ -275,5 +306,8 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
     settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
 
+
     settings.endGroup();
+
+
 }

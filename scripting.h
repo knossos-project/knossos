@@ -22,7 +22,7 @@ public:
 signals:
     
 public slots:
-    
+    void addScriptingObject(const QString &name, QObject *obj);
 };
 
 #endif // SCRIPTING_H

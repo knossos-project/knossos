@@ -14,20 +14,22 @@ TestZoomAndMultiresWidget::TestZoomAndMultiresWidget(QObject *parent) :
 
 void TestZoomAndMultiresWidget::testZoomOrthoViewport() {
     ZoomAndMultiresWidget *zoomWidget = reference->window->widgetContainer->zoomAndMultiresWidget;
-    int random = rand() % 100;
-    QVERIFY(random *zoomWidget->orthogonalDataViewportSpinBox->singleStep() == zoomWidget->orthogonalDataViewportSpinBox->value());
+    double textFieldValue = 1 - zoomWidget->orthogonalDataViewportLabel->text().toDouble() / 100.0;
+    QCOMPARE(zoomWidget->orthogonalDataViewportSpinBox->singleStep(), textFieldValue);
 
 }
 
 void TestZoomAndMultiresWidget::testZoomSkeletonViewport() {
-
+    ZoomAndMultiresWidget *zoomWidget = reference->window->widgetContainer->zoomAndMultiresWidget;
+    double textFieldValue = 1 - zoomWidget->orthogonalDataViewportLabel->text().toDouble() / 100.0;
+    QCOMPARE(zoomWidget->orthogonalDataViewportSpinBox->singleStep(), textFieldValue);
 }
 
 void TestZoomAndMultiresWidget::testResetZoomFactors() {
    ZoomAndMultiresWidget *zoomWidget = reference->window->widgetContainer->zoomAndMultiresWidget;
    zoomWidget->zoomDefaultsClicked();
 
-   QCOMPARE(zoomWidget->orthogonalDataViewportSpinBox->value(), VPZOOMMIN);
+   QCOMPARE(1 - zoomWidget->orthogonalDataViewportSpinBox->value() / 100., VPZOOMMIN);
    QCOMPARE(zoomWidget->skeletonViewportSpinBox->value(), 100.);
 
    for(int i = 0; i < 3; i++)
@@ -44,12 +46,14 @@ void TestZoomAndMultiresWidget::testZoomOrthoViewportByKeyPressed() {
 
     float zoomLevel = state->viewerState->vpConfigs[0].texture.zoomLevel;
     QTest::keyClick(firstViewport, Qt::Key_I, Qt::NoModifier, 50);
-    QVERIFY(fabs(state->viewerState->vpConfigs[0].texture.zoomLevel - zoomLevel - 0.1) <= 0.1/*FLT_EPSILON*/); // machine epsilon
 
-    QTest::keyClick(firstViewport, Qt::Key_O, 0, 50);
-    float value = fabs(state->viewerState->vpConfigs[0].texture.zoomLevel - zoomLevel);
-    qDebug() << value;
-    //QVERIFY(fabs(state->viewerState->vpConfigs[0].texture.zoomLevel - zoomLevel) <= 0.1/*FLT_EPSILON*/);
+    float diffAfterZoomIn = fabs(state->viewerState->vpConfigs[0].texture.zoomLevel - zoomLevel - 0.1);
+    QTest::keyClick(firstViewport, Qt::Key_O, Qt::NoModifier, 50);
+
+    float diffAfterZoomOut = fabs(state->viewerState->vpConfigs[0].texture.zoomLevel - zoomLevel);
+    QCOMPARE(diffAfterZoomOut, 0.0);
+
+
 }
 
 

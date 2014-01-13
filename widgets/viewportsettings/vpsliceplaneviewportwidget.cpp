@@ -84,6 +84,8 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
 
     objectIDOverlayLabel = new QLabel("Object ID Overlay");
     viewportObjectsLabel = new QLabel("Viewport Objects");
+    treeLutFile = new QLabel();
+    datasetLutFile = new QLabel();
 
     enableColorOverlayCheckBox = new QCheckBox("Enable Color Overlay");
     drawIntersectionsCrossHairCheckBox = new QCheckBox("Draw Intersections Crosshairs");
@@ -194,32 +196,42 @@ void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
 
 }
 
-void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {   
     state->viewerState->datasetColortableOn = on;
     MainWindow::datasetColorAdjustmentsChanged();
+
 }
+
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
 
-
     if(!fileName.isEmpty()) {
+        this->datasetLutFile->setText(fileName);
         const char *cname = fileName.toStdString().c_str();
         strcpy(state->viewerState->gui->datasetLUTFile, cname);
         //qDebug() << cname;
         qDebug() << fileName << " <<<";
         //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
-        bool result = loadDataSetColortableSignal(fileName, &(state->viewerState->datasetColortable[0][0]), GL_RGB);
 
-        if(!result) {
-            LOG("Error loading Dataset LUT.\n")
-            memcpy(&(state->viewerState->datasetColortable[0][0]),
-                           &(state->viewerState->neutralDatasetTable[0][0]),
-                           RGB_LUTSIZE);
-        }
+        loadDatasetLUT();
+
 
         MainWindow::datasetColorAdjustmentsChanged();
     }
+}
+
+void VPSlicePlaneViewportWidget::loadDatasetLUT() {
+    bool result = loadDataSetColortableSignal(this->datasetLutFile->text(), &(state->viewerState->datasetColortable[0][0]), GL_RGB);
+
+    if(!result) {
+        LOG("Error loading Dataset LUT.\n")
+        memcpy(&(state->viewerState->datasetColortable[0][0]),
+                       &(state->viewerState->neutralDatasetTable[0][0]),
+                       RGB_LUTSIZE);
+    }
+
+     MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
@@ -227,24 +239,28 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
     emit treeColorAdjustmentsChangedSignal();
 }
 
+
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
     if(!fileName.isEmpty()) {
+        treeLutFile->setText(fileName);
         char *cname = const_cast<char *>(fileName.toStdString().c_str());
         strcpy(state->viewerState->gui->treeLUTFile, cname);
         MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
         state->viewerState->treeLutSet = true;
-        if(loadTreeColorTableSignal(fileName, &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
-            LOG("Error loading Tree LUT.\n")
-            memcpy(&(state->viewerState->treeColortable[0]),
-                   &(state->viewerState->defaultTreeTable[0]),
-                     RGB_LUTSIZE);
-            state->viewerState->treeLutSet = false;
-        }
-
 
         emit treeColorAdjustmentsChangedSignal();
 
+    }
+}
+
+void VPSlicePlaneViewportWidget::loadTreeLUT() {
+    if(loadTreeColorTableSignal(this->treeLutFile->text(), &(state->viewerState->treeColortable[0]), GL_RGB) != true) {
+        LOG("Error loading Tree LUT.\n")
+        memcpy(&(state->viewerState->treeColortable[0]),
+               &(state->viewerState->defaultTreeTable[0]),
+                 RGB_LUTSIZE);
+        state->viewerState->treeLutSet = false;
     }
 }
 

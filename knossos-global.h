@@ -453,7 +453,8 @@ struct assignment {
   */
 #include "widgets/console.h"
 
-struct stateInfo {
+class stateInfo {
+public:
     uint svnRevision;
     Console *console;
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
