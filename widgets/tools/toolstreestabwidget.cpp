@@ -38,7 +38,7 @@
 
 #include "knossos.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 ToolsTreesTabWidget::ToolsTreesTabWidget(ToolsWidget *parent) :
     QWidget(parent)

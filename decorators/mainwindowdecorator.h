@@ -12,7 +12,7 @@ public:
     explicit MainWindowDecorator(QObject *parent = 0);
 
 signals:
-    
+
 public slots:
 
 };

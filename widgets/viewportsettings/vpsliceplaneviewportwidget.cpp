@@ -37,7 +37,7 @@
 #include "widgets/mainwindow.h"
 #include "viewer.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :

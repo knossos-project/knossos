@@ -28,7 +28,7 @@
 #include "renderer.h"
 #include "widgets/viewport.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 EventModel::EventModel(QObject *parent) :
     QObject(parent)

@@ -36,7 +36,7 @@
 #include <QSpacerItem>
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true)

@@ -103,7 +103,6 @@ signals:
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
 protected:
-
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
@@ -212,22 +211,27 @@ public:
     QToolButton *taskManagementButton;
     QToolButton *treeviewButton;
 
-    void updateFileHistoryMenu();
+    void createViewports();
+
+    // for creating action, menus and the toolbar
     void createActions();
     void createMenus();
     void createToolBar();
-    void createViewports();
 
+
+    // for save, load and clear settings
     void saveSettings();
     void loadSettings();
     void clearSettings();
 
+public slots:
+    // for the recent file menu
+    bool loadSkeletonAfterUserDecision(const QString &fileName);
+    void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);
-    QUndoStack *undoStack;
+    //QUndoStack *undoStack;
 
-
-public slots:
     /* dataset */
     void openDatasetSlot();
     /* skeleton menu */
@@ -293,8 +297,6 @@ public slots:
     void lockVPOrientation(bool lock);
     void showVPDecorationClicked();
 
-    bool fileDialogForSkeletonAndAsyncLoading(const QString &fileName);
-
     // from the event handler
     void newTreeSlot();
     void nextCommentNodeSlot();
@@ -311,8 +313,6 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
-
-
 
 };
 

@@ -30,7 +30,7 @@ void TestZoomAndMultiresWidget::testResetZoomFactors() {
    zoomWidget->zoomDefaultsClicked();
 
    QCOMPARE(1 - zoomWidget->orthogonalDataViewportSpinBox->value() / 100., VPZOOMMIN);
-   QCOMPARE(zoomWidget->skeletonViewportSpinBox->value(), 100.);
+   QCOMPARE(zoomWidget->skeletonViewportSpinBox->value(), 0.);
 
    for(int i = 0; i < 3; i++)
    QCOMPARE(state->viewerState->vpConfigs[i].texture.zoomLevel, 1.0);

@@ -33,7 +33,7 @@
 #include "GUIConstants.h"
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)

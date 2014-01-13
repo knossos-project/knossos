@@ -449,7 +449,7 @@ struct assignment {
   * @struct stateInfo
   * @brief stateInfo holds everything we need to know about the current instance of Knossos
   *
-  * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern struct stateInfo
+  * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
 #include "widgets/console.h"
 

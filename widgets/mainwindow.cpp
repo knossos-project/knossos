@@ -58,7 +58,7 @@
 #include "viewport.h"
 #include "widgetcontainer.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 // -- Constructor and destroyer -- //
 MainWindow::MainWindow(QWidget *parent) :
@@ -138,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createViewports();
     setAcceptDrops(true);
 
-    undoStack = new QUndoStack();
+    //undoStack = new QUndoStack();
 
 }
 
@@ -348,7 +348,9 @@ bool MainWindow::cpBaseDirectory(char *target, QString path){
     return true;
 }
 
+/** This method adds a file path to the queue data structure */
 bool MainWindow::addRecentFile(const QString &fileName) {
+
     if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
         skeletonFileHistory->enqueue(fileName);
     } else {
@@ -555,12 +557,13 @@ void MainWindow::createActions()
 
 }
 
+/** This slot is called if one of the entries is clicked in the recent file menue */
 void MainWindow::recentFileSelected() {
     QAction *action = (QAction *)sender();
 
     QString fileName = action->text();
     if(!fileName.isNull()) {
-        this->fileDialogForSkeletonAndAsyncLoading(fileName);
+        this->loadSkeletonAfterUserDecision(fileName);
 
     }
 }
@@ -707,7 +710,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 //file menu functionality
 
-bool MainWindow::fileDialogForSkeletonAndAsyncLoading
+bool MainWindow::loadSkeletonAfterUserDecision
 (const QString &fileName) {
     if(!fileName.isNull()) {
         QApplication::processEvents();
@@ -751,6 +754,7 @@ bool MainWindow::fileDialogForSkeletonAndAsyncLoading
         emit updateTreeviewSignal();
         return result;
     }
+    return false;
 }
 
 /**
@@ -765,13 +769,14 @@ void MainWindow::openSlot() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     state->skeletonState->skeletonFileAsQString = fileName;
 
-    fileDialogForSkeletonAndAsyncLoading(fileName);
+    loadSkeletonAfterUserDecision(fileName);
 
 
 }
 
+/** So far this variant is needed only for drag n drop skeleton files */
 void MainWindow::openSlot(const QString &fileName) {
-    fileDialogForSkeletonAndAsyncLoading(fileName);
+    loadSkeletonAfterUserDecision(fileName);
 
 }
 
@@ -788,6 +793,7 @@ bool MainWindow::alreadyInMenu(const QString &path) {
 
 /**
   * This method puts the history entries of the loaded skeleton files to the recent file menu section
+  * The order is: 1. AddRecentFile and then 2. updateFileHistoryMenu
   */
 void MainWindow::updateFileHistoryMenu() {
     QQueue<QString>::iterator it;
@@ -808,7 +814,7 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-    //qDebug() << state->skeletonState->firstTree->treeID << " ->ID";
+
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
@@ -1208,10 +1214,6 @@ void MainWindow::saveSettings() {
         }
     }
 
-//    for(int i = 0; i < skeletonFileHistory->size(); i++) {
-//        qDebug() << this->skeletonFileHistory->at(i);
-//        settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
-//    }
 
     settings.endGroup();
 
@@ -1312,13 +1314,6 @@ void MainWindow::clearSettings() {
     for(int i = 0; i < keys.size(); i++) {
         settings.remove(keys.at(i));
     }
-
-//    settings.beginGroup(MAIN_WINDOW);
-//    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-//        settings.setValue(QString("loaded_file%1").arg(i+1), "");
-//    }
-//    settings.endGroup();
-
 }
 
 void MainWindow::uncheckToolsAction() {

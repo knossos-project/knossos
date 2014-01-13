@@ -38,7 +38,7 @@
 #include <QTableWidget>
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 CommentsWidget::CommentsWidget(QWidget *parent) :
     QDialog(parent)

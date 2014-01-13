@@ -35,7 +35,7 @@
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "toolsquicktabwidget.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 ToolsQuickTabWidget::ToolsQuickTabWidget(ToolsWidget *parent) :
     QWidget(parent)

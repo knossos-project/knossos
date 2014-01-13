@@ -10,7 +10,7 @@
 #include <curl/curl.h>
 #include <curl/multi.h>
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 {

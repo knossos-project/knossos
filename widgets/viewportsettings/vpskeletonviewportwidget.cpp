@@ -31,7 +31,7 @@
 #include <QGridLayout>
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     QWidget(parent)

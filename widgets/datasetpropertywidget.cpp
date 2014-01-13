@@ -14,7 +14,7 @@
 #include "viewer.h"
 #include "mainwindow.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     QDialog(parent)
@@ -60,7 +60,7 @@ void DatasetPropertyWidget::saveSettings()
 {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
-    settings.clear();
+    //settings.clear();
     settings.setValue(DATASET_MRU, getRecentDirsItems());
     settings.endGroup();
 }

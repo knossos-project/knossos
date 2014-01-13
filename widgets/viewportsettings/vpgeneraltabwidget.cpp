@@ -34,7 +34,7 @@
 #include <QFrame>
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QWidget(parent)

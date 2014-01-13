@@ -10,11 +10,11 @@ class SkeletonizerDecorator : public QObject
     Q_OBJECT
 public:
     explicit SkeletonizerDecorator(QObject *parent = 0);
-
+    Skeletonizer *reference;
 signals:
-    
+    void userMoveSignal(int x, int y, int z);
 public slots:
-
+    void aSlot();
 
 };
 

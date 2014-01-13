@@ -44,7 +44,7 @@ int yywrap() {
         return 1;
 }
 
-extern struct stateInfo *tempConfig;
+extern  stateInfo *tempConfig;
 
 %}
 

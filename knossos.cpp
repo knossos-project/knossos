@@ -142,6 +142,8 @@ int main(int argc, char *argv[])
     loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
+
+
     Scripting *scripts = new Scripting();
     scripts->reference = viewer->skeletonizer;
 

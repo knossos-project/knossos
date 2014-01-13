@@ -36,7 +36,7 @@
 #include "skeletonizer.h"
 #include "toolsnodestabwidget.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 ToolsNodesTabWidget::ToolsNodesTabWidget(ToolsWidget *parent) :
     QWidget(parent)

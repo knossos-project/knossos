@@ -21,11 +21,13 @@ void Scripting::run() {
     console->setWindowTitle("Knossos Scripting Console");
 
 
-    ctx.addObject("Skeleton", reference);
+    //PythonQt::self()->addInstanceDecorators(reference);
+    //PythonQt::self()->registerClass(reference->metaObject(), "skeleton");
+    ctx.addObject("skeleton", reference);
 
     console->setFont(font);
     console->appendCommandPrompt(true);
-
+    console->show();
 
     exec();
 

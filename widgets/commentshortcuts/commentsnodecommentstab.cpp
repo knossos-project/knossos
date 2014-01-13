@@ -10,7 +10,7 @@
 #include "commentsnodecommentstab.h"
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
     QWidget(parent)

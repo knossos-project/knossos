@@ -4,7 +4,7 @@
 
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 // for looking up CURLcode: http://curl.haxx.se/libcurl/c/libcurl-errors.html
 

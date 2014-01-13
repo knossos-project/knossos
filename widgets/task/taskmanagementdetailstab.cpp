@@ -4,7 +4,7 @@
 #include "knossos-global.h"
 #include "taskmanagementdetailstab.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 TaskManagementDetailsTab::TaskManagementDetailsTab(QWidget *parent) :
     QWidget(parent)
 {

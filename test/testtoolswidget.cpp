@@ -142,7 +142,7 @@ void TestToolsWidget::testAddNodesPerMouseClick() {
     int random[3];
 
     for(int i = 0; i < 3; i++) {
-        random[i] = rand() % 1000 + 1;
+        random[i] = rand() % 10 + 1;
     }
 
     ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
@@ -323,15 +323,19 @@ void TestToolsWidget::testSplitConnectedComponents() {
     pos.setX(pos.x() + 10);
     pos.setY(pos.y() + 10);
 
-    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+    QPoint newPos = firstViewport->pos();
+    newPos.setX(newPos.x() + 40);
+    newPos.setY(newPos.y() + 40);
+
+    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos, 50);
 
     // Let´s change the workmode to a
-    QTest::keyClick(firstViewport, Qt::Key_A);
-    QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
+    QTest::keyClick(firstViewport, Qt::Key_A, 0, 50);
+    QTest::mouseClick(firstViewport, Qt::RightButton, 0, newPos, 50);
 
     tools->toolsTreesTabWidget->splitByConnectedComponentsButtonClicked();
 
-    int trees = state->skeletonState->treeElements;
+    //int trees = state->skeletonState->treeElements;
 
     QVERIFY(2 == state->skeletonState->treeElements);
     QVERIFY(2 == tools->toolsQuickTabWidget->activeTreeSpinBox->text().toInt());

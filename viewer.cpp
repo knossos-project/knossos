@@ -44,15 +44,6 @@ Viewer::Viewer(QObject *parent) :
 
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    QDesktopWidget *desktop = QApplication::desktop();
-
-    window->loadSettings();
-    window->show();
-    if(window->pos().x() <= 0 or window->pos().y() <= 0) {
-        window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
-                            desktop->availableGeometry().topLeft().y() + 50,
-                            1024, 800);
-    }
 
     state->console = window->widgetContainer->console;
     vpUpperLeft = window->viewports[VIEWPORT_XY];
@@ -68,6 +59,7 @@ Viewer::Viewer(QObject *parent) :
      * 1. initViewer
      * 2. new Skeletonizer
      * 3. new Renderer
+     * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
     */
     SET_COORDINATE(state->viewerState->currentPosition, state->boundary.x / 2, state->boundary.y / 2, state->boundary.z / 2);
 	SET_COORDINATE(state->viewerState->lastRecenteringPosition, state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
@@ -75,6 +67,17 @@ Viewer::Viewer(QObject *parent) :
     initViewer();
     skeletonizer = new Skeletonizer();
     renderer = new Renderer();
+
+    QDesktopWidget *desktop = QApplication::desktop();
+
+    window->loadSettings();
+    window->show();
+    if(window->pos().x() <= 0 or window->pos().y() <= 0) {
+        window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
+                            desktop->availableGeometry().topLeft().y() + 50,
+                            1024, 800);
+    }
+
 
     // This is needed for the viewport text rendering
     renderer->refVPXY = vpUpperLeft;
@@ -2174,7 +2177,7 @@ void Viewer::rewire() {
     // -- end dataset property signals
     // task management signals --
     connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(loadSkeletonSignal(const QString)),
-                    window, SLOT(fileDialogForSkeletonAndAsyncLoading(const QString)));
+                    window, SLOT(loadSkeletonAfterUserDecision(const QString)));
     connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // -- end task management signals
     // --- end widget signals

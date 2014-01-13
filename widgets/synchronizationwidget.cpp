@@ -31,7 +31,7 @@
 #include "knossos-global.h"
 #include "knossos.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 
 SynchronizationWidget::SynchronizationWidget(QWidget *parent) :
     QDialog(parent)

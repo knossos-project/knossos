@@ -6,3 +6,5 @@ MainWindowDecorator::MainWindowDecorator(QObject *parent) :
 {
 }
 
+
+

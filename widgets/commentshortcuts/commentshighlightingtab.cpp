@@ -39,7 +39,7 @@
 #include "GUIConstants.h"
 #include "knossos-global.h"
 
-extern struct stateInfo *state;
+extern  stateInfo *state;
 static const int N = 5;
 static QMap<QString, color4F> colorMap;
 
