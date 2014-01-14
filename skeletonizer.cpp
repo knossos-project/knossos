@@ -979,6 +979,16 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int time;
     color4F neuronColor;
 
+    /* */
+
+   QVector<TreeWithNodes> treeAndNodesVector;
+   QVector<int> branchVector;
+   QVector<std::pair<int, char *> > commentsVector;
+   QVector<std::pair<int, int > > edgeVector;
+
+
+    /* */
+
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
@@ -1035,12 +1045,16 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     QXmlStreamAttributes attributes;
     QStringRef attribute;
     float temp;
+
+
+
     while(!xml.atEnd() and !xml.hasError()) {
 
         if(xml.readNextStartElement()) {
+            /*
             if(xml.lineNumber() % 10 == 0) {
                 progress.setValue(xml.lineNumber());
-            }
+            }*/
 
             if(xml.name() == "parameters") {
                 while(xml.readNextStartElement()) {
@@ -1212,15 +1226,16 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     if(xml.name() == "branchpoint" and xml.isStartElement()) {
                         attributes = xml.attributes();
                         attribute = attributes.value("id");
+
                         if(!attribute.isNull()) {
                             if(!merge) {
                                 nodeID = attribute.toLocal8Bit().toInt();
                             } else {
                                 nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                             }
-                            currentNode = findNodeByNodeID(nodeID);
-                            if(currentNode)
-                                pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
+
+                            branchVector.push_back(nodeID);
+
                         }
                     }
                     while(xml.readNext() == QXmlStreamReader::Characters) {
@@ -1243,10 +1258,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                 nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                             }
                         }
+
                         attribute = attributes.value("content");
                         if(attribute.isNull() == false) {
                             char *comment = (char*) malloc(1024);
                             strcpy(comment, attribute.toLocal8Bit().data());
+
+                            commentsVector.push_back(std::pair<int, char *>(nodeID, comment));
                             comments.push_back(std::pair<uint, char*>(nodeID, comment));
                         }
                     }
@@ -1377,6 +1395,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         } else {
                             time = skeletonTime; // For legacy skeleton files
                         }
+
                         if(merge == false) {
                             addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
                         }
@@ -1407,12 +1426,15 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                          else {
                             nodeID2 = 0;
                         }
+
+                        edgeVector.push_back(std::pair<int, int>(nodeID1, nodeID2));
+                        /* // later
                         if(merge == false) {
                             addSegment(CHANGE_MANUAL, nodeID1, nodeID2, false);
                         }
                         else {
                             addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading, false);
-                        }
+                        }*/
                     }
                     xml.skipCurrentElement();
                 }
@@ -1420,6 +1442,33 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         } // end start element
     } // end while
 
+    QVectorIterator<std::pair<int, int> >edgeIterator(edgeVector);
+    while(edgeIterator.hasNext()) {
+        std::pair<int, int> pair = edgeIterator.next();
+        if(merge == false) {
+            addSegment(CHANGE_MANUAL, pair.first, pair.second, false);
+        } else {
+            addSegment(CHANGE_MANUAL, pair.first + greatestNodeIDbeforeLoading, pair.second + greatestNodeIDbeforeLoading, false);
+        }
+    }
+
+    QVectorIterator<int> branchIterator(branchVector);
+    while(branchIterator.hasNext()) {
+        currentNode = findNodeByNodeID(branchIterator.next());
+        if(currentNode)
+            pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
+    }
+
+    QVectorIterator<std::pair<int, char *> > commentsIterator(commentsVector);
+    while(commentsIterator.hasNext()) {
+        std::pair<int, char *> pair;
+        currentNode = findNodeByNodeID(pair.first);
+        if(currentNode) {
+            addComment(CHANGE_MANUAL, pair.second, currentNode, 0, false);
+        }
+    }
+
+    /*
     if(comments.size()) {
         // if comments were found in the document, add them here,
         // after the tree structure was created.
@@ -1431,7 +1480,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 free(iter->second);
             }
         }
-    }
+    }*/
+
+
+
     if(xml.hasError()) {
         qDebug() << xml.errorString() << " at " << xml.lineNumber();
     }

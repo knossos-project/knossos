@@ -31,6 +31,12 @@
 #include <vector>
 #include "knossos-global.h"
 
+class TreeWithNodes {
+    int treeId;
+    QVector<nodeListElement> nodeVector;
+
+};
+
 class Skeletonizer : public QObject
 {
     Q_OBJECT
