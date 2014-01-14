@@ -1046,11 +1046,11 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     QStringRef attribute;
     float temp;
 
-
-
+    int outerCount = 0, innerCount = 0;
     while(!xml.atEnd() and !xml.hasError()) {
-
+        outerCount++;
         if(xml.readNextStartElement()) {
+            innerCount++;
             /*
             if(xml.lineNumber() % 10 == 0) {
                 progress.setValue(xml.lineNumber());
@@ -1265,13 +1265,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             strcpy(comment, attribute.toLocal8Bit().data());
 
                             commentsVector.push_back(std::pair<int, char *>(nodeID, comment));
-                            comments.push_back(std::pair<uint, char*>(nodeID, comment));
+                            //comments.push_back(std::pair<uint, char*>(nodeID, comment));
                         }
                     }
                     xml.skipCurrentElement();
                 }
             }
-            else if(xml.name() == "thing") {              
+            else if(xml.name() == "thing") {
                 attributes = xml.attributes();
 
                 attribute = attributes.value("id");
@@ -1326,119 +1326,120 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 if(attribute.isNull() == false) {
                     addTreeComment(CHANGE_MANUAL, currentTree->treeID, attribute.toLocal8Bit().data());
                 }
-            }
-            else if(xml.name() == "nodes") {
-                while(xml.readNextStartElement()) {
-                    if(xml.name() == "node") {
-                        attributes = xml.attributes();
 
-                        attribute = attributes.value("id");
-                        if(attribute.isNull() == false) {
-                            nodeID = attribute.toLocal8Bit().toInt();
-                        } else {
-                            nodeID = 0;
-                        }
+                // gate
+                xml.readNextStartElement();
 
-                        attribute = attributes.value("radius");
-                        if(attribute.isNull() == false) {
-                            radius = attribute.toLocal8Bit().toFloat();
-                        } else {
-                            radius = state->skeletonState->defaultNodeRadius;
-                        }
+                if(xml.name() == "nodes") {
+                    while(xml.readNextStartElement()) {
+                        if(xml.name() == "node") {
+                            attributes = xml.attributes();
 
-                        attribute = attributes.value("x");
-                        if(attribute.isNull() == false) {
-                            currentCoordinate->x = attribute.toLocal8Bit().toInt() - 1;
-                            if(globalMagnificationSpecified) {
-                                currentCoordinate->x = currentCoordinate->x * magnification;
+                            attribute = attributes.value("id");
+                            if(attribute.isNull() == false) {
+                                nodeID = attribute.toLocal8Bit().toInt();
+                            } else {
+                                nodeID = 0;
                             }
-                        } else {
-                            currentCoordinate->x = 0;
-                        }
 
-                        attribute = attributes.value("y");
-                        if(attribute.isNull() == false) {
-                            currentCoordinate->y = attribute.toLocal8Bit().toInt() - 1;
-                            if(globalMagnificationSpecified) {
-                                currentCoordinate->y = currentCoordinate->y * magnification;
+                            attribute = attributes.value("radius");
+                            if(attribute.isNull() == false) {
+                                radius = attribute.toLocal8Bit().toFloat();
+                            } else {
+                                radius = state->skeletonState->defaultNodeRadius;
                             }
-                        } else {
-                            currentCoordinate->y = 0;
-                        }
 
-                        attribute = attributes.value("z");
-                        if(attribute.isNull() == false) {
-                            currentCoordinate->z = attribute.toLocal8Bit().toInt() - 1;
-                            if(globalMagnificationSpecified) {
-                                currentCoordinate->z = currentCoordinate->z * magnification;
+                            attribute = attributes.value("x");
+                            if(attribute.isNull() == false) {
+                                currentCoordinate->x = attribute.toLocal8Bit().toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->x = currentCoordinate->x * magnification;
+                                }
+                            } else {
+                                currentCoordinate->x = 0;
                             }
-                        } else {
-                            currentCoordinate->z = 0;
-                        }
 
-                        attribute = attributes.value("inVp");
-                        if(attribute.isNull() == false) {
-                            VPtype = attribute.toLocal8Bit().toInt();
-                        } else {
-                            VPtype = VIEWPORT_UNDEFINED;
-                        }
+                            attribute = attributes.value("y");
+                            if(attribute.isNull() == false) {
+                                currentCoordinate->y = attribute.toLocal8Bit().toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->y = currentCoordinate->y * magnification;
+                                }
+                            } else {
+                                currentCoordinate->y = 0;
+                            }
 
-                        attribute = attributes.value("inMag");
-                        if(attribute.isNull() == false) {
-                            inMag = attribute.toLocal8Bit().toInt();
-                        } else {
-                            inMag = magnification; // For legacy skeleton files
-                        }
-                        attribute = attributes.value("time");
-                        if(attribute.isNull() == false) {
-                            time = attribute.toLocal8Bit().toInt();
-                        } else {
-                            time = skeletonTime; // For legacy skeleton files
-                        }
+                            attribute = attributes.value("z");
+                            if(attribute.isNull() == false) {
+                                currentCoordinate->z = attribute.toLocal8Bit().toInt() - 1;
+                                if(globalMagnificationSpecified) {
+                                    currentCoordinate->z = currentCoordinate->z * magnification;
+                                }
+                            } else {
+                                currentCoordinate->z = 0;
+                            }
 
-                        if(merge == false) {
-                            addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
-                        }
-                        else {
-                            nodeID += greatestNodeIDbeforeLoading;
-                            addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
-                        }
-                    }
-                    xml.skipCurrentElement();
-                } // end while nodes
-            }
-            else if(xml.name() == "edges") {
-                while(xml.readNextStartElement()) {
-                    if(xml.name() == "edge") {
-                        attributes = xml.attributes();
-                        // Add edge
-                        attribute = attributes.value("source");
-                        if(attribute.isNull() == false) {
-                            nodeID1 = attribute.toLocal8Bit().toInt();
-                        }
-                        else {
-                            nodeID1 = 0;
-                        }
-                        attribute = attributes.value("target");
-                        if(attribute.isNull() == false) {
-                            nodeID2 = attribute.toLocal8Bit().toInt();
-                        }
-                         else {
-                            nodeID2 = 0;
-                        }
+                            attribute = attributes.value("inVp");
+                            if(attribute.isNull() == false) {
+                                VPtype = attribute.toLocal8Bit().toInt();
+                            } else {
+                                VPtype = VIEWPORT_UNDEFINED;
+                            }
 
-                        edgeVector.push_back(std::pair<int, int>(nodeID1, nodeID2));
-                        /* // later
-                        if(merge == false) {
-                            addSegment(CHANGE_MANUAL, nodeID1, nodeID2, false);
+                            attribute = attributes.value("inMag");
+                            if(attribute.isNull() == false) {
+                                inMag = attribute.toLocal8Bit().toInt();
+                            } else {
+                                inMag = magnification; // For legacy skeleton files
+                            }
+                            attribute = attributes.value("time");
+                            if(attribute.isNull() == false) {
+                                time = attribute.toLocal8Bit().toInt();
+                            } else {
+                                time = skeletonTime; // For legacy skeleton files
+                            }
+
+                            if(merge == false) {
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
+                            }
+                            else {
+                                nodeID += greatestNodeIDbeforeLoading;
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
+                            }
                         }
-                        else {
-                            addSegment(CHANGE_MANUAL, nodeID1 + greatestNodeIDbeforeLoading, nodeID2 + greatestNodeIDbeforeLoading, false);
-                        }*/
-                    }
-                    xml.skipCurrentElement();
+                        xml.skipCurrentElement();
+                    } // end while nodes
                 }
-            }
+
+                // gate
+                xml.readNextStartElement();
+
+                if(xml.name() == "edges") {
+                    while(xml.readNextStartElement()) {
+                        if(xml.name() == "edge") {
+                            attributes = xml.attributes();
+                            // Add edge
+                            attribute = attributes.value("source");
+                            if(attribute.isNull() == false) {
+                                nodeID1 = attribute.toLocal8Bit().toInt();
+                            }
+                            else {
+                                nodeID1 = 0;
+                            }
+                            attribute = attributes.value("target");
+                            if(attribute.isNull() == false) {
+                                nodeID2 = attribute.toLocal8Bit().toInt();
+                            }
+                             else {
+                                nodeID2 = 0;
+                            }
+
+                            edgeVector.push_back(std::pair<int, int>(nodeID1, nodeID2));
+                        }
+                        xml.skipCurrentElement();
+                    }
+                }
+            } // end thing
         } // end start element
     } // end while
 
@@ -1488,6 +1489,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         qDebug() << xml.errorString() << " at " << xml.lineNumber();
     }
     qDebug() << "loading skeleton took: "<< bench.elapsed();
+    qDebug() << "outer counter: " << outerCount;
+    qDebug() << "inner counter: " << innerCount;
     file.close();
 
     if(activeNodeID) {
@@ -1518,7 +1521,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }
-
 
 void Skeletonizer::setDefaultSkelFileName() {
     // Generate a default file name based on date and time.
