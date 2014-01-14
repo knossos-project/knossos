@@ -60,7 +60,6 @@ void DatasetPropertyWidget::saveSettings()
 {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
-    //settings.clear();
     settings.setValue(DATASET_MRU, getRecentDirsItems());
     settings.endGroup();
 }

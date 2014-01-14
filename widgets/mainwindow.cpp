@@ -1217,7 +1217,7 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    //widgetContainer->datasetPropertyWidget->saveSettings();
+    widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
     widgetContainer->console->saveSettings();
     widgetContainer->dataSavingWidget->saveSettings();
