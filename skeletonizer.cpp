@@ -634,7 +634,7 @@ bool Skeletonizer::updateSkeletonState() {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();
 
-                 emit saveSkeletonSignal(true);
+                 emit saveSkeletonSignal();
             }
         }
     }

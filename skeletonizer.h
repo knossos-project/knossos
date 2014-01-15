@@ -245,7 +245,7 @@ public:
 signals:
     void idleTimeSignal();
     void updatePositionSignal(int serverMovement);        
-    void saveSkeletonSignal(int increment);
+    void saveSkeletonSignal();
     void updateToolsSignal();
     void updateTreeviewSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);

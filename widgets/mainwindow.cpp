@@ -348,7 +348,10 @@ bool MainWindow::cpBaseDirectory(char *target, QString path){
     return true;
 }
 
-/** This method adds a file path to the queue data structure */
+/** This method adds a file path to the queue data structure
+    Use this method only after checking if the entry is already in the menu
+*/
+
 bool MainWindow::addRecentFile(const QString &fileName) {
 
     if(skeletonFileHistory->size() < FILE_DIALOG_HISTORY_MAX_ENTRIES) {
@@ -822,6 +825,11 @@ void MainWindow::saveSlot()
                 updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
             }
             emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+
+            if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+                addRecentFile(state->skeletonState->skeletonFileAsQString);
+            }
+
             updateTitlebar(true);
             state->skeletonState->unsavedChanges = false;           
         }
@@ -855,6 +863,11 @@ void MainWindow::saveAsSlot()
         state->skeletonState->skeletonFileAsQString = fileName;
 
         emit saveSkeletonSignal(fileName);
+
+        if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+            addRecentFile(state->skeletonState->skeletonFileAsQString);
+        }
+
         updateTitlebar(true);
         state->skeletonState->unsavedChanges = false;
 

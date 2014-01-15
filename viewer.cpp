@@ -1966,6 +1966,7 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
                     window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
     connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
     connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
