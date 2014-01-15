@@ -1,7 +1,5 @@
 #include "scripting.h"
-#include "knossos-global.h"
 
-extern stateInfo *state;
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -21,9 +19,11 @@ void Scripting::run() {
     console->setWindowTitle("Knossos Scripting Console");
 
 
-    //PythonQt::self()->addInstanceDecorators(reference);
-    //PythonQt::self()->registerClass(reference->metaObject(), "skeleton");
-    ctx.addObject("skeleton", reference);
+
+    //PythonQt::self()->addInstanceDecorators(stateReference);
+    //PythonQt::self()->registerCPPClass(reference->metaObject(), "skeleton");
+    ctx.addObject("skeleton", skeletonReference);
+    ctx.addObject("state", state);
 
     console->setFont(font);
     console->appendCommandPrompt(true);

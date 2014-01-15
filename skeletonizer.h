@@ -43,68 +43,8 @@ class Skeletonizer : public QObject
 
 public:
     explicit Skeletonizer(QObject *parent = 0);
-    static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
 
-    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
-    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
-    static nodeListElement *findNodeByCoordinate(Coordinate *position);
-    static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
-    static treeListElement *getTreeWithNextID(treeListElement *currentTree);
-    static int addNode(int targetRevision,
-                    int nodeID,
-                    float radius,
-                    int treeID,
-                    Coordinate *position,
-                    Byte VPtype,
-                    int inMag,
-                    int time,
-                    int respectLocks,
-                    int serialize);
-
-    static void *popStack(stack *stack);
-    static bool pushStack(stack *stack, void *element);
-    static stack *newStack(int size);
-    static bool delStack(stack *stack);
-    static bool delDynArray(dynArray *array);
-    static void *getDynArray(dynArray *array, int pos);
-    static bool setDynArray(dynArray *array, int pos, void *value);
-    static dynArray *newDynArray(int size);
-
-    static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
-    static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
-    static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
-
-    static bool addNodeToSkeletonStruct(nodeListElement *node);
-    static bool addSegmentToSkeletonStruct(segmentListElement *segment);
-    void WRAP_popBranchNode();
-    static void setColorFromNode(struct nodeListElement *node, color4F *color);
-    static void setRadiusFromNode(struct nodeListElement *node, float *radius);
-    bool delSkelState(skeletonState *skelState);
-    bool delTreesFromState(skeletonState *skelState);
-    bool delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
-    static bool hasObfuscatedTime();
-    bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
-    bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
-    bool delSegmentFromCmd(struct segmentListElement *segToDel);
-    static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
-
-    static bool deleteSelectedTrees();
-
-    static char *integerChecksum(int32_t in);
-    static bool isObfuscatedTime(int time);
-
-    static void resetSkeletonMeta();
-
-public:
-    static void setDefaultSkelFileName();
-    bool searchInComment(char *searchString, commentListElement *comment);
-    void popBranchNodeCanceled();
-    bool popBranchNode(int targetRevision, int serialize);
-    static bool delNodeFromSkeletonStruct(nodeListElement *node);
-    static bool updateCircRadius(struct nodeListElement *node);
-    static int xorInt(int xorMe);    
-    uint skeletonRevision;
-
+public:    
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
     //    skeletonTimeCorrection is the time that has to be subtracted from
@@ -242,6 +182,7 @@ public:
     struct cmdList *undoList;
     struct cmdList *redoList;
 
+    uint skeletonRevision;
 signals:
     void idleTimeSignal();
     void updatePositionSignal(int serverMovement);        
@@ -254,6 +195,58 @@ signals:
     void displayModeChangedSignal();
 
 public slots:
+    static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
+
+    static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
+    static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
+    static nodeListElement *findNodeByCoordinate(Coordinate *position);
+    static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
+    static treeListElement *getTreeWithNextID(treeListElement *currentTree);
+    static int addNode(int targetRevision,
+                    int nodeID,
+                    float radius,
+                    int treeID,
+                    Coordinate *position,
+                    Byte VPtype,
+                    int inMag,
+                    int time,
+                    int respectLocks,
+                    int serialize);
+
+    static void *popStack(stack *stack);
+    static bool pushStack(stack *stack, void *element);
+    static stack *newStack(int size);
+    static bool delStack(stack *stack);
+    static bool delDynArray(dynArray *array);
+    static void *getDynArray(dynArray *array, int pos);
+    static bool setDynArray(dynArray *array, int pos, void *value);
+    static dynArray *newDynArray(int size);
+
+    static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
+    static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
+    static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
+
+    static bool addNodeToSkeletonStruct(nodeListElement *node);
+    static bool addSegmentToSkeletonStruct(segmentListElement *segment);
+    void WRAP_popBranchNode();
+    static void setColorFromNode(struct nodeListElement *node, color4F *color);
+    static void setRadiusFromNode(struct nodeListElement *node, float *radius);
+    bool delSkelState(skeletonState *skelState);
+    bool delTreesFromState(skeletonState *skelState);
+    bool delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
+    static bool hasObfuscatedTime();
+    bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
+    bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
+    bool delSegmentFromCmd(struct segmentListElement *segToDel);
+    static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
+
+    static bool deleteSelectedTrees();
+
+    static char *integerChecksum(int32_t in);
+    static bool isObfuscatedTime(int time);
+
+    static void resetSkeletonMeta();
+
     void UI_popBranchNode();
     static bool delTree(int targetRevision, int treeID, int serialize);
     static bool delActiveTree();
@@ -316,12 +309,22 @@ public slots:
     static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
+    static void setDefaultSkelFileName();
+    bool searchInComment(char *searchString, commentListElement *comment);
+    void popBranchNodeCanceled();
+    bool popBranchNode(int targetRevision, int serialize);
+    static bool delNodeFromSkeletonStruct(nodeListElement *node);
+    static bool updateCircRadius(struct nodeListElement *node);
+    static int xorInt(int xorMe);
+
     static void saveSerializedSkeleton();
     void undo();
     void redo();
     static Byte *serializeSkeleton();
     void deserializeSkeleton();
     void deleteLastSerialSkeleton();
+
+
 
     static int getTreeBlockSize();
     static int getNodeBlockSize();

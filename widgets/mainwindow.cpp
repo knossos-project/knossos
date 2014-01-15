@@ -799,6 +799,7 @@ bool MainWindow::alreadyInMenu(const QString &path) {
   * The order is: 1. AddRecentFile and then 2. updateFileHistoryMenu
   */
 void MainWindow::updateFileHistoryMenu() {
+
     QQueue<QString>::iterator it;
     int i = 0;
     for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {

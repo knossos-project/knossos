@@ -92,7 +92,8 @@ SOURCES += widgets/mainwindow.cpp \
     test/knossostestrunner.cpp \
     sha256.cpp \
     widgets/documentationwidget.cpp \
-    widgets/treeview.cpp
+    widgets/treeview.cpp \
+    stateInfo.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -253,9 +254,11 @@ win32 {
             -lpythonQt_QtAll$${DEBUG_EXT} \
             -lcurl.dll \
             -lglut32 \
-            #C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\lib\libglew32.dll.a \
-            -lglut32 \
+            -lglew32 \
             -lwsock32
+
+
+
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
@@ -270,5 +273,3 @@ RESOURCES += \
 include(test/config.pri)
 
 QMAKE_CFLAGS_RELEASE += -O3
-
-

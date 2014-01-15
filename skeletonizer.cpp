@@ -1051,6 +1051,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         outerCount++;
         if(xml.readNextStartElement()) {
             innerCount++;
+
             /*
             if(xml.lineNumber() % 10 == 0) {
                 progress.setValue(xml.lineNumber());
@@ -1265,6 +1266,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             strcpy(comment, attribute.toLocal8Bit().data());
 
                             commentsVector.push_back(std::pair<int, char *>(nodeID, comment));
+                            //qDebug() << nodeID << " " << comment;
                             //comments.push_back(std::pair<uint, char*>(nodeID, comment));
                         }
                     }
@@ -1443,6 +1445,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         } // end start element
     } // end while
 
+
     QVectorIterator<std::pair<int, int> >edgeIterator(edgeVector);
     while(edgeIterator.hasNext()) {
         std::pair<int, int> pair = edgeIterator.next();
@@ -1453,6 +1456,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         }
     }
 
+
+
     QVectorIterator<int> branchIterator(branchVector);
     while(branchIterator.hasNext()) {
         currentNode = findNodeByNodeID(branchIterator.next());
@@ -1460,10 +1465,13 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
             pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
     }
 
+
     QVectorIterator<std::pair<int, char *> > commentsIterator(commentsVector);
     while(commentsIterator.hasNext()) {
-        std::pair<int, char *> pair;
+        std::pair<int, char *> pair = commentsIterator.next();
         currentNode = findNodeByNodeID(pair.first);
+        //qDebug() << pair.first;
+        //qDebug() << pair.second;
         if(currentNode) {
             addComment(CHANGE_MANUAL, pair.second, currentNode, 0, false);
         }

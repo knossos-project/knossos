@@ -39,7 +39,7 @@ public:
     static bool printConfigValues();
     static bool loadNeutralDatasetLUT(GLuint *datasetLut);
     static bool readDataConfAndLocalConf();
-    static struct stateInfo *emptyState();
+    static stateInfo *emptyState();
     bool findAndRegisterAvailableDatasets();
     static bool configDefaults();
     static bool configFromCli(int argCount, char *arguments[]);   

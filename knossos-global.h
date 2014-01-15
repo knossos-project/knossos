@@ -446,16 +446,19 @@ struct assignment {
 };
 
 /**
-  * @struct stateInfo
+  * @stateInfo
   * @brief stateInfo holds everything we need to know about the current instance of Knossos
   *
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
 #include "widgets/console.h"
 
-class stateInfo {
+class stateInfo : public QObject {
+    Q_OBJECT
 public:
+    stateInfo();
     uint svnRevision;
+
     Console *console;
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
@@ -646,6 +649,40 @@ public:
     bool modCtrl, modAlt, modShift;
     int newCoord[3];
     bool autorepeat;
+
+signals:
+public slots:
+    uint getSvnRevision();
+    float getAlpha();
+    float getBeta();
+    bool isOverlay();
+    bool isLoaderBusy();
+    bool isLoaderDummy();
+    bool isQuitSignal();
+    bool isClientSignal();
+    bool isRemoteSignal();
+    bool isBoergens();
+    char *getPath();
+    char *getLoaderPath();
+    char **getMagNames();
+    char **getMagPaths();
+    char *getDatasetBaseExpName();
+    int getMagnification();
+    uint getCompressionRatio();
+    uint getHighestAvailableMag();
+    uint getLowestAvailableMag();
+    uint getLoaderMagnification();
+    uint getCubeBytes();
+    int getCubeEdgeLength();
+    int getCubeSliceArea();
+    int getM();
+    uint getCubeSetElements();
+    uint getCubeSetBytes();
+    Coordinate getBoundary();
+
+
+
+
 
 };
 

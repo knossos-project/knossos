@@ -63,7 +63,7 @@
 
 #define NUMTHREADS 4
 
-struct stateInfo *state = NULL;
+extern stateInfo *state = NULL;
 char logFilename[MAX_PATH] = {0};
 Loader *loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
@@ -143,9 +143,10 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
 
-
     Scripting *scripts = new Scripting();
-    scripts->reference = viewer->skeletonizer;
+    scripts->skeletonReference = viewer->skeletonizer;
+    //scripts->stateReference = state;
+
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()),
                             viewer->window, SLOT(treeColorAdjustmentsChanged()));
@@ -217,7 +218,7 @@ int main(int argc, char *argv[])
     remote->start();
     client->start();
 
-    //scripts->run();
+    scripts->run();
 
     /* TEST */
     /*
@@ -686,11 +687,9 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
     return true;
 }
 
-struct stateInfo *Knossos::emptyState() {
+stateInfo *Knossos::emptyState() {
 
-    struct stateInfo *state = NULL;
-
-    state = new stateInfo();
+    stateInfo *state = new stateInfo();
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
