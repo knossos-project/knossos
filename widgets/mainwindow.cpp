@@ -298,6 +298,8 @@ void MainWindow:: createToolBar() {
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
 
     //connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
+
+    //connect(pythonButton, SIGNAL(clicked()), this, SLOT());
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
     connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
     connect(treeviewButton, SIGNAL(clicked()), this, SLOT(treeviewSlot()));

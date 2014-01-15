@@ -254,7 +254,7 @@ win32 {
             -lpythonQt_QtAll$${DEBUG_EXT} \
             -lcurl.dll \
             -lglut32 \
-            -lglew32 \
+            #-lglew32 \
             -lwsock32
 
 
