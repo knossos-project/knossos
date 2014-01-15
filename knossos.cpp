@@ -162,6 +162,8 @@ int main(int argc, char *argv[])
                             viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
     QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(startLoaderSignal()),
                      knossos, SLOT(startLoader()));
+    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+
     QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
     QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),
                             remote, SLOT(setRecenteringPosition(int,int,int)));
