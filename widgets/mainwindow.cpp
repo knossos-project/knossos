@@ -1312,7 +1312,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
-    //widgetContainer->datasetPropertyWidget->loadSettings();
+    widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->console->loadSettings();
     widgetContainer->dataSavingWidget->loadSettings();
