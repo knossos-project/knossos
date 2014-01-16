@@ -855,9 +855,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            viewerState->currentPosition.z - v1.z * viewerState->vpConfigs[i].s_max/2 - v2.z * viewerState->vpConfigs[i].t_max/2);
 
             SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.x)* state->magnification,
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.y)* state->magnification,
-                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.z)* state->magnification);
+                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.x),
+                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.y),
+                           roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.z));
 
             SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen_float,
                            viewerState->currentPosition.x
