@@ -236,10 +236,10 @@ int main(int argc, char *argv[])
     */
 
 
-    KnossosTestRunner runner;
-    runner.reference = viewer;
-    runner.addTestClasses();
-    runner.show();
+//    KnossosTestRunner runner;
+//    runner.reference = viewer;
+//    runner.addTestClasses();
+//    runner.show();
 
 
 

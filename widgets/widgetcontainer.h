@@ -5,34 +5,34 @@
 
 #include <QObject>
 
-#include "widgets/console.h"
-#include "widgets/tracingtimewidget.h"
-#include "widgets/synchronizationwidget.h"
-#include "widgets/datasavingwidget.h"
-#include "widgets/splashscreenwidget.h"
+#include "console.h"
+#include "tracingtimewidget.h"
+#include "synchronizationwidget.h"
+#include "datasavingwidget.h"
+#include "splashscreenwidget.h"
 
-#include "widgets/commentswidget.h"
-#include "widgets/commentshortcuts/commentshortcutstab.h"
-#include "widgets/commentshortcuts/commentshighlightingtab.h"
-#include "widgets/commentshortcuts/commentsnodecommentstab.h"
+#include "commentswidget.h"
+#include "commentshortcuts/commentshortcutstab.h"
+#include "commentshortcuts/commentshighlightingtab.h"
+#include "commentshortcuts/commentsnodecommentstab.h"
 
-#include "widgets/toolswidget.h"
-#include "widgets/tools/toolsnodestabwidget.h"
-#include "widgets/tools/toolsquicktabwidget.h"
-#include "widgets/tools/toolstreestabwidget.h"
+#include "toolswidget.h"
+#include "tools/toolsnodestabwidget.h"
+#include "tools/toolsquicktabwidget.h"
+#include "tools/toolstreestabwidget.h"
 
-#include "widgets/viewportsettingswidget.h"
-#include "widgets/viewportsettings/vpgeneraltabwidget.h"
-#include "widgets/viewportsettings/vpskeletonviewportwidget.h"
-#include "widgets/viewportsettings/vpsliceplaneviewportwidget.h"
+#include "viewportsettingswidget.h"
+#include "viewportsettings/vpgeneraltabwidget.h"
+#include "viewportsettings/vpskeletonviewportwidget.h"
+#include "viewportsettings/vpsliceplaneviewportwidget.h"
 
-#include "widgets/zoomandmultireswidget.h"
-#include "widgets/navigationwidget.h"
-#include "widgets/datasetpropertywidget.h"
-#include "widgets/task/taskloginwidget.h"
-#include "widgets/task/taskmanagementwidget.h"
-#include "widgets/documentationwidget.h"
-#include "widgets/treeview.h"
+#include "zoomandmultireswidget.h"
+#include "navigationwidget.h"
+#include "datasetpropertywidget.h"
+#include "task/taskloginwidget.h"
+#include "task/taskmanagementwidget.h"
+#include "documentationwidget.h"
+#include "annotationwidget.h"
 
 class Viewport;
 class MainWindow;
@@ -59,7 +59,7 @@ public:
     void createDatasetPropertyWidget(QWidget *parent);
     void createTaskWidgets(QWidget *parent);
     void createDocumentationWidget(QWidget *parent);
-    void createTreeviewWidget(QWidget *parent);
+    void createAnnotationWidget(QWidget *parent);
     void createWidgets(QWidget *parent);
 
     Console *console;
@@ -76,7 +76,7 @@ public:
     TaskLoginWidget *taskLoginWidget;
     TaskManagementWidget *taskManagementWidget;
     DocumentationWidget *docWidget;
-    Treeview *treeviewWidget;
+    AnnotationWidget *annotationWidget;
 
 signals:
 

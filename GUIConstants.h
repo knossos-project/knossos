@@ -99,6 +99,8 @@ const QString ACTIVE_TREE_ID = "active_tree_id";
 const QString ACTIVE_NODE_ID = "active_node_id";
 const QString COMMENT = "comment";
 const QString SEARCH_FOR = "search_for";
+const QString SEARCH_FOR_TREE = "search_for_tree";
+const QString SEARCH_FOR_NODE = "search_for_node";
 
 /* Tools Widget TreeTab */
 const QString ID1 = "id1";

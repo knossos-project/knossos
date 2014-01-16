@@ -14,13 +14,13 @@ WidgetContainer::WidgetContainer(MainWindow *parent) :
  * @brief WidgetContainer::rewire connects signals and slots in different widgets with each other
  */
 void WidgetContainer::rewire() {
-    connect(toolsWidget, SIGNAL(updateCommentsTableSignal()), commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
-    connect(toolsWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
-    connect(toolsWidget->toolsQuickTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
-    connect(toolsWidget->toolsNodesTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
-    connect(toolsWidget->toolsTreesTabWidget, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
-    connect(treeviewWidget, SIGNAL(updateToolsSignal()), toolsWidget, SLOT(updateToolsSlot()));
-    connect(commentsWidget->nodeCommentsTab, SIGNAL(updateTreeviewSignal()), treeviewWidget, SLOT(update()));
+//    connect(toolsWidget, SIGNAL(updateCommentsTableSignal()), commentsWidget->nodeCommentsTab, SLOT(updateCommentsTable()));
+//    connect(toolsWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
+//    connect(toolsWidget->toolsQuickTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
+//    connect(toolsWidget->toolsNodesTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
+//    connect(toolsWidget->toolsTreesTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
+    //connect(annotationWidget->treeviewTab, SIGNAL(updateToolsSignal()), toolsWidget, SLOT(updateToolsSlot()));
+//    connect(commentsWidget->nodeCommentsTab, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
 }
 
 void WidgetContainer::createConsoleWidget() {
@@ -135,11 +135,12 @@ void WidgetContainer::createDocumentationWidget(QWidget *parent) {
 #endif
 }
 
-void WidgetContainer::createTreeviewWidget(QWidget *parent) {
-    treeviewWidget = new Treeview(parent);
+void WidgetContainer::createAnnotationWidget(QWidget *parent) {
+    annotationWidget = new AnnotationWidget(parent);
 #ifdef Q_OS_MAC
-    treeviewWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+    annotationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
+    annotationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 }
 
 void WidgetContainer::createWidgets(QWidget *parent) {
@@ -149,14 +150,14 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createViewportSettingsWidget(parent);
     createZoomAndMultiresWidget(parent);
     createNavigationWidget(parent);
-    createToolWidget(parent);
+    //createToolWidget(parent);
     createDataSavingWidget(parent);
     createSychronizationWidget(parent);
     createDatasetPropertyWidget(parent);
     createTaskWidgets(parent);
     createSplashScreenWidget(parent);
     createDocumentationWidget(parent);
-    createTreeviewWidget(parent);
+    createAnnotationWidget(parent);
     rewire();
 
     connect(this->datasetPropertyWidget, SIGNAL(datasetSwitchZoomDefaults()), this->zoomAndMultiresWidget, SLOT(zoomDefaultsClicked()));

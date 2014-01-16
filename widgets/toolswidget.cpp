@@ -196,7 +196,7 @@ void ToolsWidget::loadSettings() {
     if(!settings.value(DEFAULT_NODE_RADIUS).isNull())
         this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(settings.value(DEFAULT_NODE_RADIUS).toDouble());
     else
-        this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
+        this->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
 
     this->toolsNodesTabWidget->enableCommentLockingCheckBox->setChecked(settings.value(ENABLE_COMMENT_LOCKING).toBool());
     this->toolsNodesTabWidget->lockingRadiusSpinBox->setValue(settings.value(LOCKING_RADIUS).toInt());

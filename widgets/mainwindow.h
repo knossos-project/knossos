@@ -175,7 +175,7 @@ public:
     QAction *taskAction;
     QAction *logAction;
     QAction *commentShortcutsAction;
-    QAction *treeviewAction;
+    QAction *annotationAction;
 
     /* help actions */
     QAction *aboutAction;
@@ -209,7 +209,7 @@ public:
     QPushButton *resetVPOrientButton;
     QCheckBox *lockVPOrientationCheckbox;
     QToolButton *taskManagementButton;
-    QToolButton *treeviewButton;
+    QToolButton *annotationButton;
 
     void createViewports();
 
@@ -269,7 +269,7 @@ public slots:
     void taskSlot();
     void logSlot();
     void commentShortcutsSlots();
-    void treeviewSlot();
+    void annotationSlot();
 
     /* help menu */
     void aboutSlot();

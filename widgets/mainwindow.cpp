@@ -126,7 +126,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
 
-    connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
+    //connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
     connect(widgetContainer->viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
     connect(widgetContainer->commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
     connect(widgetContainer->console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
@@ -260,21 +260,21 @@ void MainWindow:: createToolBar() {
     viewportSettingsButton->setIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
     this->toolBar->addWidget(viewportSettingsButton);
 
-    toolsButton = new QToolButton();
-    toolsButton->setToolTip("Tools Widget");
-    toolsButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
-    this->toolBar->addWidget(toolsButton);
+//    toolsButton = new QToolButton();
+//    toolsButton->setToolTip("Tools Widget");
+//    toolsButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
+//    this->toolBar->addWidget(toolsButton);
 
     commentShortcutsButton = new QToolButton();
     commentShortcutsButton->setToolTip("Comments Shortcut Widget");
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
 
-    treeviewButton = new QToolButton();
-    treeviewButton->setToolTip("Tree View");
-    treeviewButton->setIcon(QIcon(":/images/icons/graph.png"));
-    treeviewButton->setToolTip(("Tree View Widget"));
-    toolBar->addWidget(treeviewButton);
+    annotationButton = new QToolButton();
+    annotationButton->setToolTip("Tools Widget");
+    annotationButton->setIcon(QIcon(":/images/icons/graph.png"));
+    annotationButton->setToolTip(("Tools Widget"));
+    toolBar->addWidget(annotationButton);
     this->toolBar->addSeparator();
     resetVPsButton = new QPushButton("Reset VP Positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
@@ -301,8 +301,8 @@ void MainWindow:: createToolBar() {
 
     //connect(pythonButton, SIGNAL(clicked()), this, SLOT());
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
-    connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
-    connect(treeviewButton, SIGNAL(clicked()), this, SLOT(treeviewSlot()));
+    //connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
+    connect(annotationButton, SIGNAL(clicked()), this, SLOT(annotationSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
     connect(commentShortcutsButton, SIGNAL(clicked()), this, SLOT(commentShortcutsSlots()));
@@ -552,8 +552,8 @@ void MainWindow::createActions()
 
     connect(logAction, SIGNAL(triggered()), this, SLOT(logSlot()));
 
-    treeviewAction = new QAction(tr("Tree View"), this);
-    treeviewAction->setCheckable(true);
+    annotationAction = new QAction(tr("Annotation Widget"), this);
+    annotationAction->setCheckable(true);
     //connect(taskLoginAction, SIGNAL(triggered()), this, SLOT(taskLoginSlot()));
 
     /* Help actions */
@@ -677,11 +677,11 @@ void MainWindow::createMenus()
     viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
     windowMenu = menuBar()->addMenu("Windows");
-    toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
+    //toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
     taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-    treeviewAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tree View", this, SLOT(treeviewSlot()));
+    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tree View", this, SLOT(annotationSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 
@@ -710,8 +710,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          }
     }
 }
-
-
 
 //file menu functionality
 
@@ -1048,14 +1046,14 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         saveSettings();
-        qDebug() << "MainWindow::defaultPreferencesSlot: lockDatasetCheckBox->setChecked(true)";
         widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
+        //widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
         widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
-        widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1);
         emit loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
-        this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2, QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
+        this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2,
+                          QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
     }
 }
 
@@ -1133,8 +1131,9 @@ void MainWindow::commentShortcutsSlots()
     this->widgetContainer->commentsWidget->setFixedSize(this->widgetContainer->commentsWidget->size());
 }
 
-void MainWindow::treeviewSlot() {
-    this->widgetContainer->treeviewWidget->show();
+void MainWindow::annotationSlot() {
+    this->widgetContainer->annotationWidget->show();
+    this->widgetContainer->annotationWidget->adjustSize();
 }
 
 /* help menu functionality */
@@ -1240,7 +1239,8 @@ void MainWindow::saveSettings() {
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
-    widgetContainer->toolsWidget->saveSettings();
+    widgetContainer->annotationWidget->saveSettings();
+    //widgetContainer->toolsWidget->saveSettings();
     widgetContainer->tracingTimeWidget->saveSettings();
 }
 
@@ -1319,8 +1319,8 @@ void MainWindow::loadSettings() {
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
+    widgetContainer->annotationWidget->loadSettings();
     widgetContainer->tracingTimeWidget->loadSettings();
-
 }
 
 void MainWindow::clearSettings() {
@@ -1590,13 +1590,13 @@ void MainWindow::previousCommentNodeSlot() {
 
 void MainWindow::pushBranchNodeSlot() {
    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-   emit updateTools();
+   emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::popBranchNodeSlot() {
     emit popBranchNodeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 

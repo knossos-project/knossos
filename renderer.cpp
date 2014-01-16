@@ -1740,11 +1740,9 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
 #include "sleeper.h"
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
-
     int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
-
 
     GLuint selectionBuffer[8192] = {0};
     GLint hits, openGLviewport[4];
@@ -1802,15 +1800,6 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
 
     minZ = 0xffffffff;
 
-    for(int i = 49; i < 100; i++) {
-        if(selectionBuffer[i] != 0) {
-            qDebug() << "in selectionbuffer. index " << i << " " << selectionBuffer[i];
-        }
-
-    }
-
-
-
     for(i = 0; i < hits; i++) {
         names = *ptr;
 
@@ -1821,8 +1810,6 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         }
         ptr += names + 2;
     }
-
-
 
     state->viewerState->selectModeFlag = false;
     if(ptrName) {
@@ -2502,7 +2489,7 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
     int p;
 
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */
-    if(state->viewerState->selectModeFlag) radius += 900.f;
+   // if(state->viewerState->selectModeFlag) radius += 900.f;
 
     for( p = 0; p < 6; p++ )
         if( state->viewerState->vpConfigs[viewportType].frustum[p][0]

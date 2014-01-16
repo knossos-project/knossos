@@ -41,7 +41,7 @@ public:
     void saveSettings();
     CommentShortCutsTab *shortcutTab;
     CommentsHighlightingTab *highlightingTab;
-    CommentsNodeCommentsTab *nodeCommentsTab;
+//    CommentsNodeCommentsTab *nodeCommentsTab;
 signals:
     void uncheckSignal();
 public slots:

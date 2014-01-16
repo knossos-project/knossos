@@ -92,7 +92,9 @@ SOURCES += widgets/mainwindow.cpp \
     test/knossostestrunner.cpp \
     sha256.cpp \
     widgets/documentationwidget.cpp \
-    widgets/treeview.cpp \
+    widgets/annotationwidget.cpp \
+    widgets/tools/toolscommandstab.cpp \
+    widgets/tools/toolstreeviewtab.cpp \
     stateInfo.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -185,7 +187,9 @@ HEADERS  += widgets/mainwindow.h \
     test/knossostestrunner.h \
     sha256.h \
     widgets/documentationwidget.h \
-    widgets/treeview.h
+    widgets/annotationwidget.h \
+    widgets/tools/toolscommandstab.h \
+    widgets/tools/toolstreeviewtab.h \
 
 
 FORMS    += mainwindow.ui
@@ -256,7 +260,6 @@ win32 {
             -lglut32 \
             #-lglew32 \
             -lwsock32
-
 
 
 

@@ -46,12 +46,12 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
     setWindowTitle("Comment Settings");
     this->shortcutTab = new CommentShortCutsTab();
     this->highlightingTab = new CommentsHighlightingTab();
-    this->nodeCommentsTab = new CommentsNodeCommentsTab();
+//    this->nodeCommentsTab = new CommentsNodeCommentsTab();
 
     tabs = new QTabWidget(this);
     tabs->addTab(shortcutTab, "Shortcuts");
     tabs->addTab(highlightingTab, "Highlighting");
-    tabs->addTab(nodeCommentsTab, "Node Comments");
+//    tabs->addTab(nodeCommentsTab, "Node Comments");
 
 }
 
