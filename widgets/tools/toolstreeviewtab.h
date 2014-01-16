@@ -122,6 +122,7 @@ public slots:
 
     void treeItemChanged(QTableWidgetItem* item);
     void treeItemSelected();
+    void treeItemDoubleClicked(QTableWidgetItem* item);
     void nodeItemChanged(QTableWidgetItem* item);
     void nodeItemSelected();
     void nodeItemDoubleClicked(QTableWidgetItem* item);

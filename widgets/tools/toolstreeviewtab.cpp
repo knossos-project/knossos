@@ -295,6 +295,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(treeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(treeContextMenuCalled(QPoint)));
     connect(treeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(treeItemChanged(QTableWidgetItem*)));
     connect(treeTable, SIGNAL(itemSelectionChanged()), this, SLOT(treeItemSelected()));
+    connect(treeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(treeItemDoubleClicked(QTableWidgetItem*)));
 
     connect(nodeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(nodeContextMenuCalled(QPoint)));
     connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(nodeItemChanged(QTableWidgetItem*)));
@@ -765,6 +766,15 @@ void ToolsTreeviewTab::treeItemSelected() {
     if(nodesOfSelectedTreesRadio->isChecked()) {
         updateNodesTable();
     }
+}
+
+void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
+    if(state->skeletonState->selectedTrees.size() != 1) {
+        return;
+    }
+    Skeletonizer::setActiveTreeByID(state->skeletonState->selectedTrees.at(0)->treeID);
+    updateTreesTable();
+    state->skeletonState->selectedTrees.clear();
 }
 
 void ToolsTreeviewTab::nodeItemSelected() {
