@@ -28,7 +28,6 @@
 
 #include <QObject>
 #include <QtXml>
-#include <vector>
 #include "knossos-global.h"
 
 class TreeWithNodes {
@@ -294,7 +293,7 @@ public slots:
     bool moveToPrevTree();
     bool moveToPrevNode();
     bool moveToNextNode();
-
+    static bool moveNodeToTree(nodeListElement *node, int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(int nodeID);
     static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);

@@ -1209,7 +1209,22 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         emit deleteActiveNodeSignal();
         emit updateTools();
         emit updateTreeviewSignal();
-    } else if(event->key() == Qt::Key_F4) {
+    }
+    else if(event->key() == Qt::Key_Escape) {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setWindowTitle("Cofirmation required");
+        prompt.setText("Unselect current node selection?");
+        QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+        prompt.addButton("No", QMessageBox::ActionRole);
+        prompt.exec();
+        if(prompt.clickedButton() == confirmButton) {
+            state->skeletonState->selectedNodes.clear();
+            emit unselectNodesSignal();
+        }
+    }
+    else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
             QApplication::quit();

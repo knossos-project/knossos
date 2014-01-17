@@ -1970,6 +1970,8 @@ void Viewer::rewire() {
    // connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    connect(eventModel, SIGNAL(unselectNodesSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SLOT(clearSelection()));
     connect(eventModel, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(eventModel, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
     connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpUpperLeft, SLOT(zoomOrthogonals(float)));

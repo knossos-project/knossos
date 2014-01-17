@@ -77,6 +77,10 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
 
+//     state->skeletonState->drawNodeSelectSquare = false;
+//    SET_COORDINATE(state->skeletonState->nodeSelectionSquare.first, 0, 0, 0);
+//    SET_COORDINATE(state->skeletonState->nodeSelectionSquare.second, 0, 0, 0);
+
     state->skeletonState->mergeOnLoadFlag = 0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
     //state->skeletonState->autoFilenameIncrementBool = true;
@@ -1144,11 +1148,11 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                         attribute = attributes.value("y");
                         if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toLocal8Bit().toInt();
+                            loadedPosition.y = attribute.toLocal8Bit().toInt();
 
                         attribute = attributes.value("z");
                         if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toLocal8Bit().toInt();
+                            loadedPosition.z = attribute.toLocal8Bit().toInt();
 
                     }
                     else if(xml.name() == "skeletonVPState") {
@@ -2071,14 +2075,11 @@ int Skeletonizer::addNode(int targetRevision,
 
 
     if(respectLocks) {
-
         if(state->skeletonState->positionLocked) {
-
             if(state->viewerState->gui->lockComment == QString(state->skeletonState->onCommentLock)) {
                 unlockPosition();
                 return false;
             }
-
 
             lockVector.x = (float)position->x - (float)state->skeletonState->lockedPosition.x;
             lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
@@ -4271,6 +4272,78 @@ bool Skeletonizer::moveToNextNode() {
         return true;
     }
     return false;
+}
+
+bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
+    treeListElement *newTree = findTreeByTreeID(treeID);
+    if(node == NULL or newTree == NULL) {
+        return false;
+    }
+
+    nodeListElement *tmpNode, *lastNode;
+    if(node->correspondingTree != NULL) {
+
+        if(node->correspondingTree->treeID == newTree->treeID) {
+            return false;
+        }
+
+        // remove node from old tree
+        nodeListElement *lastNode = NULL; // the previous node in the current tree
+        tmpNode = node->correspondingTree->firstNode;
+        while(tmpNode) {
+            if(tmpNode->nodeID == node->nodeID) {
+                break;
+            }
+            lastNode = tmpNode;
+            tmpNode = tmpNode->next;
+        }
+        if(lastNode == NULL) { // node is the first node in its current tree
+            if(node->next) {
+                node->correspondingTree->firstNode = node->next;
+                node->next->previous = NULL;
+            }
+            else {
+                node->correspondingTree->firstNode = NULL;
+            }
+        }
+        else {
+            lastNode->next = node->next;
+            if(node->next) {
+                node->next->previous = lastNode;
+            }
+
+            // decrement node counter for the old tree
+            setDynArray(state->skeletonState->nodeCounter,
+                    node->correspondingTree->treeID,
+                    (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, node->correspondingTree->treeID) - 1));
+        }
+    }
+
+    // add node to new tree
+    tmpNode = newTree->firstNode;
+    lastNode = NULL;
+    while(tmpNode) {
+        lastNode = tmpNode;
+        tmpNode = tmpNode->next;
+    }
+    if(lastNode == NULL) { // the moved node will be the first one in the new tree
+        newTree->firstNode = node;
+        node->next = NULL;
+        node->previous = NULL;
+
+    }
+    else {
+        lastNode->next = node;
+        node->previous = lastNode;
+        node->next = NULL;
+    }
+    node->correspondingTree = newTree;
+    // increment node counter for the new tree
+    setDynArray(state->skeletonState->nodeCounter,
+            newTree->treeID,
+            (void *)((PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter, newTree->treeID) + 1));
+
+    return true;
 }
 
 bool Skeletonizer::deleteSelectedTrees() {

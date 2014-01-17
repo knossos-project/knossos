@@ -2228,6 +2228,25 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
 
+                if(std::find(state->skeletonState->selectedNodes.begin(),
+                             state->skeletonState->selectedNodes.end(),
+                             currentNode)
+                    != state->skeletonState->selectedNodes.end()) { // highlight selected nodes
+                    /* Set the default color for selected nodes */
+                    SET_COLOR(currentColor, 0.f, 1.f, 0.f, 0.5f);
+
+                    if(state->viewerState->selectModeFlag)
+                        glLoadName(state->skeletonState->activeNode->nodeID + 50);
+
+                    if(state->skeletonState->overrideNodeRadiusBool) {
+                        renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
+                                     currentColor, currentVP, viewportType);
+                    }
+                    else {
+                        renderSphere(&(currentNode->position), currentNode->radius * 2,
+                                     currentColor, currentVP, viewportType);
+                    }
+                }
                 /* Render the node description only when option is set. */
                 if(state->skeletonState->showNodeIDs) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
@@ -2319,6 +2338,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 
     }
+
     /* Restore modelview matrix */
     glPopMatrix();
     glDisable(GL_CULL_FACE);

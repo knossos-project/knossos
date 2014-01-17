@@ -1165,6 +1165,8 @@ void MainWindow::commentShortcutsSlots()
 
 void MainWindow::annotationSlot() {
     this->widgetContainer->annotationWidget->show();
+    if(this->widgetContainer->annotationWidget->pos().x() <= 0 or this->widgetContainer->annotationWidget->pos().y() <= 0)
+        this->widgetContainer->annotationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     this->widgetContainer->annotationWidget->adjustSize();
 }
 
