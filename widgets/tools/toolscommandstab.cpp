@@ -278,10 +278,7 @@ void ToolsCommandsTab::update() {
     }
     else {
         activeNodeLabel->setText("Active Node: 0");
-        // BUG BELOW BUG BELOW BUG BELOW BUG BELOW BUG BELOW BUG BELOW
-        // If you got here, then state->skeletonState->activeNode is obviously NULL,
-        // so there is NO state->skeletonState->activeNode->nodeID !!!
-        // activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
+        activeNodeIDSpin->setValue(0);
     }
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
     branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));

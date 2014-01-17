@@ -21,10 +21,12 @@ protected:
     QTabWidget *tabs;
     QLabel *treeCountLabel;
     QLabel *nodeCountLabel;
+    QLabel *listedNodesLabel;
 
 signals:
     
 public slots:
+    void nodesInList(int n);
     void update();
     void saveSettings();
     void loadSettings();

@@ -14,6 +14,7 @@ class QCheckBox;
 class QPushButton;
 class QComboBox;
 class QDoubleSpinBox;
+class QSpinBox;
 class QSplitter;
 class QMenu;
 
@@ -75,14 +76,14 @@ public:
     QWidget *treeSide;
     QWidget *nodeSide;
     QVBoxLayout *mainLayout;
-
+    // tree action dialogs
     QDialog *treeCommentEditDialog;
     QLineEdit *treeCommentField;
     QPushButton *treeApplyButton;
     QPushButton *treeCancelButton;
     QVBoxLayout *treeCommentLayout;
     QString treeCommentBuffer;
-
+    // node action dialogs
     QDialog *nodeCommentEditDialog;
     QLineEdit *nodeCommentField;
     QPushButton *nodeCommentApplyButton;
@@ -95,6 +96,13 @@ public:
     QPushButton *nodeRadiusApplyButton;
     QPushButton *nodeRadiusCancelButton;
     QVBoxLayout *nodeRadiusLayout;
+    QDialog *moveNodesDialog;
+    QLabel *newTreeLabel;
+    QSpinBox *newTreeIDSpin;
+    QPushButton *moveNodesButton;
+    QPushButton *moveNodesCancelButton;
+
+
     float radiusBuffer;
 
     // drag'n drop buffers
@@ -109,6 +117,7 @@ public:
     void createContextMenuDialogs();
     QPushButton *confirmationPrompt(QString question, QString confirmString);
 signals:
+    void updateListedNodesSignal(int n);
     void updateToolsSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
@@ -125,7 +134,7 @@ public slots:
     void treeItemDoubleClicked(QTableWidgetItem* item);
     void nodeItemChanged(QTableWidgetItem* item);
     void nodeItemSelected();
-    void nodeItemDoubleClicked(QTableWidgetItem* item);
+    void nodeItemDoubleClicked(QTableWidgetItem*);
     // tree context menu
     void treeContextMenuCalled(QPoint pos);
     void setActiveTreeAction();
@@ -140,12 +149,14 @@ public slots:
     void nodeContextMenuCalled(QPoint pos);
     void setNodeRadiusAction();
     void linkNodesAction();
+    void moveNodesAction();
     void splitComponentAction();
     void setNodeCommentAction();
     void updateNodeCommentBuffer(QString comment);
     void editNodeComments();
     void updateNodeRadiusBuffer(double value);
     void editNodeRadii();
+    void moveNodesClicked();
 
     void updateTreesTable();
     void updateNodesTable();

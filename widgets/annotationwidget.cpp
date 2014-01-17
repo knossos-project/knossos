@@ -24,10 +24,16 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
 
     treeCountLabel = new QLabel("Tree Count: 0");
     nodeCountLabel = new QLabel("Node Count: 0");
-
+    nodeCountLabel->setToolTip("Total number of nodes in the skeleton.");
+    listedNodesLabel = new QLabel("Listed Nodes: 0");
+    listedNodesLabel->setToolTip("Number of nodes currently listed in the table.");
     QHBoxLayout *hLayout = new QHBoxLayout();
+    QHBoxLayout *subHLayout = new QHBoxLayout();
+    subHLayout->addWidget(listedNodesLabel);
+    subHLayout->addWidget(nodeCountLabel);
     hLayout->addWidget(treeCountLabel);
-    hLayout->addWidget(nodeCountLabel);
+    hLayout->addLayout(subHLayout);
+
 
     mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(tabs);
@@ -35,6 +41,11 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     setLayout(mainLayout);
 
     connect(treeviewTab, SIGNAL(updateToolsSignal()), this, SLOT(update()));
+    connect(treeviewTab, SIGNAL(updateListedNodesSignal(int)), this, SLOT(nodesInList(int)));
+}
+
+void AnnotationWidget::nodesInList(int n) {
+    listedNodesLabel->setText(QString("Listed Nodes: %1").arg(n));
 }
 
 void AnnotationWidget::update() {
