@@ -125,6 +125,7 @@ signals:
     uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
     void undoSignal();
     void setViewportOrientationSignal(int orientation);
+    void unselectNodesSignal();
 
 public slots:
 
