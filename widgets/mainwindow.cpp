@@ -479,7 +479,9 @@ void MainWindow::createActions()
     /* file actions */
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
-        historyEntryActions[i] = new QAction("", this);
+        historyEntryActions[i] = new QAction(QIcon(":/images/icons/document-open-recent.png"), "", this);
+        historyEntryActions[i]->setVisible(false);
+        connect(historyEntryActions[i], SIGNAL(triggered()), this, SLOT(recentFileSelected()));
     }
 
     /* edit skeleton actions */
@@ -582,6 +584,10 @@ void MainWindow::createMenus()
     fileMenu = menuBar()->addMenu("Skeleton File");
     fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
     recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
+
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        recentFileMenu->addAction(historyEntryActions[i]);
+    }
 
     fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
     fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As...", this, SLOT(saveAsSlot()));
@@ -742,6 +748,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
+
         bool result = loadSkeletonSignal(fileName);
         //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         //future.waitForFinished();
@@ -784,6 +791,7 @@ void MainWindow::openSlot(const QString &fileName) {
 }
 
 bool MainWindow::alreadyInMenu(const QString &path) {
+
     for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
         qDebug() << skeletonFileHistory->at(i) << "_" << path;
         if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseSensitive)) {
@@ -807,13 +815,27 @@ void MainWindow::updateFileHistoryMenu() {
 
         historyEntryActions[i]->setText(path);
         if(!historyEntryActions[i]->text().isEmpty()) {
-            recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected()));
+            //recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), historyEntryActions[i]->text(), this, SLOT(recentFileSelected()));
             historyEntryActions[i]->setVisible(true);
         } else {
             historyEntryActions[i]->setVisible(false);
         }
         i++;
     }
+}
+
+/** This method returns the index of the queue´s text position */
+int MainWindow::findIndex(const QString &text) {
+    QQueue<QString>::iterator it;
+    int i = 0;
+    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
+        QString entry = *it;
+        if(!QString::compare(entry, text)) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 void MainWindow::saveSlot()
@@ -823,17 +845,27 @@ void MainWindow::saveSlot()
         if(state->skeletonState->unsavedChanges) {
 
             if(state->skeletonState->autoFilenameIncrementBool) {
+                /*
+                // solution for a clever recent file menu (not yet activated)
+                int index = findIndex(state->skeletonState->skeletonFileAsQString);
+                */
                 updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
+                /*
+                if(index >= 0) {
+                    skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
+                    historyEntryActions[index]->setText(skeletonFileHistory->at(index));
+                }*/
             }
+
             emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
 
             if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
                 addRecentFile(state->skeletonState->skeletonFileAsQString);
             }
 
-            updateTitlebar(true);
-            state->skeletonState->unsavedChanges = false;           
-        }
+                updateTitlebar(true);
+                state->skeletonState->unsavedChanges = false;
+            }
     }
     emit idleTimeSignal();
 }
@@ -1325,6 +1357,13 @@ void MainWindow::loadSettings() {
 
 void MainWindow::clearSettings() {
     QSettings settings;
+
+    skeletonFileHistory->clear();
+
+    for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
+        historyEntryActions[i]->setText("");
+        historyEntryActions[i]->setVisible(false);
+    }
 
     QStringList keys = settings.allKeys();
     for(int i = 0; i < keys.size(); i++) {

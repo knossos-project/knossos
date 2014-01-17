@@ -628,16 +628,16 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
 bool Skeletonizer::updateSkeletonState() {
 
-
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
             if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
                 state->skeletonState->lastSaveTicks = state->time.elapsed();
 
-                 emit saveSkeletonSignal();
+                emit saveSkeletonSignal();
             }
         }
     }
+
 
 
     setSkeletonWorkMode(CHANGE_MANUAL, state->skeletonState->workMode);

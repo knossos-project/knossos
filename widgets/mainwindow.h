@@ -230,6 +230,7 @@ public slots:
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);
+    int findIndex(const QString &text);
     //QUndoStack *undoStack;
 
     /* dataset */

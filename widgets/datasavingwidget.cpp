@@ -45,6 +45,7 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     autosaveCheckbox = new QCheckBox("Auto-Saving");
     autosaveIntervalLabel = new QLabel("Saving interval [min]");
     autosaveIntervalSpinBox = new QSpinBox();
+    autosaveIntervalSpinBox->setMinimum(1);
 
     QFormLayout *formLayout = new QFormLayout();
     formLayout->addRow(autosaveIntervalLabel, autosaveIntervalSpinBox);
