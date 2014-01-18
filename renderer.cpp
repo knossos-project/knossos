@@ -42,7 +42,6 @@
     #include <GL/glut.h>
 #endif
 #include "skeletonizer.h"
-#include "viewer.h"
 
 extern stateInfo *state;
 

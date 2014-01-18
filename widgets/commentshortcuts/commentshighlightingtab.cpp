@@ -36,7 +36,7 @@
 #include <QEvent>
 #include <QDebug>
 #include <QKeyEvent>
-#include "GUIConstants.h"
+#include "../GUIConstants.h"
 #include "knossos-global.h"
 
 extern  stateInfo *state;
@@ -61,14 +61,6 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     colorMap.insert(PURPLE, color);
     SET_COLOR(color, 0.73, 0.48, 0.34, 1.);
     colorMap.insert(BROWN, color);
-
-    /*
-    for(int i = 0; i < N; i++) {
-        for(int k = 0; k < N; k++) {
-
-        }
-    }*/
-
 
     QVBoxLayout *layout = new QVBoxLayout();
 

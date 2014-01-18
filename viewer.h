@@ -117,7 +117,7 @@ protected:
     bool initViewer();
     bool processUserMove();
     QTime delay;
-
+    bool idlingExceeds(uint msec);
 };
 
 #endif // VIEWER_H

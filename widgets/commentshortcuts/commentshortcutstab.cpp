@@ -24,7 +24,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "GUIConstants.h"
+#include "../GUIConstants.h"
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLabel>

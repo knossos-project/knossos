@@ -144,6 +144,7 @@ HEADERS  += widgets/mainwindow.h \
     renderer.h \
     knossos.h\
     sleeper.h \
+    widgets/GuiConstants.h \
     widgets/viewport.h \
     widgets/console.h \
     widgets/tracingtimewidget.h \
@@ -170,7 +171,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/task/taskmanagementdetailstab.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     functions.h \
-    GUIConstants.h \
     widgets/widgetcontainer.h \
     decorators/skeletonizerdecorator.h \
     decorators/mainwindowdecorator.h \

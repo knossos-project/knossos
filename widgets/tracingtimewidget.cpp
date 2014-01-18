@@ -30,7 +30,6 @@
 #include <QSpacerItem>
 #include <QGroupBox>
 #include <math.h>
-#include "GUIConstants.h"
 #include "knossos-global.h"
 
 extern  stateInfo *state;
@@ -56,27 +55,6 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(refreshTime()));
     timer->start(1000);
 
-    loadSettings();
-}
-
-void TracingTimeWidget::loadSettings() {
-    QSettings settings;
-
-    settings.beginGroup(TRACING_TIME_WIDGET);
-    if(!settings.value(RUNNING_TIME).isNull())
-        this->runningTimeLabel->setText(settings.value(RUNNING_TIME).toString());
-
-    settings.endGroup();
-}
-
-void TracingTimeWidget::saveSettings() {
-    QSettings settings;
-
-    settings.beginGroup(TRACING_TIME_WIDGET);
-    settings.setValue(RUNNING_TIME, this->runningTimeLabel->text());
-
-    settings.endGroup();
-
 }
 
 void TracingTimeWidget::closeEvent(QCloseEvent *event) {
@@ -97,6 +75,7 @@ void TracingTimeWidget::refreshTime() {
 }
 
 void TracingTimeWidget::checkIdleTime() {
+
     int time = state->time.elapsed();
 
     state->skeletonState->idleTimeLast = state->skeletonState->idleTimeNow;
@@ -121,4 +100,6 @@ void TracingTimeWidget::checkIdleTime() {
 
     QString tracingString = QString().sprintf("Tracing Time: \t%02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
     this->tracingTimeLabel->setText(tracingString);
+
+    state->viewerState->lastIdleTimeCall = QDateTime::currentDateTimeUtc();
 }

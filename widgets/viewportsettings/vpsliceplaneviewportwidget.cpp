@@ -35,7 +35,7 @@
 #include <QFileDialog>
 #include "knossos-global.h"
 #include "widgets/mainwindow.h"
-#include "viewer.h"
+
 
 extern  stateInfo *state;
 

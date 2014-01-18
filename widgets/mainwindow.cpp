@@ -1274,8 +1274,7 @@ void MainWindow::saveSettings() {
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
-    //widgetContainer->toolsWidget->saveSettings();
-    widgetContainer->tracingTimeWidget->saveSettings();
+    //widgetContainer->toolsWidget->saveSettings();    
 }
 
 /**
@@ -1354,7 +1353,7 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
-    widgetContainer->tracingTimeWidget->loadSettings();
+
 }
 
 void MainWindow::clearSettings() {

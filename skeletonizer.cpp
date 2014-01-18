@@ -985,7 +985,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     /* */
 
-   QVector<TreeWithNodes> treeAndNodesVector;
    QVector<int> branchVector;
    QVector<std::pair<int, char *> > commentsVector;
    QVector<std::pair<int, int > > edgeVector;

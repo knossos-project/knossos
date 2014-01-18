@@ -1318,7 +1318,12 @@ void Viewer::run() {
             vpUpperRight->updateGL();
             vpLowerRight->updateGL();
 
-            timer->singleShot(10, this, SLOT(run()));
+
+            if(idlingExceeds(10000)) {
+                timer->singleShot(500, this, SLOT(run()));
+            } else {
+                timer->singleShot(10, this, SLOT(run()));
+            }
 
             vpListDel(viewports);
             viewerState->userMove = false;
@@ -1326,6 +1331,18 @@ void Viewer::run() {
         }
         currentVp = nextVp;
     } //end while(viewports->elements > 0)
+}
+
+/** this method checks if the last call of the method checkIdleTime is longer than <treshold> msec ago.
+ *  In this case, the render loop is slowed down to 2 calls per second (see timer->setSingleShot).
+ *  Otherwise it stays in / switches to normal mode
+*/
+bool Viewer::idlingExceeds(uint msec) {
+    QDateTime now = QDateTime::currentDateTimeUtc();
+    if(now.msecsTo(state->viewerState->lastIdleTimeCall) <= -msec) {
+        return true;
+    }
+    return false;
 }
 
 bool Viewer::updateViewerState() {
@@ -2229,6 +2246,15 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
         return true;
 }
 
+/** The platform decisions are unfortunately neccessary because the behaviour of the event handling
+ *  differs from platform to platform.
+ *  The details here are that key events are recognized by settings flags in the event handler. At the begin of the method run()
+ *  we are checking if the keys F or D are still pressed. In this case the new coordinates (which were already calculated in the event-handler) will be passed
+ *  to the the method userMove which is from here a direct call, that has no signal and slot delay. This prevents two things. First of all it prevents a strange effect unter windows
+ *  that pressing F or D and fast mouse movements had led to delayed mouse event processing. The second thing is that there was a delay between the userMoveSignal from the eventhandler
+ *  and the processing of the userMove Slot. The run method was called but the new position was first available in the next frame. Thus rendering an "empty" frame could be prevented.
+ *
+*/
 bool Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();

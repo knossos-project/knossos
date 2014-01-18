@@ -24,7 +24,6 @@ signals:
     nodeListElement *findNodeByNodeIDSignal(int id);
     void updateTools();
     void updateTreeviewSignal();
-public slots:
 
 public slots:
     void updateCommentsTable();

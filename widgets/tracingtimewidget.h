@@ -33,8 +33,6 @@ class TracingTimeWidget : public QDialog
     Q_OBJECT
 public:
     explicit TracingTimeWidget(QWidget *parent = 0);
-    void loadSettings();
-    void saveSettings();
 signals:
     void uncheckSignal();
 public slots:

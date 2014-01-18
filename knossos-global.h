@@ -40,6 +40,7 @@
 #include <QtNetwork/qtcpsocket.h>
 #include <QtNetwork/qhostaddress.h>
 #include <QtCore/qset.h>
+#include <QtCore/qdatetime.h>
 
 #include <curl/curl.h>
 
@@ -686,10 +687,6 @@ public slots:
 
 };
 
-class StateClass : public QObject, public stateInfo {
-
-};
-
 struct httpResponse {
     char *content;
     size_t length;
@@ -1013,6 +1010,7 @@ struct viewerState {
     int viewportOrder[4];
 
     bool defaultVPSizeAndPos;
+    QDateTime lastIdleTimeCall;
 };
 
 struct commentListElement {

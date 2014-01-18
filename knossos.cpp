@@ -272,7 +272,7 @@ void Knossos::startLoader() {
     }
 }
 
-/*
+/**
  * This function is common to initStates, which is called when knossos starts,
  * and to switching to another dataset. Therefore it includes *only* those
  * actions that are dataset-specific, or that are required for reseting dataset-
@@ -1273,6 +1273,7 @@ void Knossos::loadDefaultTreeLUT() {
 void rewire() {
 
 }
+
 
 void Knossos::revisionCheck() {
 
