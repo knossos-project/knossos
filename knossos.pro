@@ -189,7 +189,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/documentationwidget.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \
-    widgets/tools/toolstreeviewtab.h \
+    widgets/tools/toolstreeviewtab.h
 
 
 FORMS    += mainwindow.ui

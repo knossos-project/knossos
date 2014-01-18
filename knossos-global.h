@@ -1011,6 +1011,7 @@ struct viewerState {
 
     bool defaultVPSizeAndPos;
     QDateTime lastIdleTimeCall;
+    uint renderInterval;
 };
 
 struct commentListElement {

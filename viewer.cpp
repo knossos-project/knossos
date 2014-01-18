@@ -1220,6 +1220,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
+    static uint call = 0;
     processUserMove();
     /*
     if(!state->viewerState->userMove) {
@@ -1284,7 +1285,9 @@ void Viewer::run() {
     recalcTextureOffsets();
 
     while(viewports->elements > 0) {
+
         switch(currentVp->vpConfig->id) {
+
         case VP_UPPERLEFT:
             vpUpperLeft->makeCurrent();
             break;
@@ -1319,14 +1322,16 @@ void Viewer::run() {
             vpLowerRight->updateGL();
 
 
-            if(idlingExceeds(10000)) {
-                timer->singleShot(500, this, SLOT(run()));
-            } else {
-                timer->singleShot(10, this, SLOT(run()));
+            if(call % 1000 == 0) {
+                if(idlingExceeds(10000)) {
+                    state->viewerState->renderInterval = 1000;
+                }
             }
+            timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
 
             vpListDel(viewports);
             viewerState->userMove = false;
+            call += 1;
             return;
         }
         currentVp = nextVp;
@@ -1349,6 +1354,7 @@ bool Viewer::updateViewerState() {
    uint i;
 
     for(i = 0; i < state->viewerState->numberViewports; i++) {
+
         if(i == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
         }
