@@ -6,6 +6,9 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QSplitter>
 
 #include "knossos-global.h"
 #include "GUIConstants.h"
@@ -61,11 +64,17 @@ void AnnotationWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(TOOLS_WIDGET);
 
-    width = settings.value(WIDTH).toInt();
-    height = settings.value(HEIGHT).toInt();
-    x = settings.value(POS_X).toInt();
-    y = settings.value(POS_Y).toInt();
-    visible = settings.value(VISIBLE).toBool();
+    width = (settings.value(WIDTH).isNull())? 700 : settings.value(WIDTH).toInt();
+    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().bottomRight().x() - width - 20;
+        y = QApplication::desktop()->screen()->rect().bottomRight().y() - height - 50;
+    }
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
+    }
+    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
     if(settings.value(SEARCH_FOR_TREE).isNull() == false) {
         treeviewTab->treeCommentField->setText(settings.value(SEARCH_FOR_TREE).toString());
@@ -119,7 +128,17 @@ void AnnotationWidget::loadSettings() {
     commandsTab->commentLockEdit->setText(QString(state->viewerState->gui->lockComment));
 
     settings.endGroup();
+    if(visible) {
+        show();
+    }
+    else {
+        hide();
+    }
     setGeometry(x, y, width, height);
+    QList<int> list;
+    list.append(310);
+    list.append(390);
+    treeviewTab->splitter->setSizes(list);
 }
 
 void AnnotationWidget::saveSettings() {

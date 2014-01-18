@@ -34,6 +34,8 @@
 #include <QDebug>
 #include <QSettings>
 #include <QSpacerItem>
+#include <QApplication>
+#include <QDesktopWidget>
 #include "knossos-global.h"
 
 extern  stateInfo *state;
@@ -217,20 +219,26 @@ void ZoomAndMultiresWidget::loadSettings() {
 
     QSettings settings;
     settings.beginGroup(ZOOM_AND_MULTIRES_WIDGET);
-    width = settings.value(WIDTH).toInt();
-    height = settings.value(HEIGHT).toInt();
-    x = settings.value(POS_X).toInt();
-    y = settings.value(POS_Y).toInt();
-    visible = settings.value(VISIBLE).toBool();
+    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
+    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().center().x();
+        y = QApplication::desktop()->screen()->rect().center().y();
+    }
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
+    }
+    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
 
-    if(settings.value(ORTHO_DATA_VIEWPORTS).toDouble()) {
+    if(settings.value(ORTHO_DATA_VIEWPORTS).isNull() == false) {
         this->orthogonalDataViewportSpinBox->setValue(settings.value(ORTHO_DATA_VIEWPORTS).toDouble());
     } else {
         this->orthogonalDataViewportSpinBox->setValue(0);
     }
 
-    if(settings.value(SKELETON_VIEW).toDouble()) {
+    if(settings.value(SKELETON_VIEW).isNull() == false) {
         userZoomSkel = false;
         this->skeletonViewportSpinBox->setValue(settings.value(SKELETON_VIEW).toDouble());
         userZoomSkel = true;
@@ -239,10 +247,19 @@ void ZoomAndMultiresWidget::loadSettings() {
     } else {
         this->skeletonViewportSpinBox->setValue(0);
     }
-    bool lockDatasetValue = settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
-    this->lockDatasetCheckBox->setChecked(lockDatasetValue);
-    state->viewerState->datasetMagLock = lockDatasetValue;
+
+    state->viewerState->datasetMagLock =
+            (settings.value(LOCK_DATASET_TO_CURRENT_MAG).isNull())? true : settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
+    this->lockDatasetCheckBox->setChecked(state->viewerState->datasetMagLock);
+
     settings.endGroup();
+    if(visible) {
+        show();
+    }
+    else {
+        hide();
+    }
+    setGeometry(x, y, width, height);
 }
 
 void ZoomAndMultiresWidget::saveSettings() {

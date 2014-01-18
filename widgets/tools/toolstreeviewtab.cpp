@@ -248,6 +248,10 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     splitter->addWidget(treeSide);
     splitter->addWidget(nodeSide);
     mainLayout->addWidget(splitter);
+    QList<int> list;
+    list.append(310);
+    list.append(390);
+    splitter->setSizes(list);
 
     setLayout(mainLayout);
 

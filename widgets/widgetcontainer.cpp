@@ -34,8 +34,11 @@ void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    tracingTimeWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    tracingTimeWidget->setMinimumSize(200, 100);
+    tracingTimeWidget->layout()->update();
+    tracingTimeWidget->layout()->activate();
+    tracingTimeWidget->move(QApplication::desktop()->screen()->rect().center().x() - tracingTimeWidget->width() - 20,
+                            QApplication::desktop()->screen()->rect().bottomRight().y() - tracingTimeWidget->height() - 50);
+    tracingTimeWidget->setFixedSize(tracingTimeWidget->size());
 }
 
 void WidgetContainer::createCommentsWidget(QWidget *parent) {
@@ -43,7 +46,12 @@ void WidgetContainer::createCommentsWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    commentsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    // update and activate, so that widget geometry is calculated
+    commentsWidget->layout()->update();
+    commentsWidget->layout()->activate();
+    commentsWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - commentsWidget->width() - 20,
+                         QApplication::desktop()->screen()->rect().topRight().y() + 50);
+    commentsWidget->setFixedSize(commentsWidget->size());
 }
 
 void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
@@ -51,7 +59,11 @@ void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    zoomAndMultiresWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    zoomAndMultiresWidget->layout()->update();
+    zoomAndMultiresWidget->layout()->activate();
+    zoomAndMultiresWidget->move(QApplication::desktop()->screen()->rect().center().x(),
+                         QApplication::desktop()->screen()->rect().center().y());
+    zoomAndMultiresWidget->setFixedSize(zoomAndMultiresWidget->size());
 }
 
 void WidgetContainer::createNavigationWidget(QWidget *parent) {
@@ -59,7 +71,11 @@ void WidgetContainer::createNavigationWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    navigationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    navigationWidget->layout()->update();
+    navigationWidget->layout()->activate();
+    navigationWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - navigationWidget->width() - 20,
+                         QApplication::desktop()->screen()->rect().topRight().y() + 50);
+    navigationWidget->setFixedSize(navigationWidget->size());
 }
 
 void WidgetContainer::createToolWidget(QWidget *parent) {
@@ -76,8 +92,11 @@ void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    viewportSettingsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    viewportSettingsWidget->setGeometry(QRect(100, 100, 500, 500));
+    viewportSettingsWidget->layout()->update();
+    viewportSettingsWidget->layout()->activate();
+    viewportSettingsWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - viewportSettingsWidget->width() - 20,
+                                 QApplication::desktop()->screen()->rect().topRight().y() + viewportSettingsWidget->height());
+    viewportSettingsWidget->setFixedSize(viewportSettingsWidget->size());
 }
 
 void WidgetContainer::createDataSavingWidget(QWidget *parent) {
@@ -85,7 +104,11 @@ void WidgetContainer::createDataSavingWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    dataSavingWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    dataSavingWidget->layout()->update();
+    dataSavingWidget->layout()->activate();
+    dataSavingWidget->move(QApplication::desktop()->screen()->rect().center().x(),
+                           QApplication::desktop()->screen()->rect().topRight().y() + 50);
+    dataSavingWidget->setFixedSize(dataSavingWidget->size());
 }
 
 void WidgetContainer::createSychronizationWidget(QWidget *parent) {
@@ -140,7 +163,11 @@ void WidgetContainer::createAnnotationWidget(QWidget *parent) {
 #ifdef Q_OS_MAC
     annotationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
-    annotationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    annotationWidget->layout()->update();
+    annotationWidget->layout()->activate();
+    annotationWidget->resize(700, annotationWidget->height());
+    annotationWidget->move(QApplication::desktop()->screen()->rect().bottomRight().x() - annotationWidget->width() - 20,
+                           QApplication::desktop()->screen()->rect().bottomRight().y() - annotationWidget->height() - 50);
 }
 
 void WidgetContainer::createWidgets(QWidget *parent) {

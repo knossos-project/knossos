@@ -125,6 +125,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createToolBar();
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
+    setGeometry(0, 0, width(), height());
 
     //connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
     connect(widgetContainer->viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
@@ -529,6 +530,7 @@ void MainWindow::createActions()
     saveCustomPreferencesAction = new QAction(tr("Save Custom Preferences"), this);
     defaultPreferencesAction = new QAction(tr("Default Preferences"), this);
     datasetNavigationAction = new QAction(tr("Dataset Navigation"), this);
+    datasetNavigationAction->setCheckable(true);
     synchronizationAction = new QAction(tr("Synchronization"), this);
     synchronizationAction->setCheckable(true);
     dataSavingOptionsAction = new QAction(tr("Data Saving Options"), this);
@@ -687,7 +689,7 @@ void MainWindow::createMenus()
     taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tree View", this, SLOT(annotationSlot()));
+    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tools", this, SLOT(annotationSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 
@@ -1005,38 +1007,26 @@ void MainWindow::clearSkeletonSlot()
 
 /* view menu functionality */
 
-void MainWindow::dragDatasetSlot()
-{
+void MainWindow::dragDatasetSlot() {
    state->viewerState->workMode = ON_CLICK_DRAG;
    if(recenterOnClickAction->isChecked()) {
        recenterOnClickAction->setChecked(false);
    }
 }
 
-void MainWindow::recenterOnClickSlot()
-{
+void MainWindow::recenterOnClickSlot() {
    state->viewerState->workMode = ON_CLICK_RECENTER;
    if(dragDatasetAction->isChecked()) {
        dragDatasetAction->setChecked(false);
    }
 }
 
-void MainWindow::zoomAndMultiresSlot()
-{
+void MainWindow::zoomAndMultiresSlot() {
     this->widgetContainer->zoomAndMultiresWidget->show();
-    this->widgetContainer->zoomAndMultiresWidget->adjustSize();
-    if(this->widgetContainer->zoomAndMultiresWidget->pos().x() <= 0 or this->widgetContainer->zoomAndMultiresWidget->pos().y() <= 0)
-        this->widgetContainer->zoomAndMultiresWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    this->widgetContainer->zoomAndMultiresWidget->setFixedSize(this->widgetContainer->zoomAndMultiresWidget->size());
 }
 
-void MainWindow::tracingTimeSlot()
-{
+void MainWindow::tracingTimeSlot() {
     this->widgetContainer->tracingTimeWidget->show();
-    this->widgetContainer->tracingTimeWidget->adjustSize();
-    if(this->widgetContainer->tracingTimeWidget->pos().x() <= 0 or this->widgetContainer->tracingTimeWidget->pos().y() <= 0)
-        this->widgetContainer->tracingTimeWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    this->widgetContainer->tracingTimeWidget->setFixedSize(this->widgetContainer->tracingTimeWidget->size());
 }
 
 /* preference menu functionality */
@@ -1077,26 +1067,22 @@ void MainWindow::defaultPreferencesSlot() {
 
     if(question.clickedButton() == yes) {
         clearSettings();
-        saveSettings();
-        widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
-        //widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
-        widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
+        loadSettings();
+//        saveSettings();
+//        widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
+//        //widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
+//        widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
         emit loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
-        this->setGeometry(QApplication::desktop()->availableGeometry().center().x() / 2,
-                          QApplication::desktop()->availableGeometry().center().y() / 2, 1024, 800);
+        this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
+                          QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1024, 800);
     }
 }
 
-void MainWindow::datatasetNavigationSlot()
-{
+void MainWindow::datatasetNavigationSlot() {
     this->widgetContainer->navigationWidget->show();
-    this->widgetContainer->navigationWidget->adjustSize();
-    if(this->widgetContainer->navigationWidget->pos().x() <= 0 or this->widgetContainer->navigationWidget->pos().y() <= 0)
-        this->widgetContainer->navigationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     datasetNavigationAction->setChecked(true);
-    this->widgetContainer->navigationWidget->setFixedSize(this->widgetContainer->navigationWidget->size());
 }
 
 void MainWindow::synchronizationSlot()
@@ -1110,26 +1096,14 @@ void MainWindow::synchronizationSlot()
     //this->widgetContainer->synchronizationWidget->setFixedSize(this->widgetContainer->);
 }
 
-void MainWindow::dataSavingOptionsSlot()
-{    
+void MainWindow::dataSavingOptionsSlot() {
     this->widgetContainer->dataSavingWidget->show();
-    this->widgetContainer->dataSavingWidget->adjustSize();
-    if(widgetContainer->dataSavingWidget->pos().x() <= 0 or this->widgetContainer->dataSavingWidget->pos().y() <= 0)
-        this->widgetContainer->dataSavingWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     dataSavingOptionsAction->setChecked(true);
-    this->widgetContainer->dataSavingWidget->setFixedSize(this->widgetContainer->dataSavingWidget->size());
 }
 
-void MainWindow::viewportSettingsSlot()
-{
-
+void MainWindow::viewportSettingsSlot() {
     this->widgetContainer->viewportSettingsWidget->show();
-    //this->widgetContainer->viewportSettingsWidget->setWindowFlags(Qt::Window);
-    this->widgetContainer->viewportSettingsWidget->adjustSize();
-    if(widgetContainer->viewportSettingsWidget->pos().x() <= 0 or this->widgetContainer->viewportSettingsWidget->pos().y() <= 0)
-        this->widgetContainer->viewportSettingsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
     viewportSettingsAction->setChecked(true);
-    this->widgetContainer->viewportSettingsWidget->setFixedSize(this->widgetContainer->viewportSettingsWidget->size());
 }
 
 /* window menu functionality */
@@ -1153,27 +1127,17 @@ void MainWindow::logSlot()
     logAction->setChecked(true);
 }
 
-void MainWindow::commentShortcutsSlots()
-{
+void MainWindow::commentShortcutsSlots() {
     this->widgetContainer->commentsWidget->show();
-    this->widgetContainer->commentsWidget->adjustSize();
-    if(widgetContainer->commentsWidget->pos().x() <= 0 or this->widgetContainer->commentsWidget->pos().y() <= 0)
-        this->widgetContainer->commentsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    commentShortcutsAction->setChecked(true);
-    this->widgetContainer->commentsWidget->setFixedSize(this->widgetContainer->commentsWidget->size());
 }
 
 void MainWindow::annotationSlot() {
     this->widgetContainer->annotationWidget->show();
-    if(this->widgetContainer->annotationWidget->pos().x() <= 0 or this->widgetContainer->annotationWidget->pos().y() <= 0)
-        this->widgetContainer->annotationWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    this->widgetContainer->annotationWidget->adjustSize();
 }
 
 /* help menu functionality */
 
-void MainWindow::aboutSlot()
-{
+void MainWindow::aboutSlot() {
     this->widgetContainer->splashWidget->show();
 }
 
@@ -1283,10 +1247,17 @@ void MainWindow::saveSettings() {
 void MainWindow::loadSettings() {
     QSettings settings;
     settings.beginGroup(MAIN_WINDOW);
-    int width = settings.value(WIDTH).toInt();
-    int height = settings.value(HEIGHT).toInt();
-    int x = settings.value(POS_X).toInt();
-    int y = settings.value(POS_Y).toInt();
+    int width = (settings.value(WIDTH).isNull())? 1024 : settings.value(WIDTH).toInt();
+    int height = (settings.value(HEIGHT).isNull())? 800 : settings.value(HEIGHT).toInt();
+    int x, y;
+    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().topLeft().x() + 20;
+        y = QApplication::desktop()->screen()->rect().topLeft().y() + 50;
+    }
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
+    }
 
     state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
     if(state->viewerState->defaultVPSizeAndPos == false) {
@@ -1300,8 +1271,6 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
-
-
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());

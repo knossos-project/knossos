@@ -32,6 +32,9 @@
 #include <QSpinBox>
 #include <QSettings>
 #include <QSpacerItem>
+#include <QApplication>
+#include <QDesktopWidget>
+
 #include "knossos-global.h"
 
 extern  stateInfo *state;
@@ -61,8 +64,6 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));
     connect(autosaveIntervalSpinBox, SIGNAL(valueChanged(int)), this, SLOT(autosaveIntervalChanged(int)));
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
-
-
 }
 
 void DataSavingWidget::loadSettings() {
@@ -71,24 +72,38 @@ void DataSavingWidget::loadSettings() {
 
    QSettings settings;
    settings.beginGroup(DATA_SAVING_WIDGET);
-   width = settings.value(WIDTH).toInt();
-   height = settings.value(HEIGHT).toInt();
-   x = settings.value(POS_X).toInt();
-   y = settings.value(POS_Y).toInt();
-   visible = settings.value(VISIBLE).toBool();
+   width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
+   height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+   if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+       x = QApplication::desktop()->screen()->rect().center().x();
+       y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
+   }
+   else {
+       x = settings.value(POS_X).toInt();
+       y = settings.value(POS_Y).toInt();
+   }
+   visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-   this->autosaveCheckbox->setChecked(settings.value(AUTO_SAVING).toBool());
-   state->skeletonState->autoSaveBool = this->autosaveCheckbox->isChecked();
+   state->skeletonState->autoSaveBool =
+           (settings.value(AUTO_SAVING).isNull())? true : settings.value(AUTO_SAVING).toBool();
+   this->autosaveCheckbox->setChecked(state->skeletonState->autoSaveBool);
 
-   this->autosaveIntervalSpinBox->setValue(settings.value(SAVING_INTERVAL).toInt());
-   state->skeletonState->autoSaveInterval = autosaveIntervalSpinBox->value();
+   state->skeletonState->autoSaveInterval =
+           (settings.value(SAVING_INTERVAL).isNull())? 5 : settings.value(SAVING_INTERVAL).toInt();
+    this->autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
 
-   this->autoincrementFileNameButton->setChecked(settings.value(AUTOINC_FILENAME).toBool());
-   state->skeletonState->autoFilenameIncrementBool = autoincrementFileNameButton->isChecked();
+   state->skeletonState->autoFilenameIncrementBool =
+           (settings.value(AUTOINC_FILENAME).isNull())? true : settings.value(AUTOINC_FILENAME).toBool();
+   this->autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
 
    settings.endGroup();
+   if(visible) {
+       show();
+   }
+   else {
+       hide();
+   }
    setGeometry(x, y, width, height);
-
 }
 
 void DataSavingWidget::saveSettings() {
@@ -120,13 +135,7 @@ void DataSavingWidget::autosaveCheckboxChecked(bool on) {
 }
 
 void DataSavingWidget::autonincrementFileNameButtonPushed(bool on) {
-
-    if(on) {
-        state->skeletonState->autoFilenameIncrementBool = true;
-    } else {
-        state->skeletonState->autoFilenameIncrementBool = false;
-    }
-
+    state->skeletonState->autoFilenameIncrementBool = on;
 }
 
 void DataSavingWidget::autosaveIntervalChanged(int value) {

@@ -67,10 +67,6 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
     this->edgeNodeRadiusRatioLabel = new QLabel("Edge <-> Node Radius Ratio:");
 
-    if(!state->skeletonState->overrideNodeRadiusBool) {
-        this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
-    }
-
     this->showVPDecorationCheckBox = new QCheckBox("Show Viewport Decorations");
     this->showVPDecorationCheckBox->setChecked(true);
     this->resetVPsButton = new QPushButton("Reset Viewports");
@@ -146,19 +142,10 @@ void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
 void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
     emit overrideNodeRadiusSignal(on);
     state->skeletonState->overrideNodeRadiusBool = on;
-
-    if(on) {
-        this->edgeNodeRadiusRatioSpinBox->setEnabled(true);
-        this->edgeNodeRadiusRatioLabel->setStyleSheet("color: black");
-
-    } else {
-        this->edgeNodeRadiusRatioSpinBox->setEnabled(false);
-        this->edgeNodeRadiusRatioLabel->setStyleSheet("color: gray");
-    }
+    overrideNodeRadiusSpinBox->setEnabled(on);
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
-
     state->skeletonState->overrideNodeRadiusVal = value;
     state->skeletonState->skeletonChanged = true;
 }
@@ -167,7 +154,6 @@ void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
     emit segRadiusToNodeRadiusSignal(value);
     state->skeletonState->segRadiusToNodeRadius = value;
-
 }
 
 void VPGeneralTabWidget::renderingQualityChanged(int value) {

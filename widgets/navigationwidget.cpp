@@ -22,7 +22,6 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "navigationwidget.h"
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -33,8 +32,12 @@
 #include <QSpacerItem>
 #include <QSettings>
 #include <QGroupBox>
+#include <QApplication>
+#include <QDesktopWidget>
+
 #include "GUIConstants.h"
 #include "knossos-global.h"
+#include "navigationwidget.h"
 
 extern  stateInfo *state;
 
@@ -193,12 +196,25 @@ void NavigationWidget::loadSettings() {
 
     QSettings settings;
     settings.beginGroup(NAVIGATION_WIDGET);
-    width = settings.value(WIDTH).toInt();
-    height = settings.value(HEIGHT).toInt();
-    x = settings.value(POS_X).toInt();
-    y = settings.value(POS_Y).toInt();
-    visible = settings.value(VISIBLE).toBool();
+    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
+    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
+        y = QApplication::desktop()->screen()->rect().topRight().y() + 50;
+    }
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
+    }
+    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
+
+    if(visible) {
+        show();
+    }
+    else {
+        hide();
+    }
     setGeometry(x, y, width, height);
 
     if(!settings.value(MOVEMENT_SPEED).isNull()) {
@@ -271,7 +287,6 @@ void NavigationWidget::loadSettings() {
     }
 
     settings.endGroup();
-
 }
 
 void NavigationWidget::saveSettings() {

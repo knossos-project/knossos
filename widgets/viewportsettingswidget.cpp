@@ -32,6 +32,9 @@
 #include <QDoubleSpinBox>
 #include <QLabel>
 #include <QRadioButton>
+#include <QVBoxLayout>
+#include <QApplication>
+#include <QDesktopWidget>
 #include "knossos-global.h"
 
 extern stateInfo *state;
@@ -50,8 +53,9 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
     tabs->addTab(slicePlaneViewportWidget, "Slice Plane Viewports");
     tabs->addTab(skeletonViewportWidget, "Skeleton Viewport");
 
-
-
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->addWidget(tabs);
+    setLayout(layout);
 }
 
 void ViewportSettingsWidget::closeEvent(QCloseEvent *event) {
@@ -65,151 +69,122 @@ void ViewportSettingsWidget::loadSettings() {
 
     QSettings settings;
     settings.beginGroup(VIEWPORT_SETTINGS_WIDGET);
-    width = settings.value(WIDTH).toInt();
-    height = settings.value(HEIGHT).toInt();
-    x = settings.value(POS_X).toInt();
-    y = settings.value(POS_Y).toInt();
-    visible = settings.value(VISIBLE).toBool();
-
-    if(!settings.value(LIGHT_EFFECTS).isNull()) {
-        this->generalTabWidget->lightEffectsCheckBox->setChecked(settings.value(LIGHT_EFFECTS).toBool());
-        state->viewerState->lightOnOff = settings.value(LIGHT_EFFECTS).toBool();
+    width = (settings.value(WIDTH).isNull())? this->width() : settings.value(WIDTH).toInt();
+    height = (settings.value(HEIGHT).isNull())? this->height() : settings.value(HEIGHT).toInt();
+    if(settings.value(POS_X).isNull() or settings.value(POS_Y).isNull()) {
+        x = QApplication::desktop()->screen()->rect().topRight().x() - this->width() - 20;
+        y = QApplication::desktop()->screen()->rect().topRight().y() + this->height();
     }
-
-    if(!settings.value(HIGHLIGHT_ACTIVE_TREE).isNull()) {
-        this->generalTabWidget->hightlightActiveTreeCheckBox->setChecked(settings.value(HIGHLIGHT_ACTIVE_TREE).toBool());
-        state->skeletonState->highlightActiveTree = settings.value(HIGHLIGHT_ACTIVE_TREE).toBool();
+    else {
+        x = settings.value(POS_X).toInt();
+        y = settings.value(POS_Y).toInt();
     }
+    visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-    if(!settings.value(SHOW_ALL_NODE_ID).isNull()) {
-        this->generalTabWidget->showAllNodeIdsCheckBox->setChecked(settings.value(SHOW_ALL_NODE_ID).toBool());
-        state->skeletonState->showNodeIDs = settings.value(SHOW_ALL_NODE_ID).toBool();
-    }
+    state->viewerState->lightOnOff =
+            (settings.value(LIGHT_EFFECTS).isNull())? true : settings.value(LIGHT_EFFECTS).toBool();
+    this->generalTabWidget->lightEffectsCheckBox->setChecked(state->viewerState->lightOnOff);
 
-    if(!settings.value(EDGE_TO_NODE_RADIUS).isNull()) {
-        this->generalTabWidget->edgeNodeRadiusRatioSpinBox->setValue(settings.value(EDGE_TO_NODE_RADIUS).toDouble());
-        state->skeletonState->segRadiusToNodeRadius = settings.value(EDGE_TO_NODE_RADIUS).toDouble();
-    }
+    state->skeletonState->highlightActiveTree =
+            (settings.value(HIGHLIGHT_ACTIVE_TREE).isNull())? true : settings.value(HIGHLIGHT_ACTIVE_TREE).toBool();
+    this->generalTabWidget->hightlightActiveTreeCheckBox->setChecked(state->skeletonState->highlightActiveTree);
 
-    if(!settings.value(RENDERING_QUALITY).isNull()) {
-        this->generalTabWidget->renderingQualitySpinBox->setValue(settings.value(RENDERING_QUALITY).toInt());
-        state->viewerState->cumDistRenderThres = settings.value(RENDERING_QUALITY).toInt();
-    }
+    state->skeletonState->showNodeIDs =
+            (settings.value(SHOW_ALL_NODE_ID).isNull())? false : settings.value(SHOW_ALL_NODE_ID).toBool();
+    this->generalTabWidget->showAllNodeIdsCheckBox->setChecked(state->skeletonState->showNodeIDs);
 
+    state->skeletonState->segRadiusToNodeRadius =
+            (settings.value(EDGE_TO_NODE_RADIUS).isNull())? 1.5 : settings.value(EDGE_TO_NODE_RADIUS).toDouble();
+    this->generalTabWidget->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
 
-    if(!settings.value(OVERRIDE_NODES_RADIUS_CHECKED).isNull()) {
-        this->generalTabWidget->overrideNodeRadiusCheckBox->setChecked(settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool());
-        state->skeletonState->overrideNodeRadiusBool = settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool();
-    }
+    state->viewerState->cumDistRenderThres =
+            (settings.value(RENDERING_QUALITY).isNull())? 7. : settings.value(RENDERING_QUALITY).toInt();
+    this->generalTabWidget->renderingQualitySpinBox->setValue((int)state->viewerState->cumDistRenderThres);
 
-    if(!settings.value(OVERRIDE_NODES_RADIUS_VALUE).isNull()) {
-        this->generalTabWidget->overrideNodeRadiusSpinBox->setValue(settings.value(OVERRIDE_NODES_RADIUS_VALUE).toDouble());
+    state->skeletonState->overrideNodeRadiusBool =
+            (settings.value(OVERRIDE_NODES_RADIUS_CHECKED).isNull())? false : settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool();
+    this->generalTabWidget->overrideNodeRadiusCheckBox->setChecked(state->skeletonState->overrideNodeRadiusBool);
+
+    if(settings.value(OVERRIDE_NODES_RADIUS_VALUE).isNull() == false) {
         state->skeletonState->overrideNodeRadiusVal = settings.value(OVERRIDE_NODES_RADIUS_VALUE).toDouble();
     } else {
-        this->generalTabWidget->overrideNodeRadiusSpinBox->setValue(false);
-        state->skeletonState->overrideNodeRadiusVal = 0;
-        this->generalTabWidget->edgeNodeRadiusRatioLabel->setStyleSheet("color: gray");
+        state->skeletonState->overrideNodeRadiusVal = 1.5;
     }
+    this->generalTabWidget->overrideNodeRadiusSpinBox->setValue(state->skeletonState->overrideNodeRadiusVal);
+    this->generalTabWidget->overrideNodeRadiusSpinBox->setEnabled(state->skeletonState->overrideNodeRadiusBool);
 
+    state->skeletonState->segRadiusToNodeRadius =
+            (settings.value(EDGE_TO_NODE_RADIUS).isNull())? 0.5 : settings.value(EDGE_TO_NODE_RADIUS).toFloat();
+    this->generalTabWidget->edgeNodeRadiusRatioSpinBox->setValue(state->skeletonState->segRadiusToNodeRadius);
 
-    if(!settings.value(SHOW_VP_DECORATION).isNull()) {
+    if(settings.value(SHOW_VP_DECORATION).isNull() == false) {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
     }
-
-    if(!settings.value(ENABLE_OVERLAY).isNull()) {
-        this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(settings.value(ENABLE_OVERLAY).toBool());
-    } else {
-        this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(true);
-        state->overlay = true;
+    else {
+        this->generalTabWidget->showVPDecorationCheckBox->setChecked(false);
     }
 
-    if(!settings.value(HIGHLIGHT_INTERSECTIONS).isNull()) {
-        this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(settings.value(HIGHLIGHT_INTERSECTIONS).toBool());
-        state->skeletonState->showIntersections = settings.value(HIGHLIGHT_INTERSECTIONS).toBool();
-    }
+    state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? true : settings.value(ENABLE_OVERLAY).toBool();
+    this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(state->overlay);
+
+    state->skeletonState->showIntersections =
+            (settings.value(HIGHLIGHT_INTERSECTIONS).isNull())? false : settings.value(HIGHLIGHT_INTERSECTIONS).toBool();
+    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(state->skeletonState->showIntersections);
 
 
-    if(!settings.value(DATASET_LINEAR_FILTERING).isNull()) {
-        this->slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked(settings.value(DATASET_LINEAR_FILTERING).toBool());
-        bool on = settings.value(DATASET_LINEAR_FILTERING).toBool();
-        if(on)
+    state->viewerState->filterType = GL_NEAREST;
+    if(settings.value(DATASET_LINEAR_FILTERING).isNull() == false) {
+        if(settings.value(DATASET_LINEAR_FILTERING).toBool()) {
             state->viewerState->filterType = GL_LINEAR;
-        else
-            state->viewerState->filterType = GL_NEAREST;
-    }
-
-    if(!settings.value(DEPTH_CUTOFF).isNull()) {
-        this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(settings.value(DEPTH_CUTOFF).toDouble());
-        state->viewerState->depthCutOff = settings.value(DEPTH_CUTOFF).toDouble();
-    } else {
-        this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(1);
-        state->viewerState->depthCutOff = 1;
-    }
-
-
-    if(!settings.value(BIAS).isNull()) {
-        this->slicePlaneViewportWidget->biasSpinBox->setValue(settings.value(BIAS).toInt());
-        state->viewerState->luminanceBias = settings.value(BIAS).toInt();
-    } else {
-        this->slicePlaneViewportWidget->biasSpinBox->setValue(0);
-        state->viewerState->luminanceBias = 0;
-    }
-
-    if(!settings.value(RANGE_DELTA).isNull()) {
-        this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(settings.value(RANGE_DELTA).toInt());
-        state->viewerState->luminanceRangeDelta = settings.value(RANGE_DELTA).toInt();
-    } else {
-        this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(this->slicePlaneViewportWidget->rangeDeltaSpinBox->maximum());
-        state->viewerState->luminanceRangeDelta = 255;
-    }
-
-
-    if(!settings.value(ENABLE_COLOR_OVERLAY).isNull()) {
-        this->slicePlaneViewportWidget->enableColorOverlayCheckBox->setChecked(settings.value(ENABLE_COLOR_OVERLAY).toBool());
-        state->viewerState->overlayVisible = settings.value(ENABLE_COLOR_OVERLAY).toBool();
-    }
-
-    if(!settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).isNull()) {
-        this->slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).toBool());
-        state->viewerState->drawVPCrosshairs = settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).toBool();
-    }
-
-    if(!settings.value(SHOW_VIEWPORT_SIZE).isNull()) {
-        this->slicePlaneViewportWidget->showViewPortsSizeCheckBox->setChecked(settings.value(SHOW_VIEWPORT_SIZE).toBool());
-        state->viewerState->showVPLabels = settings.value(SHOW_VIEWPORT_SIZE).toBool();
-    }
-
-    if(!settings.value(SHOW_XY_PLANE).isNull()) {
-        this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(settings.value(SHOW_XY_PLANE).toBool());
-        state->skeletonState->showXYplane = settings.value(SHOW_XY_PLANE).toBool();
-    }
-
-    if(!settings.value(SHOW_XZ_PLANE).isNull()) {
-        this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(settings.value(SHOW_XZ_PLANE).toBool());
-        state->skeletonState->showXZplane = settings.value(SHOW_XZ_PLANE).toBool();
-    }
-
-    if(!settings.value(SHOW_YZ_PLANE).isNull()) {
-        this->skeletonViewportWidget->showYZPlaneCheckBox->setChecked(settings.value(SHOW_YZ_PLANE).toBool());
-        state->skeletonState->showYZplane = settings.value(SHOW_YZ_PLANE).toBool();
-    }
-    if(!settings.value(ROTATE_AROUND_ACTIVE_NODE).isNull()) {
-        this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool());
-        state->skeletonState->rotateAroundActiveNode = settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool();
-    } else {
-        this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(true);
-        state->skeletonState->rotateAroundActiveNode = true;
-    }
-
-    if(!settings.value(WHOLE_SKELETON).isNull()) {
-        this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(settings.value(WHOLE_SKELETON).toBool());
-        bool on = settings.value(WHOLE_SKELETON).toBool();
-        if(!on) {
-            state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-        } else {
-           state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
         }
     }
+    this->slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked(state->viewerState->filterType);
+
+    state->viewerState->depthCutOff = (settings.value(DEPTH_CUTOFF).isNull())? 5. : settings.value(DEPTH_CUTOFF).toDouble();
+    this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(state->viewerState->depthCutOff);
+
+    state->viewerState->luminanceBias = (settings.value(BIAS).isNull())? 0 : settings.value(BIAS).toInt();
+    this->slicePlaneViewportWidget->biasSpinBox->setValue(state->viewerState->luminanceBias);
+
+    state->viewerState->luminanceRangeDelta = (settings.value(RANGE_DELTA).isNull())? 255 : settings.value(RANGE_DELTA).toInt();
+    this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(state->viewerState->luminanceRangeDelta);
+
+    state->viewerState->overlayVisible =
+            (settings.value(ENABLE_COLOR_OVERLAY).isNull())? false : settings.value(ENABLE_COLOR_OVERLAY).toBool();
+    this->slicePlaneViewportWidget->enableColorOverlayCheckBox->setChecked(state->viewerState->overlayVisible);
+
+    state->viewerState->drawVPCrosshairs =
+            (settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).isNull())? true : settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).toBool();
+    this->slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
+
+    state->viewerState->showVPLabels =
+            (settings.value(SHOW_VIEWPORT_SIZE).isNull())? false : settings.value(SHOW_VIEWPORT_SIZE).toBool();
+    this->slicePlaneViewportWidget->showViewPortsSizeCheckBox->setChecked(state->viewerState->showVPLabels);
+
+    state->skeletonState->showXYplane =
+            (settings.value(SHOW_XY_PLANE).isNull())? false : settings.value(SHOW_XY_PLANE).toBool();
+    this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(state->skeletonState->showXYplane);
+
+    state->skeletonState->showXZplane =
+            (settings.value(SHOW_XZ_PLANE).isNull())? false : settings.value(SHOW_XZ_PLANE).toBool();
+    this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
+
+    state->skeletonState->showYZplane =
+            (settings.value(SHOW_YZ_PLANE).isNull())? false : settings.value(SHOW_YZ_PLANE).toBool();
+    this->skeletonViewportWidget->showYZPlaneCheckBox->setChecked(state->skeletonState->showYZplane);
+
+    state->skeletonState->rotateAroundActiveNode =
+            (settings.value(ROTATE_AROUND_ACTIVE_NODE).isNull())? true : settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool();
+    this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(state->skeletonState->rotateAroundActiveNode);
+
+    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+    if(settings.value(WHOLE_SKELETON).isNull() == false) {
+        if(settings.value(WHOLE_SKELETON).toBool() == false) {
+            state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
+        }
+    }
+    this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE);
+
 
     if(!settings.value(ONLY_ACTIVE_TREE).isNull()) {
         this->skeletonViewportWidget->onlyActiveTreeRadioButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
@@ -221,18 +196,15 @@ void ViewportSettingsWidget::loadSettings() {
         }
     }
 
-    if(!settings.value(HIDE_SKELETON).isNull()) {
-        this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(settings.value(HIDE_SKELETON).toBool());
-        bool on = settings.value(HIDE_SKELETON).toBool();
-        if(on) {            
+    state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
+    if(settings.value(HIDE_SKELETON).isNull() == false) {
+        if(settings.value(HIDE_SKELETON).toBool()) {
             state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-        } else {
-            state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
         }
     }
+    this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE);
 
-    if(!settings.value(DATASET_LUT_FILE).isNull()) {
-
+    if(settings.value(DATASET_LUT_FILE).isNull() == false) {
         this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());
         this->slicePlaneViewportWidget->loadDatasetLUT();
         //this->slicePlaneViewportWidget->useOwnDatasetColorsChecked(true);
@@ -244,12 +216,20 @@ void ViewportSettingsWidget::loadSettings() {
         //this->slicePlaneViewportWidget->useOwnTreeColorsChecked(true);
     }
 
-    if(!this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() and !this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked() and !this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked())
+    if(this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() == false
+        and this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked() == false
+        and this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked() == false) {
+        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
+    }
     settings.endGroup();
-
+    if(visible) {
+        show();
+    }
+    else {
+        hide();
+    }
     setGeometry(x, y, width, height);
-
 }
 
 void ViewportSettingsWidget::saveSettings() {
