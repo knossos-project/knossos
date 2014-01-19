@@ -204,16 +204,15 @@ void ViewportSettingsWidget::loadSettings() {
     }
     this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE);
 
-    if(settings.value(DATASET_LUT_FILE).isNull() == false) {
-        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());
-        this->slicePlaneViewportWidget->loadDatasetLUT();
-        //this->slicePlaneViewportWidget->useOwnDatasetColorsChecked(true);
+
+    if(!settings.value(DATASET_LUT_FILE).toString().isEmpty()) {
+        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());        
+        this->slicePlaneViewportWidget->loadDatasetLUT();        
     }
 
-    if(!settings.value(TREE_LUT_FILE).isNull()) {
+    if(!settings.value(TREE_LUT_FILE).toString().isEmpty()) {
         this->slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE).toString());
-        this->slicePlaneViewportWidget->loadTreeLUT();
-        //this->slicePlaneViewportWidget->useOwnTreeColorsChecked(true);
+        this->slicePlaneViewportWidget->loadTreeLUT();       
     }
 
     if(this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() == false

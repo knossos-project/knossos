@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+
     Knossos::showSplashScreen();
 
     knossos = new Knossos();

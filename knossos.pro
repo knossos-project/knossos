@@ -4,12 +4,12 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network xml testlib
+QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qtestlib help
-CONFIG -= app_bundle
+CONFIG += qt
+#CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
     eventmodel.cpp \
@@ -230,6 +230,8 @@ mac {
             -framework GLUT \
             -lPythonQt \
             -lcurl
+
+    ICON += Knossos.icns
 }
 
 linux {
@@ -266,6 +268,9 @@ win32 {
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
+
+
+    RC_FILE = knossos.rc
 
 }
 

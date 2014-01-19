@@ -139,8 +139,6 @@ MainWindow::MainWindow(QWidget *parent) :
     createViewports();
     setAcceptDrops(true);
 
-    //undoStack = new QUndoStack();
-
 }
 
 void MainWindow::createViewports() {

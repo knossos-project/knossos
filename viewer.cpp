@@ -70,6 +70,7 @@ Viewer::Viewer(QObject *parent) :
 
     QDesktopWidget *desktop = QApplication::desktop();
 
+    rewire();
     window->loadSettings();
     window->show();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
@@ -85,7 +86,7 @@ Viewer::Viewer(QObject *parent) :
     renderer->refVPYZ = vpUpperRight;
     renderer->refVPSkel = vpLowerRight;
 
-    rewire();
+
     // TODO: to be removed in release version. Jumps to center of e1088_large dataset
     sendLoadSignal(state->viewerState->currentPosition.x,
                    state->viewerState->currentPosition.y,
@@ -1339,7 +1340,7 @@ void Viewer::run() {
 }
 
 /** this method checks if the last call of the method checkIdleTime is longer than <treshold> msec ago.
- *  In this case, the render loop is slowed down to 2 calls per second (see timer->setSingleShot).
+ *  In this case, the render loop is slowed down to 1 calls per second (see timer->setSingleShot).
  *  Otherwise it stays in / switches to normal mode
 */
 bool Viewer::idlingExceeds(uint msec) {

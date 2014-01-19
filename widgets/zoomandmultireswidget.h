@@ -1,6 +1,8 @@
 #ifndef ZOOMANDMULTIRESWIDGET_H
 #define ZOOMANDMULTIRESWIDGET_H
 
+
+
 /*
  *  This file is a part of KNOSSOS.
  *

@@ -210,18 +210,15 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
         this->datasetLutFile->setText(fileName);
         const char *cname = fileName.toStdString().c_str();
         strcpy(state->viewerState->gui->datasetLUTFile, cname);
-        //qDebug() << cname;
-        qDebug() << fileName << " <<<";
-        //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
 
+        //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
         loadDatasetLUT();
 
-
-        MainWindow::datasetColorAdjustmentsChanged();
     }
 }
 
 void VPSlicePlaneViewportWidget::loadDatasetLUT() {
+
     bool result = loadDataSetColortableSignal(this->datasetLutFile->text(), &(state->viewerState->datasetColortable[0][0]), GL_RGB);
 
     if(!result) {
@@ -231,7 +228,6 @@ void VPSlicePlaneViewportWidget::loadDatasetLUT() {
                        RGB_LUTSIZE);
     }
 
-     MainWindow::datasetColorAdjustmentsChanged();
 }
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
@@ -249,7 +245,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
         MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
         state->viewerState->treeLutSet = true;
 
-        emit treeColorAdjustmentsChangedSignal();
+        loadTreeLUT();
 
     }
 }
