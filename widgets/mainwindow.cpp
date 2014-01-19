@@ -759,12 +759,26 @@ bool MainWindow::loadSkeletonAfterUserDecision
 
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
+        } else {
+            becomeFirstEntry(fileName);
         }
+
         emit updateToolsSignal();
         emit updateTreeviewSignal();
         return result;
     }
     return false;
+}
+
+/** if a queue´s entry is reused and not more at position zero it will moved to the first entry (most recent) and the
+ *  menu will be updated
+*/
+void MainWindow::becomeFirstEntry(const QString &entry) {
+    int index = skeletonFileHistory->indexOf(entry);
+    if(index > 0) {
+        skeletonFileHistory->move(index, 0);
+        updateFileHistoryMenu();
+    }
 }
 
 /**
@@ -790,6 +804,7 @@ void MainWindow::openSlot(const QString &fileName) {
 
 }
 
+/** This method checks if a candidate is already in the queue */
 bool MainWindow::alreadyInMenu(const QString &path) {
 
     for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
@@ -824,20 +839,6 @@ void MainWindow::updateFileHistoryMenu() {
     }
 }
 
-/** This method returns the index of the queue´s text position */
-int MainWindow::findIndex(const QString &text) {
-    QQueue<QString>::iterator it;
-    int i = 0;
-    for(it = skeletonFileHistory->begin(); it != skeletonFileHistory->end(); it++) {
-        QString entry = *it;
-        if(!QString::compare(entry, text)) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
 void MainWindow::saveSlot()
 {
 
@@ -861,6 +862,8 @@ void MainWindow::saveSlot()
 
             if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
                 addRecentFile(state->skeletonState->skeletonFileAsQString);
+            } else {
+                becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
             }
 
                 updateTitlebar(true);
@@ -899,6 +902,8 @@ void MainWindow::saveAsSlot()
 
         if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
             addRecentFile(state->skeletonState->skeletonFileAsQString);
+        } else {
+            becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
         }
 
         updateTitlebar(true);

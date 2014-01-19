@@ -108,6 +108,7 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
+    void becomeFirstEntry(const QString &entry);
 
 public:
     Ui::MainWindow *ui;
@@ -229,8 +230,7 @@ public slots:
     bool loadSkeletonAfterUserDecision(const QString &fileName);
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
-    bool addRecentFile(const QString &fileName);
-    int findIndex(const QString &text);
+    bool addRecentFile(const QString &fileName);    
     //QUndoStack *undoStack;
 
     /* dataset */
