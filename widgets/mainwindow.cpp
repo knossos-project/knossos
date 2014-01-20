@@ -846,16 +846,22 @@ void MainWindow::saveSlot()
         if(state->skeletonState->unsavedChanges) {
 
             if(state->skeletonState->autoFilenameIncrementBool) {
-                /*
+
                 // solution for a clever recent file menu (not yet activated)
-                int index = findIndex(state->skeletonState->skeletonFileAsQString);
-                */
+                int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
+
                 updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
-                /*
-                if(index >= 0) {
-                    skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
-                    historyEntryActions[index]->setText(skeletonFileHistory->at(index));
-                }*/
+
+                if(state->skeletonState->autoSaveBool) {
+                    if(index >= 0) {
+                        skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
+                        historyEntryActions[index]->setText(skeletonFileHistory->at(index));
+                        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+
+
+                    }
+                }
+
             }
 
             emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
