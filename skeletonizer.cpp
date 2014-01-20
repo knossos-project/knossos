@@ -2678,7 +2678,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     state->skeletonState->firstTree = newElement;
 
     state->skeletonState->activeTree = newElement;
-    LOG("Added new tree with ID: %d.", newElement->treeID)
+    //LOG("Added new tree with ID: %d.", newElement->treeID)
 
     if(newElement->treeID > state->skeletonState->greatestTreeID) {
         state->skeletonState->greatestTreeID = newElement->treeID;
@@ -3855,7 +3855,6 @@ void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
     if(tree == NULL) {
         return;
     }
-    qDebug("in restore: %i", tree->treeID);
     int index = (tree->treeID - 1) % 256;
 
     tree->color.r = state->viewerState->defaultTreeTable[index];

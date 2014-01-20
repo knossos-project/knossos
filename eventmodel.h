@@ -60,6 +60,7 @@ public:
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    bool handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
     bool handleKeyboard(QKeyEvent *event, int VPfound);
@@ -127,6 +128,11 @@ signals:
     void setViewportOrientationSignal(int orientation);
     void unselectNodesSignal();
 
+    void treeAddedSignal(treeListElement *tree);
+    void nodeAddedSignal();
+    void nodeActivatedSignal();
+    void nodeRadiusChangedSignal(nodeListElement *node);
+    void nodePositionChangedSignal(nodeListElement *node);
 public slots:
 
 };

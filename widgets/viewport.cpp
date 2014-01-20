@@ -278,13 +278,16 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     }
 }
 
-void Viewport::mouseReleaseEvent(QMouseEvent *) {
+void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     resizeButtonHold = false; // can only be true, when left mouse button is pressed
     if(QApplication::keyboardModifiers() == Qt::CTRL) {
         setCursor(Qt::OpenHandCursor);
     }
     else if(cursor().shape() != Qt::CrossCursor) {
         setCursor(Qt::CrossCursor);
+    }
+    if(event->button() == Qt::MiddleButton) {
+        eventDelegate->handleMouseReleaseMiddle(event, id);
     }
 
     for(int i = 0; i < state->viewerState->numberViewports; i++) {

@@ -92,8 +92,8 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     void updateTools();
-    void popBranchNodeSignal();
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    bool popBranchNodeSignal();
+    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
     void idleTimeSignal();
 
@@ -102,6 +102,11 @@ signals:
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
+
+    void treeAddedSignal(treeListElement *tree);
+    void branchPushedSignal();
+    void branchPoppedSignal();
+    void nodeCommentChangedSignal(nodeListElement *node);
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);

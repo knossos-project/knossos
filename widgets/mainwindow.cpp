@@ -753,7 +753,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
         //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         //future.waitForFinished();
 
-        emit updateCommentsTableSignal();
+        //emit updateCommentsTableSignal();
         updateTitlebar(true);
         linkWithActiveNodeSlot();
 
@@ -762,8 +762,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
         } else {
             becomeFirstEntry(fileName);
         }
-
-        emit updateToolsSignal();
+        //emit updateToolsSignal();
         emit updateTreeviewSignal();
         return result;
     }
@@ -1009,7 +1008,6 @@ void MainWindow::clearSkeletonSlot()
     if(question.clickedButton() == ok) {
         emit clearSkeletonSignal(CHANGE_MANUAL, false);
         updateTitlebar(false);
-        emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
 }
@@ -1592,9 +1590,10 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
-    emit addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
+    treeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     emit updateToolsSignal();
-    emit updateTreeviewSignal();
+    //emit updateTreeviewSignal();
+    treeAddedSignal(tree);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
@@ -1607,15 +1606,15 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-   emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-   emit updateToolsSignal();
-    emit updateTreeviewSignal();
+    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
+        emit branchPushedSignal();
+    }
 }
 
 void MainWindow::popBranchNodeSlot() {
-    emit popBranchNodeSignal();
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
+    if(popBranchNodeSignal()) {
+        emit branchPoppedSignal();
+    }
 }
 
 void MainWindow::moveToNextNodeSlot() {
@@ -1659,9 +1658,7 @@ void MainWindow::F1Slot() {
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
         }
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F2Slot() {
@@ -1675,9 +1672,7 @@ void MainWindow::F2Slot() {
         if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F3Slot() {
@@ -1691,9 +1686,7 @@ void MainWindow::F3Slot() {
        if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F4Slot() {
@@ -1707,9 +1700,7 @@ void MainWindow::F4Slot() {
        if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F5Slot() {
@@ -1723,9 +1714,7 @@ void MainWindow::F5Slot() {
         if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
     }
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+    emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::resizeViewports(int width, int height) {

@@ -61,13 +61,18 @@ signals:
 
     void jumpToNodeSignal();
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
+    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
                               nodeListElement *branchNode, int branchNodeID, int serialize);
-    void popBranchNodeSignal();
+    bool popBranchNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();
 
-    void updateTreeviewSignal();
+    void treeActivatedSignal();
+    void treeAddedSignal(treeListElement *tree);
+    void nodeActivatedSignal();
+    void branchPushedSignal();
+    void branchPoppedSignal();
+
 public slots:
     void activeTreeIDSpinChanged(int value);
     void activeNodeIDSpinChanged(int value);

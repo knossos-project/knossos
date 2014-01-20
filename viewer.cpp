@@ -1992,6 +1992,16 @@ void Viewer::rewire() {
     // end skeletonizer signals
     //event model signals
    // connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(eventModel, SIGNAL(treeAddedSignal(treeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    connect(eventModel, SIGNAL(nodeAddedSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    connect(eventModel, SIGNAL(nodeActivatedSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
+    connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
+    connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(eventModel, SIGNAL(unselectNodesSignal()),
@@ -2040,6 +2050,12 @@ void Viewer::rewire() {
     //end event handler signals
     // mainwindow signals
     //connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window, SIGNAL(branchPushedSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPushed()));
+    connect(window, SIGNAL(branchPoppedSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPopped()));
+    connect(window, SIGNAL(nodeCommentChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeCommentChanged(nodeListElement*)));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(window, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)));
@@ -2076,6 +2092,8 @@ void Viewer::rewire() {
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
     connect(window, SIGNAL(updateTaskCommentSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setComment(QString)));
+    connect(window, SIGNAL(treeAddedSignal(treeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     //end mainwindow signals
     //viewport signals
     connect(vpUpperLeft, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
@@ -2155,6 +2173,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(jumpToActiveNode()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(addSegmentSignal(int,int,int,int)),
                     skeletonizer, SLOT(addSegment(int,int,int,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab->treeTable, SIGNAL(deleteSelectedTreesSignal()),
+                    skeletonizer, SLOT(deleteSelectedTrees()));
     // commands tab signals
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(findTreeByTreeIDSignal(int)),
                     skeletonizer, SLOT(findTreeByTreeID(int)));
@@ -2166,8 +2186,6 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(jumpToNodeSignal()),
                     skeletonizer, SLOT(jumpToActiveNode()));
-    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(updateTreeviewSignal()),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(addTreeListElement(int,int,int,color4F,int)),
                     skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab,

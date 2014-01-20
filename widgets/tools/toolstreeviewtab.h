@@ -25,13 +25,16 @@ class TreeTable : public QTableWidget {
     Q_OBJECT
 public:
     explicit TreeTable(QWidget *parent);
-
     int droppedOnTreeID;
+    bool changeByCode;
+    void setItem(int row, int column, QTableWidgetItem *item);
 protected:
     void keyPressEvent(QKeyEvent *event);
     void dropEvent(QDropEvent *event);
 signals:
     void updateTreeview();
+    void deleteSelectedTreesSignal();
+    void treesDeletedSignal(QModelIndexList selected);
 public slots:
     void deleteTreesAction();
 };
@@ -40,10 +43,14 @@ class NodeTable : public QTableWidget {
     Q_OBJECT
 public:
     explicit NodeTable(QWidget *parent);
+
+    bool changeByCode;
+    void setItem(int row, int column, QTableWidgetItem *item);
 protected:
     void keyPressEvent(QKeyEvent *event);
 signals:
     void delActiveNodeSignal();
+    void nodesDeletedSignal(QModelIndexList selected);
     void updateNodesTable();
 public slots:
     void deleteNodesAction();
@@ -56,6 +63,8 @@ class ToolsTreeviewTab : public QWidget
 public:
     explicit ToolsTreeviewTab(QWidget *parent = 0);
 
+    TreeTable *activeTreeTable;
+    NodeTable *activeNodeTable;
     TreeTable *treeTable;
     NodeTable *nodeTable;
 
@@ -109,13 +118,19 @@ public:
     int draggedNodeID;
     int displayedNodes;
 
-    void updateTreeColorCells(int row);
+    void updateTreeColorCells(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
 
     void createTreesContextMenu();
     void createNodesContextMenu();
     void createContextMenuDialogs();
     QPushButton *confirmationPrompt(QString question, QString confirmString);
+
+protected:
+    void insertTree(treeListElement *tree, TreeTable *table);
+    void insertNode(nodeListElement *node, NodeTable *table);
+    void setText(TreeTable *table, QTableWidgetItem *item, QString text);
+    void setText(NodeTable *table, QTableWidgetItem *item, QString text);
 signals:
     void updateListedNodesSignal(int n);
     void updateToolsSignal();
@@ -123,15 +138,19 @@ signals:
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void delActiveNodeSignal();
+
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
 
     void displayedNodesChanged(int index);
 
+    void actTreeItemChanged(QTableWidgetItem *item);
+    void activeTreeSelected();
     void treeItemChanged(QTableWidgetItem* item);
     void treeItemSelected();
     void treeItemDoubleClicked(QTableWidgetItem* item);
+    void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
     void nodeItemSelected();
     void nodeItemDoubleClicked(QTableWidgetItem*);
@@ -139,7 +158,7 @@ public slots:
     void treeContextMenuCalled(QPoint pos);
     void setActiveTreeAction();
     //bool deleteTreesAction();
-    bool mergeTreesAction();
+    void mergeTreesAction();
     void restoreColorAction();
     void setTreeCommentAction();
     void updateTreeCommentBuffer(QString comment);
@@ -158,6 +177,22 @@ public slots:
     void editNodeRadii();
     void moveNodesClicked();
 
+    // update tree table
+    void treeActivated();
+    void treeAdded(treeListElement *tree);
+    void treesDeleted(QModelIndexList selected);
+    void treesMerged(int treeID1, int treeID2);
+    void treeComponentSplit();
+
+    // update node table
+    void nodeActivated();
+    void nodeAdded();
+    void nodesDeleted(QModelIndexList selected);
+    void branchPushed();
+    void branchPopped();
+    void nodeCommentChanged(nodeListElement *node);
+    void nodeRadiusChanged(nodeListElement *node);
+    void nodePositionChanged(nodeListElement *node);
     void updateTreesTable();
     void updateNodesTable();
     void update();

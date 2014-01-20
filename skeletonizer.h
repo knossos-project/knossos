@@ -233,7 +233,7 @@ public slots:
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 
-    static bool deleteSelectedTrees();
+    bool deleteSelectedTrees();
 
     static char *integerChecksum(int32_t in);
     static bool isObfuscatedTime(int time);

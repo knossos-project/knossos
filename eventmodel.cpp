@@ -46,13 +46,11 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
-
         clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
-            emit updateTools();
-            emit updateTreeviewSignal();
+            emit nodeActivatedSignal();
             return true;
         }
 
@@ -67,8 +65,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
             if(newActiveNode != NULL) {
                 free(clickedCoordinate);
                 emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-                emit updateTools();
-                emit updateTreeviewSignal();
+                emit nodeActivatedSignal();
                 return true;
             }
         }
@@ -165,7 +162,6 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
-
     int newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
@@ -182,6 +178,10 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return true;
     }
     bool newNode = false;
+    bool treeExists = false;
+    if(state->skeletonState->firstTree != NULL) {
+        treeExists = true;
+    }
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -301,11 +301,13 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
     if(newNode) {
         emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+        emit nodeAddedSignal();
+        if(treeExists == false) { // a new tree was created
+            emit treeAddedSignal(state->skeletonState->firstTree);
+        }
     }
     emit updateViewerStateSignal();
     Knossos::sendRemoteSignal();
-    emit updateTools();
-    emit updateTreeviewSignal();
 
     free(clickedCoordinate);
     return true;
@@ -532,7 +534,6 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
                 break;
         }
     }
-
     return true;
 }
 
@@ -544,6 +545,11 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
            emit idleTimeSignal();
        }
     return true;
+}
+
+bool EventModel::handleMouseReleaseMiddle(QMouseEvent *event, int VPfound) {
+    // a node was dragged to a new position
+    emit nodePositionChangedSignal(state->skeletonState->activeNode);
 }
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
@@ -575,9 +581,10 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
                  state->skeletonState->activeNode->position.y,
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
+        if(radius > 0.) {
+            emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
+        }
 
-        emit updateTools();
-        emit updateTreeviewSignal();
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;
 
@@ -662,8 +669,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
                  state->skeletonState->activeNode->position.z,
                  state->magnification);
 
-        emit updateTools();
-        emit updateTreeviewSignal();
+        emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
 
         if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;

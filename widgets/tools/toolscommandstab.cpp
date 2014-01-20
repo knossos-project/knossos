@@ -162,8 +162,8 @@ void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
     }
     if(tree) {
         setActiveTreeSignal(tree->treeID);
+        emit treeActivatedSignal();
     }
-    emit updateTreeviewSignal();
     return;
 }
 
@@ -187,8 +187,8 @@ void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
     }
     if(node) {
         setActiveNodeSignal(CHANGE_MANUAL, node, 0);
+        emit nodeActivatedSignal();
     }
-    emit updateTreeviewSignal();
     return;
 }
 
@@ -203,19 +203,23 @@ void ToolsCommandsTab::newTreeButtonClicked() {
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    emit addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
+    treeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-    emit updateTreeviewSignal();
+    emit treeAddedSignal(tree);
 }
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
-    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
-    emit updateTreeviewSignal();
+    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
+        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+        emit branchPushedSignal();
+    }
 }
 
 void ToolsCommandsTab::popBranchButtonClicked() {
-    emit popBranchNodeSignal();
-    emit updateTreeviewSignal();
+    if(popBranchNodeSignal()) {
+        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+        emit branchPoppedSignal();
+    }
 }
 
 void ToolsCommandsTab::useLastRadiusAsDefaultCheckChanged(bool on) {
@@ -265,7 +269,9 @@ void ToolsCommandsTab::update() {
     activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
     if(state->skeletonState->activeTree) {
         activeTreeLabel->setText(QString("Active Tree: %1").arg(state->skeletonState->activeTree->treeID));
-        activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
+        if(activeTreeIDSpin->value() != state->skeletonState->activeTree->treeID) {
+            activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
+        }
     }
     else {
         activeTreeLabel->setText("Active Tree: 0");
@@ -274,7 +280,9 @@ void ToolsCommandsTab::update() {
 
     if(state->skeletonState->activeNode) {
         activeNodeLabel->setText(QString("Active Node: %1").arg(state->skeletonState->activeNode->nodeID));
-        activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
+        if(activeNodeIDSpin->value() != state->skeletonState->activeNode->nodeID) {
+            activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
+        }
     }
     else {
         activeNodeLabel->setText("Active Node: 0");
