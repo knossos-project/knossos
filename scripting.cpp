@@ -28,7 +28,6 @@ void Scripting::run() {
     ctx.addObject("skeleton", skeletonReference);
     ctx.addObject("state", state);
     //ctx.addObject("CoordinateInstance", coordinateDecorator);
-    ctx.addObject("pyExample", new ExampleObject);
 
     console->setFont(font);
     console->appendCommandPrompt(true);

@@ -238,7 +238,11 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     bool clickEvent = false;
 
     if(QApplication::mouseButtons() == Qt::LeftButton) {
-        if(QApplication::keyboardModifiers() == Qt::CTRL) { // drag viewport around
+        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+        bool alt = modifiers.testFlag(Qt::AltModifier);
+
+        if(ctrl and alt) { // drag viewport around
             moveVP(event);
         }
         else if(resizeButtonHold) {// resize viewport
@@ -267,7 +271,11 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     eventDelegate->mouseX = event->x();
     eventDelegate->mouseY = event->y();
     if(event->button() == Qt::LeftButton) {
-        if(QApplication::keyboardModifiers() == Qt::CTRL) { // user wants to drag vp
+        Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+        bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+        bool alt = modifiers.testFlag(Qt::AltModifier);
+
+        if(ctrl and alt) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
             lastX= event->x();
             lastY = event->y();
@@ -286,7 +294,11 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     resizeButtonHold = false; // can only be true, when left mouse button is pressed
-    if(QApplication::keyboardModifiers() == Qt::CTRL) {
+    Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+    bool ctrl = modifiers.testFlag(Qt::ControlModifier);
+    bool alt = modifiers.testFlag(Qt::AltModifier);
+
+    if(ctrl and alt) {
         setCursor(Qt::OpenHandCursor);
     }
     else if(cursor().shape() != Qt::CrossCursor) {
@@ -294,6 +306,9 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     }
     if(event->button() == Qt::MiddleButton) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
+    }
+    if(event->button() == Qt::LeftButton) {
+        handleMouseReleaseLeft(event, id);
     }
 
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
@@ -347,7 +362,9 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
     if(event->key() == Qt::Key_Control) {
-        setCursor(Qt::OpenHandCursor);
+        if(Qt::KeyboardModifiers() == Qt::ALT) {
+            setCursor(Qt::OpenHandCursor);
+        }
     }
     this->eventDelegate->handleKeyboard(event, focus);
     if(event->isAutoRepeat()) {
@@ -397,6 +414,10 @@ bool Viewport::handleMouseWheelForward(QWheelEvent *event, int vpID) {
 
 bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int vpID) {
     return eventDelegate->handleMouseWheelBackward(event, vpID);
+}
+
+bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseReleaseLeft(event, vpID);
 }
 
 

@@ -114,6 +114,7 @@ private:
     bool handleMouseMotionRightHold(QMouseEvent *event, int vpID);
     bool handleMouseWheelForward(QWheelEvent *event, int vpID);
     bool handleMouseWheelBackward(QWheelEvent *event, int vpID);
+    bool handleMouseReleaseLeft(QMouseEvent *event, int vpID);
 signals:    
     void recalcTextureOffsetsSignal();
     void runSignal();

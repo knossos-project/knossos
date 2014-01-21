@@ -9,7 +9,6 @@
 #include <Python.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
-#include "exampleobject.h"
 
 extern stateInfo *state;
 /** This class intializes the python qt engine in a seperate thread */
@@ -22,7 +21,6 @@ public:
     Skeletonizer *skeletonReference;
     CoordinateDecorator *coordinateDecorator;
     PyObject *aObject;
-    ExampleObject *example;
     void run();
 signals:
     

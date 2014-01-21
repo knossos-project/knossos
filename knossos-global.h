@@ -1207,6 +1207,8 @@ struct skeletonState {
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
+    bool drawNodeSelectSquare; // flag to indicate if user has pulled/is pulling a selection square, which should be displayed
+    std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;

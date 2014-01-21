@@ -2234,9 +2234,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                     /* Set the default color for selected nodes */
                     SET_COLOR(currentColor, 0.f, 1.f, 0.f, 0.5f);
 
-                    if(state->viewerState->selectModeFlag)
-                        glLoadName(state->skeletonState->activeNode->nodeID + 50);
-
                     if(state->skeletonState->overrideNodeRadiusBool) {
                         renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
                                      currentColor, currentVP, viewportType);

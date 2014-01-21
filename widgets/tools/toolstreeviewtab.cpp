@@ -393,6 +393,7 @@ void ToolsTreeviewTab::createTreesContextMenu() {
     treeContextMenu->addAction("Set as active tree", this, SLOT(setActiveTreeAction()));
     treeContextMenu->addAction("Set comment for tree(s)", this, SLOT(setTreeCommentAction()));
     treeContextMenu->addAction("Merge trees", this, SLOT(mergeTreesAction()));
+    treeContextMenu->addAction("Move selected node(s) to this tree", this, SLOT(moveNodesAction()));
     treeContextMenu->addAction("Restore default color", this, SLOT(restoreColorAction()));
     treeContextMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Delete tree(s)", treeTable, SLOT(deleteTreesAction()));
 }
@@ -402,7 +403,6 @@ void ToolsTreeviewTab::createNodesContextMenu() {
     nodeContextMenu->addAction("Set comment for node(s)...", this, SLOT(setNodeCommentAction()));
     nodeContextMenu->addAction("Set radius for node(s)...", this, SLOT(setNodeRadiusAction()));
     nodeContextMenu->addAction("Link nodes... ", this, SLOT(linkNodesAction()));
-    nodeContextMenu->addAction("Move node(s) to tree ...", this, SLOT(moveNodesAction()));
     nodeContextMenu->addAction("Split component from tree", this, SLOT(splitComponentAction()));
     nodeContextMenu->addAction(QIcon(":/images/icons/user-trash.png"), "delete node(s)", nodeTable, SLOT(deleteNodesAction()));
 
@@ -682,16 +682,31 @@ void ToolsTreeviewTab::splitComponentAction() {
 
 void ToolsTreeviewTab::moveNodesAction() {
     QMessageBox prompt;
-    if(state->skeletonState->selectedNodes.size() == 0) {
+    if(state->skeletonState->selectedNodes.size() == 0
+            or state->skeletonState->selectedTrees.size() != 1) {
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
         prompt.setIcon(QMessageBox::Information);
         prompt.setWindowTitle("Information");
-        prompt.setText("Choose at least one node to move.");
+        prompt.setText("Choose at least one node to move to exactly one tree.");
         prompt.exec();
     }
     else {
-        moveNodesDialog->show();
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setWindowTitle("Confirmation Requested");
+        prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
+                                arg(state->skeletonState->selectedTrees[0]->treeID));
+        QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
+        prompt.exec();
+        if(prompt.clickedButton() == confirmButton) {
+            for(uint i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                Skeletonizer::moveNodeToTree(state->skeletonState->selectedNodes[i],
+                                             state->skeletonState->selectedTrees[0]->treeID);
+            }
+        }
     }
+    state->skeletonState->selectedNodes.clear();
+    state->skeletonState->selectedTrees.clear();
 }
 
 void ToolsTreeviewTab::setNodeCommentAction() {

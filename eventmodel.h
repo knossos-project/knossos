@@ -60,6 +60,7 @@ public:
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
+    bool handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
     bool handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
