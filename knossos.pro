@@ -95,7 +95,8 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/annotationwidget.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
-    stateInfo.cpp
+    stateInfo.cpp \
+    exampleobject.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -189,7 +190,8 @@ HEADERS  += widgets/mainwindow.h \
     widgets/documentationwidget.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \
-    widgets/tools/toolstreeviewtab.h
+    widgets/tools/toolstreeviewtab.h \
+    exampleobject.h
 
 
 FORMS    += mainwindow.ui

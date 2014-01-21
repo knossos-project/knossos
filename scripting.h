@@ -6,8 +6,10 @@
 
 #include <PythonQt/PythonQt.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
+#include <Python.h>
 #include "skeletonizer.h"
 #include "knossos-global.h"
+#include "exampleobject.h"
 
 extern stateInfo *state;
 /** This class intializes the python qt engine in a seperate thread */
@@ -18,7 +20,9 @@ public:
     explicit Scripting(QObject *parent = 0);    
     PythonQtScriptingConsole *console;
     Skeletonizer *skeletonReference;
-
+    CoordinateDecorator *coordinateDecorator;
+    PyObject *aObject;
+    ExampleObject *example;
     void run();
 signals:
     

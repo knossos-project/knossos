@@ -1323,7 +1323,7 @@ void Viewer::run() {
             vpLowerRight->updateGL();
 
 
-            if(call % 1000 == 0) {
+            if(call % 10000 == 0) {
                 if(idlingExceeds(10000)) {
                     state->viewerState->renderInterval = 1000;
                 }

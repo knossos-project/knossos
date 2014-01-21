@@ -87,6 +87,9 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
+
+
+
 }
 
 void Viewport::initializeGL() {
@@ -147,6 +150,9 @@ void Viewport::initializeGL() {
     glEnable(GL_BLEND);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
+    qDebug() << versionString;
 }
 
 bool Viewport::setOrientation(int orientation) {

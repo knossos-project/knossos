@@ -303,8 +303,13 @@ typedef struct {
         float z;
 } floatCoordinate;
 
+
+
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-struct Coordinate{
+class Coordinate{
+public:
+    Coordinate() { }
+    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
     int x;
     int y;
     int z;
@@ -314,6 +319,19 @@ struct Coordinate{
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
 
+};
+
+class CoordinateDecorator : public QObject {
+    Q_OBJECT
+public slots:
+    Coordinate *new_Coordinate() { return new Coordinate(); }
+    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
+    int x(Coordinate *self) { return self->x; }
+    void setX(Coordinate *self, int x) { self->x = x; }
+    int y(Coordinate *self) { return self->y; }
+    void setY(Coordinate *self, int y) { self->y = y; }
+    int z(Coordinate *self) { return self->z; }
+    void setZ(Coordinate *self, int z) { self->z = z; }
 };
 
 typedef struct {
@@ -1024,6 +1042,7 @@ struct commentListElement {
 };
 
 struct treeListElement {
+public:
     struct treeListElement *next;
     struct treeListElement *previous;
     struct nodeListElement *firstNode;
@@ -1034,6 +1053,20 @@ struct treeListElement {
 
     char comment[8192];
 };
+
+//class TreeListElementDecorator : public QObject {
+//    Q_OBJECT
+//public slots:
+//    treeListElement *new_treeListElement() { return new treeListElement(); }
+//    void next(treeListElement *self) { return self->next; }
+//    void
+//    void setNext(treeListElement *self, treeListElement *next) { self->next = next; }
+//    void setPrevious(treeListElement *self, treeListElement *previous) { self->previous = previous; }
+//    void setFirstNode(treeListElement *self, treeListElement *first) { self->firstNode = first; }
+
+//    int treeID(treeListElement *self) { return self->treeID; }
+
+//};
 
 struct nodeListElement {
     struct nodeListElement *next;

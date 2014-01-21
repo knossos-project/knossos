@@ -18,12 +18,17 @@ void Scripting::run() {
     console = new PythonQtScriptingConsole(NULL, ctx);
     console->setWindowTitle("Knossos Scripting Console");
 
+    coordinateDecorator = new CoordinateDecorator();
 
+    PythonQt::self()->addDecorators(coordinateDecorator);
+    PythonQt::self()->registerCPPClass("Coordinate", "", "knossos");
+    //PythonQt::self()->addDecorators(coordinateDecorator);
+    //PythonQt::self()->registerClass(coordinateDecorator->metaObject(), "Coordinate");
 
-    //PythonQt::self()->addInstanceDecorators(stateReference);
-    //PythonQt::self()->registerCPPClass(reference->metaObject(), "skeleton");
     ctx.addObject("skeleton", skeletonReference);
     ctx.addObject("state", state);
+    //ctx.addObject("CoordinateInstance", coordinateDecorator);
+    ctx.addObject("pyExample", new ExampleObject);
 
     console->setFont(font);
     console->appendCommandPrompt(true);
