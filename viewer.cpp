@@ -1325,7 +1325,7 @@ void Viewer::run() {
 
             if(call % 10000 == 0) {
                 if(idlingExceeds(10000)) {
-                    state->viewerState->renderInterval = 1000;
+                    state->viewerState->renderInterval = SLOW;
                 }
             }
             timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));

@@ -7,6 +7,7 @@ Scripting::Scripting(QObject *parent) :
 }
 
 void Scripting::run() {
+    /*
     QFont font("Courier");
     font.setPixelSize(12);
     font.setBold(true);
@@ -32,12 +33,13 @@ void Scripting::run() {
     console->setFont(font);
     console->appendCommandPrompt(true);
     console->show();
+    */
 
     exec();
 
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    ctx.addObject(name, obj);
+    //PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    //ctx.addObject(name, obj);
 }

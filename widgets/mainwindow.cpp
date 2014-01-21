@@ -788,18 +788,20 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   *
   */
 void MainWindow::openSlot() {
-
+    state->viewerState->renderInterval = SLOW;
     QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
     state->skeletonState->skeletonFileAsQString = fileName;
 
     loadSkeletonAfterUserDecision(fileName);
 
-
+    state->viewerState->renderInterval = FAST;
 }
 
 /** So far this variant is needed only for drag n drop skeleton files */
 void MainWindow::openSlot(const QString &fileName) {
+    state->viewerState->renderInterval = SLOW;
     loadSkeletonAfterUserDecision(fileName);
+    state->viewerState->renderInterval = FAST;
 
 }
 
@@ -880,6 +882,8 @@ void MainWindow::saveSlot()
 
 void MainWindow::saveAsSlot()
 {
+    state->viewerState->renderInterval = SLOW;
+    QApplication::processEvents();
     if(!state->skeletonState->firstTree) {
         QMessageBox prompt;
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -915,6 +919,7 @@ void MainWindow::saveAsSlot()
         state->skeletonState->unsavedChanges = false;
 
     }
+    state->viewerState->renderInterval = FAST;
 }
 
 

@@ -294,6 +294,9 @@ values. The XY vp always used. */
 #define CMD_CHGCOMMENT 15 //change comment
 #define CMD_DELCOMMENT 16 //delete comment
 
+#define SLOW 1000
+#define FAST 10
+
 //Structures and custom types
 typedef uint8_t Byte;
 

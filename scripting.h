@@ -3,10 +3,11 @@
 
 #include <QObject>
 #include <QThread>
-
+/*
 #include <PythonQt/PythonQt.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 #include <Python.h>
+*/
 #include "skeletonizer.h"
 #include "knossos-global.h"
 
@@ -16,11 +17,12 @@ class Scripting : public QThread
 {
     Q_OBJECT
 public:
+
     explicit Scripting(QObject *parent = 0);    
-    PythonQtScriptingConsole *console;
+    //PythonQtScriptingConsole *console;
     Skeletonizer *skeletonReference;
     CoordinateDecorator *coordinateDecorator;
-    PyObject *aObject;
+    //PyObject *aObject;
     void run();
 signals:
     

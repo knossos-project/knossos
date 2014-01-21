@@ -9,6 +9,9 @@
 
 #include <curl/curl.h>
 #include <curl/multi.h>
+#ifdef Q_OS_LINUX
+#include <unistd.h>
+#endif
 
 extern  stateInfo *state;
 

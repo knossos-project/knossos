@@ -102,5 +102,5 @@ void TracingTimeWidget::checkIdleTime() {
     this->tracingTimeLabel->setText(tracingString);
 
     state->viewerState->lastIdleTimeCall = QDateTime::currentDateTimeUtc();
-    state->viewerState->renderInterval = 10;
+    state->viewerState->renderInterval = FAST;
 }

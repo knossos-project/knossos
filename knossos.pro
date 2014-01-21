@@ -237,7 +237,7 @@ mac {
 linux {
     LIBS += -lGL \
             -lGLU \
-            -lPythonQt \
+            #-lPythonQt \
             -lglut \
             -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \

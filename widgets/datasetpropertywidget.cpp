@@ -74,12 +74,14 @@ void DatasetPropertyWidget::loadSettings()
 }
 
 void DatasetPropertyWidget::datasetfileDialogClicked() {
+    state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
     QString selectDir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
     qDebug() << selectDir;
     if(!selectDir.isNull()) {
         path->setEditText(selectDir);
     }
+    state->viewerState->renderInterval = FAST;
 }
 
 void DatasetPropertyWidget::closeEvent(QCloseEvent *event) {

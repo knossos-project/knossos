@@ -967,7 +967,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QString fileName) {
+bool Skeletonizer::loadXmlSkeleton(QString fileName) {    
     int neuronID = 0, nodeID = 0, merge = false;
     int nodeID1, nodeID2, activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     float radius;
@@ -1404,7 +1404,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                 time = skeletonTime; // For legacy skeleton files
                             }
 
-                            if(merge == false) {
+           state->viewerState->renderInterval = SLOW;                 if(merge == false) {
                                 addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
                             }
                             else {
@@ -1527,6 +1527,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
        updatePosition(TELL_COORDINATE_CHANGE);
     }*/
+
+
+
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit displayModeChangedSignal();
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
