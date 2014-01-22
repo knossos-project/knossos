@@ -292,10 +292,10 @@ void NavigationWidget::loadSettings() {
 void NavigationWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(NAVIGATION_WIDGET);
-    settings.setValue(WIDTH, this->width());
-    settings.setValue(HEIGHT, this->height());
-    settings.setValue(POS_X, this->x());
-    settings.setValue(POS_Y, this->y());
+    settings.setValue(WIDTH, this->geometry().width());
+    settings.setValue(HEIGHT, this->geometry().height());
+    settings.setValue(POS_X, this->geometry().x());
+    settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
 
     settings.setValue(MOVEMENT_SPEED, this->movementSpeedSpinBox->value());
