@@ -66,6 +66,8 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
 }
 
+/** For those who don´t know QSettings. The Check isNull checks only if the attribute is defined in the Qsettings file.
+ *  It does not check the value of the attribute */
 void DataSavingWidget::loadSettings() {
    int width, height, x, y;
    bool visible;
@@ -82,19 +84,39 @@ void DataSavingWidget::loadSettings() {
        x = settings.value(POS_X).toInt();
        y = settings.value(POS_Y).toInt();
    }
-   visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
-   state->skeletonState->autoSaveBool =
-           (settings.value(AUTO_SAVING).isNull())? true : settings.value(AUTO_SAVING).toBool();
-   this->autosaveCheckbox->setChecked(state->skeletonState->autoSaveBool);
+   if(!settings.value(VISIBLE).isNull()) {
+       if(!settings.value(VISIBLE).toBool()) {
+           visible = false;
+       } else {
+           visible = true;
+       }
 
-   state->skeletonState->autoSaveInterval =
-           (settings.value(SAVING_INTERVAL).isNull())? 5 : settings.value(SAVING_INTERVAL).toInt();
-    this->autosaveIntervalSpinBox->setValue(state->skeletonState->autoSaveInterval);
+   }
 
-   state->skeletonState->autoFilenameIncrementBool =
-           (settings.value(AUTOINC_FILENAME).isNull())? true : settings.value(AUTOINC_FILENAME).toBool();
-   this->autoincrementFileNameButton->setChecked(state->skeletonState->autoFilenameIncrementBool);
+   if(!settings.value(AUTO_SAVING).isNull()) {
+       if(!settings.value(AUTO_SAVING).toBool()) {
+           state->skeletonState->autoSaveBool = true;
+       } else {
+           state->skeletonState->autoSaveBool = settings.value(AUTO_SAVING).toBool();
+       }
+   }
+
+   if(!settings.value(SAVING_INTERVAL).isNull()) {
+       if(!settings.value(SAVING_INTERVAL).toUInt()) {
+           state->skeletonState->autoSaveInterval = 5;
+       } else {
+           state->skeletonState->autoSaveInterval = settings.value(SAVING_INTERVAL).toUInt();
+       }
+   }
+
+   if(!settings.value(AUTOINC_FILENAME).isNull()) {
+       if(!settings.value(AUTOINC_FILENAME).toBool()) {
+           state->skeletonState->autoFilenameIncrementBool = true;
+       } else {
+           state->skeletonState->autoFilenameIncrementBool = settings.value(AUTOINC_FILENAME).toBool();
+       }
+   }
 
    settings.endGroup();
    if(visible) {
