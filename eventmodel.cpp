@@ -36,12 +36,10 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
-{
+bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     uint clickedNode;
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
-
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
@@ -73,35 +71,14 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound)
     }
 
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        int nodeID = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->pos().x(), event->pos().y(), 10);
-        if(nodeID) {
-            nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
-            if(selectedNode) {
-                std::vector<nodeListElement*>::iterator iter;
-                //check if already in buffer
-                if((iter = std::find(state->skeletonState->selectedNodes.begin(),
-                             state->skeletonState->selectedNodes.end(),
-                             selectedNode)) == state->skeletonState->selectedNodes.end()) {
-                    state->skeletonState->selectedNodes.push_back(selectedNode);
-                }
-                else {
-                    state->skeletonState->selectedNodes.erase(iter);
-                }
-            }
-        }
-//        Coordinate *startPoint = getCoordinateFromOrthogonalClick(event, VPfound);
-//        if(startPoint) {
-//            // we have a valid start point. Flush recent selection if existent to start a new one.
-//            state->skeletonState->selectedNodes.clear();
-//            emit unselectNodesSignal();
-//            state->skeletonState->nodeSelectionSquare.first = *startPoint;
-//            // reset second point from a possible previous selection square.
-//            //SET_COORDINATE(state->skeletonState->nodeSelectionSquare.second = *startPoint;
-//            state->skeletonState->drawNodeSelectSquare = true;
-//            return true;
-//        }
-//        qDebug("no valid coordinate found.");
-//        return false;
+        state->viewerState->nodeSelectionSquare.first.x = event->pos().x();
+        state->viewerState->nodeSelectionSquare.first.y = event->pos().y();
+
+        // reset second point from a possible previous selection square.
+        CPY_COORDINATE(state->viewerState->nodeSelectionSquare.second,
+                       state->viewerState->nodeSelectionSquare.first);
+        state->viewerState->drawNodeSelectSquare = VPfound;
+        return true;
     }
 
     // check in which type of VP the user clicked and perform appropriate operation
@@ -347,10 +324,12 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
-//    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-//        getCoordinateFromOrthogonalClick(event, VPfound);
-//        SET_COORDINATE(state->skeletonState->nodeSelectionSquare.second, event->pos().x()
-//    }
+    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+        if(VPfound != VIEWPORT_SKELETON and VPfound != VIEWPORT_ARBITRARY) {
+            state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
+            state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+        }
+    }
 
 
     uint i;
@@ -587,47 +566,52 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
-    // end of node selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        if(COMPARE_COORDINATE(state->skeletonState->nodeSelectionSquare.first,
-                              state->skeletonState->nodeSelectionSquare.second) == true) {
+        // single node selection
+        if(state->viewerState->nodeSelectionSquare.first.x == event->pos().x()
+                and state->viewerState->nodeSelectionSquare.first.y == event->pos().y()) {
+            int nodeID = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->pos().x(), event->pos().y(), 10);
+            if(nodeID) {
+                nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
+                if(selectedNode) {
+                    std::vector<nodeListElement*>::iterator iter;
+                    //check if already in buffer
+                    if((iter = std::find(state->skeletonState->selectedNodes.begin(),
+                                 state->skeletonState->selectedNodes.end(),
+                                 selectedNode)) == state->skeletonState->selectedNodes.end()) {
+                        state->skeletonState->selectedNodes.push_back(selectedNode);
+                    }
+                    else {
+                        state->skeletonState->selectedNodes.erase(iter);
+                    }
+                    return true;
+                }
+            }
             return false;
         }
-        // create square
-        int minX, maxX, minY, maxY, minZ, maxZ;
-        minX = state->skeletonState->nodeSelectionSquare.first.x;
-        maxX = state->skeletonState->nodeSelectionSquare.second.x;
-        minY = state->skeletonState->nodeSelectionSquare.first.y;
-        maxY = state->skeletonState->nodeSelectionSquare.second.y;
-        minZ = state->viewerState->currentPosition.z - state->viewerState->depthCutOff;
-        maxZ = state->viewerState->currentPosition.z + state->viewerState->depthCutOff;
-        if(state->skeletonState->nodeSelectionSquare.first.x > state->skeletonState->nodeSelectionSquare.second.x) {
-            maxX = state->skeletonState->nodeSelectionSquare.first.x;
-            minX = state->skeletonState->nodeSelectionSquare.second.x;
-        }
-        if(state->skeletonState->nodeSelectionSquare.first.y > state->skeletonState->nodeSelectionSquare.second.y) {
-            maxY = state->skeletonState->nodeSelectionSquare.first.y;
-            minY = state->skeletonState->nodeSelectionSquare.second.y;
-        }
+        // node selection square
+        if(VPfound != VIEWPORT_SKELETON and VPfound != VIEWPORT_ARBITRARY) {
+            state->skeletonState->selectedNodes.clear();
+            emit unselectNodesSignal();
 
-        Coordinate *endPoint = getCoordinateFromOrthogonalClick(event, VPfound);
-        state->skeletonState->nodeSelectionSquare.second = *endPoint;
-        treeListElement *tree = state->skeletonState->firstTree;
-        nodeListElement *node;
-        while(tree) {
-            node = tree->firstNode;
-            while(node) {
-                if(node->position.x >= minX and node->position.x <= maxX
-                   and node->position.y >= minY and node->position.y <= maxY
-                   and node->position.z >= minZ and node->position.z <= maxZ)  {
-                    qDebug("node %i pos %i, %i, %i", node->nodeID, node->position.x, node->position.y, node->position.z);
-                }
-                state->skeletonState->selectedNodes.push_back(node);
-                node = node->next;
-            }
-            tree = tree->next;
+            state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
+            state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+            Coordinate first = state->viewerState->nodeSelectionSquare.first;
+            Coordinate second = state->viewerState->nodeSelectionSquare.second;
+            // create square
+            int minX, maxX, minY, maxY;
+            minX = (first.x < second.x)? first.x : second.x;
+            maxX = (first.x < second.x)? second.x : first.x;
+            minY = (first.y < second.y)? first.y : second.y;
+            maxY = (first.y < second.y)? second.y : first.y;
+            retrieveAllObjectsBeneathSquareSignal(VPfound, minX + (maxX - minX)/2,
+                                                           minY + (maxY - minY)/2,
+                                                           maxX - minX,
+                                                           maxY - minY);
         }
     }
+    state->viewerState->drawNodeSelectSquare = -1;
+    return true;
 }
 
 bool EventModel::handleMouseReleaseMiddle(QMouseEvent *event, int VPfound) {
@@ -1295,9 +1279,25 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         state->skeletonState->skeletonChanged = true;
 
     } else if(event->key() == Qt::Key_Delete) {
-        emit deleteActiveNodeSignal();
-        emit updateTools();
-        emit updateTreeviewSignal();
+        if(state->skeletonState->selectedNodes.size() > 0) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
+            prompt.setWindowTitle("Cofirmation required");
+            prompt.setText("Delete selected nodes?");
+            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+            prompt.addButton("No", QMessageBox::ActionRole);
+            prompt.exec();
+            if(prompt.clickedButton() == confirmButton) {
+                emit deleteSelectedNodesSignal();
+                emit nodesDeletedSignal();
+                state->skeletonState->selectedNodes.clear();
+            }
+        }
+        else {
+            emit deleteActiveNodeSignal();
+            emit nodesDeletedSignal();
+        }
     }
     else if(event->key() == Qt::Key_Escape) {
         QMessageBox prompt;

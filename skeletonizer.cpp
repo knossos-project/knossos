@@ -77,10 +77,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
 
-//     state->skeletonState->drawNodeSelectSquare = false;
-//    SET_COORDINATE(state->skeletonState->nodeSelectionSquare.first, 0, 0, 0);
-//    SET_COORDINATE(state->skeletonState->nodeSelectionSquare.second, 0, 0, 0);
-
     state->skeletonState->mergeOnLoadFlag = 0;
     state->skeletonState->segRadiusToNodeRadius = 0.5;
     //state->skeletonState->autoFilenameIncrementBool = true;
@@ -4360,6 +4356,20 @@ bool Skeletonizer::deleteSelectedTrees() {
     }
     state->skeletonState->selectedTrees.clear();
     return true;
+}
+
+bool Skeletonizer::deleteSelectedNodes() {
+    std::vector<nodeListElement *>::iterator iter;
+    for(iter = state->skeletonState->selectedNodes.begin();
+        iter != state->skeletonState->selectedNodes.end(); ++iter) {
+        if((*iter) == state->skeletonState->activeNode) {
+            delActiveNode();
+        }
+        else {
+            delNode(CHANGE_MANUAL, 0, *iter, true);
+        }
+    }
+    state->skeletonState->selectedNodes.clear();
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].

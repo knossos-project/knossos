@@ -125,12 +125,15 @@ signals:
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
+    void retrieveAllObjectsBeneathSquareSignal(uint currentVP, uint x, uint y, uint width, uint height);
     void undoSignal();
     void setViewportOrientationSignal(int orientation);
     void unselectNodesSignal();
 
     void treeAddedSignal(treeListElement *tree);
     void nodeAddedSignal();
+    void deleteSelectedNodesSignal();
+    void nodesDeletedSignal();
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);

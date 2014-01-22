@@ -234,6 +234,7 @@ public slots:
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 
     bool deleteSelectedTrees();
+    bool deleteSelectedNodes();
 
     static char *integerChecksum(int32_t in);
     static bool isObfuscatedTime(int time);

@@ -976,6 +976,9 @@ struct viewerState {
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     bool drawVPCrosshairs;
+    // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
+    int drawNodeSelectSquare;
+    std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     //Show height/width-labels inside VPs
     bool showVPLabels;
@@ -1210,8 +1213,6 @@ struct skeletonState {
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
-    bool drawNodeSelectSquare; // flag to indicate if user has pulled/is pulling a selection square, which should be displayed
-    std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;

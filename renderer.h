@@ -53,9 +53,11 @@ protected:
     bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
     bool updateFrustumClippingPlanes(uint viewportType);
 signals:
+    nodeListElement *findNodeByNodeIDSignal(int nodeID);
     
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 

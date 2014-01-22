@@ -510,6 +510,19 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             / state->viewerState->vpConfigs[currentVP].texture.texUnitsPerDataPx
             * 0.5;
 //            * (float)state->magnification;
+
+     // for the node selection square
+    Coordinate first, second;
+    if(state->viewerState->drawNodeSelectSquare != -1) {
+        first.x = state->viewerState->nodeSelectionSquare.first.x
+                  * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
+        first.y = state->viewerState->nodeSelectionSquare.first.y
+                  * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
+        second.x = state->viewerState->nodeSelectionSquare.second.x
+                   * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
+        second.y = state->viewerState->nodeSelectionSquare.second.y
+                   * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
+    }
     switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
             if(!state->viewerState->selectModeFlag) {
@@ -629,8 +642,25 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, dataPxY, -0.0001);
                 glEnd();
             }
-            break;
 
+            // draw node selection square
+            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XY) {
+                glBegin(GL_QUADS);
+                glColor4f(0, 1., 0, 0.2);
+                    glVertex3f(first.x, first.y, 0);
+                    glVertex3f(first.x, second.y, 0);
+                    glVertex3f(second.x, second.y, 0);
+                    glVertex3f(second.x, first.y, 0);
+                glEnd();
+                glBegin(GL_LINE_LOOP);
+                glColor4f(0, 1., 0, 1);
+                    glVertex3f(first.x, first.y, 0);
+                    glVertex3f(first.x, second.y, 0);
+                    glVertex3f(second.x, second.y, 0);
+                    glVertex3f(second.x, first.y, 0);
+                glEnd();
+            }
+            break;
         case VIEWPORT_XZ:
             if(!state->viewerState->selectModeFlag) {
                 glMatrixMode(GL_PROJECTION);
@@ -748,9 +778,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glEnd();
                 }
             }
+
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-
             if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
@@ -761,6 +791,24 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glColor4f(0., 0., 1., 0.3);
                     glVertex3f(0.5, 0.0001, -dataPxY);
                     glVertex3f(0.5, 0.0001, dataPxY);
+                glEnd();
+            }
+
+            // draw node selection square
+            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XZ) {
+                glBegin(GL_QUADS);
+                glColor4f(0, 1., 0, 0.2);
+                    glVertex3f(first.x, 0, first.y);
+                    glVertex3f(first.x, 0, second.y);
+                    glVertex3f(second.x, 0, second.y);
+                    glVertex3f(second.x, 0, first.y);
+                glEnd();
+                glBegin(GL_LINE_LOOP);
+                glColor4f(0, 1., 0, 1);
+                    glVertex3f(first.x, 0, first.y);
+                    glVertex3f(first.x, 0, second.y);
+                    glVertex3f(second.x, 0, second.y);
+                    glVertex3f(second.x, 0, first.y);
                 glEnd();
             }
             break;
@@ -872,7 +920,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-
             if(state->viewerState->drawVPCrosshairs) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
@@ -883,6 +930,24 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glColor4f(0., 1., 0., 0.3);
                     glVertex3f(-0.0001, 0.5, -dataPxX);
                     glVertex3f(-0.0001, 0.5, dataPxX);
+                glEnd();
+            }
+
+            // draw node selection square
+            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_YZ) {
+                glBegin(GL_QUADS);
+                glColor4f(0, 1., 0, 0.2);
+                    glVertex3f(0, first.y, first.x);
+                    glVertex3f(0, second.y, first.x);
+                    glVertex3f(0, second.y, second.x);
+                    glVertex3f(0, first.y, second.x);
+                glEnd();
+                glBegin(GL_LINE_LOOP);
+                glColor4f(0, 1., 0, 1);
+                    glVertex3f(0, first.y, first.x);
+                    glVertex3f(0, second.y, first.x);
+                    glVertex3f(0, second.y, second.x);
+                    glVertex3f(0, first.y, second.x);
                 glEnd();
             }
             break;
@@ -1027,7 +1092,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-
         if(state->viewerState->drawVPCrosshairs) {
             glLineWidth(1.);
             glBegin(GL_LINES);
@@ -1093,10 +1157,10 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateY,
         state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateY, -1000, 10 *state->skeletonState->volBoundary);
 
+
     state->viewerState->vpConfigs[VIEWPORT_SKELETON].screenPxXPerDataPx =
             (float)state->viewerState->vpConfigs[VIEWPORT_SKELETON].edgeLength / ((
             (float)state->skeletonState->volBoundary - 2.f * ((float)state->skeletonState->volBoundary * state->skeletonState->zoomLevel))/2.f);
-
 
     if(state->viewerState->lightOnOff) {
         // Configure light
@@ -1117,6 +1181,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
         glEnable(GL_COLOR_MATERIAL);
     }
+
     if(state->viewerState->multisamplingOnOff) {
         glEnable(GL_MULTISAMPLE);
     }
@@ -1424,7 +1489,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glDisable(GL_TEXTURE_2D);
 
 
-
     for(i = 0; i < state->viewerState->numberViewports; i++) {
         dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
@@ -1673,6 +1737,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
     gluCylinder(gluCylObj, 15., 0. , 50., 15, 15);
     gluDeleteQuadric(gluCylObj);
+
     glPopMatrix();
     glPopMatrix();
 
@@ -1798,10 +1863,11 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
     ptr = (GLuint *)selectionBuffer;
 
     minZ = 0xffffffff;
-
+    if(hits == -1) {
+        hits = 8192;
+    }
     for(i = 0; i < hits; i++) {
         names = *ptr;
-
         ptr++;
         if((*ptr < minZ) && (*(ptr + 2) >= 50)) {
             minZ = *ptr;
@@ -1809,13 +1875,93 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         }
         ptr += names + 2;
     }
-
     state->viewerState->selectModeFlag = false;
     if(ptrName) {
         return *ptrName - 50;
     } else {
         return false;
     }       
+}
+
+void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height) {
+    int i;
+    /* 8192 is really arbitrary. It should be a value dependent on the
+    number of nodes / segments */
+
+    GLuint selectionBuffer[8192] = {0};
+    GLint hits, openGLviewport[4];
+    GLuint names, *ptr, minZ, *ptrName;
+    ptrName = NULL;
+
+    if(currentVP == VIEWPORT_XY) {
+        refVPXY->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == VIEWPORT_XZ) {
+        refVPXZ->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == VIEWPORT_YZ) {
+        refVPYZ->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    } else if(currentVP == VIEWPORT_SKELETON) {
+        refVPSkel->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+    }
+
+   // glGetIntegerv(GL_VIEWPORT, openGLviewport);
+
+    glSelectBuffer(8192, selectionBuffer);
+
+    state->viewerState->selectModeFlag = true;
+
+    glRenderMode(GL_SELECT);
+
+    glInitNames();
+    glPushName(0);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    if(currentVP == VIEWPORT_XY)
+        gluPickMatrix(x, refVPXY->height() - y, width, height, openGLviewport);
+    else if(currentVP == VIEWPORT_XZ)
+        gluPickMatrix(x, refVPXZ->height() - y, width, height, openGLviewport);
+    else if(currentVP == VIEWPORT_YZ)
+        gluPickMatrix(x, refVPYZ->height() - y, width, height, openGLviewport);
+    else if(currentVP == VIEWPORT_SKELETON)
+       gluPickMatrix(x, this->refVPSkel->height() - y, width, height, openGLviewport);
+
+    if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
+        renderSkeletonVP(currentVP);
+    } else {
+        glDisable(GL_DEPTH_TEST);
+        renderOrthogonalVP(currentVP);
+    }
+
+    hits = glRenderMode(GL_RENDER);
+    glLoadIdentity();
+
+    ptr = (GLuint *)selectionBuffer;
+
+    minZ = 0xffffffff;
+
+    if(hits == -1) { // overflow tag has been set.
+        hits = 8192;
+    }
+    struct nodeListElement *foundNode;
+    for(i = 0; i < hits; i++) {
+        names = *ptr;
+        ptr++;
+        if((*ptr < minZ) && (*(ptr + 2) >= 50))  {
+            minZ = *ptr;
+            ptrName = ptr + 2;
+            foundNode = findNodeByNodeIDSignal(*ptrName - 50);
+            if(foundNode) {
+                state->skeletonState->selectedNodes.push_back(foundNode);
+            }
+        }
+        ptr += names + 2;
+    }
+    state->viewerState->selectModeFlag = false;
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

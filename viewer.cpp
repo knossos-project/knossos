@@ -1980,6 +1980,8 @@ void Viewer::rewire() {
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
     connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     // end viewer signals
+    // renderer signals
+    connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     // skeletonizer signals
     //connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
@@ -1998,6 +2000,8 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
+    connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
+    connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
@@ -2011,7 +2015,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpUpperLeft, SLOT(zoomOrthogonals(float)));
     connect(eventModel, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));
     connect(eventModel, SIGNAL(zoomOutSkeletonVPSignal()), vpLowerRight, SLOT(zoomOutSkeletonVP()));
-    connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates())); // TIENITODO event handler??
+    connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
     connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
@@ -2042,7 +2046,9 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
                     skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(eventModel, SIGNAL(retrieveVisibleObjectBeneathSquareSignal(uint,uint,uint,uint)),
-            renderer, SLOT(retrieveVisibleObjectBeneathSquare(uint,uint,uint,uint)));
+                    renderer, SLOT(retrieveVisibleObjectBeneathSquare(uint,uint,uint,uint)));
+    connect(eventModel, SIGNAL(retrieveAllObjectsBeneathSquareSignal(uint,uint,uint,uint,uint)),
+                    renderer, SLOT(retrieveAllObjectsBeneathSquare(uint,uint,uint,uint,uint)));
     connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));
@@ -2167,13 +2173,17 @@ void Viewer::rewire() {
     //  treeview tab signals
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
             skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    connect(window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SIGNAL(delActiveNodeSignal()),
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedNodesSignal()),
+                    skeletonizer, SLOT(deleteSelectedNodes()));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delActiveNodeSignal()),
                     skeletonizer, SLOT(delActiveNode()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(JumpToActiveNodeSignal()),
                     skeletonizer, SLOT(jumpToActiveNode()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(addSegmentSignal(int,int,int,int)),
                     skeletonizer, SLOT(addSegment(int,int,int,int)));
-    connect(window->widgetContainer->annotationWidget->treeviewTab->treeTable, SIGNAL(deleteSelectedTreesSignal()),
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
+                    skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedTreesSignal()),
                     skeletonizer, SLOT(deleteSelectedTrees()));
     // commands tab signals
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(findTreeByTreeIDSignal(int)),
