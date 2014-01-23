@@ -1951,11 +1951,12 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     for(i = 0; i < hits; i++) {
         names = *ptr;
         ptr++;
-        if((*ptr < minZ) && (*(ptr + 2) >= 50))  {
+        if(*(ptr + 2) >= 50)  {
             minZ = *ptr;
             ptrName = ptr + 2;
             foundNode = findNodeByNodeIDSignal(*ptrName - 50);
             if(foundNode) {
+                foundNode->selected = true;
                 state->skeletonState->selectedNodes.push_back(foundNode);
             }
         }
@@ -2373,10 +2374,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
 
-                if(std::find(state->skeletonState->selectedNodes.begin(),
-                             state->skeletonState->selectedNodes.end(),
-                             currentNode)
-                    != state->skeletonState->selectedNodes.end()) { // highlight selected nodes
+                if(currentNode->selected) { // highlight selected nodes
                     /* Set the default color for selected nodes */
                     SET_COLOR(currentColor, 0.f, 1.f, 0.f, 0.5f);
 

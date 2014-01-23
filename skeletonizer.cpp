@@ -193,6 +193,7 @@ nodeListElement *Skeletonizer::addNodeListElement(
     newElement->numSegs = 0;
     newElement->nodeID = nodeID;
     newElement->isBranchNode = false;
+    newElement->selected = false;
     newElement->createdInMag = inMag;
 
     return newElement;

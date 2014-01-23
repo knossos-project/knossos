@@ -1100,6 +1100,7 @@ struct nodeListElement {
     uint nodeID;
     Coordinate position;
     bool isBranchNode;
+    bool selected;
 };
 
 

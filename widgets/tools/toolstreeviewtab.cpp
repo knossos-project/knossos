@@ -85,6 +85,9 @@ void TreeTable::dropEvent(QDropEvent *event) {
             Skeletonizer::moveNodeToTree((*iter), droppedOnTreeID);
         }
     }
+    for(int i = 0; i < kState->skeletonState->selectedNodes.size(); ++i) {
+        kState->skeletonState->selectedNodes[i]->selected = false;
+    }
     kState->skeletonState->selectedNodes.clear();
 }
 
@@ -687,6 +690,9 @@ void ToolsTreeviewTab::deleteNodesAction() {
         emit deleteSelectedNodesSignal();
         nodesDeleted();
     }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
 }
 
@@ -775,7 +781,10 @@ void ToolsTreeviewTab::moveNodesClicked() {
         }
         moveNodesDialog->hide();
     }
-    kState->skeletonState->selectedNodes.clear();
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
+    state->skeletonState->selectedNodes.clear();
 }
 
 void ToolsTreeviewTab::splitComponentAction() {
@@ -798,6 +807,9 @@ void ToolsTreeviewTab::splitComponentAction() {
         if(prompt.clickedButton() == confirmButton) {
             treeListElement *prevActive = state->skeletonState->activeTree;
             Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->selectedNodes[0]->nodeID, true);
+            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                state->skeletonState->selectedNodes[i]->selected = false;
+            }
             state->skeletonState->selectedNodes.clear();
             if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
                 treeComponentSplit();
@@ -830,6 +842,9 @@ void ToolsTreeviewTab::moveNodesAction() {
                                              state->skeletonState->selectedTrees[0]->treeID);
             }
         }
+    }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
     }
     state->skeletonState->selectedNodes.clear();
     state->skeletonState->selectedTrees.clear();
@@ -1151,6 +1166,9 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
     default:
         break;
     }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
     emit updateToolsSignal();
 }
@@ -1253,6 +1271,9 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
     default:
         break;
     }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
     emit updateToolsSignal();
 }
@@ -1314,12 +1335,23 @@ void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
 
 void ToolsTreeviewTab::activeNodeSelected() {
     nodeTable->clearSelection();
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
+    state->skeletonState->activeNode->selected = true;
     state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
 }
 
 void ToolsTreeviewTab::nodeItemSelected() {
     activeNodeTable->clearSelection();
+
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
     QModelIndexList selected = nodeTable->selectionModel()->selectedIndexes();
     nodeListElement *node;
@@ -1327,6 +1359,7 @@ void ToolsTreeviewTab::nodeItemSelected() {
         node = Skeletonizer::findNodeByNodeID(index.data().toInt());
         if(node) {
             state->skeletonState->selectedNodes.push_back(node);
+            node->selected = true;
         }
     }
 }
@@ -1337,6 +1370,9 @@ void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem*) {
     emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedNodes.at(0)->nodeID);
     emit JumpToActiveNodeSignal();
     nodeActivated();
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
+    }
     state->skeletonState->selectedNodes.clear();
 }
 
@@ -1715,6 +1751,9 @@ void ToolsTreeviewTab::nodesDeleted() {
     // update active node table, if active node was deleted
     if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == false) {
         nodeActivated(); // also activates tree
+    }
+    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+        state->skeletonState->selectedNodes[i]->selected = false;
     }
     state->skeletonState->selectedNodes.clear();
 }

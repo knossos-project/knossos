@@ -579,9 +579,11 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     if((iter = std::find(state->skeletonState->selectedNodes.begin(),
                                  state->skeletonState->selectedNodes.end(),
                                  selectedNode)) == state->skeletonState->selectedNodes.end()) {
+                        selectedNode->selected = true;
                         state->skeletonState->selectedNodes.push_back(selectedNode);
                     }
                     else {
+                        selectedNode->selected = false;
                         state->skeletonState->selectedNodes.erase(iter);
                     }
                     return true;
@@ -591,6 +593,9 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         }
         // node selection square
         if(VPfound != VIEWPORT_SKELETON and VPfound != VIEWPORT_ARBITRARY) {
+            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                state->skeletonState->selectedNodes[i]->selected = false;
+            }
             state->skeletonState->selectedNodes.clear();
             emit unselectNodesSignal();
 
@@ -1291,6 +1296,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             if(prompt.clickedButton() == confirmButton) {
                 emit deleteSelectedNodesSignal();
                 emit nodesDeletedSignal();
+                for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                    state->skeletonState->selectedNodes[i]->selected = false;
+                }
                 state->skeletonState->selectedNodes.clear();
             }
         }
@@ -1309,6 +1317,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         prompt.addButton("No", QMessageBox::ActionRole);
         prompt.exec();
         if(prompt.clickedButton() == confirmButton) {
+            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                state->skeletonState->selectedNodes[i]->selected = false;
+            }
             state->skeletonState->selectedNodes.clear();
             emit unselectNodesSignal();
         }
