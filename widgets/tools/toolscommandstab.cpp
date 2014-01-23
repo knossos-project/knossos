@@ -43,6 +43,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     defaultRadiusSpin = new QDoubleSpinBox();
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
     defaultRadiusSpin->setMaximum(100000);
+    defaultRadiusSpin->setMinimum(0.01);
 
     lockingLabel = new QLabel("Locking");
     commentLockingCheck = new QCheckBox("Enable Comment Locking");
