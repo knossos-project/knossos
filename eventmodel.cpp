@@ -325,7 +325,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        if(VPfound != VIEWPORT_SKELETON and VPfound != VIEWPORT_ARBITRARY) {
+        if(VPfound != VIEWPORT_ARBITRARY) {
             state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
             state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
         }
@@ -592,7 +592,7 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             return false;
         }
         // node selection square
-        if(VPfound != VIEWPORT_SKELETON and VPfound != VIEWPORT_ARBITRARY) {
+        if(VPfound != VIEWPORT_ARBITRARY) {
             for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
                 state->skeletonState->selectedNodes[i]->selected = false;
             }
@@ -621,7 +621,9 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseReleaseMiddle(QMouseEvent *event, int VPfound) {
     // a node was dragged to a new position
-    emit nodePositionChangedSignal(state->skeletonState->activeNode);
+    if(state->skeletonState->activeNode) {
+        emit nodePositionChangedSignal(state->skeletonState->activeNode);
+    }
 }
 
 bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
