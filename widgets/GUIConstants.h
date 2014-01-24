@@ -160,4 +160,8 @@ const QString LOADED_FILE8 = "loaded_file8";
 const QString LOADED_FILE9 = "loaded_file9";
 const QString LOADED_FILE10 = "loaded_file10";
 
+const QString OPEN_FILE_DIALOG_DIRECTORY = "open_file_dialog_directory";
+const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
+
+
 #endif // GUICONSTANTS_H

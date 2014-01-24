@@ -114,7 +114,8 @@ protected:
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
-
+    QString *openFileDirectory;
+    QString *saveFileDirectory;
 public:
     Ui::MainWindow *ui;
 

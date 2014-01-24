@@ -789,10 +789,13 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
-    state->skeletonState->skeletonFileAsQString = fileName;
-
-    loadSkeletonAfterUserDecision(fileName);
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", *this->openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
+    if(!fileName.isEmpty()) {
+        QFileInfo info(fileName);
+        openFileDirectory = new QString(info.dir().absolutePath());
+        state->skeletonState->skeletonFileAsQString = fileName;
+        loadSkeletonAfterUserDecision(fileName);
+    }
 
     state->viewerState->renderInterval = FAST;
 }
@@ -875,7 +878,7 @@ void MainWindow::saveSlot()
 
                 updateTitlebar(true);
                 state->skeletonState->unsavedChanges = false;
-            }
+        }
     }
     emit idleTimeSignal();
 }
@@ -894,16 +897,14 @@ void MainWindow::saveAsSlot()
         return;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", QDir::homePath(), "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", *saveFileDirectory, "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
-
-        qDebug() << state->skeletonState->autoFilenameIncrementBool;
+        QFileInfo info(fileName);
+        saveFileDirectory = new QString(info.dir().absolutePath());
 
         if(state->skeletonState->autoFilenameIncrementBool) {
             updateSkeletonFileName(fileName);
         }
-
-        QFileInfo info(fileName);
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
@@ -1239,6 +1240,9 @@ void MainWindow::saveSettings() {
         }
     }
 
+    settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, *this->openFileDirectory);
+    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, *this->saveFileDirectory);
+
 
     settings.endGroup();
 
@@ -1283,6 +1287,19 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
+
+    if(!settings.value(OPEN_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
+        openFileDirectory = new QString(settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString());
+    } else {
+        openFileDirectory = new QString(QDir::homePath());
+    }
+
+    if(!settings.value(SAVE_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
+        saveFileDirectory = new QString(settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString());
+    } else {
+        saveFileDirectory = new QString(QDir::homePath());
+    }
+
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
