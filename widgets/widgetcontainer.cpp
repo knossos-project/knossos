@@ -96,7 +96,8 @@ void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
     viewportSettingsWidget->layout()->activate();
     viewportSettingsWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - viewportSettingsWidget->width() - 20,
                                  QApplication::desktop()->screen()->rect().topRight().y() + viewportSettingsWidget->height());
-    viewportSettingsWidget->setFixedSize(viewportSettingsWidget->size());
+    viewportSettingsWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    viewportSettingsWidget->setFixedSize(viewportSettingsWidget->sizeHint());
 }
 
 void WidgetContainer::createDataSavingWidget(QWidget *parent) {
