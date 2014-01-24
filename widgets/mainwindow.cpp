@@ -1168,9 +1168,9 @@ void MainWindow::copyClipboardCoordinates() {
    snprintf(copyString,
                  8192,
                  "%d, %d, %d",
-                 this->xField->value(),
-                 this->yField->value(),
-                 this->zField->value());
+                 this->xField->value() + 1,
+                 this->yField->value() + 1,
+                 this->zField->value() + 1);
    QString coords(copyString);
    QApplication::clipboard()->setText(coords);
 }
