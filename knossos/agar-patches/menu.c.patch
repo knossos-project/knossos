@@ -1,0 +1,16 @@
+Index: menu.c
+===================================================================
+--- menu.c	(revision 8954)
++++ menu.c	(working copy)
+@@ -167,7 +167,10 @@
+ 		x += WIDGET(parentWidget)->rView.x1;
+ 		y += WIDGET(parentWidget)->rView.y1;
+ 		winParent = WIDGET(parentWidget)->window;
+-
++		
++        if(!winParent)
++            return(NULL);
++			
+ 		if (WIDGET(winParent)->drv != NULL &&
+ 		    AGDRIVER_MULTIPLE(WIDGET(winParent)->drv)) {
+ 			/* Convert to absolute coordinates */

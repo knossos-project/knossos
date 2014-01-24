@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="knossos" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="release">
+				<Option platforms="Windows;" />
+				<Option output="knossos" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
+				<Compiler>
+					<Add option="-march=pentium4" />
+					<Add option="-O3" />
+					<Add option="-Wall" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="ag_gui" />
+					<Add library="ag_core" />
+					<Add library="ag_dev" />
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="mingw32" />
+					<Add library="m" />
+					<Add library="GLee" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="SDL_net" />
+					<Add library="wsock32" />
+					<Add library="liblibxml2" />
+					<Add library="iconv" />
+					<Add library="z" />
+					<Add library="z.dll" />
+					<Add library="msvcrt" />
+					<Add library="libglut32" />
+					<Add library="freetype" />
+					<Add library="pthreadVC2" />
+					<Add library="libSDL_Clipboard" />
+				</Linker>
+			</Target>
+			<Target title="debug">
+				<Option platforms="Windows;" />
+				<Option output="knossos" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="--data-path=C:\knossos-skeletonizer\data\f0073_stack_cubed_mag4\" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-pg" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-pg -lgmon" />
+					<Add library="ag_gui" />
+					<Add library="ag_core" />
+					<Add library="ag_dev" />
+					<Add library="SDL" />
+					<Add library="SDLmain" />
+					<Add library="mingw32" />
+					<Add library="m" />
+					<Add library="GLee" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="SDL_net" />
+					<Add library="wsock32" />
+					<Add library="liblibxml2" />
+					<Add library="iconv" />
+					<Add library="z" />
+					<Add library="z.dll" />
+					<Add library="msvcrt" />
+					<Add library="libglut32" />
+					<Add library="freetype" />
+					<Add library="pthreadVC2" />
+					<Add library="libSDL_Clipboard" />
+					<Add library="gdi32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-std=c99" />
+		</Compiler>
+		<Linker>
+			<Add library="ag_gui" />
+			<Add library="ag_core" />
+			<Add library="ag_dev" />
+			<Add library="SDL" />
+			<Add library="SDLmain" />
+			<Add library="mingw32" />
+			<Add library="m" />
+			<Add library="GLee" />
+			<Add library="opengl32" />
+			<Add library="glu32" />
+			<Add library="SDL_net" />
+			<Add library="wsock32" />
+			<Add library="liblibxml2" />
+			<Add library="iconv" />
+			<Add library="z" />
+			<Add library="z.dll" />
+			<Add library="msvcrt" />
+			<Add library="libglut32" />
+			<Add library="freetype" />
+			<Add library="pthreadVC2" />
+			<Add library="libSDL_Clipboard" />
+		</Linker>
+		<Unit filename="client.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="client.h" />
+		<Unit filename="coordinate.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="customStyle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="customStyle.h" />
+		<Unit filename="eventHandler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="eventHandler.h" />
+		<Unit filename="gui.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gui.h" />
+		<Unit filename="hash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="hash.h" />
+		<Unit filename="knossos-global.h" />
+		<Unit filename="knossos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="knossos.h" />
+		<Unit filename="lex.yy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="loader.h" />
+		<Unit filename="remote.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="remote.h" />
+		<Unit filename="renderer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="renderer.h" />
+		<Unit filename="skeletonizer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="skeletonizer.h" />
+		<Unit filename="treeLUT_fallback.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="treeLUT_fallback.h" />
+		<Unit filename="viewer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="viewer.h" />
+		<Unit filename="y.tab.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="y.tab.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+			</wxsmith>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

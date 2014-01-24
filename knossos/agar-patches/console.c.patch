@@ -1,0 +1,21 @@
+Index: console.c
+===================================================================
+--- console.c	(revision 8954)
++++ console.c	(working copy)
+@@ -356,8 +356,14 @@
+ 	ln->cBg = AG_ColorRGBA(0,0,0,0);
+ 	ln->cFg = AG_ColorRGB(250,250,230);
+ 
+-	if (cons->flags & AG_CONSOLE_AUTOSCROLL)
+-		cons->rOffs++;
++	if (cons->flags & AG_CONSOLE_AUTOSCROLL) {
++       if((cons->nLines - cons->rVisible) > 0) {
++           cons->rOffs = cons->nLines - cons->rVisible;
++       }
++       else {
++           cons->rOffs = 0;
++       }
++    }
+ 
+ 	AG_Redraw(cons);
+ 	AG_ObjectUnlock(cons);
