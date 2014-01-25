@@ -1,41 +1,23 @@
 <?xml version="1.0"?>
 <KNOSSOS_GUI_settings>
-  <recentFiles>
-    <recentFile pos="1" path="skeletonFiles\skeleton-120713-1910.002.nml"/>
-    <recentFile pos="2" path="skeletonFiles\skeleton-120713-1910.001.nml"/>
-    <recentFile pos="3" path="skeletonFiles\skeleton-250613-2056.003.nml"/>
-    <recentFile pos="4" path="skeletonFiles\skeleton-250613-2056.002.nml"/>
-    <recentFile pos="5" path="skeletonFiles\skeleton-250613-2056.001.nml"/>
-    <recentFile pos="6" path="skeletonFiles\skeleton-130513-2001.001.nml"/>
-  </recentFiles>
-  <windowSize screenSizeX="1280" screenSizeY="738"/>
+  <recentFiles/>
+  <windowSize screenSizeX="1680" screenSizeY="993"/>
   <windows>
-    <window type="tools" x="889" y="319" w="387" h="419" visible="1"/>
-    <window type="zoom" x="987" y="259" w="289" h="190" visible="1"/>
-    <window type="nav-options" x="1008" y="90" w="268" h="301" visible="1"/>
+    <window type="tools" x="1040" y="298" w="326" h="408" visible="1"/>
+    <window type="zoom" x="739" y="348" w="306" h="194" visible="1"/>
+    <window type="nav-options" x="1039" y="40" w="250" h="280" visible="1"/>
     <window type="sync-options" x="618" y="429" w="200" h="120" visible="0"/>
-    <window type="vp-options" x="779" y="419" w="497" h="319" visible="1"/>
-    <window type="saving-options" x="618" y="348" w="207" h="82" visible="0"/>
+    <window type="vp-options" x="1037" y="575" w="497" h="317" visible="1"/>
+    <window type="saving-options" x="618" y="348" w="200" h="80" visible="0"/>
     <window type="console" x="618" y="529" w="421" h="129" visible="0"/>
-    <window type="tracingTime" x="1131" y="254" w="144" h="83" visible="1"/>
-    <window type="comments" x="628" y="478" w="298" h="264" visible="1"/>
   </windows>
   <workModes skeletonWorkMode="0" viewWorkMode="0"/>
-  <commentShortcuts comment1="" comment2="" comment3="" comment4="" comment5=""/>
-  <commentNodePrefs condNodeColoring="0" commentNodeRadius="0">
-    <substring index="0" content="" color="" radius="0.000000"/>
-    <substring index="1" content="" color="" radius="0.000000"/>
-    <substring index="2" content="" color="" radius="0.000000"/>
-    <substring index="3" content="" color="" radius="0.000000"/>
-    <substring index="4" content="" color="" radius="0.000000"/>
-  </commentNodePrefs>
-  <datasetNavigation recenteringTime="0" recenteringTimeOrth="500" movementSpeed="40" jumpFrames="1" walkFrames="1"/>
-  <dataSavingOptions savingInterval="5" autoIncrFileName="1"/>
-  <vpSettingsGeneral lightEffects="0" highlActiveTree="1" showAllNodeIDs="0" enableOverrideNodeRadius="0" overrideNodeRadius="1.000000" edgeNodeRadiusRatio="0.500000" renderingQuality="7.000000" showPosSizButtons="1"/>
+  <datasetNavigation recenteringTime="0" recenteringTimeOrth="500" movementSpeed="40" jumpFrames="1"/>
+  <dataSavingOptions autoSaving="1" savingInterval="5" autoIncrFileName="1"/>
+  <vpSettingsGeneral lightEffects="0" highlActiveTree="1" showAllNodeIDs="0" enableOverrideNodeRadius="0" overrideNodeRadius="1.000000" edgeNodeRadiusRatio="0.500000" displayModeBitFlags="1"/>
   <vpSettingsSliceVPs vpLabels="0" vpCrosshairs="1" highlIntersections="0" depthCutoff="5.000000" datasetLinearFiltering="9729" dynRangeBias="41" dynRangeDelta="171" datasetColortableOn="0" treeColortableOn="0"/>
   <vpSettingsSkelVP showXY="1" showXZ="1" showYZ="1" rotateAroundActNode="1"/>
-  <vpSettingsVPPosSiz showPosSizButtonsCheckbox="1" VP_XY_x="5" VP_XY_y="30" VP_XY_edge="349" VP_XZ_x="5" VP_XZ_y="384" VP_XZ_edge="349" VP_YZ_x="359" VP_YZ_y="30" VP_YZ_edge="349" VP_SK_x="359" VP_SK_y="384" VP_SK_edge="349"/>
-  <toolsNodesTab useLastRadiusAsDefault="0" defaultRadius="1.500000"/>
-  <Advanced-Tracing-Modes autoTracingDelay="50" autoTracingSteps="10"/>
+  <toolsNodesTab useLastRadiusAsDefault="0" defaultRadius="1.500000" enableCommentLocking="0" lockingRadius="100" lockToNodesWithComment="seed"/>
+  <Advanced-Tracing-Modes autoTracingDelay="50" autoTracingSteps="10" autoTracingMode="0"/>
   <FilePaths skeletonPath="skeletonFiles" datasetLUTPath="" treeLUTPath="" datasetLUTFile="" treeLUTFile=""/>
 </KNOSSOS_GUI_settings>

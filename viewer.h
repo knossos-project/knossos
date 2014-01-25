@@ -1,3 +1,6 @@
+#ifndef VIEWER_H
+#define VIEWER_H
+
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -22,38 +25,99 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static struct vpList *vpListNew();
-static int32_t vpListAddElement(struct vpList *vpList, struct viewPort *viewPort, struct vpBacklog *backlog);
-static struct vpList *vpListGenerate(struct viewerState *viewerState);
-static int32_t vpListDelElement(struct vpList *list, struct vpListElement *element);
-static int32_t vpListDel(struct vpList *list);
-static struct vpBacklog *backlogNew();
-static int32_t backlogDelElement(struct vpBacklog *backlog, struct vpBacklogElement *element);
-static int32_t backlogAddElement(struct vpBacklog *backlog, Coordinate datacube, uint32_t dcOffset, Byte *slice, uint32_t x_px, uint32_t y_px, uint32_t cubeType);
-static int32_t backlogDel(struct vpBacklog *backlog);
-static int32_t vpHandleBacklog(struct vpListElement *currentVp, struct viewerState *viewerState);
-static uint32_t dcSliceExtract(Byte *datacube,
-                               Byte *slice,
-                               size_t dcOffset,
-                               struct viewPort *viewPort);
-static uint32_t sliceExtract_standard(Byte *datacube,
-                                      Byte *slice,
-                                      struct viewPort *viewPort);
-static uint32_t sliceExtract_adjust(Byte *datacube,
-                                    Byte *slice,
-                                    struct viewPort *viewPort);
-static uint32_t vpGenerateTexture(struct vpListElement *currentVp, struct viewerState *viewerState);
-static uint32_t downsampleVPTexture(struct viewPort *viewPort);
-static uint32_t upsampleVPTexture(struct viewPort *viewPort);
+#include <QObject>
+#include <QThread>
+#include <QDebug>
+#include <QCursor>
+#include <QTimer>
+#include <QLineEdit>
+#include "knossos-global.h"
 
-//Calculates the upper left pixel of the texture of an orthogonal slice, dependent on viewerState->currentPosition
-static uint32_t calcLeftUpperTexAbsPx();
+/**
+ *
+ *  This file contains functions that are called by the managing,
+ *  all openGL rendering operations and
+ *  all skeletonization operations commanded directly by the user over the GUI. The files gui.c, renderer.c and
+ *  skeletonizer.c contain functions mainly used by the corresponding "subsystems". viewer.c contains the main
+ *  event loop and routines that handle (extract slices, pack into openGL textures,...) the data coming
+ *  from the loader thread.
+ */
+class Skeletonizer;
+class Renderer;
+class EventModel;
+class Viewport;
+class MainWindow;
+class Viewer : public QThread
+{
+    Q_OBJECT
 
-//Initializes the viewer, is called only once after the viewing thread started
-static int32_t initViewer();
+public:
+    explicit Viewer(QObject *parent = 0);
+    Skeletonizer *skeletonizer;
+    EventModel *eventModel;
+    Renderer *renderer;
+    MainWindow *window;
 
-static int32_t texIndex(uint32_t x,
-                        uint32_t y,
-                        uint32_t colorMultiplicationFactor,
-                        struct viewPortTexture *texture);
-static SDL_Cursor *GenCursor(char *xpm[], int xHot, int yHot);
+    floatCoordinate v1, v2, v3;
+    Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
+    vpList *viewports;
+    QTimer *timer;    
+    int frames;
+
+    bool updateZoomCube();
+    static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
+
+
+    bool initialized;
+    bool moveVPonTop(uint currentVP);
+    static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
+
+signals:
+    void loadSignal();
+    void updateCoordinatesSignal(int x, int y, int z);
+    void updateZoomAndMultiresWidgetSignal();
+    void idleTimeSignal();
+    bool broadcastPosition(uint x, uint y, uint z);
+protected:
+    bool resetViewPortData(vpConfig *viewport);
+    bool vpListDel(vpList *list);
+    int vpListDelElement( vpList *list,  vpListElement *element);
+    vpList *vpListGenerate(viewerState *viewerState);
+    int vpListAddElement(vpList *vpList, vpConfig *vpConfig);
+    vpList* vpListNew();
+
+    bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
+    bool vpGenerateTexture_arb(struct vpListElement *currentVp);
+
+    bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+
+    bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+    bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+
+    bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
+    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+
+    bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
+    void rewire();
+public slots:
+    bool changeDatasetMag(uint upOrDownFlag);
+    bool userMove(int x, int y, int z, int serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool userMove_arb(float x, float y, float z, int serverMovement);
+    static bool updatePosition(int serverMovement);
+    bool recalcTextureOffsets();
+    bool calcDisplayedEdgeLength();    
+    bool updateViewerState();    
+    void run();
+    bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
+    bool loadTreeColorTable(QString path, float *table, int type);
+    static bool loadDatasetColorTable(QString path, GLuint *table, int type);
+protected:
+    bool calcLeftUpperTexAbsPx();
+    bool initViewer();
+    bool processUserMove();
+    QTime delay;
+    bool idlingExceeds(uint msec);
+};
+
+#endif // VIEWER_H

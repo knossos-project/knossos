@@ -32,7 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opj_apps_config.h"
-#include "../knossos-global.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -212,7 +211,7 @@ char get_next_file(int imageno,dircnt_t *dirptr,img_fol_t *img_fol, opj_dparamet
 
 static int infile_format(const char *fname)
 {
-	FILE *reader;
+    FILE *reader;
 	const char *s, *magic_s;
 	int ext_format, magic_format;
 	unsigned char buf[12];
@@ -249,7 +248,8 @@ static int infile_format(const char *fname)
 	}
 	else
     {
-        fprintf(stderr, "File magic error:");
+        // TODO GetCurrentThreadId() and GetTickCount() prevent compilation on linux (and possibly other platforms?)
+        //fprintf(stderr, "DEBUG DEBUG DEBUG infile_format: file magic error %s, TID %d @ %d\n", fname, GetCurrentThreadId(), GetTickCount());
         for (i = 0; i < l_nb_read; i++) {
             fprintf(stderr, "%02X", buf[i]);
         }
@@ -354,7 +354,7 @@ static void info_callback(const char *msg, void *client_data) {
 int jp2_decompress_main(char *infile, char *buf, int bufsize)
 {
     int i;
-    int32_t *dataptr;
+    int *dataptr;
 
 	opj_dparameters_t parameters;			/* decompression parameters */
 	opj_image_t* image = NULL;

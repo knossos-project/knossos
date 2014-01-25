@@ -27,7 +27,6 @@
 from runknossos_ui import RunKnossosUI
 from kiki import KikiServer
 from kconfig import DataError
-import json
 try:
     import tkinter, tkinter.messagebox, tkinter.filedialog
     filedialog = tkinter.filedialog
@@ -45,78 +44,29 @@ class RunKnossos(RunKnossosUI):
         RunKnossosUI.__init__(self, root)
 
         # Add cached datasets to available datasets
-        kukupath = self.configFilePath()
         try:
-            with open(kukupath, "r") as kuku:
-                kukuConf = json.load(kuku)
+            kukupath = self.configFilePath()
+            kukuConf = open(kukupath, "r") 
+            kukuConfString = kukuConf.read()
+            kukuConf.close()
             
-            for dataset in kukuConf["datasets"]:
-                if dataset:
-                    #dataset = os.path.abspath(dataset)
-                    try:
-                        if os.path.isdir(dataset):
-                            self.addDataset(dataset)
-                    except TypeError:
-                        pass
-        except (ValueError, TypeError): #kuku.conf not in json format yet
-            try:
-                with open(kukupath, "r") as kuku:
-                    kukuConf = kuku.read();
-                for dataset in kukuConf.split('\n'):
-                    if dataset:
-                        #dataset = os.path.abspath(dataset)
-                        try:
-                            if os.path.isdir(dataset):
-                                self.addDataset(dataset)
-                        except TypeError:
-                            pass
-            except IOError:
-                pass
+            for currentPath in kukuConfString.split('\n'):
+                if currentPath:
+                    currentPath = os.path.abspath(currentPath)
+                    if os.path.isdir(currentPath):
+                        self.addDataset(currentPath)
         except IOError:
             pass
+
         self.updateList()
 
     # Add button
     #
     def add_button_command(self, *args):
-        kukupath = self.configFilePath()
-        if(os.path.exists(kukupath)):
-            flag = "r+"
-        else:
-            flag = "w+"
-        try:
-            with open(kukupath, flag) as kuku:
-                kukuConf = json.load(kuku)
-                lastDir = kukuConf["lastDir"]
+        path = filedialog.askdirectory()
+        if not path:
+            return
 
-                if(lastDir): # start in last opened folder
-                    if(os.path.exists(lastDir)):
-                        path = filedialog.askdirectory(initialdir=lastDir)
-                    else:
-                        path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir))
-                else: # use Knossos folder as default initialdir
-                    path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir)) 
-                if not path:
-                    return
-                kuku.truncate(0)
-                kuku.seek(0)
-                kukuConf["lastDir"] = path + "/.."
-                json.dump(kukuConf, kuku, indent=2)
-        except (ValueError, TypeError): #kuku.conf not in json format yet
-            path = filedialog.askdirectory(initialdir=os.path.join(os.path.dirname( __file__ ), os.path.pardir))      
-            if not path:
-                return
-            kukuConf = dict()
-            kukuConf["lastDir"] = path + '/..'
-            kukuConf["datasets"] = []
-            try:
-                with open(kukupath, "w+") as kuku:
-                    json.dump(kukuConf, kuku, indent=2)
-            except IOError:
-                pass
-        except IOError:
-            pass
-            
         self.addDataset(os.path.abspath(path))
 
     def del_button_command(self, *args):
@@ -133,12 +83,12 @@ class RunKnossos(RunKnossosUI):
     #
     def run_button_command(self, *args):
         try:
-            items = list(map(int, self.dataset_list.curselection()))
+            items = map(int, self.dataset_list.curselection())
         except ValueError:
             pass
 
         if len(items) == 0:
-            messageBox.showerror("No dataset selected",
+            tkMessageBox.showerror("No dataset selected",
                                    "Please select the dataset(s) that you want to load.")
  
         for currentDataset in items:
@@ -150,7 +100,7 @@ class RunKnossos(RunKnossosUI):
         try:
             configInfo = self.config.read(file)
         except DataError:
-            messageBox.showerror("Could not detect valid knossos data",
+            tkMessageBox.showerror("Could not detect valid knossos data",
                                    "The directory specified does not appear "
                                    "to contain a valid knossos dataset.")
             return False
@@ -163,14 +113,14 @@ class RunKnossos(RunKnossosUI):
         currentDataset["Source"] = configInfo[6]
 
         if self.config.check(currentDataset):
-            messageBox.showerror("Incomplete configuration",
+            tkMessageBox.showerror("Incomplete configuration",
                                   "The configuration for this dataset "
                                   "is incomplete. Run the configuration "
                                   "tool on this dataset and try again.")
             return False
 
-        if currentDataset["Name"] in self.datasets:
-            messageBox.showerror("Dataset already added",
+        if self.datasets.has_key(currentDataset["Name"]):
+            tkMessageBox.showerror("Dataset already added",
                                    "A dataset with the name \"%s\" has already been\n"
                                    "added. Two datasets cannot have the same name." \
                                    % currentDataset["Name"] )
@@ -188,13 +138,13 @@ class RunKnossos(RunKnossosUI):
         try:
             path = os.path.abspath(self.datasets[name]["Path"])
         except KeyError:
-            messageBox.showerror("Path to dataset does not exist",
+            tkMessageBox.showerror("Path to dataset does not exist",
                                    "The dataset named \"%s\" could not be found." \
                                     % name )
             return True
 
         if not self.kserver.isAlive():
-            messageBox.showerror("Synchronization server problem",
+            tkMessageBox.showerror("Synchronization server problem",
                                    "The synchronization server for this kuku "
                                    "session is not running. This either means "
                                    "the server crashed and you should restart "
@@ -206,7 +156,7 @@ class RunKnossos(RunKnossosUI):
         if not os.path.exists(knossosPath):
             knossosPath = os.path.abspath(sys.path[0] + "/../knossos.exe")
             if not os.path.exists(knossosPath):
-                messageBox.showerror("Error calling knossos",
+                tkMessageBox.showerror("Error calling knossos",
                                        "Could not call the knossos executable. It "
                                        "should be placed one directory above the "
                                        "kuku script and be executable by the user "
@@ -236,7 +186,7 @@ class RunKnossos(RunKnossosUI):
         try:
             subprocess.Popen(arguments, cwd=knossosWD)
         except:
-            messageBox.showerror("Error calling knossos",
+            tkMessageBox.showerror("Error calling knossos",
                                    "There was an error running the knossos "
                                    "executable. Check if you have the "
                                    "required permissions.")
@@ -288,37 +238,21 @@ class RunKnossos(RunKnossosUI):
                 pathListString = pathListString + currentPath + '\n'
 
         kukupath = self.configFilePath()
-        if(os.path.exists(kukupath)):
-            flag = "r+"
-        else:
-            flag = "w+"
-        try:
-            with open(kukupath, flag) as kuku:
-                kukuConf = json.load(kuku)
-                if pathListString:
-                    kukuConf["datasets"] = []
-                    for dataset in pathListString.split('\n'):
-                        kukuConf["datasets"].append(dataset)
-                else:
-                    kukuConf["datasets"] = []
-                kuku.truncate(0)
-                kuku.seek(0)
-                json.dump(kukuConf, kuku, indent=2)
-        except (ValueError, TypeError): #kuku.conf not in json format yet
+        
+        if pathListString:
             try:
-                with open(kukupath, "w+") as kuku:
-                    kukuConf = dict()
-                    kukuConf["lastDir"] = os.path.dirname( __file__ ) + '/..'
-                    kukuConf["datasets"] = []
-                    if pathListString:
-                        for dataset in pathListString.split('\n'):
-                            kukuConf["datasets"].append(dataset)
-                    json.dump(kukuConf, kuku, indent=2)
+                # Write kuku.conf to the current directory
+                
+                kukuFile = open(kukupath, "w+")
+
+                kukuFile.write(pathListString)
+                kukuFile.close()
             except IOError:
                 pass
-        except IOError:
-            pass
-     
+        else:
+            if os.path.isfile(kukupath):
+                os.remove(kukupath)
+                
         self.root.destroy()
         pass
 

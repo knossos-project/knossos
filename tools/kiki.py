@@ -113,11 +113,11 @@ class KikiServer:
                     writeTo.append(messageTo)
             readFrom = self.clients.keys()
             readFrom.append(self.serverSocket)
-        except AttributeError:
+        except:
             for messageTo in self.outMessages.keys():
                 if len(self.outMessages[messageTo]) > 0:
                     writeTo.append(messageTo)
-            readFrom = list(self.clients.keys())
+            readFrom = self.clients.copy().keys()
             readFrom.append(self.serverSocket)
 
         try:

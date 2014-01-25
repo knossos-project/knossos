@@ -1,7 +1,9 @@
+#ifndef KNOSSOS_H
+#define KNOSSOS_H
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2013
+ *  (C) Copyright 2007-2012
  *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -22,29 +24,52 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-//static uint32_t isPathString(char *string);
-//static uint32_t printUsage();
-static int32_t initStates();
-static int32_t printConfigValues();
-static uint32_t cleanUpMain();
-static int32_t tempConfigDefaults();
-static struct stateInfo *emptyState();
-static int32_t readDataConfAndLocalConf();
-static int32_t stripNewlines(char *string);
-static int32_t configFromCli(int argCount, char *arguments[]);
-static int32_t loadNeutralDatasetLUT(GLuint *lut);
-static int32_t loadDefaultTreeLUT();
-int32_t readConfigFile(char *path);
-static int32_t findAndRegisterAvailableDatasets();
-#ifdef LINUX
-static int32_t catchSegfault(int signum);
+#include <qobject.h>
+#include <QtOpenGL>
+
+#include "widgets/mainwindow.h"
+
+class Knossos : public QObject {
+    Q_OBJECT
+public:
+
+    explicit Knossos(QObject *parent = 0);
+    bool stripNewlines(char *string);
+    static bool readConfigFile(const char *path);
+    static bool printConfigValues();
+    static bool loadNeutralDatasetLUT(GLuint *datasetLut);
+    static bool readDataConfAndLocalConf();
+    static stateInfo *emptyState();
+    bool findAndRegisterAvailableDatasets();
+    static bool configDefaults();
+    static bool configFromCli(int argCount, char *arguments[]);   
+    bool initStates();
+    bool commonInitStates();
+    static void revisionCheck();
+
+    static bool unlockSkeleton(int increment);
+    static bool lockSkeleton(uint targetRevision);
+    static bool sendRemoteSignal();
+    static bool sendClientSignal();
+    static bool sendQuitSignal();
+    static bool sendServerSignal();
+    static uint log2uint32(register uint x);
+    static uint ones32(register uint x);
+    static void loadStyleSheet();
+    void loadDefaultTreeLUT();
+    static void showSplashScreen();
+
+signals:
+    void calcDisplayedEdgeLengthSignal();
+    void treeColorAdjustmentChangedSignal();
+    bool loadTreeColorTableSignal(QString path, float *table, int type);
+    void lockDatasetMag(bool lock);
+public slots:
+    void loadTreeLUTFallback();
+    void startLoader();
+
+};
+
+extern Knossos *knossos;
+
 #endif
-
-
-/*
-2. Funktion zum durch-switchen von nodes ohne comment, auch branchpoints ohne comment sollen dabei gefunden werden (fuer offizielle Version nicht noetig)
-1. Menu schlieﬂen bei klick irgendwo rein
-2. cursor wechsel resize
-3. allg. cursor Fadenkreuz
-
-*/

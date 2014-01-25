@@ -3948,7 +3948,7 @@ OPJ_BOOL opj_j2k_read_sot ( opj_j2k_t *p_j2k,
                 };
 #endif /* USE_JPWL */
 
-                /* Ref A.4.2: Psot could be equal zero if it is the last tile-part of the codestream.*/
+                /* reference A.4.2: Psot could be equal zero if it is the last tile-part of the codestream.*/
                 if (!l_tot_len) {
                         opj_event_msg(p_manager, EVT_INFO, "Psot value of the current tile-part is equal to zero, "
                                         "we assuming it is the last tile-part of the codestream.\n");

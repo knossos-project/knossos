@@ -1,3 +1,6 @@
+#ifndef RENDERER_H
+#define RENDERER_H
+
 /*
  *  This file is a part of KNOSSOS.
  *
@@ -22,20 +25,42 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-//static uint32_t setOGLforVP(uint32_t currentVP);
-//static uint32_t overlayOrthogonalVpPixel(uint32_t currentVP, Coordinate position, color4F color);
-static void renderWholeSkeleton(uint32_t viewportType);
-static void renderWholeSkeleton2(uint32_t viewportType);
-static void renderSuperCubeSkeleton(uint32_t viewportType);
-static void renderActiveTreeSkeleton(uint32_t viewportType);
-static uint32_t renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint32_t viewportType);
-static uint32_t renderSphere(Coordinate *pos, float radius, color4F color, uint32_t viewportType);
-static uint32_t renderText(Coordinate *pos, char *string);
-uint32_t updateDisplayListsSkeleton();
-static uint32_t renderSegPlaneIntersection(struct segmentListElement *segment);
-static uint32_t renderViewportBorders(uint32_t currentVP);
-static uint32_t updateRotationStateMatrix(float M1[16], float M2[16]);
-static uint32_t rotateSkeletonViewport();
-static uint32_t setRotationState(int setTo);
-static uint32_t sphereInFrustum(floatCoordinate pos, float radius, uint32_t viewportType);
-static uint32_t updateFrustumClippingPlanes(uint32_t viewportType);
+#include <QObject>
+#include "knossos-global.h"
+
+class Viewport;
+class Renderer : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Renderer(QObject *parent = 0);    
+    Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
+    QFont font;
+
+protected:
+    bool setRotationState(uint setTo);
+    bool rotateSkeletonViewport();
+    bool updateRotationStateMatrix(float M1[16], float M2[16]);
+    uint renderViewportBorders(uint currentVP);
+
+    uint renderSegPlaneIntersection(struct segmentListElement *segment);
+    uint renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType);
+    uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
+    void renderSkeleton(uint currentVP,uint viewportType);
+    bool doubleMeshCapacity(mesh *toDouble);
+    bool initMesh(mesh *meshToInit, uint initialSize);
+    bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
+    bool updateFrustumClippingPlanes(uint viewportType);
+signals:
+    nodeListElement *findNodeByNodeIDSignal(int nodeID);
+    
+public slots:
+    uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
+    void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
+    bool renderOrthogonalVP(uint currentVP);
+    bool renderSkeletonVP(uint currentVP);
+
+};
+
+#endif // RENDERER_H
