@@ -1305,8 +1305,10 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             }
         }
         else {
-            emit deleteActiveNodeSignal();
-            emit nodesDeletedSignal();
+            if(state->skeletonState->activeNode) {
+                emit deleteActiveNodeSignal();
+                emit nodesDeletedSignal();
+            }
         }
     }
     else if(event->key() == Qt::Key_Escape) {
