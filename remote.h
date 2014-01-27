@@ -1,7 +1,10 @@
+#ifndef REMOTE_H
+#define REMOTE_H
+
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2012
+ *  (C) Copyright 2007-2013
  *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -22,6 +25,41 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static int32_t updateRemoteState();
-static int32_t cleanUpRemote();
-static int32_t remoteTrajectory(int32_t trajNumber);
+#include <QObject>
+#include <QThread>
+#include <knossos-global.h>
+
+class Remote : public QThread
+{
+    Q_OBJECT
+public:
+    explicit Remote(QObject *parent = 0);
+    void msleep(unsigned long msec);
+
+    bool remoteTrajectory(int trajNumber);
+    bool newTrajectory(char *trajName, char *trajectory);
+    bool remoteWalkTo(int x, int y, int z);
+    bool remoteWalk(int x, int y, int z);
+    void run();
+    bool updateRemoteState();
+    bool remoteDelay(int s);
+
+    int type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
+    int maxTrajectories;
+    int activeTrajectory;
+    Coordinate recenteringPosition;
+
+signals:
+    void finished();
+    void updateViewerStateSignal();
+    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void updatePositionSignal(int serverMovement);
+    void idleTimeSignal();
+public slots:
+    void setRemoteStateType(int type);
+    void setRecenteringPosition(int x, int y, int z);
+    bool remoteJump(int x, int y, int z);
+
+};
+
+#endif // REMOTE_H

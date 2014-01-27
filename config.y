@@ -44,7 +44,7 @@ int yywrap() {
         return 1;
 }
 
-extern struct stateInfo *tempConfig;
+extern  stateInfo *tempConfig;
 
 %}
 
@@ -149,7 +149,7 @@ intassn:
         |
         BOERGENS _INTEGER
         {
-                tempConfig->boergens = TRUE;
+                tempConfig->boergens = true;
         }
         ;
 wordassn:

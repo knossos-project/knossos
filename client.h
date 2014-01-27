@@ -1,7 +1,10 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
 /*
  *  This file is a part of KNOSSOS.
  *
- *  (C) Copyright 2007-2012
+ *  (C) Copyright 2007-2013
  *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
  *
  *  KNOSSOS is free software: you can redistribute it and/or modify
@@ -22,10 +25,90 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-static int32_t clientRun();
-static int32_t connectToServer();
-static int32_t closeConnection();
-static float bytesToFloat(Byte *source);
-static uint32_t parseInBuffer();
-static uint32_t flushOutBuffer();
-static int32_t cleanUpClient();
+#include "knossos-global.h"
+#include <QObject>
+#include <QThread>
+
+/**
+  *
+  * @class Client
+  * @brief The client class is dedicated to open more than one knossos instance at wish.
+  * This is based that users can work with datasets in different magnification at once!
+  */
+class QAbstractSocket;
+class Client : public QThread
+{
+    Q_OBJECT
+public:
+    explicit Client(QObject *parent = 0);
+
+    bool connectToServer(QTcpSocket *remoteSocket);
+    bool closeConnection(QTcpSocket *remoteSocket);
+    bool flushOutBuffer();
+
+
+    static bool skeletonSyncBroken();
+
+    static float bytesToFloat(Byte *source);
+    static int bytesToInt(Byte *source);
+    static bool integerToBytes(Byte *dest, int source);
+    static bool floatToBytes(Byte *dest, float source);
+    static int Wrapper_SDLNet_TCP_Open(void *params);
+    static bool IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex);
+    static bool addPeer(uint id, char *name, float xScale, float yScale, float zScale, int xOffset, int yOffset, int zOffset);
+    static bool delPeer(uint id);
+    static bool broadcastCoordinate(uint x, uint y, uint z);
+    static bool syncMessage(const char *fmt, ...);
+    int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, struct IOBuffer *buffer);
+    static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
+
+    uint parseInBuffer();
+    bool clientRun(QTcpSocket *remoteSocket);
+
+    bool connectAsap;
+    int remotePort;
+    bool connected;
+    Byte synchronizePosition;
+    Byte synchronizeSkeleton;
+    int connectionTimeout;
+    bool connectionTried;
+    char serverAddress[1024];
+
+    QHostAddress *remoteServer;
+    QTcpSocket *remoteSocket;
+    QSet<QTcpSocket *> *socketSet;
+    uint myId;
+    bool saveMaster;
+
+    struct peerListElement *firstPeer;
+    struct IOBuffer *inBuffer;
+    struct IOBuffer *outBuffer;
+
+
+    void run();
+signals:
+    void finished();
+    void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    void addTreeCommentSignal(int targetRevision, int treeID, char *comment);
+    void remoteJumpSignal(int x, int y, int z);
+    void skeletonWorkModeSignal(int targetRevision, uint workMode);
+    void clearAnnotationSignal(int targetRevision, int loadingSkeleton);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+    void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
+    void delTreeSignal(int targetRevision, int treeID, int serialize);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
+    void popBranchNodeSignal();
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    void sendConnectedState();
+    void sendDisconnectedState();
+public slots:
+    void socketConnectionSucceeded();
+    void socketConnectionFailed(QAbstractSocket::SocketError error);
+    static bool broadcastPosition(uint x, uint y, uint z);
+};
+
+#endif // CLIENT_H

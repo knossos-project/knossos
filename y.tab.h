@@ -130,7 +130,3 @@ typedef union YYSTYPE
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 #endif
-
-
-
-
