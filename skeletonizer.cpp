@@ -1509,21 +1509,19 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
             }
         }
     }
-    /*  @todo
+
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&
        (loadedPosition.z != 0)) {
+
         state->viewerState->currentPosition.x =
             loadedPosition.x - 1;
         state->viewerState->currentPosition.y =
             loadedPosition.y - 1;
         state->viewerState->currentPosition.z =
             loadedPosition.z - 1;
-         @todo change to Signal loadSkeleton has to be non-static
-        emit updatePositionSignal(TELL_COORDINATE_CHANGE);
-
-       updatePosition(TELL_COORDINATE_CHANGE);
-    }*/
+        emit userMoveSignal(loadedPosition.x - 1, loadedPosition.y - 1, loadedPosition.z - 1, TELL_COORDINATE_CHANGE);
+    }
 
 
 
