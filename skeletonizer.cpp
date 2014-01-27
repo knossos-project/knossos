@@ -3885,22 +3885,25 @@ bool Skeletonizer::updateTreeColors() {
     return true;
 }
 
-
+/**
+ * @brief Skeletonizer::updateCircRadius if both the source and target node of a segment are outside the viewport,
+ *      the segment would be culled away, too, regardless of wether it is in the viewing frustum.
+ *      This function solves this by making the circ radius of one node as large as the segment,
+ *      so that it cuts the viewport and its segment is rendered.
+ * @return
+ */
 bool Skeletonizer::updateCircRadius(nodeListElement *node) {
-
     struct segmentListElement *currentSegment = NULL;
-      node->circRadius = node->radius;
+    node->circRadius = node->radius;
 
-      /* Any segment longer than the current circ radius?*/
-      currentSegment = node->firstSegment;
-      while(currentSegment) {
-          if(currentSegment->length > node->circRadius)
-              node->circRadius = currentSegment->length;
-          currentSegment = currentSegment->next;
-      }
-
-      return true;
-
+    /* Any segment longer than the current circ radius?*/
+    currentSegment = node->firstSegment;
+    while(currentSegment) {
+        if(currentSegment->length > node->circRadius)
+            node->circRadius = currentSegment->length;
+        currentSegment = currentSegment->next;
+    }
+    return true;
 }
 
 int Skeletonizer::xorInt(int xorMe) {

@@ -2364,8 +2364,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 /* The first 50 entries of the openGL namespace are reserved
                 for static objects (like slice plane quads...) */
-                if(state->viewerState->selectModeFlag)
+                if(state->viewerState->selectModeFlag) {
                     glLoadName(currentNode->nodeID + 50);
+                }
 
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
@@ -2451,7 +2452,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
     /* Highlight active node */
     if(state->skeletonState->activeNode) {
-
         /* Set the default color for the active node */
         SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
 
@@ -2460,8 +2460,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
         currentColor.a = 0.2f;
 
-        if(state->viewerState->selectModeFlag)
+        if(state->viewerState->selectModeFlag) {
             glLoadName(state->skeletonState->activeNode->nodeID + 50);
+        }
 
         if(state->skeletonState->overrideNodeRadiusBool)
             renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
@@ -2475,8 +2476,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         memset(textBuffer, '\0', 32);
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
         renderText(&(state->skeletonState->activeNode->position), textBuffer, currentVP, viewportType);
-
-
     }
 
     /* Restore modelview matrix */

@@ -567,30 +567,41 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        // single node selection
+        nodeListElement *selectedNode = NULL;
+
         if(state->viewerState->nodeSelectionSquare.first.x == event->pos().x()
                 and state->viewerState->nodeSelectionSquare.first.y == event->pos().y()) {
+            // mouse released on same spot on which it was pressed down: single node selection
             int nodeID = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->pos().x(), event->pos().y(), 10);
             if(nodeID) {
-                nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
-                if(selectedNode) {
-                    std::vector<nodeListElement*>::iterator iter;
-                    //check if already in buffer
-                    if((iter = std::find(state->skeletonState->selectedNodes.begin(),
-                                 state->skeletonState->selectedNodes.end(),
-                                 selectedNode)) == state->skeletonState->selectedNodes.end()) {
-                        selectedNode->selected = true;
-                        state->skeletonState->selectedNodes.push_back(selectedNode);
-                    }
-                    else {
-                        selectedNode->selected = false;
-                        state->skeletonState->selectedNodes.erase(iter);
-                    }
-                    return true;
+                selectedNode = findNodeByNodeIDSignal(nodeID);
+            }
+            else if (VPfound != VIEWPORT_SKELETON) {
+                // if nothing is found, try to find nearest node in radius first
+                Coordinate *clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+                if(clickedCoordinate) {
+                    selectedNode = findNodeInRadiusSignal(*clickedCoordinate);
+                    free(clickedCoordinate);
                 }
             }
-            return false;
+            if(selectedNode) {
+                std::vector<nodeListElement*>::iterator iter;
+                //check if already in buffer
+                if((iter = std::find(state->skeletonState->selectedNodes.begin(),
+                             state->skeletonState->selectedNodes.end(),
+                             selectedNode)) == state->skeletonState->selectedNodes.end()) {
+                    selectedNode->selected = true;
+                    state->skeletonState->selectedNodes.push_back(selectedNode);
+                }
+                else {
+                    selectedNode->selected = false;
+                    state->skeletonState->selectedNodes.erase(iter);
+                }
+                return true;
+            }
+            return false; // no selected node, do nothing
         }
+
         // node selection square
         if(VPfound != VIEWPORT_ARBITRARY) {
             for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
