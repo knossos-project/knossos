@@ -151,7 +151,9 @@ void Viewport::initializeGL() {
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+
     /* performance tricks from mesa3d  */
+
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
     glShadeModel(GL_FLAT);
     glDisable(GL_DITHER);
@@ -159,6 +161,7 @@ void Viewport::initializeGL() {
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
+
 
 
     QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
@@ -393,40 +396,66 @@ void Viewport::drawSkeletonViewport() {
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseButtonLeft(event, focus);
+#endif
     return eventDelegate->handleMouseButtonLeft(event, vpID);
 }
 
 bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseButtonMiddle(event, focus);
+#endif
     return eventDelegate->handleMouseButtonMiddle(event, vpID);
-
 }
 
 bool Viewport::handleMouseButtonRight(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseButtonRight(event, focus);
+#endif
     return eventDelegate->handleMouseButtonRight(event, vpID);
 }
 
 
 bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseMotionLeftHold(event, focus);
+#endif
     return eventDelegate->handleMouseMotionLeftHold(event, vpID);
 }
 
 bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseMotionMiddleHold(event, focus);
+#endif
     return eventDelegate->handleMouseMotionMiddleHold(event, vpID);
 }
 
 bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseMotionRightHold(event, focus);
+#endif
     return eventDelegate->handleMouseMotionRightHold(event, vpID);
 }
 
 bool Viewport::handleMouseWheelForward(QWheelEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseWheelForward(event, focus);
+#endif
     return eventDelegate->handleMouseWheelForward(event, vpID);
 }
 
 bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseWheelBackward(event, focus);
+#endif
     return eventDelegate->handleMouseWheelBackward(event, vpID);
 }
 
 bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
+#ifdef Q_OS_MAC
+    return eventDelegate->handleMouseReleaseLeft(event, focus);
+#endif
     return eventDelegate->handleMouseReleaseLeft(event, vpID);
 }
 

@@ -1606,7 +1606,6 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
 
     // Delete the segment out of the segment list and out of the visualization structure!
 
-
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
         return false;
@@ -1640,7 +1639,6 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
         LOG("Cannot delete segment, no segment with corresponding node IDs available!")
         Knossos::unlockSkeleton(false);
         return false;
-
     }
 
     /* numSegs counts forward AND backward segments!!! */
@@ -2809,24 +2807,30 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
 }
 
 segmentListElement* Skeletonizer::findSegmentByNodeIDs(int sourceNodeID, int targetNodeID) {
+    qDebug() << "entered findSegmentByID";
     segmentListElement *currentSegment;
     nodeListElement *currentNode;
 
     currentNode = findNodeByNodeID(sourceNodeID);
+    qDebug() << "Current Node ID =" << currentNode;
 
-    if(!currentNode) { return NULL;}
+    if(!currentNode) { return NULL;}    
     currentSegment = currentNode->firstSegment;
+    qDebug() << currentSegment;
     while(currentSegment) {
+        qDebug() << "SEGMENT_BACK=2 : " << currentSegment->flag;
         if(currentSegment->flag == SEGMENT_BACKWARD) {
             currentSegment = currentSegment->next;
             continue;
         }
         if(currentSegment->target->nodeID == targetNodeID) {
+            qDebug() << "success";
             return currentSegment;
         }
         currentSegment = currentSegment->next;
     }
 
+    qDebug() << "returning null";
     return NULL;
 }
 

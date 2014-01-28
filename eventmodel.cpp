@@ -134,27 +134,27 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     int clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
 
-    if(clickedNode) {
+    if(clickedNode) {        
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             if(keyMod.testFlag(Qt::ControlModifier)) {
-                //qDebug("shift and control and mouse middle");
+                qDebug("shift and control and mouse middle");
                 // Pressed SHIFT and CTRL
             } else {
                 // Delete segment between clicked and active node
-                if(state->skeletonState->activeNode) {
+                if(state->skeletonState->activeNode) {                   
                     if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID,
                                             clickedNode)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
-                                   NULL, true);
+                                   0, true);
                     } else if(findSegmentByNodeIDSignal(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
-                                   NULL, true);
+                                   0, true);
                     } else {
                         emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, true);
                     }
