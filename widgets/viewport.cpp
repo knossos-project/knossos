@@ -151,6 +151,16 @@ void Viewport::initializeGL() {
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
+    /* performance tricks from mesa3d  */
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+    glShadeModel(GL_FLAT);
+    glDisable(GL_DITHER);
+    glDisable(GL_STENCIL);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
+
+
     QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
     qDebug() << versionString;
 }
