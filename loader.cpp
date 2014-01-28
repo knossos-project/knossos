@@ -782,7 +782,7 @@ bool Loader::initLoader() {
     }
 
     if(state->overlay) {
-        LOG("Allocating %d bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES)
+        LOG("Allocating %u bytes for the overlay cubes.", state->cubeSetBytes * OBJID_BYTES)
                 this->OcSetChunk = (Byte*)malloc(state->cubeSetBytes * OBJID_BYTES);
         if(this->OcSetChunk == NULL) {
             LOG("Unable to allocate memory for the OC memory slots.")

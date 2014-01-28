@@ -124,7 +124,7 @@ void ViewportSettingsWidget::loadSettings() {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(false);
     }
 
-    state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? true : settings.value(ENABLE_OVERLAY).toBool();
+    state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? false : settings.value(ENABLE_OVERLAY).toBool();
     this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(state->overlay);
 
     state->skeletonState->showIntersections =
