@@ -713,8 +713,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
              event->accept();
          } else {
              event->ignore();
+             return;
          }
     }
+
+    QWidgetList widgets = QApplication::topLevelWidgets();
+    for(int i = 0; i < widgets.size(); i++) {
+        widgets.at(i)->close();
+    }
+    exit(0);
 }
 
 //file menu functionality
