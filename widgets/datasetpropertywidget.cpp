@@ -9,7 +9,7 @@
 #include <QSettings>
 #include "knossos-global.h"
 #include "knossos.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "ftp.h"
 #include "viewer.h"
 #include "mainwindow.h"

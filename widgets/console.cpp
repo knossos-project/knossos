@@ -23,7 +23,7 @@
  */
 
 #include "console.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QPlainTextEdit>
 #include <QSettings>
 

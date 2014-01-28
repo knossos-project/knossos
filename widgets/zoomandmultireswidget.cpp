@@ -23,7 +23,7 @@
  */
 
 #include "zoomandmultireswidget.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QGridLayout>
 #include <QLabel>
 #include <QDoubleSpinBox>

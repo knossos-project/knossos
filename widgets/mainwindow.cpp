@@ -52,7 +52,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"

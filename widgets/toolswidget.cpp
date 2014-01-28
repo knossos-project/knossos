@@ -30,7 +30,7 @@
 #include "widgets/tools/toolsquicktabwidget.h"
 #include "widgets/tools/toolsnodestabwidget.h"
 #include "widgets/tools/toolstreestabwidget.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 
 extern stateInfo *state;
 

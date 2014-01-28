@@ -26,7 +26,7 @@
 #include "commentshortcuts/commentshortcutstab.h"
 #include "commentshortcuts/commentshighlightingtab.h"
 #include "commentshortcuts/commentsnodecommentstab.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QSettings>
 #include <QEvent>
 #include <QKeyEvent>

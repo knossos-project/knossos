@@ -36,7 +36,7 @@
 #include <QEvent>
 #include <QDebug>
 #include <QKeyEvent>
-#include "../GUIConstants.h"
+#include "../GuiConstants.h"
 #include "knossos-global.h"
 
 extern  stateInfo *state;

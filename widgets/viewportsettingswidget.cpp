@@ -27,7 +27,7 @@
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
 #include "viewportsettings/vpskeletonviewportwidget.h"
 #include <QSettings>
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QLabel>
