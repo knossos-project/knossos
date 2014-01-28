@@ -31,7 +31,7 @@ void WidgetContainer::createConsoleWidget() {
 
 void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
     tracingTimeWidget = new TracingTimeWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     tracingTimeWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     tracingTimeWidget->layout()->update();
@@ -43,7 +43,7 @@ void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
 
 void WidgetContainer::createCommentsWidget(QWidget *parent) {
     commentsWidget = new CommentsWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     commentsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     // update and activate, so that widget geometry is calculated
@@ -56,7 +56,7 @@ void WidgetContainer::createCommentsWidget(QWidget *parent) {
 
 void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
     zoomAndMultiresWidget = new ZoomAndMultiresWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     zoomAndMultiresWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     zoomAndMultiresWidget->layout()->update();
@@ -68,7 +68,7 @@ void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
 
 void WidgetContainer::createNavigationWidget(QWidget *parent) {
     navigationWidget = new NavigationWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     navigationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     navigationWidget->layout()->update();
@@ -80,7 +80,7 @@ void WidgetContainer::createNavigationWidget(QWidget *parent) {
 
 void WidgetContainer::createToolWidget(QWidget *parent) {
     toolsWidget = new ToolsWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     toolsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -89,7 +89,7 @@ void WidgetContainer::createToolWidget(QWidget *parent) {
 
 void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
     viewportSettingsWidget = new ViewportSettingsWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     viewportSettingsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     viewportSettingsWidget->layout()->update();
@@ -102,7 +102,7 @@ void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
 
 void WidgetContainer::createDataSavingWidget(QWidget *parent) {
     dataSavingWidget = new DataSavingWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     dataSavingWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     dataSavingWidget->layout()->update();
@@ -114,7 +114,7 @@ void WidgetContainer::createDataSavingWidget(QWidget *parent) {
 
 void WidgetContainer::createSychronizationWidget(QWidget *parent) {
     synchronizationWidget = new SynchronizationWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     synchronizationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -123,20 +123,20 @@ void WidgetContainer::createSychronizationWidget(QWidget *parent) {
 
 void WidgetContainer::createDatasetPropertyWidget(QWidget *parent) {
     datasetPropertyWidget = new DatasetPropertyWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     datasetPropertyWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
 }
 
 void WidgetContainer::createTaskWidgets(QWidget *parent) {
     taskLoginWidget = new TaskLoginWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     taskLoginWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     taskManagementWidget = new TaskManagementWidget(taskLoginWidget, parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     taskManagementWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -146,7 +146,7 @@ void WidgetContainer::createTaskWidgets(QWidget *parent) {
 
 void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
     splashWidget = new SplashScreenWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     splashWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
 }
@@ -154,14 +154,14 @@ void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
 void WidgetContainer::createDocumentationWidget(QWidget *parent) {
     docWidget = new DocumentationWidget(parent);
     docWidget->resize(1112, 600);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     docWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
 }
 
 void WidgetContainer::createAnnotationWidget(QWidget *parent) {
     annotationWidget = new AnnotationWidget(parent);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
     annotationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     annotationWidget->layout()->update();
