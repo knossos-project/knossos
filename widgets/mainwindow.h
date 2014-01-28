@@ -115,7 +115,7 @@ protected:
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
     QString *openFileDirectory;
-    QString *saveFileDirectory;
+    QString *saveFileDirectory;    
 public:
     Ui::MainWindow *ui;
 

@@ -845,7 +845,6 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
@@ -1232,6 +1231,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
+    settings.setValue(WORK_MODE, state->skeletonState->workMode);
+
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(i < skeletonFileHistory->size()) {
             settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
@@ -1300,6 +1301,15 @@ void MainWindow::loadSettings() {
         saveFileDirectory = new QString(QDir::homePath());
     }
 
+    if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {
+        qDebug() << "the settings";
+        state->skeletonState->workMode = settings.value(WORK_MODE).toUInt();
+        if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE) {
+            linkWithActiveNodeSlot();
+        } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_DROP_NODE) {
+            dropNodesSlot();
+        }
+    }
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
