@@ -3682,7 +3682,11 @@ bool Skeletonizer::popBranchNode(int targetRevision, int serialize) {
             }
         branchNodeID = (PTRSIZEINT)popStack(state->skeletonState->branchStack);
         if(branchNodeID == 0) {
-            // AGAR AG_TextMsg(AG_MSG_INFO, "No branch points remain.");
+            QMessageBox box;
+            box.setWindowTitle("Knossos Information");
+            box.setIcon(QMessageBox::Information);
+            box.setInformativeText("No branch points remain");
+            box.exec();
             LOG("No branch points remain.");
 
             goto exit_popbranchnode;
