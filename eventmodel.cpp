@@ -326,6 +326,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         if(VPfound != VIEWPORT_ARBITRARY) {
+            state->viewerState->renderInterval = FAST;
             state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
             state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
         }

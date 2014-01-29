@@ -1275,7 +1275,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(270, 1., 0., 0.);
+        glRotatef(90, 1., 0., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
 
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
@@ -1305,7 +1305,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
 
-        glRotatef(90, 0., 1., 0.);
+        glRotatef(270, 0., 1., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 

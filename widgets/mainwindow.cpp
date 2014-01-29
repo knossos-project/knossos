@@ -1375,7 +1375,7 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
-    widgetContainer->tracingTimeWidget->loadSettings();
+    //widgetContainer->tracingTimeWidget->loadSettings();
 
 
 }
