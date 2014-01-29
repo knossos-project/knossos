@@ -862,13 +862,17 @@ void MainWindow::saveSlot()
 
                 updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
 
-                if(state->skeletonState->autoSaveBool) {
+                if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
                     if(index >= 0) {
                         skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
                         historyEntryActions[index]->setText(skeletonFileHistory->at(index));
                         becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-
-
+                        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+                        updateTitlebar(true);
+                        state->skeletonState->unsavedChanges = false;
+                        emit idleTimeSignal();
+                        state->skeletonState->skeletonChanged = false;
+                        return;
                     }
                 }
 
@@ -887,6 +891,7 @@ void MainWindow::saveSlot()
         }
     }
     emit idleTimeSignal();
+    state->skeletonState->skeletonChanged = false;
 }
 
 void MainWindow::saveAsSlot()
@@ -927,6 +932,7 @@ void MainWindow::saveAsSlot()
 
     }
     state->viewerState->renderInterval = FAST;
+    state->skeletonState->skeletonChanged = false;
 }
 
 
@@ -1261,7 +1267,7 @@ void MainWindow::saveSettings() {
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
-    widgetContainer->annotationWidget->saveSettings();
+    widgetContainer->annotationWidget->saveSettings();    
     //widgetContainer->toolsWidget->saveSettings();    
 }
 
@@ -1360,6 +1366,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
+
     widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->console->loadSettings();
@@ -1368,6 +1375,8 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
+    widgetContainer->tracingTimeWidget->loadSettings();
+
 
 }
 
