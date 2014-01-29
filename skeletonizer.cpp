@@ -4369,14 +4369,12 @@ bool Skeletonizer::deleteSelectedTrees() {
 }
 
 bool Skeletonizer::deleteSelectedNodes() {
-    std::vector<nodeListElement *>::iterator iter;
-    for(iter = state->skeletonState->selectedNodes.begin();
-        iter != state->skeletonState->selectedNodes.end(); ++iter) {
-        if((*iter) == state->skeletonState->activeNode) {
+    for(int i = state->skeletonState->selectedNodes.size() - 1; i >= 0; --i) {
+        if(state->skeletonState->selectedNodes[i] == state->skeletonState->activeNode) {
             delActiveNode();
         }
         else {
-            delNode(CHANGE_MANUAL, 0, *iter, true);
+            delNode(CHANGE_MANUAL, 0, state->skeletonState->selectedNodes[i], true);
         }
     }
     state->skeletonState->selectedNodes.clear();
