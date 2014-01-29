@@ -228,9 +228,10 @@ uint Renderer::renderText(Coordinate *pos, char *string, uint currentVP, uint vi
 
     glEnable(GL_DEPTH_TEST);
     return true;*/
-    char *c = string;
+    uchar *c = (uchar *)string;
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
+
     for (; *c != '\0'; c++) {
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
     }
@@ -429,7 +430,8 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-        sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+
+        sprintf(label, "Height %.2f %cm, Width %.2f %cm", height, 0xb5, width, 0xb5);
         renderText(&pos, label, currentVP, state->viewerState->vpConfigs[currentVP].type);
     }
 

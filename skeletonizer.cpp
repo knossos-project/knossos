@@ -1005,6 +1005,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         qErrnoWarning("Document not parsed successfully.");
         return false;
     }
+    /*
     int lines = 0;
     QTextStream stream(&file);
     while(!stream.atEnd()) {
@@ -1015,6 +1016,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     progress.setWindowTitle("Loading Skeleton File");
     progress.setWindowModality(Qt::WindowModal);
     progress.show();
+*/
 
     if(state->skeletonState->mergeOnLoadFlag == false) {
         merge = false;
@@ -1038,21 +1040,20 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     }
     QTime bench;
     int counter = 0;
-    file.reset();
+    //file.reset();
     QXmlStreamReader xml(&file);
+
     std::vector<std::pair<uint, char*> > comments; // for buffering comments found in the xml
     bench.start();
     QXmlStreamAttributes attributes;
     QStringRef attribute;
     float temp;
 
-    int outerCount = 0, innerCount = 0;
-    while(!xml.atEnd() and !xml.hasError()) {
-        outerCount++;
-        if(xml.readNextStartElement()) {
-            innerCount++;
 
-            /*
+    while(!xml.atEnd() and !xml.hasError()) {       
+        if(xml.readNextStartElement()) {
+
+           /*
             if(xml.lineNumber() % 10 == 0) {
                 progress.setValue(xml.lineNumber());
             }*/
@@ -1401,7 +1402,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                 time = skeletonTime; // For legacy skeleton files
                             }
 
-           state->viewerState->renderInterval = SLOW;                 if(merge == false) {
+                            if(merge == false) {
                                 addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
                             }
                             else {
@@ -1497,8 +1498,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         qDebug() << xml.errorString() << " at " << xml.lineNumber();
     }
     qDebug() << "loading skeleton took: "<< bench.elapsed();
-    qDebug() << "outer counter: " << outerCount;
-    qDebug() << "inner counter: " << innerCount;
     file.close();
 
     if(activeNodeID) {
@@ -2807,30 +2806,30 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
 }
 
 segmentListElement* Skeletonizer::findSegmentByNodeIDs(int sourceNodeID, int targetNodeID) {
-    qDebug() << "entered findSegmentByID";
+    //qDebug() << "entered findSegmentByID";
     segmentListElement *currentSegment;
     nodeListElement *currentNode;
 
     currentNode = findNodeByNodeID(sourceNodeID);
-    qDebug() << "Current Node ID =" << currentNode;
+    //qDebug() << "Current Node ID =" << currentNode;
 
     if(!currentNode) { return NULL;}    
     currentSegment = currentNode->firstSegment;
-    qDebug() << currentSegment;
+    //qDebug() << currentSegment;
     while(currentSegment) {
-        qDebug() << "SEGMENT_BACK=2 : " << currentSegment->flag;
+        //qDebug() << "SEGMENT_BACK=2 : " << currentSegment->flag;
         if(currentSegment->flag == SEGMENT_BACKWARD) {
             currentSegment = currentSegment->next;
             continue;
         }
         if(currentSegment->target->nodeID == targetNodeID) {
-            qDebug() << "success";
+            //qDebug() << "success";
             return currentSegment;
         }
         currentSegment = currentSegment->next;
     }
 
-    qDebug() << "returning null";
+    //qDebug() << "returning null";
     return NULL;
 }
 
