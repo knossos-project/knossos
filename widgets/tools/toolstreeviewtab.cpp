@@ -1752,9 +1752,6 @@ void ToolsTreeviewTab::nodesDeleted() {
     if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == false) {
         nodeActivated(); // also activates tree
     }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
     state->skeletonState->selectedNodes.clear();
 }
 

@@ -1310,9 +1310,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             if(prompt.clickedButton() == confirmButton) {
                 emit deleteSelectedNodesSignal();
                 emit nodesDeletedSignal();
-                for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                    state->skeletonState->selectedNodes[i]->selected = false;
-                }
                 state->skeletonState->selectedNodes.clear();
             }
         }
