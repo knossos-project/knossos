@@ -27,6 +27,7 @@ const QString COMMENT3 = "comment3";
 const QString COMMENT4 = "comment4";
 const QString COMMENT5 = "comment5";
 
+
 /* Autosave */
 const QString AUTO_SAVING = "auto_saving";
 const QString SAVING_INTERVAL = "saving_interval";
@@ -125,6 +126,9 @@ const QString ROSE = "rose";
 const QString AZURE = "azure";
 const QString PURPLE = "purple";
 const QString BROWN = "brown";
+
+const QString ENABLE_COND_COLORING = "enable_cond_coloring";
+const QString ENABLE_COND_RADIUS = "enable_cond_radius";
 
 const QString SUBSTR1 = "substring1";
 const QString SUBSTR2 = "substring2";

@@ -32,6 +32,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QCheckBox>
 #include <QPushButton>
 #include <QFormLayout>
 #include <QVariant>
@@ -120,36 +121,41 @@ void CommentsWidget::loadSettings() {
 
     if(settings.value(SUBSTR1).isNull() == false) {
         this->highlightingTab->substringFields[0]->setText(settings.value(SUBSTR1).toString());
+        this->highlightingTab->substringFields[0]->editingFinished();
     }
     else {
         this->highlightingTab->substringFields[0]->clear();
     }
     if(settings.value(SUBSTR2).isNull() == false) {
         this->highlightingTab->substringFields[1]->setText(settings.value(SUBSTR2).toString());
+         this->highlightingTab->substringFields[1]->editingFinished();
     }
     else {
         this->highlightingTab->substringFields[1]->clear();
     }
     if(settings.value(SUBSTR3).isNull() == false) {
         this->highlightingTab->substringFields[2]->setText(settings.value(SUBSTR3).toString());
+        this->highlightingTab->substringFields[2]->editingFinished();
     }
     else {
         this->highlightingTab->substringFields[2]->clear();
     }
     if(settings.value(SUBSTR4).isNull() == false) {
         this->highlightingTab->substringFields[3]->setText(settings.value(SUBSTR4).toString());
+        this->highlightingTab->substringFields[3]->editingFinished();
     }
     else {
         this->highlightingTab->substringFields[3]->clear();
     }
     if(settings.value(SUBSTR5).isNull() == false) {
         this->highlightingTab->substringFields[4]->setText(settings.value(SUBSTR5).toString());
+         this->highlightingTab->substringFields[4]->editingFinished();
     }
     else {
         this->highlightingTab->substringFields[4]->clear();
     }
 
-    this->highlightingTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());
+    this->highlightingTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());    
     this->highlightingTab->colorComboBox[1]->setCurrentIndex(settings.value(COLOR2).toInt());
     this->highlightingTab->colorComboBox[2]->setCurrentIndex(settings.value(COLOR3).toInt());
     this->highlightingTab->colorComboBox[3]->setCurrentIndex(settings.value(COLOR4).toInt());
@@ -185,6 +191,17 @@ void CommentsWidget::loadSettings() {
     else {
         this->highlightingTab->radiusSpinBox[4]->setValue(1.5);
     }
+
+    if(settings.value(ENABLE_COND_COLORING).isNull() == false) {
+        this->highlightingTab->enableCondColoringCheckBox->setChecked(settings.value(ENABLE_COND_COLORING).toBool());
+        this->highlightingTab->enableCondColoringChecked(settings.value(ENABLE_COND_COLORING).toBool());
+    }
+
+    if(settings.value(ENABLE_COND_RADIUS).isNull() == false) {
+        this->highlightingTab->enableCondRadiusCheckBox->setChecked(settings.value(ENABLE_COND_RADIUS).toBool());
+        this->highlightingTab->enableCondColoringCheckBox->setChecked(settings.value(ENABLE_COND_RADIUS).toBool());
+    }
+
     settings.endGroup();
 
     if(visible) {
@@ -228,6 +245,9 @@ void CommentsWidget::saveSettings() {
     settings.setValue(RADIUS3, this->highlightingTab->radiusSpinBox[2]->value());
     settings.setValue(RADIUS4, this->highlightingTab->radiusSpinBox[3]->value());
     settings.setValue(RADIUS5, this->highlightingTab->radiusSpinBox[4]->value());
+
+    settings.setValue(ENABLE_COND_COLORING, this->highlightingTab->enableCondColoringCheckBox->isChecked());
+    settings.setValue(ENABLE_COND_RADIUS, this->highlightingTab->enableCondRadiusCheckBox->isChecked());
 
     settings.endGroup();
 }

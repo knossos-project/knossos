@@ -107,6 +107,7 @@ signals:
     void branchPushedSignal();
     void branchPoppedSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
+    void viewportDecorationSignal(bool visible);
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -115,7 +116,7 @@ protected:
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
     QString *openFileDirectory;
-    QString *saveFileDirectory;    
+    QString *saveFileDirectory;        
 public:
     Ui::MainWindow *ui;
 

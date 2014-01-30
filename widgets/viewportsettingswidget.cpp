@@ -119,9 +119,10 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(settings.value(SHOW_VP_DECORATION).isNull() == false) {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
+        emit decorationSignal();
     }
     else {
-        this->generalTabWidget->showVPDecorationCheckBox->setChecked(false);
+        this->generalTabWidget->showVPDecorationCheckBox->setChecked(true);
     }
 
     state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? false : settings.value(ENABLE_OVERLAY).toBool();

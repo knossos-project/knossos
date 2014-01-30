@@ -1859,15 +1859,31 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         renderOrthogonalVP(currentVP);
     }
 
+
+
     hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
     ptr = (GLuint *)selectionBuffer;
 
+
     minZ = 0xffffffff;
     if(hits == -1) {
         hits = 8192;
     }
+
+//    for (i = 0; i < hits; i++) { /*  for each hit  */
+//          names = *ptr;
+//          qDebug (" number of names for hit = %d\n", names); ptr++;
+//          qDebug("z1 is %g;", (float) *ptr/0x7fffffff); ptr++;
+//          qDebug("z2 is %g\n", (float) *ptr/0x7fffffff); ptr++;
+//          qDebug("   the name is ");
+//          for (int j = 0; j < names; j++) {     /*  for each name */
+//             qDebug ("%d ", *ptr); ptr++;
+//          }
+//          qDebug("####");
+//       }
+
     for(i = 0; i < hits; i++) {
         names = *ptr;
         ptr++;
@@ -2232,6 +2248,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
+
             if(!sphereInFrustum(currNodePos, currentNode->circRadius, currentVP)) {
                 currentNode = currentNode->next;
                 lastNode = lastRenderedNode = NULL;
@@ -2635,7 +2652,9 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
    frustum[5][2] = clip[11] + clip[10];
    frustum[5][3] = clip[15] + clip[14];
 
+
    /* Normalize the result */
+
    t = sqrt( frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2] );
    frustum[5][0] /= t;
    frustum[5][1] /= t;

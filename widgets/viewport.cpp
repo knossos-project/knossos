@@ -216,7 +216,7 @@ void Viewport::resizeGL(int w, int h) {
     glLoadIdentity();
     GLfloat x = (GLfloat)width() / height();
 
-    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 15.0);
+    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
     glMatrixMode(GL_MODELVIEW);
 
     SET_COORDINATE(state->viewerState->vpConfigs[id].upperLeftCorner,
