@@ -222,6 +222,9 @@ void ViewportSettingsWidget::loadSettings() {
         state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
     }
+
+    this->tabs->setCurrentIndex(settings.value(VP_TAB_INDEX).toInt());
+
     settings.endGroup();
     if(visible) {
         show();
@@ -285,7 +288,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(WHOLE_SKELETON, this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
     settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
     settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
-
+    settings.setValue(VP_TAB_INDEX, this->tabs->currentIndex());
 
     settings.endGroup();
 

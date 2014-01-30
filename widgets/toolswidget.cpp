@@ -203,6 +203,10 @@ void ToolsWidget::loadSettings() {
     if(!settings.value(LOCK_TO_NODES_WITH_COMMENT).toString().isNull())
         this->toolsNodesTabWidget->lockingToNodesWithCommentField->setText(settings.value(LOCK_TO_NODES_WITH_COMMENT).toString());
 
+    if(!settings.value(TOOLS_TAB_INDEX).isNull() == false) {
+        this->tabs->setCurrentIndex(settings.value(TOOLS_TAB_INDEX).toInt());
+    }
+
     settings.endGroup();
 
     setGeometry(x, y, width, height);
@@ -237,6 +241,8 @@ void ToolsWidget::saveSettings() {
     settings.setValue(ENABLE_COMMENT_LOCKING, this->toolsNodesTabWidget->enableCommentLockingCheckBox->isChecked());
     settings.setValue(LOCKING_RADIUS, this->toolsNodesTabWidget->lockingRadiusSpinBox->value());
     settings.setValue(LOCK_TO_NODES_WITH_COMMENT, this->toolsNodesTabWidget->lockingToNodesWithCommentField->text());
+    settings.setValue(TOOLS_TAB_INDEX, this->tabs->currentIndex());
+
 
     settings.endGroup();
 }
@@ -290,5 +296,6 @@ void ToolsWidget::toggleAllWidgets(bool enabled) {
     this->toolsNodesTabWidget->findPreviousButton->setEnabled(enabled);
     this->toolsNodesTabWidget->lockToActiveNodeButton->setEnabled(enabled);
     this->toolsNodesTabWidget->disableLockingButton->setEnabled(enabled);
+
 }
 

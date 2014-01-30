@@ -202,6 +202,10 @@ void CommentsWidget::loadSettings() {
         this->highlightingTab->enableCondColoringCheckBox->setChecked(settings.value(ENABLE_COND_RADIUS).toBool());
     }
 
+    if(settings.value(COMMENTS_TAB_INDEX).isNull() == false) {
+        this->tabs->setCurrentIndex(settings.value(COMMENTS_TAB_INDEX).toInt());
+    }
+
     settings.endGroup();
 
     if(visible) {
@@ -248,6 +252,7 @@ void CommentsWidget::saveSettings() {
 
     settings.setValue(ENABLE_COND_COLORING, this->highlightingTab->enableCondColoringCheckBox->isChecked());
     settings.setValue(ENABLE_COND_RADIUS, this->highlightingTab->enableCondRadiusCheckBox->isChecked());
+    settings.setValue(COMMENTS_TAB_INDEX, this->tabs->currentIndex());
 
     settings.endGroup();
 }
