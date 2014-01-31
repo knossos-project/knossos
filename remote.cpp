@@ -102,7 +102,6 @@ bool Remote::newTrajectory(char *trajName, char *trajectory) {
     if(state->trajectories == NULL) {
         state->trajectories = (struct trajectory*) malloc(this->maxTrajectories * sizeof(struct trajectory));
         if(state->trajectories == NULL) {
-            qDebug("LOLOLOL");
             printf("Out of memory.\n");
             return false;
         }

@@ -477,7 +477,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
-    if(!state->viewerState->selectModeFlag) {
+    if(state->viewerState->selectModeFlag == false) {
         if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
 
         if(state->viewerState->lightOnOff) {
@@ -516,18 +516,18 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
      // for the node selection square
     Coordinate first, second;
     if(state->viewerState->drawNodeSelectSquare != -1) {
-        first.x = state->viewerState->nodeSelectionSquare.first.x
-                  * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
-        first.y = state->viewerState->nodeSelectionSquare.first.y
-                  * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
-        second.x = state->viewerState->nodeSelectionSquare.second.x
-                   * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
-        second.y = state->viewerState->nodeSelectionSquare.second.y
-                   * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
+        first.x = roundFloat(state->viewerState->nodeSelectionSquare.first.x
+                  * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX);
+        first.y = roundFloat(state->viewerState->nodeSelectionSquare.first.y
+                  * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY);
+        second.x = roundFloat(state->viewerState->nodeSelectionSquare.second.x
+                   * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX);
+        second.y = roundFloat(state->viewerState->nodeSelectionSquare.second.y
+                   * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY);
     }
     switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
-            if(!state->viewerState->selectModeFlag) {
+            if(state->viewerState->selectModeFlag == false) {
                 glMatrixMode(GL_PROJECTION);
                 glLoadIdentity();
             }
@@ -548,13 +548,22 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                         -((float)state->boundary.y / 2.),
                         -((float)state->boundary.z / 2.));
 
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                        (float)state->viewerState->currentPosition.y,
+                        (float)state->viewerState->currentPosition.z);
+
+            glRotatef(180., 1.,0.,0.);
+
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                        -(float)state->viewerState->currentPosition.y,
+                        -(float)state->viewerState->currentPosition.z);
+
             updateFrustumClippingPlanes(VIEWPORT_XY);
 
             glTranslatef((float)state->viewerState->currentPosition.x,
                         (float)state->viewerState->currentPosition.y,
                         (float)state->viewerState->currentPosition.z);
 
-            glRotatef(180., 1.,0.,0.);
 
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
@@ -1905,7 +1914,6 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
-
     GLuint selectionBuffer[8192] = {0};
     GLint hits, openGLviewport[4];
     GLuint names, *ptr, minZ, *ptrName;
@@ -2179,7 +2187,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     uint skippedCnt = 0;
     uint renderNode;
     float currentRadius;
-
 
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
     state->skeletonState->lineVertBuffer.normsIndex = 0;
@@ -2674,13 +2681,15 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */
    // if(state->viewerState->selectModeFlag) radius += 900.f;
 
-    for( p = 0; p < 6; p++ )
+    for( p = 0; p < 6; p++ ) {
         if( state->viewerState->vpConfigs[viewportType].frustum[p][0]
            * pos.x + state->viewerState->vpConfigs[viewportType].frustum[p][1]
            * pos.y + state->viewerState->vpConfigs[viewportType].frustum[p][2]
            * pos.z + state->viewerState->vpConfigs[viewportType].frustum[p][3]
-           <= -radius )
+           <= -radius ) {
            return false;
+        }
+    }
 
-       return true;
+    return true;
 }

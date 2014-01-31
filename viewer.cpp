@@ -1470,8 +1470,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
             viewerState->currentPosition.z + z + 1)
     }
 
-    //qDebug() << state->viewerState->currentPosition.x << " " << state->viewerState->currentPosition.y;
-
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);

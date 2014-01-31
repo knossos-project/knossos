@@ -56,17 +56,17 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             return false;
         }
 
-        //in other VPs we traverse nodelist to find nearest node inside the radius
-        clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-        if(clickedCoordinate) {
-            newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
-            if(newActiveNode != NULL) {
-                free(clickedCoordinate);
-                emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
-                emit nodeActivatedSignal();
-                return true;
-            }
-        }
+//        //in other VPs we traverse nodelist to find nearest node inside the radius
+//        clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+//        if(clickedCoordinate) {
+//            newActiveNode = findNodeInRadiusSignal(*clickedCoordinate);
+//            if(newActiveNode != NULL) {
+//                free(clickedCoordinate);
+//                emit setActiveNodeSignal(CHANGE_MANUAL, NULL, newActiveNode->nodeID);
+//                emit nodeActivatedSignal();
+//                return true;
+//            }
+//        }
         return false;
     }
 
@@ -569,22 +569,15 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         nodeListElement *selectedNode = NULL;
-
-        if(state->viewerState->nodeSelectionSquare.first.x == event->pos().x()
-                and state->viewerState->nodeSelectionSquare.first.y == event->pos().y()) {
+        int diffX = state->viewerState->nodeSelectionSquare.first.x - event->pos().x();
+        int diffY = state->viewerState->nodeSelectionSquare.first.y - event->pos().y();
+        if((diffX < 5 and diffX > -5) and (diffY < 5 and diffY > -5)) { // interpreted as click instead of drag
             // mouse released on same spot on which it was pressed down: single node selection
             int nodeID = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->pos().x(), event->pos().y(), 10);
             if(nodeID) {
                 selectedNode = findNodeByNodeIDSignal(nodeID);
             }
-            else if (VPfound != VIEWPORT_SKELETON) {
-                // if nothing is found, try to find nearest node in radius first
-                Coordinate *clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
-                if(clickedCoordinate) {
-                    selectedNode = findNodeInRadiusSignal(*clickedCoordinate);
-                    free(clickedCoordinate);
-                }
-            }
+
             if(selectedNode) {
                 std::vector<nodeListElement*>::iterator iter;
                 //check if already in buffer

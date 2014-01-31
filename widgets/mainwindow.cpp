@@ -820,7 +820,6 @@ void MainWindow::openSlot(const QString &fileName) {
 bool MainWindow::alreadyInMenu(const QString &path) {
 
     for(int i = 0; i < this->skeletonFileHistory->size(); i++) {
-        qDebug() << skeletonFileHistory->at(i) << "_" << path;
         if(!QString::compare(skeletonFileHistory->at(i), path, Qt::CaseSensitive)) {
             return true;
         }
@@ -1438,7 +1437,6 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
 void MainWindow::updateSkeletonFileName(QString &fileName) {
-    qDebug() <<"string to parse: " << fileName;
     QRegExp withVersion("[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
     QRegExp withoutVersion("[a-zA-Z0-9/_-\]+.nml$");
 
@@ -1452,14 +1450,10 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
             versionString.push_front("0");
         }
         fileName = fileName.replace(fileName.length() - 7, 3, versionString);
-        qDebug() << fileName;
 
     } else if(fileName.contains(withoutVersion)) {
         //fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
-        qDebug() << fileName;
-    } else {
-        qDebug() << "gnaaa";
     }
 }
 
@@ -1477,13 +1471,11 @@ void MainWindow::dropEvent(QDropEvent *event) {
     if(event->mimeData()->hasFormat("text/uri-list")) {
         QList<QUrl> urls = event->mimeData()->urls();
         if(urls.size() != 1) {
-            qDebug() << "error";
             return;
         }
 
         QUrl url = urls.first();
         QString fileName(url.toLocalFile());
-        qDebug() << fileName;
 
         if(!fileName.endsWith(".nml")) {
             return;
@@ -1500,7 +1492,6 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
-    qDebug() << "drag leave";
 }
 
 void MainWindow::openDatasetSlot() {

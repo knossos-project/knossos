@@ -91,8 +91,6 @@ void CommentShortCutsTab::deleteComments() {
 }
 
 void CommentShortCutsTab::commentChanged(QString comment) {
-    qDebug() << comment;
-
     QObject *emitter = sender();
 
     if(textFields[0] == emitter) {

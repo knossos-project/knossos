@@ -265,8 +265,6 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
     settings.setValue(TREE_LUT_FILE, this->slicePlaneViewportWidget->treeLutFile->text());
 
-    qDebug() << this->slicePlaneViewportWidget->datasetLutFile->text();
-
     if(!this->slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
         settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
         strcpy(state->viewerState->gui->datasetLUTFile, this->slicePlaneViewportWidget->datasetLutFile->text().toStdString().c_str());

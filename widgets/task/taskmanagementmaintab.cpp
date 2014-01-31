@@ -234,7 +234,6 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     }
     else if(httpCode == 403) {
         statusLabel->setText("<font color='red'>You are not authenticated. Permission denied.</font>");
-        qDebug(header.content);
         remove(state->taskState->taskFile);
         free(header.content);
         return;
