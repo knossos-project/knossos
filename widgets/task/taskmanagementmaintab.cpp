@@ -239,6 +239,13 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
         free(header.content);
         return;
     }
+    else {
+        statusLabel->setText("<font color='red'>Error received from server.</font>");
+        qDebug(header.content);
+        remove(state->taskState->taskFile);
+        free(header.content);
+        return;
+    }
     // 200 - success. Retrieve the filename from response header and rename the previously created tmp.nml
     memset(filename, '\0', sizeof(filename));
     if(taskState::copyInfoFromHeader(filename, &header, "filename")) {
