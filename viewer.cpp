@@ -851,9 +851,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
-                           viewerState->currentPosition.x - v1.x * viewerState->vpConfigs[i].s_max/2 - v2.x * viewerState->vpConfigs[i].t_max/2,
-                           viewerState->currentPosition.y - v1.y * viewerState->vpConfigs[i].s_max/2 - v2.y * viewerState->vpConfigs[i].t_max/2,
-                           viewerState->currentPosition.z - v1.z * viewerState->vpConfigs[i].s_max/2 - v2.z * viewerState->vpConfigs[i].t_max/2);
+                           viewerState->currentPosition.x - state->magnification * (v1.x * viewerState->vpConfigs[i].s_max/2 + v2.x * viewerState->vpConfigs[i].t_max/2),
+                           viewerState->currentPosition.y - state->magnification * (v1.y * viewerState->vpConfigs[i].s_max/2 + v2.y * viewerState->vpConfigs[i].t_max/2),
+                           viewerState->currentPosition.z - state->magnification * (v1.z * viewerState->vpConfigs[i].s_max/2 + v2.z * viewerState->vpConfigs[i].t_max/2));
 
             SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
                            roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.x),
@@ -864,6 +864,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            viewerState->currentPosition.x
                            - v1.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+
 
                            - v2.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
@@ -1899,9 +1900,9 @@ bool Viewer::recalcTextureOffsets() {
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
                 midX = state->viewerState->vpConfigs[i].s_max/2.
-                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
+                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
                 midY = state->viewerState->vpConfigs[i].t_max/2.
-                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
+                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
 
                 //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
                 calcLeftUpperTexAbsPx();
