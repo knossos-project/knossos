@@ -1540,7 +1540,7 @@ void Skeletonizer::setDefaultSkelFileName() {
     if(localtimestruct->tm_year >= 100)
         localtimestruct->tm_year -= 100;
     state->skeletonState->skeletonFileAsQString = "";
-#ifdef LINUX
+#ifdef Q_OS_UNIX
     state->skeletonState->skeletonFileAsQString.sprintf(
             "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
             localtimestruct->tm_mday,

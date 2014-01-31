@@ -106,15 +106,15 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
     char filepath[1024];
     bool success;
 
-    QDir taskDir("task-files");
+    QDir taskDir("tasks");
     if(taskDir.exists() == false) {
         taskDir.mkdir(".");
     }
     memset(tmpfilepath, '\0', 1024);
-#ifdef LINUX
-    sprintf(tmpfilepath, "task-files/lastSubmit.tmp.nml");
+#ifdef Q_OS_UNIX
+    sprintf(tmpfilepath, "tasks/lastSubmit.tmp.nml");
 #else
-    sprintf(tmpfilepath, "task-files\\lastSubmit.tmp.nml");
+    sprintf(tmpfilepath, "tasks\\lastSubmit.tmp.nml");
 #endif
 
     memset(url, '\0', 1024);
@@ -151,11 +151,11 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
     // 200 - success. Retrieve the filename from response header and rename the previously created tmp.nml
     memset(filename, '\0', sizeof(filename));
     if(taskState::copyInfoFromHeader(filename, &header, "filename")) {
-    #ifdef LINUX
-        sprintf(filepath, "task-files/%s", filename);
+    #ifdef Q_OS_UNIX
+        sprintf(filepath, "tasks/%s", filename);
         rename(tmpfilepath, filepath);
     #else
-        sprintf(filepath, "task-files\\%s", filename);
+        sprintf(filepath, "tasks\\%s", filename);
         rename(tmpfilepath, filepath);
     #endif
     }
@@ -185,21 +185,20 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     memset(postdata, '\0', 1024);
     sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken(), state->taskState->taskFile);
 
-    QDir taskDir("task-files");
+    QDir taskDir("tasks");
     if(taskDir.exists() == false) {
-    #ifdef UNIX
+    #ifdef Q_OS_UNIX
         taskDir.mkdir(".");
     #else
         taskDir.mkdir(".");
     #endif
     }
     memset(state->taskState->taskFile, '\0', 1024);
-#ifdef UNIX
-    sprintf(state->taskState->taskFile, "task-files/task.tmp.nml");
+#ifdef Q_OS_UNIX
+    sprintf(state->taskState->taskFile, "tasks/task.tmp.nml");
 #else
-    sprintf(state->taskState->taskFile, "task-files/task.tmp.nml");
+    sprintf(state->taskState->taskFile, "tasks\\task.tmp.nml");
 #endif
-
     tasknml = fopen(state->taskState->taskFile, "w");
     if(tasknml == NULL) {
         statusLabel->setText("<font color='red'>Failed to get new task. No write permission in this folder.</font>");
@@ -238,7 +237,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
         free(header.content);
         return;
     }
-    else {
+    else if(httpCode != 200){
         statusLabel->setText("<font color='red'>Error received from server.</font>");
         qDebug(header.content);
         remove(state->taskState->taskFile);
@@ -248,18 +247,18 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     // 200 - success. Retrieve the filename from response header and rename the previously created tmp.nml
     memset(filename, '\0', sizeof(filename));
     if(taskState::copyInfoFromHeader(filename, &header, "filename")) {
-    #ifdef Q_OS_LINUX
-        sprintf(filepath, "task-files/%s", filename);
+    #ifdef Q_OS_UNIX
+        sprintf(filepath, "tasks/%s", filename);
         QFile tmpFile(state->taskState->taskFile);
         tmpFile.rename(filepath);
         memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
-        sprintf(state->taskState->taskFile, "task-files/%s", filename);
+        sprintf(state->taskState->taskFile, "tasks/%s", filename);
     #else
-        sprintf(filepath, "task-files\\%s", filename);
+        sprintf(filepath, "tasks\\%s", filename);
         QFile tmpFile(state->taskState->taskFile);
         tmpFile.rename(filepath);
         memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
-        sprintf(state->taskState->taskFile, "task-files\\%s", filename);
+        sprintf(state->taskState->taskFile, "tasks\\%s", filename);
     #endif
     }
     // get task name
