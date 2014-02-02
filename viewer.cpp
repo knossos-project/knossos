@@ -2295,6 +2295,7 @@ void Viewer::updateActivePatchConnections() {
                     Patch::activePatch, SLOT(updateDistinguishableTriangles(int)));
     connect(Patch::activePatch, SIGNAL(addTreeListElementSignal(int,int,int,color4F,int)),
                     skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(Patch::activePatch, SIGNAL(makeCurrentSignal(int)), renderer, SLOT(makeCurrent(int)));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

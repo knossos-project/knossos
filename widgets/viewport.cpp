@@ -109,6 +109,7 @@ void Viewport::initializeGL() {
     if(viewportType != VIEWPORT_SKELETON) {
         glGenTextures(1, &Patch::texHandle); // for patches
         glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
+
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
@@ -120,6 +121,17 @@ void Viewport::initializeGL() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
 
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        // patch --
+        glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        // --patch
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
 
         // loads an empty texture into video memory - during user movement, this
         // texture is updated via glTexSubImage2D in vpGenerateTexture
@@ -322,6 +334,9 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     if(event->button() == Qt::LeftButton) {
         handleMouseReleaseLeft(event, id);
     }
+    if(event->button() == Qt::RightButton) {
+        handleMouseReleaseRight(event, id);
+    }
 
     for(int i = 0; i < state->viewerState->numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
@@ -432,6 +447,9 @@ bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
     return eventDelegate->handleMouseReleaseLeft(event, vpID);
 }
 
+bool Viewport::handleMouseReleaseRight(QMouseEvent *event, int vpID) {
+    return eventDelegate->handleMouseReleaseRight(event, vpID);
+}
 
 void Viewport::enterEvent(QEvent *event) {
     entered = true;

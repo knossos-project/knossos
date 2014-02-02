@@ -65,6 +65,8 @@ public slots:
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 
+    void makeCurrent(int vp);
+
 };
 
 #endif // RENDERER_H

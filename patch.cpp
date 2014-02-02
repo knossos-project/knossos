@@ -15,7 +15,7 @@ bool Patch::patchMode = false;
 uint Patch::drawMode = DRAW_CONTINUOUS_LINE;
 uint Patch::maxPatchID = 0;
 uint Patch::numPatches = 0;
-float Patch::voxelPerPoint = 1;
+float Patch::voxelPerPoint = .3;
 std::vector<floatCoordinate> Patch::activeLoop;
 uint Patch::displayMode = PATCH_DSP_WHOLE;
 Patch *Patch::firstPatch = NULL;
@@ -24,7 +24,6 @@ bool Patch::drawing = false;
 bool Patch::newPoints = false;
 GLuint Patch::vbo;
 GLuint Patch::texHandle;
-
 
 Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     next(this), previous(this), numPoints(0), numTriangles(0) {
@@ -59,8 +58,8 @@ Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     distinguishableTrianglesSkelVP = new Octree<Triangle>(center, halfEdgeLength);
     setTree(state->skeletonState->activeTree);
 
-    texData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 4);
-    memset(texData, 255, sizeof(texData)); // default is a transparent texture
+    //texData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 4);
+    memset(texData, 0, sizeof(texData)); // default is a empty texture
 }
 
 
@@ -122,7 +121,6 @@ Patch *Patch::previousPatchByID() {
 
     do {
         if(patch->patchID == this->patchID) {
-            qDebug("same");
             continue;
         }
         if(patch->patchID > minID) {
@@ -159,15 +157,17 @@ bool Patch::allowPoint(floatCoordinate point) {
 
 /**
  * @brief Patch::addInterpolatedPoint adds a point on the line between p and q with a distance of 'voxelPerPoint' from p
+ * @return the interpolated point
  */
-void Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q) {
+floatCoordinate Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q) {
     floatCoordinate v;
     SUB_ASSIGN_COORDINATE(v, q, p);
-    normalizeVector(v);
+    normalizeVector(&v);
 
     floatCoordinate *point = (floatCoordinate *)malloc(sizeof(floatCoordinate));
-    SET_COORDINATE(point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
+    SET_COORDINATE(*point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
     pointCloud->insert(point, *point, false);
+    return *point;
 }
 
 /**
@@ -191,8 +191,20 @@ bool Patch::insert(Triangle *triangle, bool replace) {
  * @return true on insertion, false otherwise
  */
 bool Patch::insert(floatCoordinate *point, bool replace) {
-    if(allowPoint(*point) == false) {
+    if(allowPoint(*point) == false) { // point too close to last point
         return false;
+    }
+    // if point is too far away from last point add interpolated points to fill the distance
+    if(activeLoop.size() > 0) {
+        floatCoordinate p = activeLoop[activeLoop.size() - 1];
+        while(point->x - p.x < -voxelPerPoint or point->x - p.x > voxelPerPoint
+              or point->y - p.y < -voxelPerPoint or point->y - p.y > voxelPerPoint
+              or point->z - p.z < -voxelPerPoint or point->z - p.z > voxelPerPoint) {
+            p = addInterpolatedPoint(p, *point);
+           //s qDebug("adding %f, %f, %f", p.x, p.y, p.z);
+            activeLoop.push_back(p);
+            numPoints++;
+        }
     }
     if(pointCloud->insert(point, *point, replace)) {
         numPoints++;
@@ -413,6 +425,361 @@ void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
         insert(triangle, true);
     }*/
     updateDistinguishableTriangles();
+}
+
+/**
+ * @brief Patch::computeVolume computes visible volume inside given viewport by iterating over y-direction of the viewport
+ *        and ray casting in x direction.
+ *        Works without normals, therefore only for volumes smaller than the super cube!
+ * @param currentVP the viewport for which to display a volume
+ */
+void Patch::computeVolume(int currentVP) {
+    Coordinate lu, rl; // left upper and right lower data coordinate
+    vpConfig *vp = &state->viewerState->vpConfigs[currentVP];
+
+    switch(currentVP) {
+    case VIEWPORT_XY:
+        lu.x = vp->leftUpperDataPxOnScreen.x;
+        lu.y = vp->leftUpperDataPxOnScreen.y;
+        lu.z = vp->leftUpperDataPxOnScreen.z;
+        break;
+    case VIEWPORT_XZ:
+        lu.x = vp->leftUpperDataPxOnScreen.x;
+        lu.y = vp->leftUpperDataPxOnScreen.z;
+        lu.z = vp->leftUpperDataPxOnScreen.y;
+        break;
+    case VIEWPORT_YZ:
+        lu.x = vp->leftUpperDataPxOnScreen.y;
+        lu.y = vp->leftUpperDataPxOnScreen.z;
+        lu.z = vp->leftUpperDataPxOnScreen.x;
+        break;
+
+    }
+
+    SET_COORDINATE(rl, lu.x + vp->edgeLength/vp->screenPxXPerDataPx,
+                       lu.y + vp->edgeLength/vp->screenPxYPerDataPx,
+                       lu.z);
+
+    float edgeLengthXInDataPx = vp->edgeLength/vp->screenPxXPerDataPx;
+    float edgeLengthYInDataPx = vp->edgeLength/vp->screenPxYPerDataPx;
+    Coordinate subTextureLL, subTextureRU;
+    SET_COORDINATE(subTextureLL, roundFloat(vp->texture.texLLx * TEXTURE_EDGE_LEN),
+                                 roundFloat(vp->texture.texLLy * TEXTURE_EDGE_LEN), 0);
+    SET_COORDINATE(subTextureRU, roundFloat(vp->texture.texRUx * TEXTURE_EDGE_LEN),
+                                 roundFloat(vp->texture.texRUy * TEXTURE_EDGE_LEN), 0);
+    int subTexWidth = subTextureRU.x - subTextureLL.x;
+    int subTexHeight = subTextureRU.y - subTextureLL.y;
+    int dataPxXPerTexel = roundFloat(subTexWidth/edgeLengthXInDataPx);
+    int dataPxYPerTexel = roundFloat(subTexHeight/edgeLengthYInDataPx);
+    std::vector<floatCoordinate> results; // found points on one ray
+    std::vector<floatCoordinate> boundingPoints; // filtered results
+    floatCoordinate p, q; // pq is any pair of boundingPoints enclosing the volume
+    int x_offset, y_offset; // offsets into the texture
+    // will hold the indices of the painted volume inside the texture
+    int xMin = INT_MAX, yMin = INT_MAX;
+    int xMax = 0, yMax = 0;
+    switch(currentVP) {
+    case VIEWPORT_XY:
+        // first a horizontal ray cast
+        for(int y = lu.y; y <= rl.y; ++y) {
+            qDebug("==Y: %i ==", y);
+            pointCloud->getObjsOnLine(results, -1, y, lu.z);
+            if(results.size() == 0) {
+                continue;
+            }
+            if(results.size() > 2) {
+                // identify all bounding points, i.e.
+                // - the left most and the right most point
+                // - points with distance of at least one voxel from other points
+                // then add them to the bounding points in ascending order (of x-coordinates) for correct pairing
+
+                // first find the left-most and right-most point
+                float minX = INT_MAX, maxX = 0;
+                std::vector<int> skipIndices;
+                int minIndex, maxIndex;
+                for(int i = 0; i < results.size(); ++i) {
+                    if(minX > results[i].x) {
+                        minX = results[i].x;
+                        minIndex = i;
+                    }
+                    else if(maxX < results[i].x) {
+                        maxX = results[i].x;
+                        maxIndex = i;
+                    }
+                }
+                boundingPoints.push_back(results[minIndex]);
+                // now find points with distance of at least one voxel from other points
+                for(uint i = 0; i <  results.size(); ++i) {
+                    if(std::find(skipIndices.begin(), skipIndices.end(), i) != skipIndices.end()) {
+                        continue;
+                    }
+
+                    for(uint j = 0; j < results.size(); ++j) {
+                        if(i == j) {
+                            continue;
+                        }
+                        if(results[j].x - results[i].x > -2 and results[j].x - results[i].x < 2) {
+                            if(j == minIndex or j == maxIndex) {
+                                skipIndices.push_back(i); // min and max always stay in the result
+                            }
+                            else {
+                                skipIndices.push_back(j);
+                            }
+                        }
+                    }
+                    if(i != maxIndex and i != minIndex and std::find(skipIndices.begin(), skipIndices.end(), i) == skipIndices.end()) { // point has enough distance to any other point
+                        // ensure ascending order
+                        if(boundingPoints[boundingPoints.size() - 1].x > results[i].x) {
+                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
+                            boundingPoints.pop_back();
+                            boundingPoints.push_back(results[i]);
+                            boundingPoints.push_back(tmp);
+                        }
+                        else {
+                            boundingPoints.push_back(results[i]);
+                        }
+                    }
+                }
+                boundingPoints.push_back(results[maxIndex]);
+            }
+            for(int i = 0; i < boundingPoints.size(); ++i) {
+                qDebug("- %i, %f", i, boundingPoints[i].x);
+            }
+            // if not even number of pairs, something went wrong. Then we'll only consider the first and last point
+            // and vertical ray cast will fix it
+            int maxPair = (boundingPoints.size() % 2 == 0)? boundingPoints.size()/2 : 1;
+            qDebug("-pairing. boundSize mod 2 = %i, maxPair %i", boundingPoints.size() % 2, maxPair);
+            int endCond = (maxPair == 1)? 1 : boundingPoints.size();
+            for(int pair = 0; pair < endCond; pair += 2) {
+                // fill texture stripe with patch color
+                if(maxPair == 1) {
+                    p = boundingPoints[0];
+                    q = boundingPoints[boundingPoints.size() -1];
+                }
+                else {
+                    p = boundingPoints[pair];
+                    q = boundingPoints[pair + 1];
+                }
+                qDebug("-- %f and %f", p.x, q.x);
+                // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
+                y_offset = subTextureRU.y - dataPxYPerTexel * (y - lu.y);
+                if(y_offset < yMin) {
+                    yMin = y_offset;
+                }
+                for(int x = roundFloat(p.x); x < q.x; ++x) {
+                    x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
+                    if(x_offset < xMin) {
+                        xMin = x_offset;
+                    }
+                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
+                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+                        texData[y_offset][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
+                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
+                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+                            texData[y_offset + texelY][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
+                        }
+                    }
+                    if(x_offset + dataPxXPerTexel - 1 > xMax) {
+                        xMax = x_offset + dataPxXPerTexel;
+                    }
+                    if(y_offset + dataPxYPerTexel - 1 > yMax) {
+                        yMax = y_offset + dataPxYPerTexel;
+                    }
+                }
+            }
+            // clear for next ray
+            boundingPoints.clear();
+            results.clear();
+        }
+        qDebug("min: %i, %i, max: %i, %i", xMin, yMin, xMax, yMax);
+        // now start vertical ray casting
+        for(int x = lu.x; x <= rl.x; ++x) {
+            pointCloud->getObjsOnLine(results, x, -1, lu.z);
+            if(results.size() == 0) {
+                continue;
+            }
+            if(results.size() > 2) {
+                // identify all bounding points, i.e.
+                // - the left most and the right most point
+                // - points with distance of at least one voxel from other points
+                // then add them to the bounding points in ascending order (of x-coordinates) for correct pairing
+
+                // first find the left-most and right-most point
+                float minY = INT_MAX, maxY = 0;
+                int minIndex, maxIndex;
+                for(int i = 0; i < results.size(); ++i) {
+                    if(minY > results[i].y) {
+                        minY = results[i].y;
+                        minIndex = i;
+                    }
+                    else if(maxY < results[i].y) {
+                        maxY = results[i].y;
+                        maxIndex = i;
+                    }
+                }
+                boundingPoints.push_back(results[minIndex]);
+                // now find points with distance of at least one voxel from other points
+                for(uint i = 0; i <  results.size(); ++i) {
+                    if(i == minIndex or i == maxIndex) {
+                        continue;
+                    }
+                    uint j = 0;
+                    for(; j < results.size(); ++j) {
+                        if(i == j) {
+                            continue;
+                        }
+                        if(results[j].y - results[i].y > -1 and results[j].y - results[i].y < 1) {
+                            // closer than one voxel
+                            break;
+                        }
+                    }
+                    if(j == results.size()) { // point has enough distance to any other point
+                        // ensure ascending order
+                        if(boundingPoints[boundingPoints.size() - 1].y > results[i].y) {
+                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
+                            boundingPoints.pop_back();
+                            boundingPoints.push_back(results[i]);
+                            boundingPoints.push_back(tmp);
+                        }
+                        else {
+                            boundingPoints.push_back(results[i]);
+                        }
+                    }
+                }
+                boundingPoints.push_back(results[maxIndex]);
+            }
+
+            // if not even number of pairs, something went wrong. Then we'll only consider the first and last point
+            // and the horizontal ray cast will fix it
+            int maxPair = (boundingPoints.size() % 2 == 0)? boundingPoints.size()/2 : 1;
+            for(int pair = 0; pair < maxPair; pair += 2) {
+                // fill texture stripe with patch color
+                if(maxPair == 1) {
+                    p = boundingPoints[0];
+                    q = boundingPoints[boundingPoints.size() -1];
+                }
+                else {
+                    p = boundingPoints[pair];
+                    q = boundingPoints[pair + 1];
+                }
+
+                x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
+                for(int y = roundFloat(p.y); y < q.y; ++y) {
+                    // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
+                    y_offset = subTextureRU.y - (y - lu.y) * dataPxYPerTexel;
+                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
+                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+                        texData[y_offset][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
+                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
+                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+                            texData[y_offset + texelY][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
+                        }
+                    }
+                }
+            }
+            // clear for next ray
+            boundingPoints.clear();
+            results.clear();
+        }
+        // now reduce the texture to the intersection of both ray castings.
+        for(int row = yMin; row <= yMax; ++row) {
+            for(int col = xMin; col <= xMax; ++col) {
+                if(texData[row][col][3] == 2) {
+                    texData[row][col][3] = 255 * correspondingTree->color.a;
+                }
+                else {
+                    texData[row][col][0] = 0;
+                    texData[row][col][1] = 0;
+                    texData[row][col][2] = 0;
+                    texData[row][col][3] = 0;
+                }
+            }
+        }
+        break;
+    case VIEWPORT_XZ:
+//        for(int z = lu.z; z <= rl.z; ++z) {
+//            pointCloud->getObjsOnLine(results, -1, lu.y, z);
+//            if(results.size() == 0) {
+//                continue;
+//            }
+//            if(results.size() >= 2) {
+//                // fill texture stripe with patch color
+//                p = results[0];
+//                q = results[results.size()-1];
+//                // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
+//                y_offset = roundFloat(subTextureRU.y - dataPxYPerTexel * (z - lu.z));
+//                for(int x = p.x; x <= q.x; ++x) {
+//                    x_offset = roundFloat(subTextureLL.x + (x - lu.x) * dataPxXPerTexel);
+//                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
+//                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+//                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+//                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+//                        texData[y_offset][x_offset + texelX][3] = 255 * correspondingTree->color.a;
+//                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
+//                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+//                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+//                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+//                            texData[y_offset + texelY][x_offset + texelX][3] = 255 * correspondingTree->color.a;
+//                        }
+//                    }
+//                }
+//            }
+//            results.clear();
+//        }
+        break;
+    case VIEWPORT_YZ:
+//        for(int z = lu.z; z <= rl.z; ++z) {
+//            pointCloud->getObjsOnLine(results, lu.x, -1, z);
+//            if(results.size() == 0) {
+//                continue;
+//            }
+//            if(results.size() >= 2) {
+//                // fill texture stripe with patch color
+//                p = results[0];
+//                q = results[results.size()-1];
+//                // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
+//                y_offset = roundFloat(subTextureRU.y - dataPxYPerTexel * (z - lu.z));
+//                for(int y = p.y; y <= q.y; ++y) {
+//                    x_offset = roundFloat(subTextureLL.x + (y - lu.y) * dataPxXPerTexel);
+//                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
+//                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+//                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+//                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+//                        texData[y_offset][x_offset + texelX][3] = 255 * correspondingTree->color.a;
+//                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
+//                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
+//                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
+//                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
+//                            texData[y_offset + texelY][x_offset + texelX][3] = 255 * correspondingTree->color.a;
+//                        }
+//                    }
+//                }
+//            }
+//            results.clear();
+//        }
+        break;
+    }
+
+    emit makeCurrentSignal(currentVP); // a context must be active for openGL commands
+    glBindTexture(GL_TEXTURE_2D, texHandle);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 vp->texture.edgeLengthPx,
+                 vp->texture.edgeLengthPx,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 texData);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 pcl_Mesh::Ptr Patch::concaveHull(pcl_Cloud::Ptr cloudPtr) {

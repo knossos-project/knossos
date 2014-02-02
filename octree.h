@@ -1,7 +1,10 @@
 #ifndef OCTREE_H
 #define OCTREE_H
 
+#include <math.h>
+
 #include "knossos-global.h"
+#include "functions.h"
 #include "renderer.h"
 
 /**
@@ -325,6 +328,103 @@ public:
             c.x = c.y = c.z = -1;
         }
         return c;
+    }
+
+    /**
+     * @brief getObjsOnLine get objects on arbitrary line pq. It doesn't matter if you pass p and q or q and p.
+     * @param results found objects are written to results.
+     */
+    void getObjsOnLine(floatCoordinate p, floatCoordinate q, std::vector<T> &results) {
+        if(p.x == q.x and p.y == q.y and p.z == q.z) {
+            return;
+        }
+        floatCoordinate p_point, point_q, p_q;
+        SUB_ASSIGN_COORDINATE(p_q, q, p);
+
+        if(object != NULL) { // leaf
+            SUB_ASSIGN_COORDINATE(p_point, point, p);
+            SUB_ASSIGN_COORDINATE(point_q, q, point);
+            if(euclidicNorm(&p_point) + euclidicNorm(&point_q) - euclidicNorm(&p_q) < 0.001) { // arbitrary float threshold
+                results.push_back(*object);
+            }
+            return;
+        }
+        // interior node, check children
+        int minX = (p_q.x > 0)? p.x : q.x; int maxX = (p_q.x > 0)? q.x : p.x;
+        int minY = (p_q.y > 0)? p.y : q.y; int maxY = (p_q.y > 0)? q.y : p.y;
+        int minZ = (p_q.z > 0)? p.z : q.z; int maxZ = (p_q.z > 0)? q.z : p.z;
+
+        if(center.x + halfEdgeLen < minX or center.x - halfEdgeLen > maxX
+                or center.y + halfEdgeLen < minY or center.y - halfEdgeLen > maxY
+                or center.z + halfEdgeLen < minZ or center.z - halfEdgeLen > maxZ) {
+            // line does not intersect this octant, don't check children
+            return;
+        }
+        // line intersects this octant
+        for(int i = 0; i < 8; ++i) {
+            if(children[i] != NULL) {
+                children[i]->getObjsOnLine(p, q, results);
+            }
+        }
+    }
+
+    /**
+     * @brief getObjsOnLine get objects on orthogonal line.
+     *        The line lies on a plane, has a start point and runs parallel to one of the axes, i.e.
+     *        for line in xy plane pass z value (plane), y (start point) and -1 for x.
+     *        Uses depth first search and order of results follows the order of child octants (see 'getCenterOFChild').
+     * @param tolerance: points with distance to the line smaller than 'tolerance' are accepted as on the line
+     * @param results found objects are written to results
+     */
+    void getObjsOnLine(std::vector<T> &results, int x, int y, int z) {
+        if(x == -1 and y == -1 and z == -1) {
+            return;
+        }
+        if(object != NULL) { //leaf
+            if(z == -1) {
+                if(floor(point.x) == x and floor(point.y) == y) {
+                    results.push_back(*object);
+                    return;
+                }
+            }
+            else if(y == -1) {
+                if(floor(point.x) == x and floor(point.z) == z) {
+                    results.push_back(*object);
+                    return;
+                }
+            }
+            else if(x == -1) {
+                if(floor(point.y) == y and floor(point.z) == z) {
+                    results.push_back(*object);
+                    return;
+                }
+            }
+        }
+        // interior node, check children
+        if(z == -1) {
+            if((center.x + halfEdgeLen < x and center.x - halfEdgeLen > x)
+                    or (center.y + halfEdgeLen < y and center.y - halfEdgeLen > y)) {
+                return;
+            }
+        }
+        if(y == -1) {
+            if((center.x + halfEdgeLen < x and center.x - halfEdgeLen > x)
+                    or (center.z + halfEdgeLen < z and center.z - halfEdgeLen > z)) {
+                return;
+            }
+        }
+        if(x == -1) {
+            if((center.y + halfEdgeLen < y and center.y - halfEdgeLen > y)
+                    or (center.z + halfEdgeLen < z and center.z - halfEdgeLen > z)) {
+                return;
+            }
+        }
+        // line intersects octant. check children
+        for(int i = 0; i < 8; ++i) {
+            if(children[i] != NULL) {
+                children[i]->getObjsOnLine(results, x, y, z);
+            }
+        }
     }
 
     /**

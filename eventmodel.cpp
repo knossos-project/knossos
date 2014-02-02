@@ -597,9 +597,13 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
             if(point == NULL) {
                 return false;
             }
-            Patch::activeLoop.push_back(*point); // for displaying the current line while it is drawn
-            if(Patch::activePatch == NULL
-               || Patch::activePatch->correspondingTree != state->skeletonState->activeTree) {
+            if(Patch::activePatch == NULL) {
+                if(newPatchSignal()) {
+                    emit activePatchChanged();
+                    emit updateTools();
+                }
+            }
+            else if(Patch::activePatch->correspondingTree != state->skeletonState->activeTree) {
                 if(newPatchSignal()) {
                     emit activePatchChanged();
                     emit updateTools();
@@ -607,6 +611,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
             }
             if(Patch::activePatch->insert(point, false)) {
                 Patch::newPoints = true;
+                Patch::activeLoop.push_back(*point); // for displaying the current line while it is drawn
             }
             emit updatePatchesWidget();
         }
@@ -680,13 +685,14 @@ bool EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
     if(Patch::patchMode) {
         Patch::drawing = false;
         if(Patch::newPoints) {
-            Patch::computeNormals(); // compute normals for the active loop, now that it is finished
+            //Patch::computeNormals(); // compute normals for the active loop, now that it is finished
             Patch::newPoints = false; // reset for next drawing
             if(Patch::activePatch == NULL) {
                 qDebug("no active patch!");
                 return false;
             }
-            Patch::activePatch->computeTriangles();
+            Patch::activePatch->computeVolume(VPfound);
+            //Patch::activePatch->computeTriangles();
             return true;
         }
     }

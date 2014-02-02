@@ -98,6 +98,7 @@ public:
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
     static void computeNormals();
+
     // ---------------------
     Patch *next;
     Patch *previous;
@@ -111,8 +112,7 @@ public:
     Octree<floatCoordinate> *pointCloud;
     Octree<Triangle> *triangles;
     Octree<std::vector<floatCoordinate> > *loops;
-    Byte *texData;
-
+    Byte texData[TEXTURE_EDGE_LEN][TEXTURE_EDGE_LEN][4];
     Octree<Triangle> *distinguishableTrianglesSkelVP;
     Octree<Triangle> *distinguishableTrianglesOrthoVP;
 
@@ -125,6 +125,8 @@ public:
     bool allowPoint(floatCoordinate point);
     bool insert(Triangle *triangle, bool replace);
     bool insert(floatCoordinate *point, bool replace);
+    floatCoordinate addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
+    void computeVolume(int currentVP);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
     std::vector<Triangle> trianglesAsVector(int viewportType = -1);
@@ -138,6 +140,7 @@ public:
 signals:
     void activePatchChanged();
     treeListElement *addTreeListElementSignal(int sync,int targetRevision, int treeID, color4F color, int serialize);
+    void makeCurrentSignal(int currentVP);
 public slots:
     void updateDistinguishableTriangles(int viewportType = -1);
 };

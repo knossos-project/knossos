@@ -287,4 +287,4 @@ RESOURCES += \
 
 include(test/config.pri)
 
-QMAKE_CFLAGS_RELEASE += -O3
+QMAKE_CXXFLAGS_RELEASE += -O3

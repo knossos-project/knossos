@@ -19,4 +19,5 @@ float degToRad(float deg);
 floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
 floatCoordinate centroidTriangle(Triangle tri);
+floatCoordinate centroidPolygon(std::vector<floatCoordinate> polygon);
 #endif // FUNCTIONS_H

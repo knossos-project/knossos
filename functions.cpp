@@ -1,5 +1,7 @@
-#include "functions.h"
 #include <math.h>
+#include <vector>
+#include "functions.h"
+
 
 /** this file contains function which are not dependent from any state */
 
@@ -57,6 +59,23 @@ floatCoordinate centroidTriangle(Triangle tri) {
     return centroid;
 }
 
+floatCoordinate centroidPolygon(std::vector<floatCoordinate> polygon) {
+    float x, y, z;
+    x = y = z = 0;
+    for(uint i = 0; i < polygon.size(); ++i) {
+        x += polygon[i].x;
+        y += polygon[i].y;
+        z += polygon[i].z;
+    }
+    floatCoordinate centroid;
+    SET_COORDINATE(centroid, x/polygon.size(), y/polygon.size(), z/polygon.size());
+    return centroid;
+}
+
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
+}
+
+float determinant(floatCoordinate v1, floatCoordinate v2, floatCoordinate v3) {
+    return v1.x*v2.y*v3.z + v1.y*v2.z*v3.x + v1.z*v2.x*v3.y - v1.z*v2.y*v3.x - v2.z*v3.y*v1.x - v3.z*v1.y*v2.x;
 }

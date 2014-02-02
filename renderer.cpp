@@ -577,6 +577,28 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glDisable(GL_TEXTURE_2D);
             glEnable(GL_DEPTH_TEST);
 
+            // apply volume texture
+            if(Patch::patchMode) {
+                glColor4f(1, 1, 1, 0);
+                glEnable(GL_TEXTURE_2D);
+                glDisable(GL_DEPTH_TEST);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
+                glBegin(GL_QUADS);
+                    glNormal3i(0,0,1);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
+                    glVertex3f(-dataPxX, -dataPxY, 0.);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx, state->viewerState->vpConfigs[currentVP].texture.texRUy);
+                    glVertex3f(dataPxX, -dataPxY, 0.);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx, state->viewerState->vpConfigs[currentVP].texture.texRLy);
+                    glVertex3f(dataPxX, dataPxY, 0.);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
+                    glVertex3f(-dataPxX, dataPxY, 0.);
+                glEnd();
+                glBindTexture (GL_TEXTURE_2D, 0);
+                glDisable(GL_TEXTURE_2D);
+                glEnable(GL_DEPTH_TEST);
+            }
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
@@ -644,6 +666,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(0.5, dataPxY, -0.0001);
                 glEnd();
             }
+
+
 
             // draw node selection square
             if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XY) {
@@ -2522,7 +2546,7 @@ void Renderer::renderPatches(uint viewportType) {
         glEnableClientState(GL_VERTEX_ARRAY);
         glColor4f(1, 0, 0., 1);
         glLineWidth(3);
-        glDrawArrays(GL_LINE_LOOP, 0, Patch::activeLoop.size());
+        glDrawArrays(GL_POINTS, 0, Patch::activeLoop.size());
     }
 
     // draw all points
@@ -2663,30 +2687,25 @@ void Renderer::renderPatches(uint viewportType) {
     glDisableClientState(GL_VERTEX_ARRAY);
     glPopMatrix();
     glEnable(GL_BLEND);
-
-//    // apply volume texture
-//    glEnable(GL_TEXTURE_2D);
-//    glDisable(GL_DEPTH_TEST);
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//    glColor4f(1., 1., 1., 1.);
-//    glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
-//    glBegin(GL_QUADS);
-//        glNormal3i(0,0,1);
-//        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
-//        glVertex3f(-dataPxX, -dataPxY, 0.);
-//        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx, state->viewerState->vpConfigs[currentVP].texture.texRUy);
-//        glVertex3f(dataPxX, -dataPxY, 0.);
-//        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx, state->viewerState->vpConfigs[currentVP].texture.texRLy);
-//        glVertex3f(dataPxX, dataPxY, 0.);
-//        glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
-//        glVertex3f(-dataPxX, dataPxY, 0.);
-//    glEnd();
-//    glBindTexture (GL_TEXTURE_2D, 0);
-//    glDisable(GL_TEXTURE_2D);
-//    glEnable(GL_DEPTH_TEST);
 }
 
-
+void Renderer::makeCurrent(int vp) {
+    GLint openGLviewport[4];
+    switch(vp) {
+    case VP_UPPERLEFT:
+        refVPXY->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+        break;
+    case VP_LOWERLEFT:
+        refVPXZ->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+        break;
+    case VP_UPPERRIGHT:
+        refVPYZ->makeCurrent();
+        glGetIntegerv(GL_VIEWPORT, openGLviewport);
+        break;
+    }
+}
 
 bool Renderer::doubleMeshCapacity(mesh *toDouble) {
 
@@ -2844,15 +2863,17 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
 bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
     int p;
 
-    for( p = 0; p < 6; p++ )
+    for( p = 0; p < 6; p++ ) {
         if( state->viewerState->vpConfigs[viewportType].frustum[p][0]
            * pos.x + state->viewerState->vpConfigs[viewportType].frustum[p][1]
            * pos.y + state->viewerState->vpConfigs[viewportType].frustum[p][2]
            * pos.z + state->viewerState->vpConfigs[viewportType].frustum[p][3]
-           <= -radius )
+           <= -radius ) {
            return false;
+        }
+    }
 
-       return true;
+    return true;
 }
 
 // modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html

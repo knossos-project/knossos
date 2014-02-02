@@ -144,8 +144,8 @@ int main(int argc, char *argv[])
     Remote *remote = new Remote();
     Client *client = new Client();
 
-    Scripting *scripts = new Scripting();
-    scripts->skeletonReference = viewer->skeletonizer;
+//    Scripting *scripts = new Scripting();
+//    scripts->skeletonReference = viewer->skeletonizer;
     //scripts->stateReference = state;
 
 
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
     remote->start();
     client->start();
 
-    scripts->run();
+//    scripts->run();
 
     /* TEST */
     /*
