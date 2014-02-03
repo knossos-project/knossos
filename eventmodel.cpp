@@ -183,7 +183,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(Patch::patchMode && VPfound < VIEWPORT_SKELETON) {
         Patch::drawing = true;
         if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
-            Patch::activeLoop.clear(); // beginning of a new loop
             return false;
         }
         else if(Patch::drawMode == DRAW_DROP_POINTS) {
@@ -609,10 +608,9 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                     emit updateTools();
                 }
             }
-            if(Patch::activePatch->insert(point, false)) {
-                Patch::newPoints = true;
-                Patch::activeLoop.push_back(*point); // for displaying the current line while it is drawn
-            }
+
+            Patch::newPoints = Patch::activePatch->insert(point, false);
+
             emit updatePatchesWidget();
         }
     }
@@ -691,7 +689,7 @@ bool EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
                 qDebug("no active patch!");
                 return false;
             }
-            Patch::activePatch->computeVolume(VPfound);
+            //Patch::activePatch->computeVolume(VPfound);
             //Patch::activePatch->computeTriangles();
             return true;
         }
@@ -1384,6 +1382,14 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         state->skeletonState->skeletonChanged = true;
 
+    } else if(event->key() == Qt::Key_Return) {
+        if(Patch::patchMode and Patch::activePatch and Patch::activeLoop.size() > 0) {
+            std::vector<floatCoordinate> *newLoop = new std::vector<floatCoordinate>();
+            *newLoop = Patch::activeLoop;
+            Patch::activePatch->loops->insert(newLoop, centroidPolygon(Patch::activeLoop), true);
+            Patch::activePatch->computeVolume(VPfound);
+            Patch::activeLoop.clear(); // for new active loop
+        }
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
             QMessageBox prompt;

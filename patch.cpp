@@ -54,6 +54,7 @@ Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     }
     pointCloud = new Octree<floatCoordinate>(center, halfEdgeLength);
     triangles = new Octree<Triangle>(center, halfEdgeLength);
+    loops = new Octree<std::vector<floatCoordinate> >(center, halfEdgeLength);
     distinguishableTrianglesOrthoVP = new Octree<Triangle>(center, halfEdgeLength);
     distinguishableTrianglesSkelVP = new Octree<Triangle>(center, halfEdgeLength);
     setTree(state->skeletonState->activeTree);
@@ -208,8 +209,10 @@ bool Patch::insert(floatCoordinate *point, bool replace) {
     }
     if(pointCloud->insert(point, *point, replace)) {
         numPoints++;
+        activeLoop.push_back(*point);
         return true;
     }
+
     return false;
 }
 
@@ -231,13 +234,29 @@ std::vector<floatCoordinate> Patch::pointCloudAsVector(int viewportType) {
     }
     return points;
     /*std::vector<floatCoordinate> result;
-    std::vector<std::pair<floatCoordinate*, floatCoordinate> >::iterator iter;
+    std::vector<std::pair<floatCoordinate*, floatCoordinate1> >::iterator iter;
     for(iter = points.begin(); iter != points.end(); ++iter) {
         if(iter->first != NULL) {
             result.push_back(*(iter->first));
         }
     }
     return result;*/
+}
+
+/**
+ * @brief Patch::loopsAsVector returns the patch's loops as vector for easy handling
+ * @param viewportType specifies a viewport to only retrieve the visible loops in this viewport
+ * @return the vector of loops
+ */
+std::vector<std::vector<floatCoordinate> > Patch::loopsAsVector(int viewportType) {
+    std::vector<std::vector<floatCoordinate> > loopVector;
+    if(viewportType == -1) {
+        loops->getAllObjs(loopVector);
+    }
+    else {
+        loops->getAllVisibleObjs(loopVector, viewportType);
+    }
+    return loopVector;
 }
 
 /**
@@ -410,7 +429,7 @@ void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
     for(iter = cells.begin(); iter != cells.end(); ++iter) {
         facet = std::make_pair(*iter, (*iter)->index(infiniteVertex));
         cgalTriangle = triangulation2.triangle(facet);
-        triangle = (Triangle*) malloc(sizeof(Triangle));
+        triangle = (Triangle*) malloc( sizeof(Triangle));
         triangle->a.x = CGAL::to_double(cgalTriangle.vertex(0).x());
         triangle->a.y = CGAL::to_double(cgalTriangle.vertex(0).y());
         triangle->a.z = CGAL::to_double(cgalTriangle.vertex(0).z());
@@ -471,9 +490,9 @@ void Patch::computeVolume(int currentVP) {
     int subTexHeight = subTextureRU.y - subTextureLL.y;
     int dataPxXPerTexel = roundFloat(subTexWidth/edgeLengthXInDataPx);
     int dataPxYPerTexel = roundFloat(subTexHeight/edgeLengthYInDataPx);
-    std::vector<floatCoordinate> results; // found points on one ray
-    std::vector<floatCoordinate> boundingPoints; // filtered results
-    floatCoordinate p, q; // pq is any pair of boundingPoints enclosing the volume
+    std::vector<float> results; // found points on one ray
+    std::vector<float> boundingPoints; // filtered results
+    float p, q; // pq is any pair of boundingPoints enclosing the volume
     int x_offset, y_offset; // offsets into the texture
     // will hold the indices of the painted volume inside the texture
     int xMin = INT_MAX, yMin = INT_MAX;
@@ -482,7 +501,6 @@ void Patch::computeVolume(int currentVP) {
     case VIEWPORT_XY:
         // first a horizontal ray cast
         for(int y = lu.y; y <= rl.y; ++y) {
-            qDebug("==Y: %i ==", y);
             pointCloud->getObjsOnLine(results, -1, y, lu.z);
             if(results.size() == 0) {
                 continue;
@@ -498,12 +516,12 @@ void Patch::computeVolume(int currentVP) {
                 std::vector<int> skipIndices;
                 int minIndex, maxIndex;
                 for(int i = 0; i < results.size(); ++i) {
-                    if(minX > results[i].x) {
-                        minX = results[i].x;
+                    if(minX > results[i]) {
+                        minX = results[i];
                         minIndex = i;
                     }
-                    else if(maxX < results[i].x) {
-                        maxX = results[i].x;
+                    else if(maxX < results[i]) {
+                        maxX = results[i];
                         maxIndex = i;
                     }
                 }
@@ -518,7 +536,7 @@ void Patch::computeVolume(int currentVP) {
                         if(i == j) {
                             continue;
                         }
-                        if(results[j].x - results[i].x > -2 and results[j].x - results[i].x < 2) {
+                        if(results[j] - results[i] > -2 and results[j] - results[i] < 2) {
                             if(j == minIndex or j == maxIndex) {
                                 skipIndices.push_back(i); // min and max always stay in the result
                             }
@@ -527,10 +545,12 @@ void Patch::computeVolume(int currentVP) {
                             }
                         }
                     }
-                    if(i != maxIndex and i != minIndex and std::find(skipIndices.begin(), skipIndices.end(), i) == skipIndices.end()) { // point has enough distance to any other point
+                    if(i != maxIndex and i != minIndex and std::find(skipIndices.begin(), skipIndices.end(), i)
+                            == skipIndices.end()) {
+                        // point has enough distance to any other point
                         // ensure ascending order
-                        if(boundingPoints[boundingPoints.size() - 1].x > results[i].x) {
-                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
+                        if(boundingPoints[boundingPoints.size() - 1] > results[i]) {
+                            float tmp = boundingPoints[boundingPoints.size() - 1];
                             boundingPoints.pop_back();
                             boundingPoints.push_back(results[i]);
                             boundingPoints.push_back(tmp);
@@ -542,13 +562,10 @@ void Patch::computeVolume(int currentVP) {
                 }
                 boundingPoints.push_back(results[maxIndex]);
             }
-            for(int i = 0; i < boundingPoints.size(); ++i) {
-                qDebug("- %i, %f", i, boundingPoints[i].x);
-            }
+
             // if not even number of pairs, something went wrong. Then we'll only consider the first and last point
             // and vertical ray cast will fix it
             int maxPair = (boundingPoints.size() % 2 == 0)? boundingPoints.size()/2 : 1;
-            qDebug("-pairing. boundSize mod 2 = %i, maxPair %i", boundingPoints.size() % 2, maxPair);
             int endCond = (maxPair == 1)? 1 : boundingPoints.size();
             for(int pair = 0; pair < endCond; pair += 2) {
                 // fill texture stripe with patch color
@@ -560,13 +577,13 @@ void Patch::computeVolume(int currentVP) {
                     p = boundingPoints[pair];
                     q = boundingPoints[pair + 1];
                 }
-                qDebug("-- %f and %f", p.x, q.x);
+
                 // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
                 y_offset = subTextureRU.y - dataPxYPerTexel * (y - lu.y);
                 if(y_offset < yMin) {
                     yMin = y_offset;
                 }
-                for(int x = roundFloat(p.x); x < q.x; ++x) {
+                for(int x = roundFloat(p); x < q; ++x) {
                     x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
                     if(x_offset < xMin) {
                         xMin = x_offset;
@@ -610,37 +627,44 @@ void Patch::computeVolume(int currentVP) {
 
                 // first find the left-most and right-most point
                 float minY = INT_MAX, maxY = 0;
+                std::vector<int> skipIndices;
                 int minIndex, maxIndex;
                 for(int i = 0; i < results.size(); ++i) {
-                    if(minY > results[i].y) {
-                        minY = results[i].y;
+                    if(minY > results[i]) {
+                        minY = results[i];
                         minIndex = i;
                     }
-                    else if(maxY < results[i].y) {
-                        maxY = results[i].y;
+                    else if(maxY < results[i]) {
+                        maxY = results[i];
                         maxIndex = i;
                     }
                 }
                 boundingPoints.push_back(results[minIndex]);
                 // now find points with distance of at least one voxel from other points
                 for(uint i = 0; i <  results.size(); ++i) {
-                    if(i == minIndex or i == maxIndex) {
+                    if(std::find(skipIndices.begin(), skipIndices.end(), i) != skipIndices.end()) {
                         continue;
                     }
-                    uint j = 0;
-                    for(; j < results.size(); ++j) {
+
+                    for(uint j = 0; j < results.size(); ++j) {
                         if(i == j) {
                             continue;
                         }
-                        if(results[j].y - results[i].y > -1 and results[j].y - results[i].y < 1) {
-                            // closer than one voxel
-                            break;
+                        if(results[j] - results[i] > -2 and results[j] - results[i] < 2) {
+                            if(j == minIndex or j == maxIndex) {
+                                skipIndices.push_back(i); // min and max always stay in the result
+                            }
+                            else {
+                                skipIndices.push_back(j);
+                            }
                         }
                     }
-                    if(j == results.size()) { // point has enough distance to any other point
+                    if(i != maxIndex and i != minIndex and std::find(skipIndices.begin(), skipIndices.end(), i)
+                            == skipIndices.end()) {
+                        // point has enough distance to any other point
                         // ensure ascending order
-                        if(boundingPoints[boundingPoints.size() - 1].y > results[i].y) {
-                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
+                        if(boundingPoints[boundingPoints.size() - 1] > results[i]) {
+                            float tmp = boundingPoints[boundingPoints.size() - 1];
                             boundingPoints.pop_back();
                             boundingPoints.push_back(results[i]);
                             boundingPoints.push_back(tmp);
@@ -654,9 +678,10 @@ void Patch::computeVolume(int currentVP) {
             }
 
             // if not even number of pairs, something went wrong. Then we'll only consider the first and last point
-            // and the horizontal ray cast will fix it
+            // and vertical ray cast will fix it
             int maxPair = (boundingPoints.size() % 2 == 0)? boundingPoints.size()/2 : 1;
-            for(int pair = 0; pair < maxPair; pair += 2) {
+            int endCond = (maxPair == 1)? 1 : boundingPoints.size();
+            for(int pair = 0; pair < endCond; pair += 2) {
                 // fill texture stripe with patch color
                 if(maxPair == 1) {
                     p = boundingPoints[0];
@@ -668,7 +693,7 @@ void Patch::computeVolume(int currentVP) {
                 }
 
                 x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
-                for(int y = roundFloat(p.y); y < q.y; ++y) {
+                for(int y = roundFloat(p); y < q; ++y) {
                     // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
                     y_offset = subTextureRU.y - (y - lu.y) * dataPxYPerTexel;
                     for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {

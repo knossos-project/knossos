@@ -376,26 +376,26 @@ public:
      * @param tolerance: points with distance to the line smaller than 'tolerance' are accepted as on the line
      * @param results found objects are written to results
      */
-    void getObjsOnLine(std::vector<T> &results, int x, int y, int z) {
+    void getObjsOnLine(std::vector<float> &results, int x, int y, int z) {
         if(x == -1 and y == -1 and z == -1) {
             return;
         }
         if(object != NULL) { //leaf
             if(z == -1) {
                 if(floor(point.x) == x and floor(point.y) == y) {
-                    results.push_back(*object);
+                    results.push_back(point.z);
                     return;
                 }
             }
             else if(y == -1) {
                 if(floor(point.x) == x and floor(point.z) == z) {
-                    results.push_back(*object);
+                    results.push_back(point.y);
                     return;
                 }
             }
             else if(x == -1) {
                 if(floor(point.y) == y and floor(point.z) == z) {
-                    results.push_back(*object);
+                    results.push_back(point.x);
                     return;
                 }
             }

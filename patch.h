@@ -116,6 +116,7 @@ public:
     Octree<Triangle> *distinguishableTrianglesSkelVP;
     Octree<Triangle> *distinguishableTrianglesOrthoVP;
 
+
     Patch(QObject *parent = 0, int newPatchID = -1);
     ~Patch();
 
@@ -129,6 +130,7 @@ public:
     void computeVolume(int currentVP);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
+    std::vector<std::vector<floatCoordinate> > loopsAsVector(int viewportType = -1);
     std::vector<Triangle> trianglesAsVector(int viewportType = -1);
     std::vector<Triangle> distinguishableTrianglesAsVector(uint viewportType);
     bool computeTriangles();
