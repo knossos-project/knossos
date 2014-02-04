@@ -2561,18 +2561,18 @@ void Renderer::renderPatches(uint viewportType) {
               Patch::activePatch->correspondingTree->color.g,
               Patch::activePatch->correspondingTree->color.b,
               Patch::activePatch->correspondingTree->color.a);
-    std::vector<std::vector<floatCoordinate> > loops = Patch::activePatch->loopsAsVector(viewportType);
+    std::vector<PatchLoop*> loops = Patch::activePatch->loopsAsVector(viewportType);
     for(uint i = 0; i < loops.size(); ++i) {
         glDeleteBuffers(1, &Patch::vbo);
         glGenBuffers(1, &Patch::vbo);
         glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-        glBufferData(GL_ARRAY_BUFFER, loops[i].size()*sizeof(floatCoordinate),
-                     &loops[i][0],
+        glBufferData(GL_ARRAY_BUFFER, loops[i]->points.size()*sizeof(floatCoordinate),
+                     &loops[i]->points[0],
                      GL_STATIC_DRAW);
 
         glVertexPointer(3, GL_FLOAT, 0, 0);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glDrawArrays(GL_POINTS, 0, loops[i].size());
+        glDrawArrays(GL_POINTS, 0, loops[i]->points.size());
     }
 
     // draw all points

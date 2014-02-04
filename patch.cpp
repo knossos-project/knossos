@@ -54,7 +54,7 @@ Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     }
     pointCloud = new Octree<floatCoordinate>(center, halfEdgeLength);
     triangles = new Octree<Triangle>(center, halfEdgeLength);
-    loops = new Octree<std::vector<floatCoordinate> >(center, halfEdgeLength);
+    loops = new Octree<PatchLoop*>(center, halfEdgeLength);
     distinguishableTrianglesOrthoVP = new Octree<Triangle>(center, halfEdgeLength);
     distinguishableTrianglesSkelVP = new Octree<Triangle>(center, halfEdgeLength);
     setTree(state->skeletonState->activeTree);
@@ -165,10 +165,10 @@ floatCoordinate Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q
     SUB_ASSIGN_COORDINATE(v, q, p);
     normalizeVector(&v);
 
-    floatCoordinate *point = (floatCoordinate *)malloc(sizeof(floatCoordinate));
-    SET_COORDINATE(*point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
-    pointCloud->insert(point, *point, false);
-    return *point;
+    floatCoordinate point;
+    SET_COORDINATE(point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
+    pointCloud->insert(point, point, false);
+    return point;
 }
 
 /**
@@ -177,8 +177,8 @@ floatCoordinate Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q
  * @param replace define behaviour if a triangle at same location already exists: replace, or do nothing
  * @return true on insertion, false otherwise
  */
-bool Patch::insert(Triangle *triangle, bool replace) {
-    if(triangles->insert(triangle, centroidTriangle(*triangle), replace)) {
+bool Patch::insert(Triangle triangle, bool replace) {
+    if(triangles->insert(triangle, centroidTriangle(triangle), replace)) {
         numTriangles++;
         return true;
     }
@@ -191,25 +191,25 @@ bool Patch::insert(Triangle *triangle, bool replace) {
  * @param define behaviour if a point at same location already exists: replace, or do nothing
  * @return true on insertion, false otherwise
  */
-bool Patch::insert(floatCoordinate *point, bool replace) {
-    if(allowPoint(*point) == false) { // point too close to last point
+bool Patch::insert(floatCoordinate point, bool replace) {
+    if(allowPoint(point) == false) { // point too close to last point
         return false;
     }
     // if point is too far away from last point add interpolated points to fill the distance
     if(activeLoop.size() > 0) {
         floatCoordinate p = activeLoop[activeLoop.size() - 1];
-        while(point->x - p.x < -voxelPerPoint or point->x - p.x > voxelPerPoint
-              or point->y - p.y < -voxelPerPoint or point->y - p.y > voxelPerPoint
-              or point->z - p.z < -voxelPerPoint or point->z - p.z > voxelPerPoint) {
-            p = addInterpolatedPoint(p, *point);
+        while(point.x - p.x < -voxelPerPoint or point.x - p.x > voxelPerPoint
+              or point.y - p.y < -voxelPerPoint or point.y - p.y > voxelPerPoint
+              or point.z - p.z < -voxelPerPoint or point.z - p.z > voxelPerPoint) {
+            p = addInterpolatedPoint(p, point);
            //s qDebug("adding %f, %f, %f", p.x, p.y, p.z);
             activeLoop.push_back(p);
             numPoints++;
         }
     }
-    if(pointCloud->insert(point, *point, replace)) {
+    if(pointCloud->insert(point, point, replace)) {
         numPoints++;
-        activeLoop.push_back(*point);
+        activeLoop.push_back(point);
         return true;
     }
 
@@ -248,8 +248,8 @@ std::vector<floatCoordinate> Patch::pointCloudAsVector(int viewportType) {
  * @param viewportType specifies a viewport to only retrieve the visible loops in this viewport
  * @return the vector of loops
  */
-std::vector<std::vector<floatCoordinate> > Patch::loopsAsVector(int viewportType) {
-    std::vector<std::vector<floatCoordinate> > loopVector;
+std::vector<PatchLoop*> Patch::loopsAsVector(int viewportType) {
+    std::vector<PatchLoop*> loopVector;
     if(viewportType == -1) {
         loops->getAllObjs(loopVector);
     }
@@ -347,21 +347,19 @@ bool Patch::computeTriangles() {
     meshCloud.clear();
     pcl::fromPCLPointCloud2(mesh->cloud, meshCloud);
     this->mesh = *mesh;
-    Triangle *triangle;
+    Triangle triangle;
     for(int tri = 0; tri != mesh->polygons.size(); ++tri) {
-        triangle = (Triangle*) malloc(sizeof(Triangle));
+        triangle.a.x = meshCloud.points[mesh->polygons[tri].vertices[0]].x;
+        triangle.a.y = meshCloud.points[mesh->polygons[tri].vertices[0]].y;
+        triangle.a.z = meshCloud.points[mesh->polygons[tri].vertices[0]].z;
 
-        triangle->a.x = meshCloud.points[mesh->polygons[tri].vertices[0]].x;
-        triangle->a.y = meshCloud.points[mesh->polygons[tri].vertices[0]].y;
-        triangle->a.z = meshCloud.points[mesh->polygons[tri].vertices[0]].z;
+        triangle.b.x = meshCloud.points[mesh->polygons[tri].vertices[1]].x;
+        triangle.b.y = meshCloud.points[mesh->polygons[tri].vertices[1]].y;
+        triangle.b.z = meshCloud.points[mesh->polygons[tri].vertices[1]].z;
 
-        triangle->b.x = meshCloud.points[mesh->polygons[tri].vertices[1]].x;
-        triangle->b.y = meshCloud.points[mesh->polygons[tri].vertices[1]].y;
-        triangle->b.z = meshCloud.points[mesh->polygons[tri].vertices[1]].z;
-
-        triangle->c.x = meshCloud.points[mesh->polygons[tri].vertices[2]].x;
-        triangle->c.y = meshCloud.points[mesh->polygons[tri].vertices[2]].y;
-        triangle->c.z = meshCloud.points[mesh->polygons[tri].vertices[2]].z;
+        triangle.c.x = meshCloud.points[mesh->polygons[tri].vertices[2]].x;
+        triangle.c.y = meshCloud.points[mesh->polygons[tri].vertices[2]].y;
+        triangle.c.z = meshCloud.points[mesh->polygons[tri].vertices[2]].z;
         insert(triangle, false);
     }
     updateDistinguishableTriangles();
@@ -402,23 +400,22 @@ void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
     std::list<CGAL_CellHandle>::iterator iter;
     CGAL_Triangle cgalTriangle;
     CGAL_Facet facet;
-    Triangle *triangle;
+    Triangle triangle;
     CGAL_VertexHandle infiniteVertex = triangulation.infinite_vertex();
     for(iter = cells.begin(); iter != cells.end(); ++iter) {
         facet = std::make_pair(*iter, (*iter)->index(infiniteVertex));
         cgalTriangle = triangulation.triangle(facet);
-        triangle = (Triangle*) malloc(sizeof(Triangle));
-        triangle->a.x = CGAL::to_double(cgalTriangle.vertex(0).x());
-        triangle->a.y = CGAL::to_double(cgalTriangle.vertex(0).y());
-        triangle->a.z = CGAL::to_double(cgalTriangle.vertex(0).z());
+        triangle.a.x = CGAL::to_double(cgalTriangle.vertex(0).x());
+        triangle.a.y = CGAL::to_double(cgalTriangle.vertex(0).y());
+        triangle.a.z = CGAL::to_double(cgalTriangle.vertex(0).z());
 
-        triangle->b.x = CGAL::to_double(cgalTriangle.vertex(1).x());
-        triangle->b.y = CGAL::to_double(cgalTriangle.vertex(1).y());
-        triangle->b.z = CGAL::to_double(cgalTriangle.vertex(1).z());
+        triangle.b.x = CGAL::to_double(cgalTriangle.vertex(1).x());
+        triangle.b.y = CGAL::to_double(cgalTriangle.vertex(1).y());
+        triangle.b.z = CGAL::to_double(cgalTriangle.vertex(1).z());
 
-        triangle->c.x = CGAL::to_double(cgalTriangle.vertex(2).x());
-        triangle->c.y = CGAL::to_double(cgalTriangle.vertex(2).y());
-        triangle->c.z = CGAL::to_double(cgalTriangle.vertex(2).z());
+        triangle.c.x = CGAL::to_double(cgalTriangle.vertex(2).x());
+        triangle.c.y = CGAL::to_double(cgalTriangle.vertex(2).y());
+        triangle.c.z = CGAL::to_double(cgalTriangle.vertex(2).z());
         insert(triangle, true);
     }
 
@@ -452,7 +449,7 @@ void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
  *        Works without normals, therefore only for volumes smaller than the super cube!
  * @param currentVP the viewport for which to display a volume
  */
-void Patch::computeVolume(int currentVP) {
+void Patch::computeVolume(int currentVP, PatchLoop *loop) {
     Coordinate lu, rl; // left upper and right lower data coordinate
     vpConfig *vp = &state->viewerState->vpConfigs[currentVP];
 
@@ -1021,7 +1018,7 @@ void Patch::genRandCloud(uint cloudSize) {
     int radius = 500;
     int width = 200;
     int tolerance = 0;
-    floatCoordinate *point;
+    floatCoordinate point;
 
     double r, w, l;
 
@@ -1029,21 +1026,20 @@ void Patch::genRandCloud(uint cloudSize) {
 
     for(int i = 0; i < cloudSize; i++)
     {
-        point = (floatCoordinate *)malloc(sizeof(floatCoordinate));
         phi = (double) rand()/RAND_MAX * 2 * PI;
 
         w = width + tolerance * (double) rand()/RAND_MAX;
         r = radius * (double) rand()/RAND_MAX *orient;
 
-        point->x = (float) w * sin(phi);
-        point->y = (float) w * cos(phi);
-        point->z = (float) r;
+        point.x = (float) w * sin(phi);
+        point.y = (float) w * cos(phi);
+        point.z = (float) r;
 
-        l = sqrt(point->x * point->x + point->y * point->y);
+        l = sqrt(point.x * point.x + point.y * point.y);
 
-        point->x += state->boundary.x / 2;
-        point->y += state->boundary.y / 2;
-        point->z += state->boundary.z / 2;
+        point.x += state->boundary.x / 2;
+        point.y += state->boundary.y / 2;
+        point.z += state->boundary.z / 2;
         //Write point to array
         activePatch->insert(point, false);
 
@@ -1086,31 +1082,30 @@ void Patch::genRandTriangulation(uint cloudSize) {
     int radius = 500;
     int width = 200;
     int tolerance = 0;
-    floatCoordinate *point;
+    floatCoordinate point;
 
     double r, w, l;
 
     qDebug("Start creating points on cylinder:");
 
     for(int i = 0; i < cloudSize; i++) {
-        point = (floatCoordinate *)malloc(sizeof(floatCoordinate));
         phi = (double) rand()/RAND_MAX * 2 * PI;
 
         w = width + tolerance * (double) rand()/RAND_MAX;
         r = radius * (double) rand()/RAND_MAX *orient;
 
-        point->x = (float) w * sin(phi);
-        point->y = (float) w * cos(phi);
-        point->z = (float) r;
+        point.x = (float) w * sin(phi);
+        point.y = (float) w * cos(phi);
+        point.z = (float) r;
 
-        l = sqrt(point->x * point->x + point->y * point->y);
+        l = sqrt(point.x * point.x + point.y * point.y);
 
-        point->x += state->boundary.x / 2;
-        point->y += state->boundary.y / 2;
-        point->z += state->boundary.z / 2;
+        point.x += state->boundary.x / 2;
+        point.y += state->boundary.y / 2;
+        point.z += state->boundary.z / 2;
         //Write point to array
         if(activePatch->insert(point, false)) {
-            activePatch->recomputeTriangles(*point, 50);
+            activePatch->recomputeTriangles(point, 50);
         }
 
         tolerance *= (-1);

@@ -348,6 +348,11 @@ public:
     floatCoordinate a;
     floatCoordinate b;
     floatCoordinate c;
+    Triangle() {
+        a.x = a.y = a.z = -1;
+        b.x = b.y = b.z = -1;
+        c.x = c.y = c.z = -1;
+    }
 
     Triangle(const Triangle &copy)
         : a(copy.a), b(copy.b), c(copy.c) {}

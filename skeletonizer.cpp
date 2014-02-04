@@ -1483,7 +1483,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 }
                 else if(xml.name() == "patches") {
                     uint patchID;
-                    Triangle *tri;
+                    Triangle tri;
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "patch") {
                             attributes = xml.attributes();
@@ -1496,45 +1496,44 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             emit activePatchChanged();
                             while(xml.readNextStartElement()) {
                                 if(xml.name() == "triangle") {
-                                    tri = (Triangle *)malloc(sizeof(Triangle));
                                     attributes = xml.attributes();
                                     attribute = attributes.value("a.x");
                                     if(attribute.isNull() == false) {
-                                        tri->a.x = attribute.toLocal8Bit().toFloat();
+                                        tri.a.x = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("a.y");
                                     if(attribute.isNull() == false) {
-                                        tri->a.y = attribute.toLocal8Bit().toFloat();
+                                        tri.a.y = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("a.z");
                                     if(attribute.isNull() == false) {
-                                        tri->a.z = attribute.toLocal8Bit().toFloat();
+                                        tri.a.z = attribute.toLocal8Bit().toFloat();
                                     }
 
                                     attribute = attributes.value("b.x");
                                     if(attribute.isNull() == false) {
-                                        tri->b.x = attribute.toLocal8Bit().toFloat();
+                                        tri.b.x = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("b.y");
                                     if(attribute.isNull() == false) {
-                                        tri->b.y = attribute.toLocal8Bit().toFloat();
+                                        tri.b.y = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("b.z");
                                     if(attribute.isNull() == false) {
-                                        tri->b.z = attribute.toLocal8Bit().toFloat();
+                                        tri.b.z = attribute.toLocal8Bit().toFloat();
                                     }
 
                                     attribute = attributes.value("c.x");
                                     if(attribute.isNull() == false) {
-                                        tri->c.x = attribute.toLocal8Bit().toFloat();
+                                        tri.c.x = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("c.y");
                                     if(attribute.isNull() == false) {
-                                        tri->c.y = attribute.toLocal8Bit().toFloat();
+                                        tri.c.y = attribute.toLocal8Bit().toFloat();
                                     }
                                     attribute = attributes.value("c.z");
                                     if(attribute.isNull() == false) {
-                                        tri->c.z = attribute.toLocal8Bit().toFloat();
+                                        tri.c.z = attribute.toLocal8Bit().toFloat();
                                     }
                                     Patch::activePatch->insert(tri, false);
                                 }

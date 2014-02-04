@@ -58,12 +58,21 @@ typedef Triangulation::Vertex_handle                CGAL_VertexHandle;
 #define DRAW_CONTINUOUS_LINE 0 //! draw patch with a continuous line
 #define DRAW_DROP_POINTS 1 //! draw patch by placing points
 
+class PatchLoop : public QObject {
+    Q_OBJECT
+public:
+    std::vector<floatCoordinate> points;
+    std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
+
+    PatchLoop(QObject *parent = 0) : QObject(parent) {}
+    ~PatchLoop() {}
+};
+
 /**
  * @brief The Patch class: for volume annotation.
  *
  */
-class Patch : public QObject
-{
+class Patch : public QObject {
     Q_OBJECT
 
 public:
@@ -111,7 +120,7 @@ public:
     pcl_Cloud meshCloud;
     Octree<floatCoordinate> *pointCloud;
     Octree<Triangle> *triangles;
-    Octree<std::vector<floatCoordinate> > *loops;
+    Octree<PatchLoop*> *loops;
     Byte texData[TEXTURE_EDGE_LEN][TEXTURE_EDGE_LEN][4];
     Octree<Triangle> *distinguishableTrianglesSkelVP;
     Octree<Triangle> *distinguishableTrianglesOrthoVP;
@@ -124,13 +133,13 @@ public:
     Patch *nextPatchByID();
     Patch *previousPatchByID();
     bool allowPoint(floatCoordinate point);
-    bool insert(Triangle *triangle, bool replace);
-    bool insert(floatCoordinate *point, bool replace);
+    bool insert(Triangle triangle, bool replace);
+    bool insert(floatCoordinate point, bool replace);
     floatCoordinate addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
-    void computeVolume(int currentVP);
+    void computeVolume(int currentVP, PatchLoop *loop);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
-    std::vector<std::vector<floatCoordinate> > loopsAsVector(int viewportType = -1);
+    std::vector<PatchLoop *> loopsAsVector(int viewportType = -1);
     std::vector<Triangle> trianglesAsVector(int viewportType = -1);
     std::vector<Triangle> distinguishableTrianglesAsVector(uint viewportType);
     bool computeTriangles();

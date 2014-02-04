@@ -197,10 +197,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if(Patch::activePatch == NULL) {
                 Patch::newPatch();
             }
-            if(Patch::activePatch->insert(clickedCoordinate, false)) {
+            if(Patch::activePatch->insert(*clickedCoordinate, false)) {
                 Patch::newPoints = true;
             }
             emit updatePatchesWidget();
+            free(clickedCoordinate);
             return true;
         }
     }
@@ -609,8 +610,8 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                 }
             }
 
-            Patch::newPoints = Patch::activePatch->insert(point, false);
-
+            Patch::newPoints = Patch::activePatch->insert(*point, false);
+            free(point);
             emit updatePatchesWidget();
         }
     }
@@ -1384,11 +1385,12 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     } else if(event->key() == Qt::Key_Return) {
         if(Patch::patchMode and Patch::activePatch and Patch::activeLoop.size() > 0) {
-            std::vector<floatCoordinate> *newLoop = new std::vector<floatCoordinate>();
-            *newLoop = Patch::activeLoop;
-            Patch::activePatch->loops->insert(newLoop, centroidPolygon(Patch::activeLoop), true);
-            Patch::activePatch->computeVolume(VPfound);
+            PatchLoop *newLoop = new PatchLoop();
+            newLoop->points = Patch::activeLoop;
+            Patch::activePatch->loops->insert(newLoop, centroidPolygon(newLoop->points), true);
+            Patch::activePatch->computeVolume(VPfound, newLoop);
             Patch::activeLoop.clear(); // for new active loop
+            Patch::activePatch->computeTriangles();
         }
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
