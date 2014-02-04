@@ -664,7 +664,7 @@ void MainWindow::createMenus()
     F5Action->setShortcut(Qt::Key_F5);
     F5Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
+    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
     viewMenu = menuBar()->addMenu("Navigation");
     workModeViewMenu = viewMenu->addMenu("Work Mode");
@@ -1013,17 +1013,31 @@ void MainWindow::clearSkeletonWithoutConfirmation() {
     emit updateCommentsTableSignal();
 }
 
-void MainWindow::clearSkeletonSlot()
+void MainWindow::clearSkeletonSlotGUI() {
+    clearSkeleton(true);
+}
+
+void MainWindow::clearSkeletonSlotNoGUI() {
+    clearSkeleton(false);
+}
+
+void MainWindow::clearSkeleton(bool isGUI)
 {
-    QMessageBox question;
-    question.setWindowFlags(Qt::WindowStaysOnTopHint);
-    question.setIcon(QMessageBox::Question);
-    question.setWindowTitle("Confirmation required");
-    question.setText("Really clear skeleton (you cannot undo this)?");
-    QPushButton *ok = question.addButton(QMessageBox::Ok);
-    question.addButton(QMessageBox::No);
-    question.exec();
-    if(question.clickedButton() == ok) {
+    bool isClear = true;
+    if (isGUI) {
+        QMessageBox question;
+        question.setWindowFlags(Qt::WindowStaysOnTopHint);
+        question.setIcon(QMessageBox::Question);
+        question.setWindowTitle("Confirmation required");
+        question.setText("Really clear skeleton (you cannot undo this)?");
+        QPushButton *ok = question.addButton(QMessageBox::Ok);
+        question.addButton(QMessageBox::No);
+        question.exec();
+        if(question.clickedButton() != ok) {
+            isClear = false;
+        }
+    }
+    if (isClear) {
         emit clearSkeletonSignal(CHANGE_MANUAL, false);
         updateTitlebar(false);
         emit updateTreeviewSignal();

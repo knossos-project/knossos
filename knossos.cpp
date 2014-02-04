@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
     QTest::qExec(&navigation);
     */
 
-
+    viewer->window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
     return a.exec();
 }

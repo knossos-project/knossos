@@ -2256,7 +2256,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(findNodeByNodeID(int)));
     // -- end comments widget signals
     // dataset property signals --
-    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonSlot()));
+    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearSkeletonSignalNoGUI()), window, SLOT(clearSkeletonSlotNoGUI()));
+    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearSkeletonSignalGUI()), window, SLOT(clearSkeletonSlotGUI()));
     // -- end dataset property signals
     // task management signals --
     connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(loadSkeletonSignal(const QString)),

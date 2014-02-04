@@ -109,6 +109,7 @@ signals:
     void nodeCommentChangedSignal(nodeListElement *node);
     void viewportDecorationSignal(bool visible);
 protected:
+    void clearSkeleton(bool isGUI);
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
@@ -254,7 +255,8 @@ public slots:
     void linkWithActiveNodeSlot();
     void dropNodesSlot();
     void skeletonStatisticsSlot();
-    void clearSkeletonSlot();
+    void clearSkeletonSlotNoGUI();
+    void clearSkeletonSlotGUI();
     void clearSkeletonWithoutConfirmation();
 
     /* view menu */

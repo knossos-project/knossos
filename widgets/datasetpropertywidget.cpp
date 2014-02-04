@@ -101,28 +101,36 @@ void DatasetPropertyWidget::cancelButtonClicked() {
 }
 
 void DatasetPropertyWidget::processButtonClicked() {
+    changeDataSet(true);
+}
+
+void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     QString dir = this->path->currentText();
     if(dir.isNull()) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText("No directory specified!");
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+        if (isGUI) {
+            QMessageBox info;
+            info.setWindowFlags(Qt::WindowStaysOnTopHint);
+            info.setIcon(QMessageBox::Information);
+            info.setWindowTitle("Information");
+            info.setText("No directory specified!");
+            info.addButton(QMessageBox::Ok);
+            info.exec();
+        }
         return;
     }
 
     QString conf = QString(dir).append("/knossos.conf");
     QFile confFile(conf);
     if(!confFile.exists()) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText("There is no knossos.conf");
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+        if (isGUI) {
+            QMessageBox info;
+            info.setWindowFlags(Qt::WindowStaysOnTopHint);
+            info.setIcon(QMessageBox::Information);
+            info.setWindowTitle("Information");
+            info.setText("There is no knossos.conf");
+            info.addButton(QMessageBox::Ok);
+            info.exec();
+        }
         return;
     }
 
@@ -136,7 +144,12 @@ void DatasetPropertyWidget::processButtonClicked() {
     // Note:
     // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
     // This is a gamble we take, in order to not have possible bugs where the skeleton depends on old configuration values.
-    emit clearSkeletonSignal();
+    if (isGUI) {
+        emit clearSkeletonSignalGUI();
+    }
+    else {
+        emit clearSkeletonSignalNoGUI();
+    }
 
     this->waitForLoader();
 
