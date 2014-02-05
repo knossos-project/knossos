@@ -135,8 +135,10 @@ public:
     bool allowPoint(floatCoordinate point);
     bool insert(Triangle triangle, bool replace);
     bool insert(floatCoordinate point, bool replace);
+    bool insert(PatchLoop *loop, uint viewportType);
     floatCoordinate addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
     void computeVolume(int currentVP, PatchLoop *loop);
+    std::vector<floatCoordinate> pointsOnLine(PatchLoop *loop, int x, int y, int z);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
     std::vector<PatchLoop *> loopsAsVector(int viewportType = -1);
@@ -151,7 +153,6 @@ public:
 signals:
     void activePatchChanged();
     treeListElement *addTreeListElementSignal(int sync,int targetRevision, int treeID, color4F color, int serialize);
-    void makeCurrentSignal(int currentVP);
 public slots:
     void updateDistinguishableTriangles(int viewportType = -1);
 };

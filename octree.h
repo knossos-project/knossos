@@ -218,10 +218,15 @@ public:
                 // finally insert old and new objects to their new leaves
                 newCenter = o->getCenterOfChild(oct1);
                 o->children[oct1] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
-                for(int i = 0; i < oldObjects.size(); ++i) {
-                    o->children[oct1]->insert(oldObjects[i], point, true);
+                if(oldObjects.size() > 1) {
+                    for(uint i = 0; i < oldObjects.size(); ++i) {
+                        o->children[oct1]->insert(oldObjects[i], point, true);
+                    }
                 }
-                point.x = point.y = point.z = -1; // now that the old object is re-inserted, we can reset point
+                else {
+                     o->children[oct1]->insert(oldObjects[0], point, allowList);
+                }
+                point.x = point.y = point.z = -1; // now that the old objects are re-inserted, we can reset point
                 newCenter = o->getCenterOfChild(oct2);
                 o->children[oct2] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
                 o->children[oct2]->insert(newObject, pos, allowList, removedObjs);
@@ -230,6 +235,8 @@ public:
         } else {
             // We are at an interior node. Insert recursively into the
             // appropriate child octant
+
+            // first check if object is too big for a smaller octant
             int octant = getOctantFor(pos);
             if(children[octant] != NULL) {
                 return children[octant]->insert(newObject, pos, allowList, removedObjs);

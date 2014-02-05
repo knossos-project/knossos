@@ -65,6 +65,12 @@ Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
 
 
 Patch::~Patch() {
+    std::vector<PatchLoop *> loopVec;
+    loops->getAllObjs(loopVec);
+    for(uint i = 0; i < loopVec.size(); ++i) {
+        delete loopVec[i];
+    }
+    delete loops;
     delete pointCloud;
     delete triangles;
     delete distinguishableTrianglesOrthoVP;
@@ -212,8 +218,18 @@ bool Patch::insert(floatCoordinate point, bool replace) {
         activeLoop.push_back(point);
         return true;
     }
-
     return false;
+}
+
+bool Patch::insert(PatchLoop *loop, uint viewportType) {
+    if(loop) {
+        qDebug("inserting a loop");
+        loops->insert(loop, centroidPolygon(loop->points), true);
+       // computeVolume(viewportType, loop);
+    }
+    else {
+        qDebug("there is no loop, I'ma sorry!");
+    }
 }
 
 void Patch::delVisibleLoop(uint viewportType) {
@@ -478,27 +494,18 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
 
     float edgeLengthXInDataPx = vp->edgeLength/vp->screenPxXPerDataPx;
     float edgeLengthYInDataPx = vp->edgeLength/vp->screenPxYPerDataPx;
-    Coordinate subTextureLL, subTextureRU;
-    SET_COORDINATE(subTextureLL, roundFloat(vp->texture.texLLx * TEXTURE_EDGE_LEN),
-                                 roundFloat(vp->texture.texLLy * TEXTURE_EDGE_LEN), 0);
-    SET_COORDINATE(subTextureRU, roundFloat(vp->texture.texRUx * TEXTURE_EDGE_LEN),
-                                 roundFloat(vp->texture.texRUy * TEXTURE_EDGE_LEN), 0);
-    int subTexWidth = subTextureRU.x - subTextureLL.x;
-    int subTexHeight = subTextureRU.y - subTextureLL.y;
-    int dataPxXPerTexel = roundFloat(subTexWidth/edgeLengthXInDataPx);
-    int dataPxYPerTexel = roundFloat(subTexHeight/edgeLengthYInDataPx);
-    std::vector<float> results; // found points on one ray
-    std::vector<float> boundingPoints; // filtered results
-    float p, q; // pq is any pair of boundingPoints enclosing the volume
-    int x_offset, y_offset; // offsets into the texture
-    // will hold the indices of the painted volume inside the texture
-    int xMin = INT_MAX, yMin = INT_MAX;
-    int xMax = 0, yMax = 0;
+
+    int vpDataPixels[(int)ceil(edgeLengthYInDataPx)][(int)ceil(edgeLengthXInDataPx)];
+    memset(vpDataPixels, 0, sizeof(vpDataPixels));
+    std::vector<floatCoordinate> results; // found points on one ray
+    std::vector<floatCoordinate> boundingPoints; // filtered results
+    floatCoordinate p, q; // pq is any pair of boundingPoints enclosing the volume
     switch(currentVP) {
     case VIEWPORT_XY:
+    {
         // first a horizontal ray cast
         for(int y = lu.y; y <= rl.y; ++y) {
-            pointCloud->getObjsOnLine(results, -1, y, lu.z);
+            results = pointsOnLine(loop, -1, y, lu.z);
             if(results.size() == 0) {
                 continue;
             }
@@ -512,13 +519,13 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                 float minX = INT_MAX, maxX = 0;
                 std::vector<int> skipIndices;
                 int minIndex, maxIndex;
-                for(int i = 0; i < results.size(); ++i) {
-                    if(minX > results[i]) {
-                        minX = results[i];
+                for(uint i = 0; i < results.size(); ++i) {
+                    if(minX > results[i].x) {
+                        minX = results[i].x;
                         minIndex = i;
                     }
-                    else if(maxX < results[i]) {
-                        maxX = results[i];
+                    else if(maxX < results[i].x) {
+                        maxX = results[i].x;
                         maxIndex = i;
                     }
                 }
@@ -533,7 +540,7 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                         if(i == j) {
                             continue;
                         }
-                        if(results[j] - results[i] > -2 and results[j] - results[i] < 2) {
+                        if(results[j].x - results[i].x > -2 and results[j].x - results[i].x < 2) {
                             if(j == minIndex or j == maxIndex) {
                                 skipIndices.push_back(i); // min and max always stay in the result
                             }
@@ -546,8 +553,8 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                             == skipIndices.end()) {
                         // point has enough distance to any other point
                         // ensure ascending order
-                        if(boundingPoints[boundingPoints.size() - 1] > results[i]) {
-                            float tmp = boundingPoints[boundingPoints.size() - 1];
+                        if(boundingPoints[boundingPoints.size() - 1].x > results[i].x) {
+                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
                             boundingPoints.pop_back();
                             boundingPoints.push_back(results[i]);
                             boundingPoints.push_back(tmp);
@@ -574,45 +581,18 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                     p = boundingPoints[pair];
                     q = boundingPoints[pair + 1];
                 }
-
-                // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
-                y_offset = subTextureRU.y - dataPxYPerTexel * (y - lu.y);
-                if(y_offset < yMin) {
-                    yMin = y_offset;
-                }
-                for(int x = roundFloat(p); x < q; ++x) {
-                    x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
-                    if(x_offset < xMin) {
-                        xMin = x_offset;
-                    }
-                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
-                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
-                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
-                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
-                        texData[y_offset][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
-                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
-                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
-                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
-                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
-                            texData[y_offset + texelY][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
-                        }
-                    }
-                    if(x_offset + dataPxXPerTexel - 1 > xMax) {
-                        xMax = x_offset + dataPxXPerTexel;
-                    }
-                    if(y_offset + dataPxYPerTexel - 1 > yMax) {
-                        yMax = y_offset + dataPxYPerTexel;
-                    }
+                for(int i = roundFloat(p.x) - lu.x; i < roundFloat(q.x) - lu.x; ++i) {
+                    vpDataPixels[y - lu.y][i] += 1;
                 }
             }
             // clear for next ray
             boundingPoints.clear();
             results.clear();
         }
-        qDebug("min: %i, %i, max: %i, %i", xMin, yMin, xMax, yMax);
+
         // now start vertical ray casting
         for(int x = lu.x; x <= rl.x; ++x) {
-            pointCloud->getObjsOnLine(results, x, -1, lu.z);
+            results = pointsOnLine(loop, x, -1, lu.z);
             if(results.size() == 0) {
                 continue;
             }
@@ -627,12 +607,12 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                 std::vector<int> skipIndices;
                 int minIndex, maxIndex;
                 for(int i = 0; i < results.size(); ++i) {
-                    if(minY > results[i]) {
-                        minY = results[i];
+                    if(minY > results[i].y) {
+                        minY = results[i].y;
                         minIndex = i;
                     }
-                    else if(maxY < results[i]) {
-                        maxY = results[i];
+                    else if(maxY < results[i].y) {
+                        maxY = results[i].y;
                         maxIndex = i;
                     }
                 }
@@ -647,7 +627,7 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                         if(i == j) {
                             continue;
                         }
-                        if(results[j] - results[i] > -2 and results[j] - results[i] < 2) {
+                        if(results[j].y - results[i].y > -2 and results[j].y - results[i].y < 2) {
                             if(j == minIndex or j == maxIndex) {
                                 skipIndices.push_back(i); // min and max always stay in the result
                             }
@@ -660,8 +640,8 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                             == skipIndices.end()) {
                         // point has enough distance to any other point
                         // ensure ascending order
-                        if(boundingPoints[boundingPoints.size() - 1] > results[i]) {
-                            float tmp = boundingPoints[boundingPoints.size() - 1];
+                        if(boundingPoints[boundingPoints.size() - 1].y > results[i].y) {
+                            floatCoordinate tmp = boundingPoints[boundingPoints.size() - 1];
                             boundingPoints.pop_back();
                             boundingPoints.push_back(results[i]);
                             boundingPoints.push_back(tmp);
@@ -689,43 +669,41 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
                     q = boundingPoints[pair + 1];
                 }
 
-                x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
-                for(int y = roundFloat(p); y < q; ++y) {
-                    // translate dataset (0, 0) (upper left) to openGL (0, 0) (lower left)
-                    y_offset = subTextureRU.y - (y - lu.y) * dataPxYPerTexel;
-                    for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
-                        texData[y_offset][x_offset + texelX][0] = 255 * correspondingTree->color.r;
-                        texData[y_offset][x_offset + texelX][1] = 255 * correspondingTree->color.g;
-                        texData[y_offset][x_offset + texelX][2] = 255 * correspondingTree->color.b;
-                        texData[y_offset][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
-                        for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
-                            texData[y_offset + texelY][x_offset + texelX][0] = 255 * correspondingTree->color.r;
-                            texData[y_offset + texelY][x_offset + texelX][1] = 255 * correspondingTree->color.g;
-                            texData[y_offset + texelY][x_offset + texelX][2] = 255 * correspondingTree->color.b;
-                            texData[y_offset + texelY][x_offset + texelX][3] += 1;//255 * correspondingTree->color.a;
-                        }
-                    }
+                for(int i = roundFloat(p.y) - lu.y; i < roundFloat(q.y) - lu.y; ++i) {
+                    vpDataPixels[i][x - lu.x] += 1;
                 }
             }
             // clear for next ray
             boundingPoints.clear();
             results.clear();
         }
-        // now reduce the texture to the intersection of both ray castings.
-        for(int row = yMin; row <= yMax; ++row) {
-            for(int col = xMin; col <= xMax; ++col) {
-                if(texData[row][col][3] == 2) {
-                    texData[row][col][3] = 255 * correspondingTree->color.a;
+
+        // now reduce to intersection of both ray castings and compress result to start end end point of each stripe
+        Coordinate start, end;
+        int found = 0;
+        for(int row = 0; row < ceil(edgeLengthYInDataPx); ++row) {
+            for(int col = 0; col < ceil(edgeLengthXInDataPx); ++col) {
+                if(vpDataPixels[row][col] == 2) {
+                    if(found == 0) {
+                        found++; //start of new stripe
+                        SET_COORDINATE(start, lu.x + col, lu.y + row, lu.z);
+                    }
                 }
-                else {
-                    texData[row][col][0] = 0;
-                    texData[row][col][1] = 0;
-                    texData[row][col][2] = 0;
-                    texData[row][col][3] = 0;
+                else if(found == 1) { // start point was found, this is one pixel after end point
+                    SET_COORDINATE(end, lu.x + col - 1, lu.y + row, lu.z);
+                    loop->volumeStripes.push_back(std::pair<Coordinate, Coordinate>(start, end));
+                    found = 0;
                 }
+            }
+            if(found == 1) {
+            // only a start point was found in the last row. so volume stripe must go from start point to end of row
+                SET_COORDINATE(end, lu.x + (int)ceil(edgeLengthXInDataPx), lu.y + row, lu.z);
+                loop->volumeStripes.push_back(std::pair<Coordinate, Coordinate>(start, end));
+                found = 0;
             }
         }
         break;
+    }
     case VIEWPORT_XZ:
 //        for(int z = lu.z; z <= rl.z; ++z) {
 //            pointCloud->getObjsOnLine(results, -1, lu.y, z);
@@ -789,19 +767,39 @@ void Patch::computeVolume(int currentVP, PatchLoop *loop) {
 //        }
         break;
     }
+}
 
-    emit makeCurrentSignal(currentVP); // a context must be active for openGL commands
-    glBindTexture(GL_TEXTURE_2D, texHandle);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 vp->texture.edgeLengthPx,
-                 vp->texture.edgeLengthPx,
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 texData);
-    glBindTexture(GL_TEXTURE_2D, 0);
+/**
+ * @brief Patch::pointsOnLine get all points of given loop that lie on the line specified by two coordinates.
+ *        Set third coordinate to -1.
+ *        A point lies on the line, if its floored coordinates equal the line coordinates.
+ * @param loop the loop whose points are tested
+ * @return the vector of points lying on defined line.
+ */
+std::vector<floatCoordinate> Patch::pointsOnLine(PatchLoop *loop, int x, int y, int z) {
+    std::vector<floatCoordinate> results;
+    if(loop == NULL) {
+        return results;
+    }
+
+    for(uint i = 0; i < loop->points.size(); ++i) {
+        if(z == -1) {
+            if(floor(loop->points[i].x) == x and floor(loop->points[i].y) == y) {
+                results.push_back(loop->points[i]);
+            }
+        }
+        else if(y == -1) {
+            if(floor(loop->points[i].x) == x and floor(loop->points[i].z) == z) {
+                results.push_back(loop->points[i]);
+            }
+        }
+        else if(x == -1) {
+            if(floor(loop->points[i].y) == y and floor(loop->points[i].z) == z) {
+                results.push_back(loop->points[i]);
+            }
+        }
+    }
+    return results;
 }
 
 pcl_Mesh::Ptr Patch::concaveHull(pcl_Cloud::Ptr cloudPtr) {

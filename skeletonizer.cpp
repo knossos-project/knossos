@@ -941,32 +941,27 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
         patchListElement *patchEl = currentTree->firstPatch;
         Patch *currentPatch;
-        std::vector<Triangle> triangles;
-        std::vector<Triangle>::iterator iter;
+        std::vector<PatchLoop*> loops;
         if(patchEl != NULL) {
             xml.writeStartElement("patches");
             do {
-                xml.writeStartElement("patch");
-                xml.writeAttribute("id", tmp.setNum(patchEl->patchID));
                 currentPatch = Patch::getPatchWithID(patchEl->patchID);
                 if(currentPatch == NULL) {
                     continue;
                 }
-                triangles = currentPatch->trianglesAsVector();
-                for(iter = triangles.begin(); iter != triangles.end(); ++iter) {
-                    xml.writeStartElement("triangle");
-                    xml.writeAttribute("a.x", tmp.setNum(iter->a.x));
-                    xml.writeAttribute("a.y", tmp.setNum(iter->a.y));
-                    xml.writeAttribute("a.z", tmp.setNum(iter->a.z));
-
-                    xml.writeAttribute("b.x", tmp.setNum(iter->b.x));
-                    xml.writeAttribute("b.y", tmp.setNum(iter->b.y));
-                    xml.writeAttribute("b.z", tmp.setNum(iter->b.z));
-
-                    xml.writeAttribute("c.x", tmp.setNum(iter->c.x));
-                    xml.writeAttribute("c.y", tmp.setNum(iter->c.y));
-                    xml.writeAttribute("c.z", tmp.setNum(iter->c.z));
-                 xml.writeEndElement();
+                xml.writeStartElement("patch");
+                xml.writeAttribute("id", tmp.setNum(patchEl->patchID));
+                loops = currentPatch->loopsAsVector();
+                for(uint i = 0; i < loops.size(); ++i) {
+                    xml.writeStartElement("loop");
+                    for(uint j = 0; j < loops[i]->points.size(); ++j) {
+                        xml.writeStartElement("point");
+                        xml.writeAttribute("x", tmp.setNum(loops[i]->points[j].x));
+                        xml.writeAttribute("y", tmp.setNum(loops[i]->points[j].y));
+                        xml.writeAttribute("z", tmp.setNum(loops[i]->points[j].z));
+                        xml.writeEndElement();
+                    }
+                    xml.writeEndElement();
                 }
                 xml.writeEndElement();
                 patchEl = patchEl->next;
@@ -1364,7 +1359,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     neuronID = currentTree->treeID;
                 }
 
-                attribute = attributes.value("comment"); // the three comment
+                attribute = attributes.value("comment"); // the tree comment
                 if(attribute.isNull() == false) {
                     addTreeComment(CHANGE_MANUAL, currentTree->treeID, attribute.toLocal8Bit().data());
                 }
@@ -1440,8 +1435,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             } else {
                                 time = skeletonTime; // For legacy skeleton files
                             }
-
-           state->viewerState->renderInterval = SLOW;                 if(merge == false) {
+                            if(merge == false) {
                                 addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
                             }
                             else {
@@ -1481,9 +1475,15 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         xml.skipCurrentElement();
                     }
                 }
-                else if(xml.name() == "patches") {
+
+                // gate
+                xml.readNextStartElement();
+
+                if(xml.name() == "patches") {
                     uint patchID;
-                    Triangle tri;
+                    PatchLoop *loop = NULL;
+                    floatCoordinate point;
+                    int viewportType = -1;
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "patch") {
                             attributes = xml.attributes();
@@ -1495,49 +1495,40 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             Skeletonizer::addPatchListElement(patchID);
                             emit activePatchChanged();
                             while(xml.readNextStartElement()) {
-                                if(xml.name() == "triangle") {
+                                if(xml.name() == "loop") {
+                                    loop = new PatchLoop();
+                                    if(loop == NULL) {
+                                        qDebug("bad alloc!");
+                                    }
                                     attributes = xml.attributes();
-                                    attribute = attributes.value("a.x");
+                                    attribute = attributes.value("inVP");
                                     if(attribute.isNull() == false) {
-                                        tri.a.x = attribute.toLocal8Bit().toFloat();
+                                        viewportType = attribute.toLocal8Bit().toInt();
                                     }
-                                    attribute = attributes.value("a.y");
-                                    if(attribute.isNull() == false) {
-                                        tri.a.y = attribute.toLocal8Bit().toFloat();
+                                    else {
+                                        viewportType = -1;
                                     }
-                                    attribute = attributes.value("a.z");
-                                    if(attribute.isNull() == false) {
-                                        tri.a.z = attribute.toLocal8Bit().toFloat();
+                                    while(xml.readNextStartElement()) {
+                                        if(xml.name() == "point") {
+                                            attributes = xml.attributes();
+                                            attribute = attributes.value("x");
+                                            if(attribute.isNull() == false) {
+                                                point.x = attribute.toLocal8Bit().toFloat();
+                                            }
+                                            attribute = attributes.value("y");
+                                            if(attribute.isNull() == false) {
+                                                point.y = attribute.toLocal8Bit().toFloat();
+                                            }
+                                            attribute = attributes.value("z");
+                                            if(attribute.isNull() == false) {
+                                                point.z = attribute.toLocal8Bit().toFloat();
+                                            }
+                                            loop->points.push_back(point);
+                                        }
+                                        xml.skipCurrentElement();
                                     }
-
-                                    attribute = attributes.value("b.x");
-                                    if(attribute.isNull() == false) {
-                                        tri.b.x = attribute.toLocal8Bit().toFloat();
-                                    }
-                                    attribute = attributes.value("b.y");
-                                    if(attribute.isNull() == false) {
-                                        tri.b.y = attribute.toLocal8Bit().toFloat();
-                                    }
-                                    attribute = attributes.value("b.z");
-                                    if(attribute.isNull() == false) {
-                                        tri.b.z = attribute.toLocal8Bit().toFloat();
-                                    }
-
-                                    attribute = attributes.value("c.x");
-                                    if(attribute.isNull() == false) {
-                                        tri.c.x = attribute.toLocal8Bit().toFloat();
-                                    }
-                                    attribute = attributes.value("c.y");
-                                    if(attribute.isNull() == false) {
-                                        tri.c.y = attribute.toLocal8Bit().toFloat();
-                                    }
-                                    attribute = attributes.value("c.z");
-                                    if(attribute.isNull() == false) {
-                                        tri.c.z = attribute.toLocal8Bit().toFloat();
-                                    }
-                                    Patch::activePatch->insert(tri, false);
+                                    Patch::activePatch->insert(loop, viewportType);
                                 }
-                                xml.skipCurrentElement();
                             }
                         }
                     }

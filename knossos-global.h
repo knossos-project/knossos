@@ -948,6 +948,7 @@ struct viewerState {
     Byte *overlayData;
     Byte *defaultTexData;
     Byte *defaultOverlayData;
+    Byte volumeTexData[TEXTURE_EDGE_LEN][TEXTURE_EDGE_LEN][4];
     uint numberViewports;
     uint splash;
     bool viewerReady;

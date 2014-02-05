@@ -609,7 +609,6 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                     emit updateTools();
                 }
             }
-
             Patch::newPoints = Patch::activePatch->insert(*point, false);
             free(point);
             emit updatePatchesWidget();
@@ -1387,10 +1386,9 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         if(Patch::patchMode and Patch::activePatch and Patch::activeLoop.size() > 0) {
             PatchLoop *newLoop = new PatchLoop();
             newLoop->points = Patch::activeLoop;
-            Patch::activePatch->loops->insert(newLoop, centroidPolygon(newLoop->points), true);
-            Patch::activePatch->computeVolume(VPfound, newLoop);
+            Patch::activePatch->insert(newLoop, VPfound);
             Patch::activeLoop.clear(); // for new active loop
-            Patch::activePatch->computeTriangles();
+            //Patch::activePatch->computeTriangles();
         }
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {

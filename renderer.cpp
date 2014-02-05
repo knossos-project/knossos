@@ -2562,6 +2562,7 @@ void Renderer::renderPatches(uint viewportType) {
               Patch::activePatch->correspondingTree->color.b,
               Patch::activePatch->correspondingTree->color.a);
     std::vector<PatchLoop*> loops = Patch::activePatch->loopsAsVector(viewportType);
+
     for(uint i = 0; i < loops.size(); ++i) {
         glDeleteBuffers(1, &Patch::vbo);
         glGenBuffers(1, &Patch::vbo);
@@ -2713,24 +2714,6 @@ void Renderer::renderPatches(uint viewportType) {
     glDisableClientState(GL_VERTEX_ARRAY);
     glPopMatrix();
     glEnable(GL_BLEND);
-}
-
-void Renderer::makeCurrent(int vp) {
-    GLint openGLviewport[4];
-    switch(vp) {
-    case VP_UPPERLEFT:
-        refVPXY->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-        break;
-    case VP_LOWERLEFT:
-        refVPXZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-        break;
-    case VP_UPPERRIGHT:
-        refVPYZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-        break;
-    }
 }
 
 bool Renderer::doubleMeshCapacity(mesh *toDouble) {

@@ -733,6 +733,117 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
     return true;
 }
 
+bool Viewer::vpGenerateVolumeTexture(vpListElement *currentVP) {
+    Coordinate lu, rl; // left upper and right lower data coordinate
+    vpConfig *vp = currentVP->vpConfig;
+    bool bindTexture = false; // only bind the texture if there is volume to display
+    // reset texture first
+    memset(state->viewerState->volumeTexData, '\0', sizeof(state->viewerState->volumeTexData));
+
+    switch(vp->id) {
+    case VIEWPORT_XY:
+        lu.x = vp->leftUpperDataPxOnScreen.x;
+        lu.y = vp->leftUpperDataPxOnScreen.y;
+        lu.z = vp->leftUpperDataPxOnScreen.z;
+        break;
+    case VIEWPORT_XZ:
+        lu.x = vp->leftUpperDataPxOnScreen.x;
+        lu.y = vp->leftUpperDataPxOnScreen.z;
+        lu.z = vp->leftUpperDataPxOnScreen.y;
+        break;
+    case VIEWPORT_YZ:
+        lu.x = vp->leftUpperDataPxOnScreen.y;
+        lu.y = vp->leftUpperDataPxOnScreen.z;
+        lu.z = vp->leftUpperDataPxOnScreen.x;
+        break;
+
+    }
+
+    SET_COORDINATE(rl, lu.x + vp->edgeLength/vp->screenPxXPerDataPx,
+                       lu.y + vp->edgeLength/vp->screenPxYPerDataPx,
+                       lu.z);
+
+    float edgeLengthXInDataPx = vp->edgeLength/vp->screenPxXPerDataPx;
+    float edgeLengthYInDataPx = vp->edgeLength/vp->screenPxYPerDataPx;
+    Coordinate subTextureLL, subTextureRU;
+    SET_COORDINATE(subTextureLL, roundFloat(vp->texture.texLLx * TEXTURE_EDGE_LEN),
+                                 roundFloat(vp->texture.texLLy * TEXTURE_EDGE_LEN), 0);
+    SET_COORDINATE(subTextureRU, roundFloat(vp->texture.texRUx * TEXTURE_EDGE_LEN),
+                                 roundFloat(vp->texture.texRUy * TEXTURE_EDGE_LEN), 0);
+    int subTexWidth = subTextureRU.x - subTextureLL.x;
+    int subTexHeight = subTextureRU.y - subTextureLL.y;
+    int dataPxXPerTexel = roundFloat(subTexWidth/edgeLengthXInDataPx);
+    int dataPxYPerTexel = roundFloat(subTexHeight/edgeLengthYInDataPx);
+    int x_offset, y_offset; // offsets into the texture
+
+    treeListElement *tree = state->skeletonState->firstTree;
+    patchListElement *patchEl;
+    std::vector<PatchLoop*> loops;
+    Patch *patch;
+    while(tree) {
+        patchEl = tree->firstPatch;
+        if(patchEl == NULL) {
+            tree = tree->next;
+            continue;
+        }
+        do {
+            patch = Patch::getPatchWithID(patchEl->patchID);
+            if(patch == NULL) {
+                patchEl = patchEl->next;
+                continue;
+            }
+
+            loops = patch->loopsAsVector(vp->id);
+            if(loops.size() > 0) {
+                if(loops[0]->volumeStripes.size() > 0) {
+                    bindTexture = true;
+                }
+            }
+            for(uint i = 0; i < loops.size(); ++i) {
+                for(uint j = 0; j < loops[i]->volumeStripes.size(); ++j) {
+                    std::pair<Coordinate, Coordinate> stripe = loops[i]->volumeStripes[j];
+                    if(stripe.first.y < lu.y or stripe.first.y > rl.y) {
+                        // this stripe is not in the viewport
+                        continue;
+                    }
+
+                    y_offset = subTextureRU.y - (stripe.first.y - lu.y) * dataPxYPerTexel;
+                    for(int x = stripe.first.x; x <= stripe.second.x; ++x) {
+                        x_offset = subTextureLL.x + (x - lu.x) * dataPxXPerTexel;
+                        for(int texelX = 0; texelX < dataPxXPerTexel; ++texelX) {
+                            state->viewerState->volumeTexData[y_offset][x_offset + texelX][0] = 255 * tree->color.r;
+                            state->viewerState->volumeTexData[y_offset][x_offset + texelX][1] = 255 * tree->color.g;
+                            state->viewerState->volumeTexData[y_offset][x_offset + texelX][2] = 255 * tree->color.b;
+                            state->viewerState->volumeTexData[y_offset][x_offset + texelX][3] = 255 * tree->color.a;
+                            for(int texelY = 0; texelY < dataPxYPerTexel; ++texelY) {
+                                state->viewerState->volumeTexData[y_offset + texelY][x_offset + texelX][0] = 255 * tree->color.r;
+                                state->viewerState->volumeTexData[y_offset + texelY][x_offset + texelX][1] = 255 * tree->color.g;
+                                state->viewerState->volumeTexData[y_offset + texelY][x_offset + texelX][2] = 255 * tree->color.b;
+                                state->viewerState->volumeTexData[y_offset + texelY][x_offset + texelX][3] = 255 * tree->color.a;
+                            }
+                        }
+                    } // stripe end
+                } // stripes end
+            } // loops end
+            patchEl = patchEl->next;
+        } while(patchEl != tree->firstPatch);
+        tree = tree->next;
+    }
+    if(bindTexture) {
+        glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA,
+                     vp->texture.edgeLengthPx,
+                     vp->texture.edgeLengthPx,
+                     0,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     state->viewerState->volumeTexData);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
  /* For downsample & upsamleVPTexture:
   * we read the texture to a CPU side - buffer,
   * and send it to graphicscard after the resampling. Using
@@ -970,7 +1081,9 @@ bool Viewer::initViewer() {
             LOG("Out of memory.")
             exit(0);
         }
-        memset(state->viewerState->vpConfigs[i].viewPortData, state->viewerState->defaultTexData[0], TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
+        memset(state->viewerState->vpConfigs[i].viewPortData,
+               state->viewerState->defaultTexData[0],
+               TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
     }
 
 
@@ -987,6 +1100,8 @@ bool Viewer::initViewer() {
                                                              * sizeof(Byte)
                                                              * 4);
     }
+
+    memset(state->viewerState->volumeTexData, '\0', sizeof(state->viewerState->volumeTexData));
 
     updateViewerState();
     recalcTextureOffsets();
@@ -1306,6 +1421,9 @@ void Viewer::run() {
         if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
             if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
                  vpGenerateTexture(currentVp, viewerState);
+                 if(Patch::patchMode) {
+                     vpGenerateVolumeTexture(currentVp);
+                 }
             }
             else {
                 vpGenerateTexture_arb(currentVp);
@@ -2295,7 +2413,6 @@ void Viewer::updateActivePatchConnections() {
                     Patch::activePatch, SLOT(updateDistinguishableTriangles(int)));
     connect(Patch::activePatch, SIGNAL(addTreeListElementSignal(int,int,int,color4F,int)),
                     skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
-    connect(Patch::activePatch, SIGNAL(makeCurrentSignal(int)), renderer, SLOT(makeCurrent(int)));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

@@ -64,9 +64,6 @@ public slots:
     void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
-
-    void makeCurrent(int vp);
-
 };
 
 #endif // RENDERER_H

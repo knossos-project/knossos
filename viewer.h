@@ -87,6 +87,7 @@ protected:
     vpList* vpListNew();
 
     bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
+    bool vpGenerateVolumeTexture(vpListElement *currentVP);
     bool vpGenerateTexture_arb(struct vpListElement *currentVp);
 
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
