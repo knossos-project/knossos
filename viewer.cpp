@@ -1326,7 +1326,6 @@ void Viewer::run() {
 
             if(call % 1000 == 0) {
                 if(idlingExceeds(1000)) {
-                    qDebug() << QString().sprintf("[%08X] Slow...", GetTickCount());
                     state->viewerState->renderInterval = SLOW;
                 }
             }

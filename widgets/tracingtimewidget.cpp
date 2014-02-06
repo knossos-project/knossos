@@ -102,6 +102,5 @@ void TracingTimeWidget::checkIdleTime() {
     this->tracingTimeLabel->setText(tracingString);
 
     state->viewerState->lastIdleTimeCall = QDateTime::currentDateTimeUtc();
-    qDebug() << QString().sprintf("[%08X] Fast>>>", GetTickCount());
     state->viewerState->renderInterval = FAST;
 }
