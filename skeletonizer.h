@@ -177,7 +177,6 @@ public:
 
     uint skeletonRevision;
 signals:
-    void idleTimeSignal();
     void updatePositionSignal(int serverMovement);        
     void saveSkeletonSignal();
     void updateToolsSignal();

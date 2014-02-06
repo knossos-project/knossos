@@ -1326,6 +1326,7 @@ void Viewer::run() {
 
             if(call % 1000 == 0) {
                 if(idlingExceeds(1000)) {
+                    qDebug() << QString().sprintf("[%08X] Slow...", GetTickCount());
                     state->viewerState->renderInterval = SLOW;
                 }
             }
@@ -1495,7 +1496,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
 
     QtConcurrent::run(this, &Viewer::updateCoordinatesSignal,
                       viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
-    emit idleTimeSignal();
 
     return true;
 }
@@ -1977,7 +1977,6 @@ void Viewer::rewire() {
     // viewer signals
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
-    connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     // end viewer signals
     // renderer signals
     connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
@@ -1988,7 +1987,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
                     window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
-    connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
@@ -2039,7 +2037,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
     connect(eventModel, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
     connect(eventModel, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(eventModel, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(eventModel, SIGNAL(updateSlicePlaneWidgetSignal()),
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
@@ -2077,7 +2074,6 @@ void Viewer::rewire() {
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
     connect(window, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
     connect(window, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
                     skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));

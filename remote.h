@@ -54,7 +54,6 @@ signals:
     void updateViewerStateSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void updatePositionSignal(int serverMovement);
-    void idleTimeSignal();
 public slots:
     void setRemoteStateType(int type);
     void setRecenteringPosition(int x, int y, int z);

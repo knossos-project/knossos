@@ -663,6 +663,7 @@ public:
     Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
 
     struct viewerState *viewerState;
+    struct Viewer *viewer;
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;

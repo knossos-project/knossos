@@ -71,6 +71,49 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 Knossos *knossos = NULL;
 
+class myEventFilter: public QObject
+{
+  public:
+  myEventFilter():QObject()
+  {};
+  ~myEventFilter(){};
+
+  bool eventFilter(QObject* object,QEvent* event)
+  {
+      int type = event->type();
+      switch(type)
+      {
+      case QEvent::MouseButtonPress :
+      case QEvent::MouseButtonRelease :
+      case QEvent::MouseButtonDblClick :
+      case QEvent::KeyPress :
+      case QEvent::KeyRelease :
+      case QEvent::Wheel :
+          if (state == NULL) {
+              break;
+          }
+          if (state->viewer == NULL) {
+              break;
+          }
+          if (state->viewer->window == NULL) {
+              break;
+          }
+          if (state->viewer->window->widgetContainer == NULL) {
+              break;
+          }
+          if (state->viewer->window->widgetContainer->tracingTimeWidget == NULL) {
+              break;
+          }
+          state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
+          break;
+      default:
+          break;
+      }
+
+      return QObject::eventFilter(object,event);
+  }
+};
+
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
@@ -140,13 +183,14 @@ int main(int argc, char *argv[])
 
     Knossos::printConfigValues();
     Viewer *viewer = new Viewer();
+    state->viewer = viewer;
     loader = new Loader();
     Remote *remote = new Remote();
     Client *client = new Client();
 
     Scripting *scripts = new Scripting();
     scripts->skeletonReference = viewer->skeletonizer;
-    //scripts->stateReference = state;
+    scripts->stateReference = state;
 
 
     QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()),
@@ -175,9 +219,6 @@ int main(int argc, char *argv[])
     QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
     QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
     QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
-    QObject::connect(remote, SIGNAL(idleTimeSignal()),
-                            viewer->window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
-
     QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
                             viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
     QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
@@ -263,6 +304,8 @@ int main(int argc, char *argv[])
     */
 
     viewer->window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+
+    a.installEventFilter(new myEventFilter());
 
     return a.exec();
 }
@@ -701,6 +744,9 @@ stateInfo *Knossos::emptyState() {
 
     state->skeletonState = new skeletonState();
     state->taskState = new taskState();
+
+    state->viewer = NULL;
+
     return state;
 }
 

@@ -485,12 +485,17 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
+    QActionGroup* workModeEditMenuGroup = new QActionGroup(this);
     addNodeAction = new QAction(tr("Add Node"), this);
     addNodeAction->setCheckable(true);
+    addNodeAction->setActionGroup(workModeEditMenuGroup);
     linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), this);
     linkWithActiveNodeAction->setCheckable(true);
+    linkWithActiveNodeAction->setActionGroup(workModeEditMenuGroup);
     dropNodesAction = new QAction(tr("Drop Nodes"), this);
     dropNodesAction->setCheckable(true);
+    dropNodesAction->setActionGroup(workModeEditMenuGroup);
+
     skeletonStatisticsAction = new QAction(tr("Skeleton Statistics"), this);
 
 
@@ -509,11 +514,14 @@ void MainWindow::createActions()
 
 
     /* view actions */
-    workModeViewAction = new QAction(tr("Work Mode"), this);
+    //workModeViewAction = new QAction(tr("Work Mode"), this);
+    QActionGroup* workModeViewMenuGroup = new QActionGroup(this);
     dragDatasetAction = new QAction(tr("Drag Dataset"), this);
     dragDatasetAction->setCheckable(true);
+    dragDatasetAction->setActionGroup(workModeViewMenuGroup);
     recenterOnClickAction = new QAction(tr("Recenter on Click"), this);
     recenterOnClickAction->setCheckable(true);
+    recenterOnClickAction->setActionGroup(workModeViewMenuGroup);
 
     if(state->viewerState->workMode == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
@@ -600,6 +608,7 @@ void MainWindow::createMenus()
         workModeEditMenu->addAction(addNodeAction);
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
+
     //editMenu->addAction(skeletonStatisticsAction);
 
     newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
@@ -870,7 +879,6 @@ void MainWindow::saveSlot()
                         emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
                         updateTitlebar(true);
                         state->skeletonState->unsavedChanges = false;
-                        emit idleTimeSignal();
                         state->skeletonState->skeletonChanged = false;
                         return;
                     }
@@ -890,7 +898,6 @@ void MainWindow::saveSlot()
                 state->skeletonState->unsavedChanges = false;
         }
     }
-    emit idleTimeSignal();
     state->skeletonState->skeletonChanged = false;
 }
 
@@ -946,50 +953,16 @@ void MainWindow::quitSlot()
 void MainWindow::addNodeSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-
-    if(linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(false);
-    }
-    if(dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(false);
-    }
-
-    if(!addNodeAction->isChecked()) {
-        addNodeAction->setChecked(true);
-    }
 }
 
 void MainWindow::linkWithActiveNodeSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-
-    if(addNodeAction->isChecked()) {
-        addNodeAction->setChecked(false);
-    }
-    if(dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(false);
-    }
-
-    if(!linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(true);
-    }
 }
 
 void MainWindow::dropNodesSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
-
-    if(addNodeAction->isChecked()) {
-        addNodeAction->setChecked(false);
-    }
-
-    if(linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(false);
-    }
-
-    if(!dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(true);
-    }
 }
 
 

@@ -326,7 +326,6 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         if(VPfound != VIEWPORT_ARBITRARY) {
-            state->viewerState->renderInterval = FAST;
             state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
             state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
         }
@@ -348,7 +347,6 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                         * ((float)state->skeletonState->volBoundary
                         * (0.5 - state->skeletonState->zoomLevel))
                         / ((float)state->viewerState->vpConfigs[i].edgeLength);
-                    emit idleTimeSignal();
                     break;
                 case VIEWPORT_XY:
                     if(state->viewerState->workMode != ON_CLICK_DRAG) break;
@@ -561,7 +559,6 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
            state->skeletonState->rotdx += xrel(event->x());
            state->skeletonState->rotdy += yrel(event->y());
            state->skeletonState->viewChanged = true;
-           emit idleTimeSignal();
        }
     return true;
 }

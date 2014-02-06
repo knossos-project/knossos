@@ -423,7 +423,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
         // granularity isn't fine enough and it doesn't matter anyway.
         msleep(eventDelay);
     }
-    emit idleTimeSignal();
     return true;
 }
 

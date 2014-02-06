@@ -579,8 +579,6 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
         addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID, false);
     }
 
-    emit idleTimeSignal();
-
     return true;
 }
 
@@ -621,7 +619,6 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
         addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, false);
         emit updateToolsSignal();
         emit updateTreeviewSignal();
-        emit idleTimeSignal();
     }
 
     return targetNodeID;

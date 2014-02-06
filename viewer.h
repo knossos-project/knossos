@@ -76,7 +76,6 @@ signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
     void updateZoomAndMultiresWidgetSignal();
-    void idleTimeSignal();
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
