@@ -17,6 +17,8 @@ uint Patch::maxPatchID = 0;
 uint Patch::numPatches = 0;
 float Patch::voxelPerPoint = .3;
 std::vector<floatCoordinate> Patch::activeLoop;
+std::vector<floatCoordinate> Patch::activeLine;
+std::vector<std::vector<floatCoordinate> > Patch::lineBuffer;
 uint Patch::displayMode = PATCH_DSP_WHOLE;
 Patch *Patch::firstPatch = NULL;
 Patch *Patch::activePatch = NULL;
@@ -166,7 +168,7 @@ bool Patch::allowPoint(floatCoordinate point) {
  * @brief Patch::addInterpolatedPoint adds a point on the line between p and q with a distance of 'voxelPerPoint' from p
  * @return the interpolated point
  */
-floatCoordinate Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q) {
+void Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q) {
     floatCoordinate v;
     SUB_ASSIGN_COORDINATE(v, q, p);
     normalizeVector(&v);
@@ -174,7 +176,13 @@ floatCoordinate Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q
     floatCoordinate point;
     SET_COORDINATE(point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
     pointCloud->insert(point, point, false);
-    return point;
+    activeLine.push_back(point);
+    numPoints++;
+    if(q.x - point.x < -voxelPerPoint or q.x - point.x > voxelPerPoint
+            or q.y - point.y < -voxelPerPoint or q.y - point.y > voxelPerPoint
+            or q.z - point.z < -voxelPerPoint or q.z - point.z > voxelPerPoint) {
+        addInterpolatedPoint(point, q);
+    }
 }
 
 /**
@@ -202,34 +210,118 @@ bool Patch::insert(floatCoordinate point, bool replace) {
         return false;
     }
     // if point is too far away from last point add interpolated points to fill the distance
-    if(activeLoop.size() > 0) {
-        floatCoordinate p = activeLoop[activeLoop.size() - 1];
-        while(point.x - p.x < -voxelPerPoint or point.x - p.x > voxelPerPoint
+    if(activeLine.size() > 0) {
+        floatCoordinate p = activeLine.back();
+        if(point.x - p.x < -voxelPerPoint or point.x - p.x > voxelPerPoint
               or point.y - p.y < -voxelPerPoint or point.y - p.y > voxelPerPoint
               or point.z - p.z < -voxelPerPoint or point.z - p.z > voxelPerPoint) {
-            p = addInterpolatedPoint(p, point);
-           //s qDebug("adding %f, %f, %f", p.x, p.y, p.z);
-            activeLoop.push_back(p);
-            numPoints++;
+            addInterpolatedPoint(p, point);
+            newPoints = true;
         }
     }
     if(pointCloud->insert(point, point, replace)) {
         numPoints++;
-        activeLoop.push_back(point);
-        return true;
+        activeLine.push_back(point);
+        newPoints = true;
     }
-    return false;
+    return newPoints;
 }
 
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
-        qDebug("inserting a loop");
         loops->insert(loop, centroidPolygon(loop->points), true);
        // computeVolume(viewportType, loop);
     }
-    else {
-        qDebug("there is no loop, I'ma sorry!");
+}
+
+bool Patch::addLineToLoop(int viewportType) {
+    if(activeLine.size() == 0) {
+        return false;
     }
+    activeLoop.insert(activeLoop.end(), activeLine.begin(), activeLine.end());
+    lineBuffer.push_back(activeLine);
+    activeLine.clear();
+}
+
+/**
+ * @brief Patch::alignToLine align start of new line to active line.
+ * @param point the start point of the new line
+ * @param index index of the line to which the new line is to be aligned
+ * @param startPoint flag that tells, wether it should be aligned to start point or end point
+ */
+void Patch::alignToLine(floatCoordinate point, int index, bool startPoint) {
+    if(startPoint) {
+        std::reverse(lineBuffer[index].begin(), lineBuffer[index].end());
+    }
+    activeLine = lineBuffer[index];
+    lineBuffer.erase(lineBuffer.begin() + index);
+
+    activePatch->addInterpolatedPoint(activeLine.back(), point);
+}
+
+
+/**
+ * @brief Patch::lineFinished decides what to do with the finished line:
+ *              connect it to an existing line, if they touch at the end points.
+ *              If the finished line closes the loop, a new 'PatchLoop' is created and added to the patch
+ * @param lastPoint the last point of the finished line
+ * @param viewportType the viewport in which the line was drawn (XY, XZ, YZ)
+ */
+void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
+    if(activePatch == NULL) {
+        return;
+    }
+    floatCoordinate distanceVec, snapPoint;
+    float distance = INT_MAX;
+    SET_COORDINATE(snapPoint, -1, -1, -1);
+    if(lineBuffer.size() > 0) {
+        for(uint i = 0; i < lineBuffer.size(); ++i) {
+            SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i][0], lastPoint);
+            if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+                snapPoint = lineBuffer[i][0];
+            }
+            else {
+                SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i][lineBuffer[i].size() - 1],
+                                                    lastPoint);
+                if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+                    snapPoint = lineBuffer[i][lineBuffer[i].size() - 1];
+                    std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
+                }
+            }
+            if(distance < AUTO_ALIGN_RADIUS) {
+                // found point to snap to. Fill distance with interpolated points,
+                // then connect the two lines
+                if(lastPoint.x - snapPoint.x < -voxelPerPoint or lastPoint.x - snapPoint.x > voxelPerPoint
+                        or lastPoint.y - snapPoint.y < -voxelPerPoint or lastPoint.y - snapPoint.y > voxelPerPoint
+                        or lastPoint.z - snapPoint.z < -voxelPerPoint or lastPoint.z - snapPoint.z > voxelPerPoint) {
+                    activePatch->addInterpolatedPoint(lastPoint, snapPoint);
+                }
+                activeLine.insert(activeLine.end(), lineBuffer[i].begin(), lineBuffer[i].end());
+                lineBuffer.erase(lineBuffer.begin() + i);
+                lineBuffer.push_back(activeLine);
+                break;
+            }
+        }
+        if(snapPoint.x == -1) { // no point found to snap to, so simply add this line to the line buffer
+            lineBuffer.push_back(activeLine);
+        }
+    }
+    else { // no other lines to check against, check if this single line is already closed
+        SUB_ASSIGN_COORDINATE(distanceVec, activeLine[0], lastPoint);
+        if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+            activePatch->addInterpolatedPoint(lastPoint, activeLine[0]);
+        }
+        else {
+            lineBuffer.push_back(activeLine);
+        }
+    }
+
+    if(lineBuffer.size() == 0) {
+        // loop is closed now
+        PatchLoop *newLoop = new PatchLoop(activeLine);
+        activePatch->insert(newLoop, viewportType);
+    }
+    activeLine.clear();
 }
 
 void Patch::delVisibleLoop(uint viewportType) {

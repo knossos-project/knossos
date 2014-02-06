@@ -2530,23 +2530,50 @@ void Renderer::renderPatches(uint viewportType) {
     glEnable(GL_BLEND);
     glPushMatrix();
 
-    // draw active loop
-    if(Patch::activeLoop.size() > 0) {
+    // draw active line
+
+    if(Patch::activeLine.size() > 0) {
         glTranslatef(-(float)state->boundary.x / 2. + 0.5,
                      -(float)state->boundary.y / 2. + 0.5,
                      -(float)state->boundary.z / 2. + 0.5);
         glDeleteBuffers(1, &Patch::vbo);
         glGenBuffers(1, &Patch::vbo);
         glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-        glBufferData(GL_ARRAY_BUFFER, Patch::activeLoop.size()*sizeof(floatCoordinate),
-                     &Patch::activeLoop[0],
+        glBufferData(GL_ARRAY_BUFFER, Patch::activeLine.size()*sizeof(floatCoordinate),
+                     &Patch::activeLine[0],
                      GL_STATIC_DRAW);
 
         glVertexPointer(3, GL_FLOAT, 0, 0);
         glEnableClientState(GL_VERTEX_ARRAY);
         glColor4f(1, 0, 0., 1);
         glLineWidth(3);
-        glDrawArrays(GL_POINTS, 0, Patch::activeLoop.size());
+        glDrawArrays(GL_POINTS, 0, Patch::activeLine.size());
+    }
+
+    glPopMatrix();
+    glEnable(GL_BLEND);
+    glPushMatrix();
+
+    // draw line buffer
+    if(Patch::lineBuffer.size() > 0) {
+        glTranslatef(-(float)state->boundary.x / 2. + 0.5,
+                     -(float)state->boundary.y / 2. + 0.5,
+                     -(float)state->boundary.z / 2. + 0.5);
+
+        for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+            glDeleteBuffers(1, &Patch::vbo);
+            glGenBuffers(1, &Patch::vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
+            glBufferData(GL_ARRAY_BUFFER, Patch::lineBuffer[i].size()*sizeof(floatCoordinate),
+                         &Patch::lineBuffer[i][0],
+                         GL_STATIC_DRAW);
+
+            glVertexPointer(3, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glColor4f(1., 0., 0., 1);
+            glLineWidth(3);
+            glDrawArrays(GL_POINTS, 0, Patch::lineBuffer[i].size());
+        }
     }
 
     glPopMatrix();

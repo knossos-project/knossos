@@ -183,6 +183,28 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if(Patch::patchMode && VPfound < VIEWPORT_SKELETON) {
         Patch::drawing = true;
         if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
+            // align point to previous line if close enough
+            floatCoordinate *clickedCoordinate = getFloatCoordinateFromOrthogonalClick(event, VPfound);
+            if(clickedCoordinate == NULL) {
+                return false;
+            }
+            floatCoordinate distance;
+            for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i][0], *clickedCoordinate);
+                if(euclidicNorm(&distance) < AUTO_ALIGN_RADIUS) {
+                    Patch::alignToLine(*clickedCoordinate, i, true);
+                    break;
+                }
+                else {
+                    SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i].back(),
+                                                    *clickedCoordinate);
+                    if(euclidicNorm(&distance) < AUTO_ALIGN_RADIUS) {
+                        Patch::alignToLine(*clickedCoordinate, i, false);
+                        break;
+                    }
+                }
+            }
+            free(clickedCoordinate);
             return false;
         }
         else if(Patch::drawMode == DRAW_DROP_POINTS) {
@@ -609,7 +631,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                     emit updateTools();
                 }
             }
-            Patch::newPoints = Patch::activePatch->insert(*point, false);
+            Patch::activePatch->insert(*point, false);
             free(point);
             emit updatePatchesWidget();
         }
@@ -689,8 +711,13 @@ bool EventModel::handleMouseReleaseRight(QMouseEvent *event, int VPfound) {
                 qDebug("no active patch!");
                 return false;
             }
-            //Patch::activePatch->computeVolume(VPfound);
-            //Patch::activePatch->computeTriangles();
+            floatCoordinate *clickedCoordinate = getFloatCoordinateFromOrthogonalClick(event, VPfound);
+            if(clickedCoordinate == NULL) {
+                qDebug("clicked coordinate is null");
+                return false;
+            }
+            Patch::lineFinished(*clickedCoordinate, VPfound);
+            free(clickedCoordinate);
             return true;
         }
     }

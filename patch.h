@@ -57,6 +57,7 @@ typedef Triangulation::Vertex_handle                CGAL_VertexHandle;
 
 #define DRAW_CONTINUOUS_LINE 0 //! draw patch with a continuous line
 #define DRAW_DROP_POINTS 1 //! draw patch by placing points
+#define AUTO_ALIGN_RADIUS 1 //! radius in which two lines are connected at their end points
 
 class PatchLoop : public QObject {
     Q_OBJECT
@@ -65,6 +66,10 @@ public:
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
 
     PatchLoop(QObject *parent = 0) : QObject(parent) {}
+    PatchLoop(std::vector<floatCoordinate> newPoints, QObject *parent = 0) : QObject(parent) {
+        points = newPoints;
+    }
+
     ~PatchLoop() {}
 };
 
@@ -95,7 +100,9 @@ public:
     static GLuint vbo;
     static GLuint texHandle;
     static std::vector<floatCoordinate> activeLoop; //! the currently drawn loop
-
+    static std::vector<floatCoordinate> activeLine; //! the currently drawn line.
+                                                    //! Started on mouse down and added to 'lineBuffer' on mouse release
+    static std::vector<std::vector<floatCoordinate> > lineBuffer; //! all lines of the not closed loop yet
     static uint displayMode; //! PATCH_DSP_WHOLE, PATCH_DSP_ACTIVE, PATCH_DSP_HIDE
 
     static Patch *newPatch(int patchID = -1);
@@ -107,6 +114,9 @@ public:
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
     static void computeNormals();
+    static bool addLineToLoop(int viewportType);
+    static void alignToLine(floatCoordinate point, int index, bool startPoint);
+    static void lineFinished(floatCoordinate lastPoint, int viewportType);
 
     // ---------------------
     Patch *next;
@@ -136,7 +146,7 @@ public:
     bool insert(Triangle triangle, bool replace);
     bool insert(floatCoordinate point, bool replace);
     bool insert(PatchLoop *loop, uint viewportType);
-    floatCoordinate addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
+    void addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
     void computeVolume(int currentVP, PatchLoop *loop);
     std::vector<floatCoordinate> pointsOnLine(PatchLoop *loop, int x, int y, int z);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
