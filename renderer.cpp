@@ -424,6 +424,31 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glEnd();
     }
 
+    // render node selection box
+    if(state->viewerState->drawNodeSelectSquare == currentVP) {
+        Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
+        Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        glLineWidth(1.);
+        glBegin(GL_QUADS);
+        glColor4f(0, 1., 0, 0.2);
+            glVertex3f(leftUpper.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, leftUpper.y, 0);
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+        glColor4f(0, 1., 0, 1);
+            glVertex3f(leftUpper.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, leftUpper.y, 0);
+        glEnd();
+        glDisable(GL_BLEND);
+    }
+
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
         glColor4f(0, 0, 0, 1);
         float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
@@ -513,18 +538,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             * 0.5;
 //            * (float)state->magnification;
 
-     // for the node selection square
-    Coordinate first, second;
-    if(state->viewerState->drawNodeSelectSquare != -1) {
-        first.x = roundFloat(state->viewerState->nodeSelectionSquare.first.x
-                  * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX);
-        first.y = roundFloat(state->viewerState->nodeSelectionSquare.first.y
-                  * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY);
-        second.x = roundFloat(state->viewerState->nodeSelectionSquare.second.x
-                   * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX);
-        second.y = roundFloat(state->viewerState->nodeSelectionSquare.second.y
-                   * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY);
-    }
     switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
             if(state->viewerState->selectModeFlag == false) {
@@ -654,23 +667,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XY) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(first.x, first.y, 0);
-                    glVertex3f(first.x, second.y, 0);
-                    glVertex3f(second.x, second.y, 0);
-                    glVertex3f(second.x, first.y, 0);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(first.x, first.y, 0);
-                    glVertex3f(first.x, second.y, 0);
-                    glVertex3f(second.x, second.y, 0);
-                    glVertex3f(second.x, first.y, 0);
-                glEnd();
-            }
             break;
         case VIEWPORT_XZ:
             if(!state->viewerState->selectModeFlag) {
@@ -805,23 +801,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XZ) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(first.x, 0, first.y);
-                    glVertex3f(first.x, 0, second.y);
-                    glVertex3f(second.x, 0, second.y);
-                    glVertex3f(second.x, 0, first.y);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(first.x, 0, first.y);
-                    glVertex3f(first.x, 0, second.y);
-                    glVertex3f(second.x, 0, second.y);
-                    glVertex3f(second.x, 0, first.y);
-                glEnd();
-            }
             break;
         case VIEWPORT_YZ:
             if(!state->viewerState->selectModeFlag) {
@@ -944,23 +923,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_YZ) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(0, first.y, first.x);
-                    glVertex3f(0, second.y, first.x);
-                    glVertex3f(0, second.y, second.x);
-                    glVertex3f(0, first.y, second.x);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(0, first.y, first.x);
-                    glVertex3f(0, second.y, first.x);
-                    glVertex3f(0, second.y, second.x);
-                    glVertex3f(0, first.y, second.x);
-                glEnd();
-            }
             break;
         case VIEWPORT_ARBITRARY:
         if(!state->viewerState->selectModeFlag) {
