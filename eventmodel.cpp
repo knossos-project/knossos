@@ -219,9 +219,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if(Patch::activePatch == NULL) {
                 Patch::newPatch();
             }
-            if(Patch::activePatch->insert(*clickedCoordinate, false)) {
-                Patch::newPoints = true;
-            }
+            Patch::insert(*clickedCoordinate);
+
             emit updatePatchesWidget();
             free(clickedCoordinate);
             return true;
@@ -631,7 +630,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                     emit updateTools();
                 }
             }
-            Patch::activePatch->insert(*point, false);
+            Patch::insert(*point);
             free(point);
             emit updatePatchesWidget();
         }

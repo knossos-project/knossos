@@ -165,23 +165,21 @@ bool Patch::allowPoint(floatCoordinate point) {
 }
 
 /**
- * @brief Patch::addInterpolatedPoint adds a point on the line between p and q with a distance of 'voxelPerPoint' from p
- * @return the interpolated point
+ * @brief Patch::addInterpolatedPoint adds points on the line between p and q with a distance of 'voxelPerPoint' from p
+ * @param line the vector to whose end the interpolated points are added
  */
-void Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q) {
+void Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q, std::vector<floatCoordinate> &line) {
     floatCoordinate v;
     SUB_ASSIGN_COORDINATE(v, q, p);
     normalizeVector(&v);
 
     floatCoordinate point;
     SET_COORDINATE(point, p.x + voxelPerPoint*v.x, p.y + voxelPerPoint*v.y, p.z + voxelPerPoint*v.z);
-    pointCloud->insert(point, point, false);
-    activeLine.push_back(point);
-    numPoints++;
+    line.push_back(point);
     if(q.x - point.x < -voxelPerPoint or q.x - point.x > voxelPerPoint
             or q.y - point.y < -voxelPerPoint or q.y - point.y > voxelPerPoint
             or q.z - point.z < -voxelPerPoint or q.z - point.z > voxelPerPoint) {
-        addInterpolatedPoint(point, q);
+        addInterpolatedPoint(point, q, line);
     }
 }
 
@@ -200,37 +198,25 @@ bool Patch::insert(Triangle triangle, bool replace) {
 }
 
 /**
- * @brief Patch::insert insert a new point to this patch's point cloud
- * @param point the new point for insertion
- * @param define behaviour if a point at same location already exists: replace, or do nothing
- * @return true on insertion, false otherwise
+ * @brief Patch::insert insert this closed patchLoop to the patch by inserting the loop into the 'loops' octree and
+ *        its points to the 'pointCloud' octree
+ * @param loop the loop to be added to the patch
+ * @param viewportType the viewport in which the loop was drawn (necessary for volume computation)
+ * @return true if the loop was inserted, false otherwise
  */
-bool Patch::insert(floatCoordinate point, bool replace) {
-    if(allowPoint(point) == false) { // point too close to last point
-        return false;
-    }
-    // if point is too far away from last point add interpolated points to fill the distance
-    if(activeLine.size() > 0) {
-        floatCoordinate p = activeLine.back();
-        if(point.x - p.x < -voxelPerPoint or point.x - p.x > voxelPerPoint
-              or point.y - p.y < -voxelPerPoint or point.y - p.y > voxelPerPoint
-              or point.z - p.z < -voxelPerPoint or point.z - p.z > voxelPerPoint) {
-            addInterpolatedPoint(p, point);
-            newPoints = true;
-        }
-    }
-    if(pointCloud->insert(point, point, replace)) {
-        numPoints++;
-        activeLine.push_back(point);
-        newPoints = true;
-    }
-    return newPoints;
-}
-
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
         loops->insert(loop, centroidPolygon(loop->points), true);
        // computeVolume(viewportType, loop);
+
+        // add to point cloud
+        for(uint i = 0; i < loop->points.size(); ++i) {
+            if(allowPoint(loop->points[i])) {
+                if(pointCloud->insert(loop->points[i], loop->points[i], false)) {
+                    numPoints++;
+                }
+            }
+        }
         return true;
     }
     return false;
@@ -249,7 +235,7 @@ void Patch::alignToLine(floatCoordinate point, int index, bool startPoint) {
     activeLine = lineBuffer[index];
     lineBuffer.erase(lineBuffer.begin() + index);
 
-    activePatch->addInterpolatedPoint(activeLine.back(), point);
+    addInterpolatedPoint(activeLine.back(), point, activeLine);
 }
 
 
@@ -274,10 +260,10 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
                 snapPoint = lineBuffer[i][0];
             }
             else {
-                SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i][lineBuffer[i].size() - 1],
+                SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i].back(),
                                                     lastPoint);
                 if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
-                    snapPoint = lineBuffer[i][lineBuffer[i].size() - 1];
+                    snapPoint = lineBuffer[i].back();
                     std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
                 }
             }
@@ -287,7 +273,7 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
                 if(lastPoint.x - snapPoint.x < -voxelPerPoint or lastPoint.x - snapPoint.x > voxelPerPoint
                         or lastPoint.y - snapPoint.y < -voxelPerPoint or lastPoint.y - snapPoint.y > voxelPerPoint
                         or lastPoint.z - snapPoint.z < -voxelPerPoint or lastPoint.z - snapPoint.z > voxelPerPoint) {
-                    activePatch->addInterpolatedPoint(lastPoint, snapPoint);
+                    addInterpolatedPoint(lastPoint, snapPoint, activeLine);
                 }
                 activeLine.insert(activeLine.end(), lineBuffer[i].begin(), lineBuffer[i].end());
                 lineBuffer.erase(lineBuffer.begin() + i);
@@ -302,7 +288,7 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
     else { // no other lines to check against, check if this single line is already closed
         SUB_ASSIGN_COORDINATE(distanceVec, activeLine[0], lastPoint);
         if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
-            activePatch->addInterpolatedPoint(lastPoint, activeLine[0]);
+            addInterpolatedPoint(lastPoint, activeLine[0], activeLine);
         }
         else {
             lineBuffer.push_back(activeLine);
@@ -1072,6 +1058,33 @@ void Patch::delActivePatch() {
 }
 
 /**
+ * @brief Patch::insert insert a new point to active loop. Will not be added if distance to last point smaller than
+ *        'voxelPerPoint'.
+ *        If distance greater than 'voxelPerPoint', interpolated points will be added in 'voxelPerPoint' distance.
+ * @param point the new point for insertion
+ * @return true on insertion, false otherwise
+ */
+bool Patch::insert(floatCoordinate point) {
+    if(activeLine.size() > 0) {
+        floatCoordinate distVec;
+        SUB_ASSIGN_COORDINATE(distVec, activeLine.back(), point);
+        if(euclidicNorm(&distVec) < voxelPerPoint) { // point too close to last point
+            return false;
+        }
+        // if point is too far away from last point add interpolated points to fill the distance
+        floatCoordinate p = activeLine.back();
+        if(point.x - p.x < -voxelPerPoint or point.x - p.x > voxelPerPoint
+              or point.y - p.y < -voxelPerPoint or point.y - p.y > voxelPerPoint
+              or point.z - p.z < -voxelPerPoint or point.z - p.z > voxelPerPoint) {
+            addInterpolatedPoint(p, point, activeLine);
+        }
+    }
+    activeLine.push_back(point);
+    newPoints = true;
+    return newPoints;
+}
+
+/**
  * @brief Patch::updateDistinguishableTriangles refills the 'distinguishableTrianglesSkelVP'
  *        and 'distinguishableTrianglesOrthoVP' octrees with triangles that are currently
  *        distinguishable in the corresponding viewport.
@@ -1137,7 +1150,7 @@ void Patch::genRandCloud(uint cloudSize) {
         point.y += state->boundary.y / 2;
         point.z += state->boundary.z / 2;
         //Write point to array
-        activePatch->insert(point, false);
+        //activePatch->insert(point, false);
 
         tolerance *= (-1);
         orient *= (-1);
@@ -1200,9 +1213,9 @@ void Patch::genRandTriangulation(uint cloudSize) {
         point.y += state->boundary.y / 2;
         point.z += state->boundary.z / 2;
         //Write point to array
-        if(activePatch->insert(point, false)) {
-            activePatch->recomputeTriangles(point, 50);
-        }
+//        if(activePatch->insert(point, false)) {
+//            activePatch->recomputeTriangles(point, 50);
+//        }
 
         tolerance *= (-1);
         orient *= (-1);

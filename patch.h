@@ -109,6 +109,8 @@ public:
     static Patch *getPatchWithID(uint patchID);
     static bool setActivePatch(uint patchID);
     static void delActivePatch();
+    static bool insert(floatCoordinate point);
+    static void addInterpolatedPoint(floatCoordinate p, floatCoordinate q, std::vector<floatCoordinate> &line);
     static void genRandCloud(uint cloudSize);
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
@@ -142,9 +144,7 @@ public:
     Patch *previousPatchByID();
     bool allowPoint(floatCoordinate point);
     bool insert(Triangle triangle, bool replace);
-    bool insert(floatCoordinate point, bool replace);
     bool insert(PatchLoop *loop, uint viewportType);
-    void addInterpolatedPoint(floatCoordinate p, floatCoordinate q);
     void computeVolume(int currentVP, PatchLoop *loop);
     std::vector<floatCoordinate> pointsOnLine(PatchLoop *loop, int x, int y, int z);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
