@@ -1000,7 +1000,7 @@ bool Knossos::configDefaults() {
     state->viewerState->numberViewports = 4;
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;
-    state->viewerState->drawNodeSelectSquare = false;
+    state->viewerState->drawNodeSelectSquare = -1;
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.first, 0, 0, 0);
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.second, 0, 0, 0);
 

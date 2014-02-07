@@ -215,7 +215,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
            /* if(keyMod.testFlag(Qt::ControlModifier)) { // loop closing/finishing click
                 Renderer::retrieveVisibleObjectBeneathSquare(VPfound, event->x, event->y, 10);
             }*/
-            Patch::activeLoop.push_back(*clickedCoordinate); // for displaying the current line while it is drawn
+
             if(Patch::activePatch == NULL) {
                 Patch::newPatch();
             }
@@ -1409,14 +1409,6 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         state->skeletonState->skeletonChanged = true;
 
-    } else if(event->key() == Qt::Key_Return) {
-        if(Patch::patchMode and Patch::activePatch and Patch::activeLoop.size() > 0) {
-            PatchLoop *newLoop = new PatchLoop();
-            newLoop->points = Patch::activeLoop;
-            Patch::activePatch->insert(newLoop, VPfound);
-            Patch::activeLoop.clear(); // for new active loop
-            //Patch::activePatch->computeTriangles();
-        }
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
             QMessageBox prompt;

@@ -94,12 +94,11 @@ public:
     static uint numPatches; //! number of patches
 
     static float voxelPerPoint; //! closeness of points to each other
-
+    static float eraserLength; //! edge length of the eraser in screen pixels
     static bool drawing; //! true if patchMode and right mouse button pressed in ortho vp
     static bool newPoints; //! true if a user draw has added new points to the cloud. Only re-triangulate if there are new points
     static GLuint vbo;
     static GLuint texHandle;
-    static std::vector<floatCoordinate> activeLoop; //! the currently drawn loop
     static std::vector<floatCoordinate> activeLine; //! the currently drawn line.
                                                     //! Started on mouse down and added to 'lineBuffer' on mouse release
     static std::vector<std::vector<floatCoordinate> > lineBuffer; //! all lines of the not closed loop yet
@@ -114,7 +113,6 @@ public:
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
     static void computeNormals();
-    static bool addLineToLoop(int viewportType);
     static void alignToLine(floatCoordinate point, int index, bool startPoint);
     static void lineFinished(floatCoordinate lastPoint, int viewportType);
 
@@ -160,6 +158,8 @@ public:
     pcl_Mesh::Ptr poissonReconstruction(pcl_Cloud::Ptr cloudPtr);
     void recomputeTriangles(floatCoordinate pos, uint halfCubeSize);
     void clearTriangles();
+
+    void erasePoints(floatCoordinate center, uint viewportType);
 signals:
     void activePatchChanged();
     treeListElement *addTreeListElementSignal(int sync,int targetRevision, int treeID, color4F color, int serialize);

@@ -16,12 +16,12 @@ uint Patch::drawMode = DRAW_CONTINUOUS_LINE;
 uint Patch::maxPatchID = 0;
 uint Patch::numPatches = 0;
 float Patch::voxelPerPoint = .3;
-std::vector<floatCoordinate> Patch::activeLoop;
 std::vector<floatCoordinate> Patch::activeLine;
 std::vector<std::vector<floatCoordinate> > Patch::lineBuffer;
 uint Patch::displayMode = PATCH_DSP_WHOLE;
 Patch *Patch::firstPatch = NULL;
 Patch *Patch::activePatch = NULL;
+float Patch::eraserLength = 5;
 bool Patch::drawing = false;
 bool Patch::newPoints = false;
 GLuint Patch::vbo;
@@ -231,16 +231,9 @@ bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
         loops->insert(loop, centroidPolygon(loop->points), true);
        // computeVolume(viewportType, loop);
+        return true;
     }
-}
-
-bool Patch::addLineToLoop(int viewportType) {
-    if(activeLine.size() == 0) {
-        return false;
-    }
-    activeLoop.insert(activeLoop.end(), activeLine.begin(), activeLine.end());
-    lineBuffer.push_back(activeLine);
-    activeLine.clear();
+    return false;
 }
 
 /**
@@ -322,6 +315,19 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         activePatch->insert(newLoop, viewportType);
     }
     activeLine.clear();
+}
+
+/**
+ * @brief Patch::erasePoints erase points in a box around 'center'
+ */
+void Patch::erasePoints(floatCoordinate center, uint viewportType) {
+    uint boxLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
+    std::vector<floatCoordinate> results;
+    pointCloud->getObjsInRange(center, boxLength, results);
+    qDebug("result: %i", results.size());
+    for(uint i = 0; i < results.size(); ++i) {
+        qDebug(" %f, %f, %f", results[i].x, results[i].y, results[i].z);
+    }
 }
 
 void Patch::delVisibleLoop(uint viewportType) {
@@ -1208,20 +1214,20 @@ void Patch::genRandTriangulation(uint cloudSize) {
 // normal of point p as angle bisector of the two lines through p and its left and right neighbour
 // todo: handle case, where loop isn't closed
 void Patch::computeNormals() {
-    if(Patch::activeLoop.size() == 0) {
-        qDebug("no points in loop to compute normals.");
-        return;
-    }
+//    if(Patch::activeLoop.size() == 0) {
+//        qDebug("no points in loop to compute normals.");
+//        return;
+//    }
 
-    floatCoordinate p, left, right, q, direct1, direct2, normal;
-    p = activeLoop[0];
-    left = activeLoop[activeLoop.size()-1];
-    right = activeLoop[1];
-    SUB_ASSIGN_COORDINATE(direct1, p, left);
-    SUB_ASSIGN_COORDINATE(direct2, p, right);
-    SET_COORDINATE(q, p.x + direct1.x + direct2.x, p.y + direct1.y + direct2.y, p.z + direct1.z + direct2.z);
-    SET_COORDINATE(normal, p.x - q.x, p.y - q.y, p.z - q.z);
-    normalizeVector(&normal);
+//    floatCoordinate p, left, right, q, direct1, direct2, normal;
+//    p = activeLoop[0];
+//    left = activeLoop[activeLoop.size()-1];
+//    right = activeLoop[1];
+//    SUB_ASSIGN_COORDINATE(direct1, p, left);
+//    SUB_ASSIGN_COORDINATE(direct2, p, right);
+//    SET_COORDINATE(q, p.x + direct1.x + direct2.x, p.y + direct1.y + direct2.y, p.z + direct1.z + direct2.z);
+//    SET_COORDINATE(normal, p.x - q.x, p.y - q.y, p.z - q.z);
+//    normalizeVector(&normal);
 
 }
 
