@@ -53,11 +53,11 @@ signals:
     treeListElement *findTreeByTreeIDSignal(int value);
     nodeListElement *findNodeByNodeIDSignal(int value);
 
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID,
-                           char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
-    void nextCommentSignal(char* searchString);
-    void previousCommentSignal(char* searchString);
+                           QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    void nextCommentSignal(QString searchString);
+    void previousCommentSignal(QString searchString);
     void updateCommentsTableSignal();
     void updateTreeviewSignal();
 public slots:

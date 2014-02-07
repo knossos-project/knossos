@@ -1005,7 +1005,8 @@ bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
 
-    const char *cpath = path.toStdString().c_str();
+    std::string path_stdstr = path.toStdString();
+    const char *cpath = path_stdstr.c_str();
 
     LOG("Reading Dataset LUT at %s\n", cpath);
 
@@ -1065,7 +1066,8 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     uint readBytes = 0, i = 0;
     uint size = RGB_LUTSIZE;
 
-    const char *cpath = path.toStdString().c_str();
+    std::string path_stdstr = path.toStdString();
+    const char *cpath = path_stdstr.c_str();
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
     LOG("Reading Tree LUT at %s\n", cpath)
@@ -2025,8 +2027,8 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(eventModel, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(eventModel, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(eventModel, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(eventModel, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
+    connect(eventModel, SIGNAL(previousCommentSignal(QString)), skeletonizer, SLOT(previousComment(QString)));
     connect(eventModel, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
@@ -2071,8 +2073,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
-    connect(window, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
+    connect(window, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
+    connect(window, SIGNAL(previousCommentSignal(QString)), skeletonizer, SLOT(previousComment(QString)));
     connect(window, SIGNAL(clearSkeletonSignal(int,int)), skeletonizer, SLOT(clearSkeleton(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
                     skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
@@ -2084,10 +2086,10 @@ void Viewer::rewire() {
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
-    connect(window, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
-                    skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
-                    skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    connect(window, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
+    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
     connect(window, SIGNAL(updateTaskDescriptionSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
     connect(window, SIGNAL(updateTaskCommentSignal(QString)),
@@ -2119,14 +2121,14 @@ void Viewer::rewire() {
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
 //                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
-//                    skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
 //    connect(window->widgetContainer->toolsWidget,
-//                    SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
-//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(char*)),
-//                    skeletonizer, SLOT(previousComment(char*)));
+//                    SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(QString)),
+//                    skeletonizer, SLOT(previousComment(QString)));
 //    //  tools quick tab signals
 //    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal()),
 //                    skeletonizer, SLOT(UI_popBranchNode()));
@@ -2142,8 +2144,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)),
 //                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
-//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,char*)),
-//                    skeletonizer, SLOT(addTreeComment(int,int,char*)));
+//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,QString)),
+//                    skeletonizer, SLOT(addTreeComment(int,int,QString)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)),
 //                    skeletonizer, SLOT(mergeTrees(int,int,int,int)));
 //    //  tools nodes tab signals

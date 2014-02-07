@@ -208,8 +208,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
 
     if(!fileName.isEmpty()) {
         this->datasetLutFile->setText(fileName);
-        const char *cname = fileName.toStdString().c_str();
-        strcpy(state->viewerState->gui->datasetLUTFile, cname);
+        strcpy(state->viewerState->gui->datasetLUTFile, fileName.toStdString().c_str());
 
         //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
         loadDatasetLUT();
@@ -240,8 +239,7 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
     if(!fileName.isEmpty()) {
         treeLutFile->setText(fileName);
-        char *cname = const_cast<char *>(fileName.toStdString().c_str());
-        strcpy(state->viewerState->gui->treeLUTFile, cname);
+        strcpy(state->viewerState->gui->treeLUTFile, const_cast<char *>(fileName.toStdString().c_str()));
         MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
         state->viewerState->treeLutSet = true;
 

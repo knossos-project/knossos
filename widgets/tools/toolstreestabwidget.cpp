@@ -198,7 +198,7 @@ void ToolsTreesTabWidget::newTreeButtonClicked() {
 void ToolsTreesTabWidget::commentChanged(QString comment) {
     if(state->skeletonState->activeTree and !comment.isEmpty()) {
         //qDebug() << comment.toStdString().c_str();
-        emit addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, const_cast<char *>(comment.toStdString().c_str()));
+        emit addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, comment);
     }
 }
 

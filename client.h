@@ -90,7 +90,7 @@ signals:
     void finished();
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-    void addTreeCommentSignal(int targetRevision, int treeID, char *comment);
+    void addTreeCommentSignal(int targetRevision, int treeID, QString comment);
     void remoteJumpSignal(int x, int y, int z);
     void skeletonWorkModeSignal(int targetRevision, uint workMode);
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);

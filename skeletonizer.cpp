@@ -2770,7 +2770,7 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
     return nextTree;
 }
 
-bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment) {
+bool Skeletonizer::addTreeComment(int targetRevision, int treeID, QString comment) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     treeListElement *tree = NULL;
 
@@ -2782,15 +2782,15 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, char *comment)
 
     tree = findTreeByTreeID(treeID);
 
-    if(comment && tree) {
-        strncpy(tree->comment, comment, 8192);
+    if((!comment.isNull()) && tree) {
+        strncpy(tree->comment, comment.toStdString().c_str(), 8192);
     }
 
     state->skeletonState->unsavedChanges = true;
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!Client::syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment)) {
+        if(!Client::syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment.toStdString().c_str())) {
             Client::skeletonSyncBroken();
         }
     }
@@ -3303,10 +3303,13 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     return nodeCount;
 }
 
-bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize) {
+bool Skeletonizer::addComment(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize) {
     //This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     commentListElement *newComment;
+
+    std::string content_stdstr = content.toStdString();
+    const char *content_cstr = content_stdstr.c_str();
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
@@ -3316,8 +3319,8 @@ bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListE
     newComment = (commentListElement*)malloc(sizeof(struct commentListElement));
     memset(newComment, '\0', sizeof(struct commentListElement));
 
-    newComment->content = (char*)malloc(strlen(content) * sizeof(char) + 1);
-    memset(newComment->content, '\0', strlen(content) * sizeof(char) + 1);
+    newComment->content = (char*)malloc(strlen(content_cstr) * sizeof(char) + 1);
+    memset(newComment->content, '\0', strlen(content_cstr) * sizeof(char) + 1);
 
     if(nodeID) {
         node = findNodeByNodeID(nodeID);
@@ -3327,8 +3330,8 @@ bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListE
         node->comment = newComment;
     }
 
-    if(content) {
-        strncpy(newComment->content, content, strlen(content));
+    if(content_cstr) {
+        strncpy(newComment->content, content_cstr, strlen(content_cstr));
         state->skeletonState->skeletonChanged = true;
     }
 
@@ -3365,7 +3368,7 @@ bool Skeletonizer::addComment(int targetRevision, const char *content, nodeListE
     state->skeletonState->skeletonRevision++;
 
     if(targetRevision == CHANGE_MANUAL) {
-        if(!Client::syncMessage("blrds", KIKI_ADDCOMMENT, node->nodeID, content)) {
+        if(!Client::syncMessage("blrds", KIKI_ADDCOMMENT, node->nodeID, content_cstr)) {
             Client::skeletonSyncBroken();
         }
     }
@@ -3450,10 +3453,13 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
     return true;
 }
 
-bool Skeletonizer::editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize) {
+bool Skeletonizer::editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
+
+    std::string newContent_strstd = newContent.toStdString();
+    const char *newContent_cstr = newContent_strstd.c_str();
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
@@ -3475,13 +3481,13 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
 
     nodeID = currentComment->node->nodeID;
 
-    if(newContent) {
+    if(newContent_cstr) {
         if(currentComment->content) {
             free(currentComment->content);
         }
-        currentComment->content = (char*)malloc(strlen(newContent) * sizeof(char) + 1);
-        memset(currentComment->content, '\0', strlen(newContent) * sizeof(char) + 1);
-        strncpy(currentComment->content, newContent, strlen(newContent));
+        currentComment->content = (char*)malloc(strlen(newContent_cstr) * sizeof(char) + 1);
+        memset(currentComment->content, '\0', strlen(newContent_cstr) * sizeof(char) + 1);
+        strncpy(currentComment->content, newContent_cstr, strlen(newContent_cstr));
 
         //write into commentBuffer, so that comment appears in comment text field when added via Shortcut
         /*
@@ -3511,7 +3517,7 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
                     KIKI_EDITCOMMENT,
                     nodeID,
                     currentComment->node->nodeID,
-                    newContent)) {
+                    newContent_cstr)) {
             Client::skeletonSyncBroken();
         }
     }
@@ -3522,10 +3528,13 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
 
     return true;
 }
-commentListElement* Skeletonizer::nextComment(char *searchString) {
+commentListElement* Skeletonizer::nextComment(QString searchString) {
    commentListElement *firstComment, *currentComment;
 
-    if(!strlen(searchString)) {
+   std::string searchString_stdstr = searchString.toStdString();
+   const char *searchString_cstr = searchString_stdstr.c_str();
+
+    if(!strlen(searchString_cstr)) {
         //->previous here because it would be unintuitive for the user otherwise.
         //(we insert new comments always as first elements)
         if(state->skeletonState->currentComment) {
@@ -3541,7 +3550,7 @@ commentListElement* Skeletonizer::nextComment(char *searchString) {
             firstComment = state->skeletonState->currentComment->previous;
             currentComment = firstComment;
             do {
-                if(strstr(currentComment->content, searchString) != NULL) {
+                if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
                     setActiveNode(CHANGE_MANUAL,
                                   state->skeletonState->currentComment->node,
@@ -3577,12 +3586,15 @@ commentListElement* Skeletonizer::nextComment(char *searchString) {
     return state->skeletonState->currentComment;
 }
 
-commentListElement* Skeletonizer::previousComment(char *searchString) {
+commentListElement* Skeletonizer::previousComment(QString searchString) {
     commentListElement *firstComment, *currentComment;
     // ->next here because it would be unintuitive for the user otherwise.
     // (we insert new comments always as first elements)
 
-    if(!strlen(searchString)) {
+    std::string searchString_stdstr = searchString.toStdString();
+    const char *searchString_cstr = searchString_stdstr.c_str();
+
+    if(!strlen(searchString_cstr)) {
         if(state->skeletonState->currentComment) {
             state->skeletonState->currentComment = state->skeletonState->currentComment->next;
             setActiveNode(CHANGE_MANUAL,
@@ -3596,7 +3608,7 @@ commentListElement* Skeletonizer::previousComment(char *searchString) {
             firstComment = state->skeletonState->currentComment->next;
             currentComment = firstComment;
             do {
-                if(strstr(currentComment->content, searchString) != NULL) {
+                if(strstr(currentComment->content, searchString_cstr) != NULL) {
                     state->skeletonState->currentComment = currentComment;
                     setActiveNode(CHANGE_MANUAL,
                                   state->skeletonState->currentComment->node,

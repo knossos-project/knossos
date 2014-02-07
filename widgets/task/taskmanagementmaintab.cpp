@@ -183,7 +183,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     bool success;
 
     memset(postdata, '\0', 1024);
-    sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken(), state->taskState->taskFile);
+    sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken().toStdString().c_str(), state->taskState->taskFile);
 
     QDir taskDir("tasks");
     if(taskDir.exists() == false) {
@@ -341,14 +341,17 @@ void TaskManagementMainTab::submitDialogOk() {
     multihandle = curl_multi_init();
 
     // fill the multipart post form. TDItem: comments are not supported, yet.
+    std::string CSRFToken_stdstr = taskState::CSRFToken().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "csrfmiddlewaretoken",
-                 CURLFORM_COPYCONTENTS, taskState::CSRFToken(), CURLFORM_END);
+                 CURLFORM_COPYCONTENTS, CSRFToken_stdstr.c_str(), CURLFORM_END);
+    std::string skeletonFileAsQString_strstr = state->skeletonState->skeletonFileAsQString.toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_file",
-                 CURLFORM_FILE, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
+                 CURLFORM_FILE, skeletonFileAsQString_strstr.c_str(), CURLFORM_END);
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "filename",
-                 CURLFORM_COPYCONTENTS, state->skeletonState->skeletonFileAsQString.toStdString().c_str(), CURLFORM_END);
+                 CURLFORM_COPYCONTENTS, skeletonFileAsQString_strstr.c_str(), CURLFORM_END);
+    std::string submitDialogCommentField_stdstr = submitDialogCommentField->text().toStdString();
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_comment",
-                 CURLFORM_COPYCONTENTS, submitDialogCommentField->text().toStdString().c_str(), CURLFORM_END);
+                 CURLFORM_COPYCONTENTS, submitDialogCommentField_stdstr.c_str(), CURLFORM_END);
     if(submitDialogFinalCheckbox->isChecked()) {
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "submit_work_isfinal",
                      CURLFORM_COPYCONTENTS, "True", CURLFORM_END);

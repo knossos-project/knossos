@@ -1177,7 +1177,8 @@ void MainWindow::pasteClipboardCoordinates(){
     QString text = QApplication::clipboard()->text();
 
     if(text.size() > 0) {
-      char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
+      std::string text_stdstr = text.toStdString();
+      char *pasteBuffer = const_cast<char *> (text_stdstr.c_str());
 
       Coordinate *extractedCoords = NULL;
       if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {

@@ -731,7 +731,7 @@ struct taskState {
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
     static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
     static void removeCookie();
-    static const char *CSRFToken();
+    static QString CSRFToken();
     static QString getCategory();
     static QString getTask();
 };

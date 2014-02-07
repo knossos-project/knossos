@@ -59,7 +59,8 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
     }
 
     tree = state->skeletonState->firstTree;
-    const char *filter = filterField->text().toStdString().c_str();
+    std::string filterField_stdstr = filterField->text().toStdString();
+    const char *filter = filterField_stdstr.c_str();
     if(strlen(filter) > 0 )
         filtered = true;
 
