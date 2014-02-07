@@ -144,10 +144,10 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // tables
     QTableWidgetItem *IDCol, *commentCol, *colorCol, // tree table cols
                      *radiusCol, *xCol, *yCol, *zCol; // node table cols
+
     // active tree table
     activeTreeTable = new TreeTable(this);
     activeTreeTable->setColumnCount(TREE_COLS);
-    activeTreeTable->setRowCount(1);
     activeTreeTable->setFixedHeight(54);
     activeTreeTable->verticalHeader()->setVisible(false);
     activeTreeTable->setToolTip("The active tree");
@@ -161,13 +161,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activeTreeTable->resizeColumnsToContents();
     activeTreeTable->setContextMenuPolicy(Qt::CustomContextMenu);
     activeTreeTable->setDragDropMode(QAbstractItemView::DropOnly);
-    QTableWidgetItem *item;
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_ID, item);
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_COLOR, item);
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_COMMENT, item);
 
     // tree table
     treeTable = new TreeTable(this);
@@ -189,7 +182,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // active node table
     activeNodeTable = new NodeTable(this);
     activeNodeTable->setColumnCount(NODE_COLS);
-    activeNodeTable->setRowCount(1);
     activeNodeTable->setFixedHeight(54);
     activeNodeTable->verticalHeader()->setVisible(false);
     activeNodeTable->setToolTip("The active node");
@@ -210,18 +202,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activeNodeTable->setContextMenuPolicy(Qt::CustomContextMenu);
     activeNodeTable->setDragEnabled(true);
     activeNodeTable->setDragDropMode(QAbstractItemView::DragOnly);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_ID, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_COMMENT, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_X, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_Y, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_Z, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_RADIUS, item);
 
 
     // node table
@@ -1342,8 +1322,10 @@ void ToolsTreeviewTab::activeNodeSelected() {
         state->skeletonState->selectedNodes[i]->selected = false;
     }
     state->skeletonState->selectedNodes.clear();
-    state->skeletonState->activeNode->selected = true;
-    state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+    if(state->skeletonState->activeNode) {
+        state->skeletonState->activeNode->selected = true;
+        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+    }
 }
 
 void ToolsTreeviewTab::nodeItemSelected() {

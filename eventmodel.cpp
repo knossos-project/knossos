@@ -325,10 +325,8 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        if(VPfound != VIEWPORT_ARBITRARY) {
-            state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
-            state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
-        }
+        state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
+        state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
     }
 
 
@@ -594,28 +592,27 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         }
 
         // node selection square
-        if(VPfound != VIEWPORT_ARBITRARY) {
-            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                state->skeletonState->selectedNodes[i]->selected = false;
-            }
-            state->skeletonState->selectedNodes.clear();
-            emit unselectNodesSignal();
-
-            state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
-            state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
-            Coordinate first = state->viewerState->nodeSelectionSquare.first;
-            Coordinate second = state->viewerState->nodeSelectionSquare.second;
-            // create square
-            int minX, maxX, minY, maxY;
-            minX = (first.x < second.x)? first.x : second.x;
-            maxX = (first.x < second.x)? second.x : first.x;
-            minY = (first.y < second.y)? first.y : second.y;
-            maxY = (first.y < second.y)? second.y : first.y;
-            retrieveAllObjectsBeneathSquareSignal(VPfound, minX + (maxX - minX)/2,
-                                                           minY + (maxY - minY)/2,
-                                                           maxX - minX,
-                                                           maxY - minY);
+        for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+            state->skeletonState->selectedNodes[i]->selected = false;
         }
+        state->skeletonState->selectedNodes.clear();
+        emit unselectNodesSignal();
+
+        state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
+        state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+        Coordinate first = state->viewerState->nodeSelectionSquare.first;
+        Coordinate second = state->viewerState->nodeSelectionSquare.second;
+        // create square
+        int minX, maxX, minY, maxY;
+        minX = (first.x < second.x)? first.x : second.x;
+        maxX = (first.x < second.x)? second.x : first.x;
+        minY = (first.y < second.y)? first.y : second.y;
+        maxY = (first.y < second.y)? second.y : first.y;
+        retrieveAllObjectsBeneathSquareSignal(VPfound, minX + (maxX - minX)/2,
+                                                       minY + (maxY - minY)/2,
+                                                       maxX - minX,
+                                                       maxY - minY);
+
     }
     state->viewerState->drawNodeSelectSquare = -1;
     return true;
