@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
     QObject::connect(knossos.get(), &Knossos::lockDatasetMag, viewer.window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::lockDatasetMagChecked);
 
-    QObject::connect(&viewer, &Viewer::broadcastPosition, &client, &Client::broadcastPosition);
+    QObject::connect(&viewer, &Viewer::broadcastPosition, &Client::broadcastPosition);
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
@@ -208,30 +208,30 @@ int main(int argc, char *argv[])
     QObject::connect(viewer.eventModel, &EventModel::setRemoteStateTypeSignal, &remote, &Remote::setRemoteStateType);
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
-    QObject::connect(&remote, &Remote::updatePositionSignal, &viewer, &Viewer::updatePosition);
+    QObject::connect(&remote, &Remote::updatePositionSignal, &Viewer::updatePosition);
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
 
     QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
-    QObject::connect(&client, &Client::setActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::setActiveNode);
-    QObject::connect(&client, &Client::addTreeCommentSignal, viewer.skeletonizer, &Skeletonizer::addTreeComment);
+    QObject::connect(&client, &Client::setActiveNodeSignal, &Skeletonizer::setActiveNode);
+    QObject::connect(&client, &Client::addTreeCommentSignal, &Skeletonizer::addTreeComment);
 
     QObject::connect(&client, &Client::remoteJumpSignal, &remote, &Remote::remoteJump);
-    
+
     QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
-    QObject::connect(&client, &Client::setActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::setActiveNode);
-    QObject::connect(&client, &Client::addTreeCommentSignal, viewer.skeletonizer, &Skeletonizer::addTreeComment);
+    QObject::connect(&client, &Client::setActiveNodeSignal, &Skeletonizer::setActiveNode);
+    QObject::connect(&client, &Client::addTreeCommentSignal, &Skeletonizer::addTreeComment);
     QObject::connect(&client, &Client::skeletonWorkModeSignal, viewer.skeletonizer, &Skeletonizer::setSkeletonWorkMode);
-    QObject::connect(&client, &Client::clearSkeletonSignal, viewer.skeletonizer, &Skeletonizer::clearSkeleton);
-    QObject::connect(&client, &Client::delSegmentSignal, viewer.skeletonizer, &Skeletonizer::delSegment);
-    QObject::connect(&client, &Client::editNodeSignal, viewer.skeletonizer, &Skeletonizer::editNode);
-    QObject::connect(&client, &Client::delNodeSignal, viewer.skeletonizer, &Skeletonizer::delNode);
-    QObject::connect(&client, &Client::delTreeSignal, viewer.skeletonizer, &Skeletonizer::delTree);
-    QObject::connect(&client, &Client::addCommentSignal, viewer.skeletonizer, &Skeletonizer::addComment);
-    QObject::connect(&client, &Client::editCommentSignal, viewer.skeletonizer, &Skeletonizer::editComment);
-    QObject::connect(&client, &Client::delCommentSignal, viewer.skeletonizer, &Skeletonizer::delComment);
+    QObject::connect(&client, &Client::clearSkeletonSignal, &Skeletonizer::clearSkeleton);
+    QObject::connect(&client, &Client::delSegmentSignal, &Skeletonizer::delSegment);
+    QObject::connect(&client, &Client::editNodeSignal, &Skeletonizer::editNode);
+    QObject::connect(&client, &Client::delNodeSignal, &Skeletonizer::delNode);
+    QObject::connect(&client, &Client::delTreeSignal, &Skeletonizer::delTree);
+    QObject::connect(&client, &Client::addCommentSignal, &Skeletonizer::addComment);
+    QObject::connect(&client, &Client::editCommentSignal, &Skeletonizer::editComment);
+    QObject::connect(&client, &Client::delCommentSignal, &Skeletonizer::delComment);
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
-    QObject::connect(&client, &Client::pushBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::pushBranchNode);
+    QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
 
 
     knossos->loadDefaultTreeLUT();
