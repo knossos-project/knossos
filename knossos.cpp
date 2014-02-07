@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     
     Scripting scripts;
     scripts.skeletonReference = viewer.skeletonizer;
-    //scripts.stateReference = state;
+     //scripts.stateReference = state;
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
@@ -244,6 +244,10 @@ int main(int argc, char *argv[])
     remote.start();
     client.start();
 
+    viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+
+    a.installEventFilter(new myEventFilter());
+
     scripts.run();
 
     /* TEST */
@@ -284,10 +288,6 @@ int main(int argc, char *argv[])
     navigation.remoteReference = remote;
     QTest::qExec(&navigation);
     */
-
-    viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
-
-    a.installEventFilter(new myEventFilter());
 
     return a.exec();
 }
