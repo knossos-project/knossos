@@ -24,6 +24,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <memory>
+
 #include <qobject.h>
 #include <QtOpenGL>
 
@@ -70,6 +72,6 @@ public slots:
 
 };
 
-extern Knossos *knossos;
+extern std::unique_ptr<Knossos> knossos;
 
 #endif

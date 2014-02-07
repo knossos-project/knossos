@@ -65,11 +65,10 @@
 
 extern stateInfo *state = NULL;
 char logFilename[MAX_PATH] = {0};
-Loader *loader;
+std::unique_ptr<Loader> loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
-
-Knossos *knossos = NULL;
+std::unique_ptr<Knossos> knossos;
 
 class myEventFilter: public QObject
 {
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 
     Knossos::showSplashScreen();
 
-    knossos = new Knossos();
+    knossos.reset(new Knossos);
 
     //Knossos::loadStyleSheet();
 
@@ -182,74 +181,57 @@ int main(int argc, char *argv[])
     bool datasetLoaded = knossos->initStates();
 
     Knossos::printConfigValues();
-    Viewer *viewer = new Viewer();
-    state->viewer = viewer;
-    loader = new Loader();
-    Remote *remote = new Remote();
-    Client *client = new Client();
+    Viewer viewer;
+    state->viewer = &viewer;
+    loader.reset(new Loader);
+    Remote remote;
+    Client client;
+    
+    Scripting scripts;
+    scripts.skeletonReference = viewer.skeletonizer;
+    //scripts.stateReference = state;
 
-    Scripting *scripts = new Scripting();
-    scripts->skeletonReference = viewer->skeletonizer;
-    scripts->stateReference = state;
+    QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
+    QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
+    QObject::connect(knossos.get(), &Knossos::lockDatasetMag, viewer.window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::lockDatasetMagChecked);
 
+    QObject::connect(&viewer, &Viewer::broadcastPosition, &client, &Client::broadcastPosition);
+    QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
+    QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
+    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
+    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
+    QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::userMoveSignal, &viewer, &Viewer::userMove);
 
-    QObject::connect(knossos, SIGNAL(treeColorAdjustmentChangedSignal()),
-                            viewer->window, SLOT(treeColorAdjustmentsChanged()));
-    QObject::connect(knossos, SIGNAL(loadTreeColorTableSignal(QString,float*,int)),
-                            viewer, SLOT(loadTreeColorTable(QString,float*,int)));
-    QObject::connect(knossos, SIGNAL(lockDatasetMag(bool)),
-                            viewer->window->widgetContainer->zoomAndMultiresWidget, SLOT(lockDatasetMagChecked(bool)));
+    QObject::connect(viewer.skeletonizer, &Skeletonizer::setRemoteStateTypeSignal, &remote, &Remote::setRemoteStateType);
+    QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
-    QObject::connect(viewer, SIGNAL(broadcastPosition(uint,uint,uint)), client, SLOT(broadcastPosition(uint,uint,uint)));
-    QObject::connect(viewer, SIGNAL(loadSignal()), loader, SLOT(load()));
-    QObject::connect(viewer->window, SIGNAL(loadTreeLUTFallback()), knossos, SLOT(loadTreeLUTFallback()));
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(changeDatasetMagSignal(uint)),
-                            viewer, SLOT(changeDatasetMag(uint)), Qt::DirectConnection);
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(startLoaderSignal()),
-                     knossos, SLOT(startLoader()));
-    QObject::connect(viewer->window->widgetContainer->datasetPropertyWidget, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
+    QObject::connect(viewer.eventModel, &EventModel::setRemoteStateTypeSignal, &remote, &Remote::setRemoteStateType);
+    QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
-    QObject::connect(viewer->skeletonizer, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->skeletonizer, SIGNAL(setRecenteringPositionSignal(int,int,int)),
-                            remote, SLOT(setRecenteringPosition(int,int,int)));
-    QObject::connect(viewer->eventModel, SIGNAL(setRemoteStateTypeSignal(int)), remote, SLOT(setRemoteStateType(int)));
-    QObject::connect(viewer->eventModel, SIGNAL(setRecenteringPositionSignal(int,int,int)),
-                            remote, SLOT(setRecenteringPosition(int,int,int)));
+    QObject::connect(&remote, &Remote::updatePositionSignal, &viewer, &Viewer::updatePosition);
+    QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
+    QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
 
-    QObject::connect(remote, SIGNAL(updatePositionSignal(int)), viewer, SLOT(updatePosition(int)));
-    QObject::connect(remote, SIGNAL(userMoveSignal(int,int,int,int)), viewer, SLOT(userMove(int,int,int,int)));
-    QObject::connect(remote, SIGNAL(updateViewerStateSignal()), viewer, SLOT(updateViewerState()));
-    QObject::connect(client, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
-                            viewer->skeletonizer, SLOT(updateSkeletonFileName(int, int, char *)));
-    QObject::connect(client, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
-                            viewer->skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-    QObject::connect(client, SIGNAL(addTreeCommentSignal(int,int,char*)),
-                            viewer->skeletonizer, SLOT(addTreeComment(int,int,char*)));
-    QObject::connect(client, SIGNAL(remoteJumpSignal(int,int,int)), remote, SLOT(remoteJump(int,int,int)));
-    QObject::connect(client, SIGNAL(skeletonWorkModeSignal(int,uint)),
-                            viewer->skeletonizer, SLOT(setSkeletonWorkMode(int,uint)));
-    QObject::connect(client, SIGNAL(clearSkeletonSignal(int,int)), viewer->skeletonizer, SLOT(clearSkeleton(int,int)));
-    QObject::connect(client, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
-                            viewer->skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
-    QObject::connect(client, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)),
-                            viewer->skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
-    QObject::connect(client, SIGNAL(delNodeSignal(int,int,nodeListElement*,int)),
-                            viewer->skeletonizer, SLOT(delNode(int,int,nodeListElement*,int)));
-    QObject::connect(client, SIGNAL(delTreeSignal(int,int,int)), viewer->skeletonizer, SLOT(delTree(int,int,int)));
-    QObject::connect(client, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
-                            viewer->skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
-                            viewer->skeletonizer,
-                            SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(delCommentSignal(int,commentListElement*,int,int)),
-                            viewer->skeletonizer, SLOT(delComment(int,commentListElement*,int,int)));
-    QObject::connect(client, SIGNAL(popBranchNodeSignal()), viewer->skeletonizer, SLOT(UI_popBranchNode()));
-    QObject::connect(client, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
-                            viewer->skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    QObject::connect(client, SIGNAL(sendConnectedState()),
-                            viewer->window->widgetContainer->synchronizationWidget, SLOT(updateConnectionInfo()));
-    QObject::connect(client, SIGNAL(sendDisconnectedState()),
-                            viewer->window->widgetContainer->synchronizationWidget, SLOT(updateDisconnectionInfo()));
+    QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
+    QObject::connect(&client, &Client::setActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::setActiveNode);
+    QObject::connect(&client, &Client::addTreeCommentSignal, viewer.skeletonizer, &Skeletonizer::addTreeComment);
+
+    QObject::connect(&client, &Client::remoteJumpSignal, &remote, &Remote::remoteJump);
+    
+    QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
+    QObject::connect(&client, &Client::setActiveNodeSignal, viewer.skeletonizer, &Skeletonizer::setActiveNode);
+    QObject::connect(&client, &Client::addTreeCommentSignal, viewer.skeletonizer, &Skeletonizer::addTreeComment);
+    QObject::connect(&client, &Client::skeletonWorkModeSignal, viewer.skeletonizer, &Skeletonizer::setSkeletonWorkMode);
+    QObject::connect(&client, &Client::clearSkeletonSignal, viewer.skeletonizer, &Skeletonizer::clearSkeleton);
+    QObject::connect(&client, &Client::delSegmentSignal, viewer.skeletonizer, &Skeletonizer::delSegment);
+    QObject::connect(&client, &Client::editNodeSignal, viewer.skeletonizer, &Skeletonizer::editNode);
+    QObject::connect(&client, &Client::delNodeSignal, viewer.skeletonizer, &Skeletonizer::delNode);
+    QObject::connect(&client, &Client::delTreeSignal, viewer.skeletonizer, &Skeletonizer::delTree);
+    QObject::connect(&client, &Client::addCommentSignal, viewer.skeletonizer, &Skeletonizer::addComment);
+    QObject::connect(&client, &Client::editCommentSignal, viewer.skeletonizer, &Skeletonizer::editComment);
+    QObject::connect(&client, &Client::delCommentSignal, viewer.skeletonizer, &Skeletonizer::delComment);
+    QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
+    QObject::connect(&client, &Client::pushBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::pushBranchNode);
 
 
     knossos->loadDefaultTreeLUT();
@@ -258,11 +240,11 @@ int main(int argc, char *argv[])
         // don't start loader, when there is no dataset, yet.
         loader->start();
     }
-    viewer->run();
-    remote->start();
-    client->start();
+    viewer.run();
+    remote.start();
+    client.start();
 
-    scripts->run();
+    scripts.run();
 
     /* TEST */
     /*
@@ -303,7 +285,7 @@ int main(int argc, char *argv[])
     QTest::qExec(&navigation);
     */
 
-    viewer->window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+    viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
     a.installEventFilter(new myEventFilter());
 
@@ -744,9 +726,6 @@ stateInfo *Knossos::emptyState() {
 
     state->skeletonState = new skeletonState();
     state->taskState = new taskState();
-
-    state->viewer = NULL;
-
     return state;
 }
 

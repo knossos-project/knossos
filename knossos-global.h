@@ -32,6 +32,8 @@
 #define KNOSSOS_GLOBAL_H
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
+#include <curl/curl.h>
+
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
 #include <QtCore/qmutex.h>
@@ -42,14 +44,14 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#include <curl/curl.h>
-
 #define KVERSION "4.0"
 
 #define FAIL    -1
 
 #define MIN_N   1
+#ifndef MAX_PATH
 #define MAX_PATH 256
+#endif
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
