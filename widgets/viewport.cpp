@@ -55,8 +55,8 @@ void ViewportButton::leaveEvent(QEvent *) {
     setCursor(Qt::CrossCursor);
 }
 
-Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
-    QGLWidget(parent), viewportType(viewportType), id(newId), resizeButtonHold(false) {
+Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
+    QGLWidget(parent, shared), viewportType(viewportType), id(newId), resizeButtonHold(false) {
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 

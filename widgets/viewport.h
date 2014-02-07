@@ -66,7 +66,7 @@ class Viewport : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit Viewport(QWidget *parent, int viewportType, uint newId);
+    explicit Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId);
     void drawViewport(int vpID);
     void drawSkeletonViewport();
     void hideButtons();

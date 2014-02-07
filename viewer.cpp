@@ -46,10 +46,10 @@ Viewer::Viewer(QObject *parent) :
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     state->console = window->widgetContainer->console;
-    vpUpperLeft = window->viewports[VIEWPORT_XY];
-    vpLowerLeft = window->viewports[VIEWPORT_XZ];
-    vpUpperRight = window->viewports[VIEWPORT_YZ];
-    vpLowerRight = window->viewports[VIEWPORT_SKELETON];
+    vpUpperLeft = window->viewports[VIEWPORT_XY].get();
+    vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
+    vpUpperRight = window->viewports[VIEWPORT_YZ].get();
+    vpLowerRight = window->viewports[VIEWPORT_SKELETON].get();
     eventModel = new EventModel();
     vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 

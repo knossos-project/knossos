@@ -66,20 +66,23 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     line3->setFrameShape(QFrame::HLine);
     line3->setFrameShadow(QFrame::Sunken);
 
-    //gridLayout->addWidget(datasetVisualizationLabel, 0, 0);
-    gridLayout->addWidget(skeletonDisplayModesLabel, 0, 0);
-    gridLayout->addWidget(line, 1, 0);
-    //gridLayout->addWidget(line2, 1, 1);
-    //gridLayout->addWidget(showXYPlaneCheckBox, 2, 0);
-    gridLayout->addWidget(wholeSkeletonRadioButton, 2, 0);
-    //gridLayout->addWidget(showXZPlaneCheckBox, 3, 0);
-    gridLayout->addWidget(onlyActiveTreeRadioButton, 3, 0);
-    //gridLayout->addWidget(showYZPlaneCheckBox, 4, 0);
-    gridLayout->addWidget(hideSkeletonRadioButton, 4, 0);
+    int currentGridColumn = 0;
 
-    gridLayout->addWidget(view3dlabel, 5, 0);
-    gridLayout->addWidget(line3, 6, 0);
-    gridLayout->addWidget(rotateAroundActiveNodeCheckBox, 7, 0);
+    //gridLayout->addWidget(datasetVisualizationLabel, gridColumn++, 0);
+    gridLayout->addWidget(skeletonDisplayModesLabel, currentGridColumn ++, 0);
+    gridLayout->addWidget(line, currentGridColumn ++, 0);
+    //gridLayout->addWidget(line2, gridColumn++, 1);
+    gridLayout->addWidget(wholeSkeletonRadioButton, currentGridColumn ++, 0);
+    gridLayout->addWidget(onlyActiveTreeRadioButton, currentGridColumn ++, 0);
+    gridLayout->addWidget(hideSkeletonRadioButton, currentGridColumn ++, 0);
+
+    gridLayout->addWidget(showXYPlaneCheckBox, currentGridColumn ++, 0);
+    gridLayout->addWidget(showXZPlaneCheckBox, currentGridColumn ++, 0);
+    gridLayout->addWidget(showYZPlaneCheckBox, currentGridColumn ++, 0);
+
+    gridLayout->addWidget(view3dlabel, currentGridColumn ++, 0);
+    gridLayout->addWidget(line3, currentGridColumn ++, 0);
+    gridLayout->addWidget(rotateAroundActiveNodeCheckBox, currentGridColumn ++, 0);
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);

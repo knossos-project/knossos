@@ -143,11 +143,10 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 void MainWindow::createViewports() {
-    viewports = new Viewport*[NUM_VP];
-    viewports[VP_UPPERLEFT] = new Viewport(this, VIEWPORT_XY, VP_UPPERLEFT);
-    viewports[VP_LOWERLEFT] = new Viewport(this, VIEWPORT_XZ, VP_LOWERLEFT);
-    viewports[VP_UPPERRIGHT] = new Viewport(this, VIEWPORT_YZ, VP_UPPERRIGHT);
-    viewports[VP_LOWERRIGHT] = new Viewport(this, VIEWPORT_SKELETON, VP_LOWERRIGHT);
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, nullptr, VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 
     viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);

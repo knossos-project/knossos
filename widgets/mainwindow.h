@@ -25,6 +25,9 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <array>
+#include <memory>
+
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 #include <QMainWindow>
 #include <QDropEvent>
@@ -130,7 +133,7 @@ public:
 
     QWidget *mainWidget;
     QGridLayout *gridLayout;
-    Viewport **viewports;
+    std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
     WidgetContainer *widgetContainer;
