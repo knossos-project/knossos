@@ -95,8 +95,6 @@ signals:
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
-    void nextCommentSignal(char *searchString);
-    void previousCommentSignal(char *searchString);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);

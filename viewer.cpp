@@ -2027,8 +2027,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(eventModel, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(eventModel, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
-    connect(eventModel, SIGNAL(previousCommentSignal(QString)), skeletonizer, SLOT(previousComment(QString)));
     connect(eventModel, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));

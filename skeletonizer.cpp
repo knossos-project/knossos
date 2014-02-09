@@ -1509,14 +1509,11 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     if((loadedPosition.x != 0) &&
        (loadedPosition.y != 0) &&
        (loadedPosition.z != 0)) {
-
-        state->viewerState->currentPosition.x =
-            loadedPosition.x - 1;
-        state->viewerState->currentPosition.y =
-            loadedPosition.y - 1;
-        state->viewerState->currentPosition.z =
-            loadedPosition.z - 1;
-        emit userMoveSignal(loadedPosition.x - 1, loadedPosition.y - 1, loadedPosition.z - 1, TELL_COORDINATE_CHANGE);
+        Coordinate jump;
+        SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
+                             loadedPosition.y - 1 - state->viewerState->currentPosition.y,
+                             loadedPosition.z - 1 - state->viewerState->currentPosition.z);
+        emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
     }
 
 
