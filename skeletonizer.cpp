@@ -119,6 +119,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
     memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
 
+    /*
     state->skeletonState->firstSerialSkeleton = (serialSkeletonListElement *)malloc(sizeof(state->skeletonState->firstSerialSkeleton));
     state->skeletonState->firstSerialSkeleton->next = NULL;
     state->skeletonState->firstSerialSkeleton->previous = NULL;
@@ -127,6 +128,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->lastSerialSkeleton->previous = NULL;
     state->skeletonState->serialSkeletonCounter = 0;
     state->skeletonState->maxUndoSteps = 16;
+    */
 
     state->skeletonState->saveCnt = 0;
 
