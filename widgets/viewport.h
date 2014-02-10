@@ -30,7 +30,9 @@
 #include <QtOpenGL>
 #include <QDebug>
 #include <QFont>
+
 #include "eventmodel.h"
+#include "renderer.h"
 
 #define VP_UPPERLEFT 0
 #define VP_LOWERLEFT 1
@@ -39,7 +41,6 @@
 static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
 
 class QPushButton;
-class Renderer;
 
 class ResizeButton : public QPushButton {
 public:
@@ -73,7 +74,7 @@ public:
     void showButtons();
     void updateButtonPositions();
     EventModel *eventDelegate;
-    Renderer * null_renderer;
+    Renderer renderer;
 
     static const int MIN_VP_SIZE = 50;
 

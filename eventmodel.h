@@ -47,7 +47,6 @@
   * You will save a couple of hours ..
   */
 
-class Renderer;
 class EventModel : public QObject
 {
     Q_OBJECT
