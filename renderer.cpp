@@ -1105,16 +1105,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 }
 
 bool Renderer::renderSkeletonVP(uint currentVP) {
-    char *textBuffer;
-    char *c;
-    uint i;
-
-    GLUquadricObj *gluCylObj = NULL;
-
-    // Used for calculation of slice pane length inside the 3d view
-    float dataPxX, dataPxY;
-
-    textBuffer = (char*)malloc(32);
+    char * const textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
     //glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
@@ -1351,11 +1342,12 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor4f(1., 1., 1., 1.);
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        // Used for calculation of slice pane length inside the 3d view
+        float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
                 * 0.5;
-        dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
+        float dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
 
@@ -1424,49 +1416,29 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             glEnd();
             glBindTexture (GL_TEXTURE_2D, 0);
             break;
-        case VIEWPORT_ARBITRARY:
-            /* @arb */
-            floatCoordinate *n, *v1, *v2;
-            n = &(state->viewerState->vpConfigs[i].n);
-
-            v1 = &(state->viewerState->vpConfigs[i].v1);
-
-            v2 = &(state->viewerState->vpConfigs[i].v2);
-
-            //TODO, adjust this for arbitrary planes
-
-            //if(!state->skeletonState->showYZplane) break;
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
-            glLoadName(i);
-            glBegin(GL_QUADS);
-            glNormal3i(n->x, n->y, n->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLUx, state->viewerState->vpConfigs[i].texture.texLUy);
-            glVertex3f(-dataPxX * v1->x - dataPxY * v2->x, -dataPxX * v1->y - dataPxY * v2->y, -dataPxX * v1->z - dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texRUx, state->viewerState->vpConfigs[i].texture.texRUy);
-            glVertex3f(dataPxX * v1->x - dataPxY * v2->x, dataPxX * v1->y - dataPxY * v2->y, dataPxX * v1->z - dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texRLx, state->viewerState->vpConfigs[i].texture.texRLy);
-
-            glVertex3f(dataPxX * v1->x + dataPxY * v2->x, dataPxX * v1->y + dataPxY * v2->y, dataPxX * v1->z + dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLLx, state->viewerState->vpConfigs[i].texture.texLLy);
-
-            glVertex3f(-dataPxX * v1->x + dataPxY * v2->x, -dataPxX * v1->y + dataPxY * v2->y, -dataPxX * v1->z + dataPxY * v2->z);
-            glEnd();
-            glBindTexture (GL_TEXTURE_2D, 0);
-            /* */
-
-            break;
         }
+    }
 
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        const auto & viewport = state->viewerState->vpConfigs[i];
+        if (viewport.type == VIEWPORT_ARBITRARY) {
+            if ( (viewport.id == VP_UPPERLEFT && state->skeletonState->showXYplane)
+                || (viewport.id == VP_LOWERLEFT && state->skeletonState->showXZplane)
+                || (viewport.id == VP_UPPERRIGHT && state->skeletonState->showYZplane) )
+            {
+                renderArbitrarySlicePane(viewport);
+            }
+        }
     }
 
     glDisable(GL_TEXTURE_2D);
 
-
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        GLUquadricObj * gluCylObj;
+        float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
-        dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
+        float dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
         switch(state->viewerState->vpConfigs[i].type) {
@@ -1665,7 +1637,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glLineWidth(1.f);
 */
     glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
-    gluCylObj = gluNewQuadric();
+    GLUquadricObj * gluCylObj = gluNewQuadric();
     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
     gluCylinder(gluCylObj, 5., 5. , state->boundary.z, 5, 5);
@@ -1773,6 +1745,32 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     free(textBuffer);
     renderViewportBorders(currentVP);
     return true;
+}
+
+void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
+    const auto & n = vp.n;
+    const auto & v1 = vp.v1;
+    const auto & v2 = vp.v2;
+    const auto & texture = vp.texture;
+
+    // Used for calculation of slice pane length inside the 3d view
+    const auto dataPxX = texture.displayedEdgeLengthX / texture.texUnitsPerDataPx * 0.5;
+    const auto dataPxY = texture.displayedEdgeLengthY / texture.texUnitsPerDataPx * 0.5;
+
+    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+
+    glBegin(GL_QUADS);
+        glNormal3i(n.x, n.y, n.z);
+        glTexCoord2f(texture.texLUx, texture.texLUy);
+        glVertex3f(-dataPxX * v1.x - dataPxY * v2.x, -dataPxX * v1.y - dataPxY * v2.y, -dataPxX * v1.z - dataPxY * v2.z);
+        glTexCoord2f(texture.texRUx, texture.texRUy);
+        glVertex3f(dataPxX * v1.x - dataPxY * v2.x, dataPxX * v1.y - dataPxY * v2.y, dataPxX * v1.z - dataPxY * v2.z);
+        glTexCoord2f(texture.texRLx, texture.texRLy);
+        glVertex3f(dataPxX * v1.x + dataPxY * v2.x, dataPxX * v1.y + dataPxY * v2.y, dataPxX * v1.z + dataPxY * v2.z);
+        glTexCoord2f(texture.texLLx, texture.texLLy);
+        glVertex3f(-dataPxX * v1.x + dataPxY * v2.x, -dataPxX * v1.y + dataPxY * v2.y, -dataPxX * v1.z + dataPxY * v2.z);
+    glEnd();
+    glBindTexture (GL_TEXTURE_2D, 0);
 }
 
 #include "sleeper.h"

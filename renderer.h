@@ -33,7 +33,8 @@ class Renderer : public QObject
 {
     Q_OBJECT
 public:
-    explicit Renderer(QObject *parent = 0);    
+    explicit Renderer(QObject *parent = 0);
+    void renderArbitrarySlicePane(const vpConfig &);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     QFont font;
 
