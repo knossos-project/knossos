@@ -29,14 +29,12 @@
 #include "knossos-global.h"
 
 class Viewport;
-class Renderer : public QObject
-{
+class Renderer : public QObject {
     Q_OBJECT
+    void renderArbitrarySlicePane(const vpConfig &);
 public:
     explicit Renderer(QObject *parent = 0);
-    void renderArbitrarySlicePane(const vpConfig &);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    QFont font;
 
 protected:
     bool setRotationState(uint setTo);

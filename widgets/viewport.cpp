@@ -56,7 +56,7 @@ void ViewportButton::leaveEvent(QEvent *) {
 }
 
 Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
-    QGLWidget(parent, shared), viewportType(viewportType), id(newId), resizeButtonHold(false) {
+    QGLWidget(parent, shared), viewportType(viewportType), id(newId), resizeButtonHold(false), null_renderer(nullptr) {
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
@@ -388,11 +388,11 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
 
 void Viewport::drawViewport(int vpID) {
-    reference->renderOrthogonalVP(vpID);
+    null_renderer->renderOrthogonalVP(vpID);
 }
 
 void Viewport::drawSkeletonViewport() {
-    reference->renderSkeletonVP(VIEWPORT_SKELETON);
+    null_renderer->renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {

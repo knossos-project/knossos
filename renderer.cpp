@@ -45,41 +45,37 @@
 
 extern stateInfo *state;
 
-Renderer::Renderer(QObject *parent) :
-    QObject(parent)
-{
-    font = QFont("Helvetica", 10, QFont::Normal);
-
+Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-        /* Initialize the basic model view matrix for the skeleton VP
-        Perform basic coordinate system rotations */
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    /* Initialize the basic model view matrix for the skeleton VP
+    Perform basic coordinate system rotations */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-            (float)state->skeletonState->volBoundary / 2.,
-            -((float)state->skeletonState->volBoundary / 2.));
+    glTranslatef((float)state->skeletonState->volBoundary / 2.,
+        (float)state->skeletonState->volBoundary / 2.,
+        -((float)state->skeletonState->volBoundary / 2.));
 
-        glScalef(-1., 1., 1.);
-        //);
-        //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
-        glRotatef(235., 1., 0., 0.);
-        glRotatef(210., 0., 0., 1.);
-        setRotationState(ROTATIONSTATERESET);
-        //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-        /* save the matrix for further use... */
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+    glScalef(-1., 1., 1.);
+    //);
+    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
+    glRotatef(235., 1., 0., 0.);
+    glRotatef(210., 0., 0., 1.);
+    setRotationState(ROTATIONSTATERESET);
+    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+    /* save the matrix for further use... */
+    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-        glLoadIdentity();
+    glLoadIdentity();
 
-        // get a unique display list identifier for each viewport
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            state->viewerState->vpConfigs[i].displayList = glGenLists(1);
-        }
+    // get a unique display list identifier for each viewport
+    for(i = 0; i < state->viewerState->numberViewports; i++) {
+        state->viewerState->vpConfigs[i].displayList = glGenLists(1);
+    }
 
-        initMesh(&(state->skeletonState->lineVertBuffer), 1024);
-        initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+    initMesh(&(state->skeletonState->lineVertBuffer), 1024);
+    initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 
 }
 
@@ -1752,6 +1748,8 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
     // Used for calculation of slice pane length inside the 3d view
     const auto dataPxX = texture.displayedEdgeLengthX / texture.texUnitsPerDataPx * 0.5;
     const auto dataPxY = texture.displayedEdgeLengthY / texture.texUnitsPerDataPx * 0.5;
+
+    glLoadName(vp.id);//for select mode
 
     glBindTexture(GL_TEXTURE_2D, texture.texHandle);
 

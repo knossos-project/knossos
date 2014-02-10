@@ -72,8 +72,8 @@ public:
     void hideButtons();
     void showButtons();
     void updateButtonPositions();
-    Renderer *reference;
     EventModel *eventDelegate;
+    Renderer * null_renderer;
 
     static const int MIN_VP_SIZE = 50;
 
