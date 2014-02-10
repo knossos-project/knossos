@@ -378,6 +378,15 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     return true;
 }
 
+bool EventModel::handleMouseMotion(QMouseEvent *event, int VPfound) {
+    if(Patch::patchMode and Patch::eraseInVP != -1 and VPfound != VIEWPORT_SKELETON) {
+        Patch::eraseInVP = VPfound; // set vp new in case mouse switched widgets
+        Patch::eraserPosX = event->x();
+        Patch::eraserPosY = event->y();
+
+    }
+}
+
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     // pull selection square
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
@@ -386,7 +395,6 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
             state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
         }
     }
-
 
     uint i;
     for(i = 0; i < state->viewerState->numberViewports; i++) {
@@ -613,26 +621,36 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     if(VPfound < VIEWPORT_SKELETON) {
-        if(Patch::patchMode && Patch::drawMode == DRAW_CONTINUOUS_LINE) {
+        if(Patch::patchMode) {
             floatCoordinate *point = getFloatCoordinateFromOrthogonalClick(event, VPfound);
             if(point == NULL) {
                 return false;
             }
-            if(Patch::activePatch == NULL) {
-                if(newPatchSignal()) {
-                    emit activePatchChanged();
-                    emit updateTools();
+            if(Patch::eraseInVP == VPfound) {
+                // eraser function
+                Patch::eraserPosX = event->x();
+                Patch::eraserPosY = event->y();
+                if(Patch::activePatch) {
+                    Patch::activePatch->erasePoints(*point, VPfound);
                 }
             }
-            else if(Patch::activePatch->correspondingTree != state->skeletonState->activeTree) {
-                if(newPatchSignal()) {
-                    emit activePatchChanged();
-                    emit updateTools();
+            else if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
+                if(Patch::activePatch == NULL) {
+                    if(newPatchSignal()) {
+                        emit activePatchChanged();
+                        emit updateTools();
+                    }
                 }
+                else if(Patch::activePatch->correspondingTree != state->skeletonState->activeTree) {
+                    if(newPatchSignal()) {
+                        emit activePatchChanged();
+                        emit updateTools();
+                    }
+                }
+                Patch::insert(*point);
+                emit updatePatchesWidget();
             }
-            Patch::insert(*point);
             free(point);
-            emit updatePatchesWidget();
         }
     }
 
@@ -905,7 +923,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {  
+bool EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
 
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
@@ -1449,11 +1467,27 @@ bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             emit unselectNodesSignal();
         }
     }
+    else if(event->key() == Qt::Key_Shift) {
+        if(Patch::patchMode and Qt::KeyboardModifiers() == Qt::NoModifier) {
+            // loop eraser activated
+            Patch::eraseInVP = VPfound;
+            Patch::eraserPosX = mouseX;
+            Patch::eraserPosY = mouseY;
+        }
+    }
     else if(event->key() == Qt::Key_F4) {
         if(alt) {
             QApplication::closeAllWindows();
             QApplication::quit();
         }
+    }
+}
+
+void EventModel::handleKeyRelease(QKeyEvent *event, int VPfound) {
+    switch(event->key()) {
+    case Qt::Key_Shift:
+        Patch::eraseInVP = -1;
+        break;
     }
 }
 
@@ -1613,11 +1647,11 @@ floatCoordinate *EventModel::getFloatCoordinateFromOrthogonalClick(QMouseEvent *
 }
 
 int EventModel::xrel(int x) {
-    return (x - this->mouseX);
+    return (x - this->mouseClickX);
 }
 
 int EventModel::yrel(int y) {
-    return (y - this->mouseY);
+    return (y - this->mouseClickY);
 }
 
 

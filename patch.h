@@ -87,6 +87,9 @@ public:
     // --- class members ---
     static bool patchMode; //! enables/disables volume annotation feature
     static uint drawMode; //! 'DRAW_CONTINUOUS_LINE' or 'DRAW_DROP_POINTS'
+    static int eraseInVP; //! flag to indicate in which vp user wants to erase active loop. -1 if not
+    static int eraserPosX; //! stores the current mouse position in viewport coordinates for eraser rendering
+    static int eraserPosY; //! stores the current mouse position in viewport coordinates for eraser rendering
     static Patch *firstPatch; //! first patch of the circular doubly linked list.
                               //! If numPatches == 1, then firstPatch = firstPatch->next = firstPatch->previous
     static Patch *activePatch; //! the currently drawn patch
@@ -111,6 +114,7 @@ public:
     static void delActivePatch();
     static bool insert(floatCoordinate point);
     static void addInterpolatedPoint(floatCoordinate p, floatCoordinate q, std::vector<floatCoordinate> &line);
+    static void erasePoints(floatCoordinate center, uint viewportType);
     static void genRandCloud(uint cloudSize);
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
@@ -159,7 +163,6 @@ public:
     void recomputeTriangles(floatCoordinate pos, uint halfCubeSize);
     void clearTriangles();
 
-    void erasePoints(floatCoordinate center, uint viewportType);
 signals:
     void activePatchChanged();
     treeListElement *addTreeListElementSignal(int sync,int targetRevision, int treeID, color4F color, int serialize);

@@ -65,12 +65,17 @@ public:
     bool handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
-    bool handleKeyboard(QKeyEvent *event, int VPfound);
+    bool handleKeyPress(QKeyEvent *event, int VPfound);
+    void handleKeyRelease(QKeyEvent *event, int VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
     static floatCoordinate *getFloatCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
     int xrel(int x);
     int yrel(int y);
+    //! last mouse click position
+    int mouseClickX;
+    int mouseClickY;
+    //! current mouse position
     int mouseX;
     int mouseY;
     bool grap;

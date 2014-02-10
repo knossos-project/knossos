@@ -463,7 +463,7 @@ public:
      * @param halfCubeLen half the edge length of the bounding box
      * @param results a vector<T> to store all found objects in.
      */
-    void getObjsInRange(const floatCoordinate pos, uint halfCubeLen, std::vector<T> &results) {
+    void getObjsInRange(const floatCoordinate pos, float halfCubeLen, std::vector<T> &results) {
         // If we're at a leaf node, just see if the current data point is inside
         // the query bounding box
         floatCoordinate bmin, bmax;

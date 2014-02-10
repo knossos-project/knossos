@@ -13,6 +13,9 @@ extern struct stateInfo *state;
 
 bool Patch::patchMode = false;
 uint Patch::drawMode = DRAW_CONTINUOUS_LINE;
+int Patch::eraseInVP = -1;
+int Patch::eraserPosX = -1;
+int Patch::eraserPosY = -1;
 uint Patch::maxPatchID = 0;
 uint Patch::numPatches = 0;
 float Patch::voxelPerPoint = .3;
@@ -21,7 +24,7 @@ std::vector<std::vector<floatCoordinate> > Patch::lineBuffer;
 uint Patch::displayMode = PATCH_DSP_WHOLE;
 Patch *Patch::firstPatch = NULL;
 Patch *Patch::activePatch = NULL;
-float Patch::eraserLength = 5;
+float Patch::eraserLength = 10;
 bool Patch::drawing = false;
 bool Patch::newPoints = false;
 GLuint Patch::vbo;
@@ -304,15 +307,72 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
 }
 
 /**
- * @brief Patch::erasePoints erase points in a box around 'center'
+ * @brief Patch::erasePoints erase points of the currently drawn lines in a radius of "eraserLength" around 'center'
  */
 void Patch::erasePoints(floatCoordinate center, uint viewportType) {
-    uint boxLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
-    std::vector<floatCoordinate> results;
-    pointCloud->getObjsInRange(center, boxLength, results);
-    qDebug("result: %i", results.size());
-    for(uint i = 0; i < results.size(); ++i) {
-        qDebug(" %f, %f, %f", results[i].x, results[i].y, results[i].z);
+    if(activeLine.size() == 0 and lineBuffer.size() == 0) {
+        return;
+    }
+    float boxLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
+
+    switch(viewportType) {
+    case VIEWPORT_XY:
+        for(int i = activeLine.size() - 1; i >= 0; --i) {
+            if(activeLine[i].x > center.x - boxLength and activeLine[i].x < center.x + boxLength
+               and activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength) {
+                activeLine.erase(activeLine.begin() + i);
+            }
+        }
+        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
+                if(lineBuffer[i][j].x > center.x - boxLength and lineBuffer[i][j].x < center.x + boxLength
+                        and lineBuffer[i][j].y > center.y - boxLength and lineBuffer[i][j].y < center.y + boxLength) {
+                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+                }
+            }
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+            }
+        }
+        break;
+    case VIEWPORT_XZ:
+        for(int i = activeLine.size() - 1; i >= 0; --i) {
+            if(activeLine[i].x > center.x - boxLength and activeLine[i].x < center.x + boxLength
+               and activeLine[i].z > center.z - boxLength and activeLine[i].z < center.z + boxLength) {
+                activeLine.erase(activeLine.begin() + i);
+            }
+        }
+        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
+                if(lineBuffer[i][j].x > center.x - boxLength and lineBuffer[i][j].x < center.x + boxLength
+                        and lineBuffer[i][j].z > center.z - boxLength and lineBuffer[i][j].z < center.z + boxLength) {
+                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+                }
+            }
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+            }
+        }
+        break;
+    case VIEWPORT_YZ:
+        for(int i = activeLine.size() - 1; i >= 0; --i) {
+            if(activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength
+               and activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength) {
+                activeLine.erase(activeLine.begin() + i);
+            }
+        }
+        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
+                if(lineBuffer[i][j].y > center.y - boxLength and lineBuffer[i][j].y < center.y + boxLength
+                        and lineBuffer[i][j].z > center.z - boxLength and lineBuffer[i][j].z < center.z + boxLength) {
+                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+                }
+            }
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+            }
+        }
+        break;
     }
 }
 

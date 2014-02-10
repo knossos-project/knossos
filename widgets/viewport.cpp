@@ -64,7 +64,7 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
-    //this->setMouseTracking(true);
+    this->setMouseTracking(true);
     this->setCursor(Qt::CrossCursor);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus.
                                           // This solves also the problem that viewports had to be clicked
@@ -91,9 +91,6 @@ Viewport::Viewport(QWidget *parent, int viewportType, uint newId) :
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
-
-
-
 }
 
 void Viewport::initializeGL() {
@@ -261,6 +258,12 @@ int Viewport::yrel(int y) {
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
     bool clickEvent = false;
 
+    eventDelegate->mouseX = event->x();
+    eventDelegate->mouseY = event->y();
+
+    if(QApplication::mouseButtons() == Qt::NoButton) {
+        eventDelegate->handleMouseMotion(event, id);
+    }
     if(QApplication::mouseButtons() == Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
@@ -285,15 +288,15 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
     }
 
     if(clickEvent) {
-        eventDelegate->mouseX = event->x();
-        eventDelegate->mouseY = event->y();
+        eventDelegate->mouseClickX = event->x();
+        eventDelegate->mouseClickY = event->y();
     }
 }
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
-    eventDelegate->mouseX = event->x();
-    eventDelegate->mouseY = event->y();
+    eventDelegate->mouseClickX = event->x();
+    eventDelegate->mouseClickY = event->y();
     if(event->button() == Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
         bool ctrl = modifiers.testFlag(Qt::ControlModifier);
@@ -377,6 +380,8 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
     if(state->modShift) {
         state->modShift = false;
     }
+
+    eventDelegate->handleKeyRelease(event, id);
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
@@ -393,7 +398,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
             setCursor(Qt::OpenHandCursor);
         }
     }
-    this->eventDelegate->handleKeyboard(event, focus);
+    this->eventDelegate->handleKeyPress(event, focus);
     if(event->isAutoRepeat()) {
         state->autorepeat = true;
         //event->ignore();
