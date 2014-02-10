@@ -155,6 +155,9 @@ int main(int argc, char *argv[])
         _Exit(false);
     }
 
+    //HACK, look 7 lines down
+    state->path[0] = '\0';
+
     if(argc >= 2) {
         Knossos::configFromCli(argc, argv);
     }
