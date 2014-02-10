@@ -758,13 +758,22 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
     if(VPfound == -1)
         return true;
 
+
+    if(Patch::patchMode and Patch::eraseInVP != -1) {
+#ifdef Q_OS_MAC
+        if(state->modShift) {
+#elif defined(Q_OS_WIN) || defined(Q_OS_LINUX)
+        if(QApplication::keyboardModifiers() == Qt::SHIFT) {
+#endif
+            if(Patch::eraserLength < 50) {
+                Patch::eraserLength++;
+            }
+        }
+        return true;
+    }
 #ifdef Q_OS_MAC
     if((state->skeletonState->activeNode) and (state->modShift)) {
-#endif
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_LINUX
+#elif defined(Q_OS_WIN) || defined(Q_OS_LINUX)
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
 #endif
         radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
@@ -841,16 +850,25 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     float radius;
     state->directionSign = -1;
 
-    if(VPfound == -1)
+    if(VPfound == -1) {
         return true;
+    }
 
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
+    if(Patch::patchMode and Patch::eraseInVP != -1) {
+#if defined(Q_OS_WIN) || defined(Q_OS_LINUX)
+        if(QApplication::keyboardModifiers() == Qt::SHIFT) {
+#elif defined(Q_OS_MAC)
+        if(state->modShift) {
 #endif
-#ifdef Q_OS_LINUX
+            if(Patch::eraserLength > 1) {
+                Patch::eraserLength--;
+            }
+        }
+        return true;
+    }
+#if defined(Q_OS_WIN) || defined(Q_OS_LINUX)
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_MAC
+#elif defined(Q_OS_MAC)
         if((state->skeletonState->activeNode) and (state->modShift)) {
 #endif
 

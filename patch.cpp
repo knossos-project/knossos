@@ -314,7 +314,6 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
         return;
     }
     float boxLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
-
     switch(viewportType) {
     case VIEWPORT_XY:
         for(int i = activeLine.size() - 1; i >= 0; --i) {

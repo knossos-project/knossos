@@ -434,13 +434,13 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
     glLineWidth(1.);
 
-    if(Patch::patchMode and Patch::eraseInVP == currentVP) {
+    if(Patch::patchMode and Patch::eraseInVP == (int)currentVP) {
         glColor4f(1., 0., 0., 1.);
         glBegin(GL_LINE_LOOP);
             glVertex3d(Patch::eraserPosX - Patch::eraserLength, Patch::eraserPosY - Patch::eraserLength, 0);
-            glVertex3d(Patch::eraserPosX - Patch::eraserLength, Patch::eraserPosY, 0);
-            glVertex3d(Patch::eraserPosX, Patch::eraserPosY, 0);
-            glVertex3d(Patch::eraserPosX, Patch::eraserPosY - Patch::eraserLength, 0);
+            glVertex3d(Patch::eraserPosX - Patch::eraserLength, Patch::eraserPosY + Patch::eraserLength, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserLength, Patch::eraserPosY + Patch::eraserLength, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserLength, Patch::eraserPosY - Patch::eraserLength, 0);
         glEnd();
     }
     return true;
