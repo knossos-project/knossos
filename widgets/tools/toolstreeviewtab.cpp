@@ -1731,7 +1731,7 @@ void ToolsTreeviewTab::nodesDeleted() {
     }
 
     // update active node table, if active node was deleted
-    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == false) {
+    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == nullptr) {
         nodeActivated(); // also activates tree
     }
     state->skeletonState->selectedNodes.clear();

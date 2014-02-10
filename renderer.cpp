@@ -465,13 +465,9 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     return true;
 }
 
-
 // Currently not used
 /* @todo update from trunk */
-static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {
-
-}
-
+//static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;

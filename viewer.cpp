@@ -1968,11 +1968,10 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->conditionLoadSignal->wakeOne();
     return true;
 }
-
+/*
 bool Viewer::moveVPonTop(uint currentVP) {
-
 }
-
+*/
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
@@ -2285,7 +2284,7 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
  *  and the processing of the userMove Slot. The run method was called but the new position was first available in the next frame. Thus rendering an "empty" frame could be prevented.
  *
 */
-bool Viewer::processUserMove() {
+void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 

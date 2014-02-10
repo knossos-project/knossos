@@ -2603,7 +2603,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         if(Knossos::lockSkeleton(targetRevision) == false) {
             LOG("addtreelistelement unable to lock.")
             Knossos::unlockSkeleton(false);
-            return false;
+            return nullptr;
         }
     }
 
@@ -3026,7 +3026,7 @@ bool Skeletonizer::delDynArray(dynArray *array) {
 
 void* Skeletonizer::getDynArray(dynArray *array, int pos) {
     if(pos > array->end) {
-        return false;
+        return nullptr;
     }
     return array->elements[pos];
 }
@@ -4375,7 +4375,7 @@ bool Skeletonizer::deleteSelectedTrees() {
     return true;
 }
 
-bool Skeletonizer::deleteSelectedNodes() {
+void Skeletonizer::deleteSelectedNodes() {
     for(int i = state->skeletonState->selectedNodes.size() - 1; i >= 0; --i) {
         if(state->skeletonState->selectedNodes[i] == state->skeletonState->activeNode) {
             delActiveNode();
@@ -4611,7 +4611,7 @@ Byte *Skeletonizer::serializeSkeleton() {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        return false; //No Skeleton to save
+        return nullptr; //No Skeleton to save
     }
 
         while(currentTree) {

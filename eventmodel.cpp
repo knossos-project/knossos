@@ -618,7 +618,7 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseReleaseMiddle(QMouseEvent *event, int VPfound) {
+void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
     // a node was dragged to a new position
     if(state->skeletonState->activeNode) {
         emit nodePositionChangedSignal(state->skeletonState->activeNode);
@@ -800,7 +800,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {  
+void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     struct treeListElement *prevTree;
     struct treeListElement *nextTree;
