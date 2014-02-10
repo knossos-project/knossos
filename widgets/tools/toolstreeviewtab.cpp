@@ -43,6 +43,8 @@
 extern stateInfo *state;
 stateInfo *kState;
 
+// -- table implementations
+
 TreeTable::TreeTable(QWidget *parent) : QTableWidget(parent), droppedOnTreeID(0), changeByCode(true) {}
 
 void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
@@ -109,6 +111,9 @@ void NodeTable::keyPressEvent(QKeyEvent *event) {
         emit deleteNodesSignal();
     }
 }
+
+
+// -- end table implementations
 
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :

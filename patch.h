@@ -64,13 +64,23 @@ class PatchLoop : public QObject {
 public:
     std::vector<floatCoordinate> points;
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
+    floatCoordinate centroid;
+    uint createdInVP;
 
-    PatchLoop(QObject *parent = 0) : QObject(parent) {}
-    PatchLoop(std::vector<floatCoordinate> newPoints, QObject *parent = 0) : QObject(parent) {
+    PatchLoop(uint inVP, QObject *parent = 0) : QObject(parent), createdInVP(inVP) {}
+
+    PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP, QObject *parent = 0)
+        : QObject(parent), centroid(newCentroid), createdInVP(inVP) {
         points = newPoints;
     }
 
     ~PatchLoop() {}
+
+    void updateCentroid() {
+        if(points.size() > 0) {
+            centroid = centroidPolygon(points);
+        }
+    }
 };
 
 /**

@@ -954,6 +954,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
                 loops = currentPatch->loopsAsVector();
                 for(uint i = 0; i < loops.size(); ++i) {
                     xml.writeStartElement("loop");
+                    xml.writeAttribute("inVP", tmp.setNum(loops[i]->createdInVP));
                     for(uint j = 0; j < loops[i]->points.size(); ++j) {
                         xml.writeStartElement("point");
                         xml.writeAttribute("x", tmp.setNum(loops[i]->points[j].x));
@@ -1496,10 +1497,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             emit activePatchChanged();
                             while(xml.readNextStartElement()) {
                                 if(xml.name() == "loop") {
-                                    loop = new PatchLoop();
-                                    if(loop == NULL) {
-                                        qDebug("bad alloc!");
-                                    }
                                     attributes = xml.attributes();
                                     attribute = attributes.value("inVP");
                                     if(attribute.isNull() == false) {
@@ -1508,6 +1505,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                     else {
                                         viewportType = -1;
                                     }
+                                    loop = new PatchLoop(viewportType);
                                     while(xml.readNextStartElement()) {
                                         if(xml.name() == "point") {
                                             attributes = xml.attributes();
@@ -1527,6 +1525,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                         }
                                         xml.skipCurrentElement();
                                     }
+                                    loop->updateCentroid();
                                     Patch::activePatch->insert(loop, viewportType);
                                 }
                             }
@@ -2409,6 +2408,7 @@ bool Skeletonizer::clearAnnotation(int targetRevision, int loadingSkeleton) {
     state->skeletonState->treeElements = 0;
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
+    Patch::activePatch = NULL;
 
     if(loadingSkeleton == false) {
         setDefaultSkelFileName();

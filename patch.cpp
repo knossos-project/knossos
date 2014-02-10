@@ -209,7 +209,7 @@ bool Patch::insert(Triangle triangle, bool replace) {
  */
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
-        loops->insert(loop, centroidPolygon(loop->points), true);
+        loops->insert(loop, loop->centroid, true);
        // computeVolume(viewportType, loop);
 
         // add to point cloud
@@ -300,7 +300,7 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
 
     if(lineBuffer.size() == 0) {
         // loop is closed now
-        PatchLoop *newLoop = new PatchLoop(activeLine);
+        PatchLoop *newLoop = new PatchLoop(activeLine, centroidPolygon(activeLine), viewportType);
         activePatch->insert(newLoop, viewportType);
     }
     activeLine.clear();
