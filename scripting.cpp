@@ -27,21 +27,23 @@ void Scripting::run() {
     //PythonQt::self()->registerClass(coordinateDecorator->metaObject(), "Coordinate");
 
     //ctx.addObject("skeleton", skeletonReference);
+
     ctx.addObject("state", state);
+    ctx.addObject("skeletonState", state->skeletonState);
+    ctx.addObject("skeletonState");
 
-
-    TreeListDecorator *treeDecorator = new TreeListDecorator();
+    skeletonDecorator = new SkeletonDecorator();
+    treeListDecorator = new TreeListDecorator();
     NodeListElementDecorator *nodeDecorator = new NodeListElementDecorator();
-    SkeletonDecorator *skeletonDecorator = new SkeletonDecorator();
 
-    PythonQt::self()->addDecorators(treeDecorator);
+    PythonQt::self()->addDecorators(skeletonDecorator);
+    PythonQt::self()->registerCPPClass("Skeleton", "", "knossos");
+
+    PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("treeListElement", "", "knossos");
 
     PythonQt::self()->addDecorators(nodeDecorator);
     PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
-
-    PythonQt::self()->addDecorators(skeletonDecorator);
-    PythonQt::self()->registerCPPClass("Skeleton", "", "knossos");
 
 
     //ctx.add

@@ -673,7 +673,7 @@ public:
     struct viewerState *viewerState;
     struct Viewer *viewer;
     struct clientState *clientState;
-    struct skeletonState *skeletonState;
+    class skeletonState *skeletonState;
     struct trajectory *trajectories;
     struct taskState *taskState;
     bool keyD, keyR, keyE, keyF;
@@ -1050,15 +1050,16 @@ struct viewerState {
 class Skeleton {
 
 public:
-    Skeleton() { trees = new QSet<treeListElement *>(); }
-    QSet<treeListElement *> *trees;
+    Skeleton() { trees = new QList<treeListElement *>(); }
+    QList<treeListElement *> *trees;
 
 
 };
 
-class treeListElement {
-public:
-    treeListElement() {}
+class treeListElement : public QObject {
+    Q_OBJECT
+public:    
+    treeListElement();
     treeListElement *next;
     treeListElement *previous;
     nodeListElement *firstNode;
@@ -1068,6 +1069,10 @@ public:
     int colorSetManually;
 
     char comment[8192];
+
+public slots:
+    int getTreeID();
+    void setTreeID(int id);
 };
 
 
@@ -1225,10 +1230,11 @@ typedef struct {
         GLbyte a;
 } color4B;
 
-/**
-  * @struct skeletonState
-  */
-struct skeletonState {
+
+class skeletonState : public QObject {
+    Q_OBJECT
+public:
+    skeletonState();
     uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
@@ -1247,8 +1253,8 @@ struct skeletonState {
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    struct treeListElement *firstTree;
-    struct treeListElement *activeTree;
+    treeListElement *firstTree;
+    treeListElement *activeTree;
     nodeListElement *activeNode;
 
     std::vector<treeListElement *> selectedTrees;
@@ -1383,6 +1389,12 @@ struct skeletonState {
     uint maxUndoSteps;
 
     QString skeletonFileAsQString;
+
+public slots:
+    int getSkeletonTime();
+    bool hasUnsavedChanges();
+    treeListElement *getFirstTree();
+    QString getSkeletonFile();
 };
 
 struct clientState {

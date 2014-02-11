@@ -11,6 +11,8 @@
 #include "skeletonizer.h"
 #include "knossos-global.h"
 
+#include "decorators/skeletondecorator.h"
+#include "decorators/treelistdecorator.h"
 
 extern stateInfo *state;
 /** This class intializes the python qt engine in a seperate thread */
@@ -21,9 +23,10 @@ public:
 
     explicit Scripting(QObject *parent = 0);    
     PythonQtScriptingConsole *console;
-    Skeletonizer *skeletonReference;
-    CoordinateDecorator *coordinateDecorator;
-    //PyObject *aObject;
+
+    SkeletonDecorator *skeletonDecorator;
+    TreeListDecorator *treeListDecorator;
+
     void run();
 signals:
     

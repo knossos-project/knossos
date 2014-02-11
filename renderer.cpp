@@ -2140,7 +2140,7 @@ bool Renderer::setRotationState(uint setTo) {
  */
 
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
-    struct treeListElement *currentTree;
+    treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;

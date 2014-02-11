@@ -15,10 +15,18 @@ public:
     explicit SkeletonDecorator(QObject *parent = 0);
 
 signals:
-
+    void clearSkeletonSignal();
 public slots:
-    Skeleton *new_Skeleton();
-    QSet<treeListElement *> *trees(Skeleton *self);
+    Skeleton *new_Skeleton();    
+    bool deleteTree(Skeleton *self, int id);
+    bool addTree(Skeleton *self, treeListElement *tree);
+    QList<treeListElement *> *trees(Skeleton *self);
+    char *experimentName(Skeleton *self);
+    treeListElement *firstTree(Skeleton *self);
+    treeListElement *findTree(Skeleton *self, int id);
+
+
+
     //int skeletonTime();
     //int idleTime();
 };

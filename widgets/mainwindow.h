@@ -241,7 +241,7 @@ public slots:
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
     bool addRecentFile(const QString &fileName);    
-    //QUndoStack *undoStack;
+
 
     /* dataset */
     void openDatasetSlot();

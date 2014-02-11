@@ -132,9 +132,9 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
 void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
 
     if(on) {
-        state->skeletonState->userCommentColoringOn = true;        
+        state->skeletonState->userCommentColoringOn = true;
     } else {
-        state->skeletonState->userCommentColoringOn = false;       
+        state->skeletonState->userCommentColoringOn = false;
     }
 }
 

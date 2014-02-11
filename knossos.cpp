@@ -133,8 +133,8 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     Knossos::showSplashScreen();
-
     knossos.reset(new Knossos);
+
 
     //Knossos::loadStyleSheet();
 
@@ -188,8 +188,8 @@ int main(int argc, char *argv[])
     Client client;
     
     Scripting scripts;
-    scripts.skeletonReference = viewer.skeletonizer;
-     //scripts.stateReference = state;
+
+
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     QObject::connect(&client, &Client::delCommentSignal, &Skeletonizer::delComment);
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
     QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-
+    QObject::connect(scripts.skeletonDecorator, &SkeletonDecorator::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
 
     knossos->loadDefaultTreeLUT();
 
@@ -247,6 +247,8 @@ int main(int argc, char *argv[])
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
     a.installEventFilter(new myEventFilter());
+
+
 
     scripts.run();
 

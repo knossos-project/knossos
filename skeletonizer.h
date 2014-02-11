@@ -54,8 +54,8 @@ public:
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    struct treeListElement *firstTree;
-    struct treeListElement *activeTree;
+    treeListElement *firstTree;
+    treeListElement *activeTree;
     nodeListElement *activeNode;
 
     struct commentListElement *currentComment;
@@ -223,12 +223,12 @@ public slots:
     void WRAP_popBranchNode();
     static void setColorFromNode(nodeListElement *node, color4F *color);
     static void setRadiusFromNode(nodeListElement *node, float *radius);
-    bool delSkelState(skeletonState *skelState);
-    bool delTreesFromState(skeletonState *skelState);
-    bool delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
+    bool delskeletonState(skeletonState *skeletonState);
+    bool delTreesFromState(skeletonState *skeletonState);
+    bool delTreeFromState(treeListElement *treeToDel, skeletonState *skeletonState);
     static bool hasObfuscatedTime();
-    bool delNodeFromState(nodeListElement *nodeToDel, struct skeletonState *skelState);
-    bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
+    bool delNodeFromState(nodeListElement *nodeToDel, skeletonState *skeletonState);
+    bool delCommentFromState(struct commentListElement *commentToDel, skeletonState *skeletonState);
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 

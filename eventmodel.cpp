@@ -802,8 +802,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
 bool EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {  
 
-    struct treeListElement *prevTree;
-    struct treeListElement *nextTree;
+    treeListElement *prevTree;
+    treeListElement *nextTree;
     nodeListElement *prevNode;
     color4F treeCol;
 

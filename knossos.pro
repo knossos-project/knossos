@@ -96,7 +96,11 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/tools/toolstreeviewtab.cpp \
     stateInfo.cpp \
     decorators/skeletondecorator.cpp \
-    decorators/treelistdecorator.cpp
+    decorators/treelistdecorator.cpp \
+    decorators/nodelistdecorator.cpp \
+    treeListElement.cpp \
+    skeletonstate.cpp \
+    decorators/skeletonstatedecorator.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -191,7 +195,9 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     decorators/skeletondecorator.h \
-    decorators/treelistdecorator.h
+    decorators/treelistdecorator.h \
+    decorators/nodelistdecorator.h \
+    decorators/skeletonstatedecorator.h
 
 
 FORMS    += mainwindow.ui

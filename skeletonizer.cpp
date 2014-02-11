@@ -969,7 +969,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int inMag, magnification = 0;
     int globalMagnificationSpecified = false;
 
-    struct treeListElement *currentTree;
+    treeListElement *currentTree;
     nodeListElement *currentNode = NULL;
     Coordinate *currentCoordinate, loadedPosition;
     Coordinate offset;
@@ -1565,7 +1565,7 @@ bool Skeletonizer::delActiveNode() {
 }
 
 bool Skeletonizer::delActiveTree() {
-    struct treeListElement *nextTree = NULL;
+    treeListElement *nextTree = NULL;
 
     if(state->skeletonState->activeTree) {
         if(state->skeletonState->activeTree->next) {
@@ -1793,7 +1793,7 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
 
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    struct treeListElement *currentTree;
+    treeListElement *currentTree;
     nodeListElement *currentNode, *nodeToDel;
 
 
@@ -2613,7 +2613,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         return newElement;
     }
 
-    newElement = (treeListElement*)malloc(sizeof(struct treeListElement));
+    newElement = (treeListElement*)malloc(sizeof(treeListElement));
     if(newElement == NULL) {
         LOG("Out of memory while trying to allocate memory for a new treeListElement.")
         Knossos::unlockSkeleton(false);
@@ -2623,7 +2623,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         saveSerializedSkeleton();
     }
 
-    memset(newElement, '\0', sizeof(struct treeListElement));
+    memset(newElement, '\0', sizeof(treeListElement));
 
     state->skeletonState->treeElements++;
 
@@ -3224,7 +3224,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
      //  behaviour of only splitting strict subgraphs.
 
     for(i = 0; i < treesCount; i++) {
-        currentTree = (struct treeListElement *)getDynArray(treesSeen, i);
+        currentTree = (treeListElement *)getDynArray(treesSeen, i);
         id = currentTree->treeID;
         nodeCountAllTrees += (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
                                                      id);
@@ -3979,55 +3979,55 @@ void Skeletonizer::setRadiusFromNode(nodeListElement *node, float *radius) {
 
 }
 
-bool Skeletonizer::delSkelState(struct skeletonState *skelState) {
-    if(skelState == NULL) {
+bool Skeletonizer::delskeletonState(skeletonState *skeletonState) {
+    if(skeletonState == NULL) {
         return false;
     }
-    delTreesFromState(skelState);
-    Hashtable::ht_rmtable(skelState->skeletonDCs);
-    free(skelState->searchStrBuffer);
-    free(skelState->prevSkeletonFile);
-    free(skelState->skeletonFile);
-    free(skelState);
-    skelState = NULL;
+    delTreesFromState(skeletonState);
+    Hashtable::ht_rmtable(skeletonState->skeletonDCs);
+    free(skeletonState->searchStrBuffer);
+    free(skeletonState->prevSkeletonFile);
+    free(skeletonState->skeletonFile);
+    free(skeletonState);
+    skeletonState = NULL;
 
     return true;
 }
 
-bool Skeletonizer::delTreesFromState(struct skeletonState *skelState) {
-    struct treeListElement *current;
-    struct treeListElement *treeToDel;
+bool Skeletonizer::delTreesFromState(skeletonState *skeletonState) {
+    treeListElement *current;
+    treeListElement *treeToDel;
 
-    if(skelState->firstTree == NULL) {
+    if(skeletonState->firstTree == NULL) {
         return false;
     }
-    current = skelState->firstTree;
+    current = skeletonState->firstTree;
     while(current) {
         treeToDel = current;
         current = current->next;
-        delTreeFromState(treeToDel, skelState);
+        delTreeFromState(treeToDel, skeletonState);
     }
-    skelState->treeElements = 0;
-    skelState->firstTree = NULL;
-    skelState->activeTree = NULL;
-    skelState->activeNode = NULL;
-    skelState->greatestTreeID = 0;
-    skelState->greatestNodeID = 0;
-    delStack(skelState->branchStack);
-    skelState->branchStack = NULL;
-    delDynArray(skelState->nodeCounter);
-    skelState->nodeCounter = NULL;
-    delDynArray(skelState->nodesByNodeID);
-    skelState->nodesByNodeID = NULL;
-    free(skelState->commentBuffer);
-    skelState->commentBuffer = NULL;
-    free(skelState->currentComment);
-    skelState->currentComment = NULL;
+    skeletonState->treeElements = 0;
+    skeletonState->firstTree = NULL;
+    skeletonState->activeTree = NULL;
+    skeletonState->activeNode = NULL;
+    skeletonState->greatestTreeID = 0;
+    skeletonState->greatestNodeID = 0;
+    delStack(skeletonState->branchStack);
+    skeletonState->branchStack = NULL;
+    delDynArray(skeletonState->nodeCounter);
+    skeletonState->nodeCounter = NULL;
+    delDynArray(skeletonState->nodesByNodeID);
+    skeletonState->nodesByNodeID = NULL;
+    free(skeletonState->commentBuffer);
+    skeletonState->commentBuffer = NULL;
+    free(skeletonState->currentComment);
+    skeletonState->currentComment = NULL;
 
     return true;
 }
 
-bool Skeletonizer::delTreeFromState(treeListElement *treeToDel, skeletonState *skelState) {
+bool Skeletonizer::delTreeFromState(treeListElement *treeToDel, skeletonState *skeletonState) {
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeToDel = NULL;
 
@@ -4039,7 +4039,7 @@ bool Skeletonizer::delTreeFromState(treeListElement *treeToDel, skeletonState *s
     while(currentNode) {
         nodeToDel = currentNode;
         currentNode = nodeToDel->next;
-        delNodeFromState(nodeToDel, skelState);
+        delNodeFromState(nodeToDel, skeletonState);
     }
     treeToDel->firstNode = NULL;
 
@@ -4068,7 +4068,7 @@ bool Skeletonizer::hasObfuscatedTime() {
     return false;
 }
 
-bool Skeletonizer::delNodeFromState(nodeListElement *nodeToDel, struct skeletonState *skelState) {
+bool Skeletonizer::delNodeFromState(nodeListElement *nodeToDel, skeletonState *skeletonState) {
     struct segmentListElement *currentSegment;
     struct segmentListElement *tempNext;
 
@@ -4077,7 +4077,7 @@ bool Skeletonizer::delNodeFromState(nodeListElement *nodeToDel, struct skeletonS
     }
 
     if(nodeToDel->comment) {
-        delCommentFromState(nodeToDel->comment, skelState);
+        delCommentFromState(nodeToDel->comment, skeletonState);
     }
 
     /*
@@ -4113,7 +4113,7 @@ bool Skeletonizer::delNodeFromState(nodeListElement *nodeToDel, struct skeletonS
     return true;
 }
 
-bool Skeletonizer::delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState) {
+bool Skeletonizer::delCommentFromState(struct commentListElement *commentToDel, skeletonState *skeletonState) {
     int nodeID = 0;
 
     if(commentToDel == NULL) {
@@ -4128,13 +4128,13 @@ bool Skeletonizer::delCommentFromState(struct commentListElement *commentToDel, 
     }
 
     if(commentToDel->next == commentToDel) { //only comment in list
-        skelState->currentComment = NULL;
+        skeletonState->currentComment = NULL;
     }
     else {
         commentToDel->next->previous = commentToDel->previous;
         commentToDel->previous->next = commentToDel->next;
-        if(skelState->currentComment == commentToDel) {
-            skelState->currentComment = commentToDel->next;
+        if(skeletonState->currentComment == commentToDel) {
+            skeletonState->currentComment = commentToDel->next;
         }
     }
     free(commentToDel);
@@ -4179,7 +4179,7 @@ bool Skeletonizer::delSegmentFromCmd(struct segmentListElement *segToDel) {
 
 bool Skeletonizer::moveToPrevTree() {
 
-    struct treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
+    treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     nodeListElement *node;
     if(state->skeletonState->activeTree == NULL) {
         return false;
@@ -4217,7 +4217,7 @@ bool Skeletonizer::moveToPrevTree() {
 
 bool Skeletonizer::moveToNextTree() {
 
-    struct treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
+    treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     nodeListElement *node;
 
     if(state->skeletonState->activeTree == NULL) {
@@ -4455,7 +4455,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     PTRSIZEINT currentBranchPointID;
     Byte *serialSkeleton = NULL;
-    struct treeListElement *currentTree;
+    treeListElement *currentTree;
     nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
     struct commentListElement *currentComment;
@@ -4734,7 +4734,7 @@ void Skeletonizer::deserializeSkeleton() {
     int stringLength = 0;
     char temp[10000];
     color4F neuronColor;
-    struct treeListElement *currentTree;
+    treeListElement *currentTree;
     nodeListElement *currentNode;
     float radius;
     Byte VPtype;
@@ -5000,7 +5000,7 @@ int Skeletonizer::getTreeBlockSize(){
     int treeBlockSize = 0;
     
     if(state->skeletonState->firstTree){
-        struct treeListElement *currentTree = state->skeletonState->firstTree;
+        treeListElement *currentTree = state->skeletonState->firstTree;
         treeBlockSize+=sizeof(currentTree->treeID);
         treeBlockSize+=sizeof(currentTree->color.r)+sizeof(currentTree->color.b)+sizeof(currentTree->color.g)+sizeof(currentTree->color.a);
         //Number of nodes, Number of segments
