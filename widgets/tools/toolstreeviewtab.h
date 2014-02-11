@@ -49,7 +49,6 @@ protected:
     void dropEvent(QDropEvent *event);
 
 signals:
-    void updateTreeview();
 
 public slots:
 };
@@ -156,6 +155,7 @@ signals:
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
 
     bool newPatchSignal();
+    bool setActivePatchSignal(Patch *patch, uint patchID = 0);
     bool deleteSelectedPatchesSignal();
 public slots:
     void treeSearchChanged();
@@ -164,14 +164,13 @@ public slots:
     void setFocused(KTable *table);
     void deleteAction();
     void itemsSelected();
+    void itemDoubleClicked(QTableWidgetItem*item);
 
     void displayedNodesChanged(int index);
     void actTreeItemChanged(QTableWidgetItem *item);
     void treeItemChanged(QTableWidgetItem* item);
-    void treeItemDoubleClicked(QTableWidgetItem* item);
     void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
-    void nodeItemDoubleClicked(QTableWidgetItem*);
 
     // context menu
     void contextMenuCalled(QPoint pos);

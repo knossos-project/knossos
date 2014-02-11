@@ -30,6 +30,7 @@
 #include <QtXml>
 #include "knossos-global.h"
 
+class Patch;
 class Skeletonizer : public QObject
 {
     Q_OBJECT
@@ -275,6 +276,7 @@ public slots:
     static bool setActiveTreeByID(int treeID);
 
     // patches slots
+    bool setActivePatch(Patch *patch, uint patchID = 0);
     bool addPatchListElement(int patchID = -1);
     bool delActivePatch();
     // end patches slots

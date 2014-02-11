@@ -182,7 +182,6 @@ public:
 
 signals:
     void activePatchChanged();
-    treeListElement *addTreeListElementSignal(int sync,int targetRevision, int treeID, color4F color, int serialize);
 public slots:
     void updateDistinguishableTriangles(int viewportType = -1);
 };

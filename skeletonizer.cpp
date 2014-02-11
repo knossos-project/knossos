@@ -4508,6 +4508,23 @@ unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comm
 }
 
 // patches
+bool Skeletonizer::setActivePatch(Patch* patch, uint patchID) {
+    if(patch == NULL and patchID == 0) {
+        return false;
+    }
+    if(patch == NULL) {
+        patch = Patch::getPatchWithID(patchID);
+        if(patch == NULL) {
+            qDebug("Could not find patch with id %i", patchID);
+            return false;
+        }
+    }
+    Patch::activePatch = patch;
+    setActiveTreeByID(patch->correspondingTree->treeID);
+    state->skeletonState->unsavedChanges = true;
+    return true;
+}
+
 bool Skeletonizer::addPatchListElement(int patchID) {
     treeListElement *tree = state->skeletonState->activeTree;
     if(tree == NULL) { // create new active tree, to add patch to

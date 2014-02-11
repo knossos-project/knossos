@@ -2305,6 +2305,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedTreesSignal()),
                     skeletonizer, SLOT(deleteSelectedTrees()));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActivePatchSignal(Patch*,uint)),
+            skeletonizer, SLOT(setActivePatch(Patch*,uint)));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(newPatchSignal()),
                     skeletonizer, SLOT(addPatchListElement()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedPatchesSignal()),
@@ -2415,8 +2417,6 @@ void Viewer::updateActivePatchConnections() {
                     Patch::activePatch, SLOT(updateDistinguishableTriangles(int)));
     connect(vpLowerRight, SIGNAL(updateDistinguishableTriangles(int)),
                     Patch::activePatch, SLOT(updateDistinguishableTriangles(int)));
-    connect(Patch::activePatch, SIGNAL(addTreeListElementSignal(int,int,int,color4F,int)),
-                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
