@@ -1,0 +1,38 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>logo.ico</file>
+        <file>script.py</file>
+        <file>arrow</file>
+        <file>arrow2</file>
+        <file alias="python.png">icons/text-x-python.png</file>
+        <file>icons/application-exit.png</file>
+        <file>icons/appointment.png</file>
+        <file>icons/dialog-ok.png</file>
+        <file>icons/document-open-recent.png</file>
+        <file>icons/system-shutdown.png</file>
+        <file>icons/text-x-readme.png</file>
+        <file>icons/document-save-as.png</file>
+        <file>icons/document-save.png</file>
+        <file>icons/document-open.png</file>
+        <file>icons/edit-copy.png</file>
+        <file>icons/edit-paste.png</file>
+        <file>icons/edit-select-all.png</file>
+        <file>icons/user-trash-full.png</file>
+        <file>icons/user-trash.png</file>
+        <file>icons/zoom-in.png</file>
+        <file>icons/zoom-original.png</file>
+        <file>icons/zoom-out.png</file>
+        <file>icons/view-list-icons-symbolic.png</file>
+        <file>icons/insert-text.png</file>
+        <file>icons/configure-toolbars.png</file>
+        <file>icons/network-connect.png</file>
+        <file>icons/network-disconnect.png</file>
+        <file>splash.png</file>
+        <file>icons/resize.gif</file>
+		<file>icons/graph.png</file>
+		<file>icons/task.png</file>
+    </qresource>
+    <qresource prefix="/misc">
+        <file>style.qss</file>
+    </qresource>
+</RCC>
