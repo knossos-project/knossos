@@ -66,11 +66,14 @@ public:
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
     floatCoordinate centroid;
     uint createdInVP;
+    QString comment;
 
-    PatchLoop(uint inVP, QObject *parent = 0) : QObject(parent), createdInVP(inVP) {}
+    PatchLoop(uint inVP, QString newComment = "", QObject *parent = 0)
+        : QObject(parent), createdInVP(inVP), comment(newComment) {}
 
-    PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP, QObject *parent = 0)
-        : QObject(parent), centroid(newCentroid), createdInVP(inVP) {
+    PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP,
+              QString newComment = "", QObject *parent = 0)
+        : QObject(parent), centroid(newCentroid), createdInVP(inVP), comment(newComment) {
         points = newPoints;
     }
 
@@ -84,7 +87,9 @@ public:
 };
 
 /**
- * @brief The Patch class: for volume annotation.
+ * @brief The Patch class: A patch is part of the volume annotation of a neuron. A tree consists of many patches,
+ *        and a Patch consists of many volume loops and a surface.
+ *        Patches are organized in a circular list.
  *
  */
 class Patch : public QObject {
@@ -137,7 +142,9 @@ public:
     Patch *previous;
     uint patchID;
     treeListElement *correspondingTree;
+    QString comment;
     uint numPoints;
+    uint numLoops;
     uint numTriangles;
     pcl_ConcaveHull triangulation;
     pcl_Mesh mesh;

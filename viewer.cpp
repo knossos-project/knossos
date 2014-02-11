@@ -2119,7 +2119,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(nodeAddedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(activeNodeChanged()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
     connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
@@ -2305,6 +2305,10 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedTreesSignal()),
                     skeletonizer, SLOT(deleteSelectedTrees()));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(newPatchSignal()),
+                    skeletonizer, SLOT(addPatchListElement()));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedPatchesSignal()),
+                    skeletonizer, SLOT(deleteSelectedPatches()));
     // commands tab signals
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(findTreeByTreeIDSignal(int)),
                     skeletonizer, SLOT(findTreeByTreeID(int)));
@@ -2391,7 +2395,7 @@ void Viewer::rewire() {
 //                    window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SLOT(updateToolsPatchesWidget()));
     connect(eventModel, SIGNAL(newPatchSignal()), skeletonizer, SLOT(addPatchListElement()));
     connect(eventModel, SIGNAL(activePatchChanged()), this, SLOT(updateActivePatchConnections()));
-
+    connect(eventModel, SIGNAL(patchAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(patchAdded()));
 //    connect(window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SIGNAL(newPatchSignal()),
 //                    skeletonizer, SLOT(addPatchListElement()));
 //    connect(window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SIGNAL(activePatchChanged()),

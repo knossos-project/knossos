@@ -21,41 +21,37 @@ class QMenu;
 struct treeListElement;
 struct nodeListElement;
 struct segmentListElement;
-class TreeTable : public QTableWidget {
+class Patch;
+
+class KTable : public QTableWidget {
+    Q_OBJECT
+public:
+    explicit KTable(QWidget *parent);
+    bool changeByCode;
+    void setItem(int row, int column, QTableWidgetItem *item);
+
+protected:
+    void focusInEvent(QFocusEvent *);
+    void keyPressEvent(QKeyEvent *event);
+signals:
+    void focused(KTable *table);
+    void deleteSignal();
+public slots:
+};
+
+class TreeTable : public KTable {
     Q_OBJECT
 public:
     explicit TreeTable(QWidget *parent);
     int droppedOnTreeID;
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
+
 protected:
-    void keyPressEvent(QKeyEvent *event);
     void dropEvent(QDropEvent *event);
-    void focusInEvent(QFocusEvent *);
+
 signals:
-    void focused(TreeTable *table);
     void updateTreeview();
-    void deleteTreesSignal();
+
 public slots:
-};
-
-class NodeTable : public QTableWidget {
-    Q_OBJECT
-public:
-    explicit NodeTable(QWidget *parent);
-
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void focusInEvent(QFocusEvent *);
-signals:
-    void deleteNodesSignal();
-    void nodesDeletedSignal(QModelIndexList selected);
-    void updateNodesTable();
-    void focused(NodeTable *table);
-public slots:
-
 };
 
 class ToolsTreeviewTab : public QWidget
@@ -66,15 +62,19 @@ public:
 
     TreeTable *activeTreeTable;
     TreeTable *treeTable;
-    TreeTable *focusedTreeTable; // holds activeTreeTable or treeTable depending on what is focused by the user
-    NodeTable *activeNodeTable;
-    NodeTable *nodeTable;
-    NodeTable *focusedNodeTable;
+    KTable *activeNodeTable;
+    KTable *nodeTable;
+    KTable *activePatchTable;
+    KTable *patchTable;
+    KTable *loopTable;
+    KTable *focusedTable; //! holds one of the existing table
 
     QLineEdit *treeSearchField;
     QLineEdit *nodeSearchField;
+    QLineEdit *patchSearchField;
     QCheckBox *treeRegExCheck;
     QCheckBox *nodeRegExCheck;
+    QCheckBox *patchRegExCheck;
     QRadioButton *nodesOfSelectedTreesRadio;
     QRadioButton *allNodesRadio;
     QCheckBox *branchNodesChckBx;
@@ -83,10 +83,9 @@ public:
     QComboBox *displayedNodesCombo;
     QMenu *treeContextMenu;
     QMenu *nodeContextMenu;
+    QMenu *patchContextMenu;
 
     QSplitter *splitter;
-    QWidget *treeSide;
-    QWidget *nodeSide;
     QVBoxLayout *mainLayout;
     // tree action dialogs
     // tree comment editing
@@ -132,58 +131,59 @@ public:
     void updateTreeColorCell(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
 
-    void createTreesContextMenu();
-    void createNodesContextMenu();
+    void createContextMenus();
     void createContextMenuDialogs();
     QPushButton *confirmationPrompt(QString question, QString confirmString);
 
 protected:
     void insertTree(treeListElement *tree, TreeTable *table);
-    void insertNode(nodeListElement *node, NodeTable *table);
-    void setText(TreeTable *table, QTableWidgetItem *item, QString text);
-    void setText(NodeTable *table, QTableWidgetItem *item, QString text);
+    void insertNode(nodeListElement *node, KTable *table);
+    void insertPatch(Patch *patch, KTable *table);
+    void setText(KTable *table, QTableWidgetItem *item, QString text);
     int getActiveTreeRow();
     int getActiveNodeRow();
 signals:
     void updateListedNodesSignal(int n);
     void updateToolsSignal();
-    void deleteSelectedTreesSignal();
+
+    bool deleteSelectedTreesSignal();
+
     void delActiveNodeSignal();
-    void deleteSelectedNodesSignal();
+    bool deleteSelectedNodesSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+
+    bool newPatchSignal();
+    bool deleteSelectedPatchesSignal();
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
 
+    void setFocused(KTable *table);
+    void deleteAction();
+    void itemsSelected();
+
     void displayedNodesChanged(int index);
-    void setFocused(TreeTable *table);
-    void setFocused(NodeTable *table);
     void actTreeItemChanged(QTableWidgetItem *item);
-    void activeTreeSelected();
     void treeItemChanged(QTableWidgetItem* item);
-    void treeItemSelected();
     void treeItemDoubleClicked(QTableWidgetItem* item);
     void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
-    void activeNodeSelected();
-    void nodeItemSelected();
     void nodeItemDoubleClicked(QTableWidgetItem*);
-    // tree context menu
-    void treeContextMenuCalled(QPoint pos);
+
+    // context menu
+    void contextMenuCalled(QPoint pos);
+    // tree actions
     void setActiveTreeAction();
     void editTreeColor();
-    void deleteTreesAction();
     void mergeTreesAction();
     void restoreColorAction();
     void setTreeCommentAction();
     void updateTreeCommentBuffer(QString comment);
     void editTreeComments();
-
-    // node context menu
-    void nodeContextMenuCalled(QPoint pos);
+    // node actions
     void setNodeRadiusAction();
     void linkNodesAction();
     void moveNodesAction();
@@ -193,18 +193,19 @@ public slots:
     void editNodeComments();
     void updateNodeRadiusBuffer(double value);
     void editNodeRadii();
-    void deleteNodesAction();
     void moveNodesClicked();
+    // patch actions
+    void addPatchAction();
 
     // update tree table
-    void treeActivated();
+    void activeTreeChanged();
     void treeAdded(treeListElement *tree);
     void treesDeleted();
-    void treesMerged(int treeID1, int treeID2);
+    void treesMerged(int treeID2);
     void treeComponentSplit();
 
     // update node table
-    void nodeActivated();
+    void activeNodeChanged();
     void nodeAdded();
     void nodesDeleted();
     void branchPushed();
@@ -216,6 +217,10 @@ public slots:
     void updateNodesTable();
     void update();
     
+    // update patch table
+    void activePatchChanged();
+    void patchAdded();
+    void patchesDeleted();
 };
 
 #endif // TREEVIEWTAB_H

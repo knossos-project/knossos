@@ -240,6 +240,7 @@ public slots:
 
     bool deleteSelectedTrees();
     bool deleteSelectedNodes();
+    bool deleteSelectedPatches();
 
     static char *integerChecksum(int32_t in);
     static bool isObfuscatedTime(int time);
@@ -327,8 +328,6 @@ public slots:
     static Byte *serializeSkeleton();
     void deserializeSkeleton();
     void deleteLastSerialSkeleton();
-
-
 
     static int getTreeBlockSize();
     static int getNodeBlockSize();

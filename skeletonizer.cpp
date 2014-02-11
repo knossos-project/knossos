@@ -1929,7 +1929,6 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
         delPatch(currentTree->firstPatch);
     }
 
-
     if(currentTree == state->skeletonState->firstTree)
         state->skeletonState->firstTree = currentTree->next;
     else {
@@ -4443,32 +4442,44 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
 }
 
 bool Skeletonizer::deleteSelectedTrees() {
+    bool deleted = false;
     std::vector<treeListElement *>::iterator iter;
     for(iter = state->skeletonState->selectedTrees.begin();
         iter != state->skeletonState->selectedTrees.end(); ++iter) {
         if(*iter == state->skeletonState->activeTree) {
-            delActiveTree();
+            deleted = delActiveTree() || deleted;
         }
         else {
-            delTree(CHANGE_MANUAL, (*iter)->treeID, true);
+            deleted = delTree(CHANGE_MANUAL, (*iter)->treeID, true) || deleted;
         }
     }
     state->skeletonState->selectedTrees.clear();
-    return true;
+    return deleted;
 }
 
 bool Skeletonizer::deleteSelectedNodes() {
+    bool deleted = false;
     std::vector<nodeListElement *>::iterator iter;
     for(iter = state->skeletonState->selectedNodes.begin();
         iter != state->skeletonState->selectedNodes.end(); ++iter) {
         if((*iter) == state->skeletonState->activeNode) {
-            delActiveNode();
+            deleted = delActiveNode() || deleted;
         }
         else {
-            delNode(CHANGE_MANUAL, 0, *iter, true);
+            deleted = delNode(CHANGE_MANUAL, 0, *iter, true) || deleted;
         }
     }
     state->skeletonState->selectedNodes.clear();
+    return deleted;
+}
+
+bool Skeletonizer::deleteSelectedPatches() {
+    bool deleted = false;
+    for(uint i = 0; i < state->skeletonState->selectedPatches.size(); ++i) {
+        deleted = delPatch(state->skeletonState->selectedPatches[i]) || deleted;
+    }
+    state->skeletonState->selectedPatches.clear();
+    return deleted;
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
@@ -4577,6 +4588,7 @@ bool Skeletonizer::delPatch(patchListElement *patchElToDel, uint patchID) {
     Patch *patch = Patch::getPatchWithID(patchElToDel->patchID);
     Patch::delPatch(patch);
     // update links of patch element list
+    patchElToDel->previous->next = patchElToDel->next;
     patchElToDel->next->previous = patchElToDel->previous;
     if(patchElToDel->next->next == patchElToDel) { // next patch will be last patch -> next and previous point to itself
         patchElToDel->next->next = patchElToDel->next;

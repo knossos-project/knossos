@@ -46,9 +46,9 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     connect(treeviewTab, SIGNAL(updateToolsSignal()), this, SLOT(update()));
     connect(treeviewTab, SIGNAL(updateListedNodesSignal(int)), this, SLOT(nodesInList(int)));
 
-    connect(commandsTab, SIGNAL(treeActivatedSignal()), treeviewTab, SLOT(treeActivated()));
+    connect(commandsTab, SIGNAL(treeActivatedSignal()), treeviewTab, SLOT(activeTreeChanged()));
     connect(commandsTab, SIGNAL(treeAddedSignal(treeListElement*)), treeviewTab, SLOT(treeAdded(treeListElement*)));
-    connect(commandsTab, SIGNAL(nodeActivatedSignal()), treeviewTab, SLOT(nodeActivated()));
+    connect(commandsTab, SIGNAL(nodeActivatedSignal()), treeviewTab, SLOT(activeNodeChanged()));
     connect(commandsTab, SIGNAL(branchPushedSignal()), treeviewTab, SLOT(branchPushed()));
     connect(commandsTab, SIGNAL(branchPoppedSignal()), treeviewTab, SLOT(branchPopped()));
 }

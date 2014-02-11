@@ -636,15 +636,20 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
             }
             else if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
                 if(Patch::activePatch == NULL) {
+                    bool newTree = (state->skeletonState->activeTree == NULL)? true : false;
                     if(newPatchSignal()) {
                         emit activePatchChanged();
-                        emit updateTools();
+                        emit patchAddedSignal();
+                        if(newTree) {
+                            emit treeAddedSignal(Patch::activePatch->correspondingTree);
+                        }
+
                     }
                 }
                 else if(Patch::activePatch->correspondingTree != state->skeletonState->activeTree) {
                     if(newPatchSignal()) {
                         emit activePatchChanged();
-                        emit updateTools();
+                        emit patchAddedSignal();
                     }
                 }
                 Patch::insert(*point);

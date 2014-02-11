@@ -31,7 +31,7 @@ GLuint Patch::vbo;
 GLuint Patch::texHandle;
 
 Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
-    next(this), previous(this), numPoints(0), numTriangles(0) {
+    next(this), previous(this), numPoints(0), numLoops(0), numTriangles(0) {
 
     if(newPatchID == -1) {
         patchID = ++Patch::maxPatchID;
@@ -210,6 +210,7 @@ bool Patch::insert(Triangle triangle, bool replace) {
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
         loops->insert(loop, loop->centroid, true);
+        numLoops++;
        // computeVolume(viewportType, loop);
 
         // add to point cloud

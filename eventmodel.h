@@ -145,11 +145,13 @@ signals:
 
     void treeAddedSignal(treeListElement *tree);
     void nodeAddedSignal();
+    void patchAddedSignal();
     void deleteSelectedNodesSignal();
     void nodesDeletedSignal();
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);
+
 public slots:
 
 };
