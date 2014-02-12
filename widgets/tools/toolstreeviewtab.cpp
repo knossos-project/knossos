@@ -277,13 +277,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     patchTable->horizontalHeader()->setSectionResizeMode(PATCH_COMMENT, QHeaderView::Stretch);
     patchTable->resizeColumnsToContents();
     patchTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    // loop table
-    loopTable = new KTable(this);
-    loopTable->setColumnCount(LOOP_COLS);
-    loopTable->setAlternatingRowColors(true);
-    posCol = new QTableWidgetItem("position");
-    loopTable->setHorizontalHeaderItem(LOOP_POS, posCol);
-    loopTable->resizeColumnsToContents();
 
     createContextMenus();
     createContextMenuDialogs();
@@ -336,21 +329,14 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     vLayout->addWidget(patchTable);
     patchSide->setLayout(vLayout);
 
-    QWidget *loopSide = new QWidget();
-    vLayout = new QVBoxLayout();
-    vLayout->addWidget(loopTable);
-    loopSide->setLayout(vLayout);
-
     splitter = new QSplitter(this);
     splitter->addWidget(treeSide);
     splitter->addWidget(nodeSide);
     splitter->addWidget(patchSide);
-    splitter->addWidget(loopSide);
     mainLayout->addWidget(splitter);
     QList<int> list;
     list.append(310);
     list.append(390);
-    list.append(200);
     list.append(200);
     splitter->setSizes(list);
 
@@ -399,6 +385,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(activePatchTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
     connect(activePatchTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuCalled(QPoint)));
     connect(activePatchTable, SIGNAL(itemSelectionChanged()), this, SLOT(itemsSelected()));
+    connect(activePatchTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(itemDoubleClicked(QTableWidgetItem*)));
     connect(activePatchTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(patchItemChanged(QTableWidgetItem*)));
     connect(activePatchTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
     connect(patchTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
@@ -407,9 +394,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(patchTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(patchItemChanged(QTableWidgetItem*)));
     connect(patchTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuCalled(QPoint)));
     connect(patchTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
-
-    connect(loopTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
-    connect(loopTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
 }
 
 void ToolsTreeviewTab::createContextMenus() {
@@ -570,9 +554,6 @@ void ToolsTreeviewTab::contextMenuCalled(QPoint pos) {
         patchContextMenu->move(patchTable->mapToGlobal(pos));
         patchContextMenu->show();
     }
-    else if(focusedTable == loopTable) {
-
-    }
 }
 
 void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
@@ -632,7 +613,7 @@ void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
             return;
         }
         emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedNodes.at(0)->nodeID);
-        emit JumpToActiveNodeSignal();
+        emit jumpToActiveNodeSignal();
         activeNodeChanged();
         for(uint i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
             state->skeletonState->selectedNodes[i]->selected = false;
@@ -641,12 +622,14 @@ void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
     }
 
     else if(focusedTable == patchTable) {
-        if(state->skeletonState->selectedPatches.size() != 1) {
-            return;
-        }
-        if(setActivePatchSignal(NULL, state->skeletonState->selectedPatches[0]->patchID)) {
+        if(setActivePatchSignal(NULL, patchTable->item(item->row(), PATCH_ID)->text().toInt())) {
             activePatchChanged();
         }
+        emit jumpToActivePatchSignal();
+        state->skeletonState->selectedPatches.clear();
+    }
+    else if(focusedTable == activePatchTable) {
+        emit jumpToActivePatchSignal();
         state->skeletonState->selectedPatches.clear();
     }
 }
@@ -715,9 +698,6 @@ void ToolsTreeviewTab::itemsSelected() {
                 state->skeletonState->selectedPatches.push_back(patch);
             }
         }
-    }
-    else if(focusedTable == loopTable) {
-
     }
 }
 
@@ -837,9 +817,6 @@ void ToolsTreeviewTab::deleteAction() {
                 patchesDeleted();
             }
         }
-    }
-    else if(focusedTable == loopTable) {
-
     }
 }
 
@@ -1314,9 +1291,9 @@ void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
 }
 
 void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
-//    if(treeTable->changeByCode) {
-//        return;
-//    }
+    if(treeTable->changeByCode) {
+        return;
+    }
     QTableWidgetItem *idItem = treeTable->item(item->row(), TREE_ID);
     if(idItem == NULL) {
         return;
@@ -1737,7 +1714,7 @@ void ToolsTreeviewTab::updateNodesTable() {
     nodeTable->changeByCode = true;
     nodeTable->clearContents();
 
-    if(displayedNodes > state->skeletonState->totalNodeElements or displayedNodes == DISPLAY_ALL) {
+    if((uint)displayedNodes > state->skeletonState->totalNodeElements or displayedNodes == DISPLAY_ALL) {
         nodeTable->setRowCount(state->skeletonState->totalNodeElements);
     }
     else {

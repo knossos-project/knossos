@@ -2555,8 +2555,7 @@ void Renderer::renderPatches(uint viewportType) {
         glVertexPointer(3, GL_FLOAT, 0, 0);
         glEnableClientState(GL_VERTEX_ARRAY);
         glColor4f(1, 0, 0., 1);
-        glLineWidth(3);
-        glDrawArrays(GL_POINTS, 0, Patch::activeLine.size());
+        glDrawArrays(GL_LINE_STRIP, 0, Patch::activeLine.size());
     }
 
     glPopMatrix();
@@ -2580,8 +2579,7 @@ void Renderer::renderPatches(uint viewportType) {
             glVertexPointer(3, GL_FLOAT, 0, 0);
             glEnableClientState(GL_VERTEX_ARRAY);
             glColor4f(1., 0., 0., 1);
-            glLineWidth(3);
-            glDrawArrays(GL_POINTS, 0, Patch::lineBuffer[i].size());
+            glDrawArrays(GL_LINE_STRIP, 0, Patch::lineBuffer[i].size());
         }
     }
 
@@ -2609,7 +2607,7 @@ void Renderer::renderPatches(uint viewportType) {
 
         glVertexPointer(3, GL_FLOAT, 0, 0);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glDrawArrays(GL_POINTS, 0, loops[i]->points.size());
+        glDrawArrays(GL_LINE_LOOP, 0, loops[i]->points.size());
     }
 
     // draw all points

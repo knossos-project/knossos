@@ -57,7 +57,7 @@ typedef Triangulation::Vertex_handle                CGAL_VertexHandle;
 
 #define DRAW_CONTINUOUS_LINE 0 //! draw patch with a continuous line
 #define DRAW_DROP_POINTS 1 //! draw patch by placing points
-#define AUTO_ALIGN_RADIUS 1 //! radius in which two lines are connected at their end points
+#define AUTO_ALIGN_RADIUS 2 //! radius in which two lines are connected at their end points
 
 class PatchLoop : public QObject {
     Q_OBJECT
@@ -143,6 +143,7 @@ public:
     uint patchID;
     treeListElement *correspondingTree;
     QString comment;
+    floatCoordinate pos;
     uint numPoints;
     uint numLoops;
     uint numTriangles;

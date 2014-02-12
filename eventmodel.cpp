@@ -50,6 +50,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     struct nodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
+    Patch::eraseInVP = -1;
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
@@ -141,6 +142,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
+    Patch::eraseInVP = -1;
     int clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
 
     if(clickedNode) {
@@ -188,19 +190,24 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if(clickedCoordinate == NULL) {
                 return false;
             }
-            floatCoordinate distance;
-            for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
-                SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i][0], *clickedCoordinate);
-                if(euclidicNorm(&distance) < AUTO_ALIGN_RADIUS) {
-                    Patch::alignToLine(*clickedCoordinate, i, true);
-                    break;
-                }
-                else {
-                    SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i].back(),
-                                                    *clickedCoordinate);
+            if(Patch::eraseInVP == VPfound) { // erasing
+                Patch::erasePoints(*clickedCoordinate, VPfound);
+            }
+            else { // drawing
+                floatCoordinate distance;
+                for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                    SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i][0], *clickedCoordinate);
                     if(euclidicNorm(&distance) < AUTO_ALIGN_RADIUS) {
-                        Patch::alignToLine(*clickedCoordinate, i, false);
+                        Patch::alignToLine(*clickedCoordinate, i, true);
                         break;
+                    }
+                    else {
+                        SUB_ASSIGN_COORDINATE(distance, Patch::lineBuffer[i].back(),
+                                                        *clickedCoordinate);
+                        if(euclidicNorm(&distance) < AUTO_ALIGN_RADIUS) {
+                            Patch::alignToLine(*clickedCoordinate, i, false);
+                            break;
+                        }
                     }
                 }
             }
@@ -631,7 +638,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                 Patch::eraserPosX = event->x();
                 Patch::eraserPosY = event->y();
                 if(Patch::activePatch) {
-                    Patch::activePatch->erasePoints(*point, VPfound);
+                    Patch::erasePoints(*point, VPfound);
                 }
             }
             else if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {

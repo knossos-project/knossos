@@ -2297,7 +2297,7 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(deleteSelectedNodes()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delActiveNodeSignal()),
                     skeletonizer, SLOT(delActiveNode()));
-    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(JumpToActiveNodeSignal()),
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(jumpToActiveNodeSignal()),
                     skeletonizer, SLOT(jumpToActiveNode()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(addSegmentSignal(int,int,int,int)),
                     skeletonizer, SLOT(addSegment(int,int,int,int)));
@@ -2307,6 +2307,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(deleteSelectedTrees()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActivePatchSignal(Patch*,uint)),
             skeletonizer, SLOT(setActivePatch(Patch*,uint)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(jumpToActivePatchSignal()),
+            skeletonizer, SLOT(jumpToActivePatch()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(newPatchSignal()),
                     skeletonizer, SLOT(addPatchListElement()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedPatchesSignal()),

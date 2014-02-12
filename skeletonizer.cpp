@@ -4525,6 +4525,18 @@ bool Skeletonizer::setActivePatch(Patch* patch, uint patchID) {
     return true;
 }
 
+void Skeletonizer::jumpToActivePatch() {
+    if(Patch::activePatch) {
+        if(Patch::activePatch->pos.x != -1) {
+            emit userMoveSignal(roundFloat(Patch::activePatch->pos.x) - state->viewerState->currentPosition.x,
+                                roundFloat(Patch::activePatch->pos.y) - state->viewerState->currentPosition.y,
+                                roundFloat(Patch::activePatch->pos.z) - state->viewerState->currentPosition.z,
+                                TELL_COORDINATE_CHANGE);
+        }
+    }
+}
+
+
 bool Skeletonizer::addPatchListElement(int patchID) {
     treeListElement *tree = state->skeletonState->activeTree;
     if(tree == NULL) { // create new active tree, to add patch to

@@ -42,7 +42,7 @@ Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
             maxPatchID = newPatchID;
         }
     }
-
+    SET_COORDINATE(pos, -1, -1, -1);
     floatCoordinate center;
     center.x = state->boundary.x/2;
     center.y = state->boundary.y/2;
@@ -209,9 +209,10 @@ bool Patch::insert(Triangle triangle, bool replace) {
  */
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
+        pos = loop->centroid;
         loops->insert(loop, loop->centroid, true);
         numLoops++;
-       // computeVolume(viewportType, loop);
+        //computeVolume(viewportType, loop);
 
         // add to point cloud
         for(uint i = 0; i < loop->points.size(); ++i) {
@@ -314,62 +315,93 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
     if(activeLine.size() == 0 and lineBuffer.size() == 0) {
         return;
     }
-    float boxLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
+    std::vector<uint> erasedPoints;
+    float halfLength = eraserLength/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
     switch(viewportType) {
     case VIEWPORT_XY:
-        for(int i = activeLine.size() - 1; i >= 0; --i) {
-            if(activeLine[i].x > center.x - boxLength and activeLine[i].x < center.x + boxLength
-               and activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength) {
-                activeLine.erase(activeLine.begin() + i);
-            }
-        }
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
-                if(lineBuffer[i][j].x > center.x - boxLength and lineBuffer[i][j].x < center.x + boxLength
-                        and lineBuffer[i][j].y > center.y - boxLength and lineBuffer[i][j].y < center.y + boxLength) {
-                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+            erasedPoints.clear();
+            for(uint j = 0; j < lineBuffer[i].size(); ++j) {
+                if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
+                        and lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength) {
+                    erasedPoints.push_back(j);
                 }
             }
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
+            if(erasedPoints.size() > 0) {
+                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
+                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
+                if(start != -1 and end != -1) { // eraser split line into two lines
+                    std::vector<floatCoordinate> newLine;
+                    newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
+                    lineBuffer.push_back(newLine);
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].end());
+                }
+                else if(start == -1 and end == -1) { // line empty, remove it
+                    lineBuffer.erase(lineBuffer.begin() + i);
+                }
+                else { // line shortened
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].begin() + erasedPoints.back() + 1);
+                }
             }
         }
         break;
     case VIEWPORT_XZ:
-        for(int i = activeLine.size() - 1; i >= 0; --i) {
-            if(activeLine[i].x > center.x - boxLength and activeLine[i].x < center.x + boxLength
-               and activeLine[i].z > center.z - boxLength and activeLine[i].z < center.z + boxLength) {
-                activeLine.erase(activeLine.begin() + i);
-            }
-        }
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
-                if(lineBuffer[i][j].x > center.x - boxLength and lineBuffer[i][j].x < center.x + boxLength
-                        and lineBuffer[i][j].z > center.z - boxLength and lineBuffer[i][j].z < center.z + boxLength) {
-                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+            erasedPoints.clear();
+            for(uint j = 0; j < lineBuffer[i].size(); ++j) {
+                if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
+                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength) {
+                    erasedPoints.push_back(j);
                 }
             }
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
+            if(erasedPoints.size() > 0) {
+                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
+                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
+                if(start != -1 and end != -1) { // eraser split line into two lines
+                    std::vector<floatCoordinate> newLine;
+                    newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
+                    lineBuffer.push_back(newLine);
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].end());
+                }
+                else if(erasedPoints.size() == lineBuffer[i].size()) { // line empty, remove it
+                    lineBuffer.erase(lineBuffer.begin() + i);
+                }
+                else { // line shortened
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].begin() + erasedPoints.back() + 1);
+                }
             }
         }
         break;
     case VIEWPORT_YZ:
-        for(int i = activeLine.size() - 1; i >= 0; --i) {
-            if(activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength
-               and activeLine[i].y > center.y - boxLength and activeLine[i].y < center.y + boxLength) {
-                activeLine.erase(activeLine.begin() + i);
-            }
-        }
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            for(int j = lineBuffer[i].size() - 1; j >= 0; --j) {
-                if(lineBuffer[i][j].y > center.y - boxLength and lineBuffer[i][j].y < center.y + boxLength
-                        and lineBuffer[i][j].z > center.z - boxLength and lineBuffer[i][j].z < center.z + boxLength) {
-                    lineBuffer[i].erase(lineBuffer[i].begin() + j);
+            erasedPoints.clear();
+            for(uint j = 0; j < lineBuffer[i].size(); ++j) {
+                if(lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength
+                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength) {
+                    erasedPoints.push_back(j);
                 }
             }
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
+            if(erasedPoints.size() > 0) {
+                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
+                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
+                if(start != -1 and end != -1) { // eraser split line into two lines
+                    std::vector<floatCoordinate> newLine;
+                    newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
+                    lineBuffer.push_back(newLine);
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].end());
+                }
+                else if(start == -1 and end == -1) { // line empty, remove it
+                    lineBuffer.erase(lineBuffer.begin() + i);
+                }
+                else { // line shortened
+                    lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                        lineBuffer[i].begin() + erasedPoints.back() + 1);
+                }
             }
         }
         break;

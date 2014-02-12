@@ -277,6 +277,7 @@ public slots:
 
     // patches slots
     bool setActivePatch(Patch *patch, uint patchID = 0);
+    void jumpToActivePatch();
     bool addPatchListElement(int patchID = -1);
     bool delActivePatch();
     // end patches slots

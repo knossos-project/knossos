@@ -65,7 +65,6 @@ public:
     KTable *nodeTable;
     KTable *activePatchTable;
     KTable *patchTable;
-    KTable *loopTable;
     KTable *focusedTable; //! holds one of the existing table
 
     QLineEdit *treeSearchField;
@@ -125,7 +124,7 @@ public:
 
     // drag'n drop buffers
     int draggedNodeID;
-    uint displayedNodes;
+    int displayedNodes;
 
     void updateTreeColorCell(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
@@ -150,13 +149,14 @@ signals:
     void delActiveNodeSignal();
     bool deleteSelectedNodesSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
-    void JumpToActiveNodeSignal();
+    void jumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
 
     bool newPatchSignal();
     bool setActivePatchSignal(Patch *patch, uint patchID = 0);
     bool deleteSelectedPatchesSignal();
+    void jumpToActivePatchSignal();
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
