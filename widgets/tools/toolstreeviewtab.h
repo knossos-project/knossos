@@ -125,7 +125,7 @@ public:
 
     // drag'n drop buffers
     int draggedNodeID;
-    int displayedNodes;
+    uint displayedNodes;
 
     void updateTreeColorCell(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
@@ -160,6 +160,7 @@ signals:
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
+    void patchSearchChanged();
 
     void setFocused(KTable *table);
     void deleteAction();
@@ -171,6 +172,7 @@ public slots:
     void treeItemChanged(QTableWidgetItem* item);
     void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
+    void patchItemChanged(QTableWidgetItem *item);
 
     // context menu
     void contextMenuCalled(QPoint pos);
@@ -214,6 +216,7 @@ public slots:
     void nodePositionChanged(nodeListElement *node);
     void updateTreesTable();
     void updateNodesTable();
+    void updatePatchesTable();
     void update();
     
     // update patch table

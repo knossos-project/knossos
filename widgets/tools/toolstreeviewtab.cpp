@@ -359,6 +359,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // search events
     connect(treeSearchField, SIGNAL(editingFinished()), this, SLOT(treeSearchChanged()));
     connect(nodeSearchField, SIGNAL(editingFinished()), this, SLOT(nodeSearchChanged()));
+    connect(patchSearchField, SIGNAL(editingFinished()), this, SLOT(patchSearchChanged()));
     // display events
     connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
     connect(allNodesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
@@ -398,10 +399,12 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(activePatchTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
     connect(activePatchTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuCalled(QPoint)));
     connect(activePatchTable, SIGNAL(itemSelectionChanged()), this, SLOT(itemsSelected()));
+    connect(activePatchTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(patchItemChanged(QTableWidgetItem*)));
     connect(activePatchTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
     connect(patchTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
     connect(patchTable, SIGNAL(itemSelectionChanged()), this, SLOT(itemsSelected()));
     connect(patchTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(itemDoubleClicked(QTableWidgetItem*)));
+    connect(patchTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(patchItemChanged(QTableWidgetItem*)));
     connect(patchTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuCalled(QPoint)));
     connect(patchTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
 
@@ -1217,6 +1220,16 @@ void ToolsTreeviewTab::nodeSearchChanged() {
     updateNodesTable();
 }
 
+void ToolsTreeviewTab::patchSearchChanged() {
+    if(patchRegExCheck->isChecked() and patchSearchField->text().length() > 0) {
+        QRegularExpression regex(patchSearchField->text());
+        if(regex.isValid() == false) {
+            QToolTip::showText(patchSearchField->mapToGlobal(patchSearchField->pos()), "Invalid regular expression.");
+        }
+    }
+    updatePatchesTable();
+}
+
 void ToolsTreeviewTab::displayedNodesChanged(int index) {
     switch(index) {
     case NODECOMBO_100:
@@ -1553,6 +1566,82 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
     emit updateToolsSignal();
 }
 
+void ToolsTreeviewTab::patchItemChanged(QTableWidgetItem *item) {
+    KTable *table = (KTable *)item->tableWidget();
+    if(table->changeByCode) {
+        return;
+    }
+
+    QTableWidgetItem *idItem = table->item(item->row(), PATCH_ID);
+    Patch *patch;
+    if((patch = Patch::getPatchWithID(idItem->text().toInt())) == NULL) {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Information);
+        prompt.setWindowTitle("Information");
+        prompt.setText(QString("Patch with ID %1 could not be found.").arg(idItem->text()));
+        prompt.exec();
+        table->removeRow(item->row());
+    }
+    if(item->column() == PATCH_COMMENT) {
+        if(patch == Patch::activePatch) {
+            if(table == patchTable) {
+                setText(activePatchTable, activePatchTable->item(0, PATCH_COMMENT), item->text());
+                //check if patch is now filtered out by comment search
+                if(patch->comment.isEmpty() == false) {
+                    patch->comment = item->text();
+                    if(item->text().length() == 0) {
+                        if(patchSearchField->text().isEmpty() == false) {
+                            patchTable->removeRow(item->row()); // filter out
+                        }
+                    }
+                    else {
+                        if(patchSearchField->text().isEmpty() == false) {
+                            if(matchesSearchString(patchSearchField->text(),
+                                                   patch->comment, patchRegExCheck->isChecked()) == false) {
+                                patchTable->removeRow(item->row());
+                            }
+                        }
+                    }
+                }
+                else { // comment was empty before and not filtered out, so it won't be filtered out after this, either
+                    patch->comment = item->text();
+                }
+            }
+            else { // activePatchTable
+                for(int i = 0; i < patchTable->rowCount(); ++i) {
+                    if((uint)patchTable->item(i, PATCH_ID)->text().toInt() == Patch::activePatch->patchID) {
+                        setText(patchTable, patchTable->item(i, PATCH_COMMENT), item->text());
+                        break;
+                    }
+                }
+            }
+        }
+        else { // not active patch
+            //check if patch is now filtered out by comment search
+            if(patch->comment.isEmpty() == false) {
+                patch->comment = item->text();
+                if(item->text().length() == 0) {
+                    if(patchSearchField->text().isEmpty() == false) {
+                        patchTable->removeRow(item->row()); // filter out
+                    }
+                }
+                else {
+                    if(patchSearchField->text().isEmpty() == false) {
+                        if(matchesSearchString(patchSearchField->text(),
+                                               patch->comment, patchRegExCheck->isChecked()) == false) {
+                            patchTable->removeRow(item->row());
+                        }
+                    }
+                }
+            }
+            else { // comment was empty before and not filtered out, so it won't be filtered out after this, either
+                patch->comment = item->text();
+            }
+        }
+    }
+}
+
 void ToolsTreeviewTab::updateTreeColorCell(TreeTable *table, int row) {
     QTableWidgetItem *idItem = table->item(row, TREE_ID);
     treeListElement *tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
@@ -1760,6 +1849,55 @@ void ToolsTreeviewTab::updateNodesTable() {
 
     emit updateListedNodesSignal(nodeTable->rowCount());
     nodeTable->changeByCode = false;
+}
+
+void ToolsTreeviewTab::updatePatchesTable() {
+    patchTable->clearContents();
+    patchTable->setRowCount(Patch::numPatches);
+
+    Patch *currentPatch = Patch::activePatch;
+    if(currentPatch == NULL) {
+        return;
+    }
+
+    QTableWidgetItem *item;
+    uint patchIndex = 0;
+    do {
+        // filter comment for search string match
+        if(patchSearchField->text().length() > 0) {
+            if(currentPatch->comment.length() == 0) {
+                currentPatch = currentPatch->next;
+                continue;
+            }
+            if(matchesSearchString(patchSearchField->text(), currentPatch->comment, treeRegExCheck->isChecked()) == false) {
+                currentPatch = currentPatch->next;
+                continue;
+            }
+        }
+        // patch id
+        Qt::ItemFlags flags;
+        item = new QTableWidgetItem(QString::number(currentPatch->patchID));
+        flags = item->flags();
+        flags |= Qt::ItemIsSelectable;
+        flags &= ~Qt::ItemIsEditable;
+        item->setFlags(flags);
+        patchTable->setItem(patchIndex, PATCH_ID, item);
+
+        // patch comment
+        item = new QTableWidgetItem("");
+        flags = item->flags();
+        flags &= ~Qt::ItemIsSelectable;
+        item->setFlags(flags);
+        if(currentPatch->comment.length() > 0) {
+            setText(patchTable, item, currentPatch->comment);
+        }
+        patchTable->setItem(patchIndex, PATCH_COMMENT, item);
+
+        patchIndex++;
+        currentPatch = currentPatch->next;
+    } while(currentPatch != Patch::activePatch);
+
+    patchTable->setRowCount(patchIndex);
 }
 
 void ToolsTreeviewTab::activeTreeChanged() {
@@ -2065,6 +2203,7 @@ void ToolsTreeviewTab::update() {
     updateTreesTable();
     updateNodesTable();
     activeNodeChanged();
+    updatePatchesTable();
     emit updateToolsSignal();
 }
 
