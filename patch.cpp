@@ -325,10 +325,15 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
     switch(viewportType) {
     case VIEWPORT_XY:
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+                continue;
+            }
             erasedPoints.clear();
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
                 if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
-                        and lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength) {
+                        and lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength
+                        and roundFloat(lineBuffer[i][j].z) == state->viewerState->currentPosition.z) {
                     erasedPoints.push_back(j);
                 }
             }
@@ -368,10 +373,15 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
         break;
     case VIEWPORT_XZ:
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+                continue;
+            }
             erasedPoints.clear();
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
                 if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
-                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength) {
+                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength
+                        and roundFloat(lineBuffer[i][j].y) == state->viewerState->currentPosition.y) {
                     erasedPoints.push_back(j);
                 }
             }
@@ -410,10 +420,15 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
         break;
     case VIEWPORT_YZ:
         for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+            if(lineBuffer[i].size() == 0) {
+                lineBuffer.erase(lineBuffer.begin() + i);
+                continue;
+            }
             erasedPoints.clear();
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
                 if(lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength
-                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength) {
+                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength
+                        and roundFloat(lineBuffer[i][j].x) == state->viewerState->currentPosition.x) {
                     erasedPoints.push_back(j);
                 }
             }
@@ -474,6 +489,9 @@ void Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
     switch(viewportType) {
     case VIEWPORT_XY:
         for(uint i = 0; i < visibleLoops.size(); ++i) {
+            if(roundFloat(visibleLoops[i]->centroid.z) != state->viewerState->currentPosition.z) {
+                continue;
+            }
             for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
                 if(visibleLoops[i]->points[j].x > center.x - halfEdge and visibleLoops[i]->points[j].x < center.x + halfEdge
                         and visibleLoops[i]->points[j].y > center.y - halfEdge and visibleLoops[i]->points[j].y < center.y + halfEdge) {
@@ -486,6 +504,9 @@ void Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
         break;
     case VIEWPORT_XZ:
         for(uint i = 0; i < visibleLoops.size(); ++i) {
+            if(roundFloat(visibleLoops[i]->centroid.y) != state->viewerState->currentPosition.y) {
+                continue;
+            }
             for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
                 if(visibleLoops[i]->points[j].x > center.x - halfEdge and visibleLoops[i]->points[j].x < center.x + halfEdge
                         and visibleLoops[i]->points[j].z > center.z - halfEdge and visibleLoops[i]->points[j].z < center.z + halfEdge) {
@@ -498,6 +519,9 @@ void Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
         break;
     case VIEWPORT_YZ:
         for(uint i = 0; i < visibleLoops.size(); ++i) {
+            if(roundFloat(visibleLoops[i]->centroid.x) != state->viewerState->currentPosition.x) {
+                continue;
+            }
             for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
                 if(visibleLoops[i]->points[j].y > center.y - halfEdge and visibleLoops[i]->points[j].y < center.y + halfEdge
                         and visibleLoops[i]->points[j].z > center.z - halfEdge and visibleLoops[i]->points[j].z < center.z + halfEdge) {
