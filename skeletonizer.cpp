@@ -2407,7 +2407,10 @@ bool Skeletonizer::clearAnnotation(int targetRevision, int loadingSkeleton) {
     state->skeletonState->treeElements = 0;
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
+
     Patch::activePatch = NULL;
+    Patch::activeLine.clear();
+    Patch::lineBuffer.clear();
 
     if(loadingSkeleton == false) {
         setDefaultSkelFileName();

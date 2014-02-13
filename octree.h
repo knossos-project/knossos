@@ -618,6 +618,67 @@ public:
     }
 
     /**
+     * @brief remove removes given object from octree. The "=" operator must be defined for this to work.
+     *        When a leaf is passed, this function assumes it is the octree's root without any children
+     * @param obj the object to be removed
+     * @param objPos the object's position
+     * @return true if something was removed, false otherwise
+     */
+    bool remove(T obj, floatCoordinate objPos) {
+        if(isLeaf()) {
+            if(point.x == -1 or COMPARE_COORDINATE(point, objPos) == false) {
+                return false;
+            }
+            for(uint i = 0; i < objects.size(); ++i) {
+                if(objects[i] == obj) {
+                    objects.erase(objects.begin() + i);
+                    if(objects.size() == 0) {
+                        SET_COORDINATE(point, -1, -1, -1);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+        if(center.x + halfEdgeLen < objPos.x or center.x - halfEdgeLen > objPos.x
+           or center.y + halfEdgeLen < objPos.y or center.y - halfEdgeLen > objPos.y
+           or center.z + halfEdgeLen < objPos.z or center.z - halfEdgeLen > objPos.z) {
+            return false;
+        }
+        for(int i = 0; i < 8; ++i) {
+            if(children[i] == NULL) {
+                continue;
+            }
+            if(children[i]->isLeaf() == false) { // not at level above leaf, yet
+                if(children[i]->remove(obj, objPos)) {
+                    return true;
+                }
+            }
+            else if(children[i]->point.x == -1) { // leaf is empty
+                continue;
+            }
+            else { // found leaf that is not empty
+                bool deleted = false;
+                for(uint j = 0; j < children[i]->objects.size(); ++j) {
+                    if(obj == children[i]->objects[j]) {
+                        children[i]->objects.erase(children[i]->objects.begin() + j);
+                        deleted = true;
+                        break;
+                    }
+                }
+                if(children[i]->objects.size() == 0) {
+                    delete children[i];
+                    children[i] = NULL;
+                }
+                if(deleted) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * @brief clearObjsInCube deletes all leaves in this octree whose objects are in the specified cube.
      *        If this octree is a leaf itself, nothing happens.
      * @param pos the center of the specified cube
@@ -636,7 +697,7 @@ public:
             if(children[i]->isLeaf() == false) { // not at level above leaf yet
                 children[i]->clearObjsInCube(pos, halfCubeLen, removedObjs);
             }
-            else if(point.x == -1) { // leaf is empty
+            else if(children[i]->point.x == -1) { // leaf is empty
                 continue;
             }
             else if(children[i]->point.x > pos.x - halfCubeLen and children[i]->point.x < pos.x + halfCubeLen

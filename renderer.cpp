@@ -156,59 +156,81 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         return true;
 }
 
-uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType) {
+/**
+ * @brief Renderer::renderSphere renders a sphere at given position of either float precision or int precision.
+ * @param floatPos sphere center in float coordinates. Set to NULL when using int precision.
+ * @param pos sphere center in int coordinates. Set to NULL when using float precision.
+ * @param currentVP viewport id
+ * @param viewportType XY, XZ, YZ, arbitrary or 3d
+ * @return
+ */
+uint Renderer::renderSphere(floatCoordinate *floatPos, Coordinate *pos, float radius, color4F color,
+                            uint currentVP, uint viewportType) {
     GLUquadricObj *gluSphereObj = NULL;
 
-        /* Render only a point if the sphere wouldn't be visible anyway */
+    floatCoordinate center;
+    if(floatPos != NULL) {
+        CPY_COORDINATE(center, *floatPos);
+    }
+    else if(pos != NULL) {
+        CPY_COORDINATE(center, *pos);
+    }
+    else {
+        qDebug("Specify either floatPos or pos!");
+        return false;
+    }
 
-        if((state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
-           * radius > 0.0f) && (state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
-           * radius < 2.0f) || (state->viewerState->cumDistRenderThres > 19.f)) {
+    /* Render only a point if the sphere wouldn't be visible anyway */
 
-            /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
-            Color buffer picking brings its own issues on the other hand, so we
-            stick with SELECT mode for the time being. */
-            if(state->viewerState->selectModeFlag) {
-                glPointSize(radius * 2.);
-                glBegin(GL_POINTS);
-                    glVertex3f((float)pos->x, (float)pos->y, (float)pos->z);
-                glEnd();
-                glPointSize(1.);
-            }
-            else {
-                if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
-                    doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
+    if(((state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
+       * radius > 0.0f) && (state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
+       * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
-                SET_COORDINATE(state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex], (float)pos->x, (float)pos->y, (float)pos->z);
-                state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
-                state->skeletonState->pointVertBuffer.vertsIndex++;
-            }
+        /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
+        Color buffer picking brings its own issues on the other hand, so we
+        stick with SELECT mode for the time being. */
+        if(state->viewerState->selectModeFlag) {
+            glPointSize(radius * 2.);
+            glBegin(GL_POINTS);
+                glVertex3f(center.x, center.y, center.z);
+            glEnd();
+            glPointSize(1.);
         }
         else {
-            GLfloat tmp[] = {color.r, color.g, color.b, color.a};
-            glColor4fv(tmp);
-            glPushMatrix();
-            glTranslatef((float)pos->x, (float)pos->y, (float)pos->z);
-            glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
-            gluSphereObj = gluNewQuadric();
-            gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
-
-            if(radius * state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx  > 20.) {
-                gluSphere(gluSphereObj, radius, 14, 14);
+            if(state->skeletonState->pointVertBuffer.vertsBuffSize
+                < state->skeletonState->pointVertBuffer.vertsIndex + 2) {
+                doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
             }
-            else if(radius * state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx  > 5.) {
-                gluSphere(gluSphereObj, radius, 8, 8);
-            }
-            else {
-                gluSphere(gluSphereObj, radius, 5, 5);
-            }
-            //glScalef(1.f, 1.f, 1.f/state->viewerState->voxelXYtoZRatio);
-            gluDeleteQuadric(gluSphereObj);
-            glPopMatrix();
+            SET_COORDINATE(state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex],
+                           center.x, center.y, center.z);
+            state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
+            state->skeletonState->pointVertBuffer.vertsIndex++;
         }
+    }
+    else {
+        GLfloat tmp[] = {color.r, color.g, color.b, color.a};
+        glColor4fv(tmp);
+        glPushMatrix();
+        glTranslatef(center.x, center.y, center.z);
+        glScalef(1.f, 1.f, state->viewerState->voxelXYtoZRatio);
+        gluSphereObj = gluNewQuadric();
+        gluQuadricNormals(gluSphereObj, GLU_SMOOTH);
+        gluQuadricOrientation(gluSphereObj, GLU_OUTSIDE);
 
-        return true;
+        if(radius * state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx  > 20.) {
+            gluSphere(gluSphereObj, radius, 14, 14);
+        }
+        else if(radius * state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx  > 5.) {
+            gluSphere(gluSphereObj, radius, 8, 8);
+        }
+        else {
+            gluSphere(gluSphereObj, radius, 5, 5);
+        }
+        //glScalef(1.f, 1.f, 1.f/state->viewerState->voxelXYtoZRatio);
+        gluDeleteQuadric(gluSphereObj);
+        glPopMatrix();
+    }
+    return true;
 }
 
 
@@ -437,10 +459,10 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     if(Patch::patchMode and Patch::eraseInVP == (int)currentVP) {
         glColor4f(1., 0., 0., 1.);
         glBegin(GL_LINE_LOOP);
-            glVertex3d(Patch::eraserPosX - Patch::eraserLength, Patch::eraserPosY - Patch::eraserLength, 0);
-            glVertex3d(Patch::eraserPosX - Patch::eraserLength, Patch::eraserPosY + Patch::eraserLength, 0);
-            glVertex3d(Patch::eraserPosX + Patch::eraserLength, Patch::eraserPosY + Patch::eraserLength, 0);
-            glVertex3d(Patch::eraserPosX + Patch::eraserLength, Patch::eraserPosY - Patch::eraserLength, 0);
+            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
         glEnd();
     }
     return true;
@@ -2413,18 +2435,18 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 Skeletonizer::setColorFromNode(currentNode, &currentColor);
                 Skeletonizer::setRadiusFromNode(currentNode, &currentRadius);
 
-                renderSphere(&(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
+                renderSphere(NULL, &(currentNode->position), currentRadius, currentColor, currentVP, viewportType);
 
                 if(currentNode->selected) { // highlight selected nodes
                     /* Set the default color for selected nodes */
                     SET_COLOR(currentColor, 0.f, 1.f, 0.f, 0.5f);
 
                     if(state->skeletonState->overrideNodeRadiusBool) {
-                        renderSphere(&(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
+                        renderSphere(NULL, &(currentNode->position), state->skeletonState->overrideNodeRadiusVal * 2,
                                      currentColor, currentVP, viewportType);
                     }
                     else {
-                        renderSphere(&(currentNode->position), currentNode->radius * 2,
+                        renderSphere(NULL, &(currentNode->position), currentNode->radius * 2,
                                      currentColor, currentVP, viewportType);
                     }
                 }
@@ -2504,10 +2526,14 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         if(state->viewerState->selectModeFlag)
             glLoadName(state->skeletonState->activeNode->nodeID + 50);
 
-        if(state->skeletonState->overrideNodeRadiusBool)
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
-        else
-            renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->activeNode->radius * 1.5, currentColor, currentVP, viewportType);
+        if(state->skeletonState->overrideNodeRadiusBool) {
+            renderSphere(NULL, &(state->skeletonState->activeNode->position),
+                         state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
+        }
+        else {
+            renderSphere(NULL, &(state->skeletonState->activeNode->position),
+                         state->skeletonState->activeNode->radius * 1.5, currentColor, currentVP, viewportType);
+        }
 
         /* Description of active node is always rendered,
         ignoring state->skeletonState->showNodeIDs */
@@ -2581,6 +2607,20 @@ void Renderer::renderPatches(uint viewportType) {
             glColor4f(1., 0., 0., 1);
             glDrawArrays(GL_LINE_STRIP, 0, Patch::lineBuffer[i].size());
         }
+    }
+
+    // highlight open loop endings
+    color4F currentColor;
+    SET_COLOR(currentColor, 1., 0, 0., 0.5);
+    if(Patch::lineBuffer.size() > 0) {
+        for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+            renderSphere(&Patch::lineBuffer[i][0], NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
+            renderSphere(&Patch::lineBuffer[i].back(), NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
+        }
+    }
+    if(Patch::activeLine.size() > 0) {
+        renderSphere(&Patch::activeLine[0], NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
+        renderSphere(&Patch::activeLine.back(), NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
     }
 
     glPopMatrix();

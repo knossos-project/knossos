@@ -777,8 +777,8 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
 #elif defined(Q_OS_WIN) || defined(Q_OS_LINUX)
         if(QApplication::keyboardModifiers() == Qt::SHIFT) {
 #endif
-            if(Patch::eraserLength < 50) {
-                Patch::eraserLength++;
+            if(Patch::eraserHalfEdge < 50) {
+                Patch::eraserHalfEdge++;
             }
         }
         return true;
@@ -872,8 +872,8 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 #elif defined(Q_OS_MAC)
         if(state->modShift) {
 #endif
-            if(Patch::eraserLength > 1) {
-                Patch::eraserLength--;
+            if(Patch::eraserHalfEdge > 1) {
+                Patch::eraserHalfEdge--;
             }
         }
         return true;

@@ -331,8 +331,8 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
     splitter = new QSplitter(this);
     splitter->addWidget(treeSide);
-    splitter->addWidget(nodeSide);
     splitter->addWidget(patchSide);
+    splitter->addWidget(nodeSide);
     mainLayout->addWidget(splitter);
     QList<int> list;
     list.append(310);

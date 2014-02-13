@@ -112,7 +112,7 @@ public:
     static uint numPatches; //! number of patches
 
     static float voxelPerPoint; //! closeness of points to each other
-    static float eraserLength; //! edge length of the eraser in screen pixels
+    static float eraserHalfEdge; //! half edge length of the eraser in screen pixels
     static bool drawing; //! true if patchMode and right mouse button pressed in ortho vp
     static bool newPoints; //! true if a user draw has added new points to the cloud. Only re-triangulate if there are new points
     static GLuint vbo;
@@ -169,6 +169,7 @@ public:
     bool insert(PatchLoop *loop, uint viewportType);
     void computeVolume(int currentVP, PatchLoop *loop);
     std::vector<floatCoordinate> pointsOnLine(PatchLoop *loop, int x, int y, int z);
+    void activateLoop(floatCoordinate center, float halfEdge, uint viewportType);
     void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
     std::vector<PatchLoop *> loopsAsVector(int viewportType = -1);
