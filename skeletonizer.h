@@ -277,11 +277,12 @@ public slots:
     // patches slots
     bool setActivePatch(Patch *patch, uint patchID = 0);
     void jumpToActivePatch();
+    void jumpToActiveLoop();
     bool addPatchListElement(int patchID = -1);
     bool delActivePatch();
     // end patches slots
 
-    /* Slots which manipulates attributes */
+    /* Slots which manipulate attributes */
     void setZoomLevel(float value);
     void setShowIntersections(bool on);
     void setShowXyPlane(bool on);

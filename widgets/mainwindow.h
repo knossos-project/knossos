@@ -100,6 +100,8 @@ signals:
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
 
+    void jumpToActiveLoopSignal();
+
     bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
 
@@ -198,7 +200,8 @@ public:
     QMenu *dataSetMenu;
     QMenu *fileMenu;
     QMenu *recentFileMenu;
-    QMenu *editMenu;
+    QMenu *skelMenu; //! action menu for skeleton mode (placing nodes)
+    QMenu *patchMenu; //! action menu for patch mode (volume annotation)
     QMenu *workModeEditMenu;
     QMenu *viewMenu;
     QMenu *workModeViewMenu;
@@ -330,6 +333,8 @@ public slots:
     void F4Slot();
     void F5Slot();
 
+    void jumpToActiveLoopSlot();
+    void delActiveLoopSlot();
 };
 
 #endif // MAINWINDOW_H

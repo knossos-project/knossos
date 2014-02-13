@@ -616,77 +616,98 @@ void MainWindow::createMenus()
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
-    editMenu = menuBar()->addMenu("Edit Annotation");
-    workModeEditMenu = editMenu->addMenu("Work Mode");
+    skelMenu = new QMenu("Edit Skeleton");
+    workModeEditMenu = skelMenu->addMenu("Work Mode");
         workModeEditMenu->addAction(addNodeAction);
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
 
     //editMenu->addAction(skeletonStatisticsAction);
 
-    newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
+    newTreeAction = skelMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
     newTreeAction->setShortcut(QKeySequence(tr("C")));
     newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    moveToNextNodeAction = editMenu->addAction(QIcon(""), "Move To Next Node", this, SLOT(moveToNextNodeSlot()));
+    moveToNextNodeAction = skelMenu->addAction(QIcon(""), "Move To Next Node", this, SLOT(moveToNextNodeSlot()));
     moveToNextNodeAction->setShortcut(QKeySequence(tr("X")));
     moveToNextNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    moveToPrevNodeAction = editMenu->addAction(QIcon(""), "Move To Previous Node", this, SLOT(moveToPrevNodeSlot()));
+    moveToPrevNodeAction = skelMenu->addAction(QIcon(""), "Move To Previous Node", this, SLOT(moveToPrevNodeSlot()));
     moveToPrevNodeAction->setShortcut(QKeySequence(tr("SHIFT+X")));
     moveToPrevNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    moveToNextTreeAction = editMenu->addAction(QIcon(""), "Move To Next Tree", this, SLOT(moveToNextTreeSlot()));
+    moveToNextTreeAction = skelMenu->addAction(QIcon(""), "Move To Next Tree", this, SLOT(moveToNextTreeSlot()));
     moveToNextTreeAction->setShortcut(QKeySequence(tr("Z")));
     moveToNextTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    moveToPrevTreeAction = editMenu->addAction(QIcon(""), "Move To Previous Tree", this, SLOT(moveToPrevTreeSlot()));
+    moveToPrevTreeAction = skelMenu->addAction(QIcon(""), "Move To Previous Tree", this, SLOT(moveToPrevTreeSlot()));
     moveToPrevTreeAction->setShortcut(QKeySequence(tr("SHIFT+Z")));
     moveToPrevTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    pushBranchNodeAction = editMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()));
+    pushBranchNodeAction = skelMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()));
     pushBranchNodeAction->setShortcut(QKeySequence(tr("B")));
     pushBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    popBranchNodeAction = editMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()));
+    popBranchNodeAction = skelMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()));
     popBranchNodeAction->setShortcut(QKeySequence(tr("J")));
     popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    jumpToActiveNodeAction = editMenu->addAction(QIcon(""), "Jump To Active Node", this, SLOT(jumpToActiveNodeSlot()));
+    jumpToActiveNodeAction = skelMenu->addAction(QIcon(""), "Jump To Active Node", this, SLOT(jumpToActiveNodeSlot()));
     jumpToActiveNodeAction->setShortcut(QKeySequence(tr("S")));
     jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addSeparator();
+    skelMenu->addSeparator();
 
-    nextCommentAction = editMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()));
+    nextCommentAction = skelMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()));
     nextCommentAction->setShortcut(QKeySequence(tr("N")));
     nextCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    previousCommentAction = editMenu->addAction(QIcon(""), "Previous Comment", this, SLOT(previousCommentNodeSlot()));
+    previousCommentAction = skelMenu->addAction(QIcon(""), "Previous Comment", this, SLOT(previousCommentNodeSlot()));
     previousCommentAction->setShortcut(QKeySequence(tr("P")));
     previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
+    F1Action = skelMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
     F1Action->setShortcut(Qt::Key_F1);
     F1Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    F2Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
+    F2Action = skelMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
     F2Action->setShortcut(Qt::Key_F2);
     F2Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    F3Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
+    F3Action = skelMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
     F3Action->setShortcut(Qt::Key_F3);
     F3Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
+    F1Action = skelMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
     F1Action->setShortcut(Qt::Key_F4);
     F1Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    F5Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
+    F5Action = skelMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
     F5Action->setShortcut(Qt::Key_F5);
     F5Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Annotation", this, SLOT(clearAnnotationSlotGUI()));
+    clearAnnotationAction = skelMenu->addAction(QIcon(":/images/icons/user-trash.png"),
+                                                "Clear Annotation", this, SLOT(clearAnnotationSlotGUI()));
+
+    patchMenu = new QMenu("Edit Patches");
+    patchMenu->addAction(newTreeAction);
+    patchMenu->addAction(moveToNextTreeAction);
+    patchMenu->addAction(moveToPrevTreeAction);
+    patchMenu->addSeparator();
+    QAction *jumpToActiveLoop = patchMenu->addAction("Jump To Active Loop",
+                                                     this, SLOT(jumpToActiveLoopSlot()), QKeySequence(tr("S")));
+    jumpToActiveLoop->setShortcutContext(Qt::ApplicationShortcut);
+    QAction *delActiveLoop = patchMenu->addAction("Delete Active Loop",
+                                                  this, SLOT(delActiveLoopSlot()), QKeySequence(tr("Del")));
+    delActiveLoop->setShortcutContext(Qt::ApplicationShortcut);
+    patchMenu->addAction(clearAnnotationAction);
+
+    if(Patch::patchMode) {
+        menuBar()->addMenu(patchMenu);
+    }
+    else {
+        menuBar()->addMenu(skelMenu);
+    }
 
     viewMenu = menuBar()->addMenu("Navigation");
     workModeViewMenu = viewMenu->addMenu("Work Mode");
@@ -1615,10 +1636,14 @@ void MainWindow::lockVPOrientation(bool lock) {
 
 void MainWindow::patchModeSelected() {
     Patch::patchMode = true;
+    menuBar()->insertMenu(skelMenu->menuAction(), patchMenu);
+    menuBar()->removeAction(skelMenu->menuAction());
 }
 
 void MainWindow::skeletonModeSelected() {
     Patch::patchMode = false;
+    menuBar()->insertMenu(patchMenu->menuAction(), skelMenu);
+    menuBar()->removeAction(patchMenu->menuAction());
 }
 
 void MainWindow::showVPDecorationClicked() {
@@ -1772,6 +1797,14 @@ void MainWindow::F5Slot() {
                                QString(state->viewerState->gui->comment5), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
+}
+
+void MainWindow::jumpToActiveLoopSlot() {
+    emit jumpToActiveLoopSignal();
+}
+
+void MainWindow::delActiveLoopSlot() {
+
 }
 
 void MainWindow::resizeViewports(int width, int height) {

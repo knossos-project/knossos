@@ -4567,6 +4567,25 @@ void Skeletonizer::jumpToActivePatch() {
     }
 }
 
+void Skeletonizer::jumpToActiveLoop() {
+    if(Patch::lineBuffer.size() == 0) {
+        jumpToActivePatch();
+        return;
+    }
+    srand(QTime::currentTime().msec());
+    int index = rand() % (Patch::lineBuffer.size() - 1);
+    while(Patch::lineBuffer[index].size() == 0) {
+        Patch::lineBuffer.erase(Patch::lineBuffer.begin() + index);
+        srand(QTime::currentTime().msec());
+        index = rand() % (Patch::lineBuffer.size() - 1);
+    }
+    floatCoordinate point = Patch::lineBuffer[index][0];
+    emit userMoveSignal(roundFloat(point.x) - state->viewerState->currentPosition.x,
+                        roundFloat(point.y) - state->viewerState->currentPosition.y,
+                        roundFloat(point.z) - state->viewerState->currentPosition.z,
+                        TELL_COORDINATE_CHANGE);
+}
+
 
 bool Skeletonizer::addPatchListElement(int patchID) {
     treeListElement *tree = state->skeletonState->activeTree;
