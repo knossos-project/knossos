@@ -32,7 +32,7 @@
 #define KNOSSOS_GLOBAL_H
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
-
+#include <curl/curl.h>
 #include <GL/glew.h>
 
 #include <QtCore/QTime>
@@ -44,14 +44,14 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#include <curl/curl.h>
-
 #define KVERSION "4.0"
 
 #define FAIL    -1
 
 #define MIN_N   1
+#ifndef MAX_PATH
 #define MAX_PATH 256
+#endif
 #define PI 3.141592653589793238462643383279
 
 #define TEXTURE_EDGE_LEN 1024
@@ -685,6 +685,7 @@ public:
     Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
 
     struct viewerState *viewerState;
+    struct Viewer *viewer;
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
@@ -750,7 +751,7 @@ struct taskState {
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
     static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
     static void removeCookie();
-    static const char *CSRFToken();
+    static QString CSRFToken();
     static QString getCategory();
     static QString getTask();
 };

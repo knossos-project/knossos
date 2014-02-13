@@ -14,6 +14,7 @@ public:
     explicit DatasetPropertyWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
+    void changeDataSet(bool isGUI);
 
 protected:
     QGroupBox *localGroup;
@@ -25,6 +26,8 @@ protected:
     void waitForLoader();
     QStringList getRecentDirsItems();
 signals:
+    void clearAnnotationSignalGUI();
+    void clearAnnotationSignalNoGUI();
     void clearAnnotationSignal();
     void changeDatasetMagSignal(uint upOrDownFlag);
     void userMoveSignal(int x, int y, int z, int serverMovement);

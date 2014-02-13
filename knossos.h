@@ -25,6 +25,8 @@
  */
 #include <GL/glew.h>
 
+#include <memory>
+
 #include <qobject.h>
 
 #include "widgets/mainwindow.h"
@@ -70,6 +72,6 @@ public slots:
 
 };
 
-extern Knossos *knossos;
+extern std::unique_ptr<Knossos> knossos;
 
 #endif

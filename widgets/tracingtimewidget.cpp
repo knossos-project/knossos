@@ -83,16 +83,16 @@ void TracingTimeWidget::checkIdleTime() {
     if (state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast > 600000) { //tolerance of 10 minutes
         state->skeletonState->idleTime += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
         state->skeletonState->idleTimeSession += state->skeletonState->idleTimeNow - state->skeletonState->idleTimeLast;
+
+        state->skeletonState->unsavedChanges = true;
+
+        int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 3600.0);
+        int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 60.0 - hoursIdleTime * 60);
+        int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
+
+        QString idleString = QString().sprintf("Idle Time: \t%02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
+        this->idleTimeLabel->setText(idleString);
     }
-
-    state->skeletonState->unsavedChanges = true;
-
-    int hoursIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 3600.0);
-    int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 60.0 - hoursIdleTime * 60);
-    int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
-
-    QString idleString = QString().sprintf("Idle Time: \t%02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
-    this->idleTimeLabel->setText(idleString);
 
     int hoursTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) / 3600.0);
     int minutesTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) /60.0 - hoursTracingTime * 60);

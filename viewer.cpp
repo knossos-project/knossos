@@ -48,10 +48,10 @@ Viewer::Viewer(QObject *parent) :
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     state->console = window->widgetContainer->console;
-    vpUpperLeft = window->viewports[VIEWPORT_XY];
-    vpLowerLeft = window->viewports[VIEWPORT_XZ];
-    vpUpperRight = window->viewports[VIEWPORT_YZ];
-    vpLowerRight = window->viewports[VIEWPORT_SKELETON];
+    vpUpperLeft = window->viewports[VIEWPORT_XY].get();
+    vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
+    vpUpperRight = window->viewports[VIEWPORT_YZ].get();
+    vpLowerRight = window->viewports[VIEWPORT_SKELETON].get();
     eventModel = new EventModel();
     vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
@@ -964,9 +964,9 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
-                           viewerState->currentPosition.x - v1.x * viewerState->vpConfigs[i].s_max/2 - v2.x * viewerState->vpConfigs[i].t_max/2,
-                           viewerState->currentPosition.y - v1.y * viewerState->vpConfigs[i].s_max/2 - v2.y * viewerState->vpConfigs[i].t_max/2,
-                           viewerState->currentPosition.z - v1.z * viewerState->vpConfigs[i].s_max/2 - v2.z * viewerState->vpConfigs[i].t_max/2);
+                           viewerState->currentPosition.x - state->magnification * (v1.x * viewerState->vpConfigs[i].s_max/2 + v2.x * viewerState->vpConfigs[i].t_max/2),
+                           viewerState->currentPosition.y - state->magnification * (v1.y * viewerState->vpConfigs[i].s_max/2 + v2.y * viewerState->vpConfigs[i].t_max/2),
+                           viewerState->currentPosition.z - state->magnification * (v1.z * viewerState->vpConfigs[i].s_max/2 + v2.z * viewerState->vpConfigs[i].t_max/2));
 
             SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
                            roundFloat(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float.x),
@@ -977,6 +977,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            viewerState->currentPosition.x
                            - v1.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthX / 2.)
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx)
+
 
                            - v2.x * ((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx),
@@ -1121,7 +1122,8 @@ bool Viewer::loadDatasetColorTable(QString path, GLuint *table, int type) {
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
 
-    const char *cpath = path.toStdString().c_str();
+    std::string path_stdstr = path.toStdString();
+    const char *cpath = path_stdstr.c_str();
 
     LOG("Reading Dataset LUT at %s\n", cpath);
 
@@ -1181,7 +1183,8 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     uint readBytes = 0, i = 0;
     uint size = RGB_LUTSIZE;
 
-    const char *cpath = path.toStdString().c_str();
+    std::string path_stdstr = path.toStdString();
+    const char *cpath = path_stdstr.c_str();
     // The b is for compatibility with non-UNIX systems and denotes a
     // binary file.
     LOG("Reading Tree LUT at %s\n", cpath)
@@ -1443,8 +1446,8 @@ void Viewer::run() {
             vpLowerRight->updateGL();
 
 
-            if(call % 10000 == 0) {
-                if(idlingExceeds(10000)) {
+            if(call % 1000 == 0) {
+                if(idlingExceeds(1000)) {
                     state->viewerState->renderInterval = SLOW;
                 }
             }
@@ -1590,8 +1593,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
             viewerState->currentPosition.z + z + 1)
     }
 
-    //qDebug() << state->viewerState->currentPosition.x << " " << state->viewerState->currentPosition.y;
-
     calcLeftUpperTexAbsPx();
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
@@ -1616,7 +1617,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
 
     QtConcurrent::run(this, &Viewer::updateCoordinatesSignal,
                       viewerState->currentPosition.x, viewerState->currentPosition.y, viewerState->currentPosition.z);
-    emit idleTimeSignal();
 
     return true;
 }
@@ -2021,9 +2021,9 @@ bool Viewer::recalcTextureOffsets() {
                     state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
                 midX = state->viewerState->vpConfigs[i].s_max/2.
-                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
+                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
                 midY = state->viewerState->vpConfigs[i].t_max/2.
-                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx;
+                       * state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx * (float)state->magnification;
 
                 //Update state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen with this call
                 calcLeftUpperTexAbsPx();
@@ -2088,17 +2088,15 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->conditionLoadSignal->wakeOne();
     return true;
 }
-
+/*
 bool Viewer::moveVPonTop(uint currentVP) {
-
 }
-
+*/
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
-    connect(this, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     // end viewer signals
     // renderer signals
     connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
@@ -2109,7 +2107,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
                     window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
-    connect(skeletonizer, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
@@ -2149,8 +2146,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(eventModel, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
-    connect(eventModel, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(eventModel, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
     connect(eventModel, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
                     skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
@@ -2160,7 +2155,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
     connect(eventModel, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
     connect(eventModel, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
-    connect(eventModel, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     connect(eventModel, SIGNAL(updateSlicePlaneWidgetSignal()),
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
@@ -2196,9 +2190,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
-    connect(window, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-    connect(window, SIGNAL(previousCommentSignal(char*)), skeletonizer, SLOT(previousComment(char*)));
-    connect(window, SIGNAL(idleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
+    connect(window, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
+    connect(window, SIGNAL(previousCommentSignal(QString)), skeletonizer, SLOT(previousComment(QString)));
     connect(window, SIGNAL(clearAnnotationSignal(int,int)), skeletonizer, SLOT(clearAnnotation(int,int)));
     connect(window, SIGNAL(updateSkeletonFileNameSignal(int,int,char*)),
                     skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
@@ -2210,10 +2203,10 @@ void Viewer::rewire() {
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
-    connect(window, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
-                    skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
-    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
-                    skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
+    connect(window, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
+    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
     connect(window, SIGNAL(updateTaskDescriptionSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
     connect(window, SIGNAL(updateTaskCommentSignal(QString)),
@@ -2245,14 +2238,14 @@ void Viewer::rewire() {
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
 //                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,const char*,nodeListElement*,int,int)),
-//                    skeletonizer, SLOT(addComment(int,const char*,nodeListElement*,int,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
 //    connect(window->widgetContainer->toolsWidget,
-//                    SIGNAL(editCommentSignal(int,commentListElement*,int,char*,nodeListElement*,int,int)),
-//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,char*,nodeListElement*,int,int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(char*)), skeletonizer, SLOT(nextComment(char*)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(char*)),
-//                    skeletonizer, SLOT(previousComment(char*)));
+//                    SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(QString)),
+//                    skeletonizer, SLOT(previousComment(QString)));
 //    //  tools quick tab signals
 //    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal()),
 //                    skeletonizer, SLOT(UI_popBranchNode()));
@@ -2268,8 +2261,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)),
 //                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
-//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,char*)),
-//                    skeletonizer, SLOT(addTreeComment(int,int,char*)));
+//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,QString)),
+//                    skeletonizer, SLOT(addTreeComment(int,int,QString)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)),
 //                    skeletonizer, SLOT(mergeTrees(int,int,int,int)));
 //    //  tools nodes tab signals
@@ -2385,7 +2378,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(findNodeByNodeID(int)));
     // -- end comments widget signals
     // dataset property signals --
-    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearAnnotationSignal()), window, SLOT(clearAnnotationSlot()));
+    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearAnnotationSignalNoGUI()), window, SLOT(clearAnnotationSlotNoGUI()));
+    connect(window->widgetContainer->datasetPropertyWidget, SIGNAL(clearAnnotationSignalGUI()), window, SLOT(clearAnnotationSlotGUI()));
     // -- end dataset property signals
     // task management signals --
     connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(loadSkeletonSignal(const QString)),
@@ -2444,7 +2438,7 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
  *  and the processing of the userMove Slot. The run method was called but the new position was first available in the next frame. Thus rendering an "empty" frame could be prevented.
  *
 */
-bool Viewer::processUserMove() {
+void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 

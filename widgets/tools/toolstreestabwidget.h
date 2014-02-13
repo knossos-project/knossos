@@ -66,7 +66,7 @@ signals:
     void restoreDefaultTreeColorSignal();
     int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
     treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    bool addTreeComment(int targetRevision, int treeID, char *comment);
+    bool addTreeComment(int targetRevision, int treeID, QString comment);
     bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
 public slots:
     void commentChanged(QString comment);

@@ -35,7 +35,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "knossos-global.h"
 #include "navigationwidget.h"
 

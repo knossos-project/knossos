@@ -24,7 +24,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "../GUIConstants.h"
+#include "../GuiConstants.h"
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLabel>
@@ -91,8 +91,6 @@ void CommentShortCutsTab::deleteComments() {
 }
 
 void CommentShortCutsTab::commentChanged(QString comment) {
-    qDebug() << comment;
-
     QObject *emitter = sender();
 
     if(textFields[0] == emitter) {

@@ -25,6 +25,9 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <array>
+#include <memory>
+
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
 #include <QMainWindow>
 #include <QDropEvent>
@@ -85,8 +88,8 @@ signals:
     void loadTreeLUTFallback();
 
     treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    void nextCommentSignal(char *searchString);
-    void previousCommentSignal(char *searchString);
+    void nextCommentSignal(QString searchString);
+    void previousCommentSignal(QString searchString);
     /* */
     void moveToPrevNodeSignal();
     void moveToNextNodeSignal();
@@ -96,10 +99,9 @@ signals:
     bool popBranchNodeSignal();
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
-    void idleTimeSignal();
 
-    bool addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
@@ -108,7 +110,9 @@ signals:
     void branchPushedSignal();
     void branchPoppedSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
+    void viewportDecorationSignal(bool visible);
 protected:
+    void clearAnnotation(bool isGUI);
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
@@ -116,7 +120,7 @@ protected:
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
     QString *openFileDirectory;
-    QString *saveFileDirectory;
+    QString *saveFileDirectory;        
 public:
     Ui::MainWindow *ui;
 
@@ -131,7 +135,7 @@ public:
 
     QWidget *mainWidget;
     QGridLayout *gridLayout;
-    Viewport **viewports;
+    std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
     WidgetContainer *widgetContainer;
@@ -255,7 +259,8 @@ public slots:
     void linkWithActiveNodeSlot();
     void dropNodesSlot();
     void skeletonStatisticsSlot();
-    void clearAnnotationSlot();
+    void clearAnnotationSlotNoGUI();
+    void clearAnnotationSlotGUI();
     void clearAnnotationWithoutConfirmation();
 
     /* view menu */

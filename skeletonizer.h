@@ -178,7 +178,6 @@ public:
 
     uint skeletonRevision;
 signals:
-    void idleTimeSignal();
     void updatePositionSignal(int serverMovement);        
     void saveSkeletonSignal();
     void updateToolsSignal();
@@ -258,19 +257,19 @@ public slots:
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);
-    static bool addTreeComment(int targetRevision, int treeID, char *comment);
+    static bool addTreeComment(int targetRevision, int treeID, QString comment);
     bool setSkeletonWorkMode(int targetRevision, uint workMode);
     static bool unlockPosition();
     static bool lockPosition(Coordinate lockCoordinate);
-    commentListElement *nextComment(char *searchString);
-    commentListElement *previousComment(char *searchString);
+    commentListElement *nextComment(QString searchString);
+    commentListElement *previousComment(QString searchString);
     bool previousCommentlessNode();
     bool nextCommentlessNode();
     static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
     static bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
     static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
-    static bool addComment(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
-    static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    static bool addComment(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
+    static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
     static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
     bool jumpToActiveNode();    
     static bool setActiveTreeByID(int treeID);

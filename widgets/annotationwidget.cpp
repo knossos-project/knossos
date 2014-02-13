@@ -11,7 +11,7 @@
 #include <QSplitter>
 
 #include "knossos-global.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "annotationwidget.h"
 
 extern stateInfo *state;

@@ -27,7 +27,6 @@
 #define TREE_COLOR   1
 #define TREE_COMMENT 2
 #define TREE_COLS    3
-
 #define NODE_ID      0
 #define NODE_COMMENT 1
 #define NODE_X       2
@@ -39,9 +38,6 @@
 #define PATCH_ID      0
 #define PATCH_COMMENT 1
 #define PATCH_COLS    2
-
-#define LOOP_POS      0
-#define LOOP_COLS     1
 
 #define NODECOMBO_100 0
 #define NODECOMBO_1000 1
@@ -108,6 +104,7 @@ void TreeTable::dropEvent(QDropEvent *event) {
 
 // -- end table implementations
 
+
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QWidget(parent), focusedTable(NULL), radiusBuffer(state->skeletonState->defaultNodeRadius),
@@ -145,12 +142,11 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
     // tables
     QTableWidgetItem *IDCol, *commentCol, *colorCol, // tree table cols
-                     *radiusCol, *xCol, *yCol, *zCol, // node table cols
-                     *posCol; // loop table cols
+                     *radiusCol, *xCol, *yCol, *zCol; // node table cols
+
     // active tree table
     activeTreeTable = new TreeTable(this);
     activeTreeTable->setColumnCount(TREE_COLS);
-    activeTreeTable->setRowCount(1);
     activeTreeTable->setFixedHeight(54);
     activeTreeTable->verticalHeader()->setVisible(false);
     activeTreeTable->setToolTip("The active tree");
@@ -164,13 +160,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activeTreeTable->resizeColumnsToContents();
     activeTreeTable->setContextMenuPolicy(Qt::CustomContextMenu);
     activeTreeTable->setDragDropMode(QAbstractItemView::DropOnly);
-    QTableWidgetItem *item;
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_ID, item);
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_COLOR, item);
-    item = new QTableWidgetItem();
-    activeTreeTable->setItem(0, TREE_COMMENT, item);
 
     // tree table
     treeTable = new TreeTable(this);
@@ -192,7 +181,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // active node table
     activeNodeTable = new KTable(this);
     activeNodeTable->setColumnCount(NODE_COLS);
-    activeNodeTable->setRowCount(1);
     activeNodeTable->setFixedHeight(54);
     activeNodeTable->verticalHeader()->setVisible(false);
     activeNodeTable->setToolTip("The active node");
@@ -213,18 +201,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activeNodeTable->setContextMenuPolicy(Qt::CustomContextMenu);
     activeNodeTable->setDragEnabled(true);
     activeNodeTable->setDragDropMode(QAbstractItemView::DragOnly);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_ID, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_COMMENT, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_X, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_Y, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_Z, item);
-    item = new QTableWidgetItem();
-    activeNodeTable->setItem(0, NODE_RADIUS, item);
 
 
     // node table
@@ -364,9 +340,9 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
     connect(treeTable, SIGNAL(focused(KTable*)), this, SLOT(setFocused(KTable*)));
     connect(treeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuCalled(QPoint)));
+    connect(treeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(itemDoubleClicked(QTableWidgetItem*)));
     connect(treeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(treeItemChanged(QTableWidgetItem*)));
     connect(treeTable, SIGNAL(itemSelectionChanged()), this, SLOT(itemsSelected()));
-    connect(treeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(itemDoubleClicked(QTableWidgetItem*)));
     connect(treeTable, SIGNAL(deleteSignal()), this, SLOT(deleteAction()));
 
     connect(activeNodeTable, SIGNAL(itemSelectionChanged()), this, SLOT(itemsSelected()));
@@ -778,9 +754,6 @@ void ToolsTreeviewTab::deleteAction() {
                 nodesDeleted();
             }
         }
-        for(uint i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-            state->skeletonState->selectedNodes[i]->selected = false;
-        }
         state->skeletonState->selectedNodes.clear();
     }
     else if(focusedTable == activePatchTable) {
@@ -821,6 +794,7 @@ void ToolsTreeviewTab::deleteAction() {
 }
 
 // tree actions
+
 void ToolsTreeviewTab::setActiveTreeAction() {
     if(state->skeletonState->selectedTrees.size() != 1) {
         QMessageBox prompt;
@@ -943,8 +917,8 @@ void ToolsTreeviewTab::editTreeColor() {
     treeColorEditDialog->hide();
 }
 
-
 // node actions
+
 void ToolsTreeviewTab::setNodeRadiusAction() {
     if(state->skeletonState->selectedNodes.size() == 0) {
         return;
@@ -1174,7 +1148,6 @@ void ToolsTreeviewTab::addPatchAction() {
         patchAdded();
     }
 }
-
 
 void ToolsTreeviewTab::treeSearchChanged() {
     if(treeRegExCheck->isChecked() and treeSearchField->text().length() > 0) {
@@ -1619,6 +1592,7 @@ void ToolsTreeviewTab::patchItemChanged(QTableWidgetItem *item) {
     }
 }
 
+
 void ToolsTreeviewTab::updateTreeColorCell(TreeTable *table, int row) {
     QTableWidgetItem *idItem = table->item(row, TREE_ID);
     treeListElement *tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
@@ -1877,6 +1851,7 @@ void ToolsTreeviewTab::updatePatchesTable() {
     patchTable->setRowCount(patchIndex);
 }
 
+
 void ToolsTreeviewTab::activeTreeChanged() {
     activeTreeTable->clearContents();
     if(state->skeletonState->activeTree == NULL) {
@@ -2053,8 +2028,8 @@ void ToolsTreeviewTab::nodesDeleted() {
         }
     }
 
-    // update active node table, in case active node was deleted, too
     activeNodeChanged();
+    state->skeletonState->selectedNodes.clear();
 }
 
 void ToolsTreeviewTab::branchPushed() {
@@ -2175,6 +2150,7 @@ void ToolsTreeviewTab::patchesDeleted() {
     // update active patch table, in case active patch was deleted, too
     activePatchChanged();
 }
+
 
 void ToolsTreeviewTab::update() {
     updateTreesTable();
@@ -2330,6 +2306,8 @@ void ToolsTreeviewTab::insertPatch(Patch *patch, KTable *table) {
     }
     table->setItem(0, PATCH_COMMENT, item);
 }
+
+
 
 int ToolsTreeviewTab::getActiveTreeRow() {
     int activeRow = -1;

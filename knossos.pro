@@ -252,18 +252,15 @@ linux {
 }
 
 win32 {
-
     CONFIG(debug, debug|release) {
         DEBUG_EXT = _d
     } else {
         DEBUG_EXT =
     }
 
-    LIBS += -lpythonQt$${DEBUG_EXT} \
-            -lpythonQt_QtAll$${DEBUG_EXT} \
-            -lcurl.dll \
-            -lglut32 \
+    LIBS += -lcurl.dll \
             -lglew32 \
+            -lglut32 \
             -lwsock32 \
             -lCGAL.dll \
             -lgmp \
@@ -276,9 +273,7 @@ win32 {
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
 
-
     RC_FILE = knossos.rc
-
 }
 
 
@@ -287,4 +282,5 @@ RESOURCES += \
 
 include(test/config.pri)
 
+QMAKE_CXXFLAGS += -std=gnu++0x #-std=c++0x
 QMAKE_CXXFLAGS_RELEASE += -O3

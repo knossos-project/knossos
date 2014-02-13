@@ -44,6 +44,7 @@ public:
     void saveSettings();
 signals:
     void uncheckSignal();
+    void decorationSignal();
 public slots:
 
 protected:

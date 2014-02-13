@@ -47,6 +47,7 @@ signals:
     void skeletonChangedSignal(bool on);
     void showNodeID(bool on);
     void segRadiusToNodeRadiusSignal(float value);
+
 public slots:
     void lightEffectsChecked(bool on);
     void hightlightActiveTreeChecked(bool on);

@@ -23,7 +23,7 @@
  */
 
 #include "datasavingwidget.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QRadioButton>
 #include <QVBoxLayout>
 #include <QFormLayout>

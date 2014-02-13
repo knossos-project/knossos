@@ -44,41 +44,37 @@
 
 extern stateInfo *state;
 
-Renderer::Renderer(QObject *parent) :
-    QObject(parent)
-{
-    font = QFont("Helvetica", 10, QFont::Normal);
-
+Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-        /* Initialize the basic model view matrix for the skeleton VP
-        Perform basic coordinate system rotations */
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    /* Initialize the basic model view matrix for the skeleton VP
+    Perform basic coordinate system rotations */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-        glTranslatef((float)state->skeletonState->volBoundary / 2.,
-            (float)state->skeletonState->volBoundary / 2.,
-            -((float)state->skeletonState->volBoundary / 2.));
+    glTranslatef((float)state->skeletonState->volBoundary / 2.,
+        (float)state->skeletonState->volBoundary / 2.,
+        -((float)state->skeletonState->volBoundary / 2.));
 
-        glScalef(-1., 1., 1.);
-        //);
-        //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
-        glRotatef(235., 1., 0., 0.);
-        glRotatef(210., 0., 0., 1.);
-        setRotationState(ROTATIONSTATERESET);
-        //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-        /* save the matrix for further use... */
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+    glScalef(-1., 1., 1.);
+    //);
+    //LOG("state->viewerState->voxelXYtoZRatio = %f", state->viewerState->voxelXYtoZRatio)
+    glRotatef(235., 1., 0., 0.);
+    glRotatef(210., 0., 0., 1.);
+    setRotationState(ROTATIONSTATERESET);
+    //glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+    /* save the matrix for further use... */
+    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
-        glLoadIdentity();
+    glLoadIdentity();
 
-        // get a unique display list identifier for each viewport
-        for(i = 0; i < state->viewerState->numberViewports; i++) {
-            state->viewerState->vpConfigs[i].displayList = glGenLists(1);
-        }
+    // get a unique display list identifier for each viewport
+    for(i = 0; i < state->viewerState->numberViewports; i++) {
+        state->viewerState->vpConfigs[i].displayList = glGenLists(1);
+    }
 
-        initMesh(&(state->skeletonState->lineVertBuffer), 1024);
-        initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+    initMesh(&(state->skeletonState->lineVertBuffer), 1024);
+    initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 
 }
 
@@ -249,9 +245,10 @@ uint Renderer::renderText(Coordinate *pos, char *string, uint currentVP, uint vi
 
     glEnable(GL_DEPTH_TEST);
     return true;*/
-    char *c = string;
+    uchar *c = (uchar *)string;
     glDisable(GL_DEPTH_TEST);
     glRasterPos3d(pos->x, pos->y, pos->z);
+
     for (; *c != '\0'; c++) {
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
     }
@@ -444,13 +441,39 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glEnd();
     }
 
+    // render node selection box
+    if(state->viewerState->drawNodeSelectSquare == currentVP) {
+        Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
+        Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        glLineWidth(1.);
+        glBegin(GL_QUADS);
+        glColor4f(0, 1., 0, 0.2);
+            glVertex3f(leftUpper.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, leftUpper.y, 0);
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+        glColor4f(0, 1., 0, 1);
+            glVertex3f(leftUpper.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, rightLower.y, 0);
+            glVertex3f(rightLower.x, leftUpper.y, 0);
+        glEnd();
+        glDisable(GL_BLEND);
+    }
+
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
         glColor4f(0, 0, 0, 1);
         float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-        sprintf(label, "Height %.2f \u00B5m, Width %.2f \u00B5m", height, width);
+
+        sprintf(label, "Height %.2f %cm, Width %.2f %cm", height, 0xb5, width, 0xb5);
         renderText(&pos, label, currentVP, state->viewerState->vpConfigs[currentVP].type);
     }
 
@@ -468,13 +491,9 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     return true;
 }
 
-
 // Currently not used
 /* @todo update from trunk */
-static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {
-
-}
-
+//static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
@@ -505,7 +524,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
-    if(!state->viewerState->selectModeFlag) {
+    if(state->viewerState->selectModeFlag == false) {
         if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
 
         if(state->viewerState->lightOnOff) {
@@ -541,21 +560,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             * 0.5;
 //            * (float)state->magnification;
 
-     // for the node selection square
-    Coordinate first, second;
-    if(state->viewerState->drawNodeSelectSquare != -1) {
-        first.x = state->viewerState->nodeSelectionSquare.first.x
-                  * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
-        first.y = state->viewerState->nodeSelectionSquare.first.y
-                  * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
-        second.x = state->viewerState->nodeSelectionSquare.second.x
-                   * dataPxX / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxX;
-        second.y = state->viewerState->nodeSelectionSquare.second.y
-                   * dataPxY / (state->viewerState->vpConfigs[currentVP].edgeLength/2.) - dataPxY;
-    }
     switch(state->viewerState->vpConfigs[currentVP].type) {
         case VIEWPORT_XY:
-            if(!state->viewerState->selectModeFlag) {
+            if(state->viewerState->selectModeFlag == false) {
                 glMatrixMode(GL_PROJECTION);
                 glLoadIdentity();
             }
@@ -576,13 +583,22 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                         -((float)state->boundary.y / 2.),
                         -((float)state->boundary.z / 2.));
 
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                        (float)state->viewerState->currentPosition.y,
+                        (float)state->viewerState->currentPosition.z);
+
+            glRotatef(180., 1.,0.,0.);
+
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                        -(float)state->viewerState->currentPosition.y,
+                        -(float)state->viewerState->currentPosition.z);
+
             updateFrustumClippingPlanes(VIEWPORT_XY);
 
             glTranslatef((float)state->viewerState->currentPosition.x,
                         (float)state->viewerState->currentPosition.y,
                         (float)state->viewerState->currentPosition.z);
 
-            glRotatef(180., 1.,0.,0.);
 
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
@@ -698,25 +714,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-
-
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XY) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(first.x, first.y, 0);
-                    glVertex3f(first.x, second.y, 0);
-                    glVertex3f(second.x, second.y, 0);
-                    glVertex3f(second.x, first.y, 0);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(first.x, first.y, 0);
-                    glVertex3f(first.x, second.y, 0);
-                    glVertex3f(second.x, second.y, 0);
-                    glVertex3f(second.x, first.y, 0);
-                glEnd();
-            }
             break;
         case VIEWPORT_XZ:
             if(!state->viewerState->selectModeFlag) {
@@ -852,23 +849,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_XZ) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(first.x, 0, first.y);
-                    glVertex3f(first.x, 0, second.y);
-                    glVertex3f(second.x, 0, second.y);
-                    glVertex3f(second.x, 0, first.y);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(first.x, 0, first.y);
-                    glVertex3f(first.x, 0, second.y);
-                    glVertex3f(second.x, 0, second.y);
-                    glVertex3f(second.x, 0, first.y);
-                glEnd();
-            }
             break;
         case VIEWPORT_YZ:
             if(!state->viewerState->selectModeFlag) {
@@ -994,23 +974,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                 glEnd();
             }
 
-            // draw node selection square
-            if(state->viewerState->drawNodeSelectSquare == VIEWPORT_YZ) {
-                glBegin(GL_QUADS);
-                glColor4f(0, 1., 0, 0.2);
-                    glVertex3f(0, first.y, first.x);
-                    glVertex3f(0, second.y, first.x);
-                    glVertex3f(0, second.y, second.x);
-                    glVertex3f(0, first.y, second.x);
-                glEnd();
-                glBegin(GL_LINE_LOOP);
-                glColor4f(0, 1., 0, 1);
-                    glVertex3f(0, first.y, first.x);
-                    glVertex3f(0, second.y, first.x);
-                    glVertex3f(0, second.y, second.x);
-                    glVertex3f(0, first.y, second.x);
-                glEnd();
-            }
             break;
         case VIEWPORT_ARBITRARY:
         if(!state->viewerState->selectModeFlag) {
@@ -1193,16 +1156,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 }
 
 bool Renderer::renderSkeletonVP(uint currentVP) {
-    char *textBuffer;
-    char *c;
-    uint i;
-
-    GLUquadricObj *gluCylObj = NULL;
-
-    // Used for calculation of slice pane length inside the 3d view
-    float dataPxX, dataPxY;
-
-    textBuffer = (char*)malloc(32);
+    char * const textBuffer = (char*)malloc(32);
     memset(textBuffer, '\0', 32);
 
     //glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
@@ -1336,7 +1290,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(270, 1., 0., 0.);
+        glRotatef(90, 0., 1., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
 
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
@@ -1366,7 +1320,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
 
-        glRotatef(90, 0., 1., 0.);
+        glRotatef(270, 1., 0., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
@@ -1439,11 +1393,12 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor4f(1., 1., 1., 1.);
 
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        // Used for calculation of slice pane length inside the 3d view
+        float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                 / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
                 * 0.5;
-        dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
+        float dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
 
@@ -1512,49 +1467,29 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             glEnd();
             glBindTexture (GL_TEXTURE_2D, 0);
             break;
-        case VIEWPORT_ARBITRARY:
-            /* @arb */
-            floatCoordinate *n, *v1, *v2;
-            n = &(state->viewerState->vpConfigs[i].n);
-
-            v1 = &(state->viewerState->vpConfigs[i].v1);
-
-            v2 = &(state->viewerState->vpConfigs[i].v2);
-
-            //TODO, adjust this for arbitrary planes
-
-            //if(!state->skeletonState->showYZplane) break;
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
-            glLoadName(i);
-            glBegin(GL_QUADS);
-            glNormal3i(n->x, n->y, n->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLUx, state->viewerState->vpConfigs[i].texture.texLUy);
-            glVertex3f(-dataPxX * v1->x - dataPxY * v2->x, -dataPxX * v1->y - dataPxY * v2->y, -dataPxX * v1->z - dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texRUx, state->viewerState->vpConfigs[i].texture.texRUy);
-            glVertex3f(dataPxX * v1->x - dataPxY * v2->x, dataPxX * v1->y - dataPxY * v2->y, dataPxX * v1->z - dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texRLx, state->viewerState->vpConfigs[i].texture.texRLy);
-
-            glVertex3f(dataPxX * v1->x + dataPxY * v2->x, dataPxX * v1->y + dataPxY * v2->y, dataPxX * v1->z + dataPxY * v2->z);
-            glTexCoord2f(state->viewerState->vpConfigs[i].texture.texLLx, state->viewerState->vpConfigs[i].texture.texLLy);
-
-            glVertex3f(-dataPxX * v1->x + dataPxY * v2->x, -dataPxX * v1->y + dataPxY * v2->y, -dataPxX * v1->z + dataPxY * v2->z);
-            glEnd();
-            glBindTexture (GL_TEXTURE_2D, 0);
-            /* */
-
-            break;
         }
+    }
 
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        const auto & viewport = state->viewerState->vpConfigs[i];
+        if (viewport.type == VIEWPORT_ARBITRARY) {
+            if ( (viewport.id == VP_UPPERLEFT && state->skeletonState->showXYplane)
+                || (viewport.id == VP_LOWERLEFT && state->skeletonState->showXZplane)
+                || (viewport.id == VP_UPPERRIGHT && state->skeletonState->showYZplane) )
+            {
+                renderArbitrarySlicePane(viewport);
+            }
+        }
     }
 
     glDisable(GL_TEXTURE_2D);
 
-
-    for(i = 0; i < state->viewerState->numberViewports; i++) {
-        dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        GLUquadricObj * gluCylObj;
+        float dataPxX = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
-        dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
+        float dataPxY = state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
             / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
             * 0.5;
         switch(state->viewerState->vpConfigs[i].type) {
@@ -1753,7 +1688,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glLineWidth(1.f);
 */
     glTranslatef(-(state->boundary.x / 2),-(state->boundary.y / 2),-(state->boundary.z / 2));
-    gluCylObj = gluNewQuadric();
+    GLUquadricObj * gluCylObj = gluNewQuadric();
     gluQuadricNormals(gluCylObj, GLU_SMOOTH);
     gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
     gluCylinder(gluCylObj, 5., 5. , state->boundary.z, 5, 5);
@@ -1865,6 +1800,34 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     return true;
 }
 
+void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
+    const auto & n = vp.n;
+    const auto & v1 = vp.v1;
+    const auto & v2 = vp.v2;
+    const auto & texture = vp.texture;
+
+    // Used for calculation of slice pane length inside the 3d view
+    const auto dataPxX = texture.displayedEdgeLengthX / texture.texUnitsPerDataPx * 0.5;
+    const auto dataPxY = texture.displayedEdgeLengthY / texture.texUnitsPerDataPx * 0.5;
+
+    glLoadName(vp.id);//for select mode
+
+    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+
+    glBegin(GL_QUADS);
+        glNormal3i(n.x, n.y, n.z);
+        glTexCoord2f(texture.texLUx, texture.texLUy);
+        glVertex3f(-dataPxX * v1.x - dataPxY * v2.x, -dataPxX * v1.y - dataPxY * v2.y, -dataPxX * v1.z - dataPxY * v2.z);
+        glTexCoord2f(texture.texRUx, texture.texRUy);
+        glVertex3f(dataPxX * v1.x - dataPxY * v2.x, dataPxX * v1.y - dataPxY * v2.y, dataPxX * v1.z - dataPxY * v2.z);
+        glTexCoord2f(texture.texRLx, texture.texRLy);
+        glVertex3f(dataPxX * v1.x + dataPxY * v2.x, dataPxX * v1.y + dataPxY * v2.y, dataPxX * v1.z + dataPxY * v2.z);
+        glTexCoord2f(texture.texLLx, texture.texLLy);
+        glVertex3f(-dataPxX * v1.x + dataPxY * v2.x, -dataPxX * v1.y + dataPxY * v2.y, -dataPxX * v1.z + dataPxY * v2.z);
+    glEnd();
+    glBindTexture (GL_TEXTURE_2D, 0);
+}
+
 #include "sleeper.h"
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
     int i;
@@ -1920,15 +1883,31 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
         renderOrthogonalVP(currentVP);
     }
 
+
+
     hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
     ptr = (GLuint *)selectionBuffer;
 
+
     minZ = 0xffffffff;
     if(hits == -1) {
         hits = 8192;
     }
+
+//    for (i = 0; i < hits; i++) { /*  for each hit  */
+//          names = *ptr;
+//          qDebug (" number of names for hit = %d\n", names); ptr++;
+//          qDebug("z1 is %g;", (float) *ptr/0x7fffffff); ptr++;
+//          qDebug("z2 is %g\n", (float) *ptr/0x7fffffff); ptr++;
+//          qDebug("   the name is ");
+//          for (int j = 0; j < names; j++) {     /*  for each name */
+//             qDebug ("%d ", *ptr); ptr++;
+//          }
+//          qDebug("####");
+//       }
+
     for(i = 0; i < hits; i++) {
         names = *ptr;
         ptr++;
@@ -1950,7 +1929,6 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     int i;
     /* 8192 is really arbitrary. It should be a value dependent on the
     number of nodes / segments */
-
     GLuint selectionBuffer[8192] = {0};
     GLint hits, openGLviewport[4];
     GLuint names, *ptr, minZ, *ptrName;
@@ -2225,7 +2203,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     uint renderNode;
     float currentRadius;
 
-
     state->skeletonState->lineVertBuffer.vertsIndex = 0;
     state->skeletonState->lineVertBuffer.normsIndex = 0;
     state->skeletonState->lineVertBuffer.colsIndex = 0;
@@ -2293,6 +2270,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
             /* Every node is tested based on a precomputed circumsphere
             that includes its segments. */
+
             if(!sphereInFrustum(currNodePos, currentNode->circRadius, currentVP)) {
                 currentNode = currentNode->next;
                 lastNode = lastRenderedNode = NULL;
@@ -2427,8 +2405,12 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 /* The first 50 entries of the openGL namespace are reserved
                 for static objects (like slice plane quads...) */
-                if(state->viewerState->selectModeFlag)
-                    glLoadName(currentNode->nodeID + 50);
+                if(state->viewerState->selectModeFlag) {
+                    // the active node receives its name later, don't name it twice, or it will be selected twice.
+                    if(currentNode != state->skeletonState->activeNode) {
+                        glLoadName(currentNode->nodeID + 50);
+                    }
+                }
 
                 /* Changes the current color & radius if the node has a comment */
                 /* This is a bit hackish, but does the job */
@@ -2514,7 +2496,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
     /* Highlight active node */
     if(state->skeletonState->activeNode) {
-
         /* Set the default color for the active node */
         SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
 
@@ -2523,8 +2504,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
         currentColor.a = 0.2f;
 
-        if(state->viewerState->selectModeFlag)
+        if(state->viewerState->selectModeFlag) {
             glLoadName(state->skeletonState->activeNode->nodeID + 50);
+        }
 
         if(state->skeletonState->overrideNodeRadiusBool) {
             renderSphere(NULL, &(state->skeletonState->activeNode->position),
@@ -2542,8 +2524,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         memset(textBuffer, '\0', 32);
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
         renderText(&(state->skeletonState->activeNode->position), textBuffer, currentVP, viewportType);
-
-
     }
 
     /* Restore modelview matrix */
@@ -2929,7 +2909,9 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
    frustum[5][2] = clip[11] + clip[10];
    frustum[5][3] = clip[15] + clip[14];
 
+
    /* Normalize the result */
+
    t = sqrt( frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2] );
    frustum[5][0] /= t;
    frustum[5][1] /= t;
@@ -2945,6 +2927,9 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
 // modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html
 bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
     int p;
+
+    /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */
+   // if(state->viewerState->selectModeFlag) radius += 900.f;
 
     for( p = 0; p < 6; p++ ) {
         if( state->viewerState->vpConfigs[viewportType].frustum[p][0]

@@ -36,7 +36,7 @@
 #include <QEvent>
 #include <QDebug>
 #include <QKeyEvent>
-#include "../GUIConstants.h"
+#include "../GuiConstants.h"
 #include "knossos-global.h"
 
 extern  stateInfo *state;
@@ -130,6 +130,7 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
 }
 
 void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
+
     if(on) {
         state->skeletonState->userCommentColoringOn = true;        
     } else {
@@ -140,10 +141,8 @@ void CommentsHighlightingTab::enableCondColoringChecked(bool on) {
 void CommentsHighlightingTab::enableCondRadiusChecked(bool on) {
     if(on) {
         state->skeletonState->commentNodeRadiusOn = true;
-        qDebug() << "enabled";
     } else {
         state->skeletonState->commentNodeRadiusOn = false;
-        qDebug() << "disabled";
     }
 }
 
@@ -159,26 +158,20 @@ void CommentsHighlightingTab::substringEntered() {
 
 
 void CommentsHighlightingTab::colorChanged(QString color) {
-    qDebug() << color;
     QComboBox *colorBox = (QComboBox*) sender();
     for(int i = 0; i < N; i++) {
         if(colorBox == colorComboBox[i]) {
             color4F col;
             if(color == "green") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.13, 0.69, 0.3, 1.);
-                qDebug() << "green selected";
             } else if(color == "rose") {
                  SET_COLOR(state->skeletonState->commentColors[i], 0.94, 0.89, 0.69, 1.);
-                 qDebug() << " rose selected";
             } else if(color == "azure") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.6, 0.85, 0.92, 1.);
-                qDebug() << "azure selected";
             } else if(color == "purple") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.64, 0.29, 0.64, 1.);
-                qDebug() << "purple";
             } else if(color == "brown") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.73, 0.48, 0.34, 1.);
-                qDebug() << "brown";
             }
         }
     }

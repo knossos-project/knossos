@@ -26,6 +26,8 @@ const QString COMMENT2 = "comment2";
 const QString COMMENT3 = "comment3";
 const QString COMMENT4 = "comment4";
 const QString COMMENT5 = "comment5";
+const QString COMMENTS_TAB_INDEX = "tab_index";
+
 
 /* Autosave */
 const QString AUTO_SAVING = "auto_saving";
@@ -58,6 +60,7 @@ const QString VPYZ_COORD = "vpyz_coord";
 const QString VPYZ_SIZE = "vpyz_size";
 const QString VPSKEL_COORD = "vpskel_coord";
 const QString VPSKEL_SIZE = "vpskel_size";
+const QString VP_TAB_INDEX = "vp_tab_index";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";
@@ -101,6 +104,7 @@ const QString COMMENT = "comment";
 const QString SEARCH_FOR = "search_for";
 const QString SEARCH_FOR_TREE = "search_for_tree";
 const QString SEARCH_FOR_NODE = "search_for_node";
+const QString TOOLS_TAB_INDEX = "tools_tab_index";
 
 /* Tools Widget TreeTab */
 const QString ID1 = "id1";
@@ -125,6 +129,9 @@ const QString ROSE = "rose";
 const QString AZURE = "azure";
 const QString PURPLE = "purple";
 const QString BROWN = "brown";
+
+const QString ENABLE_COND_COLORING = "enable_cond_coloring";
+const QString ENABLE_COND_RADIUS = "enable_cond_radius";
 
 const QString SUBSTR1 = "substring1";
 const QString SUBSTR2 = "substring2";
@@ -162,6 +169,6 @@ const QString LOADED_FILE10 = "loaded_file10";
 
 const QString OPEN_FILE_DIALOG_DIRECTORY = "open_file_dialog_directory";
 const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
-
+const QString WORK_MODE = "work_mode";
 
 #endif // GUICONSTANTS_H

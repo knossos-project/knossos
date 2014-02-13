@@ -27,7 +27,7 @@
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
 #include "viewportsettings/vpskeletonviewportwidget.h"
 #include <QSettings>
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QLabel>
@@ -119,12 +119,13 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(settings.value(SHOW_VP_DECORATION).isNull() == false) {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
+        emit decorationSignal();
     }
     else {
-        this->generalTabWidget->showVPDecorationCheckBox->setChecked(false);
+        this->generalTabWidget->showVPDecorationCheckBox->setChecked(true);
     }
 
-    state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? true : settings.value(ENABLE_OVERLAY).toBool();
+    state->overlay = (settings.value(ENABLE_OVERLAY).isNull())? false : settings.value(ENABLE_OVERLAY).toBool();
     this->slicePlaneViewportWidget->enableOverlayCheckBox->setChecked(state->overlay);
 
     state->skeletonState->showIntersections =
@@ -167,7 +168,7 @@ void ViewportSettingsWidget::loadSettings() {
 
     state->skeletonState->showXZplane =
             (settings.value(SHOW_XZ_PLANE).isNull())? false : settings.value(SHOW_XZ_PLANE).toBool();
-    this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
+    this->skeletonViewportWidget->showXZPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
 
     state->skeletonState->showYZplane =
             (settings.value(SHOW_YZ_PLANE).isNull())? false : settings.value(SHOW_YZ_PLANE).toBool();
@@ -221,6 +222,9 @@ void ViewportSettingsWidget::loadSettings() {
         state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
         this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
     }
+
+    this->tabs->setCurrentIndex(settings.value(VP_TAB_INDEX).toInt());
+
     settings.endGroup();
     if(visible) {
         show();
@@ -261,8 +265,6 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
     settings.setValue(TREE_LUT_FILE, this->slicePlaneViewportWidget->treeLutFile->text());
 
-    qDebug() << this->slicePlaneViewportWidget->datasetLutFile->text();
-
     if(!this->slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
         settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
         strcpy(state->viewerState->gui->datasetLUTFile, this->slicePlaneViewportWidget->datasetLutFile->text().toStdString().c_str());
@@ -284,7 +286,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(WHOLE_SKELETON, this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
     settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
     settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
-
+    settings.setValue(VP_TAB_INDEX, this->tabs->currentIndex());
 
     settings.endGroup();
 

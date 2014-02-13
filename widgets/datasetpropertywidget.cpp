@@ -11,7 +11,7 @@
 #include <QApplication>
 #include "knossos-global.h"
 #include "knossos.h"
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "ftp.h"
 #include "viewer.h"
 #include "mainwindow.h"
@@ -79,7 +79,6 @@ void DatasetPropertyWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
     QString selectDir = QFileDialog::getExistingDirectory(this, "Select a knossos.conf", QDir::homePath());
-    qDebug() << selectDir;
     if(!selectDir.isNull()) {
         path->setEditText(selectDir);
     }
@@ -104,28 +103,36 @@ void DatasetPropertyWidget::cancelButtonClicked() {
 }
 
 void DatasetPropertyWidget::processButtonClicked() {
+    changeDataSet(true);
+}
+
+void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     QString dir = this->path->currentText();
     if(dir.isNull()) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText("No directory specified!");
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+        if (isGUI) {
+            QMessageBox info;
+            info.setWindowFlags(Qt::WindowStaysOnTopHint);
+            info.setIcon(QMessageBox::Information);
+            info.setWindowTitle("Information");
+            info.setText("No directory specified!");
+            info.addButton(QMessageBox::Ok);
+            info.exec();
+        }
         return;
     }
 
     QString conf = QString(dir).append("/knossos.conf");
     QFile confFile(conf);
     if(!confFile.exists()) {
-        QMessageBox info;
-        info.setWindowFlags(Qt::WindowStaysOnTopHint);
-        info.setIcon(QMessageBox::Information);
-        info.setWindowTitle("Information");
-        info.setText("There is no knossos.conf");
-        info.addButton(QMessageBox::Ok);
-        info.exec();
+        if (isGUI) {
+            QMessageBox info;
+            info.setWindowFlags(Qt::WindowStaysOnTopHint);
+            info.setIcon(QMessageBox::Information);
+            info.setWindowTitle("Information");
+            info.setText("There is no knossos.conf");
+            info.addButton(QMessageBox::Ok);
+            info.exec();
+        }
         return;
     }
 
@@ -140,7 +147,12 @@ void DatasetPropertyWidget::processButtonClicked() {
     // We clear the skeleton *before* reading the new config. In case we fail later, the skeleton would be nevertheless be gone.
     // This is a gamble we take, in order to not have possible bugs where the skeleton depends on old configuration values.
     emit clearAnnotationSignal();
-
+    if (isGUI) {
+        emit clearAnnotationSignalGUI();
+    }
+    else {
+        emit clearAnnotationSignalNoGUI();
+    }
     this->waitForLoader();
 
     // From now on we don't really want to *load* anything, just mess around with data structures to get things right

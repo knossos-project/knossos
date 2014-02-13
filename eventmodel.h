@@ -47,7 +47,6 @@
   * You will save a couple of hours ..
   */
 
-class Renderer;
 class EventModel : public QObject
 {
     Q_OBJECT
@@ -102,8 +101,6 @@ signals:
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
-    void nextCommentSignal(char *searchString);
-    void previousCommentSignal(char *searchString);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();
     void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
@@ -113,7 +110,6 @@ signals:
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
-    void idleTimeSignal();
     void updateTools();
     void updateTreeviewSignal();
     void updateCommentsTable();

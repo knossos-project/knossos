@@ -52,7 +52,7 @@
 #include <QCheckBox>
 #include <QtConcurrent/QtConcurrentRun>
 
-#include "GUIConstants.h"
+#include "GuiConstants.h"
 #include "knossos-global.h"
 #include "knossos.h"
 #include "viewport.h"
@@ -138,6 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
+    connect(widgetContainer->viewportSettingsWidget, SIGNAL(decorationSignal()), this, SLOT(viewportSettingsSlot()));
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
@@ -145,11 +146,10 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 void MainWindow::createViewports() {
-    viewports = new Viewport*[NUM_VP];
-    viewports[VP_UPPERLEFT] = new Viewport(this, VIEWPORT_XY, VP_UPPERLEFT);
-    viewports[VP_LOWERLEFT] = new Viewport(this, VIEWPORT_XZ, VP_LOWERLEFT);
-    viewports[VP_UPPERRIGHT] = new Viewport(this, VIEWPORT_YZ, VP_UPPERRIGHT);
-    viewports[VP_LOWERRIGHT] = new Viewport(this, VIEWPORT_SKELETON, VP_LOWERRIGHT);
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, nullptr, VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 
     viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
@@ -498,12 +498,17 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
+    QActionGroup* workModeEditMenuGroup = new QActionGroup(this);
     addNodeAction = new QAction(tr("Add Node"), this);
     addNodeAction->setCheckable(true);
+    addNodeAction->setActionGroup(workModeEditMenuGroup);
     linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), this);
     linkWithActiveNodeAction->setCheckable(true);
+    linkWithActiveNodeAction->setActionGroup(workModeEditMenuGroup);
     dropNodesAction = new QAction(tr("Drop Nodes"), this);
     dropNodesAction->setCheckable(true);
+    dropNodesAction->setActionGroup(workModeEditMenuGroup);
+
     skeletonStatisticsAction = new QAction(tr("Skeleton Statistics"), this);
 
 
@@ -522,11 +527,14 @@ void MainWindow::createActions()
 
 
     /* view actions */
-    workModeViewAction = new QAction(tr("Work Mode"), this);
+    //workModeViewAction = new QAction(tr("Work Mode"), this);
+    QActionGroup* workModeViewMenuGroup = new QActionGroup(this);
     dragDatasetAction = new QAction(tr("Drag Dataset"), this);
     dragDatasetAction->setCheckable(true);
+    dragDatasetAction->setActionGroup(workModeViewMenuGroup);
     recenterOnClickAction = new QAction(tr("Recenter on Click"), this);
     recenterOnClickAction->setCheckable(true);
+    recenterOnClickAction->setActionGroup(workModeViewMenuGroup);
 
     if(state->viewerState->workMode == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
@@ -613,6 +621,7 @@ void MainWindow::createMenus()
         workModeEditMenu->addAction(addNodeAction);
         workModeEditMenu->addAction(linkWithActiveNodeAction);
         workModeEditMenu->addAction(dropNodesAction);
+
     //editMenu->addAction(skeletonStatisticsAction);
 
     newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()));
@@ -677,7 +686,7 @@ void MainWindow::createMenus()
     F5Action->setShortcut(Qt::Key_F5);
     F5Action->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Annotation", this, SLOT(clearAnnotationSlot()));
+    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Annotation", this, SLOT(clearAnnotationSlotGUI()));
 
     viewMenu = menuBar()->addMenu("Navigation");
     workModeViewMenu = viewMenu->addMenu("Work Mode");
@@ -727,8 +736,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
              event->accept();
          } else {
              event->ignore();
+             return;
          }
     }
+
+    QWidgetList widgets = QApplication::topLevelWidgets();
+    for(int i = 0; i < widgets.size(); i++) {
+        widgets.at(i)->close();
+    }
+    exit(0);
 }
 
 //file menu functionality
@@ -857,7 +873,6 @@ void MainWindow::updateFileHistoryMenu() {
 
 void MainWindow::saveSlot()
 {
-
     if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
@@ -868,13 +883,16 @@ void MainWindow::saveSlot()
 
                 updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
 
-                if(state->skeletonState->autoSaveBool) {
+                if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
                     if(index >= 0) {
                         skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
                         historyEntryActions[index]->setText(skeletonFileHistory->at(index));
                         becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-
-
+                        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+                        updateTitlebar(true);
+                        state->skeletonState->unsavedChanges = false;
+                        state->skeletonState->skeletonChanged = false;
+                        return;
                     }
                 }
 
@@ -892,7 +910,7 @@ void MainWindow::saveSlot()
                 state->skeletonState->unsavedChanges = false;
         }
     }
-    emit idleTimeSignal();
+    state->skeletonState->skeletonChanged = false;
 }
 
 void MainWindow::saveAsSlot()
@@ -933,6 +951,7 @@ void MainWindow::saveAsSlot()
 
     }
     state->viewerState->renderInterval = FAST;
+    state->skeletonState->skeletonChanged = false;
 }
 
 
@@ -946,50 +965,16 @@ void MainWindow::quitSlot()
 void MainWindow::addNodeSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-
-    if(linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(false);
-    }
-    if(dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(false);
-    }
-
-    if(!addNodeAction->isChecked()) {
-        addNodeAction->setChecked(true);
-    }
 }
 
 void MainWindow::linkWithActiveNodeSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-
-    if(addNodeAction->isChecked()) {
-        addNodeAction->setChecked(false);
-    }
-    if(dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(false);
-    }
-
-    if(!linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(true);
-    }
 }
 
 void MainWindow::dropNodesSlot()
 {
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
-
-    if(addNodeAction->isChecked()) {
-        addNodeAction->setChecked(false);
-    }
-
-    if(linkWithActiveNodeAction->isChecked()) {
-        linkWithActiveNodeAction->setChecked(false);
-    }
-
-    if(!dropNodesAction->isChecked()) {
-        dropNodesAction->setChecked(true);
-    }
 }
 
 
@@ -1013,17 +998,31 @@ void MainWindow::clearAnnotationWithoutConfirmation() {
     emit updateCommentsTableSignal();
 }
 
-void MainWindow::clearAnnotationSlot()
+void MainWindow::clearAnnotationSlotGUI() {
+    clearAnnotation(true);
+}
+
+void MainWindow::clearAnnotationSlotNoGUI() {
+    clearAnnotation(false);
+}
+
+void MainWindow::clearAnnotation(bool isGUI)
 {
-    QMessageBox question;
-    question.setWindowFlags(Qt::WindowStaysOnTopHint);
-    question.setIcon(QMessageBox::Question);
-    question.setWindowTitle("Confirmation required");
-    question.setText("Really clear annotation (you cannot undo this)?");
-    QPushButton *ok = question.addButton(QMessageBox::Ok);
-    question.addButton(QMessageBox::No);
-    question.exec();
-    if(question.clickedButton() == ok) {
+    bool isClear = true;
+    if (isGUI) {
+        QMessageBox question;
+        question.setWindowFlags(Qt::WindowStaysOnTopHint);
+        question.setIcon(QMessageBox::Question);
+        question.setWindowTitle("Confirmation required");
+        question.setText("Really clear skeleton (you cannot undo this)?");
+        QPushButton *ok = question.addButton(QMessageBox::Ok);
+        question.addButton(QMessageBox::No);
+        question.exec();
+        if(question.clickedButton() != ok) {
+            isClear = false;
+        }
+    }
+    if (isClear) {
         emit clearAnnotationSignal(CHANGE_MANUAL, false);
         updateTitlebar(false);
         emit updateTreeviewSignal();
@@ -1191,7 +1190,8 @@ void MainWindow::pasteClipboardCoordinates(){
     QString text = QApplication::clipboard()->text();
 
     if(text.size() > 0) {
-      char *pasteBuffer = const_cast<char *> (text.toStdString().c_str());
+      std::string text_stdstr = text.toStdString();
+      char *pasteBuffer = const_cast<char *> (text_stdstr.c_str());
 
       Coordinate *extractedCoords = NULL;
       if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {
@@ -1244,6 +1244,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
+    settings.setValue(WORK_MODE, state->skeletonState->workMode);
+
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(i < skeletonFileHistory->size()) {
             settings.setValue(QString("loaded_file%1").arg(i+1), this->skeletonFileHistory->at(i));
@@ -1265,7 +1267,7 @@ void MainWindow::saveSettings() {
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
-    widgetContainer->annotationWidget->saveSettings();
+    widgetContainer->annotationWidget->saveSettings();    
     //widgetContainer->toolsWidget->saveSettings();    
 }
 
@@ -1312,6 +1314,14 @@ void MainWindow::loadSettings() {
         saveFileDirectory = new QString(QDir::homePath());
     }
 
+    if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {
+        state->skeletonState->workMode = settings.value(WORK_MODE).toUInt();
+        if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE) {
+            linkWithActiveNodeSlot();
+        } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_DROP_NODE) {
+            dropNodesSlot();
+        }
+    }
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
@@ -1355,6 +1365,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
     this->setGeometry(x, y, width, height);
 
+
     widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
     widgetContainer->console->loadSettings();
@@ -1363,6 +1374,8 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
+    //widgetContainer->tracingTimeWidget->loadSettings();
+
 
 }
 
@@ -1440,8 +1453,6 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
     } else if(fileName.contains(withoutVersion)) {
         //fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
-    } else {
-        qDebug() << "gnaaa";
     }
 }
 
@@ -1459,13 +1470,11 @@ void MainWindow::dropEvent(QDropEvent *event) {
     if(event->mimeData()->hasFormat("text/uri-list")) {
         QList<QUrl> urls = event->mimeData()->urls();
         if(urls.size() != 1) {
-            qDebug() << "error";
             return;
         }
 
         QUrl url = urls.first();
         QString fileName(url.toLocalFile());
-        qDebug() << fileName;
 
         if(!fileName.endsWith(".nml")) {
             return;
@@ -1482,7 +1491,6 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
-    qDebug() << "drag leave";
 }
 
 void MainWindow::openDatasetSlot() {
@@ -1637,11 +1645,11 @@ void MainWindow::newTreeSlot() {
 }
 
 void MainWindow::nextCommentNodeSlot() {
-    emit nextCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    emit nextCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
 }
 
 void MainWindow::previousCommentNodeSlot() {
-    emit previousCommentSignal(state->viewerState->gui->commentSearchBuffer);
+    emit previousCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
 }
 
 void MainWindow::pushBranchNodeSlot() {
@@ -1684,74 +1692,84 @@ void MainWindow::jumpToActiveNodeSlot() {
     emit jumpToActiveNodeSignal();
 }
 
-void MainWindow::F1Slot() {   
-    if(!state->skeletonState->activeNode)
+void MainWindow::F1Slot() {
+    if(!state->skeletonState->activeNode) {
         return;
-
+    }
     QString comment(state->viewerState->gui->comment1);
 
     if((!state->skeletonState->activeNode->comment) && (!comment.isEmpty())) {
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
+        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment1),
+                              state->skeletonState->activeNode, 0, true);
     } else{
         if (!comment.isEmpty()) {
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment1, state->skeletonState->activeNode, 0, true);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                                   QString(state->viewerState->gui->comment1), state->skeletonState->activeNode, 0, true);
         }
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F2Slot() {
-    if(!state->skeletonState->activeNode)
+    if(!state->skeletonState->activeNode) {
         return;
-
+    }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
+        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment2),
+                              state->skeletonState->activeNode, 0, true);
     }
     else{
         if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment2, state->skeletonState->activeNode, 0, true);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                                   QString(state->viewerState->gui->comment2), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F3Slot() {
-    if(!state->skeletonState->activeNode)
+    if(!state->skeletonState->activeNode) {
         return;
-
+    }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
+        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment3),
+                              state->skeletonState->activeNode, 0, true);
     }
     else{
        if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment3, state->skeletonState->activeNode, 0, true);
+            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                                   QString(state->viewerState->gui->comment3), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F4Slot() {
-    if(!state->skeletonState->activeNode)
+    if(!state->skeletonState->activeNode) {
         return;
-
+    }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
+        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment4),
+                              state->skeletonState->activeNode, 0, true);
     }
     else{
        if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
-        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment4, state->skeletonState->activeNode, 0, true);
+        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                               QString(state->viewerState->gui->comment4), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
 void MainWindow::F5Slot() {
-    if(!state->skeletonState->activeNode)
+    if(!state->skeletonState->activeNode) {
         return;
-
+    }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
+        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment5),
+                              state->skeletonState->activeNode, 0, true);
     }
     else {
         if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
-        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0, state->viewerState->gui->comment5, state->skeletonState->activeNode, 0, true);
+        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+                               QString(state->viewerState->gui->comment5), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }

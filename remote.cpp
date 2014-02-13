@@ -102,7 +102,6 @@ bool Remote::newTrajectory(char *trajName, char *trajectory) {
     if(state->trajectories == NULL) {
         state->trajectories = (struct trajectory*) malloc(this->maxTrajectories * sizeof(struct trajectory));
         if(state->trajectories == NULL) {
-            qDebug("LOLOLOL");
             printf("Out of memory.\n");
             return false;
         }
@@ -424,7 +423,6 @@ bool Remote::remoteWalk(int x, int y, int z) {
         // granularity isn't fine enough and it doesn't matter anyway.
         msleep(eventDelay);
     }
-    emit idleTimeSignal();
     return true;
 }
 
@@ -438,7 +436,7 @@ void Remote::setRecenteringPosition(int x, int y, int z) {
     this->recenteringPosition.z = z;
 }
 
-
+/*
 bool Remote::remoteDelay(int s) {
-
 }
+*/

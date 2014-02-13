@@ -29,13 +29,12 @@
 #include "knossos-global.h"
 
 class Viewport;
-class Renderer : public QObject
-{
+class Renderer : public QObject {
     Q_OBJECT
+    void renderArbitrarySlicePane(const vpConfig &);
 public:
-    explicit Renderer(QObject *parent = 0);    
+    explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    QFont font;
 
     static bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
     static bool cubeInFrustum(floatCoordinate center, float edgeLen, uint viewportType);

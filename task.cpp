@@ -195,7 +195,7 @@ void taskState::removeCookie() {
     }
 }
 
-const char *taskState::CSRFToken() {
+QString taskState::CSRFToken() {
     QFile cookie(state->taskState->cookieFile);
     if(cookie.exists() == false) {
         return NULL;
@@ -212,7 +212,7 @@ const char *taskState::CSRFToken() {
         if((index = content.indexOf("csrftoken")) == -1) {
             continue;
         }
-        return content.mid(index + strlen("csrftoken ")).toStdString().c_str();
+        return QString (content.mid(index + strlen("csrftoken ")).toStdString().c_str());
     }
     qDebug("no csrf token found!");
     return NULL;
