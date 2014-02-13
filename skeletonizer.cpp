@@ -950,6 +950,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
                 }
                 xml.writeStartElement("patch");
                 xml.writeAttribute("id", tmp.setNum(patchEl->patchID));
+                xml.writeAttribute("comment", currentPatch->comment);
                 loops = currentPatch->loopsAsVector();
                 for(uint i = 0; i < loops.size(); ++i) {
                     xml.writeStartElement("loop");
@@ -1484,6 +1485,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                 if(xml.name() == "patches") {
                     uint patchID;
+                    QString comment;
                     PatchLoop *loop = NULL;
                     floatCoordinate point;
                     int viewportType = -1;
@@ -1496,6 +1498,14 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             }
                             patchID = attribute.toLocal8Bit().toInt();
                             Skeletonizer::addPatchListElement(patchID);
+                            if(Patch::activePatch == NULL) {
+                                qDebug("failed to create patch with ID %i", patchID);
+                                continue;
+                            }
+                            attribute = attributes.value("comment");
+                            if(attribute.isNull() == false) {
+                                Patch::activePatch->comment = attribute.toString();
+                            }
                             emit activePatchChanged();
                             while(xml.readNextStartElement()) {
                                 if(xml.name() == "loop") {

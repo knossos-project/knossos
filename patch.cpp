@@ -477,7 +477,7 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
  */
 void Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportType) {
     if(lineBuffer.size() > 0 or activeLine.size() > 0) {
-        qDebug("finishe active first!");
+        qDebug("finish active first!");
         return;
     }
     std::vector<PatchLoop *> visibleLoops;
