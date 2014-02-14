@@ -2204,6 +2204,7 @@ void Viewer::rewire() {
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
     connect(window, SIGNAL(jumpToActiveLoopSignal()), skeletonizer, SLOT(jumpToActiveLoop()));
+    connect(window, SIGNAL(delActiveLoopSignal()), skeletonizer, SLOT(delActiveLoop()));
     connect(window, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
                     skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
     connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),

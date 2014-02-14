@@ -101,6 +101,7 @@ signals:
     void jumpToActiveNodeSignal();
 
     void jumpToActiveLoopSignal();
+    void delActiveLoopSignal();
 
     bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);

@@ -4590,6 +4590,23 @@ void Skeletonizer::jumpToActiveLoop() {
                         TELL_COORDINATE_CHANGE);
 }
 
+void Skeletonizer::delActiveLoop() {
+    if(Patch::activeLine.size() == 0 and Patch::lineBuffer.size() == 0) {
+        return;
+    }
+    QMessageBox prompt;
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle("Cofirmation required");
+    prompt.setText("Really delete active loop?");
+    QPushButton *yes = prompt.addButton("Delete", QMessageBox::ActionRole);
+    prompt.addButton("Cancel", QMessageBox::ActionRole);
+    prompt.exec();
+    if(prompt.clickedButton() == yes) {
+        Patch::activeLine.clear();
+        Patch::lineBuffer.clear();
+    }
+}
 
 bool Skeletonizer::addPatchListElement(int patchID) {
     treeListElement *tree = state->skeletonState->activeTree;

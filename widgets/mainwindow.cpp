@@ -1804,7 +1804,7 @@ void MainWindow::jumpToActiveLoopSlot() {
 }
 
 void MainWindow::delActiveLoopSlot() {
-
+    emit delActiveLoopSignal();
 }
 
 void MainWindow::resizeViewports(int width, int height) {
