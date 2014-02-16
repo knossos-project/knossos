@@ -101,6 +101,7 @@ signals:
     void jumpToActiveNodeSignal();
 
     void jumpToActiveLoopSignal();
+    void deactivateLoopSignal();
     void delActiveLoopSignal();
 
     bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
@@ -112,6 +113,7 @@ signals:
     void treeAddedSignal(treeListElement *tree);
     void branchPushedSignal();
     void branchPoppedSignal();
+    void unselectNodesSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
     void viewportDecorationSignal(bool visible);
 protected:
@@ -328,6 +330,7 @@ public slots:
     void moveToPrevTreeSlot();
     void moveToNextTreeSlot();
     void jumpToActiveNodeSlot();
+    void deselectNodesSlot();
     void F1Slot();
     void F2Slot();
     void F3Slot();
@@ -335,6 +338,7 @@ public slots:
     void F5Slot();
 
     void jumpToActiveLoopSlot();
+    void deactivateLoopSlot();
     void delActiveLoopSlot();
 };
 

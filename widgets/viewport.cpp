@@ -332,6 +332,16 @@ void Viewport::mousePressEvent(QMouseEvent *event) {
     }
 }
 
+void Viewport::mouseDoubleClickEvent(QMouseEvent *event) {
+    switch(event->button()) {
+    case Qt::LeftButton:
+        eventDelegate->handleMouseDoubleClickLeft(event, id);
+        break;
+    case Qt::RightButton:
+        break;
+    }
+}
+
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     resizeButtonHold = false; // can only be true, when left mouse button is pressed
     Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();

@@ -55,7 +55,8 @@ public:
     bool handleMouseButtonLeft(QMouseEvent *event, int VPfound);
     bool handleMouseButtonMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseButtonRight(QMouseEvent *event, int VPfound);
-    bool handleMouseMotion(QMouseEvent *event, int VPfound);
+    void handleMouseDoubleClickLeft(QMouseEvent *event, int VPfound);
+    void handleMouseMotion(QMouseEvent *event, int VPfound);
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);

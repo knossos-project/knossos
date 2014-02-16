@@ -85,7 +85,7 @@ public:
             children[i] = NULL;
         }
         if(copy.isLeaf()) {
-            if(copy.point.x != -1) {
+            if(copy.hasContent()) {
                 (*counter)++;
                 objects = copy.objects;
             }
@@ -150,7 +150,10 @@ public:
             && children[4] == NULL && children[5] == NULL && children[6] == NULL && children[7] == NULL;
     }
 
-
+    /**
+     * @brief hasContent tells you if this or any sub-octree holds an object
+     * @return true if any this or a sub-octree holds an object, false otherwise
+     */
     bool hasContent() const {
         if(isLeaf()) {
             return point.x != -1;
@@ -165,6 +168,17 @@ public:
         }
         return false;
     }
+
+    /**
+     * @brief contains tells you if this octree's range includes given point.
+     *        If the point lies on the octree's borders, it is considered as inside.
+     */
+    bool contains(floatCoordinate point) {
+        return center.x - halfEdgeLen <= point.x and center.x + halfEdgeLen >= point.x
+                and center.y - halfEdgeLen <= point.y and center.y + halfEdgeLen >= point.y
+                and center.z - halfEdgeLen <= point.z and center.z + halfEdgeLen >= point.z;
+    }
+
     /**
      * @brief insert inserts a new object into the octree.
      * @param newObject pointer to new object
@@ -177,7 +191,7 @@ public:
         // If this node doesn't have a data point yet assigned
         // and it is a leaf, then we're done!
         if(isLeaf()) {
-            if(point.x == -1) {
+            if(hasContent() == false) {
                 objects.push_back(newObject);
                 point = pos;
                 return true;
@@ -254,7 +268,7 @@ public:
      */
     void getAllObjs(std::vector<T> &objs) {
         if(isLeaf()) {
-            if(point.x != -1) {
+            if(hasContent()) {
                 objs.insert(objs.end(), objects.begin(), objects.end());
             }
             return;
@@ -275,7 +289,7 @@ public:
      */
     void getAllVisibleObjs(std::vector<T> &objs, uint viewportType) {
         if(isLeaf()) {
-            if(point.x != -1) {
+            if(hasContent()) {
                 objs.insert(objs.end(), objects.begin(), objects.end());
             }
             return;
@@ -371,14 +385,17 @@ public:
         floatCoordinate p_point, point_q, p_q;
         SUB_ASSIGN_COORDINATE(p_q, q, p);
 
-        if(point.x != -1) { // leaf
-            SUB_ASSIGN_COORDINATE(p_point, point, p);
-            SUB_ASSIGN_COORDINATE(point_q, q, point);
-            if(euclidicNorm(&p_point) + euclidicNorm(&point_q) - euclidicNorm(&p_q) < 0.001) { // arbitrary float threshold
-                results.insert(results.end(), objects.begin(), objects.end());
+        if(isLeaf()) {
+            if(hasContent()) {
+                SUB_ASSIGN_COORDINATE(p_point, point, p);
+                SUB_ASSIGN_COORDINATE(point_q, q, point);
+                if(euclidicNorm(&p_point) + euclidicNorm(&point_q) - euclidicNorm(&p_q) < 0.001) { // arbitrary float threshold for equality
+                    results.insert(results.end(), objects.begin(), objects.end());
+                }
+                return;
             }
-            return;
         }
+
         // interior node, check children
         int minX = (p_q.x > 0)? p.x : q.x; int maxX = (p_q.x > 0)? q.x : p.x;
         int minY = (p_q.y > 0)? p.y : q.y; int maxY = (p_q.y > 0)? q.y : p.y;
@@ -410,23 +427,25 @@ public:
         if(x == -1 and y == -1 and z == -1) {
             return;
         }
-        if(point.x != -1) { //leaf
-            if(z == -1) {
-                if(floor(point.x) == x and floor(point.y) == y) {
-                    results.push_back(point.z);
-                    return;
+        if(isLeaf()) {
+            if(hasContent()) {
+                if(z == -1) {
+                    if(floor(point.x) == x and floor(point.y) == y) {
+                        results.push_back(point.z);
+                        return;
+                    }
                 }
-            }
-            else if(y == -1) {
-                if(floor(point.x) == x and floor(point.z) == z) {
-                    results.push_back(point.y);
-                    return;
+                else if(y == -1) {
+                    if(floor(point.x) == x and floor(point.z) == z) {
+                        results.push_back(point.y);
+                        return;
+                    }
                 }
-            }
-            else if(x == -1) {
-                if(floor(point.y) == y and floor(point.z) == z) {
-                    results.push_back(point.x);
-                    return;
+                else if(x == -1) {
+                    if(floor(point.y) == y and floor(point.z) == z) {
+                        results.push_back(point.x);
+                        return;
+                    }
                 }
             }
         }
@@ -458,6 +477,96 @@ public:
     }
 
     /**
+     * @brief getNearestNeighbor returns pointer to the nearest neighbor of the object at given position.
+     *        If many nearest neighbors exist, the first one found is returned.
+     *        Returns NULL if no neighbor is found
+     */
+    std::pair<floatCoordinate, T> getNearestNeighbor(floatCoordinate pos) {
+        T dummy;
+        if(isLeaf()) {
+            if(hasContent()) {
+                return std::pair<floatCoordinate, T>(point, objects[0]);
+            }
+            return std::pair<floatCoordinate, T>(point, dummy);
+        }
+        if(hasContent() == false) {
+            return std::pair<floatCoordinate, T>(point, dummy);
+        }
+
+        // rearrange children for faster search
+        Octree<T> *searchOrder[8];
+        for(int i = 0; i < 8; ++i) { // order of search if point is inside the octant or left of it.
+            searchOrder[i] = children[i];
+        }
+        if(contains(pos) == false) {
+            if(center.x + halfEdgeLen < pos.x) { // point right of octant. so explore children 4 - 7 before the others
+                for(int i = 0; i < 4; ++i) {
+                    searchOrder[i] = children[i + 4];
+                    searchOrder[i + 4] = children[i];
+                }
+            }
+            else if(center.y - halfEdgeLen > pos.y) { // point behind octant. explore 0, 1, 4, 5 before the others
+                searchOrder[0] = children[0]; searchOrder[1] = children[1];
+                searchOrder[2] = children[4]; searchOrder[3] = children[5];
+                searchOrder[4] = children[2]; searchOrder[5] = children[3];
+                searchOrder[6] = children[6]; searchOrder[7] = children[7];
+            }
+            else if(center.y + halfEdgeLen < pos.y) { // point in front of octant. explore 2, 3, 6, 7 before the others
+                searchOrder[0] = children[2]; searchOrder[1] = children[3];
+                searchOrder[2] = children[6]; searchOrder[3] = children[7];
+                searchOrder[4] = children[0]; searchOrder[5] = children[1];
+                searchOrder[6] = children[4]; searchOrder[7] = children[5];
+
+            }
+            else if(center.z - halfEdgeLen > pos.z) { // point below octant. explore 0, 2, 4, 6 before the others
+                searchOrder[0] = children[0]; searchOrder[1] = children[2];
+                searchOrder[2] = children[4]; searchOrder[3] = children[6];
+                searchOrder[4] = children[1]; searchOrder[5] = children[3];
+                searchOrder[6] = children[5]; searchOrder[7] = children[7];
+            }
+            else if(center.z + halfEdgeLen < pos.z) { // point over octant. explore 1, 3, 5, 7 before the others
+                searchOrder[0] = children[0]; searchOrder[1] = children[2];
+                searchOrder[2] = children[4]; searchOrder[3] = children[6];
+                searchOrder[4] = children[1]; searchOrder[5] = children[3];
+                searchOrder[6] = children[5]; searchOrder[7] = children[7];
+            }
+        }
+        std::vector<std::pair<floatCoordinate, T> > neighbors;
+        for(int i = 0; i < 4; ++i) {
+            if(searchOrder[i] == NULL) {
+                continue;
+            }
+            std::pair<floatCoordinate, T> found = searchOrder[i]->getNearestNeighbor(pos);
+            if(found.first.x != -1) {
+                neighbors.push_back(found);
+            }
+        }
+        if(neighbors.size() == 0) { // in first four sub octants no objects. Check remaining 4.
+            for(int i = 4; i < 8; ++i) {
+                if(searchOrder[i] == NULL) {
+                    continue;
+                }
+                std::pair<floatCoordinate, T> found = searchOrder[i]->getNearestNeighbor(pos);
+                if(found.first.x != -1) {
+                    neighbors.push_back(found);
+                }
+            }
+        }
+        floatCoordinate distVec;
+        std::pair<floatCoordinate, T> neighbor;
+        float tmpDist;
+        float minDist = INT_MAX;
+        for(uint i = 0; i < neighbors.size(); ++i) {
+            SUB_ASSIGN_COORDINATE(distVec, pos, neighbors[i].first);
+            if((tmpDist = euclidicNorm(&distVec)) < minDist) {
+                minDist = tmpDist;
+                neighbor = neighbors[i];
+            }
+        }
+        return neighbor;
+    }
+
+    /**
      * @brief getObjsInRange retrieves all objects found in the given bounding box  and stores them in results.
      * @param pos center of the bounding box
      * @param halfCubeLen half the edge length of the bounding box
@@ -470,7 +579,7 @@ public:
         bmin.x = pos.x - halfCubeLen; bmin.y = pos.y - halfCubeLen; bmin.z = pos.z - halfCubeLen;
         bmax.x = pos.x + halfCubeLen; bmax.y = pos.y + halfCubeLen; bmax.z = pos.z + halfCubeLen;
         if(isLeaf()) {
-            if(point.x != -1) {
+            if(hasContent()) {
                 if(point.x > bmax.x || point.y > bmax.y || point.z > bmax.z) return;
                 if(point.x < bmin.x || point.y < bmin.y || point.z < bmin.z) return;
                 results.insert(results.end(), objects.begin(), objects.end());
@@ -536,7 +645,7 @@ public:
      */
     void getObjsInMargin(floatCoordinate pos, uint halfCubeLen, uint margin, std::vector<T> results) {
         if(isLeaf()) {
-            if(point.x == -1) {
+            if(hasContent() == false) {
                 return;
             }
             // check if object outside of cube + margin
@@ -626,7 +735,7 @@ public:
      */
     bool remove(T obj, floatCoordinate objPos) {
         if(isLeaf()) {
-            if(point.x == -1 or COMPARE_COORDINATE(point, objPos) == false) {
+            if(hasContent() == false or COMPARE_COORDINATE(point, objPos) == false) {
                 return false;
             }
             for(uint i = 0; i < objects.size(); ++i) {
@@ -654,7 +763,7 @@ public:
                     return true;
                 }
             }
-            else if(children[i]->point.x == -1) { // leaf is empty
+            else if(children[i]->hasContent() == false) { // leaf is empty
                 continue;
             }
             else { // found leaf that is not empty
@@ -697,7 +806,7 @@ public:
             if(children[i]->isLeaf() == false) { // not at level above leaf yet
                 children[i]->clearObjsInCube(pos, halfCubeLen, removedObjs);
             }
-            else if(children[i]->point.x == -1) { // leaf is empty
+            else if(children[i]->hasContent() == false) { // leaf is empty
                 continue;
             }
             else if(children[i]->point.x > pos.x - halfCubeLen and children[i]->point.x < pos.x + halfCubeLen
@@ -720,7 +829,7 @@ public:
      */
     bool objInRange(floatCoordinate pos, float range) {
         if(isLeaf()) {
-            if(point.x == -1) {
+            if(hasContent() == false) {
                 return false;
             }
             return point.x <= (pos.x + range) && point.x >= (pos.x - range)

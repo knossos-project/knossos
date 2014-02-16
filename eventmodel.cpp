@@ -191,7 +191,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                 return false;
             }
             if(Patch::eraseInVP == VPfound) { // erasing
-                Patch::erasePoints(*clickedCoordinate, VPfound);
+                Patch::eraseActiveLoop(*clickedCoordinate, VPfound);
             }
             else { // drawing
                 floatCoordinate distance;
@@ -385,7 +385,18 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseMotion(QMouseEvent *event, int VPfound) {
+void EventModel::handleMouseDoubleClickLeft(QMouseEvent *event, int VPfound) {
+    if(Patch::patchMode) {
+        // activate loop
+        floatCoordinate *point = getFloatCoordinateFromOrthogonalClick(event, VPfound);
+        if(Patch::activateLoop(*point, 10/state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx, VPfound)) {
+            emit activePatchChanged();
+        }
+        free(point);
+    }
+}
+
+void EventModel::handleMouseMotion(QMouseEvent *event, int VPfound) {
     if(Patch::patchMode and Patch::eraseInVP != -1 and VPfound != VIEWPORT_SKELETON) {
         Patch::eraseInVP = VPfound; // set vp new in case mouse switched widgets
         Patch::eraserPosX = event->x();
@@ -628,15 +639,16 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
         if(Patch::patchMode) {
             floatCoordinate *point = getFloatCoordinateFromOrthogonalClick(event, VPfound);
             if(point == NULL) {
-                return false;
+                if(Patch::activeLine.size() > 0) {
+                    Patch::lineFinished(Patch::activeLine.back(), VPfound);
+                }
+                return true;
             }
             if(Patch::eraseInVP == VPfound) {
                 // eraser function
                 Patch::eraserPosX = event->x();
                 Patch::eraserPosY = event->y();
-                if(Patch::activePatch) {
-                    Patch::erasePoints(*point, VPfound);
-                }
+                Patch::eraseActiveLoop(*point, VPfound);
             }
             else if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
                 if(Patch::activePatch == NULL) {
@@ -1474,23 +1486,6 @@ bool EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
                 emit deleteActiveNodeSignal();
                 emit nodesDeletedSignal();
             }
-        }
-    }
-    else if(event->key() == Qt::Key_Escape) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Unselect current node selection?");
-        QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-        prompt.addButton("No", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                state->skeletonState->selectedNodes[i]->selected = false;
-            }
-            state->skeletonState->selectedNodes.clear();
-            emit unselectNodesSignal();
         }
     }
     else if(event->key() == Qt::Key_Shift) {

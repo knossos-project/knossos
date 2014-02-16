@@ -2590,45 +2590,64 @@ void Renderer::renderPatches(uint viewportType) {
     }
 
     // highlight open loop endings
-    color4F currentColor;
-    SET_COLOR(currentColor, 1., 0, 0., 0.5);
-    if(Patch::lineBuffer.size() > 0) {
-        for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
-            renderSphere(&Patch::lineBuffer[i][0], NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
-            renderSphere(&Patch::lineBuffer[i].back(), NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
+    if(Patch::eraseInVP == -1) {
+        color4F currentColor;
+        floatCoordinate distVec;
+        SET_COLOR(currentColor, 1., 0, 0., 0.5);
+        if(Patch::lineBuffer.size() > 0) {
+            if(Patch::lineBuffer.size() == 1) {
+                // if only one line in the buffer, highlight endings only if they are too far apart.
+                // otherwise the loop is not open and needs no highlighting
+                SUB_ASSIGN_COORDINATE(distVec, Patch::lineBuffer[0][0], Patch::lineBuffer[0].back());
+                if(euclidicNorm(&distVec) > AUTO_ALIGN_RADIUS) {
+                    renderSphere(&Patch::lineBuffer[0][0], NULL, AUTO_ALIGN_RADIUS,
+                                 currentColor, viewportType, viewportType);
+                    renderSphere(&Patch::lineBuffer[0].back(), NULL, AUTO_ALIGN_RADIUS,
+                                 currentColor, viewportType, viewportType);
+                }
+            }
+            else {
+                for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                    renderSphere(&Patch::lineBuffer[i][0], NULL, AUTO_ALIGN_RADIUS,
+                                 currentColor, viewportType, viewportType);
+                    renderSphere(&Patch::lineBuffer[i].back(), NULL, AUTO_ALIGN_RADIUS,
+                                 currentColor, viewportType, viewportType);
+                }
+            }
         }
-    }
-    if(Patch::activeLine.size() > 0) {
-        renderSphere(&Patch::activeLine[0], NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
-        renderSphere(&Patch::activeLine.back(), NULL, AUTO_ALIGN_RADIUS, currentColor, viewportType, viewportType);
     }
 
     glPopMatrix();
     glEnable(GL_BLEND);
     glPushMatrix();
-
-    // draw loops of active patch
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,
                  -(float)state->boundary.y / 2. + 0.5,
                  -(float)state->boundary.z / 2. + 0.5);
-    glColor4f(Patch::activePatch->correspondingTree->color.r,
-              Patch::activePatch->correspondingTree->color.g,
-              Patch::activePatch->correspondingTree->color.b,
-              Patch::activePatch->correspondingTree->color.a);
-    std::vector<PatchLoop*> loops = Patch::activePatch->loopsAsVector(viewportType);
 
-    for(uint i = 0; i < loops.size(); ++i) {
-        glDeleteBuffers(1, &Patch::vbo);
-        glGenBuffers(1, &Patch::vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-        glBufferData(GL_ARRAY_BUFFER, loops[i]->points.size()*sizeof(floatCoordinate),
-                     &loops[i]->points[0],
-                     GL_STATIC_DRAW);
+    Patch *patch = Patch::activePatch;
+    std::vector<PatchLoop*> loops;
+    do {
+        glColor4f(patch->correspondingTree->color.r,
+                  patch->correspondingTree->color.g,
+                  patch->correspondingTree->color.b,
+                  patch->correspondingTree->color.a);
+        // draw loops of active patch
+        loops = patch->loopsAsVector(viewportType);
 
-        glVertexPointer(3, GL_FLOAT, 0, 0);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glDrawArrays(GL_LINE_LOOP, 0, loops[i]->points.size());
-    }
+        for(uint i = 0; i < loops.size(); ++i) {
+            glDeleteBuffers(1, &Patch::vbo);
+            glGenBuffers(1, &Patch::vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
+            glBufferData(GL_ARRAY_BUFFER, loops[i]->points.size()*sizeof(floatCoordinate),
+                         &loops[i]->points[0],
+                         GL_STATIC_DRAW);
+
+            glVertexPointer(3, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glDrawArrays(GL_LINE_LOOP, 0, loops[i]->points.size());
+        }
+        patch = patch->next;
+    } while(patch != Patch::activePatch);
 
     // draw all points
 

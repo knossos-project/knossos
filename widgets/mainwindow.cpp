@@ -656,6 +656,10 @@ void MainWindow::createMenus()
     jumpToActiveNodeAction->setShortcut(QKeySequence(tr("S")));
     jumpToActiveNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
+    QAction *deselectNodesAction = skelMenu->addAction("Deselect Nodes", this,
+                                                       SLOT(deselectNodesSlot()), QKeySequence(tr("ESC")));
+    deselectNodesAction->setShortcutContext(Qt::ApplicationShortcut);
+
     skelMenu->addSeparator();
 
     nextCommentAction = skelMenu->addAction(QIcon(""), "Next Comment", this, SLOT(nextCommentNodeSlot()));
@@ -697,6 +701,9 @@ void MainWindow::createMenus()
     QAction *jumpToActiveLoop = patchMenu->addAction("Jump To Active Loop",
                                                      this, SLOT(jumpToActiveLoopSlot()), QKeySequence(tr("S")));
     jumpToActiveLoop->setShortcutContext(Qt::ApplicationShortcut);
+    QAction *deactivateLoop = patchMenu->addAction("Deactivate Loop", this,
+                                                   SLOT(deactivateLoopSlot()), QKeySequence(tr("ESC")));
+    deactivateLoop->setShortcutContext(Qt::ApplicationShortcut);
     QAction *delActiveLoop = patchMenu->addAction("Delete Active Loop",
                                                   this, SLOT(delActiveLoopSlot()), QKeySequence(tr("Del")));
     delActiveLoop->setShortcutContext(Qt::ApplicationShortcut);
@@ -1666,6 +1673,9 @@ void MainWindow::newTreeSlot() {
     emit updateToolsSignal();
     //emit updateTreeviewSignal();
     treeAddedSignal(tree);
+    if(Patch::activeLoop) {
+        Patch::deactivateLoop();
+    }
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
@@ -1715,6 +1725,26 @@ void MainWindow::moveToNextTreeSlot() {
 
 void MainWindow::jumpToActiveNodeSlot() {
     emit jumpToActiveNodeSignal();
+}
+
+void MainWindow::deselectNodesSlot() {
+    if(state->skeletonState->selectedNodes.size() > 0) {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setWindowTitle("Cofirmation required");
+        prompt.setText("Unselect current node selection?");
+        QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+        prompt.addButton("No", QMessageBox::ActionRole);
+        prompt.exec();
+        if(prompt.clickedButton() == confirmButton) {
+            for(uint i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
+                state->skeletonState->selectedNodes[i]->selected = false;
+            }
+            state->skeletonState->selectedNodes.clear();
+            emit unselectNodesSignal();
+        }
+    }
 }
 
 void MainWindow::F1Slot() {
@@ -1801,6 +1831,10 @@ void MainWindow::F5Slot() {
 
 void MainWindow::jumpToActiveLoopSlot() {
     emit jumpToActiveLoopSignal();
+}
+
+void MainWindow::deactivateLoopSlot() {
+    emit deactivateLoopSignal();
 }
 
 void MainWindow::delActiveLoopSlot() {

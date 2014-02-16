@@ -108,6 +108,7 @@ public:
     static Patch *firstPatch; //! first patch of the circular doubly linked list.
                               //! If numPatches == 1, then firstPatch = firstPatch->next = firstPatch->previous
     static Patch *activePatch; //! the currently drawn patch
+    static PatchLoop *activeLoop; //! holds the active patch's loop that is being edited.
     static uint maxPatchID; //! really the maxPatchID that ever existed. Needed to find next unused patchID
     static uint numPatches; //! number of patches
 
@@ -120,16 +121,20 @@ public:
     static std::vector<floatCoordinate> activeLine; //! the currently drawn line.
                                                     //! Started on mouse down and added to 'lineBuffer' on mouse release
     static std::vector<std::vector<floatCoordinate> > lineBuffer; //! all lines of the not closed loop yet
+
     static uint displayMode; //! PATCH_DSP_WHOLE, PATCH_DSP_ACTIVE, PATCH_DSP_HIDE
 
     static Patch *newPatch(int patchID = -1);
     static void delPatch(Patch *patch);
     static Patch *getPatchWithID(uint patchID);
     static bool setActivePatch(uint patchID);
+    static bool activateLoop(floatCoordinate center, float halfEdge, uint viewportType);
     static void delActivePatch();
+    static void delActiveLoop();
     static bool insert(floatCoordinate point);
     static void addInterpolatedPoint(floatCoordinate p, floatCoordinate q, std::vector<floatCoordinate> &line);
-    static void erasePoints(floatCoordinate center, uint viewportType);
+    static void eraseActiveLoop(floatCoordinate center, uint viewportType);
+    static bool activeLoopIsClosed();
     static void genRandCloud(uint cloudSize);
     static void genRandTriangulation(uint cloudSize);
     static void visiblePoints(uint viewportType);
@@ -169,8 +174,6 @@ public:
     bool insert(PatchLoop *loop, uint viewportType);
     void computeVolume(int currentVP, PatchLoop *loop);
     std::vector<floatCoordinate> pointsOnLine(PatchLoop *loop, int x, int y, int z);
-    void activateLoop(floatCoordinate center, float halfEdge, uint viewportType);
-    void delVisibleLoop(uint viewportType); //! delete the last drawn loop
     std::vector<floatCoordinate> pointCloudAsVector(int viewportType = -1);
     std::vector<PatchLoop *> loopsAsVector(int viewportType = -1);
     std::vector<Triangle> trianglesAsVector(int viewportType = -1);
@@ -186,6 +189,7 @@ signals:
     void activePatchChanged();
 public slots:
     void updateDistinguishableTriangles(int viewportType = -1);
+    static void deactivateLoop();
 };
 
 #endif // PATCH_H

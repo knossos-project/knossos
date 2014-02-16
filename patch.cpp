@@ -24,6 +24,7 @@ std::vector<std::vector<floatCoordinate> > Patch::lineBuffer;
 uint Patch::displayMode = PATCH_DSP_WHOLE;
 Patch *Patch::firstPatch = NULL;
 Patch *Patch::activePatch = NULL;
+PatchLoop *Patch::activeLoop = NULL;
 float Patch::eraserHalfEdge = 10;
 bool Patch::drawing = false;
 bool Patch::newPoints = false;
@@ -215,13 +216,13 @@ bool Patch::insert(PatchLoop *loop, uint viewportType) {
         //computeVolume(viewportType, loop);
 
         // add to point cloud
-        for(uint i = 0; i < loop->points.size(); ++i) {
-            if(allowPoint(loop->points[i])) {
+//        for(uint i = 0; i < loop->points.size(); ++i) {
+//            if(allowPoint(loop->points[i])) {
 //                if(pointCloud->insert(loop->points[i], loop->points[i], false)) {
 //                    numPoints++;
 //                }
-            }
-        }
+//            }
+//        }
         return true;
     }
     return false;
@@ -252,7 +253,7 @@ void Patch::alignToLine(floatCoordinate point, int index, bool startPoint) {
  * @param viewportType the viewport in which the line was drawn (XY, XZ, YZ)
  */
 void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
-    if(activePatch == NULL) {
+    if(activePatch == NULL || activeLine.size() == 0) {
         return;
     }
     floatCoordinate distanceVec, snapPoint;
@@ -302,24 +303,30 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
 
     if(lineBuffer.size() == 0) {
         // loop is closed now
-        PatchLoop *newLoop = new PatchLoop(activeLine, centroidPolygon(activeLine), viewportType);
-        activePatch->insert(newLoop, viewportType);
+        if(activeLoop) {
+            activeLoop->points = activeLine;
+            activeLoop->updateCentroid();
+            deactivateLoop();
+        }
+        else {
+            PatchLoop *newLoop = new PatchLoop(activeLine, centroidPolygon(activeLine), viewportType);
+            activePatch->insert(newLoop, viewportType);
+        }
     }
     activeLine.clear();
 }
 
 /**
- * @brief Patch::erasePoints erase points of the currently drawn lines
- *               in a square with position 'center' and half edge length 'eraserHalfEdge'
+ * @brief Patch::eraseActiveLoop erase points of the active loop
+ *        inside the square with half edge length 'eraseHalfEdge' and given center
+ * @param center the square's center
+ * @param viewportType the viewport in which to erase
  */
-void Patch::erasePoints(floatCoordinate center, uint viewportType) {
-    float halfLength = eraserHalfEdge/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
-
+void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
     if(activeLine.size() == 0 and lineBuffer.size() == 0) {
-        if(activePatch) {
-            activePatch->activateLoop(center, halfLength, viewportType);
-        }
+        return;
     }
+    float halfLength = eraserHalfEdge/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
 
     std::vector<uint> erasedPoints;
     switch(viewportType) {
@@ -355,6 +362,16 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
                         std::vector<floatCoordinate> newLine;
                         newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
                         lineBuffer.push_back(newLine);
+                        int p, q;
+                        for(uint j = erasedPoints.size() - 1; j > 0; --j) {
+                            p = erasedPoints[j - 1], q = erasedPoints[j];
+                            if(q - p > 1) {
+                                std::vector<floatCoordinate> newLine;
+                                newLine.insert(newLine.begin(), lineBuffer[i].begin() + p,
+                                                                lineBuffer[i].begin() + q + 1);
+                                lineBuffer.push_back(newLine);
+                            }
+                        }
                         lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
                                             lineBuffer[i].end());
                     }
@@ -468,76 +485,147 @@ void Patch::erasePoints(floatCoordinate center, uint viewportType) {
     }
 }
 
+bool Patch::activeLoopIsClosed() {
+    if(activeLine.size() != 0 or lineBuffer.size() != 1) {
+        return false;
+    }
+    floatCoordinate distVec;
+    SUB_ASSIGN_COORDINATE(distVec, lineBuffer[0][0], lineBuffer[0].back());
+    return euclidicNorm(&distVec) < AUTO_ALIGN_RADIUS;
+}
+
 /**
- * @brief Patch::activateLoop activate the patch's loop that intersects the square defined by center and halfEdge.
+ * @brief Patch::activateLoop activate the loop that intersects the square defined by center and halfEdge.
  *        If two loops intersect the square, only the first one found is activated.
  * @param center the picking square's center
  * @param halfEdge half the picking square's edge length
  * @param viewportType the viewport from which the request came
  */
-void Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportType) {
-    if(lineBuffer.size() > 0 or activeLine.size() > 0) {
-        qDebug("finish active first!");
-        return;
+bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportType) {
+    if(firstPatch == NULL) {
+        qDebug("no patches exist to activate.");
+        return false;
     }
-    std::vector<PatchLoop *> visibleLoops;
-    loops->getAllVisibleObjs(visibleLoops, viewportType);
-    if(visibleLoops.size() == 0) {
-        return;
+    // deactivate the previously active loop first
+    if(activeLoop != NULL and activePatch != NULL) {
+        if(activeLoopIsClosed()) {
+            deactivateLoop();
+        }
+        else {
+            return false;
+        }
     }
 
-    switch(viewportType) {
-    case VIEWPORT_XY:
-        for(uint i = 0; i < visibleLoops.size(); ++i) {
-            if(roundFloat(visibleLoops[i]->centroid.z) != state->viewerState->currentPosition.z) {
-                continue;
-            }
-            for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
-                if(visibleLoops[i]->points[j].x > center.x - halfEdge and visibleLoops[i]->points[j].x < center.x + halfEdge
-                        and visibleLoops[i]->points[j].y > center.y - halfEdge and visibleLoops[i]->points[j].y < center.y + halfEdge) {
-                    lineBuffer.push_back(visibleLoops[i]->points);
-                    loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                    return;
-                }
-            }
+    Patch *currPatch = firstPatch;
+    do {
+        std::vector<PatchLoop *> visibleLoops;
+        currPatch->loops->getAllVisibleObjs(visibleLoops, viewportType);
+        if(visibleLoops.size() == 0) {
+            continue;
         }
-        break;
-    case VIEWPORT_XZ:
-        for(uint i = 0; i < visibleLoops.size(); ++i) {
-            if(roundFloat(visibleLoops[i]->centroid.y) != state->viewerState->currentPosition.y) {
-                continue;
-            }
-            for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
-                if(visibleLoops[i]->points[j].x > center.x - halfEdge and visibleLoops[i]->points[j].x < center.x + halfEdge
-                        and visibleLoops[i]->points[j].z > center.z - halfEdge and visibleLoops[i]->points[j].z < center.z + halfEdge) {
-                    lineBuffer.push_back(visibleLoops[i]->points);
-                    loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                    return;
-                }
-            }
-        }
-        break;
-    case VIEWPORT_YZ:
-        for(uint i = 0; i < visibleLoops.size(); ++i) {
-            if(roundFloat(visibleLoops[i]->centroid.x) != state->viewerState->currentPosition.x) {
-                continue;
-            }
-            for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
-                if(visibleLoops[i]->points[j].y > center.y - halfEdge and visibleLoops[i]->points[j].y < center.y + halfEdge
-                        and visibleLoops[i]->points[j].z > center.z - halfEdge and visibleLoops[i]->points[j].z < center.z + halfEdge) {
-                    lineBuffer.push_back(visibleLoops[i]->points);
-                    loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                    return;
-                }
-            }
 
+        switch(viewportType) {
+        case VIEWPORT_XY:
+            for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(roundFloat(visibleLoops[i]->centroid.z) != state->viewerState->currentPosition.z) {
+                    continue;
+                }
+                for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
+                    if(visibleLoops[i]->points[j].x > center.x - halfEdge
+                        and visibleLoops[i]->points[j].x < center.x + halfEdge
+                        and visibleLoops[i]->points[j].y > center.y - halfEdge
+                        and visibleLoops[i]->points[j].y < center.y + halfEdge) {
+                        activeLoop = visibleLoops[i];
+                        lineBuffer.push_back(visibleLoops[i]->points);
+                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
+                        currPatch->numLoops--;
+                        setActivePatch(currPatch->patchID);
+                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
+                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
+                        }
+                        return true;
+                    }
+                }
+            }
+            break;
+        case VIEWPORT_XZ:
+            for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(roundFloat(visibleLoops[i]->centroid.y) != state->viewerState->currentPosition.y) {
+                    continue;
+                }
+                for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
+                    if(visibleLoops[i]->points[j].x > center.x - halfEdge
+                        and visibleLoops[i]->points[j].x < center.x + halfEdge
+                        and visibleLoops[i]->points[j].z > center.z - halfEdge
+                        and visibleLoops[i]->points[j].z < center.z + halfEdge) {
+                        activeLoop = visibleLoops[i];
+                        lineBuffer.push_back(visibleLoops[i]->points);
+                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
+                        currPatch->numLoops--;
+                        setActivePatch(currPatch->patchID);
+                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
+                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
+                        }
+                        return true;
+                    }
+                }
+            }
+            break;
+        case VIEWPORT_YZ:
+            for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(roundFloat(visibleLoops[i]->centroid.x) != state->viewerState->currentPosition.x) {
+                    continue;
+                }
+                for(uint j = 0; j < visibleLoops[i]->points.size(); ++j) {
+                    if(visibleLoops[i]->points[j].y > center.y - halfEdge
+                        and visibleLoops[i]->points[j].y < center.y + halfEdge
+                        and visibleLoops[i]->points[j].z > center.z - halfEdge
+                        and visibleLoops[i]->points[j].z < center.z + halfEdge) {
+                        activeLoop = visibleLoops[i];
+                        lineBuffer.push_back(visibleLoops[i]->points);
+                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
+                        currPatch->numLoops--;
+                        setActivePatch(currPatch->patchID);
+                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
+                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
+                        }
+                        return true;
+                    }
+                }
+
+            }
+            break;
         }
-        break;
-    }
+        currPatch = currPatch->next;
+    } while(currPatch != firstPatch);
+
+    return false;
 }
 
-void Patch::delVisibleLoop(uint viewportType) {
+/**
+ * @brief Patch::deactivateLoop reinserts the previously activated loop to the active patch. If the loop is not closed,
+ *        nothing happens.
+ */
+void Patch::deactivateLoop() {
+    activePatch->insert(activeLoop, activeLoop->createdInVP);
+    activeLoop = NULL;
+    activeLine.clear();
+    lineBuffer.clear();
+}
 
+void Patch::delActiveLoop() {
+    activeLine.clear();
+    lineBuffer.clear();
+    if(activeLoop != NULL) {
+        activeLoop = NULL;
+        std::pair<floatCoordinate, PatchLoop*> nextLoop = activePatch->loops->getNearestNeighbor(activePatch->pos);
+        if(nextLoop.first.x != -1) {
+            activePatch->pos = nextLoop.first;
+        }
+        else {
+            SET_COORDINATE(activePatch->pos, -1, -1, -1);
+        }
+    }
 }
 
 /**
@@ -1444,7 +1532,7 @@ void Patch::genRandTriangulation(uint cloudSize) {
     qDebug ("Pointcloud created. NumPoints: %i", activePatch->numPoints);
 }
 
-// normal of point p as angle bisector of the two lines through p and its left and right neighbour
+// normal of point p as angle bisector of the two lines through p and its left and right neighbor
 // todo: handle case, where loop isn't closed
 void Patch::computeNormals() {
 //    if(Patch::activeLoop.size() == 0) {

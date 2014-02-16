@@ -4603,8 +4603,7 @@ void Skeletonizer::delActiveLoop() {
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
     if(prompt.clickedButton() == yes) {
-        Patch::activeLine.clear();
-        Patch::lineBuffer.clear();
+        Patch::delActiveLoop();
     }
 }
 

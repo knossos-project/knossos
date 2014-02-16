@@ -2174,6 +2174,8 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPushed()));
     connect(window, SIGNAL(branchPoppedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPopped()));
+    connect(window, SIGNAL(unselectNodesSignal()),
+                    window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SLOT(clearSelection()));
     connect(window, SIGNAL(nodeCommentChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeCommentChanged(nodeListElement*)));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
@@ -2395,7 +2397,10 @@ void Viewer::rewire() {
 //                    window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SLOT(updateToolsPatchesWidget()));
     connect(eventModel, SIGNAL(newPatchSignal()), skeletonizer, SLOT(addPatchListElement()));
     connect(eventModel, SIGNAL(activePatchChanged()), this, SLOT(updateActivePatchConnections()));
-    connect(eventModel, SIGNAL(patchAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(patchAdded()));
+    connect(eventModel, SIGNAL(activePatchChanged()),
+                        window->widgetContainer->annotationWidget->treeviewTab, SLOT(activePatchChanged()));
+    connect(eventModel, SIGNAL(patchAddedSignal()),
+                        window->widgetContainer->annotationWidget->treeviewTab, SLOT(patchAdded()));
 //    connect(window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SIGNAL(newPatchSignal()),
 //                    skeletonizer, SLOT(addPatchListElement()));
 //    connect(window->widgetContainer->toolsWidget->toolsPatchesTabWidget, SIGNAL(activePatchChanged()),
