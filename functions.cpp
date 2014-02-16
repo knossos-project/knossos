@@ -1,4 +1,5 @@
 #include <math.h>
+#include <float.h>
 #include <vector>
 #include "functions.h"
 
@@ -8,6 +9,33 @@
 int roundFloat(float number) {
     if(number >= 0) return (int)(number + 0.5);
     else return (int)(number - 0.5);
+}
+
+/**
+ * @brief almostEqual checks if two floats are practically equal.
+ *        See also: http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+ */
+bool almostEqual(float a, float b) {
+    if (fabs(a - b) < FLT_MIN) { // absolute difference small enough
+        return true;
+    }
+    float relativeError;
+    if(fabs(b) > fabs(a)) {
+        relativeError = fabs((a - b) / b);
+    }
+    else {
+        relativeError = fabs((a - b) / a);
+    }
+    if(relativeError <= 0.01) { // max relative difference of 0.01 was arbitrarily chosen here...
+        return true;
+    }
+    return false;
+}
+
+float distance(floatCoordinate a, floatCoordinate b) {
+    floatCoordinate distVec;
+    SUB_ASSIGN_COORDINATE(distVec, a, b);
+    return euclidicNorm(&distVec);
 }
 
 float scalarProduct(floatCoordinate *v1, floatCoordinate *v2) {

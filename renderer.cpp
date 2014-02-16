@@ -2592,14 +2592,12 @@ void Renderer::renderPatches(uint viewportType) {
     // highlight open loop endings
     if(Patch::eraseInVP == -1) {
         color4F currentColor;
-        floatCoordinate distVec;
         SET_COLOR(currentColor, 1., 0, 0., 0.5);
         if(Patch::lineBuffer.size() > 0) {
             if(Patch::lineBuffer.size() == 1) {
                 // if only one line in the buffer, highlight endings only if they are too far apart.
                 // otherwise the loop is not open and needs no highlighting
-                SUB_ASSIGN_COORDINATE(distVec, Patch::lineBuffer[0][0], Patch::lineBuffer[0].back());
-                if(euclidicNorm(&distVec) > AUTO_ALIGN_RADIUS) {
+                if(distance(Patch::lineBuffer[0][0], Patch::lineBuffer[0].back()) > AUTO_ALIGN_RADIUS) {
                     renderSphere(&Patch::lineBuffer[0][0], NULL, AUTO_ALIGN_RADIUS,
                                  currentColor, viewportType, viewportType);
                     renderSphere(&Patch::lineBuffer[0].back(), NULL, AUTO_ALIGN_RADIUS,

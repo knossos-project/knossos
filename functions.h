@@ -8,6 +8,8 @@
  */
 
 int roundFloat(float number);
+bool almostEqual(float a, float b);
+float distance(floatCoordinate a, floatCoordinate b);
 bool normalizeVector(floatCoordinate *v);
 float euclidicNorm(floatCoordinate *v);
 bool normalizeVector(floatCoordinate *v);

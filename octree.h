@@ -389,7 +389,7 @@ public:
             if(hasContent()) {
                 SUB_ASSIGN_COORDINATE(p_point, point, p);
                 SUB_ASSIGN_COORDINATE(point_q, q, point);
-                if(euclidicNorm(&p_point) + euclidicNorm(&point_q) - euclidicNorm(&p_q) < 0.001) { // arbitrary float threshold for equality
+                if(almostEqual(euclidicNorm(&p_point) + euclidicNorm(&point_q), euclidicNorm(&p_q))) {
                     results.insert(results.end(), objects.begin(), objects.end());
                 }
                 return;

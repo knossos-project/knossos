@@ -256,24 +256,23 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
     if(activePatch == NULL || activeLine.size() == 0) {
         return;
     }
-    floatCoordinate distanceVec, snapPoint;
-    float distance = INT_MAX;
+    floatCoordinate snapPoint;
+    float dist = INT_MAX;
     SET_COORDINATE(snapPoint, -1, -1, -1);
     if(lineBuffer.size() > 0) {
         for(uint i = 0; i < lineBuffer.size(); ++i) {
-            SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i][0], lastPoint);
-            if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+            dist = distance(lineBuffer[i][0], lastPoint);
+            if(dist < AUTO_ALIGN_RADIUS) {
                 snapPoint = lineBuffer[i][0];
             }
             else {
-                SUB_ASSIGN_COORDINATE(distanceVec, lineBuffer[i].back(),
-                                                    lastPoint);
-                if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+                dist = distance(lineBuffer[i].back(), lastPoint);
+                if(dist < AUTO_ALIGN_RADIUS) {
                     snapPoint = lineBuffer[i].back();
                     std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
                 }
             }
-            if(distance < AUTO_ALIGN_RADIUS) {
+            if(dist < AUTO_ALIGN_RADIUS) {
                 // found point to snap to. Fill distance with interpolated points,
                 // then connect the two lines
                 if(lastPoint.x - snapPoint.x < -voxelPerPoint or lastPoint.x - snapPoint.x > voxelPerPoint
@@ -292,8 +291,7 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         }
     }
     else { // no other lines to check against, check if this single line is already closed
-        SUB_ASSIGN_COORDINATE(distanceVec, activeLine[0], lastPoint);
-        if((distance = euclidicNorm(&distanceVec)) < AUTO_ALIGN_RADIUS) {
+        if(distance(activeLine[0], lastPoint) < AUTO_ALIGN_RADIUS) {
             addInterpolatedPoint(lastPoint, activeLine[0], activeLine);
         }
         else {
@@ -348,9 +346,8 @@ void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
                 int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
                 int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
                 if(start != -1 and end != -1) { // eraser went through line
-                    floatCoordinate distVec;
-                    SUB_ASSIGN_COORDINATE(distVec, lineBuffer[i].back(), lineBuffer[i][0]);
-                    if(euclidicNorm(&distVec) <= voxelPerPoint) {
+                    float dist = distance(lineBuffer[i].back(), lineBuffer[i][0]);
+                    if(dist < voxelPerPoint or almostEqual(dist, voxelPerPoint)) {
                         // this line is a closed loop. An erasion only opens it up instead of splitting it
                         std::vector<floatCoordinate> newLine;
                         newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
@@ -406,9 +403,8 @@ void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
                 int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
                 int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
                 if(start != -1 and end != -1) { // eraser split line into two lines
-                    floatCoordinate distVec;
-                    SUB_ASSIGN_COORDINATE(distVec, lineBuffer[i].back(), lineBuffer[i][0]);
-                    if(euclidicNorm(&distVec) <= voxelPerPoint) {
+                    float dist = distance(lineBuffer[i].back(), lineBuffer[i][0]);
+                    if(dist < voxelPerPoint or almostEqual(dist, voxelPerPoint)) {
                         // this line is a closed loop. An erasion only opens it up instead of splitting it
                         std::vector<floatCoordinate> newLine;
                         newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
@@ -489,9 +485,7 @@ bool Patch::activeLoopIsClosed() {
     if(activeLine.size() != 0 or lineBuffer.size() != 1) {
         return false;
     }
-    floatCoordinate distVec;
-    SUB_ASSIGN_COORDINATE(distVec, lineBuffer[0][0], lineBuffer[0].back());
-    return euclidicNorm(&distVec) < AUTO_ALIGN_RADIUS;
+    return distance(lineBuffer[0][0], lineBuffer[0].back()) < AUTO_ALIGN_RADIUS;
 }
 
 /**
@@ -1374,9 +1368,7 @@ void Patch::delActivePatch() {
  */
 bool Patch::insert(floatCoordinate point) {
     if(activeLine.size() > 0) {
-        floatCoordinate distVec;
-        SUB_ASSIGN_COORDINATE(distVec, activeLine.back(), point);
-        if(euclidicNorm(&distVec) < voxelPerPoint) { // point too close to last point
+        if(distance(activeLine.back(), point) < voxelPerPoint) { // point too close to last point
             return false;
         }
         // if point is too far away from last point add interpolated points to fill the distance
