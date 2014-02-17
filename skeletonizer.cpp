@@ -951,6 +951,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
                 xml.writeStartElement("patch");
                 xml.writeAttribute("id", tmp.setNum(patchEl->patchID));
                 xml.writeAttribute("comment", currentPatch->comment);
+                xml.writeAttribute("visible", tmp.setNum(currentPatch->visible));
                 loops = currentPatch->loopsAsVector();
                 for(uint i = 0; i < loops.size(); ++i) {
                     xml.writeStartElement("loop");
@@ -1485,7 +1486,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
                 if(xml.name() == "patches") {
                     uint patchID;
-                    QString comment;
                     PatchLoop *loop = NULL;
                     floatCoordinate point;
                     int viewportType = -1;
@@ -1505,6 +1505,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             attribute = attributes.value("comment");
                             if(attribute.isNull() == false) {
                                 Patch::activePatch->comment = attribute.toString();
+                            }
+                            attribute = attributes.value("visible");
+                            if(attribute.isNull() == false) {
+                                Patch::activePatch->visible = attribute.toString().toInt();
                             }
                             emit activePatchChanged();
                             while(xml.readNextStartElement()) {

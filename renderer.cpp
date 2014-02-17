@@ -682,9 +682,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
             renderSkeleton(currentVP, VIEWPORT_XY);
-            if(Patch::patchMode) {
-                renderPatches(VIEWPORT_XY);
-            }
+            renderPatches(VIEWPORT_XY);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -816,9 +814,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
 
             renderSkeleton(currentVP, VIEWPORT_XZ);
-            if(Patch::patchMode) {
-                renderPatches(VIEWPORT_XZ);
-            }
+            renderPatches(VIEWPORT_XZ);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -940,9 +936,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef((float)state->boundary.x / 2.,(float)state->boundary.y / 2.,(float)state->boundary.z / 2.);
 
             renderSkeleton(currentVP, VIEWPORT_YZ);
-            if(Patch::patchMode) {
-                renderPatches(VIEWPORT_YZ);
-            }
+            renderPatches(VIEWPORT_YZ);
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
@@ -1783,9 +1777,8 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
 
     /* new position */
     renderSkeleton(VIEWPORT_SKELETON, VIEWPORT_SKELETON);
-    if(Patch::patchMode) {
-        renderPatches(VIEWPORT_SKELETON);
-    }
+    renderPatches(VIEWPORT_SKELETON);
+
     Coordinate pos;
 
     // Draw axis description
@@ -2583,6 +2576,9 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 }
 
 void Renderer::renderPatches(uint viewportType) {
+    if(Patch::displayMode == PATCH_DSP_HIDE) {
+        return;
+    }
     glPushMatrix();
     glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     // draw active line
@@ -2654,10 +2650,14 @@ void Renderer::renderPatches(uint viewportType) {
             }
         }
     }
+    glPopMatrix();
 
-    if(Patch::activePatch == NULL || Patch::displayMode == PATCH_DSP_HIDE) {
+    if(Patch::activePatch == NULL) {
         return;
     }
+
+    glPushMatrix();
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
 
     Patch *patch = Patch::activePatch;
     std::vector<PatchLoop*> loops;

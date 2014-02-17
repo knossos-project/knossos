@@ -1624,10 +1624,23 @@ void ToolsTreeviewTab::patchItemChanged(QTableWidgetItem *item) {
                 }
             }
             else { // activePatchTable
-                for(int i = 0; i < patchTable->rowCount(); ++i) {
+                patch->comment = item->text();
+                int i;
+                for(i = 0; i < patchTable->rowCount(); ++i) {
                     if((uint)patchTable->item(i, PATCH_ID)->text().toInt() == Patch::activePatch->patchID) {
                         setText(patchTable, patchTable->item(i, PATCH_COMMENT), item->text());
                         break;
+                    }
+                }
+                if(i == patchTable->rowCount()) { // item was filtered out before, check if it is shown now
+                    if(matchesSearchString(patchSearchField->text(), patch->comment, patchRegExCheck->isChecked())) {
+                        insertPatch(patch, patchTable);
+                    }
+                }
+                else if(patchSearchField->text().length() > 0) {
+                    //was not filtered out before. check if it is filtered now
+                    if(matchesSearchString(patchSearchField->text(), patch->comment, patchRegExCheck->isChecked()) == false) {
+                        patchTable->removeRow(i);
                     }
                 }
             }
@@ -1891,12 +1904,18 @@ void ToolsTreeviewTab::updatePatchesTable() {
             }
         }
         // patch id
+        QColor color(currentPatch->correspondingTree->color.r * 255,
+                     currentPatch->correspondingTree->color.g * 255,
+                     currentPatch->correspondingTree->color.b * 255,
+                     0.6 * 255);
+
         Qt::ItemFlags flags;
         item = new QTableWidgetItem(QString::number(currentPatch->patchID));
         flags = item->flags();
         flags |= Qt::ItemIsSelectable;
         flags &= ~Qt::ItemIsEditable;
         item->setFlags(flags);
+        item->setBackgroundColor(color);
         patchTable->setItem(patchIndex, PATCH_ID, item);
 
         // patch comment
@@ -1908,6 +1927,16 @@ void ToolsTreeviewTab::updatePatchesTable() {
             setText(patchTable, item, currentPatch->comment);
         }
         patchTable->setItem(patchIndex, PATCH_COMMENT, item);
+
+        // patch visibility
+        item = new QTableWidgetItem("show");
+        if(currentPatch->visible == false) {
+            item->setText("hide");
+        }
+        flags = item->flags();
+        flags &= ~Qt::ItemIsSelectable & ~Qt::ItemIsEditable;
+        item->setFlags(flags);
+        patchTable->setItem(patchIndex, PATCH_VISIBLE, item);
 
         patchIndex++;
         currentPatch = currentPatch->next;
@@ -2222,6 +2251,7 @@ void ToolsTreeviewTab::update() {
     updateNodesTable();
     activeNodeChanged();
     updatePatchesTable();
+    activePatchChanged();
     emit updateToolsSignal();
 }
 
