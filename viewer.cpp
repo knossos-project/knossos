@@ -45,7 +45,7 @@ Viewer::Viewer(QObject *parent) :
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    state->console = window->widgetContainer->console;
+    //state->console = window->widgetContainer->console;
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();

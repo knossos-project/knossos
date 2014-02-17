@@ -33,6 +33,21 @@
 #include <QLineEdit>
 #include "knossos-global.h"
 
+
+struct vpListElement {
+    struct vpConfig *vpConfig;
+    struct vpListElement *next;
+    struct vpListElement *previous;
+};
+
+
+struct vpList {
+    struct vpListElement *entry;
+    uint elements;
+};
+
+
+
 /**
  *
  *  This file contains functions that are called by the managing,

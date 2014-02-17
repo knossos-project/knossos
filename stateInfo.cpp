@@ -1,3 +1,4 @@
+/*
 #include "knossos-global.h"
 
 stateInfo::stateInfo() {
@@ -112,3 +113,4 @@ Coordinate stateInfo::getBoundary() {
     return boundary;
 }
 
+*/

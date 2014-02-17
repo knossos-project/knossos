@@ -299,11 +299,10 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
-class Skeleton;
-class treeListElement;
-class nodeListElement;
-class commentListElement;
-class segmentListElement;
+struct treeListElement;
+struct nodeListElement;
+struct segmentListElement;
+struct commentListElement;
 
 //Structures and custom types
 typedef uint8_t Byte;
@@ -317,8 +316,7 @@ typedef struct {
 
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-class Coordinate{
-public:
+struct Coordinate{
     Coordinate() { }
     Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
     int x;
@@ -329,9 +327,9 @@ public:
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
-
 };
 
+/*
 class CoordinateDecorator : public QObject {
     Q_OBJECT
 public slots:
@@ -344,6 +342,7 @@ public slots:
     int z(Coordinate *self) { return self->z; }
     void setZ(Coordinate *self, int z) { self->z = z; }
 };
+*/
 
 typedef struct {
         GLfloat r;
@@ -352,20 +351,8 @@ typedef struct {
         GLfloat a;
 } color4F;
 
-struct _CubeSlot {
-        Byte *cube;
-        struct _CubeSlot *next;
-        struct _CubeSlot *previous;
-};
 
-typedef struct _CubeSlot CubeSlot;
 
-struct _CubeSlotList {
-        CubeSlot *firstSlot;
-        int elements;
-};
-
-typedef struct _CubeSlotList CubeSlotList;
 
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
@@ -446,16 +433,6 @@ typedef struct Hashtable{
 
 // This is used for a (counting) linked list of vpConfigs that have to be handled
 // (their textures put together from datacube slices)
-struct vpListElement {
-    struct vpConfig *vpConfig;
-    struct vpListElement *next;
-    struct vpListElement *previous;
-};
-
-struct vpList {
-    struct vpListElement *entry;
-    uint elements;
-};
 
 struct stack {
     uint elementsOnStack;
@@ -464,11 +441,7 @@ struct stack {
     int size;
 };
 
-struct dynArray {
-    void **elements;
-    int end;
-    int firstSize;
-};
+
 
 struct assignment {
     char *lval;
@@ -481,15 +454,14 @@ struct assignment {
   *
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
-#include "widgets/console.h"
+//#include "widgets/console.h"
 
-class stateInfo : public QObject {
-    Q_OBJECT
-public:
-    stateInfo();
+struct stateInfo {
+
+    stateInfo() {}
     uint svnRevision;
 
-    Console *console;
+    //Console *console;
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
@@ -681,6 +653,7 @@ public:
     int newCoord[3];
     bool autorepeat;
 
+    /*
 signals:
 public slots:
     uint getSvnRevision();
@@ -710,18 +683,17 @@ public slots:
     uint getCubeSetElements();
     uint getCubeSetBytes();
     Coordinate getBoundary();
-
-
-
-
+*/
 
 };
 
+// to taskwidget
 struct httpResponse {
     char *content;
     size_t length;
 };
 
+// to taskwidget
 struct taskState {
     char *host;
     char *cookieFile;
@@ -742,16 +714,13 @@ struct taskState {
     static QString getTask();
 };
 
-struct trajectory {
-		char name[64];
-		char *source;
-};
 
 /**
   * @struct viewportTexture
   * @brief TODO
   */
 
+// to viewer
 struct viewportTexture {
     //Handles for OpenGl
     uint texHandle;
@@ -780,8 +749,8 @@ struct viewportTexture {
     //Coordinates of crosshair inside VP
     float xOffset, yOffset;
 
-	// Current zoom level. 1: no zoom; near 0: maximum zoom.
-	float zoomLevel;
+    // Current zoom level. 1: no zoom; near 0: maximum zoom.
+    float zoomLevel;
 
 };
 
@@ -1047,19 +1016,10 @@ struct viewerState {
     uint renderInterval;
 };
 
-class Skeleton {
 
-public:
-    Skeleton() { trees = new QList<treeListElement *>(); }
-    QList<treeListElement *> *trees;
+struct treeListElement {
 
-
-};
-
-class treeListElement : public QObject {
-    Q_OBJECT
-public:    
-    treeListElement();
+    treeListElement() {}
     treeListElement *next;
     treeListElement *previous;
     nodeListElement *firstNode;
@@ -1069,15 +1029,15 @@ public:
     int colorSetManually;
 
     char comment[8192];
-
+/*
 public slots:
     int getTreeID();
     void setTreeID(int id);
+    */
 };
 
 
-class nodeListElement {
-public:
+struct nodeListElement {
     nodeListElement() {}
     nodeListElement *next;
     nodeListElement *previous;
@@ -1106,35 +1066,9 @@ public:
     bool selected;
 };
 
-class NodeListElementDecorator : public QObject {
-    Q_OBJECT
-public slots:
-    nodeListElement *new_nodeListElement() { return new nodeListElement(); }
-    nodeListElement *next(nodeListElement *self) {
-        if(self) {
-            if(self->next) {
-                return self->next;
-            }
-
-        }
-        return 0;
-    }
 
 
-    nodeListElement *previous(nodeListElement *self) {
-        if(self) {
-            if(self->previous) {
-                return self->previous;
-            }
-        }
-       return 0;
-    }
-
-
-
-};
-
-class segmentListElement {
+struct segmentListElement {
 public:
     segmentListElement() {}
     segmentListElement *next;
@@ -1160,8 +1094,7 @@ public:
     nodeListElement *target;
 };
 
-class commentListElement {
-public:
+struct commentListElement {
     commentListElement();
     struct commentListElement *next;
     struct commentListElement *previous;
@@ -1171,42 +1104,6 @@ public:
     nodeListElement *node;
 };
 
-
-struct serialSkeletonListElement {
-    struct serialSkeletonListElement *next;
-    struct serialSkeletonListElement *previous;
-    Byte* content;
-};
-
-struct skeletonDC {
-    struct skeletonDCsegment *firstSkeletonDCsegment;
-    struct skeletonDCnode *firstSkeletonDCnode;
-};
-
-struct skeletonDCnode {
-    nodeListElement *node;
-    struct skeletonDCnode *next;
-};
-
-struct skeletonDCsegment {
-    struct segmentListElement *segment;
-    struct skeletonDCsegment *next;
-};
-
-struct peerListElement {
-    uint id;
-    char *name;
-    floatCoordinate scale;
-    Coordinate offset;
-
-    struct peerListElement *next;
-};
-
-struct IOBuffer {
-    uint size;      // The current maximum size
-    uint length;    // The current amount of data in the buffer
-    Byte *data;
-};
 
 typedef struct {
     floatCoordinate *vertices;
@@ -1223,6 +1120,7 @@ typedef struct {
     uint colsIndex;
 } mesh;
 
+// unused ?
 typedef struct {
         GLbyte r;
         GLbyte g;
@@ -1231,10 +1129,9 @@ typedef struct {
 } color4B;
 
 
-class skeletonState : public QObject {
-    Q_OBJECT
-public:
-    skeletonState();
+struct skeletonState {
+
+    skeletonState() {}
     uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
@@ -1389,13 +1286,26 @@ public:
     uint maxUndoSteps;
 
     QString skeletonFileAsQString;
-
+/*
 public slots:
     int getSkeletonTime();
     bool hasUnsavedChanges();
     treeListElement *getFirstTree();
     QString getSkeletonFile();
+*/
 };
+
+/*
+class Skeleton {
+
+public:
+    Skeleton() { trees = new QList<treeListElement *>(); }
+
+    QList<treeListElement *> *trees;
+};
+*/
+
+
 
 struct clientState {
     bool connectAsap;

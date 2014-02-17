@@ -1,3 +1,4 @@
+/*
 #include "knossos-global.h"
 
 treeListElement::treeListElement() {
@@ -11,3 +12,4 @@ int treeListElement::getTreeID() {
 void treeListElement::setTreeID(int id) {
     treeID = id;
 }
+*/

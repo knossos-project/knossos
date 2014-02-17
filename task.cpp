@@ -172,7 +172,7 @@ size_t taskState::readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
 // for retrieving information from response headers. Useful for responses with file content
 // the information should be terminated with an ';' for sucessful parsing
 int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char *info) {
-    int i, numChars = 0;
+    uint i, numChars = 0;
     char *pos = strstr(header->content, info);
     if(pos == NULL) {
         return false;

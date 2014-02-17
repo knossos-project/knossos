@@ -30,6 +30,38 @@
 #include <QtXml>
 #include "knossos-global.h"
 
+// to skeletonizer
+struct dynArray {
+    void **elements;
+    int end;
+    int firstSize;
+};
+
+// to skeletonizer
+struct serialSkeletonListElement {
+    struct serialSkeletonListElement *next;
+    struct serialSkeletonListElement *previous;
+    Byte* content;
+};
+
+// to skeletonizer
+struct skeletonDC {
+    struct skeletonDCsegment *firstSkeletonDCsegment;
+    struct skeletonDCnode *firstSkeletonDCnode;
+};
+
+// to skeletonizer
+struct skeletonDCnode {
+    nodeListElement *node;
+    struct skeletonDCnode *next;
+};
+
+// to skeletonizer
+struct skeletonDCsegment {
+    struct segmentListElement *segment;
+    struct skeletonDCsegment *next;
+};
+
 class Skeletonizer : public QObject
 {
     Q_OBJECT

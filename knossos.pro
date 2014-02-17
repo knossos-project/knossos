@@ -1,3 +1,4 @@
+
 #-------------------------------------------------
 #
 # Project created by QtCreator 2012-09-05T18:04:31
@@ -8,55 +9,10 @@ QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt
+CONFIG += qt warn_off
 #CONFIG -= app_bundle
 
-SOURCES += widgets/mainwindow.cpp \
-    eventmodel.cpp \
-    client.cpp \
-    loader.cpp \
-    viewer.cpp \
-    remote.cpp \
-    skeletonizer.cpp \
-    renderer.cpp \
-    knossos.cpp \
-    coordinate.cpp \
-    Hashtable.cpp \
-    sleeper.cpp \
-    widgets/viewport.cpp \
-    treeLUT_fallback.cpp \
-    widgets/console.cpp \
-    widgets/tracingtimewidget.cpp \
-    widgets/commentswidget.cpp \
-    widgets/commentshortcuts/commentshortcutstab.cpp \
-    widgets/commentshortcuts/commentshighlightingtab.cpp \
-    widgets/zoomandmultireswidget.cpp \
-    widgets/datasavingwidget.cpp \
-    widgets/navigationwidget.cpp \
-    widgets/viewportsettingswidget.cpp \
-    widgets/toolswidget.cpp \
-    widgets/tools/toolsquicktabwidget.cpp \
-    widgets/tools/toolstreestabwidget.cpp \
-    widgets/tools/toolsnodestabwidget.cpp \
-    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
-    widgets/viewportsettings/vpskeletonviewportwidget.cpp \
-    widgets/viewportsettings/vpgeneraltabwidget.cpp \
-    widgets/synchronizationwidget.cpp \
-    widgets/splashscreenwidget.cpp \
-    widgets/datasetpropertywidget.cpp \
-    widgets/task/taskloginwidget.cpp \
-    widgets/task/taskmanagementwidget.cpp \
-    widgets/task/taskmanagementmaintab.cpp \
-    widgets/task/taskmanagementdetailstab.cpp \
-    functions.cpp \
-    widgets/widgetcontainer.cpp \
-    decorators/mainwindowdecorator.cpp \
-    widgets/commentshortcuts/commentsnodecommentstab.cpp \
-    scripting.cpp \
-    qsort.cpp \
-    ftp.cpp \
-    task.cpp \
-    openjpeg/cio.c \
+SOURCES += openjpeg/cio.c \
     openjpeg/bio.c \
     openjpeg/color.c \
     openjpeg/convert.c \
@@ -80,6 +36,57 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/t2.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
+    eventmodel.cpp \
+    client.cpp \
+    loader.cpp \
+    viewer.cpp \
+    remote.cpp \
+    skeletonizer.cpp \
+    renderer.cpp \
+    knossos.cpp \
+    coordinate.cpp \
+    Hashtable.cpp \
+    sleeper.cpp \
+    functions.cpp \
+    qsort.cpp \
+    ftp.cpp \
+    task.cpp \
+    stateInfo.cpp \
+    treeListElement.cpp \
+    skeletonstate.cpp \
+    treeLUT_fallback.cpp \
+    sha256.cpp \
+    widgets/viewport.cpp \    
+    widgets/mainwindow.cpp \
+    widgets/console.cpp \
+    widgets/tracingtimewidget.cpp \
+    widgets/commentswidget.cpp \
+    widgets/commentshortcuts/commentshortcutstab.cpp \
+    widgets/commentshortcuts/commentshighlightingtab.cpp \
+    widgets/zoomandmultireswidget.cpp \
+    widgets/datasavingwidget.cpp \
+    widgets/navigationwidget.cpp \
+    widgets/viewportsettingswidget.cpp \
+    widgets/toolswidget.cpp \
+    widgets/tools/toolsquicktabwidget.cpp \
+    widgets/tools/toolstreestabwidget.cpp \
+    widgets/tools/toolsnodestabwidget.cpp \
+    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
+    widgets/viewportsettings/vpskeletonviewportwidget.cpp \
+    widgets/viewportsettings/vpgeneraltabwidget.cpp \
+    widgets/synchronizationwidget.cpp \
+    widgets/splashscreenwidget.cpp \
+    widgets/datasetpropertywidget.cpp \
+    widgets/task/taskloginwidget.cpp \
+    widgets/task/taskmanagementwidget.cpp \
+    widgets/task/taskmanagementmaintab.cpp \
+    widgets/task/taskmanagementdetailstab.cpp \
+    widgets/widgetcontainer.cpp \
+    widgets/commentshortcuts/commentsnodecommentstab.cpp \
+    widgets/documentationwidget.cpp \
+    widgets/annotationwidget.cpp \
+    widgets/tools/toolscommandstab.cpp \
+    widgets/tools/toolstreeviewtab.cpp \
     test/testcommentswidget.cpp \
     test/testskeletonviewport.cpp \
     test/testtoolswidget.cpp \
@@ -88,19 +95,16 @@ SOURCES += widgets/mainwindow.cpp \
     test/testorthogonalviewport.cpp \
     test/testdatasavingwidget.cpp \
     test/testskeletonloadandsave.cpp \
-    test/knossostestrunner.cpp \
-    sha256.cpp \
-    widgets/documentationwidget.cpp \
-    widgets/annotationwidget.cpp \
-    widgets/tools/toolscommandstab.cpp \
-    widgets/tools/toolstreeviewtab.cpp \
-    stateInfo.cpp \
-    decorators/skeletondecorator.cpp \
-    decorators/treelistdecorator.cpp \
-    decorators/nodelistdecorator.cpp \
-    treeListElement.cpp \
-    skeletonstate.cpp \
-    decorators/skeletonstatedecorator.cpp
+    test/knossostestrunner.cpp \        
+    scriptengine/scripting.cpp \
+    scriptengine/decorators/skeletondecorator.cpp \
+    scriptengine/decorators/treelistdecorator.cpp \
+    scriptengine/decorators/nodelistdecorator.cpp \
+    scriptengine/decorators/mainwindowdecorator.cpp \
+    scriptengine/decorators/skeletonstatedecorator.cpp \
+    scriptengine/subclasses/node.cpp \
+    scriptengine/subclasses/tree.cpp
+
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -149,6 +153,9 @@ HEADERS  += widgets/mainwindow.h \
     renderer.h \
     knossos.h\
     sleeper.h \
+    functions.h \
+    ftp.h \
+    sha256.h \
     widgets/GuiConstants.h \
     widgets/viewport.h \
     widgets/console.h \
@@ -174,12 +181,12 @@ HEADERS  += widgets/mainwindow.h \
     widgets/task/taskmanagementwidget.h \
     widgets/task/taskmanagementmaintab.h \
     widgets/task/taskmanagementdetailstab.h \
-    widgets/commentshortcuts/commentsnodecommentstab.h \
-    functions.h \
+    widgets/commentshortcuts/commentsnodecommentstab.h \    
     widgets/widgetcontainer.h \
-    decorators/mainwindowdecorator.h \
-    scripting.h \
-    ftp.h \
+    widgets/documentationwidget.h \
+    widgets/annotationwidget.h \
+    widgets/tools/toolscommandstab.h \
+    widgets/tools/toolstreeviewtab.h \
     test/testcommentswidget.h \    
     test/testskeletonviewport.h \
     test/testtoolswidget.h \
@@ -188,17 +195,15 @@ HEADERS  += widgets/mainwindow.h \
     test/testorthogonalviewport.h \
     test/testdatasavingwidget.h \
     test/testskeletonloadandsave.h \
-    test/knossostestrunner.h \
-    sha256.h \
-    widgets/documentationwidget.h \
-    widgets/annotationwidget.h \
-    widgets/tools/toolscommandstab.h \
-    widgets/tools/toolstreeviewtab.h \
-    decorators/skeletondecorator.h \
-    decorators/treelistdecorator.h \
-    decorators/nodelistdecorator.h \
-    decorators/skeletonstatedecorator.h
-
+    test/knossostestrunner.h \        
+    scriptengine/scripting.h \
+    scriptengine/decorators/skeletondecorator.h \
+    scriptengine/decorators/treelistdecorator.h \
+    scriptengine/decorators/nodelistdecorator.h \
+    scriptengine/decorators/mainwindowdecorator.h \
+    scriptengine/decorators/skeletonstatedecorator.h \
+    scriptengine/subclasses/node.h \
+    scriptengine/subclasses/tree.h
 
 FORMS    += mainwindow.ui
 

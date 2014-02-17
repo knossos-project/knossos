@@ -29,6 +29,23 @@
 #include <QObject>
 #include <QThread>
 
+// to client
+struct peerListElement {
+    uint id;
+    char *name;
+    floatCoordinate scale;
+    Coordinate offset;
+
+    struct peerListElement *next;
+};
+
+// to client
+struct IOBuffer {
+    uint size;      // The current maximum size
+    uint length;    // The current amount of data in the buffer
+    Byte *data;
+};
+
 /**
   *
   * @class Client

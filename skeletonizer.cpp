@@ -1035,16 +1035,14 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     if(!merge) {
         state->skeletonState->skeletonTime = 0;
     }
-    QTime bench;
-    int counter = 0;
-    //file.reset();
+    QTime bench;    
     QXmlStreamReader xml(&file);
 
     std::vector<std::pair<uint, char*> > comments; // for buffering comments found in the xml
     bench.start();
     QXmlStreamAttributes attributes;
     QStringRef attribute;
-    float temp;
+
 
 
     while(!xml.atEnd() and !xml.hasError()) {       
@@ -2044,7 +2042,7 @@ int Skeletonizer::addNode(int targetRevision,
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
-    int lockDistance = 0;
+    uint lockDistance = 0;
 
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -2601,7 +2599,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         if(Knossos::lockSkeleton(targetRevision) == false) {
             LOG("addtreelistelement unable to lock.")
             Knossos::unlockSkeleton(false);
-            return false;
+            return 0;
         }
     }
 

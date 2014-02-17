@@ -1,3 +1,4 @@
+/*
 #include "knossos-global.h"
 
 skeletonState::skeletonState()
@@ -19,3 +20,4 @@ treeListElement *skeletonState::getFirstTree() {
 QString skeletonState::getSkeletonFile() {
     return skeletonFileAsQString;
 }
+*/

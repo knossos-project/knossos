@@ -22,10 +22,10 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+
 #include "knossos-global.h"
 
 extern stateInfo *state;
-
 
 /**
  * This function calculates the coordinates of the datacube from pixel coordinates

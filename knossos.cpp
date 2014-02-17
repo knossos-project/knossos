@@ -41,7 +41,7 @@
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
-#include "scripting.h"
+#include "scriptengine/scripting.h"
 #include "ftp.h"
 
 #include "test/knossostestrunner.h"
@@ -55,7 +55,7 @@
 #endif
 #ifdef Q_OS_WIN
 #include <GL/glut.h>
-#include "windows.h"
+#include <windows.h>
 #endif
 #ifdef Q_OS_LINUX
 #include <GL/freeglut_std.h>
@@ -63,7 +63,7 @@
 
 #define NUMTHREADS 4
 
-extern stateInfo *state = NULL;
+stateInfo *state = NULL;
 char logFilename[MAX_PATH] = {0};
 std::unique_ptr<Loader> loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
     QObject::connect(&client, &Client::delCommentSignal, &Skeletonizer::delComment);
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
     QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-    QObject::connect(scripts.skeletonDecorator, &SkeletonDecorator::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
+    //QObject::connect(scripts.skeletonDecorator, &SkeletonDecorator::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
 
     knossos->loadDefaultTreeLUT();
 

@@ -50,6 +50,21 @@ For Loader file loader
 #define LM_LOCAL    0
 #define LM_FTP      1
 
+struct _CubeSlot {
+        Byte *cube;
+        struct _CubeSlot *next;
+        struct _CubeSlot *previous;
+};
+
+typedef struct _CubeSlot CubeSlot;
+
+struct _CubeSlotList {
+        CubeSlot *firstSlot;
+        int elements;
+};
+
+typedef struct _CubeSlotList CubeSlotList;
+
 struct _C_Element {
     Coordinate coordinate;
 

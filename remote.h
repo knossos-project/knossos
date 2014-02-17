@@ -29,6 +29,12 @@
 #include <QThread>
 #include <knossos-global.h>
 
+// to remote
+struct trajectory {
+        char name[64];
+        char *source;
+};
+
 class Remote : public QThread
 {
     Q_OBJECT
