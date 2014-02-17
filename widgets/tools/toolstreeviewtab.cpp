@@ -2293,9 +2293,14 @@ void ToolsTreeviewTab::insertPatch(Patch *patch, KTable *table) {
     table->insertRow(0);
 
     QTableWidgetItem *item = new QTableWidgetItem(QString::number(patch->patchID));
+    QColor treeColor = QColor(patch->correspondingTree->color.r*255,
+                              patch->correspondingTree->color.g*255,
+                              patch->correspondingTree->color.b*255,
+                              0.6*255);
     Qt::ItemFlags flags = item->flags();
     flags &= ~Qt::ItemIsEditable;
     item->setFlags(flags);
+    item->setBackgroundColor(treeColor);
     table->setItem(0, PATCH_ID, item);
     item = new QTableWidgetItem("");
     flags = item->flags();

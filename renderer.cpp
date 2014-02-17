@@ -152,6 +152,37 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         return true;
 }
 
+void Renderer::renderCircle(floatCoordinate pos, float radius, color4F color, uint viewportType) {
+    float theta = 2 * PI / float(20);
+    float c = cosf(theta);//precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
+
+    float x = radius;//we start at angle = 0
+    float y = 0;
+    glColor4f(color.r, color.g, color.b, color.a);
+    glBegin(GL_LINE_LOOP);
+    for(int ii = 0; ii < 20; ii++) {
+        switch(viewportType) {
+        case VIEWPORT_XY:
+            glVertex3f(x + pos.x, y + pos.y, pos.z);//output vertex
+            break;
+        case VIEWPORT_XZ:
+            glVertex3f(x + pos.x, pos.y, y + pos.z);//output vertex
+            break;
+        case VIEWPORT_YZ:
+            glVertex3f(pos.x, y + pos.y, x + pos.z);//output vertex
+            break;
+        }
+
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
+    }
+    glEnd();
+}
+
 /**
  * @brief Renderer::renderSphere renders a sphere at given position of either float precision or int precision.
  * @param floatPos sphere center in float coordinates. Set to NULL when using int precision.
@@ -2539,18 +2570,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 }
 
 void Renderer::renderPatches(uint viewportType) {
-    if(Patch::activePatch == NULL || Patch::displayMode == PATCH_DSP_HIDE) {
-        return;
-    }
-    glEnable(GL_BLEND);
     glPushMatrix();
-
+    glTranslatef(-(float)state->boundary.x / 2., -(float)state->boundary.y / 2., -(float)state->boundary.z / 2.);
     // draw active line
-
     if(Patch::activeLine.size() > 0) {
-        glTranslatef(-(float)state->boundary.x / 2. + 0.5,
-                     -(float)state->boundary.y / 2. + 0.5,
-                     -(float)state->boundary.z / 2. + 0.5);
         glDeleteBuffers(1, &Patch::vbo);
         glGenBuffers(1, &Patch::vbo);
         glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
@@ -2564,16 +2587,8 @@ void Renderer::renderPatches(uint viewportType) {
         glDrawArrays(GL_LINE_STRIP, 0, Patch::activeLine.size());
     }
 
-    glPopMatrix();
-    glEnable(GL_BLEND);
-    glPushMatrix();
-
     // draw line buffer
     if(Patch::lineBuffer.size() > 0) {
-        glTranslatef(-(float)state->boundary.x / 2. + 0.5,
-                     -(float)state->boundary.y / 2. + 0.5,
-                     -(float)state->boundary.z / 2. + 0.5);
-
         for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
             glDeleteBuffers(1, &Patch::vbo);
             glGenBuffers(1, &Patch::vbo);
@@ -2587,40 +2602,49 @@ void Renderer::renderPatches(uint viewportType) {
             glColor4f(1., 0., 0., 1);
             glDrawArrays(GL_LINE_STRIP, 0, Patch::lineBuffer[i].size());
         }
-    }
 
-    // highlight open loop endings
-    if(Patch::eraseInVP == -1) {
-        color4F currentColor;
-        SET_COLOR(currentColor, 1., 0, 0., 0.5);
-        if(Patch::lineBuffer.size() > 0) {
+        // highlight open loop endings
+        if(Patch::eraseInVP == -1) {
+            color4F currentColor;
+            SET_COLOR(currentColor, 1., 0, 0., 0.5);
             if(Patch::lineBuffer.size() == 1) {
                 // if only one line in the buffer, highlight endings only if they are too far apart.
                 // otherwise the loop is not open and needs no highlighting
                 if(distance(Patch::lineBuffer[0][0], Patch::lineBuffer[0].back()) > AUTO_ALIGN_RADIUS) {
-                    renderSphere(&Patch::lineBuffer[0][0], NULL, AUTO_ALIGN_RADIUS,
-                                 currentColor, viewportType, viewportType);
-                    renderSphere(&Patch::lineBuffer[0].back(), NULL, AUTO_ALIGN_RADIUS,
-                                 currentColor, viewportType, viewportType);
+                    if(viewportType == VIEWPORT_SKELETON) {
+                        renderSphere(&Patch::lineBuffer[0][0], NULL, AUTO_ALIGN_RADIUS, currentColor,
+                                     state->viewerState->vpConfigs[viewportType].id, viewportType);
+                        renderSphere(&Patch::lineBuffer[0].back(), NULL, AUTO_ALIGN_RADIUS, currentColor,
+                                     state->viewerState->vpConfigs[viewportType].id, viewportType);
+                    }
+                    else {
+                        renderCircle(Patch::lineBuffer[0][0], AUTO_ALIGN_RADIUS, currentColor, viewportType);
+                        renderCircle(Patch::lineBuffer[0].back(), AUTO_ALIGN_RADIUS, currentColor, viewportType);
+                    }
                 }
             }
             else {
-                for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
-                    renderSphere(&Patch::lineBuffer[i][0], NULL, AUTO_ALIGN_RADIUS,
-                                 currentColor, viewportType, viewportType);
-                    renderSphere(&Patch::lineBuffer[i].back(), NULL, AUTO_ALIGN_RADIUS,
-                                 currentColor, viewportType, viewportType);
+                if(viewportType == VIEWPORT_SKELETON) {
+                    for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                        renderSphere(&Patch::lineBuffer[i][0], NULL, AUTO_ALIGN_RADIUS, currentColor,
+                                     state->viewerState->vpConfigs[viewportType].id, viewportType);
+                        renderSphere(&Patch::lineBuffer[i].back(), NULL, AUTO_ALIGN_RADIUS, currentColor,
+                                     state->viewerState->vpConfigs[viewportType].id, viewportType);
+                    }
+                }
+                else {
+                    for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                        renderCircle(Patch::lineBuffer[i][0], AUTO_ALIGN_RADIUS, currentColor, viewportType);
+                        renderCircle(Patch::lineBuffer[i].back(), AUTO_ALIGN_RADIUS, currentColor, viewportType);
+                    }
                 }
             }
         }
     }
 
-    glPopMatrix();
-    glEnable(GL_BLEND);
-    glPushMatrix();
-    glTranslatef(-(float)state->boundary.x / 2. + 0.5,
-                 -(float)state->boundary.y / 2. + 0.5,
-                 -(float)state->boundary.z / 2. + 0.5);
+    if(Patch::activePatch == NULL || Patch::displayMode == PATCH_DSP_HIDE) {
+        return;
+    }
 
     Patch *patch = Patch::activePatch;
     std::vector<PatchLoop*> loops;
@@ -2664,14 +2688,8 @@ void Renderer::renderPatches(uint viewportType) {
 //    glColor3f(0, 1, 0);
 //    glDrawArrays(GL_POINTS, 0, points.size());
 
-    glPopMatrix();
-    glEnable(GL_BLEND);
-    glPushMatrix();
-
     // draw patches depending on display mode
-    glTranslatef(-(float)state->boundary.x / 2. + 0.5,
-                 -(float)state->boundary.y / 2. + 0.5,
-                 -(float)state->boundary.z / 2. + 0.5);
+
 //    std::vector<pcl_Point> visiblePoints;
 //    Patch::visiblePoints(viewportType, visiblePoints);
 //    if(visiblePoints.size() != 0 and viewportType != VIEWPORT_SKELETON) {
@@ -2784,7 +2802,6 @@ void Renderer::renderPatches(uint viewportType) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisableClientState(GL_VERTEX_ARRAY);
     glPopMatrix();
-    glEnable(GL_BLEND);
 }
 
 bool Renderer::doubleMeshCapacity(mesh *toDouble) {

@@ -4590,6 +4590,10 @@ void Skeletonizer::jumpToActiveLoop() {
                         TELL_COORDINATE_CHANGE);
 }
 
+void Skeletonizer::deactivateLoop() {
+    Patch::deactivateLoop();
+}
+
 void Skeletonizer::delActiveLoop() {
     if(Patch::activeLine.size() == 0 and Patch::lineBuffer.size() == 0) {
         return;

@@ -324,160 +324,96 @@ void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
     if(activeLine.size() == 0 and lineBuffer.size() == 0) {
         return;
     }
-    float halfLength = eraserHalfEdge/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
+    float eraserHalf = eraserHalfEdge/state->viewerState->vpConfigs[viewportType].screenPxYPerDataPx;
 
     std::vector<uint> erasedPoints;
-    switch(viewportType) {
-    case VIEWPORT_XY:
-        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
-                continue;
-            }
-            erasedPoints.clear();
+    for(int i = lineBuffer.size() - 1; i >= 0; --i) {
+        if(lineBuffer[i].size() == 0) {
+            lineBuffer.erase(lineBuffer.begin() + i);
+            continue;
+        }
+        erasedPoints.clear();
+        switch(viewportType) { // check which points will be erased
+        case VIEWPORT_XY:
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
-                if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
-                        and lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength
+                if(lineBuffer[i][j].x > center.x - eraserHalf and lineBuffer[i][j].x < center.x + eraserHalf
+                        and lineBuffer[i][j].y > center.y - eraserHalf and lineBuffer[i][j].y < center.y + eraserHalf
                         and roundFloat(lineBuffer[i][j].z) == state->viewerState->currentPosition.z) {
                     erasedPoints.push_back(j);
                 }
             }
-            if(erasedPoints.size() > 0) {
-                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
-                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
-                if(start != -1 and end != -1) { // eraser went through line
-                    float dist = distance(lineBuffer[i].back(), lineBuffer[i][0]);
-                    if(dist < voxelPerPoint or almostEqual(dist, voxelPerPoint)) {
-                        // this line is a closed loop. An erasion only opens it up instead of splitting it
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        newLine.insert(newLine.end(), lineBuffer[i].begin(), lineBuffer[i].begin() + start - 1);
-                        lineBuffer.erase(lineBuffer.begin() + i);
-                        lineBuffer.push_back(newLine);
-                    }
-                    else {
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        lineBuffer.push_back(newLine);
-                        int p, q;
-                        for(uint j = erasedPoints.size() - 1; j > 0; --j) {
-                            p = erasedPoints[j - 1], q = erasedPoints[j];
-                            if(q - p > 1) {
-                                std::vector<floatCoordinate> newLine;
-                                newLine.insert(newLine.begin(), lineBuffer[i].begin() + p,
-                                                                lineBuffer[i].begin() + q + 1);
-                                lineBuffer.push_back(newLine);
-                            }
-                        }
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
-                                            lineBuffer[i].end());
-                    }
-                }
-                else if(erasedPoints.size() >= lineBuffer[i].size() - 1) {
-                     // eraser removed whole line (if only one point left, delete it, too)
-                    lineBuffer.erase(lineBuffer.begin() + i);
-                }
-                else { // eraser shortened the line at the end(s)
-                    for(int j = erasedPoints.size() - 1; j >= 0; --j) {
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[j]);
-                    }
-                }
-            }
-        }
-        break;
-    case VIEWPORT_XZ:
-        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
-                continue;
-            }
-            erasedPoints.clear();
+            break;
+        case VIEWPORT_XZ:
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
-                if(lineBuffer[i][j].x > center.x - halfLength and lineBuffer[i][j].x < center.x + halfLength
-                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength
+                if(lineBuffer[i][j].x > center.x - eraserHalf and lineBuffer[i][j].x < center.x + eraserHalf
+                        and lineBuffer[i][j].z > center.z - eraserHalf and lineBuffer[i][j].z < center.z + eraserHalf
                         and roundFloat(lineBuffer[i][j].y) == state->viewerState->currentPosition.y) {
                     erasedPoints.push_back(j);
                 }
             }
-            if(erasedPoints.size() > 0) {
-                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
-                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
-                if(start != -1 and end != -1) { // eraser split line into two lines
-                    float dist = distance(lineBuffer[i].back(), lineBuffer[i][0]);
-                    if(dist < voxelPerPoint or almostEqual(dist, voxelPerPoint)) {
-                        // this line is a closed loop. An erasion only opens it up instead of splitting it
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        newLine.insert(newLine.end(), lineBuffer[i].begin(), lineBuffer[i].begin() + start - 1);
-                        lineBuffer.erase(lineBuffer.begin() + i);
-                        lineBuffer.push_back(newLine);
-                    }
-                    else {
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        lineBuffer.push_back(newLine);
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
-                                            lineBuffer[i].end());
-                    }
-                }
-                else if(erasedPoints.size() == lineBuffer[i].size()) { // line empty, remove it
-                    lineBuffer.erase(lineBuffer.begin() + i);
-                }
-                else { // line shortened
-                    for(int j = erasedPoints.size() - 1; j >= 0; --j) {
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[j]);
-                    }
-                }
-            }
-        }
-        break;
-    case VIEWPORT_YZ:
-        for(int i = lineBuffer.size() - 1; i >= 0; --i) {
-            if(lineBuffer[i].size() == 0) {
-                lineBuffer.erase(lineBuffer.begin() + i);
-                continue;
-            }
-            erasedPoints.clear();
+            break;
+        case VIEWPORT_YZ:
             for(uint j = 0; j < lineBuffer[i].size(); ++j) {
-                if(lineBuffer[i][j].y > center.y - halfLength and lineBuffer[i][j].y < center.y + halfLength
-                        and lineBuffer[i][j].z > center.z - halfLength and lineBuffer[i][j].z < center.z + halfLength
+                if(lineBuffer[i][j].y > center.y - eraserHalf and lineBuffer[i][j].y < center.y + eraserHalf
+                        and lineBuffer[i][j].z > center.z - eraserHalf and lineBuffer[i][j].z < center.z + eraserHalf
                         and roundFloat(lineBuffer[i][j].x) == state->viewerState->currentPosition.x) {
                     erasedPoints.push_back(j);
                 }
             }
-            if(erasedPoints.size() > 0) {
-                int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
-                int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
-                if(start != -1 and end != -1) { // eraser split line into two lines
-                    floatCoordinate distVec;
-                    SUB_ASSIGN_COORDINATE(distVec, lineBuffer[i].back(), lineBuffer[i][0]);
-                    if(euclidicNorm(&distVec) <= voxelPerPoint) {
-                        // this line is a closed loop. An erasion only opens it up instead of splitting it
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        newLine.insert(newLine.end(), lineBuffer[i].begin(), lineBuffer[i].begin() + start - 1);
-                        lineBuffer.erase(lineBuffer.begin() + i);
-                        lineBuffer.push_back(newLine);
-                    }
-                    else {
-                        std::vector<floatCoordinate> newLine;
-                        newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
-                        lineBuffer.push_back(newLine);
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
-                                            lineBuffer[i].end());
-                    }
-                }
-                else if(erasedPoints.size() == lineBuffer[i].size()) { // line empty, remove it
-                    lineBuffer.erase(lineBuffer.begin() + i);
-                }
-                else { // line shortened
-                    for(int j = erasedPoints.size() - 1; j >= 0; --j) {
-                        lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[j]);
-                    }
+            break;
+        }
+        if(erasedPoints.size() == 0) {
+            continue;
+        }
+        // when points are erased, there are three cases to be handled:
+        // 1.eraser went through the line. -> split it up: points between two non-adjacent erased points form new lines.
+        //   additionally, if line was a closed loop before, treat it differently than if it was open (see below).
+        // 2. eraser removed the whole line. -> remove it from the line buffer, no new lines.
+        // 3. eraser shortened the line at the end(s). -> remove the erased points from the line, now new lines.
+        // 'start' and 'end' help us identify the case
+        int start = (erasedPoints[0] == 0)? -1 : erasedPoints[0];
+        int end = (erasedPoints.back() == lineBuffer[i].size() - 1)? -1 : erasedPoints.back() + 1;
+        if(start != -1 and end != -1) { // case 1. eraser went through line
+            bool wasClosed = activeLoopIsClosed();
+            std::vector<floatCoordinate> newLine;
+            if(wasClosed) {
+                // if line was a closed loop before, points after last erased point until first erased point form a line
+                newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
+                newLine.insert(newLine.end(), lineBuffer[i].begin(), lineBuffer[i].begin() + start - 1);
+                lineBuffer.push_back(newLine);
+            }
+            else { // line was open before, so points after last erased point until end of line form a new line
+                newLine.insert(newLine.begin(), lineBuffer[i].begin() + end, lineBuffer[i].end());
+                lineBuffer.push_back(newLine);
+            }
+            int p, q;
+            for(uint j = erasedPoints.size() - 1; j > 0; --j) {
+                p = erasedPoints[j - 1], q = erasedPoints[j];
+                if(q - p > 1) { // points between erased points p and q become a new line
+                    std::vector<floatCoordinate> newLine;
+                    newLine.insert(newLine.begin(), lineBuffer[i].begin() + p,
+                                                    lineBuffer[i].begin() + q + 1);
+                    lineBuffer.push_back(newLine);
                 }
             }
+            if(wasClosed) { // the remaining former closed loop points have been put into new lines. remove the old one
+                lineBuffer.erase(lineBuffer.begin() + i);
+            }
+            else { // from the former open line only the points from beginning to first erased point remain
+                lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[0],
+                                    lineBuffer[i].end());
+            }
         }
-        break;
+        else if(erasedPoints.size() >= lineBuffer[i].size() - 1) {
+             // case 2. eraser has removed whole line
+            // (if only one point remains, delete it, too. it was left out by accident, anymway)
+            lineBuffer.erase(lineBuffer.begin() + i);
+        }
+        else { // case 3. eraser has shortened the line at the end(s).
+            for(int j = erasedPoints.size() - 1; j >= 0; --j) {
+                lineBuffer[i].erase(lineBuffer[i].begin() + erasedPoints[j]);
+            }
+        }
     }
 }
 

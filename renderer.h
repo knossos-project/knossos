@@ -48,6 +48,7 @@ protected:
 
     uint renderSegPlaneIntersection(struct segmentListElement *segment);
     uint renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType);
+    void renderCircle(floatCoordinate pos, float radius, color4F color, uint viewportType);
     uint renderSphere(floatCoordinate *floatPos, Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);
