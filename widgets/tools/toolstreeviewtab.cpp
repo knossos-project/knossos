@@ -37,7 +37,8 @@
 
 #define PATCH_ID      0
 #define PATCH_COMMENT 1
-#define PATCH_COLS    2
+#define PATCH_VISIBLE 2
+#define PATCH_COLS    3
 
 #define NODECOMBO_100 0
 #define NODECOMBO_1000 1
@@ -58,6 +59,10 @@ void KTable::setItem(int row, int column, QTableWidgetItem *item) {
         QTableWidget::setItem(row, column, item);
         changeByCode = false;
     }
+}
+
+void KTable::keyPressed(QKeyEvent *event) {
+    keyPressEvent(event);
 }
 
 void KTable::focusInEvent(QFocusEvent *) {
@@ -142,8 +147,8 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
     // tables
     QTableWidgetItem *IDCol, *commentCol, *colorCol, // tree table cols
-                     *radiusCol, *xCol, *yCol, *zCol; // node table cols
-
+                     *radiusCol, *xCol, *yCol, *zCol, // node table cols
+                     *visibleCol;
     // active tree table
     activeTreeTable = new TreeTable(this);
     activeTreeTable->setColumnCount(TREE_COLS);
@@ -235,8 +240,10 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     activePatchTable->setFixedHeight(54);
     IDCol = new QTableWidgetItem("Patch ID");
     commentCol = new QTableWidgetItem("Comment");
+    visibleCol = new QTableWidgetItem("show/hide");
     activePatchTable->setHorizontalHeaderItem(PATCH_ID, IDCol);
     activePatchTable->setHorizontalHeaderItem(PATCH_COMMENT, commentCol);
+    activePatchTable->setHorizontalHeaderItem(PATCH_VISIBLE, visibleCol);
     activePatchTable->horizontalHeader()->setSectionResizeMode(PATCH_COMMENT, QHeaderView::Stretch);
     activePatchTable->resizeColumnsToContents();
     activePatchTable->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -248,8 +255,10 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     patchTable->verticalHeader()->setVisible(false);
     IDCol = new QTableWidgetItem("Patch ID");
     commentCol = new QTableWidgetItem("Comment");
+    visibleCol = new QTableWidgetItem("show/hide");
     patchTable->setHorizontalHeaderItem(PATCH_ID, IDCol);
     patchTable->setHorizontalHeaderItem(PATCH_COMMENT, commentCol);
+    patchTable->setHorizontalHeaderItem(PATCH_VISIBLE, visibleCol);
     patchTable->horizontalHeader()->setSectionResizeMode(PATCH_COMMENT, QHeaderView::Stretch);
     patchTable->resizeColumnsToContents();
     patchTable->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -499,6 +508,12 @@ void ToolsTreeviewTab::setFocused(KTable *table) {
     focusedTable = table;
 }
 
+void ToolsTreeviewTab::keyPressed(QKeyEvent *event) {
+    if(focusedTable) {
+        focusedTable->keyPressed(event);
+    }
+}
+
 void ToolsTreeviewTab::contextMenuCalled(QPoint pos) {
     if(focusedTable == activeTreeTable) {
         treeContextMenu->actions().at(0)->setEnabled(false); // set as active tree action
@@ -598,15 +613,63 @@ void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
     }
 
     else if(focusedTable == patchTable) {
-        if(setActivePatchSignal(NULL, patchTable->item(item->row(), PATCH_ID)->text().toInt())) {
-            activePatchChanged();
+        switch(item->column()) {
+        case PATCH_ID:
+            if(setActivePatchSignal(NULL, patchTable->item(item->row(), PATCH_ID)->text().toInt())) {
+                activePatchChanged();
+                emit jumpToActivePatchSignal();
+            }
+            state->skeletonState->selectedPatches.clear();
+            break;
+        case PATCH_VISIBLE:
+            QTableWidgetItem *idItem = patchTable->item(item->row(), PATCH_ID);
+            Patch *patch = Patch::getPatchWithID(idItem->text().toInt());
+            if(patch == NULL) {
+                qDebug("could not find patch with id %i", idItem->text().toInt());
+                patchTable->removeRow(item->row());
+                return;
+            }
+            if(item->text() == "show") {
+                item->setText("hide");
+                patch->visible = false;
+            }
+            else {
+                item->setText("show");
+                patch->visible = true;
+            }
+            if(patch == Patch::activePatch) {
+                activePatchTable->item(0, PATCH_VISIBLE)->setText(item->text());
+            }
+            break;
         }
-        emit jumpToActivePatchSignal();
-        state->skeletonState->selectedPatches.clear();
     }
     else if(focusedTable == activePatchTable) {
-        emit jumpToActivePatchSignal();
-        state->skeletonState->selectedPatches.clear();
+        switch(item->column()) {
+        case PATCH_ID:
+            emit jumpToActivePatchSignal();
+            state->skeletonState->selectedPatches.clear();
+            break;
+        case PATCH_VISIBLE:
+            if(Patch::activePatch == NULL) {
+                qDebug("no active patch.");
+                activePatchTable->clearContents();
+                return;
+            }
+            if(item->text() == "show") {
+                item->setText("hide");
+                Patch::activePatch->visible = false;
+            }
+            else {
+                item->setText("show");
+                Patch::activePatch->visible = true;
+            }
+            for(int i = 0; i < patchTable->rowCount(); ++i) {
+                if(patchTable->item(i, PATCH_ID)->text().toInt() == Patch::activePatch->patchID) {
+                    patchTable->item(i, PATCH_VISIBLE)->setText(item->text());
+                }
+            }
+            break;
+        }
     }
 }
 
@@ -2302,6 +2365,7 @@ void ToolsTreeviewTab::insertPatch(Patch *patch, KTable *table) {
     item->setFlags(flags);
     item->setBackgroundColor(treeColor);
     table->setItem(0, PATCH_ID, item);
+
     item = new QTableWidgetItem("");
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
@@ -2310,9 +2374,16 @@ void ToolsTreeviewTab::insertPatch(Patch *patch, KTable *table) {
         setText(table, item, patch->comment);
     }
     table->setItem(0, PATCH_COMMENT, item);
+
+    item = new QTableWidgetItem("show");
+    if(patch->visible == false) {
+        item->setText("hide");
+    }
+    flags = item->flags();
+    flags &= ~Qt::ItemIsSelectable & ~Qt::ItemIsEditable;
+    item->setFlags(flags);
+    table->setItem(0, PATCH_VISIBLE, item);
 }
-
-
 
 int ToolsTreeviewTab::getActiveTreeRow() {
     int activeRow = -1;

@@ -110,6 +110,7 @@ signals:
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
 
+    void keyPressSignal(QKeyEvent *event);
     void treeAddedSignal(treeListElement *tree);
     void branchPushedSignal();
     void branchPoppedSignal();
@@ -339,7 +340,7 @@ public slots:
 
     void jumpToActiveLoopSlot();
     void deactivateLoopSlot();
-    void delActiveLoopSlot();
+    void delActionSlot();
 };
 
 #endif // MAINWINDOW_H

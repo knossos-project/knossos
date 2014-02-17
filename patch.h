@@ -66,14 +66,12 @@ public:
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
     floatCoordinate centroid;
     uint createdInVP;
-    QString comment;
 
-    PatchLoop(uint inVP, QString newComment = "", QObject *parent = 0)
-        : QObject(parent), createdInVP(inVP), comment(newComment) {}
+    PatchLoop(uint inVP, QObject *parent = 0)
+        : QObject(parent), createdInVP(inVP) {}
 
-    PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP,
-              QString newComment = "", QObject *parent = 0)
-        : QObject(parent), centroid(newCentroid), createdInVP(inVP), comment(newComment) {
+    PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP, QObject *parent = 0)
+        : QObject(parent), centroid(newCentroid), createdInVP(inVP) {
         points = newPoints;
     }
 
@@ -149,6 +147,7 @@ public:
     treeListElement *correspondingTree;
     QString comment;
     floatCoordinate pos;
+    bool visible;
     uint numPoints;
     uint numLoops;
     uint numTriangles;

@@ -32,7 +32,7 @@ GLuint Patch::vbo;
 GLuint Patch::texHandle;
 
 Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
-    next(this), previous(this), numPoints(0), numLoops(0), numTriangles(0) {
+    next(this), previous(this), visible(true), numPoints(0), numLoops(0), numTriangles(0) {
 
     if(newPatchID == -1) {
         patchID = ++Patch::maxPatchID;
@@ -415,6 +415,11 @@ void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
             }
         }
     }
+    if(activeLoop) {
+        if(lineBuffer.size() == 0) {
+            delActiveLoop();
+        }
+    }
 }
 
 bool Patch::activeLoopIsClosed() {
@@ -448,8 +453,9 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
 
     Patch *currPatch = firstPatch;
     do {
-        if(activeLoop) {
-            break;
+        if(currPatch->visible == false) {
+            currPatch = currPatch->next;
+            continue;
         }
         std::vector<PatchLoop *> visibleLoops;
         currPatch->loops->getAllVisibleObjs(visibleLoops, viewportType);
@@ -517,6 +523,9 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
             }
             break;
         }
+        if(activeLoop) {
+            break;
+        }
         currPatch = currPatch->next;
     } while(currPatch != firstPatch);
 
@@ -555,6 +564,7 @@ void Patch::delActiveLoop() {
     activeLine.clear();
     lineBuffer.clear();
     if(activeLoop != NULL) {
+        delete activeLoop;
         activeLoop = NULL;
         std::pair<floatCoordinate, PatchLoop*> nextLoop = activePatch->loops->getNearestNeighbor(activePatch->pos);
         if(nextLoop.first.x != -1) {

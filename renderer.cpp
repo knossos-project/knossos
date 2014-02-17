@@ -2649,11 +2649,14 @@ void Renderer::renderPatches(uint viewportType) {
     Patch *patch = Patch::activePatch;
     std::vector<PatchLoop*> loops;
     do {
+        if(patch->visible == false) {
+            patch = patch->next;
+            continue;
+        }
         glColor4f(patch->correspondingTree->color.r,
                   patch->correspondingTree->color.g,
                   patch->correspondingTree->color.b,
                   patch->correspondingTree->color.a);
-        // draw loops of active patch
         loops = patch->loopsAsVector(viewportType);
 
         for(uint i = 0; i < loops.size(); ++i) {

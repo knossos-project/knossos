@@ -29,7 +29,7 @@ public:
     explicit KTable(QWidget *parent);
     bool changeByCode;
     void setItem(int row, int column, QTableWidgetItem *item);
-
+    void keyPressed(QKeyEvent *event);
 protected:
     void focusInEvent(QFocusEvent *);
     void keyPressEvent(QKeyEvent *event);
@@ -163,6 +163,7 @@ public slots:
     void patchSearchChanged();
 
     void setFocused(KTable *table);
+    void keyPressed(QKeyEvent *event);
     void deleteAction();
     void itemsSelected();
     void itemDoubleClicked(QTableWidgetItem*item);

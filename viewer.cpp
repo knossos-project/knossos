@@ -2170,6 +2170,8 @@ void Viewer::rewire() {
     //end event handler signals
     // mainwindow signals
     //connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
+    connect(window, SIGNAL(keyPressSignal(QKeyEvent*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(keyPressed(QKeyEvent*)));
     connect(window, SIGNAL(branchPushedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPushed()));
     connect(window, SIGNAL(branchPoppedSignal()),

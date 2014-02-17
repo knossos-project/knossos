@@ -4550,6 +4550,20 @@ bool Skeletonizer::setActivePatch(Patch* patch, uint patchID) {
             return false;
         }
     }
+    if(patch != Patch::activePatch and Patch::activeLoop != NULL) {
+        if(Patch::activeLoopIsClosed()) {
+            Patch::deactivateLoop();
+        }
+        else {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Please finish the active loop before activating another patch.");
+            prompt.exec();
+            return false;
+        }
+    }
     Patch::activePatch = patch;
     setActiveTreeByID(patch->correspondingTree->treeID);
     state->skeletonState->unsavedChanges = true;
