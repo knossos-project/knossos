@@ -1843,12 +1843,11 @@ void MainWindow::delActionSlot() {
             QKeyEvent *event = new QKeyEvent(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
             emit keyPressSignal(event);
             delete event;
+            return;
         }
     }
-    else {
-        if(Patch::patchMode) {
-            emit delActiveLoopSignal();
-        }
+    if(Patch::patchMode) {
+        emit delActiveLoopSignal();
     }
 }
 

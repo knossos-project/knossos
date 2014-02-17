@@ -460,6 +460,7 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
         std::vector<PatchLoop *> visibleLoops;
         currPatch->loops->getAllVisibleObjs(visibleLoops, viewportType);
         if(visibleLoops.size() == 0) {
+            currPatch = currPatch->next;
             continue;
         }
 
@@ -554,10 +555,12 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
  *        nothing happens.
  */
 void Patch::deactivateLoop() {
-    activePatch->insert(activeLoop, activeLoop->createdInVP);
-    activeLoop = NULL;
-    activeLine.clear();
-    lineBuffer.clear();
+    if(activeLoopIsClosed()) {
+        activePatch->insert(activeLoop, activeLoop->createdInVP);
+        activeLoop = NULL;
+        activeLine.clear();
+        lineBuffer.clear();
+    }
 }
 
 void Patch::delActiveLoop() {
