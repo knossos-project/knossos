@@ -102,7 +102,6 @@ signals:
 
     void jumpToActiveLoopSignal();
     void deactivateLoopSignal();
-    void delActiveLoopSignal();
 
     bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
     bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
@@ -340,7 +339,6 @@ public slots:
 
     void jumpToActiveLoopSlot();
     void deactivateLoopSlot();
-    void delActionSlot();
 };
 
 #endif // MAINWINDOW_H

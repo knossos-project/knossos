@@ -2155,6 +2155,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
     connect(eventModel, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
     connect(eventModel, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
+    connect(eventModel, SIGNAL(delActiveLoopSignal()), skeletonizer, SLOT(delActiveLoop()));
     connect(eventModel, SIGNAL(updateSlicePlaneWidgetSignal()),
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
@@ -2170,8 +2171,6 @@ void Viewer::rewire() {
     //end event handler signals
     // mainwindow signals
     //connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
-    connect(window, SIGNAL(keyPressSignal(QKeyEvent*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(keyPressed(QKeyEvent*)));
     connect(window, SIGNAL(branchPushedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPushed()));
     connect(window, SIGNAL(branchPoppedSignal()),
@@ -2208,7 +2207,6 @@ void Viewer::rewire() {
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
     connect(window, SIGNAL(jumpToActiveLoopSignal()), skeletonizer, SLOT(jumpToActiveLoop()));
-    connect(window, SIGNAL(delActiveLoopSignal()), skeletonizer, SLOT(delActiveLoop()));
     connect(window, SIGNAL(deactivateLoopSignal()), skeletonizer, SLOT(deactivateLoop()));
     connect(window, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
                     skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));

@@ -1463,6 +1463,10 @@ bool EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         state->skeletonState->skeletonChanged = true;
 
     } else if(event->key() == Qt::Key_Delete) {
+        if(Patch::patchMode) {
+            emit delActiveLoopSignal();
+			return true;
+        }
         if(state->skeletonState->selectedNodes.size() > 0) {
             QMessageBox prompt;
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);

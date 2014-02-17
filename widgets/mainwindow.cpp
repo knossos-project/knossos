@@ -704,9 +704,6 @@ void MainWindow::createMenus()
     QAction *deactivateLoop = patchMenu->addAction("Deactivate Loop", this,
                                                    SLOT(deactivateLoopSlot()), QKeySequence(tr("ESC")));
     deactivateLoop->setShortcutContext(Qt::ApplicationShortcut);
-    QAction *delAction = patchMenu->addAction("Delete Active Loop",
-                                                  this, SLOT(delActionSlot()), QKeySequence(tr("Del")));
-    delAction->setShortcutContext(Qt::ApplicationShortcut);
     patchMenu->addAction(clearAnnotationAction);
 
     if(Patch::patchMode) {
@@ -1835,20 +1832,6 @@ void MainWindow::jumpToActiveLoopSlot() {
 
 void MainWindow::deactivateLoopSlot() {
     emit deactivateLoopSignal();
-}
-
-void MainWindow::delActionSlot() {
-    if(widgetContainer->annotationWidget->treeviewTab->focusedTable != NULL) {
-        if(widgetContainer->annotationWidget->treeviewTab->focusedTable->hasFocus()) {
-            QKeyEvent *event = new QKeyEvent(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
-            emit keyPressSignal(event);
-            delete event;
-            return;
-        }
-    }
-    if(Patch::patchMode) {
-        emit delActiveLoopSignal();
-    }
 }
 
 void MainWindow::resizeViewports(int width, int height) {

@@ -257,22 +257,48 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         return;
     }
     floatCoordinate snapPoint;
-    float dist = INT_MAX;
+    float distX = INT_MAX, distY = INT_MAX;
     SET_COORDINATE(snapPoint, -1, -1, -1);
     if(lineBuffer.size() > 0) {
         for(uint i = 0; i < lineBuffer.size(); ++i) {
-            dist = distance(lineBuffer[i][0], lastPoint);
-            if(dist < AUTO_ALIGN_RADIUS) {
+            switch(viewportType) {
+            case VIEWPORT_XY:
+                distX = fabs(lineBuffer[i][0].x  - lastPoint.x);
+                distY = fabs(lineBuffer[i][0].y  - lastPoint.y);
+                break;
+            case VIEWPORT_XZ:
+                distX = fabs(lineBuffer[i][0].x  - lastPoint.x);
+                distY = fabs(lineBuffer[i][0].z  - lastPoint.z);
+                break;
+            case VIEWPORT_YZ:
+                distX = fabs(lineBuffer[i][0].y  - lastPoint.y);
+                distY = fabs(lineBuffer[i][0].z  - lastPoint.z);
+                break;
+            }
+            if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
                 snapPoint = lineBuffer[i][0];
             }
             else {
-                dist = distance(lineBuffer[i].back(), lastPoint);
-                if(dist < AUTO_ALIGN_RADIUS) {
+                switch(viewportType) {
+                case VIEWPORT_XY:
+                    distX = fabs(lineBuffer[i].back().x  - lastPoint.x);
+                    distY = fabs(lineBuffer[i].back().y  - lastPoint.y);
+                    break;
+                case VIEWPORT_XZ:
+                    distX = fabs(lineBuffer[i].back().x  - lastPoint.x);
+                    distY = fabs(lineBuffer[i].back().z  - lastPoint.z);
+                    break;
+                case VIEWPORT_YZ:
+                    distX = fabs(lineBuffer[i].back().y  - lastPoint.y);
+                    distY = fabs(lineBuffer[i].back().z  - lastPoint.z);
+                    break;
+                }
+                if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
                     snapPoint = lineBuffer[i].back();
                     std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
                 }
             }
-            if(dist < AUTO_ALIGN_RADIUS) {
+            if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
                 // found point to snap to. Fill distance with interpolated points,
                 // then connect the two lines
                 if(lastPoint.x - snapPoint.x < -voxelPerPoint or lastPoint.x - snapPoint.x > voxelPerPoint
@@ -423,8 +449,21 @@ void Patch::eraseActiveLoop(floatCoordinate center, uint viewportType) {
 }
 
 bool Patch::activeLoopIsClosed() {
-    if(activeLine.size() != 0 or lineBuffer.size() != 1) {
+    if(activeLoop == NULL or lineBuffer.size() > 1) {
         return false;
+    }
+    if(activeLine.size() == 0) {
+        if(lineBuffer.size() != 1) {
+            return false;
+        }
+    }
+    if(lineBuffer.size() == 0) {
+        if(activeLine.size() == 0) {
+            return false;
+        }
+        else {
+            return distance(activeLine[0], activeLine.back()) < AUTO_ALIGN_RADIUS;
+        }
     }
     return distance(lineBuffer[0][0], lineBuffer[0].back()) < AUTO_ALIGN_RADIUS;
 }

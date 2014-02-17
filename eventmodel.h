@@ -126,6 +126,7 @@ signals:
     //patch signals
     bool newPatchSignal();
     void activePatchChanged();
+    void delActiveLoopSignal();
     void updatePatchesWidget();
     //end patch signals
 
