@@ -980,6 +980,7 @@ struct viewerState {
 
     uint activeVP;
 
+    bool rotateAroundCurrentPosition;
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)

@@ -1276,6 +1276,19 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                          -(float)state->skeletonState->activeNode->position.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
         }
+        else if(state->viewerState->rotateAroundCurrentPosition) {
+            glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2),-((float)state->boundary.z / 2.));
+            glTranslatef((float)state->viewerState->currentPosition.x,
+                         (float)state->viewerState->currentPosition.y,
+                         (float)state->viewerState->currentPosition.z);
+            glScalef(1., 1., state->viewerState->voxelXYtoZRatio);
+            rotateSkeletonViewport();
+            glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+            glTranslatef(-(float)state->viewerState->currentPosition.x,
+                         -(float)state->viewerState->currentPosition.y,
+                         -(float)state->viewerState->currentPosition.z);
+            glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
+        }
         // rotate around dataset center if no active node is selected
         else {
             glScalef(1., 1., state->viewerState->voxelXYtoZRatio);

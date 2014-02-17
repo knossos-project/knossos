@@ -338,6 +338,7 @@ bool Knossos::initStates() {
    }
 
    // For the viewer  
+   state->viewerState->rotateAroundCurrentPosition = false;
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;

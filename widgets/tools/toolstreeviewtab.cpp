@@ -61,6 +61,8 @@ void KTable::setItem(int row, int column, QTableWidgetItem *item) {
     }
 }
 
+// allows delegation of keyboard event handling to this table. necessary for keyboard events that are global but are
+// also handled by ktable, e.g. "DEL".
 void KTable::keyPressed(QKeyEvent *event) {
     keyPressEvent(event);
 }

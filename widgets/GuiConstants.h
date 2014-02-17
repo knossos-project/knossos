@@ -80,6 +80,7 @@ const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
 const QString SHOW_YZ_PLANE = "show_yz_plane";
 const QString ROTATE_AROUND_ACTIVE_NODE = "rotate_around_active_node";
+const QString ROTATE_AROUND_CURR_POS = "rotate_around_current_position";
 const QString WHOLE_SKELETON = "whole_skeleton";
 const QString ONLY_ACTIVE_TREE = "only_active_tree";
 const QString HIDE_SKELETON = "hide_skeleton";

@@ -51,8 +51,12 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     hideSkeletonRadioButton = new QRadioButton("Hide Skeleton (fast)");
 
     view3dlabel = new QLabel("3D View");
-    rotateAroundActiveNodeCheckBox = new QCheckBox("Rotate Around Active Node");
-    rotateAroundActiveNodeCheckBox->setChecked(true);
+    rotAroundActNodeRadio = new QRadioButton("Rotate Around Active Node");
+    rotAroundActNodeRadio->setChecked(true);
+    rotAroundCurrPosRadio = new QRadioButton("Rotate Around Current Position");
+    rotAroundCurrPosRadio->setChecked(false);
+    rotAroundDatasetRadio = new QRadioButton("Rotate Around Dataset");
+    rotAroundDatasetRadio->setChecked(false);
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
@@ -66,23 +70,25 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     line3->setFrameShape(QFrame::HLine);
     line3->setFrameShadow(QFrame::Sunken);
 
-    int currentGridColumn = 0;
+    int currentGridRow = 0;
 
     //gridLayout->addWidget(datasetVisualizationLabel, gridColumn++, 0);
-    gridLayout->addWidget(skeletonDisplayModesLabel, currentGridColumn ++, 0);
-    gridLayout->addWidget(line, currentGridColumn ++, 0);
+    gridLayout->addWidget(skeletonDisplayModesLabel, currentGridRow ++, 0);
+    gridLayout->addWidget(line, currentGridRow ++, 0);
     //gridLayout->addWidget(line2, gridColumn++, 1);
-    gridLayout->addWidget(wholeSkeletonRadioButton, currentGridColumn ++, 0);
-    gridLayout->addWidget(onlyActiveTreeRadioButton, currentGridColumn ++, 0);
-    gridLayout->addWidget(hideSkeletonRadioButton, currentGridColumn ++, 0);
+    gridLayout->addWidget(wholeSkeletonRadioButton, currentGridRow ++, 0);
+    gridLayout->addWidget(onlyActiveTreeRadioButton, currentGridRow ++, 0);
+    gridLayout->addWidget(hideSkeletonRadioButton, currentGridRow ++, 0);
 
-    gridLayout->addWidget(showXYPlaneCheckBox, currentGridColumn ++, 0);
-    gridLayout->addWidget(showXZPlaneCheckBox, currentGridColumn ++, 0);
-    gridLayout->addWidget(showYZPlaneCheckBox, currentGridColumn ++, 0);
+    gridLayout->addWidget(showXYPlaneCheckBox, currentGridRow ++, 0);
+    gridLayout->addWidget(showXZPlaneCheckBox, currentGridRow ++, 0);
+    gridLayout->addWidget(showYZPlaneCheckBox, currentGridRow ++, 0);
 
-    gridLayout->addWidget(view3dlabel, currentGridColumn ++, 0);
-    gridLayout->addWidget(line3, currentGridColumn ++, 0);
-    gridLayout->addWidget(rotateAroundActiveNodeCheckBox, currentGridColumn ++, 0);
+    gridLayout->addWidget(view3dlabel, currentGridRow ++, 0);
+    gridLayout->addWidget(line3, currentGridRow ++, 0);
+    gridLayout->addWidget(rotAroundActNodeRadio, currentGridRow++, 0);
+    gridLayout->addWidget(rotAroundCurrPosRadio, currentGridRow++, 0);
+    gridLayout->addWidget(rotAroundDatasetRadio, currentGridRow++, 0);
 
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
@@ -95,7 +101,9 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
     connect(onlyCurrentCubeRadioButton, SIGNAL(clicked()), this, SLOT(onlyCurrentCubeSelected()));
     connect(onlyActiveTreeRadioButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
     connect(hideSkeletonRadioButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
-    connect(rotateAroundActiveNodeCheckBox, SIGNAL(clicked(bool)), SLOT(rotateAroundActiveNodeChecked(bool)));
+    connect(rotAroundActNodeRadio, SIGNAL(clicked(bool)), SLOT(rotationPrefChanged(bool)));
+    connect(rotAroundCurrPosRadio, SIGNAL(clicked(bool)), SLOT(rotationPrefChanged(bool)));
+    connect(rotAroundDatasetRadio, SIGNAL(clicked(bool)), SLOT(rotationPrefChanged(bool)));
 }
 
 void VPSkeletonViewportWidget::showXYPlaneChecked(bool on) {
@@ -134,8 +142,19 @@ void VPSkeletonViewportWidget::hideSkeletonSelected() {
     emit updateViewerStateSignal();
 }
 
-void VPSkeletonViewportWidget::rotateAroundActiveNodeChecked(bool on) {
-    state->skeletonState->rotateAroundActiveNode = on;
+void VPSkeletonViewportWidget::rotationPrefChanged(bool) {
+    if(rotAroundActNodeRadio->isChecked()) {
+        state->skeletonState->rotateAroundActiveNode = true;
+        state->viewerState->rotateAroundCurrentPosition = false;
+    }
+    else if(rotAroundCurrPosRadio->isChecked()) {
+        state->skeletonState->rotateAroundActiveNode = false;
+        state->viewerState->rotateAroundCurrentPosition = true;
+    }
+    else {
+        state->skeletonState->rotateAroundActiveNode = false;
+        state->viewerState->rotateAroundCurrentPosition = false;
+    }
 }
 
 void VPSkeletonViewportWidget::resetDisplayMode() {

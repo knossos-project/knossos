@@ -176,7 +176,12 @@ void ViewportSettingsWidget::loadSettings() {
 
     state->skeletonState->rotateAroundActiveNode =
             (settings.value(ROTATE_AROUND_ACTIVE_NODE).isNull())? true : settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool();
-    this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(state->skeletonState->rotateAroundActiveNode);
+    this->skeletonViewportWidget->rotAroundActNodeRadio->setChecked(state->skeletonState->rotateAroundActiveNode);
+    if(state->skeletonState->rotateAroundActiveNode == false) {
+        state->viewerState->rotateAroundCurrentPosition =
+                (settings.value(ROTATE_AROUND_CURR_POS).isNull())? true : settings.value(ROTATE_AROUND_CURR_POS).toBool();
+        this->skeletonViewportWidget->rotAroundCurrPosRadio->setChecked(state->viewerState->rotateAroundCurrentPosition);
+    }
 
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
     if(settings.value(WHOLE_SKELETON).isNull() == false) {
@@ -282,7 +287,8 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(SHOW_XY_PLANE, this->skeletonViewportWidget->showXYPlaneCheckBox->isChecked());
     settings.setValue(SHOW_XZ_PLANE, this->skeletonViewportWidget->showXZPlaneCheckBox->isChecked());
     settings.setValue(SHOW_YZ_PLANE, this->skeletonViewportWidget->showYZPlaneCheckBox->isChecked());
-    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->isChecked());
+    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, this->skeletonViewportWidget->rotAroundActNodeRadio->isChecked());
+    settings.setValue(ROTATE_AROUND_CURR_POS, this->skeletonViewportWidget->rotAroundCurrPosRadio->isChecked());
     settings.setValue(WHOLE_SKELETON, this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
     settings.setValue(ONLY_ACTIVE_TREE, this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
     settings.setValue(HIDE_SKELETON, this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked());

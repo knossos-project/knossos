@@ -48,7 +48,7 @@ public slots:
     void onlyCurrentCubeSelected();
     void onlyActiveTreeSelected();
     void hideSkeletonSelected();
-    void rotateAroundActiveNodeChecked(bool on);
+    void rotationPrefChanged(bool);
     void resetDisplayMode();
     void updateDisplayModeRadio();
 
@@ -57,7 +57,9 @@ protected:
     QCheckBox *showXYPlaneCheckBox, *showXZPlaneCheckBox, *showYZPlaneCheckBox;
     QRadioButton *wholeSkeletonRadioButton, *onlyCurrentCubeRadioButton, *onlyActiveTreeRadioButton, *hideSkeletonRadioButton;
     QLabel *view3dlabel;
-    QCheckBox *rotateAroundActiveNodeCheckBox;
+    QRadioButton *rotAroundDatasetRadio;
+    QRadioButton *rotAroundActNodeRadio;
+    QRadioButton *rotAroundCurrPosRadio;
     
 };
 
