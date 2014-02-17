@@ -135,7 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    connect(widgetContainer->viewportSettingsWidget, SIGNAL(decorationSignal()), this, SLOT(viewportSettingsSlot()));
+    connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::decorationSignal, this, &MainWindow::showVPDecorationClicked);
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
