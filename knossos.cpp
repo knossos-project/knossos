@@ -317,11 +317,11 @@ bool Knossos::commonInitStates() {
 
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
-    if(false == findAndRegisterAvailableDatasets()) {
-        return false;
+    if(state->path[0] == '\0') {
+        return false;//no dataset loaded
     }
 
-    return true;
+    return findAndRegisterAvailableDatasets();
 }
 
 /**
