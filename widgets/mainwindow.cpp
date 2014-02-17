@@ -730,7 +730,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     for(int i = 0; i < widgets.size(); i++) {
         widgets.at(i)->close();
     }
-    exit(0);
+    Knossos::sendQuitSignal();
+    QApplication::quit();
 }
 
 //file menu functionality

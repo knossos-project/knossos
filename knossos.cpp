@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 
     a.installEventFilter(new myEventFilter());
 
-    scripts.run();
+    //scripts.run();
 
     /* TEST */
     /*

@@ -1288,7 +1288,7 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
-    while(viewports->elements > 0) {
+    while(!state->quitSignal && viewports->elements > 0) {
 
         switch(currentVp->vpConfig->id) {
 
