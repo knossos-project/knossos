@@ -383,6 +383,9 @@ void EventModel::handleMouseDoubleClickLeft(QMouseEvent *event, int VPfound) {
     if(Patch::patchMode) {
         // activate loop
         floatCoordinate *point = getFloatCoordinateFromOrthogonalClick(event, VPfound);
+        if(point == NULL) {
+            return;
+        }
         if(Patch::activateLoop(*point, 10/state->viewerState->vpConfigs[VPfound].screenPxXPerDataPx, VPfound)) {
             emit activePatchChanged();
         }

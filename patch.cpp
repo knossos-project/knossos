@@ -448,6 +448,9 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
 
     Patch *currPatch = firstPatch;
     do {
+        if(activeLoop) {
+            break;
+        }
         std::vector<PatchLoop *> visibleLoops;
         currPatch->loops->getAllVisibleObjs(visibleLoops, viewportType);
         if(visibleLoops.size() == 0) {
@@ -457,6 +460,9 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
         switch(viewportType) {
         case VIEWPORT_XY:
             for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(activeLoop) {
+                    break;
+                }
                 if(roundFloat(visibleLoops[i]->centroid.z) != state->viewerState->currentPosition.z) {
                     continue;
                 }
@@ -466,20 +472,16 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
                         and visibleLoops[i]->points[j].y > center.y - halfEdge
                         and visibleLoops[i]->points[j].y < center.y + halfEdge) {
                         activeLoop = visibleLoops[i];
-                        lineBuffer.push_back(visibleLoops[i]->points);
-                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                        currPatch->numLoops--;
-                        setActivePatch(currPatch->patchID);
-                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
-                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
-                        }
-                        return true;
+                        break;
                     }
                 }
             }
             break;
         case VIEWPORT_XZ:
             for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(activeLoop) {
+                    break;
+                }
                 if(roundFloat(visibleLoops[i]->centroid.y) != state->viewerState->currentPosition.y) {
                     continue;
                 }
@@ -489,20 +491,16 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
                         and visibleLoops[i]->points[j].z > center.z - halfEdge
                         and visibleLoops[i]->points[j].z < center.z + halfEdge) {
                         activeLoop = visibleLoops[i];
-                        lineBuffer.push_back(visibleLoops[i]->points);
-                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                        currPatch->numLoops--;
-                        setActivePatch(currPatch->patchID);
-                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
-                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
-                        }
-                        return true;
+                        break;
                     }
                 }
             }
             break;
         case VIEWPORT_YZ:
             for(uint i = 0; i < visibleLoops.size(); ++i) {
+                if(activeLoop) {
+                    break;
+                }
                 if(roundFloat(visibleLoops[i]->centroid.x) != state->viewerState->currentPosition.x) {
                     continue;
                 }
@@ -512,14 +510,7 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
                         and visibleLoops[i]->points[j].z > center.z - halfEdge
                         and visibleLoops[i]->points[j].z < center.z + halfEdge) {
                         activeLoop = visibleLoops[i];
-                        lineBuffer.push_back(visibleLoops[i]->points);
-                        currPatch->loops->remove(visibleLoops[i], visibleLoops[i]->centroid);
-                        currPatch->numLoops--;
-                        setActivePatch(currPatch->patchID);
-                        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
-                            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
-                        }
-                        return true;
+                        break;
                     }
                 }
 
@@ -529,6 +520,23 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
         currPatch = currPatch->next;
     } while(currPatch != firstPatch);
 
+    if(activeLoop) {
+        lineBuffer.push_back(activeLoop->points);
+        currPatch->loops->remove(activeLoop, activeLoop->centroid);
+        currPatch->numLoops--;
+        std::pair<floatCoordinate, PatchLoop*> nextLoop = activePatch->loops->getNearestNeighbor(activePatch->pos);
+        if(nextLoop.first.x != -1) {
+            activePatch->pos = nextLoop.first;
+        }
+        else {
+            SET_COORDINATE(activePatch->pos, -1, -1, -1);
+        }
+        setActivePatch(currPatch->patchID);
+        if(currPatch->correspondingTree != state->skeletonState->activeTree) {
+            Skeletonizer::setActiveTreeByID(currPatch->correspondingTree->treeID);
+        }
+        return true;
+    }
     return false;
 }
 

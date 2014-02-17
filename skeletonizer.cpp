@@ -4558,12 +4558,19 @@ bool Skeletonizer::setActivePatch(Patch* patch, uint patchID) {
 
 void Skeletonizer::jumpToActivePatch() {
     if(Patch::activePatch) {
-        if(Patch::activePatch->pos.x != -1) {
-            emit userMoveSignal(roundFloat(Patch::activePatch->pos.x) - state->viewerState->currentPosition.x,
-                                roundFloat(Patch::activePatch->pos.y) - state->viewerState->currentPosition.y,
-                                roundFloat(Patch::activePatch->pos.z) - state->viewerState->currentPosition.z,
-                                TELL_COORDINATE_CHANGE);
+        if(Patch::activePatch->pos.x == -1) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("Nothing to jump to.");
+            prompt.exec();
+            return;
         }
+        emit userMoveSignal(roundFloat(Patch::activePatch->pos.x) - state->viewerState->currentPosition.x,
+                            roundFloat(Patch::activePatch->pos.y) - state->viewerState->currentPosition.y,
+                            roundFloat(Patch::activePatch->pos.z) - state->viewerState->currentPosition.z,
+                            TELL_COORDINATE_CHANGE);
     }
 }
 
@@ -4574,13 +4581,22 @@ void Skeletonizer::jumpToActiveLoop() {
     }
 
     srand(QTime::currentTime().msec());
-    int index = rand() % (Patch::lineBuffer.size());
+    int index = rand() % Patch::lineBuffer.size();
     floatCoordinate point = Patch::lineBuffer[index][0];
     while(roundFloat(point.x) == state->viewerState->currentPosition.x
           and roundFloat(point.y) ==  state->viewerState->currentPosition.y
           and roundFloat(point.z) ==  state->viewerState->currentPosition.z) {
+        if(Patch::lineBuffer.size() == 1) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText("No other line to jump to.");
+            prompt.exec();
+            return;
+        }
         srand(QTime::currentTime().msec());
-        index = rand() % (Patch::lineBuffer.size());
+        index = rand() % Patch::lineBuffer.size();
         point = Patch::lineBuffer[index][0];
     }
 
