@@ -1091,8 +1091,18 @@ public:
     int getTime();
     void setTime(int time);
     float getRadius();
-    void setRadius(float radius);
-
+    void setRadius(float radius);    
+    void setCoordinate(int x, int y, int z);
+    void setCoordinate(Coordinate coordinate);
+    void getCoordinate();
+    void setViewport(int viewport);
+    void getViewport();
+    void setMagnification(int magnification);
+    void getMagnification();
+    //void setParent(int treeID);
+    void setParent(treeListElement *parent);
+    treeListElement *getParent();
+    int getParentID();
 };
 
 

@@ -107,7 +107,8 @@ SOURCES += openjpeg/cio.c \
     skeleton.cpp \
     scriptengine/decorators/colordecorator.cpp \
     nodeListElement.cpp \
-    scriptengine/decorators/segmentlistdecorator.cpp
+    scriptengine/decorators/segmentlistdecorator.cpp \
+    segmentListElement.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
