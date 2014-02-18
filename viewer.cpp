@@ -1348,7 +1348,7 @@ void Viewer::run() {
 */
 bool Viewer::idlingExceeds(uint msec) {
     QDateTime now = QDateTime::currentDateTimeUtc();
-    if(now.msecsTo(state->viewerState->lastIdleTimeCall) <= -msec) {
+    if(state->viewerState->lastIdleTimeCall.msecsTo(now) >= msec) {
         return true;
     }
     return false;
