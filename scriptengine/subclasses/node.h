@@ -9,6 +9,7 @@ class Node : public QObject, public nodeListElement
     Q_OBJECT
 public:
     explicit Node(QObject *parent = 0);
+
     
 signals:
     

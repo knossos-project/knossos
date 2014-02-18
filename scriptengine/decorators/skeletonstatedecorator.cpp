@@ -4,7 +4,7 @@ SkeletonStateDecorator::SkeletonStateDecorator(QObject *parent) :
     QObject(parent)
 {
 }
-
+/*
 uint SkeletonStateDecorator::getSkeletonRevision(skeletonState *self) {
     return self->skeletonRevision;
 }
@@ -32,3 +32,4 @@ treeListElement *SkeletonStateDecorator::activeTree(skeletonState *self) {
 nodeListElement *SkeletonStateDecorator::activeNode(skeletonState *self) {
     return self->activeNode;
 }
+*/

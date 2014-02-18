@@ -1,4 +1,5 @@
 #include "skeletondecorator.h"
+#include "treelistdecorator.h"
 #include <QDebug>
 #include <QMutableSetIterator>
 
@@ -11,33 +12,33 @@ Skeleton *SkeletonDecorator::new_Skeleton() {
     return new Skeleton();
 }
 
-bool SkeletonDecorator::deleteTree(Skeleton *self, int id) {
-    QMutableListIterator<treeListElement *> it(*self->trees);
-    while(it.hasNext()) {
-        treeListElement *tree = it.next();
-        if(tree->treeID == id) {
-            it.remove();
-            return true;
-        }
-    }
-
-    return false;
+treeListElement *SkeletonDecorator::getFirstTree(Skeleton *self) {
+    return self->firstTree;
 }
 
-bool SkeletonDecorator::addTree(Skeleton *self, treeListElement *tree) {
-    if(self->trees->contains(tree)) {
-        return false;
+treeListElement *SkeletonDecorator::getActiveTree(Skeleton *self) {
+    return self->getFirstTree();
+}
+
+void SkeletonDecorator::setActiveTree(Skeleton *self, int treeID) {
+    self->setActiveTree(treeID);
+}
+
+
+void SkeletonDecorator::addTree(Skeleton *self, treeListElement *tree) {
+    if(self->trees()->contains(tree)) {
+        return;
     }
 
-    self->trees->append(tree);
-    return true;
+    //self->trees()->append(tree);
 }
+
 
 QList<treeListElement *> *SkeletonDecorator::trees(Skeleton *self) {
-    return self->trees;
+    return self->trees();
 }
 
-/*  */
+/*
 char *SkeletonDecorator::experimentName(Skeleton *self) {
 
     return state->name;
@@ -60,7 +61,7 @@ treeListElement *SkeletonDecorator::findTree(Skeleton *self, int id) {
 
     return 0;
 }
-
+*/
 /*
 int SkeletonDecorator::skeletonTime() {
     return state->skeletonState->skeletonTime;

@@ -299,10 +299,10 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
-struct treeListElement;
-struct nodeListElement;
-struct segmentListElement;
-struct commentListElement;
+class treeListElement;
+class nodeListElement;
+class segmentListElement;
+class commentListElement;
 
 //Structures and custom types
 typedef uint8_t Byte;
@@ -343,6 +343,20 @@ public slots:
     void setZ(Coordinate *self, int z) { self->z = z; }
 };
 */
+
+class Color {
+public:
+    Color() {}
+    Color(float r, float g, float b, float a) {
+       this->r = r;
+       this->g = g;
+       this->b = b;
+       this->a = a;
+
+    }
+
+    float r, g, b, a;
+};
 
 typedef struct {
         GLfloat r;
@@ -1017,9 +1031,11 @@ struct viewerState {
 };
 
 
-struct treeListElement {
+class treeListElement {
+public:
+    treeListElement();
+    treeListElement(int treeID, Color color, QString comment);
 
-    treeListElement() {}
     treeListElement *next;
     treeListElement *previous;
     nodeListElement *firstNode;
@@ -1029,16 +1045,20 @@ struct treeListElement {
     int colorSetManually;
 
     char comment[8192];
-/*
-public slots:
+
+
     int getTreeID();
     void setTreeID(int id);
-    */
+    QList<nodeListElement *> *getNodes();
+
 };
 
 
-struct nodeListElement {
-    nodeListElement() {}
+class nodeListElement  {
+public:
+    nodeListElement();
+    nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
+
     nodeListElement *next;
     nodeListElement *previous;
 
@@ -1064,11 +1084,20 @@ struct nodeListElement {
     Coordinate position;
     bool isBranchNode;
     bool selected;
+
+
+    int getNodeID();
+    void setNodeID(int id);
+    int getTime();
+    void setTime(int time);
+    float getRadius();
+    void setRadius(float radius);
+
 };
 
 
 
-struct segmentListElement {
+class segmentListElement {
 public:
     segmentListElement() {}
     segmentListElement *next;
@@ -1092,6 +1121,8 @@ public:
 
     nodeListElement *source;
     nodeListElement *target;
+
+
 };
 
 struct commentListElement {
@@ -1129,9 +1160,11 @@ typedef struct {
 } color4B;
 
 
-struct skeletonState {
+class skeletonState : public QObject {
+    Q_OBJECT
+public:
 
-    skeletonState() {}
+    skeletonState();
     uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
@@ -1153,6 +1186,7 @@ struct skeletonState {
     treeListElement *firstTree;
     treeListElement *activeTree;
     nodeListElement *activeNode;
+
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
@@ -1286,24 +1320,69 @@ struct skeletonState {
     uint maxUndoSteps;
 
     QString skeletonFileAsQString;
-/*
+signals:
+    bool loadSkeleton(QString file);
+    bool saveSkeleton(QString file);
+    bool addNodeSignal(Coordinate *coordinate, Byte VPtype);
+    void updateTools();
 public slots:
     int getSkeletonTime();
     bool hasUnsavedChanges();
     treeListElement *getFirstTree();
     QString getSkeletonFile();
-*/
+    bool toXml(QString file);
+    bool fromXml(QString file);
+    void addTree(int treeID, Color color, QString comment);
+    void addTree(treeListElement *tree);
+    void addNode(int x, int y, int z, int viewport);
+    void addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
+    void addNode(int nodeID , int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time);
+    QList<treeListElement *> *getTrees();
+    void addTrees(QList<treeListElement *> *list);
 };
 
-/*
+
+#include <QList>
 class Skeleton {
 
 public:
-    Skeleton() { trees = new QList<treeListElement *>(); }
+    Skeleton() { }
+    treeListElement *firstTree = 0;
+    treeListElement *activeTree = 0;
+    nodeListElement *activeNode = 0;
+    QList<treeListElement *> *trees() {
+        QList<treeListElement *> *trees = new QList<treeListElement *>();
+        treeListElement *currentTree = firstTree;
+        while(currentTree)  {
+            trees->append(currentTree);
+            currentTree = currentTree->next;
+        }
 
-    QList<treeListElement *> *trees;
+        return trees;
+    }
+
+    treeListElement *getFirstTree() {
+        return this->firstTree;
+    }
+
+    treeListElement *getActiveTree() {
+        return this->activeTree;
+    }
+
+    void setActiveTree(int treeID) {
+        treeListElement *currentTree = firstTree;
+        while(currentTree) {
+            if(currentTree->treeID == treeID) {
+                activeTree = currentTree;
+            }
+        }
+    }
+
+    void addTree(treeListElement *tree) {
+
+    }
 };
-*/
+
 
 
 

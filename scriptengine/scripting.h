@@ -3,29 +3,30 @@
 
 #include <QObject>
 #include <QThread>
-
 #include <PythonQt/PythonQt.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 #include <Python.h>
 
-#include "skeletonizer.h"
-#include "knossos-global.h"
+class ColorDecorator;
+class SkeletonDecorator;
+class TreeListDecorator;
+class NodeListDecorator;
 
-#include "decorators/skeletondecorator.h"
-#include "decorators/treelistdecorator.h"
-
-extern stateInfo *state;
-/** This class intializes the python qt engine in a seperate thread */
+/** This class intializes the python qt engine */
 class Scripting : public QThread
 {
     Q_OBJECT
 public:
 
-    explicit Scripting(QObject *parent = 0);    
+    explicit Scripting(QObject *parent = 0);
+
+    //NicePyConsole *console;
     PythonQtScriptingConsole *console;
 
+    ColorDecorator *colorDecorator;
     SkeletonDecorator *skeletonDecorator;
     TreeListDecorator *treeListDecorator;
+    NodeListDecorator *nodeListDecorator;
 
     void run();
 signals:

@@ -13,7 +13,7 @@ public:
     explicit SkeletonStateDecorator(QObject *parent = 0);
     
 signals:
-    
+/*
 public slots:
     uint getSkeletonRevision(skeletonState *self);
     bool hasUnsavedChanges(skeletonState *self);
@@ -23,6 +23,7 @@ public slots:
     treeListElement *firstTree(skeletonState *self);
     treeListElement *activeTree(skeletonState *self);
     nodeListElement *activeNode(skeletonState *self);
+*/
 
 };
 

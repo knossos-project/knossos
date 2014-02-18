@@ -103,7 +103,11 @@ SOURCES += openjpeg/cio.c \
     scriptengine/decorators/mainwindowdecorator.cpp \
     scriptengine/decorators/skeletonstatedecorator.cpp \
     scriptengine/subclasses/node.cpp \
-    scriptengine/subclasses/tree.cpp
+    scriptengine/subclasses/tree.cpp \
+    skeleton.cpp \
+    scriptengine/decorators/colordecorator.cpp \
+    nodeListElement.cpp \
+    scriptengine/decorators/segmentlistdecorator.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -203,7 +207,9 @@ HEADERS  += widgets/mainwindow.h \
     scriptengine/decorators/mainwindowdecorator.h \
     scriptengine/decorators/skeletonstatedecorator.h \
     scriptengine/subclasses/node.h \
-    scriptengine/subclasses/tree.h
+    scriptengine/subclasses/tree.h \
+    scriptengine/decorators/colordecorator.h \
+    scriptengine/decorators/segmentlistdecorator.h
 
 FORMS    += mainwindow.ui
 

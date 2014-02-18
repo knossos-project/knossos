@@ -1,10 +1,14 @@
+
 #include "scripting.h"
+#include "decorators/colordecorator.h"
 #include "decorators/skeletondecorator.h"
 #include "decorators/treelistdecorator.h"
+#include "decorators/nodelistdecorator.h"
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
 {
+
 }
 
 void Scripting::run() {
@@ -16,9 +20,13 @@ void Scripting::run() {
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
+    //console = new NicePyConsole(0, ctx);
 
     console = new PythonQtScriptingConsole(NULL, ctx);
     console->setWindowTitle("Knossos Scripting Console");
+
+
+
 
     //coordinateDecorator = new CoordinateDecorator();
     //PythonQt::self()->addDecorators(coordinateDecorator);
@@ -28,29 +36,34 @@ void Scripting::run() {
 
     //ctx.addObject("skeleton", skeletonReference);
 
-    ctx.addObject("state", state);
-    ctx.addObject("skeletonState", state->skeletonState);
-    ctx.addObject("skeletonState");
+    //ctx.addObject("state", state);
+    ctx.addObject("Skeleton", state->skeletonState);
+    //ctx.addObject("skeletonState");
 
+    colorDecorator = new ColorDecorator();
     skeletonDecorator = new SkeletonDecorator();
     treeListDecorator = new TreeListDecorator();
-    NodeListElementDecorator *nodeDecorator = new NodeListElementDecorator();
+    nodeListDecorator = new NodeListDecorator();
+
+    PythonQt::self()->addDecorators(colorDecorator);
+    PythonQt::self()->registerCPPClass("Color", "", "knossos");
 
     PythonQt::self()->addDecorators(skeletonDecorator);
     PythonQt::self()->registerCPPClass("Skeleton", "", "knossos");
 
     PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("treeListElement", "", "knossos");
+    PythonQt::self()->registerCPPClass("Tree", "", "knossos");
 
-    PythonQt::self()->addDecorators(nodeDecorator);
-    PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
+    PythonQt::self()->addDecorators(nodeListDecorator);
+    PythonQt::self()->registerCPPClass("Node", "", "knossos");
+
 
 
     //ctx.add
     //ctx.addObject("CoordinateInstance", coordinateDecorator);
 
-    console->setFont(font);
-    console->appendCommandPrompt(true);
+    //console->setFont(font);
+   // console->appendCommandPrompt(true);
     console->show();
 
 

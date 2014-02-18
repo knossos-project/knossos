@@ -2693,6 +2693,8 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
     }
+
+
     return newElement;
 }
 
