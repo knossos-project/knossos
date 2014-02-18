@@ -1061,7 +1061,9 @@ void Loader::run() {
     state->protectLoadSignal->lock();
 
     // Set up DCOI and freeDcSlots / freeOcSlots.
-    initLoader();
+    if(initLoader() == false) {
+        throw std::runtime_error("initLoader failed");
+    }
     initialized = true;
 
     // Start "signal wait" loop.

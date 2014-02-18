@@ -1405,7 +1405,7 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
-    while(viewports->elements > 0) {
+    while(!state->quitSignal && viewports->elements > 0) {
 
         switch(currentVp->vpConfig->id) {
 
@@ -1468,7 +1468,7 @@ void Viewer::run() {
 */
 bool Viewer::idlingExceeds(uint msec) {
     QDateTime now = QDateTime::currentDateTimeUtc();
-    if(now.msecsTo(state->viewerState->lastIdleTimeCall) <= -msec) {
+    if(state->viewerState->lastIdleTimeCall.msecsTo(now) >= msec) {
         return true;
     }
     return false;

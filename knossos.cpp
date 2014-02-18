@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 
     a.installEventFilter(new myEventFilter());
 
-    scripts.run();
+    //scripts.run();
 
     /* TEST */
     /*
@@ -318,11 +318,11 @@ bool Knossos::commonInitStates() {
 
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
-    if(false == findAndRegisterAvailableDatasets()) {
-        return false;
+    if(state->path[0] == '\0') {
+        return false;//no dataset loaded
     }
 
-    return true;
+    return findAndRegisterAvailableDatasets();
 }
 
 /**

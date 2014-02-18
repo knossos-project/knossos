@@ -1770,7 +1770,7 @@ void ToolsTreeviewTab::updateNodesTable() {
     nodeListElement *node;
     while(currentTree) {
         node = currentTree->firstNode;
-        while((node and nodeIndex <= displayedNodes) or (node and displayedNodes == DISPLAY_ALL)) {
+        while(node and nodeIndex < displayedNodes or (node and displayedNodes == DISPLAY_ALL)) {
             // filter for comment search string
             if(nodeSearchField->text().length() > 0) {
                 if(node->comment == NULL) {
@@ -2112,6 +2112,7 @@ void ToolsTreeviewTab::nodesDeleted() {
 
     activeNodeChanged();
     state->skeletonState->selectedNodes.clear();
+    updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPushed() {
