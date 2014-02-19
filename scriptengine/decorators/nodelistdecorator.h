@@ -22,6 +22,18 @@ public slots:
     void setTime(nodeListElement *self, int time);
     float getRadius(nodeListElement *self);
     void setRadius(nodeListElement *self, float radius);
+
+    void setCoordinate(nodeListElement *self, int x, int y, int z);
+    void setCoordinate(nodeListElement *self, Coordinate coordinate);
+    void getCoordinate(nodeListElement *self);
+    void setViewport(nodeListElement *self, int viewport);
+    void getViewport(nodeListElement *self);
+    void setMagnification(nodeListElement *self, int magnification);
+    void getMagnification(nodeListElement *self);
+
+    void setParent(nodeListElement *self, treeListElement *parent);
+    treeListElement *getParent(nodeListElement *self);
+    int getParentID(nodeListElement *self);
 };
 
 #endif // NODELISTDECORATOR_H
