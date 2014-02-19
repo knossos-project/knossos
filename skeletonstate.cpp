@@ -30,10 +30,14 @@ bool skeletonState::toXml(QString file) {
 }
 
 void skeletonState::addTree(treeListElement *tree) {
-    Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree->treeID, tree->color, false);
+    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree->treeID, tree->color, false);
     if(tree->comment) {
         Skeletonizer::addTreeComment(CHANGE_MANUAL, tree->treeID, tree->comment);
     }
+
+    Skeletonizer::setActiveTreeByID(theTree->getTreeID());
+    emit updateToolsSignal();
+    emit treeAddedSignal(theTree);
 }
 
 void skeletonState::addTree(int treeID, Color color, QString comment) {
@@ -44,13 +48,21 @@ void skeletonState::addTree(int treeID, Color color, QString comment) {
     c4f.a = color.a;
 
 
-
-    Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, treeID, c4f, false);
+    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, treeID, c4f, false);
     if(comment.isNull() == false) {
         Skeletonizer::addTreeComment(CHANGE_MANUAL, treeID, comment.toLocal8Bit().data());
     }
 
     Skeletonizer::setActiveTreeByID(treeID);
+    emit updateToolsSignal();
+    emit treeAddedSignal(theTree);
+}
+
+void skeletonState::addNode(nodeListElement *node) {
+    if(Skeletonizer::addNode(CHANGE_MANUAL, node->nodeID, node->radius, node->getParentID(), &node->position, node->getViewport(), node->getMagnification(), node->getTime(), false, false)) {
+        Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node->nodeID);
+        emit nodeAddedSignal();
+    }
 }
 
 void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
@@ -66,7 +78,7 @@ void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int i
 
     if(Skeletonizer::addNode(CHANGE_MANUAL, nodeID, radius, activeID, &coordinate, inVp, inMag, time, false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, nodeID);
-        emit updateTools();
+        emit nodeAddedSignal();
     }
 
 }
@@ -79,7 +91,7 @@ void skeletonState::addNode(int nodeID, int radius, int parentID, int x, int y, 
 
     if(Skeletonizer::addNode(CHANGE_MANUAL, nodeID, radius, parentID, &coordinate, inVp, inMag, time, false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, nodeID);
-        emit updateTools();
+        emit nodeAddedSignal();
     }
 }
 
@@ -95,7 +107,7 @@ void skeletonState::addNode(int x, int y, int z, int viewport) {
     }
 
     emit addNodeSignal(&coordinate, viewport);
-    emit updateTools();
+    emit nodeAddedSignal();
 }
 
 QList<treeListElement *> *skeletonState::getTrees() {
@@ -108,10 +120,11 @@ QList<treeListElement *> *skeletonState::getTrees() {
     return trees;
 }
 
-void skeletonState::addTrees(QList<treeListElement *> *list) {
-    for(int i = 0; i < list->size(); i++) {
-        treeListElement *currentTree = list->at(i);
+void skeletonState::addTrees(QList<treeListElement *> list) {
+    for(int i = 0; i < list.size(); i++) {
+        treeListElement *currentTree = list.at(i);
         Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, currentTree->treeID, currentTree->color, false);
+        emit treeAddedSignal(currentTree);
         if(currentTree->comment) {
             Skeletonizer::addTreeComment(CHANGE_MANUAL, currentTree->treeID, currentTree->comment);
         }
@@ -119,4 +132,7 @@ void skeletonState::addTrees(QList<treeListElement *> *list) {
     }
 }
 
+bool  skeletonState::deleteTree(int id) {
+   return Skeletonizer::delTree(CHANGE_MANUAL, id, true);
+}
 

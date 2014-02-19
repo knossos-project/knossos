@@ -35,6 +35,10 @@ void treeListElement::setTreeID(int id) {
     treeID = id;
 }
 
+nodeListElement *treeListElement::getRoot() {
+    return firstNode;
+}
+
 QList<nodeListElement *> *treeListElement::getNodes() {
     QList<nodeListElement *> *nodes = new QList<nodeListElement *>();
 

@@ -5,11 +5,11 @@ NodeListDecorator::NodeListDecorator(QObject *parent) :
 {
 }
 
-nodeListElement *NodeListDecorator::new_Node() {
+nodeListElement *NodeListDecorator::new_nodeListElement() {
     return new nodeListElement();
 }
 
-nodeListElement *NodeListDecorator::new_Node(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
+nodeListElement *NodeListDecorator::new_nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
     return new nodeListElement(nodeID, radius, x, y, z, inVp, inMag, time);
 }
 
@@ -61,15 +61,15 @@ void NodeListDecorator::setViewport(nodeListElement *self, int viewport) {
     self->createdInVp = viewport;
 }
 
-void NodeListDecorator::getViewport(nodeListElement *self) {
+Byte NodeListDecorator::getViewport(nodeListElement *self) {
     return self->createdInVp;
 }
 
-void NodeListDecorator::setMagnification(nodeListElement *self, int magnification) {
+void NodeListDecorator::setMagnification(nodeListElement *self, Byte magnification) {
     self->createdInMag = magnification;
 }
 
-void NodeListDecorator::getMagnification(nodeListElement *self) {
+Byte NodeListDecorator::getMagnification(nodeListElement *self) {
     return self->createdInMag;
 }
 

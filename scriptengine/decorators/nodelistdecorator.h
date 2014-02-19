@@ -14,8 +14,8 @@ public:
 signals:
     
 public slots:
-    nodeListElement *new_Node();
-    nodeListElement *new_Node(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
+    nodeListElement *new_nodeListElement();
+    nodeListElement *new_nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
     int getNodeID(nodeListElement *self);
     void setNodeID(nodeListElement *self, int nodeID);
     int getTime(nodeListElement *self);
@@ -25,11 +25,11 @@ public slots:
 
     void setCoordinate(nodeListElement *self, int x, int y, int z);
     void setCoordinate(nodeListElement *self, Coordinate coordinate);
-    void getCoordinate(nodeListElement *self);
+    Coordinate getCoordinate(nodeListElement *self);
     void setViewport(nodeListElement *self, int viewport);
-    void getViewport(nodeListElement *self);
-    void setMagnification(nodeListElement *self, int magnification);
-    void getMagnification(nodeListElement *self);
+    Byte getViewport(nodeListElement *self);
+    void setMagnification(nodeListElement *self, Byte magnification);
+    Byte getMagnification(nodeListElement *self);
 
     void setParent(nodeListElement *self, treeListElement *parent);
     treeListElement *getParent(nodeListElement *self);

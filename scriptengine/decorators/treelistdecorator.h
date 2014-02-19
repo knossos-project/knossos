@@ -15,13 +15,13 @@ public:
 signals:
     
 public slots:
-    treeListElement *new_Tree();
-    treeListElement *new_Tree(int treeID, Color color, QString comment);
-    treeListElement *new_Tree(int treeID, float r, float g, float b, float a, QString comment);
-    int treeID(treeListElement *self);
+    treeListElement *new_treeListElement();
+    treeListElement *new_treeListElement(int treeID, Color color, QString comment);
+    treeListElement *new_treeListElement(int treeID, float r, float g, float b, float a, QString comment);
+    int getTreeID(treeListElement *self);
     void setTreeID(treeListElement *self, int treeID);
-
-
+    nodeListElement *getRoot(treeListElement *self);
+    QList<nodeListElement *> *getNodes(treeListElement *self);
     //treeListElement *next(treeListElement *self) { return self->next; }
     /*
 

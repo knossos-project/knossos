@@ -51,7 +51,7 @@ void nodeListElement::setCoordinate(Coordinate coordinate) {
     this->position = coordinate;
 }
 
-void nodeListElement::getCoordinate() {
+Coordinate nodeListElement::getCoordinate() {
     return this->position;
 }
 
@@ -62,17 +62,17 @@ void nodeListElement::setViewport(int viewport) {
     this->createdInVp = viewport;
 }
 
-void nodeListElement::getViewport() {
+Byte nodeListElement::getViewport() {
     return this->createdInVp;
 }
 
-void nodeListElement::setMagnification(int magnification) {
-    if(magnification % 2 == 0 and magnication <= 8) {
+void nodeListElement::setMagnification(Byte magnification) {
+    if(magnification % 2 == 0 and magnification <= 8) {
         this->createdInMag = magnification;
     }
 }
 
-void nodeListElement::getMagnification() {
+Byte nodeListElement::getMagnification() {
     return this->createdInMag;
 }
 
@@ -86,7 +86,7 @@ void nodeListElement::setParent(treeListElement *parent) {
     this->correspondingTree = parent;
 }
 
-int nodeListElement::getParent() {
+treeListElement *nodeListElement::getParent() {
     return this->correspondingTree;
 }
 

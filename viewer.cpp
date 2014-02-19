@@ -2262,8 +2262,10 @@ void Viewer::rewire() {
     // --- end widget signals
     connect(state->skeletonState, SIGNAL(loadSkeleton(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(state->skeletonState, SIGNAL(saveSkeleton(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    connect(state->skeletonState, SIGNAL(updateTools()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    connect(state->skeletonState, SIGNAL(treeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeActivated()));
+    connect(state->skeletonState, SIGNAL(nodeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(state->skeletonState, SIGNAL(addNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateToolsSlot()));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

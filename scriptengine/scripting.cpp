@@ -52,10 +52,10 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("Skeleton", "", "knossos");
 
     PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("Tree", "", "knossos");
+    PythonQt::self()->registerCPPClass("treeListElement", "", "knossos");
 
     PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("Node", "", "knossos");
+    PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
 
 
 

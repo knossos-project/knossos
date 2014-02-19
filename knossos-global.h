@@ -1035,6 +1035,7 @@ class treeListElement {
 public:
     treeListElement();
     treeListElement(int treeID, Color color, QString comment);
+    treeListElement(int treeID, float r, float g, float b, float a, QString comment);
 
     treeListElement *next;
     treeListElement *previous;
@@ -1049,6 +1050,7 @@ public:
 
     int getTreeID();
     void setTreeID(int id);
+    nodeListElement *getRoot();
     QList<nodeListElement *> *getNodes();
 
 };
@@ -1094,11 +1096,11 @@ public:
     void setRadius(float radius);    
     void setCoordinate(int x, int y, int z);
     void setCoordinate(Coordinate coordinate);
-    void getCoordinate();
+    Coordinate getCoordinate();
     void setViewport(int viewport);
-    void getViewport();
-    void setMagnification(int magnification);
-    void getMagnification();
+    Byte getViewport();
+    void setMagnification(Byte magnification);
+    Byte getMagnification();
     //void setParent(int treeID);
     void setParent(treeListElement *parent);
     treeListElement *getParent();
@@ -1109,7 +1111,8 @@ public:
 
 class segmentListElement {
 public:
-    segmentListElement() {}
+    segmentListElement();
+    segmentListElement(nodeListElement *source, nodeListElement *target, Byte flag);
     segmentListElement *next;
     segmentListElement *previous;
 
@@ -1334,7 +1337,9 @@ signals:
     bool loadSkeleton(QString file);
     bool saveSkeleton(QString file);
     bool addNodeSignal(Coordinate *coordinate, Byte VPtype);
-    void updateTools();
+    void treeAddedSignal(treeListElement *tree);
+    void nodeAddedSignal();
+    void updateToolsSignal();
 public slots:
     int getSkeletonTime();
     bool hasUnsavedChanges();
@@ -1344,11 +1349,13 @@ public slots:
     bool fromXml(QString file);
     void addTree(int treeID, Color color, QString comment);
     void addTree(treeListElement *tree);
+    void addNode(nodeListElement *node);
     void addNode(int x, int y, int z, int viewport);
     void addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
     void addNode(int nodeID , int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time);
     QList<treeListElement *> *getTrees();
-    void addTrees(QList<treeListElement *> *list);
+    void addTrees(QList<treeListElement *> list);
+    bool deleteTree(int id);
 };
 
 
