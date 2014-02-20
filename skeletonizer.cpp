@@ -2415,11 +2415,10 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
         if(tree2->next)
             tree2->next->previous = tree2->previous;
     }
-    free(tree2);
-
     if(state->skeletonState->activeTree->treeID == tree2->treeID) {
        setActiveTreeByID(tree1->treeID);
     }
+    free(tree2);
 
     state->skeletonState->treeElements--;
     state->skeletonState->skeletonChanged = true;
