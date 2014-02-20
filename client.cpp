@@ -558,7 +558,7 @@ bool Client::flushOutBuffer() {
 }
 
 bool cleanUpClient() {
-    free(state->clientState);
+    delete state->clientState;
     state->clientState = NULL;
 
     return true;
