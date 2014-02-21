@@ -1633,13 +1633,15 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
+    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
+    if (state->skeletonState->activeNode->isBranchNode) {//active node was successfully marked as branch
         emit branchPushedSignal();
     }
 }
 
 void MainWindow::popBranchNodeSlot() {
-    if(popBranchNodeSignal()) {
+    emit popBranchNodeSignal();
+    if (!state->skeletonState->activeNode->isBranchNode) {//active node was successfully unmarked as branch
         emit branchPoppedSignal();
     }
 }

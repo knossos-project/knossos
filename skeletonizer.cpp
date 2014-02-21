@@ -1723,6 +1723,10 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
         delComment(CHANGE_MANUAL, nodeToDel->comment, 0, false);
     }
 
+    if(nodeToDel->isBranchNode) {
+        state->skeletonState->totalBranchpoints--;
+    }
+
      // First, delete all segments pointing towards and away of the nodeToDelhas
      // been
 

@@ -16,8 +16,8 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     QWidget(parent)
 {
     treeLabel = new QLabel("Tree");
-    activeTreeLabel = new QLabel("Active Tree: 0");
-    activeNodeLabel = new QLabel("Active Node: 0");
+    activeTreeLabel = new QLabel("Active Tree: None");
+    activeNodeLabel = new QLabel("Active Node: None");
     activeTreeIDLabel = new QLabel("Active Tree ID:");
     activeTreeIDSpin = new QSpinBox();
     activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
@@ -31,7 +31,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     jumpToActiveButton->setToolTip("Recenter on active node");
 
     branchnodesLabel = new QLabel("Branch Nodes");
-    branchesOnStackLabel = new QLabel("On Stack: 0");
+    branchesOnStackLabel = new QLabel("On Stack: None");
     pushBranchButton = new QPushButton("Push (B)ranch Node");
     pushBranchButton->setToolTip("Turn active node into a branch node");
     popBranchButton = new QPushButton("Pop && (J)ump");
@@ -211,14 +211,14 @@ void ToolsCommandsTab::newTreeButtonClicked() {
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
     if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
-        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
         emit branchPushedSignal();
     }
 }
 
 void ToolsCommandsTab::popBranchButtonClicked() {
     if(popBranchNodeSignal()) {
-        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+        branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
         emit branchPoppedSignal();
     }
 }
@@ -270,25 +270,21 @@ void ToolsCommandsTab::update() {
     activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
     if(state->skeletonState->activeTree) {
         activeTreeLabel->setText(QString("Active Tree: %1").arg(state->skeletonState->activeTree->treeID));
-        if(activeTreeIDSpin->value() != state->skeletonState->activeTree->treeID) {
-            activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
-        }
+        activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
     }
     else {
-        activeTreeLabel->setText("Active Tree: 0");
+        activeTreeLabel->setText("Active Tree: None");
         activeTreeIDSpin->setValue(0);
     }
 
     if(state->skeletonState->activeNode) {
         activeNodeLabel->setText(QString("Active Node: %1").arg(state->skeletonState->activeNode->nodeID));
-        if(activeNodeIDSpin->value() != state->skeletonState->activeNode->nodeID) {
-            activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
-        }
+        activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
     }
     else {
-        activeNodeLabel->setText("Active Node: 0");
+        activeNodeLabel->setText("Active Node: None");
         activeNodeIDSpin->setValue(0);
     }
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
-    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->branchStack->elementsOnStack));
+    branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
 }
