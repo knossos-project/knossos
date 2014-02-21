@@ -1982,7 +1982,7 @@ void Viewer::rewire() {
     connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     // skeletonizer signals
     //connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
-    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
+    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));
     connect(skeletonizer, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
@@ -1999,6 +1999,7 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
     connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
+    QObject::connect(eventModel, &EventModel::nodesDeletedSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),

@@ -23,11 +23,8 @@ protected:
     QLabel *nodeCountLabel;
     QLabel *listedNodesLabel;
 
-signals:
-    
 public slots:
-    void nodesInList(int n);
-    void update();
+    void updateLabels();
     void saveSettings();
     void loadSettings();
 };

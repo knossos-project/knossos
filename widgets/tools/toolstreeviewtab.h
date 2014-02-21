@@ -145,7 +145,6 @@ protected:
     int getActiveTreeRow();
     int getActiveNodeRow();
 signals:
-    void updateListedNodesSignal(int n);
     void updateToolsSignal();
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();

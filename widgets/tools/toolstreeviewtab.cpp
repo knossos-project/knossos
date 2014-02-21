@@ -944,6 +944,8 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
     else {
         updateNodesTable();
     }
+
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
@@ -1571,8 +1573,8 @@ void ToolsTreeviewTab::updateNodesTable() {
         nodeTable->setRowCount(nodeIndex);
     }
 
-    emit updateListedNodesSignal(nodeTable->rowCount());
     nodeTable->changeByCode = false;
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::treeActivated() {
@@ -1677,14 +1679,14 @@ void ToolsTreeviewTab::treesMerged(int treeID1, int treeID2) {
             treeActivated();
         }
     }
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::treeComponentSplit() {
     // when a tree is split, a new tree has been created and made active
     treeActivated();
     insertTree(state->skeletonState->activeTree, treeTable);
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 // update node table
@@ -1708,6 +1710,7 @@ void ToolsTreeviewTab::nodeAdded() {
     }
     nodeActivated();
     insertNode(state->skeletonState->activeNode, nodeTable);
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodesDeleted() {
@@ -1735,7 +1738,7 @@ void ToolsTreeviewTab::nodesDeleted() {
         nodeActivated(); // also activates tree
     }
     state->skeletonState->selectedNodes.clear();
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPushed() {
@@ -1743,7 +1746,7 @@ void ToolsTreeviewTab::branchPushed() {
         // the active node has become branch point, add it to node table
         insertNode(state->skeletonState->activeNode, nodeTable);
     }
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPopped() {
@@ -1757,7 +1760,7 @@ void ToolsTreeviewTab::branchPopped() {
         }
     }
     nodeActivated();
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodeCommentChanged(nodeListElement *node) {
@@ -1939,9 +1942,6 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
     table->setItem(0, NODE_RADIUS, item);
-    if(table == nodeTable) {
-        emit updateListedNodesSignal(nodeTable->rowCount());
-    }
 }
 
 int ToolsTreeviewTab::getActiveTreeRow() {
