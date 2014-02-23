@@ -135,7 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
-    connect(widgetContainer->viewportSettingsWidget, SIGNAL(decorationSignal()), this, SLOT(viewportSettingsSlot()));
+    connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::decorationSignal, this, &MainWindow::showVPDecorationClicked);
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
@@ -730,7 +730,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     for(int i = 0; i < widgets.size(); i++) {
         widgets.at(i)->close();
     }
-    exit(0);
+    Knossos::sendQuitSignal();
+    QApplication::quit();
 }
 
 //file menu functionality
@@ -1632,13 +1633,15 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
+    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
+    if (state->skeletonState->activeNode->isBranchNode) {//active node was successfully marked as branch
         emit branchPushedSignal();
     }
 }
 
 void MainWindow::popBranchNodeSlot() {
-    if(popBranchNodeSignal()) {
+    emit popBranchNodeSignal();
+    if (!state->skeletonState->activeNode->isBranchNode) {//active node was successfully unmarked as branch
         emit branchPoppedSignal();
     }
 }

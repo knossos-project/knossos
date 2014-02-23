@@ -388,11 +388,11 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 
 
 void Viewport::drawViewport(int vpID) {
-    reference->renderOrthogonalVP(vpID);
+    renderer.renderOrthogonalVP(vpID);
 }
 
 void Viewport::drawSkeletonViewport() {
-    reference->renderSkeletonVP(VIEWPORT_SKELETON);
+    renderer.renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {

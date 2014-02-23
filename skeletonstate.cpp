@@ -136,3 +136,6 @@ bool  skeletonState::deleteTree(int id) {
    return Skeletonizer::delTree(CHANGE_MANUAL, id, true);
 }
 
+void skeletonState::deleteSkeleton() {
+    emit clearSkeletonSignal();
+}

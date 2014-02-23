@@ -47,7 +47,6 @@
   * You will save a couple of hours ..
   */
 
-class Renderer;
 class EventModel : public QObject
 {
     Q_OBJECT
@@ -61,10 +60,10 @@ public:
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     bool handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
-    bool handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
     bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
     bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
-    bool handleKeyboard(QKeyEvent *event, int VPfound);
+    void handleKeyboard(QKeyEvent *event, int VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
     int xrel(int x);

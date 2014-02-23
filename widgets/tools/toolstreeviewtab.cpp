@@ -944,6 +944,8 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
     else {
         updateNodesTable();
     }
+
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
@@ -1477,7 +1479,7 @@ void ToolsTreeviewTab::updateNodesTable() {
     nodeListElement *node;
     while(currentTree) {
         node = currentTree->firstNode;
-        while(node and nodeIndex <= displayedNodes or (node and displayedNodes == DISPLAY_ALL)) {
+        while(node and nodeIndex < displayedNodes or (node and displayedNodes == DISPLAY_ALL)) {
             // filter for comment search string
             if(nodeSearchField->text().length() > 0) {
                 if(node->comment == NULL) {
@@ -1571,8 +1573,8 @@ void ToolsTreeviewTab::updateNodesTable() {
         nodeTable->setRowCount(nodeIndex);
     }
 
-    emit updateListedNodesSignal(nodeTable->rowCount());
     nodeTable->changeByCode = false;
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::treeActivated() {
@@ -1677,14 +1679,14 @@ void ToolsTreeviewTab::treesMerged(int treeID1, int treeID2) {
             treeActivated();
         }
     }
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::treeComponentSplit() {
     // when a tree is split, a new tree has been created and made active
     treeActivated();
     insertTree(state->skeletonState->activeTree, treeTable);
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 // update node table
@@ -1708,6 +1710,7 @@ void ToolsTreeviewTab::nodeAdded() {
     }
     nodeActivated();
     insertNode(state->skeletonState->activeNode, nodeTable);
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodesDeleted() {
@@ -1731,10 +1734,11 @@ void ToolsTreeviewTab::nodesDeleted() {
     }
 
     // update active node table, if active node was deleted
-    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == false) {
+    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == nullptr) {
         nodeActivated(); // also activates tree
     }
     state->skeletonState->selectedNodes.clear();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPushed() {
@@ -1742,7 +1746,7 @@ void ToolsTreeviewTab::branchPushed() {
         // the active node has become branch point, add it to node table
         insertNode(state->skeletonState->activeNode, nodeTable);
     }
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPopped() {
@@ -1756,7 +1760,7 @@ void ToolsTreeviewTab::branchPopped() {
         }
     }
     nodeActivated();
-    updateToolsSignal();
+    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodeCommentChanged(nodeListElement *node) {
@@ -1800,7 +1804,7 @@ void ToolsTreeviewTab::nodePositionChanged(nodeListElement *node) {
         setText(activeNodeTable, activeNodeTable->item(0, NODE_Z), QString::number(node->position.z + 1));
 
         for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if(nodeTable->item(i, NODE_ID)->text().toInt() == node->nodeID) {
+            if((uint)nodeTable->item(i, NODE_ID)->text().toInt() == node->nodeID) {
                 setText(nodeTable, nodeTable->item(i, NODE_X), QString::number(node->position.x + 1));
                 setText(nodeTable, nodeTable->item(i, NODE_Y), QString::number(node->position.y + 1));
                 setText(nodeTable, nodeTable->item(i, NODE_Z), QString::number(node->position.z + 1));
@@ -1938,9 +1942,6 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
     table->setItem(0, NODE_RADIUS, item);
-    if(table == nodeTable) {
-        emit updateListedNodesSignal(nodeTable->rowCount());
-    }
 }
 
 int ToolsTreeviewTab::getActiveTreeRow() {

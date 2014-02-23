@@ -119,6 +119,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     memset(state->skeletonState->searchStrBuffer, '\0', 2048 * sizeof(char));
     memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
 
+    /*
     state->skeletonState->firstSerialSkeleton = (serialSkeletonListElement *)malloc(sizeof(state->skeletonState->firstSerialSkeleton));
     state->skeletonState->firstSerialSkeleton->next = NULL;
     state->skeletonState->firstSerialSkeleton->previous = NULL;
@@ -127,6 +128,7 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->lastSerialSkeleton->previous = NULL;
     state->skeletonState->serialSkeletonCounter = 0;
     state->skeletonState->maxUndoSteps = 16;
+    */
 
     state->skeletonState->saveCnt = 0;
 
@@ -1719,6 +1721,10 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
         delComment(CHANGE_MANUAL, nodeToDel->comment, 0, false);
     }
 
+    if(nodeToDel->isBranchNode) {
+        state->skeletonState->totalBranchpoints--;
+    }
+
      // First, delete all segments pointing towards and away of the nodeToDelhas
      // been
 
@@ -2411,11 +2417,10 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
         if(tree2->next)
             tree2->next->previous = tree2->previous;
     }
-    free(tree2);
-
     if(state->skeletonState->activeTree->treeID == tree2->treeID) {
        setActiveTreeByID(tree1->treeID);
     }
+    free(tree2);
 
     state->skeletonState->treeElements--;
     state->skeletonState->skeletonChanged = true;
@@ -2599,7 +2604,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         if(Knossos::lockSkeleton(targetRevision) == false) {
             LOG("addtreelistelement unable to lock.")
             Knossos::unlockSkeleton(false);
-            return 0;
+            return nullptr;
         }
     }
 
@@ -3024,7 +3029,7 @@ bool Skeletonizer::delDynArray(dynArray *array) {
 
 void* Skeletonizer::getDynArray(dynArray *array, int pos) {
     if(pos > array->end) {
-        return false;
+        return nullptr;
     }
     return array->elements[pos];
 }
@@ -4373,7 +4378,7 @@ bool Skeletonizer::deleteSelectedTrees() {
     return true;
 }
 
-bool Skeletonizer::deleteSelectedNodes() {
+void Skeletonizer::deleteSelectedNodes() {
     for(int i = state->skeletonState->selectedNodes.size() - 1; i >= 0; --i) {
         if(state->skeletonState->selectedNodes[i] == state->skeletonState->activeNode) {
             delActiveNode();
@@ -4609,7 +4614,7 @@ Byte *Skeletonizer::serializeSkeleton() {
 
     currentTree = state->skeletonState->firstTree;
     if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        return false; //No Skeleton to save
+        return nullptr; //No Skeleton to save
     }
 
         while(currentTree) {

@@ -1288,7 +1288,7 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
-    while(viewports->elements > 0) {
+    while(!state->quitSignal && viewports->elements > 0) {
 
         switch(currentVp->vpConfig->id) {
 
@@ -1348,7 +1348,7 @@ void Viewer::run() {
 */
 bool Viewer::idlingExceeds(uint msec) {
     QDateTime now = QDateTime::currentDateTimeUtc();
-    if(now.msecsTo(state->viewerState->lastIdleTimeCall) <= -msec) {
+    if(state->viewerState->lastIdleTimeCall.msecsTo(now) >= msec) {
         return true;
     }
     return false;
@@ -1968,11 +1968,10 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->conditionLoadSignal->wakeOne();
     return true;
 }
-
+/*
 bool Viewer::moveVPonTop(uint currentVP) {
-
 }
-
+*/
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
@@ -1983,7 +1982,7 @@ void Viewer::rewire() {
     connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     // skeletonizer signals
     //connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
-    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
+    connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));
     connect(skeletonizer, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
@@ -2000,6 +1999,7 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
     connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
+    QObject::connect(eventModel, &EventModel::nodesDeletedSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
@@ -2262,10 +2262,11 @@ void Viewer::rewire() {
     // --- end widget signals
     connect(state->skeletonState, SIGNAL(loadSkeleton(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(state->skeletonState, SIGNAL(saveSkeleton(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    connect(state->skeletonState, SIGNAL(treeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeActivated()));
+    connect(state->skeletonState, SIGNAL(treeAddedSignal(treeListElement *)), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(state->skeletonState, SIGNAL(nodeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(state->skeletonState, SIGNAL(addNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateToolsSlot()));
+    connect(state->skeletonState, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonWithoutConfirmation()));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
@@ -2291,7 +2292,7 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
  *  and the processing of the userMove Slot. The run method was called but the new position was first available in the next frame. Thus rendering an "empty" frame could be prevented.
  *
 */
-bool Viewer::processUserMove() {
+void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 

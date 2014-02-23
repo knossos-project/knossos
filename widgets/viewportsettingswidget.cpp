@@ -168,7 +168,7 @@ void ViewportSettingsWidget::loadSettings() {
 
     state->skeletonState->showXZplane =
             (settings.value(SHOW_XZ_PLANE).isNull())? false : settings.value(SHOW_XZ_PLANE).toBool();
-    this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
+    this->skeletonViewportWidget->showXZPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
 
     state->skeletonState->showYZplane =
             (settings.value(SHOW_YZ_PLANE).isNull())? false : settings.value(SHOW_YZ_PLANE).toBool();

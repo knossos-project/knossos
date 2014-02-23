@@ -4,6 +4,7 @@
 #include "decorators/skeletondecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
+#include "highlighter.h"
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -11,21 +12,23 @@ Scripting::Scripting(QObject *parent) :
 
 }
 
+
+
 void Scripting::run() {
 
     QFont font("Courier");
     font.setPixelSize(12);
-    font.setBold(true);
+    //font.setBold(true);
 
     PythonQt::init();
+
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
 
     //console = new NicePyConsole(0, ctx);
 
     console = new PythonQtScriptingConsole(NULL, ctx);
     console->setWindowTitle("Knossos Scripting Console");
-
-
+    highlighter = new Highlighter(console->document());
 
 
     //coordinateDecorator = new CoordinateDecorator();
@@ -61,9 +64,8 @@ void Scripting::run() {
 
     //ctx.add
     //ctx.addObject("CoordinateInstance", coordinateDecorator);
-
-    //console->setFont(font);
-   // console->appendCommandPrompt(true);
+    console->resize(800, 300);
+    console->setFont(font);
     console->show();
 
 

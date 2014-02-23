@@ -248,8 +248,6 @@ int main(int argc, char *argv[])
 
     a.installEventFilter(new myEventFilter());
 
-
-
     scripts.run();
 
     /* TEST */
@@ -316,11 +314,11 @@ bool Knossos::commonInitStates() {
 
     // searches for multiple mag datasets and enables multires if more
     //  than one was found
-    if(false == findAndRegisterAvailableDatasets()) {
-        return false;
+    if(state->path[0] == '\0') {
+        return false;//no dataset loaded
     }
 
-    return true;
+    return findAndRegisterAvailableDatasets();
 }
 
 /**
@@ -431,6 +429,8 @@ bool Knossos::initStates() {
    state->cubeSetElements = state->M * state->M * state->M;
    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
    state->magnification = 0x1;
+   state->lowestAvailableMag = INT_MAX;
+   state->highestAvailableMag = 1;
 
    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
    state->currentDirectionsIndex = 0;
@@ -721,6 +721,7 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 stateInfo *Knossos::emptyState() {
 
     stateInfo *state = new stateInfo();
+    memset(state, 0, sizeof(stateInfo));//initialize memory
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
@@ -818,10 +819,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                 }
             }
         }
-
-        state->lowestAvailableMag = INT_MAX;
-        state->highestAvailableMag = 1;
-        //currMag = 1;
 
         /* iterate over all possible mags and test their availability */
         for(currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
@@ -977,6 +974,10 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
 bool Knossos::configDefaults() {
     state = Knossos::emptyState();
+
+    state->path[0] = '\0';
+    state->name[0] = '\0';
+
     state->loadSignal = false;
     state->loaderBusy = false;
     state->loaderDummy = false;
@@ -1010,6 +1011,8 @@ bool Knossos::configDefaults() {
     state->cubeEdgeLength = 128;
     state->M = 3;
     state->magnification = 1;
+    state->lowestAvailableMag = INT_MAX;
+    state->highestAvailableMag = 1;
     state->overlay = false;
 
     // For the viewer

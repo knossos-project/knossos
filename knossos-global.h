@@ -1340,6 +1340,7 @@ signals:
     void treeAddedSignal(treeListElement *tree);
     void nodeAddedSignal();
     void updateToolsSignal();
+    void clearSkeletonSignal();
 public slots:
     int getSkeletonTime();
     bool hasUnsavedChanges();
@@ -1356,6 +1357,7 @@ public slots:
     QList<treeListElement *> *getTrees();
     void addTrees(QList<treeListElement *> list);
     bool deleteTree(int id);
+    void deleteSkeleton();
 };
 
 

@@ -108,7 +108,8 @@ SOURCES += openjpeg/cio.c \
     scriptengine/decorators/colordecorator.cpp \
     nodeListElement.cpp \
     scriptengine/decorators/segmentlistdecorator.cpp \
-    segmentListElement.cpp
+    segmentListElement.cpp \
+    scriptengine/highlighter.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -210,7 +211,8 @@ HEADERS  += widgets/mainwindow.h \
     scriptengine/subclasses/node.h \
     scriptengine/subclasses/tree.h \
     scriptengine/decorators/colordecorator.h \
-    scriptengine/decorators/segmentlistdecorator.h
+    scriptengine/decorators/segmentlistdecorator.h \
+    scriptengine/highlighter.h
 
 FORMS    += mainwindow.ui
 
@@ -257,7 +259,8 @@ mac {
 linux {
     LIBS += -lGL \
             -lGLU \
-            #-lPythonQt \
+            -lPythonQt \
+            -lPythonQt_QtAll \
             -lglut \
             -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \

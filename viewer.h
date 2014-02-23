@@ -129,7 +129,7 @@ public slots:
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
-    bool processUserMove();
+    void processUserMove();
     QTime delay;
     bool idlingExceeds(uint msec);
 };

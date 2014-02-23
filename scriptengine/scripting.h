@@ -5,12 +5,13 @@
 #include <QThread>
 #include <PythonQt/PythonQt.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
-#include <Python.h>
+
 
 class ColorDecorator;
 class SkeletonDecorator;
 class TreeListDecorator;
 class NodeListDecorator;
+class Highlighter;
 
 /** This class intializes the python qt engine */
 class Scripting : public QThread
@@ -27,6 +28,8 @@ public:
     SkeletonDecorator *skeletonDecorator;
     TreeListDecorator *treeListDecorator;
     NodeListDecorator *nodeListDecorator;
+
+    Highlighter *highlighter;
 
     void run();
 signals:
