@@ -346,21 +346,6 @@ typedef struct {
         GLfloat a;
 } color4F;
 
-struct _CubeSlot {
-        Byte *cube;
-        struct _CubeSlot *next;
-        struct _CubeSlot *previous;
-};
-
-typedef struct _CubeSlot CubeSlot;
-
-struct _CubeSlotList {
-        CubeSlot *firstSlot;
-        int elements;
-};
-
-typedef struct _CubeSlotList CubeSlotList;
-
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
 // defined by the pointer in the hash table structure below.
@@ -377,15 +362,13 @@ typedef struct _CubeSlotList CubeSlotList;
 //   next element if that element has the same key as the current element and is
 //   NULL else.
 
-struct _C2D_Element {
+struct C2D_Element {
         Coordinate coordinate;
         Byte *datacube;
-        struct _C2D_Element *previous;
-        struct _C2D_Element *next;
-        struct _C2D_Element *ht_next;
+        C2D_Element *previous;
+        C2D_Element *next;
+        C2D_Element *ht_next;
 };
-
-typedef struct _C2D_Element C2D_Element;
 
 // This structure defines a hash table. It is passed to various functions
 // along with some other parameters to perform actions on a specific hash

@@ -24,11 +24,14 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "knossos-global.h"
+
+#include <list>
+#include <vector>
 
 #include <QObject>
 #include <QSemaphore>
 #include <QThread>
-#include "knossos-global.h"
 
 /* Calculate movement trajectory for loading based on how many last single movements */
 #define LL_CURRENT_DIRECTIONS_SIZE (20)
@@ -50,7 +53,7 @@ For Loader file loader
 #define LM_LOCAL    0
 #define LM_FTP      1
 
-struct _C_Element {
+struct C_Element {
     Coordinate coordinate;
 
     char *filename;
@@ -59,7 +62,7 @@ struct _C_Element {
     char *local_filename;
     CURL *curlHandle;
     FILE *ftp_fh;
-    int    hasError;
+    int hasError;
     int isFinished;
     int isAborted;
     int isLoaded;
@@ -68,15 +71,13 @@ struct _C_Element {
     //DWORD tickDownloaded;
     //DWORD tickDecompressed;
 
-    struct _C_Element *previous;
-    struct _C_Element *next;
+    C_Element *previous;
+    C_Element *next;
 };
-
-typedef struct _C_Element C_Element;
 
 class Loader;
 
-struct _ftp_thread_struct {
+struct ftp_thread_struct {
 /*
     DWORD debugVal;
     DWORD beginTickCount;
@@ -87,9 +88,7 @@ struct _ftp_thread_struct {
     Loader* thisPtr;
 };
 
-typedef struct _ftp_thread_struct ftp_thread_struct;
-
-struct _loadcube_thread_struct {
+struct loadcube_thread_struct {
     //DWORD beginTickCount;
     //DWORD decompTime;
     int threadIndex;
@@ -100,8 +99,6 @@ struct _loadcube_thread_struct {
     uint retVal;
 };
 
-typedef struct _loadcube_thread_struct loadcube_thread_struct;
-
 class LoadCubeThread : public QThread
 {
 public:
@@ -111,57 +108,47 @@ protected:
     void *ctx;
 };
 
-struct _LO_Element {
+struct LO_Element {
         Coordinate coordinate;
         Coordinate offset;
         float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-typedef struct _LO_Element LO_Element;
-
 int calc_nonzero_sign(float x);
 
-class Loader : public QThread
-{
+class Loader : public QThread {
     Q_OBJECT
     friend class LoadCubeThread;
-public:
-    explicit Loader(QObject *parent = 0);
-    void run();
-    void waitTillFinished();
-    int CompareLoadOrderMetric(const void * a, const void * b);
-
-    C_Element *Dcoi;
-    int currentMaxMetric;
-    CubeSlotList *freeDcSlots;
-    CubeSlotList *freeOcSlots;
-    Byte *DcSetChunk;
-    Byte *OcSetChunk;
+private:
+    std::list<std::vector<Byte>> DcSetChunk;
+    std::list<std::vector<Byte>> OcSetChunk;
+    std::list<Byte*> freeDcSlots;
+    std::list<Byte*> freeOcSlots;
     Byte *bogusDc;
     Byte *bogusOc;
     bool magChange;
+    int currentMaxMetric;
     Hashtable *mergeCube2Pointer;
-signals:
-    void finished();
-public slots:
-    bool load();
+    void run();
     bool initLoader();
-protected:    
     bool initialized;
     uint prevLoaderMagnification;
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, Hashtable *currentLoadedHash);
     uint DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash);
-    CubeSlot *slotListGetElement(CubeSlotList *slotList);
     void loadCube(loadcube_thread_struct *lts);
-    int slotListDelElement(CubeSlotList *slotList, CubeSlot *element);
-    bool slotListDel(CubeSlotList *delList);
-    int slotListAddElement(CubeSlotList *slotList, Byte *datacube);
-    CubeSlotList *slotListNew();
-    //bool initLoader();
     uint removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagnification);
     uint loadCubes();
+public:
+    explicit Loader(QObject *parent = 0);
+    int CompareLoadOrderMetric(const void * a, const void * b);
+
+    C_Element *Dcoi;
+signals:
+    void finished();
+public slots:
+    bool load();
 };
 
 #endif // LOADER_H
