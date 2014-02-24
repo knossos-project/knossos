@@ -125,6 +125,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createToolBar();
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
+    setStatusBar(nullptr);
     setGeometry(0, 0, width(), height());
 
     //connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
