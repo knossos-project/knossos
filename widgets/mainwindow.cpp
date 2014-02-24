@@ -1760,7 +1760,7 @@ void MainWindow::F5Slot() {
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
-void MainWindow::resizeViewports(const int width, const int height) {
+void MainWindow::resizeViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN) / 2;
     height = (height - DEFAULT_VP_MARGIN) / 2;
 
