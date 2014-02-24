@@ -1046,9 +1046,15 @@ void MainWindow::loadCustomPreferencesSlot()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
     if(!fileName.isEmpty()) {      
-        QSettings::setUserIniPath(fileName);
-        loadSettings();
+        QSettings settings;
 
+        QSettings settingsToLoad(fileName, QSettings::IniFormat);
+        QStringList keys = settingsToLoad.allKeys();
+        for(int i = 0; i < keys.size(); i++) {
+            settings.setValue(keys.at(i), settingsToLoad.value(keys.at(i)));
+        }
+
+        loadSettings();
     }
 }
 
