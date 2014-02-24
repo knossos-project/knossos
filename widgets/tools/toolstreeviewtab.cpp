@@ -452,6 +452,7 @@ void ToolsTreeviewTab::setFocused(NodeTable *table) {
 
 // tree context menu
 void ToolsTreeviewTab::treeContextMenuCalled(QPoint pos) {
+    treeItemSelected();
     if(focusedTreeTable == activeTreeTable) {
         treeContextMenu->actions().at(0)->setEnabled(false); // set as active tree action
         treeContextMenu->actions().at(2)->setEnabled(false); // merge trees action
@@ -628,6 +629,7 @@ void ToolsTreeviewTab::editTreeColor() {
 
 // node context menu
 void ToolsTreeviewTab::nodeContextMenuCalled(QPoint pos) {
+    nodeItemSelected();
     if(focusedNodeTable == activeNodeTable) {
         nodeContextMenu->actions().at(2)->setEnabled(false); // link nodes needs two selected nodes
     }
