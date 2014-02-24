@@ -139,19 +139,18 @@ MainWindow::MainWindow(QWidget *parent) :
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
-
 }
 
 void MainWindow::createViewports() {
-    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, nullptr, VIEWPORT_XY, VP_UPPERLEFT));
-    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), nullptr, VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 
-    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
 }
 
 MainWindow::~MainWindow()
@@ -1767,19 +1766,19 @@ void MainWindow::resizeViewports(int width, int height) {
     int sizeH = (height - 70) / 2;
 
     if(width < height) {
-        viewports[VIEWPORT_XY]->move(5, 60);
-        viewports[VIEWPORT_XZ]->move(5, sizeW+60+5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeW, 60);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeW, sizeW + 60 + 5);
+        viewports[VIEWPORT_XY]->move(5, 0);
+        viewports[VIEWPORT_XZ]->move(5, sizeW + 5);
+        viewports[VIEWPORT_YZ]->move(10 + sizeW, 0);
+        viewports[VIEWPORT_SKELETON]->move(10 + sizeW, sizeW + 5);
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(sizeW, sizeW);
 
         }
     } else if(width > height) {
-        viewports[VIEWPORT_XY]->move(5, 60);
-        viewports[VIEWPORT_XZ]->move(5, sizeH+60+5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeH, 60);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeH, sizeH + 60 + 5);
+        viewports[VIEWPORT_XY]->move(5, 0);
+        viewports[VIEWPORT_XZ]->move(5, sizeH + 5);
+        viewports[VIEWPORT_YZ]->move(10 + sizeH, 0);
+        viewports[VIEWPORT_SKELETON]->move(10 + sizeH, sizeH + 5);
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(sizeH, sizeH);
             viewports[i]->updateButtonPositions();

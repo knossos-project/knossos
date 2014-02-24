@@ -106,7 +106,6 @@ values. The XY vp always used. */
 #define VIEWPORT_ORTHO 0
 // default position of xy viewport and default viewport size
 #define DEFAULT_VP_MARGIN 5
-#define DEFAULT_VP_Y_OFFSET 60 //distance from the top of the mainwindow
 #define DEFAULT_VP_SIZE 350
 
 // skeleton vp orientation
