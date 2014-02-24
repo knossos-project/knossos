@@ -1450,12 +1450,10 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
     }
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event) {
+void MainWindow::resizeEvent(QResizeEvent *) {
     if(state->viewerState->defaultVPSizeAndPos) {
         // don't resize viewports when user positioned and resized them manually
-        int width = event->size().width();
-        int height = event->size().height();
-        resizeViewports(width, height);
+        resetViewports();
     }
 }
 
@@ -1582,7 +1580,7 @@ void MainWindow::taskSlot() {
 
 
 void MainWindow::resetViewports() {
-    resizeViewports(width(), height());
+    resizeViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
@@ -1762,26 +1760,26 @@ void MainWindow::F5Slot() {
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
 
-void MainWindow::resizeViewports(int width, int height) {
-    int sizeW = (width - 15)  / 2 ;
-    int sizeH = (height - 70) / 2;
+void MainWindow::resizeViewports(const int width, const int height) {
+    width = (width - DEFAULT_VP_MARGIN) / 2;
+    height = (height - DEFAULT_VP_MARGIN) / 2;
 
     if(width < height) {
-        viewports[VIEWPORT_XY]->move(5, 0);
-        viewports[VIEWPORT_XZ]->move(5, sizeW + 5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeW, 0);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeW, sizeW + 5);
+        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + width);
+        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN + width);
         for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeW, sizeW);
+            viewports[i]->resize(width-DEFAULT_VP_MARGIN, width-DEFAULT_VP_MARGIN);
 
         }
     } else if(width > height) {
-        viewports[VIEWPORT_XY]->move(5, 0);
-        viewports[VIEWPORT_XZ]->move(5, sizeH + 5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeH, 0);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeH, sizeH + 5);
+        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + height);
+        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN + height);
         for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeH, sizeH);
+            viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
             viewports[i]->updateButtonPositions();
         }
     }
