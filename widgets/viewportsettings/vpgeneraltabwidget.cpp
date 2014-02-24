@@ -101,8 +101,10 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     hLayout3->addWidget(this->edgeNodeRadiusRatioSpinBox);
     mainLayout->addLayout(hLayout3);
 
+    this->resetVPsButton->setFocusPolicy(Qt::NoFocus);
     mainLayout->addWidget(this->showVPDecorationCheckBox);
     mainLayout->addWidget(this->resetVPsButton);
+
 
     setLayout(mainLayout);
     mainLayout->addStretch(50);

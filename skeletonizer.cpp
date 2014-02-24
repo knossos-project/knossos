@@ -1047,7 +1047,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
 
 
-    while(!xml.atEnd() and !xml.hasError()) {       
+    while(!xml.atEnd() and !xml.hasError()) {
+
+
         if(xml.readNextStartElement()) {
 
            /*
@@ -1440,7 +1442,8 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     }
                 }
             } // end thing
-        } // end start element
+        }
+            // end start element e
     } // end while
 
 

@@ -33,6 +33,18 @@ QList<nodeListElement *> *TreeListDecorator::getNodes(treeListElement *self) {
     return self->getNodes();
 }
 
+void TreeListDecorator::addNode(treeListElement *self, nodeListElement *node) {
+
+}
+
+void TreeListDecorator::addNode(treeListElement *self, int nodeID, Coordinate coordinate, QString comment) {
+
+}
+
+void TreeListDecorator::addNodes(treeListElement *self, QList<nodeListElement *> *nodeList) {
+
+}
+
 /*
 char *TreeListDecorator::comment(treeListElement *self) {
     return self->comment;

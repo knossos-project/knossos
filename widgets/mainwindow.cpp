@@ -1042,14 +1042,26 @@ void MainWindow::tracingTimeSlot() {
 }
 
 /* preference menu functionality */
-void MainWindow::loadCustomPreferencesSlot()
+void MainWindow::loadCustomPreferencesSlot()   
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
-    if(!fileName.isEmpty()) {      
-        QSettings::setUserIniPath(fileName);
-        loadSettings();
+    state->viewerState->renderInterval = SLOW;
 
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
+
+    if(!fileName.isEmpty()) {
+         QSettings settings;
+
+        QSettings settingsToLoad(fileName, QSettings::IniFormat);
+        QStringList keys = settingsToLoad.allKeys();
+        for(int i = 0; i < keys.size(); i++) {
+            settings.setValue(keys.at(i), settingsToLoad.value(keys.at(i)));
+        }
+
+
+    loadSettings();
     }
+
+    state->viewerState->renderInterval = FAST;
 }
 
 void MainWindow::saveCustomPreferencesSlot()
@@ -1059,7 +1071,7 @@ void MainWindow::saveCustomPreferencesSlot()
     QString originSettings = settings.fileName();
 
     QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.ini)");    
-    if(!fileName.isEmpty()) {
+    if(!fileName.isEmpty()) {                
         QFile file;
         file.setFileName(originSettings);
         file.copy(fileName);

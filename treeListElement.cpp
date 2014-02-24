@@ -1,5 +1,6 @@
-
 #include "knossos-global.h"
+#include "skeletonizer.h"
+#include "functions.h"
 
 treeListElement::treeListElement() {
 
@@ -53,3 +54,26 @@ QList<nodeListElement *> *treeListElement::getNodes() {
 
     return nodes;
 }
+
+void treeListElement::addNode(nodeListElement *node) {
+    if(!checkNodeParameter(node->nodeID, node->position.x, node->position.y, node->position.z)) {
+        return;
+    }
+
+    Coordinate coordinate(node->position.x, node->position.y, node->position.z);
+
+
+    /*if(Skeletonizer::addNode(CHANGE_MANUAL, node->nodeID, node->radius, node->getParent()->getTreeID(), &coordinate, node->createdInVp, node->createdInMag, node->timestamp)) {
+
+    } */
+}
+
+void treeListElement::addNode(int nodeID, int x, int y, int z) {
+
+}
+
+void treeListElement::addNodes(QList<nodeListElement *> *nodeList) {
+
+}
+
+

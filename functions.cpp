@@ -52,3 +52,17 @@ floatCoordinate* crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
+
+bool checkTreeParameter(int id, float r, float g, float b, float a) {
+    if(id < 0 or r < 0 or r > 1 or g < 0 or g > 1 or b < 0 or b > 1 or a < 0 or a > 1) {
+        return false;
+    }
+    return true;
+}
+
+bool checkNodeParameter(int id, int x, int y, int z) {
+    if(id < 0 or x < 0 or y < 0 or z < 0) {
+        return false;
+    }
+    return true;
+}

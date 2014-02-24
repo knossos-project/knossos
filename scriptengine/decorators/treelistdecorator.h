@@ -22,6 +22,11 @@ public slots:
     void setTreeID(treeListElement *self, int treeID);
     nodeListElement *getRoot(treeListElement *self);
     QList<nodeListElement *> *getNodes(treeListElement *self);
+
+    void addNode(treeListElement *self, nodeListElement *node);
+    void addNode(treeListElement *self, int nodeID, Coordinate coordinate, QString comment);
+    void addNodes(treeListElement *self, QList<nodeListElement *> *nodeList);
+
     //treeListElement *next(treeListElement *self) { return self->next; }
     /*
 

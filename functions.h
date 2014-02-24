@@ -18,5 +18,7 @@ float radToDeg(float rad);
 float degToRad(float deg);
 floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
 float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
+bool checkTreeParameter(int id, float r, float g, float b, float a);
+bool checkNodeParameter(int id, int x, int y, int z);
 
 #endif // FUNCTIONS_H

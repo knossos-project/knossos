@@ -1053,6 +1053,11 @@ public:
     nodeListElement *getRoot();
     QList<nodeListElement *> *getNodes();
 
+    void addNode(nodeListElement *node);
+    void addNode(int nodeID, int x, int y, int z);
+    void addNodes(QList<nodeListElement *> *nodeList);
+
+
 };
 
 
@@ -1350,6 +1355,7 @@ public slots:
     bool fromXml(QString file);
     void addTree(int treeID, Color color, QString comment);
     void addTree(treeListElement *tree);
+    void addTree(int treeID, float r, float g, float b, float a, QString comment);
     void addNode(nodeListElement *node);
     void addNode(int x, int y, int z, int viewport);
     void addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
@@ -1358,6 +1364,7 @@ public slots:
     void addTrees(QList<treeListElement *> list);
     bool deleteTree(int id);
     void deleteSkeleton();
+
 };
 
 

@@ -30,7 +30,6 @@ void Scripting::run() {
     console->setWindowTitle("Knossos Scripting Console");
     highlighter = new Highlighter(console->document());
 
-
     //coordinateDecorator = new CoordinateDecorator();
     //PythonQt::self()->addDecorators(coordinateDecorator);
     //PythonQt::self()->registerCPPClass("Coordinate", "", "knossos");
@@ -38,7 +37,6 @@ void Scripting::run() {
     //PythonQt::self()->registerClass(coordinateDecorator->metaObject(), "Coordinate");
 
     //ctx.addObject("skeleton", skeletonReference);
-
     //ctx.addObject("state", state);
     ctx.addObject("Skeleton", state->skeletonState);
 
@@ -60,7 +58,6 @@ void Scripting::run() {
 
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
-
 
 
     //ctx.add
