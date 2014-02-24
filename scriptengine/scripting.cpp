@@ -41,6 +41,7 @@ void Scripting::run() {
 
     //ctx.addObject("state", state);
     ctx.addObject("Skeleton", state->skeletonState);
+
     //ctx.addObject("skeletonState");
 
     colorDecorator = new ColorDecorator();

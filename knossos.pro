@@ -109,7 +109,9 @@ SOURCES += openjpeg/cio.c \
     nodeListElement.cpp \
     scriptengine/decorators/segmentlistdecorator.cpp \
     segmentListElement.cpp \
-    scriptengine/highlighter.cpp
+    scriptengine/highlighter.cpp \
+    pattern/observer/iobservable.cpp \
+    pattern/observer/iobserver.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -212,7 +214,9 @@ HEADERS  += widgets/mainwindow.h \
     scriptengine/subclasses/tree.h \
     scriptengine/decorators/colordecorator.h \
     scriptengine/decorators/segmentlistdecorator.h \
-    scriptengine/highlighter.h
+    scriptengine/highlighter.h \
+    pattern/observer/iobservable.h \
+    pattern/observer/iobserver.h
 
 FORMS    += mainwindow.ui
 
