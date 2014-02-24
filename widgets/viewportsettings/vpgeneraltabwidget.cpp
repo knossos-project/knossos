@@ -70,6 +70,7 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     this->showVPDecorationCheckBox = new QCheckBox("Show Viewport Decorations");
     this->showVPDecorationCheckBox->setChecked(true);
     this->resetVPsButton = new QPushButton("Reset Viewports");
+    this->resetVPsButton->setFocusPolicy(Qt::NoFocus);
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
