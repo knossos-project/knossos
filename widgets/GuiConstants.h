@@ -73,7 +73,9 @@ const QString ENABLE_COLOR_OVERLAY = "enable_color_overlay";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
 const QString SHOW_VIEWPORT_SIZE = "draw_viewport_size";
 const QString TREE_LUT_FILE = "tree_lut_file";
+const QString TREE_LUT_FILE_USED = "tree_lut_file_used";
 const QString DATASET_LUT_FILE = "dataset_lut_file";
+const QString DATASET_LUT_FILE_USED = "dataset_lut_file_used";
 
 /* Viewport Settings Skeleton Viewport Tab */
 const QString SHOW_XY_PLANE = "show_xy_plane";

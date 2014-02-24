@@ -211,9 +211,22 @@ void ViewportSettingsWidget::loadSettings() {
         this->slicePlaneViewportWidget->loadDatasetLUT();        
     }
 
+    if(settings.value(DATASET_LUT_FILE_USED).isNull() == false) {
+        qDebug() << settings.value(DATASET_LUT_FILE_USED).toBool();
+        this->slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->setChecked(settings.value(DATASET_LUT_FILE_USED).toBool());
+        this->slicePlaneViewportWidget->useOwnDatasetColorsChecked(settings.value(DATASET_LUT_FILE).toBool());
+    }
+
     if(!settings.value(TREE_LUT_FILE).toString().isEmpty()) {
         this->slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE).toString());
         this->slicePlaneViewportWidget->loadTreeLUT();       
+    }
+
+    if(!settings.value(TREE_LUT_FILE_USED).isNull()) {
+        qDebug() << "ja";
+        this->slicePlaneViewportWidget->useOwnTreeColorsCheckBox->setChecked(settings.value(TREE_LUT_FILE_USED).toBool());
+        this->slicePlaneViewportWidget->useOwnTreeColorsChecked(settings.value(TREE_LUT_FILE_USED).toBool());
+
     }
 
     if(this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() == false
@@ -263,7 +276,9 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, this->slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->isChecked());
     settings.setValue(SHOW_VIEWPORT_SIZE, this->slicePlaneViewportWidget->showViewPortsSizeCheckBox->isChecked());
     settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
+    settings.setValue(DATASET_LUT_FILE_USED, this->slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->isChecked());
     settings.setValue(TREE_LUT_FILE, this->slicePlaneViewportWidget->treeLutFile->text());
+    settings.setValue(TREE_LUT_FILE_USED, this->slicePlaneViewportWidget->useOwnTreeColorsCheckBox->isChecked());
 
     if(!this->slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
         settings.setValue(DATASET_LUT_FILE, this->slicePlaneViewportWidget->datasetLutFile->text());
