@@ -2,8 +2,8 @@
 #define COLOR4FDECORATOR_H
 
 #include <QObject>
-#include "knossos-global.h"
 
+class Color;
 class ColorDecorator : public QObject
 {
     Q_OBJECT

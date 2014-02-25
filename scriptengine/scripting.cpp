@@ -1,10 +1,12 @@
-
 #include "scripting.h"
 #include "decorators/colordecorator.h"
 #include "decorators/skeletondecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
 #include "highlighter.h"
+#include "knossos-global.h"
+
+extern stateInfo *state;
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)

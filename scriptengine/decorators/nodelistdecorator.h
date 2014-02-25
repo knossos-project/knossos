@@ -4,7 +4,6 @@
 #include <QObject>
 #include "knossos-global.h"
 
-
 class NodeListDecorator : public QObject
 {
     Q_OBJECT
@@ -15,7 +14,7 @@ signals:
     
 public slots:
     nodeListElement *new_nodeListElement();
-    nodeListElement *new_nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
+    nodeListElement *new_nodeListElement(int nodeID, int x, int, int z, float radius = 1.5, int inVp = 1, int inMag = 1, int time = 1);
     int getNodeID(nodeListElement *self);
     void setNodeID(nodeListElement *self, int nodeID);
     int getTime(nodeListElement *self);
@@ -27,9 +26,9 @@ public slots:
     void setCoordinate(nodeListElement *self, Coordinate coordinate);
     Coordinate getCoordinate(nodeListElement *self);
     void setViewport(nodeListElement *self, int viewport);
-    Byte getViewport(nodeListElement *self);
-    void setMagnification(nodeListElement *self, Byte magnification);
-    Byte getMagnification(nodeListElement *self);
+    int getViewport(nodeListElement *self);
+    void setMagnification(nodeListElement *self, int magnification);
+    int getMagnification(nodeListElement *self);
 
     void setParent(nodeListElement *self, treeListElement *parent);
     treeListElement *getParent(nodeListElement *self);

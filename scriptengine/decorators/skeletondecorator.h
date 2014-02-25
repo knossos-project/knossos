@@ -4,11 +4,9 @@
 #include <QObject>
 #include <QList>
 #include <QSet>
-#include "knossos-global.h"
 
-extern stateInfo *state;
-
-
+class Skeleton;
+class treeListElement;
 class SkeletonDecorator : public QObject
 {
     Q_OBJECT

@@ -2,9 +2,8 @@
 #define MAINWINDOWDECORATOR_H
 
 #include <QObject>
-#include "knossos-global.h"
-#include "widgets/mainwindow.h"
 
+class MainWindow;
 class MainWindowDecorator : public QObject
 {
     Q_OBJECT

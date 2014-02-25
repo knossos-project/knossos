@@ -18,7 +18,7 @@ bool skeletonState::hasUnsavedChanges() {
 }
 
 treeListElement *skeletonState::getFirstTree() {
-    return firstTree;
+    return state->skeletonState->firstTree;
 }
 
 QString skeletonState::getSkeletonFile() {
@@ -34,8 +34,15 @@ bool skeletonState::toXml(QString file) {
 }
 
 void skeletonState::addTree(treeListElement *tree) {
-    if(!checkTreeParameter(tree->treeID, tree->color.r, tree->color.g, tree->color.b, tree->color.a))
+    if(!tree) {
+        qDebug() << "tree is NULL";
         return;
+    }
+
+    if(!checkTreeParameter(tree->treeID, tree->color.r, tree->color.g, tree->color.b, tree->color.a)) {
+        qDebug() << "one of the arguments is in negative range";
+        return;
+    }
 
     treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree->treeID, tree->color, false);
     if(tree->comment) {
@@ -45,11 +52,20 @@ void skeletonState::addTree(treeListElement *tree) {
     Skeletonizer::setActiveTreeByID(theTree->getTreeID());
     emit updateToolsSignal();
     emit treeAddedSignal(theTree);
-}
+
+    nodeListElement *currentNode = theTree->firstNode;
+    while(currentNode) {
+        addNode(currentNode);
+        currentNode = currentNode->next;
+    }
+ }
 
 void skeletonState::addTree(int treeID, Color color, QString comment) {
-    if(!checkTreeParameter(treeID, color.r, color.g, color.b, color.a))
+    if(!checkTreeParameter(treeID, color.r, color.g, color.b, color.a)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
+    }
+
 
     color4F c4f;
     c4f.r = color.r;
@@ -70,6 +86,7 @@ void skeletonState::addTree(int treeID, Color color, QString comment) {
 
 void skeletonState::addTree(int treeID, float r, float g, float b, float a, QString comment) {
     if(!checkTreeParameter(treeID, r, g, b, a)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
     }
 
@@ -87,13 +104,25 @@ void skeletonState::addTree(int treeID, float r, float g, float b, float a, QStr
     Skeletonizer::setActiveTreeByID(treeID);
     emit updateToolsSignal();
     emit treeAddedSignal(theTree);
+
+    nodeListElement *currentNode = theTree->firstNode;
+    while(currentNode) {
+        addNode(currentNode);
+        currentNode = currentNode->next;
+    }
 }
 
 void skeletonState::addNode(nodeListElement *node) {
     if(!node or !checkNodeParameter(node->nodeID, node->position.x, node->position.y, node->position.z)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
     }
 
+    if(state->skeletonState->activeTree) {
+        node->setParent(state->skeletonState->activeTree);
+    } else {
+        emit treeAddedSignal(state->skeletonState->firstTree);
+    }
 
     if(Skeletonizer::addNode(CHANGE_MANUAL, node->nodeID, node->radius, node->getParentID(), &node->position, node->getViewport(), node->getMagnification(), node->getTime(), false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node->nodeID);
@@ -104,11 +133,12 @@ void skeletonState::addNode(nodeListElement *node) {
 
 void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
     if(!checkNodeParameter(nodeID, x, y, z)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
     }
 
     int activeID = 0;
-    if(activeTree) {
+    if(state->skeletonState->activeTree) {
         activeID = activeTree->treeID;
     }
 
@@ -126,6 +156,7 @@ void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int i
 
 void skeletonState::addNode(int nodeID, int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time) {
     if(!checkNodeParameter(nodeID, x, y, z)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
     }
 
@@ -142,6 +173,7 @@ void skeletonState::addNode(int nodeID, int radius, int parentID, int x, int y, 
 
 void skeletonState::addNode(int x, int y, int z, int viewport) {
     if(!checkNodeParameter(0, x, y, z)) {
+        qDebug() << "one of the arguments is in negative range";
         return;
     }
 
@@ -179,12 +211,18 @@ void skeletonState::addTrees(QList<treeListElement *> list) {
         if(currentTree and !checkTreeParameter(currentTree->treeID, currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a)) {
             return;
         }
-        Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, currentTree->treeID, currentTree->color, false);
+
+        treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, currentTree->treeID, currentTree->color, false);
         emit treeAddedSignal(currentTree);
         if(currentTree->comment) {
             Skeletonizer::addTreeComment(CHANGE_MANUAL, currentTree->treeID, currentTree->comment);
         }
 
+        nodeListElement *currentNode = theTree->firstNode;
+        while(currentNode) {
+            addNode(currentNode);
+            currentNode = currentNode->next;
+        }
     }
 }
 

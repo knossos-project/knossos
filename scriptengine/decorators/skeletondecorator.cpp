@@ -2,6 +2,9 @@
 #include "treelistdecorator.h"
 #include <QDebug>
 #include <QMutableSetIterator>
+#include "knossos-global.h"
+
+extern stateInfo *state;
 
 SkeletonDecorator::SkeletonDecorator(QObject *parent) :
     QObject(parent)

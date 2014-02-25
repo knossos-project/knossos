@@ -1,4 +1,5 @@
 #include "nodelistdecorator.h"
+#include "knossos-global.h"
 
 NodeListDecorator::NodeListDecorator(QObject *parent) :
     QObject(parent)
@@ -9,7 +10,7 @@ nodeListElement *NodeListDecorator::new_nodeListElement() {
     return new nodeListElement();
 }
 
-nodeListElement *NodeListDecorator::new_nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
+nodeListElement *NodeListDecorator::new_nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time) {
     return new nodeListElement(nodeID, radius, x, y, z, inVp, inMag, time);
 }
 
@@ -61,15 +62,15 @@ void NodeListDecorator::setViewport(nodeListElement *self, int viewport) {
     self->createdInVp = viewport;
 }
 
-Byte NodeListDecorator::getViewport(nodeListElement *self) {
+int NodeListDecorator::getViewport(nodeListElement *self) {
     return self->createdInVp;
 }
 
-void NodeListDecorator::setMagnification(nodeListElement *self, Byte magnification) {
+void NodeListDecorator::setMagnification(nodeListElement *self, int magnification) {
     self->createdInMag = magnification;
 }
 
-Byte NodeListDecorator::getMagnification(nodeListElement *self) {
+int NodeListDecorator::getMagnification(nodeListElement *self) {
     return self->createdInMag;
 }
 

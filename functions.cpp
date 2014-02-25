@@ -66,3 +66,11 @@ bool checkNodeParameter(int id, int x, int y, int z) {
     }
     return true;
 }
+
+bool checkNodeParameter(int id) {
+    if(id < 0) {
+        return false;
+    }
+
+    return true;
+}

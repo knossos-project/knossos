@@ -5,7 +5,6 @@
 #include "knossos-global.h"
 
 extern stateInfo *state;
-
 class SkeletonStateDecorator : public QObject
 {
     Q_OBJECT

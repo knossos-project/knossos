@@ -316,9 +316,10 @@ typedef struct {
 
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-struct Coordinate{
-    Coordinate() { }
-    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
+class Coordinate{
+public:
+    Coordinate();
+    Coordinate(int x, int y, int z);// { this->x = x; this->y = y; this->z = z; }
     int x;
     int y;
     int z;
@@ -327,6 +328,13 @@ struct Coordinate{
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
+
+    void setX(int x);
+    int getX();
+    void setY(int y);
+    int getY();
+    void setZ(int z);
+    int getZ();
 };
 
 /*
@@ -1052,10 +1060,14 @@ public:
     void setTreeID(int id);
     nodeListElement *getRoot();
     QList<nodeListElement *> *getNodes();
+    void setColor(Color color);
+    Color getColor();
+
 
     void addNode(nodeListElement *node);
     void addNode(int nodeID, int x, int y, int z);
     void addNodes(QList<nodeListElement *> *nodeList);
+
 
 
 };
@@ -1064,7 +1076,7 @@ public:
 class nodeListElement  {
 public:
     nodeListElement();
-    nodeListElement(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
+    nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time);
 
     nodeListElement *next;
     nodeListElement *previous;
@@ -1103,13 +1115,16 @@ public:
     void setCoordinate(Coordinate coordinate);
     Coordinate getCoordinate();
     void setViewport(int viewport);
-    Byte getViewport();
-    void setMagnification(Byte magnification);
-    Byte getMagnification();
+    int getViewport();
+    void setMagnification(int magnification);
+    int getMagnification();
     //void setParent(int treeID);
     void setParent(treeListElement *parent);
     treeListElement *getParent();
     int getParentID();
+    void addSegment(segmentListElement *segment);
+    QList<segmentListElement *> *getSegments();
+
 };
 
 
@@ -1117,7 +1132,8 @@ public:
 class segmentListElement {
 public:
     segmentListElement();
-    segmentListElement(nodeListElement *source, nodeListElement *target, Byte flag);
+    segmentListElement(int sourceID, int targetID);
+    segmentListElement(nodeListElement *source, nodeListElement *target);
     segmentListElement *next;
     segmentListElement *previous;
 
@@ -1139,6 +1155,15 @@ public:
 
     nodeListElement *source;
     nodeListElement *target;
+
+    void setSource(nodeListElement *source);
+    void setTarget(nodeListElement *target);
+    nodeListElement *getSource();
+    nodeListElement *getTarget();
+    void setSource(int sourceID);
+    void setTarget(int targetID);
+    int getSourceID();
+    int getTargetID();
 
 
 };

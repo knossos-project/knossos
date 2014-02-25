@@ -27,6 +27,16 @@
 
 extern stateInfo *state;
 
+Coordinate::Coordinate() {
+
+}
+
+Coordinate::Coordinate(int x, int y, int z) {
+    this->setX(x);
+    this->setY(y);
+    this->setZ(z);
+}
+
 /**
  * This function calculates the coordinates of the datacube from pixel coordinates
  */
@@ -126,3 +136,34 @@ void Coordinate::operator=(Coordinate const &rhs) {
 
 }
 
+void Coordinate::setX(int x) {
+    if(x < 0) {
+        qDebug() << "x is in negative range";
+    }
+
+    this->x = x;
+}
+
+int Coordinate::getX() {
+    return x;
+}
+
+void Coordinate::setY(int y) {
+    if(y < 0) {
+        qDebug() << "y is in negative range";
+    }
+
+    this->y = y;
+}
+
+int Coordinate::getY() {
+    return y;
+}
+
+void Coordinate::setZ(int z) {
+    if(z < 0) {
+        qDebug() << "z is in negative range";
+    }
+
+    this->z = z;
+}

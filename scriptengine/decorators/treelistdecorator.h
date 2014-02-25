@@ -2,9 +2,8 @@
 #define TREELISTDECORATOR_H
 
 #include <QObject>
+#include <QList>
 #include "knossos-global.h"
-
-extern stateInfo *state;
 
 class TreeListDecorator : public QObject
 {
