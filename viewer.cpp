@@ -731,33 +731,6 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
     return true;
 }
 
- /* For downsample & upsamleVPTexture:
-  * we read the texture to a CPU side - buffer,
-  * and send it to graphicscard after the resampling. Using
-  * OpenGL is certainly possible for the resampling
-  * but the CPU implementation appears to be
-  * more straightforward, with probably almost no
-  * performance penalty. We use a simple
-  * box filter for the downsampling */
-
-static bool downsampleVPTexture(vpConfig *vpConfig) {
-    /* allocate 2 texture buffers */
-    //Byte *orig, *resampled;
-
-    /* get the texture */
-
-    /* downsample it */
-
-    /* send it to the graphicscard again */
-
-    return true;
-}
-
-
-static bool upsampleVPTexture(vpConfig *vpConfig) {
-   return true;
-}
-
 /* this function calculates the mapping between the left upper texture pixel
  * and the real dataset pixel */
 bool Viewer::calcLeftUpperTexAbsPx() {
@@ -1137,7 +1110,6 @@ bool Viewer::calcDisplayedEdgeLength() {
     return true;
 }
 
-
 /**
 * takes care of all necessary changes inside the viewer and signals
 * the loader to change the dataset
@@ -1158,7 +1130,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 2.0;
-                        upsampleVPTexture(&state->viewerState->vpConfigs[i]);
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx *= 2.;
                     }
                 }
@@ -1172,7 +1143,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
                         state->viewerState->vpConfigs[i].texture.zoomLevel *= 0.5;
-                        downsampleVPTexture(&state->viewerState->vpConfigs[i]);
                         state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= 2.;
                     }
                 }

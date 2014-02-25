@@ -83,7 +83,7 @@ void DatasetPropertyWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = FAST;
 }
 
-void DatasetPropertyWidget::closeEvent(QCloseEvent *event) {
+void DatasetPropertyWidget::closeEvent(QCloseEvent *) {
     this->hide();
 }
 
@@ -146,20 +146,16 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     // This is a gamble we take, in order to not have possible bugs where the skeleton depends on old configuration values.
     if (isGUI) {
         emit clearSkeletonSignalGUI();
-    }
-    else {
+    } else {
         emit clearSkeletonSignalNoGUI();
     }
 
-    this->waitForLoader();
-
-    // From now on we don't really want to *load* anything, just mess around with data structures to get things right
-    state->loaderDummy = true;
-
-    while (state->magnification > 1) {
+    /*
+    while (state->magnification > 1) {//BUG if lowest mag > 1 or mags locked
         emit changeDatasetMagSignal(MAG_DOWN);
         this->waitForLoader();
     }
+    */
 
     // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
     state->viewerState->currentPosition.x =
@@ -205,6 +201,16 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     if(state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
+
+    //Viewer::changeDatasetMag cannot be used when ther’re no other mags available
+    //sets viewport settings according to current mag
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN / state->magnification;
+        }
+    }
+
     emit datasetSwitchZoomDefaults();
     this->hide();
 }
