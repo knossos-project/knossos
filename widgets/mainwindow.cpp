@@ -920,9 +920,10 @@ void MainWindow::saveAsSlot()
         QFileInfo info(fileName);
         saveFileDirectory = new QString(info.dir().absolutePath());
 
+        /*
         if(state->skeletonState->autoFilenameIncrementBool) {
             updateSkeletonFileName(fileName);
-        }
+        }*/
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
@@ -1445,7 +1446,7 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
         fileName = fileName.replace(fileName.length() - 7, 3, versionString);
 
     } else if(fileName.contains(withoutVersion)) {
-        //fileName = fileName.insert(fileName.length() - 3, "001.");
+        fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
     }
 }
