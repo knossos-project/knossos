@@ -207,13 +207,26 @@ void ViewportSettingsWidget::loadSettings() {
 
 
     if(!settings.value(DATASET_LUT_FILE).toString().isEmpty()) {
-        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());        
-        this->slicePlaneViewportWidget->loadDatasetLUT();        
+        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());
+        this->slicePlaneViewportWidget->loadDatasetLUT();
+    }
+
+    if(settings.value(DATASET_LUT_FILE_USED).isNull() == false) {
+        qDebug() << settings.value(DATASET_LUT_FILE_USED).toBool();
+        this->slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->setChecked(settings.value(DATASET_LUT_FILE_USED).toBool());
+        this->slicePlaneViewportWidget->useOwnDatasetColorsChecked(settings.value(DATASET_LUT_FILE).toBool());
     }
 
     if(!settings.value(TREE_LUT_FILE).toString().isEmpty()) {
         this->slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE).toString());
-        this->slicePlaneViewportWidget->loadTreeLUT();       
+        this->slicePlaneViewportWidget->loadTreeLUT();
+    }
+
+    if(!settings.value(TREE_LUT_FILE_USED).isNull()) {
+        qDebug() << "ja";
+        this->slicePlaneViewportWidget->useOwnTreeColorsCheckBox->setChecked(settings.value(TREE_LUT_FILE_USED).toBool());
+        this->slicePlaneViewportWidget->useOwnTreeColorsChecked(settings.value(TREE_LUT_FILE_USED).toBool());
+
     }
 
     if(this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() == false
