@@ -113,6 +113,13 @@ class myEventFilter: public QObject
   }
 };
 
+Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+    screen.show();
+    //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
+    QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
+    timer.start(timeout_msec);
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
@@ -132,7 +139,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Knossos::showSplashScreen();
+    Splash splash(":/images/splash.png", 1500);
 
     knossos.reset(new Knossos);
 
@@ -1354,16 +1361,4 @@ void Knossos::loadStyleSheet() {
     qApp->setStyleSheet(design);
     file.close();
 
-}
-
-void Knossos::showSplashScreen() {
-    QSplashScreen screen(QPixmap(":/images/splash.png"), Qt::WindowStaysOnTopHint);
-    screen.show();
-
-    QTime time;
-    time.start();
-    while(time.elapsed() < 1000) {
-    }
-
-    screen.close();
 }
