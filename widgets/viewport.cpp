@@ -104,12 +104,12 @@ void Viewport::initializeGL() {
     // button geometry has to be defined here, because width() and height() return wrong information before initializeGL
     updateButtonPositions();
     if(viewportType != VIEWPORT_SKELETON) {
-        glGenTextures(1, &Patch::texHandle); // for patches
-        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
+        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.patchTexHandle); // for patches
+        glGenTextures(1, &state->viewerState->vpConfigs[id].texture.dataTexHandle);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.dataTexHandle);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -119,7 +119,7 @@ void Viewport::initializeGL() {
 
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         // patch --
-        glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.patchTexHandle);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -128,7 +128,7 @@ void Viewport::initializeGL() {
 
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         // --patch
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.dataTexHandle);
 
         // loads an empty texture into video memory - during user movement, this
         // texture is updated via glTexSubImage2D in vpGenerateTexture
@@ -204,10 +204,10 @@ bool Viewport::setOrientation(int orientation) {
 void Viewport::initializeOverlayGL() {
     if(viewportType != VIEWPORT_SKELETON) {
         if(state->overlay) {
-            glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
+            glGenTextures(1, &state->viewerState->vpConfigs[id].texture.dataOverlayHandle);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.dataOverlayHandle);
 
             //Set the parameters for the texture.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

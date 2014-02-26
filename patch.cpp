@@ -29,7 +29,6 @@ float Patch::eraserHalfEdge = 10;
 bool Patch::drawing = false;
 bool Patch::newPoints = false;
 GLuint Patch::vbo;
-GLuint Patch::texHandle;
 
 Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     next(this), previous(this), visible(true), numPoints(0), numLoops(0), numTriangles(0) {
@@ -257,48 +256,35 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         return;
     }
     floatCoordinate snapPoint;
-    float distX = INT_MAX, distY = INT_MAX;
     SET_COORDINATE(snapPoint, -1, -1, -1);
+    float dist;
     if(lineBuffer.size() > 0) {
         for(uint i = 0; i < lineBuffer.size(); ++i) {
             switch(viewportType) {
             case VIEWPORT_XY:
-                distX = fabs(lineBuffer[i][0].x  - lastPoint.x);
-                distY = fabs(lineBuffer[i][0].y  - lastPoint.y);
+                if(lastPoint.z != lineBuffer[i][0].z) {
+                    continue;
+                }
                 break;
             case VIEWPORT_XZ:
-                distX = fabs(lineBuffer[i][0].x  - lastPoint.x);
-                distY = fabs(lineBuffer[i][0].z  - lastPoint.z);
+                if(lastPoint.y != lineBuffer[i][0].y) {
+                    continue;
+                }
                 break;
             case VIEWPORT_YZ:
-                distX = fabs(lineBuffer[i][0].y  - lastPoint.y);
-                distY = fabs(lineBuffer[i][0].z  - lastPoint.z);
+                if(lastPoint.x != lineBuffer[i][0].x) {
+                    continue;
+                }
                 break;
             }
-            if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
+            if((dist = distance(lineBuffer[i][0], lastPoint)) < AUTO_ALIGN_RADIUS) {
                 snapPoint = lineBuffer[i][0];
             }
-            else {
-                switch(viewportType) {
-                case VIEWPORT_XY:
-                    distX = fabs(lineBuffer[i].back().x  - lastPoint.x);
-                    distY = fabs(lineBuffer[i].back().y  - lastPoint.y);
-                    break;
-                case VIEWPORT_XZ:
-                    distX = fabs(lineBuffer[i].back().x  - lastPoint.x);
-                    distY = fabs(lineBuffer[i].back().z  - lastPoint.z);
-                    break;
-                case VIEWPORT_YZ:
-                    distX = fabs(lineBuffer[i].back().y  - lastPoint.y);
-                    distY = fabs(lineBuffer[i].back().z  - lastPoint.z);
-                    break;
-                }
-                if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
-                    snapPoint = lineBuffer[i].back();
-                    std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
-                }
+            else if((dist = distance(lineBuffer[i].back(), lastPoint)) < AUTO_ALIGN_RADIUS) {
+                snapPoint = lineBuffer[i].back();
+                std::reverse(lineBuffer[i].begin(), lineBuffer[i].end());
             }
-            if(distX < AUTO_ALIGN_RADIUS and distY < AUTO_ALIGN_RADIUS) {
+            if(dist < AUTO_ALIGN_RADIUS) {
                 // found point to snap to. Fill distance with interpolated points,
                 // then connect the two lines
                 if(lastPoint.x - snapPoint.x < -voxelPerPoint or lastPoint.x - snapPoint.x > voxelPerPoint
@@ -317,7 +303,20 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         }
     }
     else { // no other lines to check against, check if this single line is already closed
-        if(distance(activeLine[0], lastPoint) < AUTO_ALIGN_RADIUS) {
+        bool otherPlane = false;
+        switch(viewportType) {
+        case VIEWPORT_XY:
+            otherPlane = activeLine[0].z != lastPoint.z;
+            break;
+        case VIEWPORT_XZ:
+            otherPlane = activeLine[0].y != lastPoint.y;
+            break;
+        case VIEWPORT_YZ:
+            otherPlane = activeLine[0].x != lastPoint.x;
+            break;
+        }
+
+        if(otherPlane == false and distance(activeLine[0], lastPoint) < AUTO_ALIGN_RADIUS) {
             addInterpolatedPoint(lastPoint, activeLine[0], activeLine);
         }
         else {
@@ -462,10 +461,34 @@ bool Patch::activeLoopIsClosed() {
             return false;
         }
         else {
-            return distance(activeLine[0], activeLine.back()) < AUTO_ALIGN_RADIUS;
+            bool otherPlane = false;
+            switch(activeLoop->createdInVP) {
+            case VIEWPORT_XY:
+                otherPlane = activeLine[0].z != activeLine.back().z;
+                break;
+            case VIEWPORT_XZ:
+                otherPlane = activeLine[0].y != activeLine.back().y;
+                break;
+            case VIEWPORT_YZ:
+                otherPlane = activeLine[0].x != activeLine.back().x;
+                break;
+            }
+            return otherPlane == false and distance(activeLine[0], activeLine.back()) < AUTO_ALIGN_RADIUS;
         }
     }
-    return distance(lineBuffer[0][0], lineBuffer[0].back()) < AUTO_ALIGN_RADIUS;
+    bool otherPlane = false;
+    switch(activeLoop->createdInVP) {
+    case VIEWPORT_XY:
+        otherPlane = lineBuffer[0][0].z != lineBuffer[0].back().z;
+        break;
+    case VIEWPORT_XZ:
+        otherPlane = lineBuffer[0][0].y != lineBuffer[0].back().y;
+        break;
+    case VIEWPORT_YZ:
+        otherPlane = lineBuffer[0][0].x != lineBuffer[0].back().x;
+        break;
+    }
+    return otherPlane == false and distance(lineBuffer[0][0], lineBuffer[0].back()) < AUTO_ALIGN_RADIUS;
 }
 
 /**
@@ -1619,7 +1642,7 @@ void Patch::visiblePoints(uint viewportType) {
             }
         }
     }
-    glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[viewportType].texture.patchTexHandle);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGBA,

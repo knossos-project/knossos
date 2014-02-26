@@ -416,16 +416,17 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 uint Renderer::renderViewportBorders(uint currentVP) {
     Coordinate pos;
     char label[1024] = {'\0'};
+    vpConfig vp = state->viewerState->vpConfigs[currentVP];
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
-    glOrtho(0, state->viewerState->vpConfigs[currentVP].edgeLength,
-            state->viewerState->vpConfigs[currentVP].edgeLength, 0, 25, -25);
+    glOrtho(0, vp.edgeLength, vp.edgeLength, 0, 25, -25);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    switch(state->viewerState->vpConfigs[currentVP].type) {
+    switch(vp.type) {
         case VIEWPORT_XY:
             glColor4f(0.7, 0., 0., 1.);
             break;
@@ -439,20 +440,18 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glColor4f(0., 0., 0., 1.);
             break;
         case VIEWPORT_ARBITRARY:
-            glColor4f(state->viewerState->vpConfigs[currentVP].n.z,
-                      state->viewerState->vpConfigs[currentVP].n.y,
-                      state->viewerState->vpConfigs[currentVP].n.x, 1.);
+            glColor4f(vp.n.z, vp.n.y, vp.n.x, 1.);
         break;
     }
     glLineWidth(3.);
     glBegin(GL_LINES);
         glVertex3d(2, 1, -1);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
-        glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
+        glVertex3d(vp.edgeLength - 1, 1, -1);
+        glVertex3d(vp.edgeLength - 1, 1, -1);
+        glVertex3d(vp.edgeLength - 1, vp.edgeLength - 1, -1);
+        glVertex3d(vp.edgeLength - 1, vp.edgeLength - 1, -1);
+        glVertex3d(2, vp.edgeLength - 2, -1);
+        glVertex3d(2, vp.edgeLength - 2, -1);
         glVertex3d(2, 1, -1);
     glEnd();
 
@@ -462,18 +461,45 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glColor4f(1., 0.3, 0., 1.);
         glBegin(GL_LINES);
             glVertex3d(5, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
+            glVertex3d(vp.edgeLength - 4, 4, -1);
+            glVertex3d(vp.edgeLength - 4, 4, -1);
+            glVertex3d(vp.edgeLength - 4, vp.edgeLength - 4, -1);
+            glVertex3d(vp.edgeLength - 4, vp.edgeLength - 4, -1);
+            glVertex3d(5, vp.edgeLength - 5, -1);
+            glVertex3d(5, vp.edgeLength - 5, -1);
             glVertex3d(5, 4, -1);
         glEnd();
     }
 
+//    // apply volume texture
+//    float width = (float)vp.edgeLength/vp.texture.edgeLengthPx;
+//    if(Patch::patchMode) {
+//        glEnable(GL_TEXTURE_2D);
+//        glDisable(GL_DEPTH_TEST);
+//        glEnable (GL_BLEND);
+//        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//        glColor4f(0, 0, 0, 0);
+//        glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
+//        glBegin(GL_QUADS);
+//            glNormal3i(0,0,1);
+//            glTexCoord2f(0, 0);
+//            glVertex3f(0, 0, 0.);
+//            glTexCoord2f(width, 0);
+//            glVertex3f(vp.edgeLength, 0, 0.);
+//            glTexCoord2f(width, width);
+//            glVertex3f(vp.edgeLength, vp.edgeLength, 0.);
+//            glTexCoord2f(0, width);
+//            glVertex3f(0, vp.edgeLength, 0.);
+//        glEnd();
+//        glBindTexture (GL_TEXTURE_2D, 0);
+//        glDisable(GL_TEXTURE_2D);
+//        glEnable(GL_DEPTH_TEST);
+//        glDisable(GL_BLEND);
+//    }
+
     // render node selection box
-    if(state->viewerState->drawNodeSelectSquare == currentVP) {
+    if((uint)state->viewerState->drawNodeSelectSquare == currentVP) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 
@@ -499,13 +525,13 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
         glColor4f(0, 0, 0, 1);
-        float width = state->viewerState->vpConfigs[currentVP].displayedlengthInNmX*0.001;
-        float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
-        SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
+        float width = vp.displayedlengthInNmX*0.001;
+        float height = vp.displayedlengthInNmY*0.001;
+        SET_COORDINATE(pos, 15, vp.edgeLength - 10, -1);
 
 
         sprintf(label, "Height %.2f %cm, Width %.2f %cm", height, 0xb5, width, 0xb5);
-        renderText(&pos, label, currentVP, state->viewerState->vpConfigs[currentVP].type);
+        renderText(&pos, label, currentVP, vp.type);
     }
 
     glLineWidth(1.);
@@ -639,7 +665,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 1.);
                // LOG("ortho VP tex XY id: %d", state->viewerState->vpConfigs[currentVP].texture.texHandle)
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -654,29 +680,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glBindTexture (GL_TEXTURE_2D, 0);
             glDisable(GL_TEXTURE_2D);
             glEnable(GL_DEPTH_TEST);
-
-            // apply volume texture
-            if(Patch::patchMode) {
-                glColor4f(1, 1, 1, 0);
-                glEnable(GL_TEXTURE_2D);
-                glDisable(GL_DEPTH_TEST);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glBindTexture(GL_TEXTURE_2D, Patch::texHandle);
-                glBegin(GL_QUADS);
-                    glNormal3i(0,0,1);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
-                    glVertex3f(-dataPxX, -dataPxY, 0.);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx, state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                    glVertex3f(dataPxX, -dataPxY, 0.);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx, state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                    glVertex3f(dataPxX, dataPxY, 0.);
-                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx, state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                    glVertex3f(-dataPxX, dataPxY, 0.);
-                glEnd();
-                glBindTexture (GL_TEXTURE_2D, 0);
-                glDisable(GL_TEXTURE_2D);
-                glEnable(GL_DEPTH_TEST);
-            }
 
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
@@ -694,7 +697,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 0.6);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -709,7 +712,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             /* Draw the overlay textures */
             if(state->overlay) {
                 if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataOverlayHandle);
                     glBegin(GL_QUADS);
                         glNormal3i(0, 0, 1);
                         glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
@@ -793,7 +796,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 1.);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,1,0);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -826,7 +829,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 0.6);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,1,0);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -842,7 +845,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             /* Draw overlay */
             if(state->overlay) {
                 if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataOverlayHandle);
                     glBegin(GL_QUADS);
                         glNormal3i(0,1,0);
                         glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
@@ -916,7 +919,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 1.);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(1,0,0);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -948,7 +951,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 0.6);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(1,0,0);
                 glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -964,7 +967,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             /* Draw overlay */
             if(state->overlay) {
                 if(state->viewerState->overlayVisible) {
-                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataOverlayHandle);
                     glBegin(GL_QUADS);
                         glNormal3i(1,0,0);
                         glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
@@ -1052,7 +1055,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
         glBegin(GL_QUADS);
             glNormal3i(n->x, n->y, n->z);
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -1083,7 +1086,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 0.6);
 
-        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.texHandle);
+        glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
         glBegin(GL_QUADS);
             glNormal3i(n->x, n->y, n->z);
             glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx, state->viewerState->vpConfigs[currentVP].texture.texLUy);
@@ -1101,7 +1104,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         // Draw the overlay textures
         if(state->overlay) {
             if(state->viewerState->overlayVisible) {
-                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+                glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataOverlayHandle);
                 glBegin(GL_QUADS);
                     glNormal3i(n->x, n->y, n->z);
                     glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLUx,
@@ -1452,7 +1455,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             glColor4f(1., 1., 1., 1.);
 
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.dataTexHandle);
 
             //LOG("skeleton VP tex XY id: %d", state->viewerState->vpConfigs[i].texture.texHandle)
             glLoadName(VIEWPORT_XY);
@@ -1472,7 +1475,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             break;
         case VIEWPORT_XZ:
             if(!state->skeletonState->showXZplane) break;
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.dataTexHandle);
             glLoadName(VIEWPORT_XZ);
             glBegin(GL_QUADS);
                 glNormal3i(0,1,0);
@@ -1489,7 +1492,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             break;
         case VIEWPORT_YZ:
             if(!state->skeletonState->showYZplane) break;
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.texHandle);
+            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[i].texture.dataTexHandle);
             glLoadName(VIEWPORT_YZ);
             glBegin(GL_QUADS);
                 glNormal3i(1,0,0);
@@ -1849,7 +1852,7 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
 
     glLoadName(vp.id);//for select mode
 
-    glBindTexture(GL_TEXTURE_2D, texture.texHandle);
+    glBindTexture(GL_TEXTURE_2D, texture.dataTexHandle);
 
     glBegin(GL_QUADS);
         glNormal3i(n.x, n.y, n.z);

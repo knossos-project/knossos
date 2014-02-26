@@ -768,8 +768,9 @@ struct trajectory {
 
 struct viewportTexture {
     //Handles for OpenGl
-    uint texHandle;
-    uint overlayHandle;
+    uint dataTexHandle;
+    uint dataOverlayHandle;
+    uint patchTexHandle;
 
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     Coordinate leftUpperPxInAbsPx;

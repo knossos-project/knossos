@@ -194,7 +194,24 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
                 Patch::eraseActiveLoop(*clickedCoordinate, VPfound);
             }
             else { // drawing
-                for(uint i = 0; i < Patch::lineBuffer.size(); ++i) {
+                for(uint i = 0; i < Patch::lineBuffer.size(); ++i) { // test if line can be aligned to existing line
+                    switch(VPfound) {
+                    case VIEWPORT_XY:
+                        if(Patch::lineBuffer[i][0].z != clickedCoordinate->z) {
+                            continue;
+                        }
+                        break;
+                    case VIEWPORT_XZ:
+                        if(Patch::lineBuffer[i][0].y != clickedCoordinate->y) {
+                            continue;
+                        }
+                        break;
+                    case VIEWPORT_YZ:
+                        if(Patch::lineBuffer[i][0].x != clickedCoordinate->x) {
+                            continue;
+                        }
+                        break;
+                    }
                     if(distance(Patch::lineBuffer[i][0], *clickedCoordinate) < AUTO_ALIGN_RADIUS) {
                         Patch::alignToLine(*clickedCoordinate, i, true);
                         break;
