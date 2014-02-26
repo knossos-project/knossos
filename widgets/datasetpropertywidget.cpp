@@ -150,13 +150,6 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
         emit clearSkeletonSignalNoGUI();
     }
 
-    /*
-    while (state->magnification > 1) {//BUG if lowest mag > 1 or mags locked
-        emit changeDatasetMagSignal(MAG_DOWN);
-        this->waitForLoader();
-    }
-    */
-
     // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
