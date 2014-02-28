@@ -32,6 +32,8 @@
 #define KNOSSOS_GLOBAL_H
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
+#include <cmath>
+
 #include <curl/curl.h>
 
 #include <QtOpenGL/qgl.h>
@@ -498,12 +500,12 @@ public:
     char path[1024];
     char loaderPath[1024];
     // Paths to all available datasets of the 3-D image pyramid
-    char magPaths[NUM_MAG_DATASETS][1024];
+    char magPaths[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)][1024];
 
     // Current dataset identifier string
     char name[1024];
     char loaderName[1024];
-    char magNames[NUM_MAG_DATASETS][1024];
+    char magNames[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)][1024];
 
     char datasetBaseExpName[1024];
 
@@ -547,7 +549,7 @@ public:
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
     //Coordinate loaderBoundary;
-    Coordinate *magBoundaries[NUM_MAG_DATASETS];
+    Coordinate *magBoundaries[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
 
     // pixel-to-nanometer scale
     floatCoordinate scale;
@@ -643,8 +645,8 @@ public:
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    Hashtable *Dc2Pointer[NUM_MAG_DATASETS];
-    Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
+    Hashtable *Dc2Pointer[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
+    Hashtable *Oc2Pointer[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
 
     struct viewerState *viewerState;
     struct Viewer *viewer;

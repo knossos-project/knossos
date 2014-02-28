@@ -22,7 +22,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <math.h>
+#include <cmath>
+
 #include <dirent.h>
 #include "loader.h"
 #include "knossos.h"
@@ -688,7 +689,7 @@ bool Loader::initLoader() {
         memset(this->bogusOc, '\0', state->cubeBytes * OBJID_BYTES);
     }
 
-    state->loaderMagnification = Knossos::log2uint32(state->magnification);
+    state->loaderMagnification = std::log2(state->magnification);
     strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
     strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 
@@ -986,7 +987,7 @@ bool Loader::load() {
     }
 
     prevLoaderMagnification = state->loaderMagnification;
-    state->loaderMagnification = Knossos::log2uint32(state->magnification);
+    state->loaderMagnification = std::log(state->magnification)/std::log(2);
     strncpy(state->loaderName, state->magNames[state->loaderMagnification], 1024);
     strncpy(state->loaderPath, state->magPaths[state->loaderMagnification], 1024);
 

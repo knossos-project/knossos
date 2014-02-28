@@ -21,6 +21,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include <cmath>
+
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
 #include <QTest>
@@ -476,41 +478,13 @@ bool Knossos::initStates() {
    // creating the hashtables is cheap, keeping the datacubes is
    // memory expensive..
    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-       state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Dc2Pointer[static_cast<std::size_t>(std::log2(i))] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Oc2Pointer[static_cast<std::size_t>(std::log2(i))] = Hashtable::ht_new(state->cubeSetElements * 10);
        if(i == 0) i = 1;
    }
 
    return commonInitStates();
 
-}
-
-
-/* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
-uint Knossos::ones32(register uint x) {
-        /* 32-bit recursive reduction using SWAR...
-       but first step is mapping 2-bit values
-       into sum of 2 1-bit values in sneaky way
-    */
-        x -= ((x >> 1) & 0x55555555);
-        x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
-        x = (((x >> 4) + x) & 0x0f0f0f0f);
-        x += (x >> 8);
-        x += (x >> 16);
-        return(x & 0x0000003f);
-}
-
-
-/* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
-uint Knossos::log2uint32(register uint x) {
-
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-
-    return(ones32(x >> 1));
 }
 
 bool Knossos::lockSkeleton(uint targetRevision) {
@@ -872,7 +846,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
-                strcpy(state->magPaths[log2uint32(currMag)], currPath);
+                strcpy(state->magPaths[static_cast<std::size_t>(std::log2(currMag))], currPath);
 
                 /* the last 4 letters are "mag1" by convention; if not,
                  * K multires won't work */
@@ -886,7 +860,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                         strlen(datasetBaseExpName)-1);
                 state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
 
-                sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
+                sprintf(state->magNames[static_cast<std::size_t>(std::log2(currMag))], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
         LOG("Highest Mag: %d", state->highestAvailableMag);
@@ -949,8 +923,8 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         }
 
         /* the loader uses only magNames and magPaths */
-        strcpy(state->magNames[log2uint32(state->magnification)], state->name);
-        strcpy(state->magPaths[log2uint32(state->magnification)], state->path);
+        strcpy(state->magNames[static_cast<std::size_t>(std::log2(state->magnification))], state->name);
+        strcpy(state->magPaths[static_cast<std::size_t>(std::log2(state->magnification))], state->path);
 
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
