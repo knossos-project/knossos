@@ -2019,6 +2019,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperRight, SLOT(setOrientation(int)));
+    connect(eventModel, SIGNAL(showSelectedTreesAndNodesSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(showSelectedTreesAndNodes()));
     //end event handler signals
     // mainwindow signals
     //connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));

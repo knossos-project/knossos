@@ -77,6 +77,8 @@ public:
     QCheckBox *nodeRegExCheck;
     QRadioButton *nodesOfSelectedTreesRadio;
     QRadioButton *allNodesRadio;
+    QRadioButton *selectedNodes;
+
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
     QLabel *displayedNodesTable;
@@ -211,8 +213,9 @@ public slots:
     void nodeCommentChanged(nodeListElement *node);
     void nodeRadiusChanged(nodeListElement *node);
     void nodePositionChanged(nodeListElement *node);
-    void updateTreesTable();
+    void updateTreesTable();    
     void updateNodesTable();
+    void showSelectedTreesAndNodes();
     void update();
     
 };

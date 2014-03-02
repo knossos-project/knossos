@@ -68,7 +68,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
-    this->setUnifiedTitleAndToolBarOnMac(true);
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
