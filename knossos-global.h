@@ -303,13 +303,21 @@ values. The XY vp always used. */
 //Structures and custom types
 typedef uint8_t Byte;
 
-typedef struct {
-        float x;
-        float y;
-        float z;
-} floatCoordinate;
+//custom tail recursive constexpr log implementation
+//required for the following array declarations/accesses: (because std::log2 isn’t required to be constexpr yet)
+//  magPaths, magNames, magBoundaries, Dc2Pointer, Oc2Pointer
+//TODO to be removed when the above mentioned variables vanish
+//integral return value for castless use in subscripts
+template<typename T>
+constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t res = 0) {
+    return val < base ? res : int_log(val/base, base, res+1);
+}
 
-
+struct floatCoordinate {
+    float x;
+    float y;
+    float z;
+};
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 class Coordinate{
@@ -500,12 +508,12 @@ public:
     char path[1024];
     char loaderPath[1024];
     // Paths to all available datasets of the 3-D image pyramid
-    char magPaths[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)][1024];
+    char magPaths[int_log(NUM_MAG_DATASETS)+1][1024];
 
     // Current dataset identifier string
     char name[1024];
     char loaderName[1024];
-    char magNames[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)][1024];
+    char magNames[int_log(NUM_MAG_DATASETS)+1][1024];
 
     char datasetBaseExpName[1024];
 
@@ -549,7 +557,7 @@ public:
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
     //Coordinate loaderBoundary;
-    Coordinate *magBoundaries[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
+    Coordinate *magBoundaries[int_log(NUM_MAG_DATASETS)+1];
 
     // pixel-to-nanometer scale
     floatCoordinate scale;
@@ -645,8 +653,8 @@ public:
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    Hashtable *Dc2Pointer[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
-    Hashtable *Oc2Pointer[static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)+1)];
+    Hashtable *Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
+    Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
     struct Viewer *viewer;

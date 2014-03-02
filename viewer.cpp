@@ -574,8 +574,8 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             }
 
             state->protectCube2Pointer->lock();
-            datacube = Hashtable::ht_get(state->Dc2Pointer[static_cast<std::size_t>(std::log2(state->magnification))], currentDc);
-            overlayCube = Hashtable::ht_get(state->Oc2Pointer[static_cast<std::size_t>(std::log2(state->magnification))], currentDc);
+            datacube = Hashtable::ht_get(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            overlayCube = Hashtable::ht_get(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
 
@@ -692,8 +692,8 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
             state->protectCube2Pointer->lock();
-            datacube = Hashtable::ht_get(state->Dc2Pointer[static_cast<std::size_t>(std::log2(state->magnification))], currentDc);
-            overlayCube = Hashtable::ht_get(state->Oc2Pointer[static_cast<std::size_t>(std::log2(state->magnification))], currentDc);
+            datacube = Hashtable::ht_get(state->Dc2Pointer[int_log(state->magnification)], currentDc);
+            overlayCube = Hashtable::ht_get(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
             SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,

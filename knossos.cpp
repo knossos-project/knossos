@@ -478,8 +478,8 @@ bool Knossos::initStates() {
    // creating the hashtables is cheap, keeping the datacubes is
    // memory expensive..
    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-       state->Dc2Pointer[static_cast<std::size_t>(std::log2(i))] = Hashtable::ht_new(state->cubeSetElements * 10);
-       state->Oc2Pointer[static_cast<std::size_t>(std::log2(i))] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
        if(i == 0) i = 1;
    }
 
@@ -846,7 +846,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
-                strcpy(state->magPaths[static_cast<std::size_t>(std::log2(currMag))], currPath);
+                strcpy(state->magPaths[int_log(currMag)], currPath);
 
                 /* the last 4 letters are "mag1" by convention; if not,
                  * K multires won't work */
@@ -860,7 +860,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                         strlen(datasetBaseExpName)-1);
                 state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
 
-                sprintf(state->magNames[static_cast<std::size_t>(std::log2(currMag))], "%smag%d", datasetBaseExpName, currMag);
+                sprintf(state->magNames[int_log(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
         LOG("Highest Mag: %d", state->highestAvailableMag);
@@ -923,8 +923,8 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         }
 
         /* the loader uses only magNames and magPaths */
-        strcpy(state->magNames[static_cast<std::size_t>(std::log2(state->magnification))], state->name);
-        strcpy(state->magPaths[static_cast<std::size_t>(std::log2(state->magnification))], state->path);
+        strcpy(state->magNames[int_log(state->magnification)], state->name);
+        strcpy(state->magPaths[int_log(state->magnification)], state->path);
 
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
