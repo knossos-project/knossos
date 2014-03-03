@@ -96,7 +96,8 @@ struct loadcube_thread_struct {
     int isBusy;
     C_Element *currentCube;
     Loader* thisPtr;
-    uint retVal;
+    bool retVal;
+    int threadCount;
 };
 
 class LoadCubeThread : public QThread

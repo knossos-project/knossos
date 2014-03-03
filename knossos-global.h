@@ -487,6 +487,7 @@ public:
     bool loaderBusy;
     // Should loader load real data or just dummy do-nothing
     bool loaderDummy;
+    int loaderDecompThreadsNumber;
 
     // If loadSignal is true and quitSignal is true, make the
     // loading thread quit. loadSignal == true means the loader

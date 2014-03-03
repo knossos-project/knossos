@@ -131,9 +131,15 @@ int main(int argc, char *argv[])
     glutInit(&argc, argv);
 #endif
     //Knossos::revisionCheck();
+#ifdef Q_OS_WIN
     char tempPath[MAX_PATH] = {0};
+    GetTempPathA(sizeof(tempPath), tempPath);
+    GetTempFileNameA(tempPath, "KNL", 0, logFilename);
+#endif
+#ifdef Q_OS_LINUX
     const char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
+#endif
 
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationDomain("MPI");
@@ -962,6 +968,7 @@ bool Knossos::configDefaults() {
     state->loadSignal = false;
     state->loaderBusy = false;
     state->loaderDummy = false;
+    state->loaderDecompThreadsNumber = QThread::idealThreadCount();
     state->remoteSignal = false;
     state->quitSignal = false;
     state->clientSignal = false;

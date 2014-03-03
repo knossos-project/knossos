@@ -106,7 +106,7 @@ void DatasetPropertyWidget::processButtonClicked() {
 
 void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     QString dir = this->path->currentText();
-    if(dir.isNull()) {
+    if(dir.isNull() || dir.isEmpty()) {
         if (isGUI) {
             QMessageBox info;
             info.setWindowFlags(Qt::WindowStaysOnTopHint);

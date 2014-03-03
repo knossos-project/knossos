@@ -285,12 +285,23 @@ void MainWindow:: createToolBar() {
     lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
     this->toolBar->addWidget(lockVPOrientationCheckbox);
 
+    loaderThreadsField = new QSpinBox();
+    loaderThreadsField->setMaximum(state->loaderDecompThreadsNumber);
+    loaderThreadsField->setMinimum(1);
+    loaderThreadsField->setMinimumWidth(75);
+    loaderThreadsField->clearFocus();
+    loaderThreadsField->setValue(state->loaderDecompThreadsNumber);
+    loaderThreadsLabel = new QLabel("<font color='black'>Decomp Threads</font>");
+    this->toolBar->addWidget(loaderThreadsLabel);
+    this->toolBar->addWidget(loaderThreadsField);
+
     connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
 
+    connect(loaderThreadsField, SIGNAL(editingFinished()), this, SLOT(loaderThreadsFieldChanged()));
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
@@ -1208,6 +1219,10 @@ void MainWindow::pasteClipboardCoordinates(){
     } else {
        LOG("Unable to fetch text from clipboard")
     }
+}
+
+void MainWindow::loaderThreadsFieldChanged() {
+    state->loaderDecompThreadsNumber = loaderThreadsField->value();
 }
 
 void MainWindow::coordinateEditingFinished() {

@@ -507,10 +507,12 @@ extern "C" {
 }
 
 void Loader::loadCube(loadcube_thread_struct *lts) {
-    int retVal = true;
+    bool retVal = true;
+    bool isPut = false;
     char *filename;
     FILE *cubeFile = NULL;
     size_t readBytes = 0;
+    Byte *currentDcSlot = NULL;
     //DWORD tickCount = GetTickCount();
 
     /*
@@ -524,8 +526,12 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
      */
 
     state->protectLoaderSlots->lock();
-    if (lts->thisPtr->freeDcSlots.empty()) {
-        state->protectLoaderSlots->unlock();
+    if (!lts->thisPtr->freeDcSlots.empty()) {
+        currentDcSlot = lts->thisPtr->freeDcSlots.front();
+        lts->thisPtr->freeDcSlots.remove(currentDcSlot);
+    }
+    state->protectLoaderSlots->unlock();
+    if (NULL == currentDcSlot) {
         LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
             lts->currentCube->coordinate.x,
             lts->currentCube->coordinate.y,
@@ -534,85 +540,82 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         retVal = false;
         goto loadcube_ret;
     }
-    {//FIXME this scope is only necessary because the goto above would skip the init of currentDcSlot
-        Byte * const currentDcSlot = lts->thisPtr->freeDcSlots.front();
-        state->protectLoaderSlots->unlock();
 
-        if (LM_FTP == state->loadMode) {
-            if (lts->currentCube->isAborted) {
-                retVal = false;
-                goto loadcube_ret;
-            }
-            if (lts->currentCube->hasError) {
-                goto loadcube_fail;
-            }
-        }
-
-        filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
-
-        if (state->compressionRatio > 0) {
-            if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
-                LOG("Decompression function failed!");
-                goto loadcube_fail;
-            }
-        }
-        else {
-            cubeFile = fopen(filename, "rb");
-
-            if(cubeFile == NULL) {
-                LOG("fopen failed for %s!", filename);
-                goto loadcube_fail;
-            }
-
-            readBytes = fread(currentDcSlot, 1, state->cubeBytes, cubeFile);
-            if(readBytes != state->cubeBytes) {
-                LOG("fread error!");
-                if(fclose(cubeFile) != 0) {
-                    LOG("Additionally, an error occured closing the file");
-                }
-                goto loadcube_fail;
-            } else {
-                fclose(cubeFile);
-            }
-        }
-
-        goto loadcube_manage;
-
-    loadcube_fail:
-        memcpy(currentDcSlot, lts->thisPtr->bogusDc, state->cubeBytes);
-
-    loadcube_manage:
-        /* Add pointers for the dc and oc (if at least one of them could be loaded)
-         * to the Cube2Pointer table.
-         *
-         */
-        if (!retVal) {
-            goto loadcube_ret;
-        }
-        state->protectCube2Pointer->lock();
-        if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot) != HT_SUCCESS) {
-            LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-                lts->currentCube->coordinate.x,
-                lts->currentCube->coordinate.y,
-                lts->currentCube->coordinate.z,
-                currentDcSlot,
-                state->loaderMagnification);
+    if (LM_FTP == state->loadMode) {
+        if (lts->currentCube->isAborted) {
             retVal = false;
-        }
-        state->protectCube2Pointer->unlock();
-        if (!retVal) {
             goto loadcube_ret;
         }
+        if (lts->currentCube->hasError) {
+            goto loadcube_fail;
+        }
+    }
 
-        /*
-         * Remove the slots
-         *
-         */
+    filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
+
+    if (state->compressionRatio > 0) {
+        if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
+            LOG("Decompression function failed!");
+            goto loadcube_fail;
+        }
+    }
+    else {
+        cubeFile = fopen(filename, "rb");
+
+        if(cubeFile == NULL) {
+            LOG("fopen failed for %s!", filename);
+            goto loadcube_fail;
+        }
+
+        readBytes = fread(currentDcSlot, 1, state->cubeBytes, cubeFile);
+        if(readBytes != state->cubeBytes) {
+            LOG("fread error!");
+            if(fclose(cubeFile) != 0) {
+                LOG("Additionally, an error occured closing the file");
+            }
+            goto loadcube_fail;
+        } else {
+            fclose(cubeFile);
+        }
+    }
+    goto loadcube_manage;
+
+loadcube_fail:
+    memcpy(currentDcSlot, lts->thisPtr->bogusDc, state->cubeBytes);
+
+loadcube_manage:
+    /* Add pointers for the dc and oc (if at least one of them could be loaded)
+     * to the Cube2Pointer table.
+     *
+     */
+    if (!retVal) {
+        goto loadcube_ret;
+    }
+    state->protectCube2Pointer->lock();
+    if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot) != HT_SUCCESS) {
+        LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
+            lts->currentCube->coordinate.x,
+            lts->currentCube->coordinate.y,
+            lts->currentCube->coordinate.z,
+            currentDcSlot,
+            state->loaderMagnification);
+        retVal = false;
+    }
+    else {
+        isPut = true;
+    }
+    state->protectCube2Pointer->unlock();
+    if (!retVal) {
+        goto loadcube_ret;
+    }
+
+loadcube_ret:
+    if ((NULL != currentDcSlot) && (false == isPut)) {
         state->protectLoaderSlots->lock();
-        lts->thisPtr->freeDcSlots.remove(currentDcSlot);
+        lts->thisPtr->freeDcSlots.push_front(currentDcSlot);
         state->protectLoaderSlots->unlock();
     }
-loadcube_ret:
+
     if (retVal) {
         //lts->decompTime = GetTickCount() - tickCount;
     }
@@ -767,26 +770,29 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
     return true;
 }
 
-#define DECOMP_THREAD_NUM (1)
+#define MAX_DECOMP_THREAD_NUM (64)
 uint Loader::loadCubes() {
-    C_Element *currentCube = NULL;
+    int decompThreads = state->loaderDecompThreadsNumber;
+
+    C_Element *currentCube = NULL, *prevCube = NULL, *decompedCube = NULL;
     uint loadedDc;
     FtpThread *ftpThread;
     ftp_thread_struct fts = {0};
-    loadcube_thread_struct lts_array[DECOMP_THREAD_NUM] = {0};
+    loadcube_thread_struct lts_array[MAX_DECOMP_THREAD_NUM] = {0};
     loadcube_thread_struct *lts_current;
     loadcube_thread_struct lts_empty = {0};
-    LoadCubeThread *threadHandle_array[DECOMP_THREAD_NUM] = {NULL};
-    QSemaphore *loadCubeThreadSem = new QSemaphore(DECOMP_THREAD_NUM);
+    LoadCubeThread *threadHandle_array[MAX_DECOMP_THREAD_NUM] = {NULL};
+    QSemaphore *loadCubeThreadSem = new QSemaphore(decompThreads);
     int hadError = false;
     int retVal = true;
-    int cubeCount = 0, loadedCubeCount = 0;
+    int cubeCount = 0, cubeCountFinished = 0, cubeCountDispatched = 0;
     int thread_index;
     int isBreak;
 
     for (currentCube = this->Dcoi->previous; currentCube != this->Dcoi; currentCube = currentCube->previous) {
         cubeCount++;
     }
+
     if (LM_FTP == state->loadMode) {
         fts.cubeCount = cubeCount;
         fts.ftpThreadSem = new QSemaphore(0);
@@ -799,12 +805,15 @@ uint Loader::loadCubes() {
     while (true) {
         // Wait on an available decompression thread
         loadCubeThreadSem->acquire();
-        for (thread_index = 0; (thread_index < DECOMP_THREAD_NUM) && lts_array[thread_index].isBusy; thread_index++);
-        if (DECOMP_THREAD_NUM == thread_index) {
+        for (thread_index = 0; (thread_index < decompThreads) && lts_array[thread_index].isBusy; thread_index++);
+        if (decompThreads == thread_index) {
             LOG("All threads occupied, c'est impossible! Au revoir loader!");
             retVal = false;
             break;
         }
+        // The following would only be called if all threads, except ONE that has just finished,
+        // were occupied by now. Otherwise, it could be that other non-busy threads were also
+        // available one of which would had been found by the "for" above
         if (NULL != threadHandle_array[thread_index]) {
             threadHandle_array[thread_index]->wait();
             //decompTime += lts_array[thread_index].decompTime;
@@ -812,11 +821,14 @@ uint Loader::loadCubes() {
             delete threadHandle_array[thread_index];
             threadHandle_array[thread_index] = NULL;
             lts_array[thread_index] = lts_empty;
-            loadedCubeCount++;
+            cubeCountFinished++;
             if (!loadedDc) {
                 retVal = false;
                 break;
             }
+        }
+        if (cubeCount == cubeCountFinished) {
+            break;
         }
 
         // We need to be able to cancel the loading when the
@@ -827,11 +839,8 @@ uint Loader::loadCubes() {
         isBreak = (state->datasetChangeSignal != NO_MAG_CHANGE) || (state->loadSignal == true) || (true == hadError);
         state->protectLoadSignal->unlock();
         if (isBreak) {
-            LOG("loadCubes Interrupted!");
+            //LOG("loadCubes Interrupted!");
             retVal = false;
-            break;
-        }
-        if (cubeCount == loadedCubeCount) {
             break;
         }
 
@@ -848,8 +857,7 @@ uint Loader::loadCubes() {
             }
         }
         if (this->Dcoi == currentCube) {
-            LOG("All cubes loaded, c'est impossible! Au revoir loader!");
-            retVal = false;
+            LOG("No more cubes to load, c'est impossible! Au revoird loader!");
             break;
         }
         /*
@@ -867,7 +875,12 @@ uint Loader::loadCubes() {
         lts_current->retVal = false;
         lts_current->thisPtr = this;
         threadHandle_array[thread_index] = new LoadCubeThread(lts_current);
-        threadHandle_array[thread_index]->start();
+        threadHandle_array[thread_index]->start(QThread::LowestPriority);
+
+        cubeCountDispatched++;
+        if (cubeCount == cubeCountDispatched) {
+            break;
+        }
     }
 
     if (LM_FTP == state->loadMode) {
@@ -877,14 +890,11 @@ uint Loader::loadCubes() {
         ftpThread = NULL;
         delete fts.ftpThreadSem; fts.ftpThreadSem = NULL;
         delete fts.loaderThreadSem; fts.loaderThreadSem = NULL;
-
-        if (true == retVal) {
-        }
     }
 
-    for (thread_index = 0; thread_index <  DECOMP_THREAD_NUM; thread_index++) {
+    for (thread_index = 0; thread_index <  decompThreads; thread_index++) {
         if (NULL != threadHandle_array[thread_index]) {
-            LOG("LOADER Decompression thread %d was open! Waiting...", thread_index);
+            //LOG("LOADER Decompression thread %d was open! Waiting...", thread_index);
             threadHandle_array[thread_index]->wait();
             delete threadHandle_array[thread_index];
             threadHandle_array[thread_index] = NULL;
@@ -894,6 +904,7 @@ uint Loader::loadCubes() {
 
     return retVal;
 }
+
 
 /**
   * @brief This method is used for the QThread loader declared in main knossos.cpp
@@ -1023,7 +1034,7 @@ bool Loader::load() {
 
     if (!state->loaderDummy) {
         if(loadCubes() == false) {
-            qDebug("Loading of all DCOI did not complete.");
+            //qDebug("Loading of all DCOI did not complete.");
         }
     }
     lll_rmlist(this->Dcoi);
