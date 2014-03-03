@@ -113,7 +113,7 @@ void NodeTable::keyPressEvent(QKeyEvent *event) {
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QWidget(parent), focusedTreeTable(NULL), focusedNodeTable(NULL),
-    draggedNodeID(0), radiusBuffer(state->skeletonState->defaultNodeRadius), displayedNodes(1000)
+    draggedNodeID(0), radiusBuffer(state->skeletonState->defaultNodeRadius), displayedNodes(1000), selectedNodes("selected nodes")
 {
     kState = state;
 
@@ -127,7 +127,6 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     treeRegExCheck->setToolTip("search by regular expression");
     nodeRegExCheck = new QCheckBox("RegEx");
     nodeRegExCheck->setToolTip("search by regular expression");
-    selectedNodes = new QRadioButton("selected nodes");
 
     nodesOfSelectedTreesRadio = new QRadioButton("nodes of selected trees");
     nodesOfSelectedTreesRadio->setToolTip("Select the tree(s) by single left click");
@@ -260,7 +259,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
     hLayout = new QHBoxLayout();    
     hLayout->addWidget(nodesOfSelectedTreesRadio);
-    hLayout->addWidget(selectedNodes);
+    hLayout->addWidget(&selectedNodes);
 
     vLayout->addLayout(hLayout);
     hLayout = new QHBoxLayout();
@@ -291,7 +290,8 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(nodeSearchField, SIGNAL(editingFinished()), this, SLOT(nodeSearchChanged()));
     // display events
     connect(allNodesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));    
+    connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
+    QObject::connect(&selectedNodes, &QRadioButton::clicked, this, &ToolsTreeviewTab::updateNodesTable);//special :D
 
     connect(branchNodesChckBx, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
     connect(commentNodesChckBx, SIGNAL(clicked()), this,SLOT(updateNodesTable()));
@@ -1514,7 +1514,13 @@ void ToolsTreeviewTab::updateNodesTable() {
                     continue;
                 }
             }
-
+            // filter for selected nodes
+            if (selectedNodes.isChecked()) {
+                if (node->selected == false) {
+                    node = node->next;
+                    continue;
+                }
+            }
             // filter for branch nodes
             if(branchNodesChckBx->isChecked()) {
                 if(node->isBranchNode == false) {
