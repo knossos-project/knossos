@@ -118,11 +118,11 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     kState = state;
 
     treeSearchField = new QLineEdit();
-    treeSearchField->setPlaceholderText("search tree");
-    treeSearchField->setFocusPolicy(Qt::NoFocus);
+    treeSearchField->setPlaceholderText("search tree");    
+    treeSearchField->setFocusPolicy(Qt::ClickFocus);
     nodeSearchField = new QLineEdit();
     nodeSearchField->setPlaceholderText("search node");
-    nodeSearchField->setFocusPolicy(Qt::NoFocus);
+    nodeSearchField->setFocusPolicy(Qt::ClickFocus);
     treeRegExCheck = new QCheckBox("RegEx");
     treeRegExCheck->setToolTip("search by regular expression");
     nodeRegExCheck = new QCheckBox("RegEx");
@@ -1470,9 +1470,8 @@ void ToolsTreeviewTab::updateTreesTable() {
     treeTable->setRowCount(treeIndex);
 }
 
-/** As the methods updateTreeTable and updateNodeTable are declared for the knossos skeleton this method only
-    considers nodes which are stores in the selectedNodes vector. Those nodes are inserted into the nodeTable and
-    the corresponding trees are inserted in the treeTable
+/** this method only considers nodes which are stored in the selectedNodes vector.
+    Those nodes are inserted into the nodeTable and the corresponding trees are inserted in the treeTable
 */
 void ToolsTreeviewTab::showSelectedTreesAndNodes() {
     qDebug() << "entered";
@@ -1489,6 +1488,7 @@ void ToolsTreeviewTab::showSelectedTreesAndNodes() {
     QTableWidgetItem *item;
     uint treeIndex = 0;
     uint nodeIndex = 0;
+
     foreach(const nodeListElement *node, state->skeletonState->selectedNodes) {
         item = new QTableWidgetItem(QString::number(node->nodeID));
         Qt::ItemFlags flags = item->flags();
@@ -1575,10 +1575,6 @@ void ToolsTreeviewTab::showSelectedTreesAndNodes() {
                 setText(treeTable, treeItem, QString(tree->comment));
             }
             treeTable->setItem(treeIndex, TREE_COMMENT, treeItem);
-
-
-
-
 
         }
 
