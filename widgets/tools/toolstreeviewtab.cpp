@@ -291,8 +291,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(nodeSearchField, SIGNAL(editingFinished()), this, SLOT(nodeSearchChanged()));
     // display events
     connect(allNodesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    connect(selectedNodes, SIGNAL(clicked()), this, SLOT(showSelectedTreesAndNodes()));
+    connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));    
 
     connect(branchNodesChckBx, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
     connect(commentNodesChckBx, SIGNAL(clicked()), this,SLOT(updateNodesTable()));
@@ -1470,122 +1469,6 @@ void ToolsTreeviewTab::updateTreesTable() {
     treeTable->setRowCount(treeIndex);
 }
 
-/** this method only considers nodes which are stored in the selectedNodes vector.
-    Those nodes are inserted into the nodeTable and the corresponding trees are inserted in the treeTable
-*/
-void ToolsTreeviewTab::showSelectedTreesAndNodes() {
-    qDebug() << "entered";
-    qDebug() << state->skeletonState->selectedNodes.size();
-    treeTable->changeByCode = true;
-    treeTable->clearContents();
-
-    nodeTable->changeByCode = true;
-    nodeTable->clearContents();
-
-    treeTable->setRowCount(state->skeletonState->selectedNodes.size());
-    nodeTable->setRowCount(state->skeletonState->selectedNodes.size());
-
-    QTableWidgetItem *item;
-    uint treeIndex = 0;
-    uint nodeIndex = 0;
-
-    foreach(const nodeListElement *node, state->skeletonState->selectedNodes) {
-        item = new QTableWidgetItem(QString::number(node->nodeID));
-        Qt::ItemFlags flags = item->flags();
-        flags &= ~Qt::ItemIsEditable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_ID, item);
-
-        item = new QTableWidgetItem();
-        if(node->comment) {
-            item->setText(QString(node->comment->content));
-        }
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_COMMENT, item);
-
-        item = new QTableWidgetItem(QString::number(node->position.x + 1));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_X, item);
-
-        item = new QTableWidgetItem(QString::number(node->position.y + 1));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_Y, item);
-
-        item = new QTableWidgetItem(QString::number(node->position.z + 1));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_Z, item);
-
-        item = new QTableWidgetItem(QString::number(node->radius));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        nodeTable->setItem(nodeIndex, NODE_RADIUS, item);
-
-
-        treeListElement *tree = node->correspondingTree;
-        if(!tree)
-            continue;
-        bool found = false;
-        treeIndex = 0;
-        for(int i = 0; i < treeTable->rowCount(); i++) {
-            QTableWidgetItem *searchItem = treeTable->item(i, TREE_ID);
-            if(searchItem) {
-                if(searchItem->text().toInt() == tree->treeID)
-                    found = true;
-                treeIndex += 1;
-
-            }
-        }
-
-        if(!found) {
-            // tree id
-            QTableWidgetItem *treeItem = new QTableWidgetItem(QString::number(tree->treeID));
-            Qt::ItemFlags flags = treeItem->flags();
-            flags |= Qt::ItemIsSelectable;
-            flags &= ~Qt::ItemIsEditable;
-            treeItem->setFlags(flags);
-            qDebug() << "before setItem";
-            treeTable->setItem(treeIndex, TREE_ID, treeItem);
-            qDebug() << "after setITem";
-
-            // tree color
-            QColor treeColor = QColor(tree->color.r*255,
-                                      tree->color.g*255,
-                                      tree->color.b*255,
-                                      0.6*255);
-            treeItem = new QTableWidgetItem();
-            flags = treeItem->flags();
-            flags &= ~Qt::ItemIsEditable;
-            treeItem->setFlags(flags);
-            treeItem->setBackgroundColor(treeColor);
-            treeTable->setItem(treeIndex, TREE_COLOR, treeItem);
-
-
-            // tree comment
-            treeItem = new QTableWidgetItem();
-            if(tree->comment) {
-                setText(treeTable, treeItem, QString(tree->comment));
-            }
-            treeTable->setItem(treeIndex, TREE_COMMENT, treeItem);
-
-        }
-
-        nodeIndex++;
-    }
-
-    treeTable->setRowCount(treeIndex);
-    emit updateToolsSignal();
-    return;
-}
-
 void ToolsTreeviewTab::updateNodesTable() {
     nodeTable->changeByCode = true;
     nodeTable->clearContents();
@@ -1716,7 +1599,7 @@ void ToolsTreeviewTab::treeActivated() {
 }
 
 void ToolsTreeviewTab::treeAdded(treeListElement *tree) {
-    if(tree == NULL or selectedNodes->isChecked()) {
+    if(tree == NULL) {
         return;
     }
     if(tree->treeID == state->skeletonState->activeTree->treeID) {
@@ -1833,7 +1716,7 @@ void ToolsTreeviewTab::nodeActivated() {
 }
 
 void ToolsTreeviewTab::nodeAdded() {
-    if(state->skeletonState->activeNode == NULL or selectedNodes->isChecked()) {
+    if(state->skeletonState->activeNode == NULL) {
         return;
     }
     nodeActivated();

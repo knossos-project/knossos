@@ -615,7 +615,7 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
 
     }
     state->viewerState->drawNodeSelectSquare = -1;
-    emit showSelectedTreesAndNodesSignal();
+
     return true;
 }
 
