@@ -17,3 +17,27 @@ segmentListElement *SegmentListDecorator::new_segmentListElement(int sourceID, i
 segmentListElement *SegmentListDecorator::new_segmentListElement(nodeListElement *source, nodeListElement *target) {
     return new segmentListElement(source, target);
 }
+
+nodeListElement *SegmentListDecorator::getSource(segmentListElement *self) {
+    return self->getSource();
+}
+
+void SegmentListDecorator::setSource(segmentListElement *self, nodeListElement *source) {
+    self->setSource(source);
+}
+
+nodeListElement *SegmentListDecorator::getTarget(segmentListElement *self) {
+    return self->getTarget();
+}
+
+void SegmentListDecorator::setTarget(segmentListElement *self, nodeListElement *target) {
+    self->setTarget(target);
+}
+
+void SegmentListDecorator::setSource(segmentListElement *self, int sourceID) {
+    self->setSource(sourceID);
+}
+
+void SegmentListDecorator::setTarget(segmentListElement *self, int targetID) {
+    self->setTarget(targetID);
+}

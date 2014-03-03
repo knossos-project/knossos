@@ -1039,7 +1039,8 @@ struct viewerState {
 };
 
 
-class treeListElement {
+class treeListElement : public QObject {
+    Q_OBJECT
 public:
     treeListElement();
     treeListElement(int treeID, Color color, QString comment);
@@ -1072,11 +1073,10 @@ public:
 
 };
 
-
 class nodeListElement  {
 public:
     nodeListElement();
-    nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time);
+    nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time, char *comment);
 
     nodeListElement *next;
     nodeListElement *previous;
@@ -1107,6 +1107,9 @@ public:
 
     int getNodeID();
     void setNodeID(int id);
+    void setComment(char *comment);
+    char *getComment();
+
     int getTime();
     void setTime(int time);
     float getRadius();
@@ -1124,7 +1127,7 @@ public:
     int getParentID();
     void addSegment(segmentListElement *segment);
     QList<segmentListElement *> *getSegments();
-
+    segmentListElement *getFirstSegment();
 };
 
 
@@ -1158,6 +1161,7 @@ public:
 
     void setSource(nodeListElement *source);
     void setTarget(nodeListElement *target);
+
     nodeListElement *getSource();
     nodeListElement *getTarget();
     void setSource(int sourceID);
@@ -1168,10 +1172,12 @@ public:
 
 };
 
-struct commentListElement {
+class commentListElement {
+public:
     commentListElement();
-    struct commentListElement *next;
-    struct commentListElement *previous;
+
+    commentListElement *next;
+    commentListElement *previous;
 
     char *content;
 
@@ -1386,9 +1392,11 @@ public slots:
     void addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
     void addNode(int nodeID , int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time);
     QList<treeListElement *> *getTrees();
-    void addTrees(QList<treeListElement *> list);
+    void addTrees(QList<treeListElement *> *list);
     bool deleteTree(int id);
     void deleteSkeleton();
+    void addSegment(nodeListElement *source, nodeListElement *target);
+
 
 };
 

@@ -14,7 +14,7 @@ signals:
     
 public slots:
     nodeListElement *new_nodeListElement();
-    nodeListElement *new_nodeListElement(int nodeID, int x, int, int z, float radius = 1.5, int inVp = 1, int inMag = 1, int time = 1);
+    nodeListElement *new_nodeListElement(int nodeID, int x, int, int z, float radius = 1.5, int inVp = 1, int inMag = 1, int time = 1, char *comment = 0);
     int getNodeID(nodeListElement *self);
     void setNodeID(nodeListElement *self, int nodeID);
     int getTime(nodeListElement *self);
@@ -33,6 +33,9 @@ public slots:
     void setParent(nodeListElement *self, treeListElement *parent);
     treeListElement *getParent(nodeListElement *self);
     int getParentID(nodeListElement *self);
+
+    void addSegment(nodeListElement *self, segmentListElement *segment);
+    QList<segmentListElement *> *getSegments(nodeListElement *self);
 };
 
 #endif // NODELISTDECORATOR_H

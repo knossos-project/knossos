@@ -10,8 +10,8 @@ nodeListElement *NodeListDecorator::new_nodeListElement() {
     return new nodeListElement();
 }
 
-nodeListElement *NodeListDecorator::new_nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time) {
-    return new nodeListElement(nodeID, radius, x, y, z, inVp, inMag, time);
+nodeListElement *NodeListDecorator::new_nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time, char *comment) {
+    return new nodeListElement(nodeID, radius, x, y, z, inVp, inMag, time, comment);
 }
 
 int NodeListDecorator::getNodeID(nodeListElement *self) {
@@ -84,4 +84,12 @@ treeListElement *NodeListDecorator::getParent(nodeListElement *self) {
 
 int NodeListDecorator::getParentID(nodeListElement *self) {
     return self->getParentID();
+}
+
+void NodeListDecorator::addSegment(nodeListElement *self, segmentListElement *segment) {
+    self->addSegment(segment);
+}
+
+QList<segmentListElement *> *NodeListDecorator::getSegments(nodeListElement *self) {
+    return self->getSegments();
 }

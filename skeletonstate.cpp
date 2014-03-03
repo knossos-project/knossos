@@ -1,7 +1,7 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 #include "functions.h"
-
+#include <PythonQt/PythonQt.h>
 extern stateInfo *state;
 
 
@@ -35,6 +35,7 @@ bool skeletonState::toXml(QString file) {
 
 void skeletonState::addTree(treeListElement *tree) {
     if(!tree) {
+
         qDebug() << "tree is NULL";
         return;
     }
@@ -204,10 +205,14 @@ QList<treeListElement *> *skeletonState::getTrees() {
 }
 
  // maybe a special case
-void skeletonState::addTrees(QList<treeListElement *> list) {
+void skeletonState::addTrees(QList<treeListElement *> *list)  {
+    if(!list) {
+        qDebug() << "list object is NULL";
+        return;
+    }
 
-    for(int i = 0; i < list.size(); i++) {
-        treeListElement *currentTree = list.at(i);
+    for(int i = 0; i < list->size(); i++) {
+        treeListElement *currentTree = list->at(i);
         if(currentTree and !checkTreeParameter(currentTree->treeID, currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a)) {
             return;
         }
@@ -219,10 +224,19 @@ void skeletonState::addTrees(QList<treeListElement *> list) {
         }
 
         nodeListElement *currentNode = theTree->firstNode;
-        while(currentNode) {
-            addNode(currentNode);
+        while(currentNode) {            
+           addNode(currentNode);
+
+           QList<segmentListElement *> *segments = currentNode->getSegments();
+           for(int i = 0; i < segments->size(); i++) {
+                segmentListElement *segment = segments->at(i);
+                addSegment(segment->source, segment->target);
+           }
+
+
             currentNode = currentNode->next;
         }
+
     }
 }
 
@@ -232,4 +246,12 @@ bool  skeletonState::deleteTree(int id) {
 
 void skeletonState::deleteSkeleton() {
     emit clearSkeletonSignal();
+}
+
+void skeletonState::addSegment(nodeListElement *source, nodeListElement *target) {
+    if(source and target) {
+        Skeletonizer::addSegment(CHANGE_MANUAL, source->nodeID, target->nodeID, false);
+    } else {
+        qDebug() << "source and target may not be NULL";
+    }
 }

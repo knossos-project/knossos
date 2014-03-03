@@ -110,7 +110,8 @@ SOURCES += openjpeg/cio.c \
     scriptengine/highlighter.cpp \
     pattern/observer/iobservable.cpp \
     pattern/observer/iobserver.cpp \
-    scriptengine/decorators/coordinatedecorator.cpp
+    scriptengine/decorators/coordinatedecorator.cpp \
+    commentListElement.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \

@@ -9,13 +9,14 @@ nodeListElement::nodeListElement() {
 
 }
 
-nodeListElement::nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time) {
+nodeListElement::nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time, char *comment) {
     this->setNodeID(nodeID);
     this->setRadius(radius);
     this->setCoordinate(x, y, z);
     this->setViewport(inVp);
     this->setMagnification(inMag);
     this->setTime(time);
+    this->setComment(comment);
 }
 
 
@@ -29,6 +30,19 @@ void nodeListElement::setNodeID(int id) {
 
 int nodeListElement::getNodeID() {
     return nodeID;
+}
+
+void nodeListElement::setComment(char *comment) {
+    if(!this->comment) {
+        this->comment = new commentListElement();
+        this->comment->content = comment;
+    }
+}
+
+char *nodeListElement::getComment() {
+    if(comment)
+        return this->comment->content;
+    return 0;
 }
 
 float nodeListElement::getRadius() {
@@ -149,3 +163,6 @@ QList<segmentListElement *> *nodeListElement::getSegments() {
     }
 }
 
+segmentListElement *nodeListElement::getFirstSegment() {
+    return firstSegment;
+}

@@ -573,7 +573,9 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             }
 
             state->protectCube2Pointer->lock();
+
             datacube = Hashtable::ht_get(state->Dc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
+
             overlayCube = Hashtable::ht_get(state->Oc2Pointer[Knossos::log2uint32(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 

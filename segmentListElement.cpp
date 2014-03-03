@@ -51,12 +51,20 @@ int segmentListElement::getSourceID() {
     return 0;
 }
 
+nodeListElement *segmentListElement::getSource() {
+    return this->source;
+}
+
 int segmentListElement::getTargetID() {
     if(this->target) {
         return this->target->getNodeID();
     } else {
         qDebug() << "no target is set, returning zero";
     }
+}
+
+nodeListElement *segmentListElement::getTarget() {
+    return this->target;
 }
 
 void segmentListElement::setSource(int sourceID) {

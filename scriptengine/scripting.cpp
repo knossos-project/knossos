@@ -3,6 +3,7 @@
 #include "decorators/skeletondecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
+#include "decorators/segmentlistdecorator.h"
 #include "highlighter.h"
 #include "knossos-global.h"
 
@@ -14,6 +15,17 @@ Scripting::Scripting(QObject *parent) :
 
 }
 
+void Scripting::addDoc() {
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+
+    ctx.evalScript("import knossos_python_api");
+    ctx.evalScript("knossos_python_api.__doc__ = 'this is the root module which has to be included for interacting between python and knossos'");
+
+    ctx.evalScript("from knossos_python_api import knossos");
+    ctx.evalScript("knossos.__doc__ = 'This module contains data structures'");
+    ctx.evalScript("knossos.treeListElement.__doc__ = 'A tree class which '");
+
+}
 
 
 void Scripting::run() {
@@ -22,11 +34,8 @@ void Scripting::run() {
     font.setPixelSize(12);
     //font.setBold(true);
 
-    PythonQt::init();
-
+    PythonQt::init(PythonQt::RedirectStdOut, QString("knossos_python_api").toLocal8Bit());
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-
-    //console = new NicePyConsole(0, ctx);
 
     console = new PythonQtScriptingConsole(NULL, ctx);
     console->setWindowTitle("Knossos Scripting Console");
@@ -40,7 +49,7 @@ void Scripting::run() {
 
     //ctx.addObject("skeleton", skeletonReference);
     //ctx.addObject("state", state);
-    ctx.addObject("Skeleton", state->skeletonState);
+    ctx.addObject("skeleton", state->skeletonState);
 
     //ctx.addObject("skeletonState");
 
@@ -48,19 +57,35 @@ void Scripting::run() {
     skeletonDecorator = new SkeletonDecorator();
     treeListDecorator = new TreeListDecorator();
     nodeListDecorator = new NodeListDecorator();
+    segmentListDecorator = new SegmentListDecorator();
+
+    PythonQtClassInfo info;
+    info.setMetaObject(treeListDecorator->metaObject());
+
+    PythonQt::init(PythonQt::RedirectStdOut, QString("knossos").toLocal8Bit());
 
     PythonQt::self()->addDecorators(colorDecorator);
     PythonQt::self()->registerCPPClass("Color", "", "knossos");
 
-    PythonQt::self()->addDecorators(skeletonDecorator);
-    PythonQt::self()->registerCPPClass("Skeleton", "", "knossos");
+
+    PythonQt::self()->addDecorators(segmentListDecorator);
+    PythonQt::self()->registerCPPClass("segmentListElement", "", "knossos");
 
     PythonQt::self()->addDecorators(treeListDecorator);
     PythonQt::self()->registerCPPClass("treeListElement", "", "knossos");
 
+
+
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
+    addDoc();
 
+    //
+
+    reflect(treeListDecorator);
+
+
+    //
 
     //ctx.add
     //ctx.addObject("CoordinateInstance", coordinateDecorator);
@@ -77,4 +102,16 @@ void Scripting::run() {
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
     //PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
     //ctx.addObject(name, obj);
+}
+
+void Scripting::reflect(QObject *obj) {
+    const QMetaObject *meta = obj->metaObject();
+
+    for(int i = 0; i < meta->methodCount(); i++) {
+        QMetaMethod method = meta->method(i);
+
+       qDebug() << method.methodSignature();
+    }
+
+
 }
