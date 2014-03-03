@@ -255,3 +255,238 @@ void skeletonState::addSegment(nodeListElement *source, nodeListElement *target)
         qDebug() << "source and target may not be NULL";
     }
 }
+
+PyObject *skeletonState::addNewSkeleton(PyObject *args) {
+    PyObject *newSkeleton;
+
+    if(!PyArg_Parse(args, "O", &newSkeleton)) {
+        qDebug() << "No object";
+        Py_RETURN_NONE;
+    }
+
+
+    PyObject *annotations;
+
+    if(PyObject_HasAttrString(newSkeleton, "annotations")) {
+        annotations = PyObject_GetAttrString(newSkeleton, "annotations");
+        qDebug() << "found attribute annotations";
+
+        if(!PySet_Check(annotations)) {
+            qDebug() << "attribute annotations is not from type set";
+            Py_RETURN_NONE;
+        } else {
+            qDebug() << "attribute annotations is from type set";
+        }
+
+        int size = PySet_Size(annotations);
+        qDebug() << "there are " << size << " entries in the set";
+
+        PyObject *iterator, *item;
+
+        iterator = PyObject_GetIter(annotations);
+        if(!iterator) {
+            qDebug() << "error getting iterator from annotations";
+            Py_RETURN_NONE;
+        }
+
+        PyObject *skeletonAnnotation;
+        PyObject *nodes;
+        while(item = PyIter_Next(iterator)) {
+            if(!PyArg_Parse(item , "O", &skeletonAnnotation)) {
+                qDebug() << "no object type skeletonAnnotation";
+                Py_RETURN_NONE;
+            }
+
+            nodes = PyObject_GetAttrString(skeletonAnnotation, "nodes");
+            if(!PySet_Check(nodes)) {
+                qDebug() << "attribute nodes in not from type set";
+                Py_RETURN_NONE;
+            } else {
+                qDebug() << "attributes nodes is from type set";
+            }
+
+            size = PySet_Size(nodes);
+            qDebug() << "there are" << size << "entries in the set";
+
+            iterator = PyObject_GetIter(nodes);
+            if(!iterator) {
+                qDebug() << "error getting iterator from nodes";
+            }
+
+            PyObject *skeletonNode;
+            PyObject *data;
+            while(item = PyIter_Next(iterator)) {
+                if(!PyArg_Parse(item, "O", &skeletonNode)) {
+                    qDebug() << "no object type SkeletonNode";
+                    Py_RETURN_NONE;
+                }
+
+                data = PyObject_GetAttrString(skeletonNode, "data");
+
+            }
+
+        }
+
+    } else {
+       qDebug() << "no attribute annotations";
+    }
+
+}
+
+void skeletonState::setIdleTime(uint idleTime) {
+    state->skeletonState->idleTime = idleTime;
+}
+
+void skeletonState::setSkeletonTime(uint skeletonTime) {
+    state->skeletonState->skeletonTime = skeletonTime;
+}
+
+void skeletonState::setEditPosition(int x, int y, int z) {
+    emit userMoveSignal(x, y, z, TELL_COORDINATE_CHANGE);
+}
+
+void skeletonState::setActiveNode(int id) {
+    Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, id);
+}
+
+void skeletonState::addComment(int nodeID, char *comment) {
+    nodeListElement *node = Skeletonizer::findNodeByNodeID(nodeID);
+    if(node) {
+        Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false);
+    }
+}
+
+void skeletonState::addBranchNode(int nodeID) {
+    nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(nodeID);
+    if(currentNode)
+        Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
+}
+
+/*
+void skeletonState::parseTree(PyObject *skeletonAnnotation) {
+    PyObject *nodes = PyObject_GetAttrString(skeletonAnnotation, "nodes");
+    if(!nodes) {
+        qDebug() << "no attribute nodes";
+    }
+
+    PyObject *set;
+    if(!PyArg_Parse(nodes, "O", &nodes)) {
+        qDebug() << "attribute node is no object";
+    }
+
+    if(!PySet_Check(set)) {
+        qDebug() << "attribute data is not from type set";
+    }
+
+    PyObject *iterator, *item;
+
+    iterator = PyObject_GetIter(set);
+    if(!iterator) {
+        qDebug() << "could not get the set iterator";
+    }
+
+    PyObject *skeletonNode;
+    while(item = PyIter_Next(iterator)) {
+        if(!PyArg_Parse(item, "O", &skeletonNode)) {
+            qDebug() << "no object type";
+        }
+
+        parseNode(skeletonNode);
+    }
+
+    Py_RETURN_NONE;
+
+}
+
+void skeletonState::parseNode(PyObject *skeletonNode) {
+    PyObject *data = PyObject_GetAttrString(skeletonNode, "data");
+
+    if(!data) {
+        qDebug() << "no attribute data";
+    }
+
+    PyObject *dictionary;
+    if(!PyArg_Parse(data, "O", &dictionary)) {
+        qDebug() << "attribute data is no object";
+    }
+
+    if(!PyDict_Check(dictionary)) {
+        qDebug() << "attribute data is not from type object dictionary";
+    }
+
+    float radius;
+    int x, y, z, id, inVp, inMag, time;
+
+    PyObject *result;
+    result = PyDict_GetItemString(dictionary, "id");
+    if(!PyArg_Parse(result, "i", &id)) {
+        qDebug() << "no value for x";
+    }
+
+    result = PyDict_GetItemString(dictionary, "radius");
+    if(!PyArg_Parse(result, "f", &radius)) {
+        qDebug() << "no value for radius";
+    }
+
+    result = PyDict_GetItemString(dictionary, "x");
+    if(!PyArg_Parse(result, "i", &x)) {
+        qDebug() << "no value for x";
+    }
+
+    result = PyDict_GetItemString(dictionary, "y");
+    if(!PyArg_Parse(result, "i", &y)) {
+        qDebug() << "no value for y";
+    }
+
+    result = PyDict_GetItemString(dictionary, "z");
+    if(!PyArg_Parse(result, "i", &z)) {
+        qDebug() << "no value for z";
+    }
+
+    result = PyDict_GetItemString(dictionary, "inMag");
+    if(!PyArg_Parse(result, "i", &inMag)) {
+        qDebug() << "no value for inMag";
+    }
+
+    result = PyDict_GetItemString(dictionary, "inVp");
+    if(!PyArg_Parse(result, "i", &inVp)) {
+        qDebug() << "no value for inVp";
+    }
+
+    result = PyDict_GetItemString(dictionary, "time");
+    if(!PyArg_Parse(result, "i", &time)) {
+        qDebug() << "no value for time";
+    }
+
+    qDebug() << "new node object with attributes: id=" << id << " radius=" << radius << " x=" << x << " y=" << y << " z=" << z;
+
+
+}
+
+void skeletonState::parseNewSkeleton(PyObject *args) {
+    PyObject *newSkeleton;
+
+    if(!PyArg_Parse(args, "O", &newSkeleton)) {
+        qDebug() << "No object";
+        Py_RETURN_NONE;
+    }
+
+    PyObject *annotations;
+
+    if(PyObject_HasAttrString(newSkeleton, "annotations")) {
+        annotations = PyObject_GetAttrString(newSkeleton, "annotations");
+        qDebug() << "found attribute annotations";
+
+        if(!PySet_Check(annotations)) {
+            qDebug() << "attribute annotations is not from type set";
+            Py_RETURN_NONE;
+        } else {
+            qDebug() << "attribute annotations is from type set";
+        }
+
+        parseNewSkeleton(annotations);
+
+     }
+
+}
+*/

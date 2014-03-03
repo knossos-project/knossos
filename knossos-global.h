@@ -33,7 +33,6 @@
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
 #include <curl/curl.h>
-
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
 #include <QtCore/qmutex.h>
@@ -43,6 +42,7 @@
 #include <QtNetwork/qhostaddress.h>
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
+#include <PythonQt/PythonQt.h>
 
 #define KVERSION "4.0"
 
@@ -1377,6 +1377,7 @@ signals:
     void nodeAddedSignal();
     void updateToolsSignal();
     void clearSkeletonSignal();
+    void userMoveSignal(int x, int y, int z, int serverMovement);
 public slots:
     int getSkeletonTime();
     bool hasUnsavedChanges();
@@ -1397,6 +1398,18 @@ public slots:
     void deleteSkeleton();
     void addSegment(nodeListElement *source, nodeListElement *target);
 
+    //
+    PyObject *addNewSkeleton(PyObject *args);
+    //void parseNewSkeleton(PyObject *newSkeleton);
+    //void parseTree(PyObject *skeletonAnnotation);
+    //void parseNode(PyObject *skeletonNode);
+    void setIdleTime(uint idleTime);
+    void setSkeletonTime(uint skeletonTime);
+    void setEditPosition(int x, int y, int z);
+    void setActiveNode(int id);
+
+    void addComment(int nodeID, char *comment);
+    void addBranchNode(int nodeID);
 
 };
 

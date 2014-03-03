@@ -267,6 +267,7 @@ linux {
             -lglut \
             -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
+            -L/usr/lib/i386-linux-gnu -lpython2.7 \
 
     INCLUDEPATH += /usr/include/GL/ \
             /usr/local/include/ \

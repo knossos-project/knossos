@@ -25,6 +25,21 @@ void Scripting::addDoc() {
     ctx.evalScript("knossos.__doc__ = 'This module contains data structures'");
     ctx.evalScript("knossos.treeListElement.__doc__ = 'A tree class which '");
 
+    ctx.evalScript("execfile('/home/amos/Schreibtisch/NewSkeletonTest.py')");
+
+
+
+    PythonQtObjectPtr obj = ctx.getVariable("skel");
+    PyObject *pobj = obj.object();
+    if(!pobj) {
+        qDebug() << "obj is null";
+    }
+
+    //if(!PyArg_Parse())
+
+
+
+
 }
 
 
@@ -80,7 +95,7 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("nodeListElement", "", "knossos");
     addDoc();
 
-    //
+
 
     reflect(treeListDecorator);
 
