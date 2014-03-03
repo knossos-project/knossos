@@ -1326,6 +1326,10 @@ void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
 }
 
 void ToolsTreeviewTab::activeNodeSelected() {
+    if (nodeTable->changeByCode) {
+        return;
+    }
+
     nodeTable->clearSelection();
     for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
         state->skeletonState->selectedNodes[i]->selected = false;
@@ -1341,6 +1345,10 @@ void ToolsTreeviewTab::activeNodeSelected() {
 }
 
 void ToolsTreeviewTab::nodeItemSelected() {
+    if (nodeTable->changeByCode) {
+        return;
+    }
+
     activeNodeTable->clearSelection();
 
     for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
@@ -1356,6 +1364,7 @@ void ToolsTreeviewTab::nodeItemSelected() {
             node->selected = true;
         }
     }
+    updateNodesTable();
 }
 void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem*) {
     if(state->skeletonState->selectedNodes.size() != 1) {
@@ -1472,6 +1481,7 @@ void ToolsTreeviewTab::updateTreesTable() {
 void ToolsTreeviewTab::updateNodesTable() {
     nodeTable->changeByCode = true;
     nodeTable->clearContents();
+    nodeTable->changeByCode = false;
 
     if(displayedNodes > state->skeletonState->totalNodeElements or displayedNodes == DISPLAY_ALL) {
         nodeTable->setRowCount(state->skeletonState->totalNodeElements);
@@ -1479,6 +1489,8 @@ void ToolsTreeviewTab::updateNodesTable() {
     else {
         nodeTable->setRowCount(displayedNodes);
     }
+
+    QItemSelection selectedItems = nodeTable->selectionModel()->selection();
 
     treeListElement *currentTree = state->skeletonState->firstTree;
     if(currentTree == NULL) {
@@ -1574,11 +1586,22 @@ void ToolsTreeviewTab::updateNodesTable() {
             item->setFlags(flags);
             nodeTable->setItem(nodeIndex, NODE_RADIUS, item);
 
+            if (node->selected) {
+                nodeTable->changeByCode = true;
+                nodeTable->selectRow(nodeIndex);
+                nodeTable->changeByCode = false;
+                selectedItems.merge(nodeTable->selectionModel()->selection(), QItemSelectionModel::Select);
+            }
+
             nodeIndex++;
             node = node->next;
         }
         currentTree = currentTree->next;
     }
+
+    nodeTable->changeByCode = true;
+    nodeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    nodeTable->changeByCode = false;
 
     // resize every column to size of content, to make them small,
     // omit comment column, because it might become large
@@ -1590,7 +1613,6 @@ void ToolsTreeviewTab::updateNodesTable() {
         nodeTable->setRowCount(nodeIndex);
     }
 
-    nodeTable->changeByCode = false;
     emit updateToolsSignal();
 }
 
@@ -1706,7 +1728,7 @@ void ToolsTreeviewTab::treeComponentSplit() {
     emit updateToolsSignal();
 }
 
-// update node table
+// update active node table
 void ToolsTreeviewTab::nodeActivated() {
     activeNodeTable->clearContents();
     if(state->skeletonState->activeNode == NULL) {
@@ -1717,6 +1739,15 @@ void ToolsTreeviewTab::nodeActivated() {
     }
     insertNode(state->skeletonState->activeNode, activeNodeTable);
     activeNodeTable->setRowCount(1);
+
+    // resize every column to size of content, to make them small,
+    // omit comment column, because it might become large
+    activeNodeTable->resizeColumnToContents(NODE_ID);
+    activeNodeTable->resizeColumnToContents(NODE_X);
+    activeNodeTable->resizeColumnToContents(NODE_Y);
+    activeNodeTable->resizeColumnToContents(NODE_Z);
+    activeNodeTable->resizeColumnToContents(NODE_RADIUS);
+
     treeActivated(); // update active tree table in case of tree switch
     emit updateToolsSignal();
 }
