@@ -2342,13 +2342,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 }
 
-                /* The first 50 entries of the openGL namespace are reserved
-                for static objects (like slice plane quads...) */
                 if(state->viewerState->selectModeFlag) {
-                    // the active node receives its name later, don't name it twice, or it will be selected twice.
-                    if(currentNode != state->skeletonState->activeNode) {
-                        glLoadName(currentNode->nodeID + 50);
-                    }
+                    glLoadName(GLNAME_NODEID_OFFSET + currentNode->nodeID);
                 }
 
                 /* Changes the current color & radius if the node has a comment */
@@ -2442,10 +2437,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         highlighting */
         Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
         currentColor.a = 0.2f;
-
-        if(state->viewerState->selectModeFlag) {
-            glLoadName(state->skeletonState->activeNode->nodeID + 50);
-        }
 
         if(state->skeletonState->overrideNodeRadiusBool)
             renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);

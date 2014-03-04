@@ -31,6 +31,9 @@
 class Viewport;
 class Renderer : public QObject {
     Q_OBJECT
+    /* The first 50 entries of the openGL namespace are reserved
+    for static objects (like slice plane quads...) */
+    const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
 public:
     explicit Renderer(QObject *parent = 0);
