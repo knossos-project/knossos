@@ -229,6 +229,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     nodeTable->setContextMenuPolicy(Qt::CustomContextMenu);
     nodeTable->setDragEnabled(true);
     nodeTable->setDragDropMode(QAbstractItemView::DragOnly);
+    nodeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
     createTreesContextMenu();
     createNodesContextMenu();
     createContextMenuDialogs();
