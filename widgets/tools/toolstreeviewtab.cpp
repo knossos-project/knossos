@@ -987,7 +987,7 @@ void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
             if(treeSearchField->text().isEmpty() == false) {
                 if(matchesSearchString(treeSearchField->text(),
                                        QString(activeTree->comment),
-                                       nodeRegExCheck->isChecked()) == false) { // new comment does not match search string
+                                       treeRegExCheck->isChecked()) == false) { // new comment does not match search string
                     for(int i = 0; i < treeTable->rowCount(); ++i) {
                         if(treeTable->item(i, TREE_ID)->text().toInt() == activeTree->treeID) {
                             treeTable->removeRow(i);
@@ -1038,7 +1038,7 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
             if(treeSearchField->text().isEmpty() == false) {
                 if(matchesSearchString(treeSearchField->text(),
                                        QString(selectedTree->comment),
-                                       nodeRegExCheck->isChecked()) == false) {
+                                       treeRegExCheck->isChecked()) == false) {
                     for(int i = 0; i < treeTable->rowCount(); ++i) {
                         if(treeTable->item(i, TREE_ID)->text().toInt() == selectedTree->treeID) {
                             treeTable->removeRow(i);
