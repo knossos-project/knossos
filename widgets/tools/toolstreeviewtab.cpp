@@ -346,7 +346,6 @@ void ToolsTreeviewTab::createNodesContextMenu() {
     nodeContextMenu->addAction("(Un)link nodes... ", this, SLOT(linkNodesAction()));
     nodeContextMenu->addAction("Split component from tree", this, SLOT(splitComponentAction()));
     nodeContextMenu->addAction(QIcon(":/images/icons/user-trash.png"), "delete node(s)", this, SLOT(deleteNodesAction()));
-
 }
 
 void ToolsTreeviewTab::createContextMenuDialogs() {
@@ -1327,14 +1326,8 @@ void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
 }
 
 void ToolsTreeviewTab::activeNodeSelected() {
-    if (nodeTable->changeByCode) {
-        return;
-    }
-
     nodeTable->clearSelection();
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
+
     for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
         state->skeletonState->selectedNodes[i]->selected = false;
     }
@@ -1367,6 +1360,7 @@ void ToolsTreeviewTab::nodeItemSelected() {
     }
     updateNodesTable();
 }
+
 void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem*) {
     if(state->skeletonState->selectedNodes.size() != 1) {
         return;
@@ -1935,6 +1929,10 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
                 // node not in one of the selected trees
                 return;
             }
+        }
+        //filter selected nodes
+        if (selectedNodes.isChecked() && node->selected == false) {
+            return;
         }
         // filter for branch nodes
         if(branchNodesChckBx->isChecked()) {
