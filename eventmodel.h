@@ -82,6 +82,7 @@ signals:
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
     void updateViewerStateSignal();
+    void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
     void workModeAddSignal();

@@ -25,8 +25,14 @@ void Scripting::addDoc() {
     ctx.evalScript("knossos.__doc__ = 'This module contains data structures'");
     ctx.evalScript("knossos.treeListElement.__doc__ = 'A tree class which '");
 
-    ctx.evalScript("execfile('/home/amos/Schreibtisch/NewSkeletonTest.py')");
+    //ctx.evalScript("execfile('/home/amos/Schreibtisch/NewSkeletonTest.py')");
+    ctx.evalScript("import sys");
+    ctx.evalScript("sys.path.append('/home/amos/PyFi')");
+    //ctx.evalScript("execfile('/home/amos/Projects/skeleton-analysis/NewSkeleton.py')");
+    //ctx.evalScript("execfile('/home/amos/Projects/skeleton-analysis/adapter.py')");
+    //ctx.evalScript("execfile('/home/amos/Projects/skeleton-analysis/small_test.py')");
 
+    //ctx.evalFile("/home/amos/PyFi/small_test.py");
 
 
     PythonQtObjectPtr obj = ctx.getVariable("skel");

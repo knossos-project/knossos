@@ -253,10 +253,10 @@ mac {
                    /usr/include
     LIBS += -framework Python \
             -framework GLUT \
-            -lPythonQt \
+            -L$(QTDIR)/lib -lPythonQt \
             -lcurl
 
-    ICON += Knossos.icns
+    #ICON += Knossos.icns
 }
 
 linux {

@@ -207,8 +207,8 @@ void ViewportSettingsWidget::loadSettings() {
 
 
     if(!settings.value(DATASET_LUT_FILE).toString().isEmpty()) {
-        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());        
-        this->slicePlaneViewportWidget->loadDatasetLUT();        
+        this->slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE).toString());
+        this->slicePlaneViewportWidget->loadDatasetLUT();
     }
 
     if(settings.value(DATASET_LUT_FILE_USED).isNull() == false) {
@@ -219,7 +219,7 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(!settings.value(TREE_LUT_FILE).toString().isEmpty()) {
         this->slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE).toString());
-        this->slicePlaneViewportWidget->loadTreeLUT();       
+        this->slicePlaneViewportWidget->loadTreeLUT();
     }
 
     if(!settings.value(TREE_LUT_FILE_USED).isNull()) {

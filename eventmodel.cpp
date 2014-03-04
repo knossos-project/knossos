@@ -586,6 +586,7 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                     selectedNode->selected = false;
                     state->skeletonState->selectedNodes.erase(iter);
                 }
+                emit updateTreeviewSignal();
                 return true;
             }
             return false; // no selected node, do nothing
@@ -612,9 +613,10 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                                                        minY + (maxY - minY)/2,
                                                        maxX - minX,
                                                        maxY - minY);
-
+        emit updateTreeviewSignal();
     }
     state->viewerState->drawNodeSelectSquare = -1;
+
     return true;
 }
 

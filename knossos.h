@@ -31,10 +31,16 @@
 
 #include "widgets/mainwindow.h"
 
+class Splash {
+    QSplashScreen screen;
+    QTimer timer;
+public:
+    Splash(const QString & img_filename, const int timeout_msec);
+};
+
 class Knossos : public QObject {
     Q_OBJECT
 public:
-
     explicit Knossos(QObject *parent = 0);
     bool stripNewlines(char *string);
     static bool readConfigFile(const char *path);
@@ -55,21 +61,18 @@ public:
     static bool sendClientSignal();
     static bool sendQuitSignal();
     static bool sendServerSignal();
-    static uint log2uint32(register uint x);
-    static uint ones32(register uint x);
     static void loadStyleSheet();
     void loadDefaultTreeLUT();
-    static void showSplashScreen();
 
 signals:
     void calcDisplayedEdgeLengthSignal();
     void treeColorAdjustmentChangedSignal();
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void lockDatasetMag(bool lock);
+
 public slots:
     void loadTreeLUTFallback();
     void startLoader();
-
 };
 
 extern std::unique_ptr<Knossos> knossos;

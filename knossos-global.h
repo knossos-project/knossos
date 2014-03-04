@@ -32,6 +32,8 @@
 #define KNOSSOS_GLOBAL_H
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
+#include <cmath>
+
 #include <curl/curl.h>
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
@@ -106,7 +108,6 @@ values. The XY vp always used. */
 #define VIEWPORT_ORTHO 0
 // default position of xy viewport and default viewport size
 #define DEFAULT_VP_MARGIN 5
-#define DEFAULT_VP_Y_OFFSET 60 //distance from the top of the mainwindow
 #define DEFAULT_VP_SIZE 350
 
 // skeleton vp orientation
@@ -307,13 +308,21 @@ class commentListElement;
 //Structures and custom types
 typedef uint8_t Byte;
 
-typedef struct {
-        float x;
-        float y;
-        float z;
-} floatCoordinate;
+//custom tail recursive constexpr log implementation
+//required for the following array declarations/accesses: (because std::log2 isn’t required to be constexpr yet)
+//  magPaths, magNames, magBoundaries, Dc2Pointer, Oc2Pointer
+//TODO to be removed when the above mentioned variables vanish
+//integral return value for castless use in subscripts
+template<typename T>
+constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t res = 0) {
+    return val < base ? res : int_log(val/base, base, res+1);
+}
 
-
+struct floatCoordinate {
+    float x;
+    float y;
+    float z;
+};
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 class Coordinate{
@@ -392,15 +401,13 @@ typedef struct {
 //   next element if that element has the same key as the current element and is
 //   NULL else.
 
-struct _C2D_Element {
+struct C2D_Element {
         Coordinate coordinate;
         Byte *datacube;
-        struct _C2D_Element *previous;
-        struct _C2D_Element *next;
-        struct _C2D_Element *ht_next;
+        C2D_Element *previous;
+        C2D_Element *next;
+        C2D_Element *ht_next;
 };
-
-typedef struct _C2D_Element C2D_Element;
 
 // This structure defines a hash table. It is passed to various functions
 // along with some other parameters to perform actions on a specific hash
@@ -495,6 +502,7 @@ struct stateInfo {
     bool loaderBusy;
     // Should loader load real data or just dummy do-nothing
     bool loaderDummy;
+    int loaderDecompThreadsNumber;
 
     // If loadSignal is true and quitSignal is true, make the
     // loading thread quit. loadSignal == true means the loader
@@ -516,12 +524,12 @@ struct stateInfo {
     char path[1024];
     char loaderPath[1024];
     // Paths to all available datasets of the 3-D image pyramid
-    char magPaths[NUM_MAG_DATASETS][1024];
+    char magPaths[int_log(NUM_MAG_DATASETS)+1][1024];
 
     // Current dataset identifier string
     char name[1024];
     char loaderName[1024];
-    char magNames[NUM_MAG_DATASETS][1024];
+    char magNames[int_log(NUM_MAG_DATASETS)+1][1024];
 
     char datasetBaseExpName[1024];
 
@@ -565,7 +573,7 @@ struct stateInfo {
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
     //Coordinate loaderBoundary;
-    Coordinate *magBoundaries[NUM_MAG_DATASETS];
+    Coordinate *magBoundaries[int_log(NUM_MAG_DATASETS)+1];
 
     // pixel-to-nanometer scale
     floatCoordinate scale;
@@ -661,8 +669,8 @@ struct stateInfo {
     // It is a set of key (cube coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
-    Hashtable *Dc2Pointer[NUM_MAG_DATASETS];
-    Hashtable *Oc2Pointer[NUM_MAG_DATASETS];
+    Hashtable *Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
+    Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
     struct Viewer *viewer;
@@ -1385,6 +1393,7 @@ public slots:
     QString getSkeletonFile();
     bool toXml(QString file);
     bool fromXml(QString file);
+    void addTree(int treeID, char *comment);
     void addTree(int treeID, Color color, QString comment);
     void addTree(treeListElement *tree);
     void addTree(int treeID, float r, float g, float b, float a, QString comment);
@@ -1396,7 +1405,8 @@ public slots:
     void addTrees(QList<treeListElement *> *list);
     bool deleteTree(int id);
     void deleteSkeleton();
-    void addSegment(nodeListElement *source, nodeListElement *target);
+    void addSegment(int sourceID, int targetID);
+
 
     //
     PyObject *addNewSkeleton(PyObject *args);

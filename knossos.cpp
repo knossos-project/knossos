@@ -21,6 +21,8 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include <cmath>
+
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
 #include <QTest>
@@ -113,6 +115,13 @@ class myEventFilter: public QObject
   }
 };
 
+Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
+    screen.show();
+    //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
+    QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
+    timer.start(timeout_msec);
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
@@ -122,9 +131,15 @@ int main(int argc, char *argv[])
     glutInit(&argc, argv);
 #endif
     //Knossos::revisionCheck();
+#ifdef Q_OS_WIN
     char tempPath[MAX_PATH] = {0};
+    GetTempPathA(sizeof(tempPath), tempPath);
+    GetTempFileNameA(tempPath, "KNL", 0, logFilename);
+#endif
+#ifdef Q_OS_LINUX
     const char *file = "/Users/amos/log.txt";
     strcpy(logFilename, file);
+#endif
 
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationDomain("MPI");
@@ -132,7 +147,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Knossos::showSplashScreen();
+    Splash splash(":/images/splash.png", 1500);
     knossos.reset(new Knossos);
 
 
@@ -469,41 +484,13 @@ bool Knossos::initStates() {
    // creating the hashtables is cheap, keeping the datacubes is
    // memory expensive..
    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-       state->Dc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       state->Oc2Pointer[Knossos::log2uint32(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+       state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
        if(i == 0) i = 1;
    }
 
    return commonInitStates();
 
-}
-
-
-/* http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer */
-uint Knossos::ones32(register uint x) {
-        /* 32-bit recursive reduction using SWAR...
-       but first step is mapping 2-bit values
-       into sum of 2 1-bit values in sneaky way
-    */
-        x -= ((x >> 1) & 0x55555555);
-        x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
-        x = (((x >> 4) + x) & 0x0f0f0f0f);
-        x += (x >> 8);
-        x += (x >> 16);
-        return(x & 0x0000003f);
-}
-
-
-/* copied from http://aggregate.org/MAGIC/#Log2%20of%20an%20Integer;  */
-uint Knossos::log2uint32(register uint x) {
-
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-
-    return(ones32(x >> 1));
 }
 
 bool Knossos::lockSkeleton(uint targetRevision) {
@@ -865,7 +852,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
 
                 /* add dataset path to magPaths; magPaths is used by the loader */
 
-                strcpy(state->magPaths[log2uint32(currMag)], currPath);
+                strcpy(state->magPaths[int_log(currMag)], currPath);
 
                 /* the last 4 letters are "mag1" by convention; if not,
                  * K multires won't work */
@@ -879,7 +866,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
                         strlen(datasetBaseExpName)-1);
                 state->datasetBaseExpName[strlen(datasetBaseExpName)-1] = '\0';
 
-                sprintf(state->magNames[log2uint32(currMag)], "%smag%d", datasetBaseExpName, currMag);
+                sprintf(state->magNames[int_log(currMag)], "%smag%d", datasetBaseExpName, currMag);
             } else break;
         }
         LOG("Highest Mag: %d", state->highestAvailableMag);
@@ -942,8 +929,8 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         }
 
         /* the loader uses only magNames and magPaths */
-        strcpy(state->magNames[log2uint32(state->magnification)], state->name);
-        strcpy(state->magPaths[log2uint32(state->magnification)], state->path);
+        strcpy(state->magNames[int_log(state->magnification)], state->name);
+        strcpy(state->magPaths[int_log(state->magnification)], state->path);
 
         state->lowestAvailableMag = state->magnification;
         state->highestAvailableMag = state->magnification;
@@ -981,6 +968,7 @@ bool Knossos::configDefaults() {
     state->loadSignal = false;
     state->loaderBusy = false;
     state->loaderDummy = false;
+    state->loaderDecompThreadsNumber = QThread::idealThreadCount();
     state->remoteSignal = false;
     state->quitSignal = false;
     state->clientSignal = false;
@@ -1354,16 +1342,4 @@ void Knossos::loadStyleSheet() {
     qApp->setStyleSheet(design);
     file.close();
 
-}
-
-void Knossos::showSplashScreen() {
-    QSplashScreen screen(QPixmap(":/images/splash.png"), Qt::WindowStaysOnTopHint);
-    screen.show();
-
-    QTime time;
-    time.start();
-    while(time.elapsed() < 1000) {
-    }
-
-    screen.close();
 }

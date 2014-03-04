@@ -61,6 +61,12 @@ void skeletonState::addTree(treeListElement *tree) {
     }
  }
 
+void skeletonState::addTree(int treeID, char *comment) {
+
+    Color color;
+    addTree(treeID, color, QString(comment));
+}
+
 void skeletonState::addTree(int treeID, Color color, QString comment) {
     if(!checkTreeParameter(treeID, color.r, color.g, color.b, color.a)) {
         qDebug() << "one of the arguments is in negative range";
@@ -148,6 +154,7 @@ void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int i
     coordinate.y = y;
     coordinate.z = z;
 
+
     if(Skeletonizer::addNode(CHANGE_MANUAL, nodeID, radius, activeID, &coordinate, inVp, inMag, time, false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, nodeID);
         emit nodeAddedSignal();
@@ -230,7 +237,7 @@ void skeletonState::addTrees(QList<treeListElement *> *list)  {
            QList<segmentListElement *> *segments = currentNode->getSegments();
            for(int i = 0; i < segments->size(); i++) {
                 segmentListElement *segment = segments->at(i);
-                addSegment(segment->source, segment->target);
+                addSegment(segment->source->nodeID, segment->target->nodeID);
            }
 
 
@@ -248,12 +255,10 @@ void skeletonState::deleteSkeleton() {
     emit clearSkeletonSignal();
 }
 
-void skeletonState::addSegment(nodeListElement *source, nodeListElement *target) {
-    if(source and target) {
-        Skeletonizer::addSegment(CHANGE_MANUAL, source->nodeID, target->nodeID, false);
-    } else {
-        qDebug() << "source and target may not be NULL";
-    }
+
+
+void skeletonState::addSegment(int sourceID, int targetID) {
+    Skeletonizer::addSegment(CHANGE_MANUAL, sourceID, targetID, false);
 }
 
 PyObject *skeletonState::addNewSkeleton(PyObject *args) {
