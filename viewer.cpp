@@ -1949,8 +1949,6 @@ void Viewer::rewire() {
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
     // end viewer signals
-    // renderer signals
-    connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     // skeletonizer signals
     //connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));

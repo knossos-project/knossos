@@ -1865,34 +1865,22 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
 }
 
 void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height) {
-    int i;
-    /* 8192 is really arbitrary. It should be a value dependent on the
-    number of nodes / segments */
-    GLuint selectionBuffer[8192] = {0};
-    GLint hits, openGLviewport[4];
-    GLuint names, *ptr, minZ, *ptrName;
-    ptrName = NULL;
-
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_XZ) {
         refVPXZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_YZ) {
         refVPYZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_SKELETON) {
         refVPSkel->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     }
 
-   // glGetIntegerv(GL_VIEWPORT, openGLviewport);
-
-    glSelectBuffer(8192, selectionBuffer);
+    //4 elems per node: hit_count(always 1), min, max and 1 name
+    //generous amount of addional space for non-node-glloadname-calls
+    std::vector<GLuint> selectionBuffer(state->skeletonState->totalNodeElements * (4 + 1));
+    glSelectBuffer(selectionBuffer.size()/sizeof(selectionBuffer[0]), selectionBuffer.data());
 
     state->viewerState->selectModeFlag = true;
-
     glRenderMode(GL_SELECT);
 
     glInitNames();
@@ -1901,14 +1889,23 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if(currentVP == VIEWPORT_XY)
-        gluPickMatrix(x, refVPXY->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_XZ)
-        gluPickMatrix(x, refVPXZ->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_YZ)
-        gluPickMatrix(x, refVPYZ->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_SKELETON)
-       gluPickMatrix(x, this->refVPSkel->height() - y, width, height, openGLviewport);
+    GLdouble vp_height = refVPSkel->height();
+
+    if(currentVP == VIEWPORT_XY) {
+        vp_height = refVPXY->height();
+    } else if(currentVP == VIEWPORT_XZ) {
+        vp_height = refVPXZ->height();
+    } else if(currentVP == VIEWPORT_YZ) {
+        vp_height = refVPYZ->height();
+    }
+
+    const GLdouble center_x = x + width/2;
+    const GLdouble center_y = vp_height - (y + height/2);//window y top→bottom, ogl y bottom→top
+
+    GLint openGLviewport[4];
+    glGetIntegerv(GL_VIEWPORT, openGLviewport);
+
+    gluPickMatrix(center_x, center_y, width, height, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
@@ -1917,30 +1914,33 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
         renderOrthogonalVP(currentVP);
     }
 
-    hits = glRenderMode(GL_RENDER);
+    GLint hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
-    ptr = (GLuint *)selectionBuffer;
+    qDebug() << "hits: " << hits;
+    for (std::size_t i = 0; i < selectionBuffer.size()/sizeof(selectionBuffer[0]);) {
+        if (hits == 0) {//if hits was positive and reaches 0
+            //if overflow bit was set hits is negative and we only use the buffer-end-condition
+            break;
+        }
+        --hits;
 
-    minZ = 0xffffffff;
-
-    if(hits == -1) { // overflow tag has been set.
-        hits = 8192;
-    }
-    struct nodeListElement *foundNode;
-    for(i = 0; i < hits; i++) {
-        names = *ptr;
-        ptr++;
-        if(*(ptr + 2) >= 50)  {
-            minZ = *ptr;
-            ptrName = ptr + 2;
-            foundNode = findNodeByNodeIDSignal(*ptrName - 50);
-            if(foundNode) {
-                foundNode->selected = true;
-                state->skeletonState->selectedNodes.push_back(foundNode);
+        const GLuint hit_count = selectionBuffer[i];
+        //const GLuint min_z = selectionBuffer[i+1];
+        //const GLuint max_z = selectionBuffer[i+2];
+        //qDebug() << "hit: " << hit_count;// << " " << min_z << " " << max_z;
+        if (hit_count > 0) {
+            const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
+            //qDebug() << "hit name: " << name;
+            if (name >= GLNAME_NODEID_OFFSET) {
+                nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
+                if (foundNode) {
+                    foundNode->selected = true;
+                    state->skeletonState->selectedNodes.push_back(foundNode);
+                }
             }
         }
-        ptr += names + 2;
+        i = i + 3 + hit_count;
     }
     state->viewerState->selectModeFlag = false;
 }
