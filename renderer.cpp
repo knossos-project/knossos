@@ -392,31 +392,31 @@ uint Renderer::renderViewportBorders(uint currentVP) {
                       state->viewerState->vpConfigs[currentVP].n.x, 1.);
         break;
     }
-    glLineWidth(3.);
+    glLineWidth(2.);
     glBegin(GL_LINES);
-        glVertex3d(2, 1, -1);
+        glVertex3d(1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
-        glVertex3d(2, 1, -1);
+        glVertex3d(1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(1, 1, -1);
     glEnd();
 
     if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
         // Draw an orange border to highlight the viewport.
 
         glColor4f(1., 0.3, 0., 1.);
-        glBegin(GL_LINES);
-            glVertex3d(5, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
-            glVertex3d(5, 4, -1);
+        glBegin(GL_LINE_LOOP);
+            glVertex3f(3, 3, -1);
+            glVertex3f(state->viewerState->vpConfigs[currentVP].edgeLength - 3, 3, -1);
+            //glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 3, 3, -1);
+            glVertex3f(state->viewerState->vpConfigs[currentVP].edgeLength - 3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            //glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 3, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
+            //glVertex3d(3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            glVertex3f(3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            //glVertex3d(3, 3, -1);
         glEnd();
     }
 
@@ -430,17 +430,17 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glLineWidth(1.);
         glBegin(GL_QUADS);
         glColor4f(0, 1., 0, 0.2);
-            glVertex3f(leftUpper.x, leftUpper.y, 0);
-            glVertex3f(leftUpper.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
+            glVertex3f(leftUpper.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
         glBegin(GL_LINE_LOOP);
         glColor4f(0, 1., 0, 1);
-            glVertex3f(leftUpper.x, leftUpper.y, 0);
-            glVertex3f(leftUpper.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
+            glVertex3f(leftUpper.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
         glDisable(GL_BLEND);
     }
