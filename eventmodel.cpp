@@ -1294,15 +1294,14 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             prompt.addButton("No", QMessageBox::ActionRole);
             prompt.exec();
             if(prompt.clickedButton() == confirmButton) {
-                emit deleteSelectedNodesSignal();
-                emit nodesDeletedSignal();
-                state->skeletonState->selectedNodes.clear();
+                emit deleteSelectedNodesSignal();//skeletonizer
+                emit updateTreeviewSignal();//annotation->treeview
             }
         }
         else {
             if(state->skeletonState->activeNode) {
-                emit deleteActiveNodeSignal();
-                emit nodesDeletedSignal();
+                emit deleteActiveNodeSignal();//skeletonizer
+                emit updateTreeviewSignal();//annotation->treeview
             }
         }
     }

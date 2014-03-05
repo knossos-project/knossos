@@ -1967,8 +1967,6 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
-    connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
-    QObject::connect(eventModel, &EventModel::nodesDeletedSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),

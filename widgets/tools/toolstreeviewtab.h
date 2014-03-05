@@ -51,7 +51,6 @@ protected:
     void focusInEvent(QFocusEvent *);
 signals:
     void deleteNodesSignal();
-    void nodesDeletedSignal(QModelIndexList selected);
     void updateNodesTable();
     void focused(NodeTable *table);
 public slots:
@@ -207,7 +206,6 @@ public slots:
     // update node table
     void nodeActivated();
     void nodeAdded();
-    void nodesDeleted();
     void branchPushed();
     void branchPopped();
     void nodeCommentChanged(nodeListElement *node);
@@ -216,7 +214,6 @@ public slots:
     void updateTreesTable();    
     void updateNodesTable();
     void update();
-    
 };
 
 #endif // TREEVIEWTAB_H

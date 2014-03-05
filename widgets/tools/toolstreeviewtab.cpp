@@ -660,7 +660,7 @@ void ToolsTreeviewTab::deleteNodesAction() {
         prompt.exec();
         if(prompt.clickedButton() == confirmButton) {
             emit delActiveNodeSignal();
-            nodesDeleted(); // No need to send list of deleted nodes. It is the active node
+            updateNodesTable();
         }
         return;
     }
@@ -677,8 +677,8 @@ void ToolsTreeviewTab::deleteNodesAction() {
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
     if(prompt.clickedButton() == confirmButton) {
-        emit deleteSelectedNodesSignal();
-        nodesDeleted();
+        emit deleteSelectedNodesSignal();//skeletonizer
+        updateNodesTable();
     }
     for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
         state->skeletonState->selectedNodes[i]->selected = false;
@@ -1754,34 +1754,6 @@ void ToolsTreeviewTab::nodeAdded() {
     }
     nodeActivated();
     insertNode(state->skeletonState->activeNode, nodeTable);
-    emit updateToolsSignal();
-}
-
-void ToolsTreeviewTab::nodesDeleted() {
-    if(focusedNodeTable == activeNodeTable) {
-        int activeID = activeNodeTable->item(0, NODE_ID)->text().toInt(); // to delete from nodeTable
-        nodeActivated(); // a new node might be active now
-        for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if(nodeTable->item(i, NODE_ID)->text().toInt() == activeID) {
-                nodeTable->removeRow(i);
-                break;
-            }
-        }
-        return;
-    }
-    // nodes have to be deleted in reverse order or the row numbers will shift
-    for(int i = nodeTable->rowCount() - 1; i >= 0; --i) {
-        int nodeID = nodeTable->item(i, NODE_ID)->text().toInt();
-        if(Skeletonizer::findNodeByNodeID(nodeID) == NULL) {
-            nodeTable->removeRow(i);
-        }
-    }
-
-    // update active node table, if active node was deleted
-    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == nullptr) {
-        nodeActivated(); // also activates tree
-    }
-    state->skeletonState->selectedNodes.clear();
     emit updateToolsSignal();
 }
 
