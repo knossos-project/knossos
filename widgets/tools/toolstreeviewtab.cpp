@@ -1583,9 +1583,9 @@ void ToolsTreeviewTab::updateNodesTable() {
 
             if (node->selected) {
                 nodeTable->changeByCode = true;
-                nodeTable->selectRow(nodeIndex);
+                nodeTable->setCurrentCell(nodeIndex, 0);
                 nodeTable->changeByCode = false;
-                selectedItems.merge(nodeTable->selectionModel()->selection(), QItemSelectionModel::Select);
+                selectedItems.select(nodeTable->currentIndex(), nodeTable->currentIndex());
             }
 
             nodeIndex++;
@@ -1595,6 +1595,7 @@ void ToolsTreeviewTab::updateNodesTable() {
     }
 
     nodeTable->changeByCode = true;
+    nodeTable->selectionModel()->clearSelection();
     nodeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
     nodeTable->changeByCode = false;
 
