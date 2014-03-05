@@ -948,9 +948,6 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
     if(displayedNodes == nodeTable->rowCount()) {
         return;
     }
-    else if(displayedNodes != DISPLAY_ALL and displayedNodes < nodeTable->rowCount()) {
-        nodeTable->setRowCount(displayedNodes);
-    }
     else {
         updateNodesTable();
     }
