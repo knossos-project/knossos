@@ -1581,11 +1581,9 @@ void ToolsTreeviewTab::updateNodesTable() {
             item->setFlags(flags);
             nodeTable->setItem(nodeIndex, NODE_RADIUS, item);
 
-            if (node->selected) {
-                nodeTable->changeByCode = true;
-                nodeTable->setCurrentCell(nodeIndex, 0);
-                nodeTable->changeByCode = false;
-                selectedItems.select(nodeTable->currentIndex(), nodeTable->currentIndex());
+            if (node->selected && state->skeletonState->selectedNodes.size() < 20000) {//WARNING table update with many nodes is too slow
+                const auto index = nodeTable->model()->index(nodeIndex, 0);
+                selectedItems.select(index, index);
             }
 
             nodeIndex++;
