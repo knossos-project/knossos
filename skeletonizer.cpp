@@ -1068,12 +1068,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
                     }
-                } else if(xml.name() == "activeNode") {
-                    if(merge == false) {
-                        QStringRef attribute = attributes.value("id");
-                        if(attribute.isNull() == false) {
-                            activeNodeID = attribute.toLocal8Bit().toInt();
-                        }
+                } else if(xml.name() == "activeNode" && !merge) {
+                    QStringRef attribute = attributes.value("id");
+                    if(attribute.isNull() == false) {
+                        activeNodeID = attribute.toLocal8Bit().toInt();
                     }
                 } else if(xml.name() == "scale") {
                     QStringRef attribute = attributes.value("x");
@@ -1099,7 +1097,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     if(attribute.isNull() == false)
                         loadedPosition.z = attribute.toLocal8Bit().toInt();
 
-                } else if(xml.name() == "skeletonVPState") {
+                } else if(xml.name() == "skeletonVPState" && !merge) {
                     int j = 0;
                     char element [8];
                     for (j = 0; j < 16; j++){
@@ -1404,24 +1402,28 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
-    if(activeNodeID) {
-        if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
-            if(state->skeletonState->firstTree->firstNode) {
-                setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+    if(!merge) {
+
+        if(activeNodeID) {
+            if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
+                if(state->skeletonState->firstTree->firstNode) {
+                    setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+                }
             }
         }
-    }
 
-    if((loadedPosition.x != 0) &&
-       (loadedPosition.y != 0) &&
-       (loadedPosition.z != 0)) {
-        Coordinate jump;
-        SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
-                             loadedPosition.y - 1 - state->viewerState->currentPosition.y,
-                             loadedPosition.z - 1 - state->viewerState->currentPosition.z);
-        emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
-    }
 
+        if((loadedPosition.x != 0) &&
+           (loadedPosition.y != 0) &&
+           (loadedPosition.z != 0)) {
+            Coordinate jump;
+            SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
+                                 loadedPosition.y - 1 - state->viewerState->currentPosition.y,
+                                 loadedPosition.z - 1 - state->viewerState->currentPosition.z);
+            emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
+        }
+
+    }
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit displayModeChangedSignal();
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
