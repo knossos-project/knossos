@@ -1877,8 +1877,8 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
 
     //4 elems per node: hit_count(always 1), min, max and 1 name
     //generous amount of addional space for non-node-glloadname-calls
-    std::vector<GLuint> selectionBuffer(state->skeletonState->totalNodeElements * (4 + 1));
-    glSelectBuffer(selectionBuffer.size()/sizeof(selectionBuffer[0]), selectionBuffer.data());
+    std::vector<GLuint> selectionBuffer(state->skeletonState->totalNodeElements * 4 + 2048);
+    glSelectBuffer(selectionBuffer.size(), selectionBuffer.data());
 
     state->viewerState->selectModeFlag = true;
     glRenderMode(GL_SELECT);
@@ -1917,8 +1917,8 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     GLint hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
-    qDebug() << "hits: " << hits;
-    for (std::size_t i = 0; i < selectionBuffer.size()/sizeof(selectionBuffer[0]);) {
+    qDebug() << "selection hits: " << hits;
+    for (std::size_t i = 0; i < selectionBuffer.size();) {
         if (hits == 0) {//if hits was positive and reaches 0
             //if overflow bit was set hits is negative and we only use the buffer-end-condition
             break;
@@ -1926,12 +1926,8 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
         --hits;
 
         const GLuint hit_count = selectionBuffer[i];
-        //const GLuint min_z = selectionBuffer[i+1];
-        //const GLuint max_z = selectionBuffer[i+2];
-        //qDebug() << "hit: " << hit_count;// << " " << min_z << " " << max_z;
         if (hit_count > 0) {
             const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
-            //qDebug() << "hit name: " << name;
             if (name >= GLNAME_NODEID_OFFSET) {
                 nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
                 if (foundNode) {
@@ -2238,7 +2234,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 
             currentSegment = currentNode->firstSegment;
-            while(currentSegment && allowHeuristic) {
+            while(currentSegment && allowHeuristic && !state->viewerState->selectModeFlag) {
                 /* isBranchNode tells you only whether the node is on the branch point stack,
                  * not whether it is actually a node connected to more than two other nodes! */
                 if((currentSegment->target == lastNode)
