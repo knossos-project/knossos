@@ -21,7 +21,7 @@ uint Patch::numPatches = 0;
 float Patch::voxelPerPoint = .3;
 std::vector<floatCoordinate> Patch::activeLine;
 std::vector<std::vector<floatCoordinate> > Patch::lineBuffer;
-uint Patch::displayMode = PATCH_DSP_WHOLE;
+bool Patch::hidePatches = false;
 Patch *Patch::firstPatch = NULL;
 Patch *Patch::activePatch = NULL;
 PatchLoop *Patch::activeLoop = NULL;

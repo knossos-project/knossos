@@ -2579,7 +2579,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 }
 
 void Renderer::renderPatches(uint viewportType) {
-    if(Patch::displayMode == PATCH_DSP_HIDE) {
+    if(Patch::hidePatches) {
         return;
     }
     glPushMatrix();
@@ -2729,93 +2729,48 @@ void Renderer::renderPatches(uint viewportType) {
 //            glDrawArrays(GL_TRIANGLE_STRIP, 0, meshCloud.points.size());
 //        }
 //   }
-    if(Patch::displayMode == PATCH_DSP_ACTIVE) {
-        glDeleteBuffers(1, &Patch::vbo);
-        glGenBuffers(1, &Patch::vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-        glBufferData(GL_ARRAY_BUFFER, Patch::activePatch->meshCloud.points.size()*sizeof(pcl_Point), // size parameter expects size in bytes
-                     &Patch::activePatch->meshCloud.points[0],
-                     GL_STATIC_DRAW);
-        glVertexPointer(3, GL_FLOAT, 0, 0);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        if(state->skeletonState->highlightActiveTree
-           and Patch::activePatch->correspondingTree == state->skeletonState->activeTree) {
-            glColor4f(1, 0, 0, 1);
-        }
-        else {
-        glColor4f(Patch::activePatch->correspondingTree->color.r,
-                  Patch::activePatch->correspondingTree->color.g,
-                  Patch::activePatch->correspondingTree->color.b,
-                  Patch::activePatch->correspondingTree->color.a);
-        }
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, Patch::activePatch->meshCloud.points.size()); // count parameter expects number of points
-
-        std::vector<Triangle> patch = Patch::activePatch->trianglesAsVector(viewportType);
-        glDeleteBuffers(1, &Patch::vbo);
-        glGenBuffers(1, &Patch::vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-        glBufferData(GL_ARRAY_BUFFER, patch.size()*sizeof(Triangle), // size parameter expects size in bytes
-                     &patch[0],
-                     GL_STATIC_DRAW);
-        glVertexPointer(3, GL_FLOAT, 0, 0);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        if(state->skeletonState->highlightActiveTree
-           and Patch::activePatch->correspondingTree == state->skeletonState->activeTree) {
-            glColor4f(1, 0, 0, 1);
-        }
-        else {
-        glColor4f(Patch::activePatch->correspondingTree->color.r,
-                  Patch::activePatch->correspondingTree->color.g,
-                  Patch::activePatch->correspondingTree->color.b,
-                  Patch::activePatch->correspondingTree->color.a);
-        }
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, patch.size()*3); // count parameter expects number of points
-    }
-    else {
-        // display mode == PATCH_DSP_WHOLE
-        // Iterate over all trees and draw each tree's patches
-        std::vector<Triangle> patches; // to be filled with all patches of one tree and passed to vbo
-        std::vector<Triangle> tmp; // buffer for single patches, to be copied to 'patches' vector
-        patchListElement *patchEl;
-        Patch *patch;
-        treeListElement *currentTree = state->skeletonState->firstTree;
-        while(currentTree) {
-            if((patchEl = currentTree->firstPatch) == NULL) { // tree has no patches
-                currentTree = currentTree->next;
-                continue;
-            }
-            do { // tree has patches. iterate over them and add them to the vertex array for drawing
-                patch = Patch::getPatchWithID(patchEl->patchID);
-                if(patch == NULL) {
-                    qDebug("could not find patch for patchEl with id %i", patchEl->patchID);
-                    break;
-                }
-                tmp = patch->trianglesAsVector(viewportType);
-                patches.insert(patches.end(), tmp.begin(), tmp.end());
-                patchEl = patchEl->next;
-            } while(patchEl != currentTree->firstPatch);
-
-            // collected all triangles from all patches of this tree. Draw them
-            glDeleteBuffers(1, &Patch::vbo);
-            glGenBuffers(1, &Patch::vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
-            glBufferData(GL_ARRAY_BUFFER, patches.size()*sizeof(Triangle), // size parameter expects size in bytes
-                         &patches[0],
-                         GL_STATIC_DRAW);
-            glVertexPointer(3, GL_FLOAT, 0, 0);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            if(state->skeletonState->highlightActiveTree and currentTree == state->skeletonState->activeTree) {
-                glColor4f(1., 0, 0, 1);
-            }
-            else {
-                glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
-            }
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, patches.size()*3); // count parameter expects number of points
-            glColor3f(0, 0, 0);
-           // glDrawArrays(GL_LINE_STRIP, 0, patches.size()*3);
-            patches.clear(); // clear for next tree
+    // Iterate over all trees and draw each tree's patches
+    std::vector<Triangle> patches; // to be filled with all patches of one tree and passed to vbo
+    std::vector<Triangle> tmp; // buffer for single patches, to be copied to 'patches' vector
+    patchListElement *patchEl;
+    Patch *currPatch;
+    treeListElement *currentTree = state->skeletonState->firstTree;
+    while(currentTree) {
+        if((patchEl = currentTree->firstPatch) == NULL) { // tree has no patches
             currentTree = currentTree->next;
+            continue;
         }
+        do { // tree has patches. iterate over them and add them to the vertex array for drawing
+            currPatch = Patch::getPatchWithID(patchEl->patchID);
+            if(currPatch == NULL) {
+                qDebug("could not find patch for patchEl with id %i", patchEl->patchID);
+                break;
+            }
+            tmp = currPatch->trianglesAsVector(viewportType);
+            patches.insert(patches.end(), tmp.begin(), tmp.end());
+            patchEl = patchEl->next;
+        } while(patchEl != currentTree->firstPatch);
+
+        // collected all triangles from all patches of this tree. Draw them
+        glDeleteBuffers(1, &Patch::vbo);
+        glGenBuffers(1, &Patch::vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
+        glBufferData(GL_ARRAY_BUFFER, patches.size()*sizeof(Triangle), // size parameter expects size in bytes
+                     &patches[0],
+                     GL_STATIC_DRAW);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        if(state->skeletonState->highlightActiveTree and currentTree == state->skeletonState->activeTree) {
+            glColor4f(1., 0, 0, 1);
+        }
+        else {
+            glColor4f(currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a);
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, patches.size()*3); // count parameter expects number of points
+        glColor3f(0, 0, 0);
+       // glDrawArrays(GL_LINE_STRIP, 0, patches.size()*3);
+        patches.clear(); // clear for next tree
+        currentTree = currentTree->next;
     }
     // unbind vbo
     glBindBuffer(GL_ARRAY_BUFFER, 0);

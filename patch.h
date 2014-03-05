@@ -119,7 +119,7 @@ public:
                                                     //! Started on mouse down and added to 'lineBuffer' on mouse release
     static std::vector<std::vector<floatCoordinate> > lineBuffer; //! all lines of the not closed loop yet
 
-    static uint displayMode; //! PATCH_DSP_WHOLE, PATCH_DSP_ACTIVE, PATCH_DSP_HIDE
+    static bool hidePatches; //! hide all patches (overrides individual patch's visibility flag)
 
     static Patch *newPatch(int patchID = -1);
     static void delPatch(Patch *patch);

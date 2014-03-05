@@ -251,10 +251,6 @@ values. The XY vp always used. */
 #define DSP_ACTIVETREE          16
 #define DSP_LINES_POINTS        32
 
-#define PATCH_DSP_WHOLE  1
-#define PATCH_DSP_ACTIVE 2
-#define PATCH_DSP_HIDE   3
-
 #define CATCH_RADIUS            10
 #define JMP_THRESHOLD           500 //for moving to next/prev node
 

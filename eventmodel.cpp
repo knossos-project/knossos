@@ -1506,6 +1506,9 @@ bool EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
             }
         }
     }
+    else if(event->key() == Qt::Key_Space) {
+        Patch::hidePatches = true;
+    }
     else if(event->key() == Qt::Key_Shift) {
         if(Patch::patchMode and Qt::KeyboardModifiers() == Qt::NoModifier) {
             // loop eraser activated
@@ -1526,6 +1529,9 @@ void EventModel::handleKeyRelease(QKeyEvent *event, int VPfound) {
     switch(event->key()) {
     case Qt::Key_Shift:
         Patch::eraseInVP = -1;
+        break;
+    case Qt::Key_Space:
+        Patch::hidePatches = false;
         break;
     }
 }
