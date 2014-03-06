@@ -177,11 +177,6 @@ public:
     QAction *synchronizationAction;
     QAction *dataSavingOptionsAction;
     QAction *viewportSettingsAction;
-    QAction *F1Action;
-    QAction *F2Action;
-    QAction *F3Action;
-    QAction *F4Action;
-    QAction *F5Action;
 
     /* window actions */
     QAction *toolsAction;

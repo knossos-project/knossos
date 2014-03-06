@@ -662,25 +662,18 @@ void MainWindow::createMenus()
     previousCommentAction->setShortcut(QKeySequence(tr("P")));
     previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
-    F1Action->setShortcut(Qt::Key_F1);
-    F1Action->setShortcutContext(Qt::ApplicationShortcut);
+    auto addEditMenuShortcut = [&](const Qt::Key key, const QString & description, void(MainWindow::*const slot)()){
+        auto * action = editMenu->addAction(QIcon(""), description);
+        action->setShortcut(key);
+        action->setShortcutContext(Qt::ApplicationShortcut);
+        QObject::connect(action, &QAction::triggered, this, slot);
+    };
 
-    F2Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
-    F2Action->setShortcut(Qt::Key_F2);
-    F2Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F3Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
-    F3Action->setShortcut(Qt::Key_F3);
-    F3Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
-    F1Action->setShortcut(Qt::Key_F4);
-    F1Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F5Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
-    F5Action->setShortcut(Qt::Key_F5);
-    F5Action->setShortcutContext(Qt::ApplicationShortcut);
+    addEditMenuShortcut(Qt::Key_F1, "1st Comment Shortcut", &MainWindow::F1Slot);
+    addEditMenuShortcut(Qt::Key_F2, "2nd Comment Shortcut", &MainWindow::F2Slot);
+    addEditMenuShortcut(Qt::Key_F3, "3rd Comment Shortcut", &MainWindow::F3Slot);
+    addEditMenuShortcut(Qt::Key_F4, "4th Comment Shortcut", &MainWindow::F4Slot);
+    addEditMenuShortcut(Qt::Key_F5, "5th Comment Shortcut", &MainWindow::F5Slot);
 
     editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
