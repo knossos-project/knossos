@@ -66,13 +66,16 @@ public:
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
     floatCoordinate centroid;
     uint createdInVP;
+    int timestamp;
 
-    PatchLoop(uint inVP, QObject *parent = 0)
-        : QObject(parent), createdInVP(inVP) {}
+    PatchLoop(uint inVP, int time, QObject *parent = 0)
+        : QObject(parent), createdInVP(inVP), timestamp(time) {}
 
     PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP, QObject *parent = 0)
         : QObject(parent), centroid(newCentroid), createdInVP(inVP) {
         points = newPoints;
+        timestamp = state->skeletonState->skeletonTime
+                    - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
     }
 
     ~PatchLoop() {}

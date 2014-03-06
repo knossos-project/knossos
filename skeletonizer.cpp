@@ -957,6 +957,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
                 for(uint i = 0; i < loops.size(); ++i) {
                     xml.writeStartElement("loop");
                     xml.writeAttribute("inVP", tmp.setNum(loops[i]->createdInVP));
+                    xml.writeAttribute("timestamp", tmp.setNum(loops[i]->timestamp));
                     for(uint j = 0; j < loops[i]->points.size(); ++j) {
                         xml.writeStartElement("point");
                         xml.writeAttribute("x", tmp.setNum(loops[i]->points[j].x));
@@ -1442,7 +1443,15 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                     else {
                                         viewportType = -1;
                                     }
-                                    loop = new PatchLoop(viewportType);
+                                    attribute = attributes.value("timestamp");
+                                    int loopTime;
+                                    if(attribute.isNull() == false) {
+                                        loopTime = attribute.toLocal8Bit().toInt();
+                                    }
+                                    else {
+                                        loopTime = skeletonTime;
+                                    }
+                                    loop = new PatchLoop(viewportType, loopTime);
                                     while(xml.readNextStartElement()) {
                                         if(xml.name() == "point") {
                                             attributes = xml.attributes();

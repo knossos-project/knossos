@@ -618,6 +618,8 @@ bool Patch::activateLoop(floatCoordinate center, float halfEdge, uint viewportTy
  */
 void Patch::deactivateLoop() {
     if(activeLoopIsClosed()) {
+        activeLoop->timestamp = state->skeletonState->skeletonTime
+                                - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
         activePatch->insert(activeLoop, activeLoop->createdInVP);
         activeLoop = NULL;
         activeLine.clear();
