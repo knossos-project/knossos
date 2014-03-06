@@ -9,7 +9,7 @@
 
 #include <curl/curl.h>
 #include <curl/multi.h>
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
 #include <unistd.h>
 #endif
 

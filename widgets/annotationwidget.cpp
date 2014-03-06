@@ -25,15 +25,15 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     tabs->addTab(treeviewTab, "Tree View");
     tabs->addTab(commandsTab, "Commands");
 
-    treeCountLabel = new QLabel("Tree Count: 0");
-    nodeCountLabel = new QLabel("Node Count: 0");
+    treeCountLabel = new QLabel("Total Tree Count: 0");
+    nodeCountLabel = new QLabel("Total Node Count: 0");
     nodeCountLabel->setToolTip("Total number of nodes in the skeleton.");
-    listedNodesLabel = new QLabel("Listed Nodes: 0");
+    listedNodesLabel = new QLabel("Currently Listed Nodes: 0");
     listedNodesLabel->setToolTip("Number of nodes currently listed in the table.");
     QHBoxLayout *hLayout = new QHBoxLayout();
     QHBoxLayout *subHLayout = new QHBoxLayout();
-    subHLayout->addWidget(listedNodesLabel);
-    subHLayout->addWidget(nodeCountLabel);
+    subHLayout->addWidget(listedNodesLabel, 0, Qt::AlignLeft);
+    subHLayout->addWidget(nodeCountLabel, 0, Qt::AlignRight);
     hLayout->addWidget(treeCountLabel);
     hLayout->addLayout(subHLayout);
 
@@ -43,8 +43,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     mainLayout->addLayout(hLayout);
     setLayout(mainLayout);
 
-    connect(treeviewTab, SIGNAL(updateToolsSignal()), this, SLOT(update()));
-    connect(treeviewTab, SIGNAL(updateListedNodesSignal(int)), this, SLOT(nodesInList(int)));
+    connect(treeviewTab, SIGNAL(updateToolsSignal()), this, SLOT(updateLabels()));
 
     connect(commandsTab, SIGNAL(treeActivatedSignal()), treeviewTab, SLOT(activeTreeChanged()));
     connect(commandsTab, SIGNAL(treeAddedSignal(treeListElement*)), treeviewTab, SLOT(treeAdded(treeListElement*)));
@@ -53,13 +52,10 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     connect(commandsTab, SIGNAL(branchPoppedSignal()), treeviewTab, SLOT(branchPopped()));
 }
 
-void AnnotationWidget::nodesInList(int n) {
-    listedNodesLabel->setText(QString("Listed Nodes: %1").arg(n));
-}
-
-void AnnotationWidget::update() {
-    treeCountLabel->setText(QString("Tree Count: %1").arg(state->skeletonState->treeElements));
-    nodeCountLabel->setText(QString("Node Count: %1").arg(state->skeletonState->totalNodeElements));
+void AnnotationWidget::updateLabels() {
+    listedNodesLabel->setText(QString("Currently Listed Nodes: %1").arg(treeviewTab->nodeTable->rowCount()));
+    treeCountLabel->setText(QString("Total Tree Count: %1").arg(state->skeletonState->treeElements));
+    nodeCountLabel->setText(QString("Total Node Count: %1").arg(state->skeletonState->totalNodeElements));
     commandsTab->update();
 }
 

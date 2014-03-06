@@ -22,7 +22,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include <time.h>
+#include <vector>
+
 #include <QApplication>
 #include <QProgressDialog>
 #include <QMessageBox>
@@ -968,8 +969,8 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
                 xml.writeEndElement();
                 patchEl = patchEl->next;
             } while(patchEl != currentTree->firstPatch);
+            xml.writeEndElement(); // end patches
         }
-
         currentTree = currentTree->next;
         xml.writeEndElement(); // end tree
     }
@@ -1002,58 +1003,25 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 }
 
 bool Skeletonizer::loadXmlSkeleton(QString fileName) {    
-    int neuronID = 0, nodeID = 0, merge = false;
-    int nodeID1, nodeID2, activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
-    float radius;
-    Byte VPtype;
+    int merge = false;
+    int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
     int globalMagnificationSpecified = false;
 
-    struct treeListElement *currentTree;
-    struct nodeListElement *currentNode = NULL;
-    Coordinate *currentCoordinate, loadedPosition;
+    treeListElement *currentTree;
+
     Coordinate offset;
     floatCoordinate scale;
-    int time;
-    color4F neuronColor;
-
-    /* */
-
-   QVector<int> branchVector;
-   QVector<std::pair<int, char *> > commentsVector;
-   QVector<std::pair<int, int > > edgeVector;
-
-
-    /* */
-
+    Coordinate loadedPosition;
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
     SET_COORDINATE(loadedPosition, 0, 0, 0);
-
-    currentCoordinate = (Coordinate*) malloc(sizeof(Coordinate));
-    if(currentCoordinate == NULL) {
-        LOG("Out of memory.");
-        return false;
-    }
-    memset(currentCoordinate, '\0', sizeof(currentCoordinate));
 
     QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qErrnoWarning("Document not parsed successfully.");
         return false;
     }
-    /*
-    int lines = 0;
-    QTextStream stream(&file);
-    while(!stream.atEnd()) {
-        lines += 1;
-        stream.readLine();
-    }
-    QProgressDialog progress(QString("Parsing %1").arg(fileName), 0, 0, lines);
-    progress.setWindowTitle("Loading Skeleton File");
-    progress.setWindowModality(Qt::WindowModal);
-    progress.show();
-*/
 
     if(state->skeletonState->mergeOnLoadFlag == false) {
         merge = false;
@@ -1076,305 +1044,261 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         state->skeletonState->skeletonTime = 0;
     }
     QTime bench;
-    int counter = 0;
-    //file.reset();
     QXmlStreamReader xml(&file);
 
-    std::vector<std::pair<uint, char*> > comments; // for buffering comments found in the xml
+    std::vector<uint> branchVector;
+    std::vector<std::pair<int, QString>> commentsVector;
+    std::vector<std::pair<int, int>> edgeVector;
+
     bench.start();
-    QXmlStreamAttributes attributes;
-    QStringRef attribute;
-    float temp;
 
+    if (!xml.readNextStartElement() || xml.name() != "things") {
+        qDebug() << "invalid xml token: " << xml.name();
+        return false;
+    }
+    while(xml.readNextStartElement()) {
+        if(xml.name() == "parameters") {
+            while(xml.readNextStartElement()) {
+                QXmlStreamAttributes attributes = xml.attributes();
 
-    while(!xml.atEnd() and !xml.hasError()) {       
-        if(xml.readNextStartElement()) {
-
-           /*
-            if(xml.lineNumber() % 10 == 0) {
-                progress.setValue(xml.lineNumber());
-            }*/
-
-            if(xml.name() == "parameters") {
-                while(xml.readNextStartElement()) {
-                    attributes = xml.attributes();
-
-                    if(xml.name() == "createdin") {
-                        attribute = attributes.value("version");
-                        if(attribute.isNull() == false) {
-                            strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toLocal8Bit().data());
-                        }
-                        else {
-                            strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
+                if(xml.name() == "createdin") {
+                    QStringRef attribute = attributes.value("version");
+                    if(attribute.isNull() == false) {
+                        strcpy(state->skeletonState->skeletonCreatedInVersion, attribute.toLocal8Bit().data());
+                    } else {
+                        strcpy(state->skeletonState->skeletonCreatedInVersion, "Pre-3.2");
+                    }
+                } else if(xml.name() == "lastsavedin") {
+                    QStringRef attribute = attributes.value("version");
+                    if(attribute.isNull() == false) {
+                        strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
+                    }
+                } else if(xml.name() == "magnification" and xml.isStartElement()) {
+                    QStringRef attribute = attributes.value("factor");
+                     // This is for legacy skeleton files.
+                     // In the past, magnification was specified on a per-file basis
+                     // or not specified at all.
+                     // A magnification factor of 0 shall represent an unknown magnification.
+                    if(attribute.isNull() == false) {
+                        magnification = attribute.toLocal8Bit().toInt();
+                        globalMagnificationSpecified = true;
+                    } else {
+                        magnification = 0;
+                    }
+                } else if(xml.name() == "offset") {
+                    QStringRef attribute = attributes.value("x");
+                    if(attribute.isNull() == false) {
+                        offset.x = attribute.toLocal8Bit().toInt();
+                    }
+                    attribute = attributes.value("y");
+                    if(attribute.isNull() == false) {
+                        offset.y = attribute.toLocal8Bit().toInt();
+                    }
+                    attribute = attributes.value("z");
+                    if(attribute.isNull() == false) {
+                        offset.z = attribute.toLocal8Bit().toInt();
+                    }
+                } else if(xml.name() == "time" && merge == false) {
+                    QStringRef attribute = attributes.value("ms");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->skeletonTime = attribute.toLocal8Bit().toInt();
+                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->skeletonTime)) {
+                            state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
                     }
-                    else if(xml.name() == "lastsavedin") {
-                        attribute = attributes.value("version");
-                        if(attribute.isNull() == false) {
-                            strcpy(state->skeletonState->skeletonLastSavedInVersion, attribute.toLocal8Bit().data());
+                } else if(xml.name() == "activeNode" && !merge) {
+                    QStringRef attribute = attributes.value("id");
+                    if(attribute.isNull() == false) {
+                        activeNodeID = attribute.toLocal8Bit().toInt();
+                    }
+                } else if(xml.name() == "scale") {
+                    QStringRef attribute = attributes.value("x");
+                    if(attribute.isNull() == false) {
+                        scale.x = attribute.toLocal8Bit().toFloat();
+                    }
+                    attribute = attributes.value("y");
+                    if(attribute.isNull() == false) {
+                        scale.y = attribute.toLocal8Bit().toFloat();
+                    }
+                    attribute = attributes.value("z");
+                    if(attribute.isNull() == false) {
+                        scale.z = attribute.toLocal8Bit().toFloat();
+                    }
+                } else if(xml.name() == "editPosition") {
+                    QStringRef attribute = attributes.value("x");
+                    if(attribute.isNull() == false)
+                        loadedPosition.x = attribute.toLocal8Bit().toInt();
+                    attribute = attributes.value("y");
+                    if(attribute.isNull() == false)
+                        loadedPosition.y = attribute.toLocal8Bit().toInt();
+                    attribute = attributes.value("z");
+                    if(attribute.isNull() == false)
+                        loadedPosition.z = attribute.toLocal8Bit().toInt();
+
+                } else if(xml.name() == "skeletonVPState" && !merge) {
+                    int j = 0;
+                    char element [8];
+                    for (j = 0; j < 16; j++){
+                        sprintf (element, "E%d", j);
+                        QStringRef attribute = attributes.value(element);
+                        state->skeletonState->skeletonVpModelView[j] = attribute.toString().toFloat();
+                    }
+                    glMatrixMode(GL_MODELVIEW);
+                    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+
+                    QStringRef attribute = attributes.value("translateX");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->translateX = attribute.toString().toFloat();
+                    }
+                    attribute = attributes.value("translateY");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->translateY = attribute.toString().toFloat();
+                    }
+                } else if(xml.name() == "vpSettingsZoom") {
+                    QStringRef attribute = attributes.value("XYPlane");
+                    if(attribute.isNull() == false) {
+                        state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = attribute.toString().toFloat();
+                    }
+                    attribute = attributes.value("XZPlane");
+                    if(attribute.isNull() == false) {
+                        state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = attribute.toString().toFloat();
+                    }
+                    attribute = attributes.value("YZPlane");
+                    if(attribute.isNull() == false) {
+                        state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = attribute.toString().toFloat();
+                    }
+                    attribute = attributes.value("SkelVP");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->zoomLevel = attribute.toString().toFloat();
+                    }
+                } else if(xml.name() == "skeletonDisplayMode") {
+                    QStringRef attribute = attributes.value("displayModeBitFlags");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->displayMode = attribute.toString().toInt();
+                    }
+                } else if(xml.name() == "RadiusLocking") {
+                    QStringRef attribute = attributes.value("enableCommentLocking");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->lockPositions = attribute.toString().toInt();
+                    }
+                    attribute = attributes.value("lockingRadius");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->lockRadius = attribute.toString().toInt();
+                    }
+                    attribute = attributes.value("lockToNodesWithComment");
+                    if(attribute.isNull() == false) {
+                        strcpy(state->skeletonState->onCommentLock, static_cast<const char*>(attribute.toString().toStdString().c_str()));
+                    }
+                } else if(merge == false && xml.name() == "idleTime") {
+                    QStringRef attribute = attributes.value("ms");
+                    if(attribute.isNull() == false) {
+                        state->skeletonState->idleTime = attribute.toString().toInt();
+                        if(Skeletonizer::isObfuscatedTime(state->skeletonState->idleTime)) {
+                            state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
                         }
                     }
-                    else if(xml.name() == "magnification" and xml.isStartElement()) {
-                        attribute = attributes.value("factor");
-                         // This is for legacy skeleton files.
-                         // In the past, magnification was specified on a per-file basis
-                         // or not specified at all.
-                         // A magnification factor of 0 shall represent an unknown magnification.
-                        if(attribute.isNull() == false) {
-                            magnification = attribute.toLocal8Bit().toInt();
-                            globalMagnificationSpecified = true;
-                        }
-                        else {
-                            magnification = 0;
-                        }
-                    }
-                    else if(xml.name() == "offset") {
-                        attribute = attributes.value("x");
-                        if(attribute.isNull() == false) {
-                            offset.x = attribute.toLocal8Bit().toInt();
-                        }
-                        attribute = attributes.value("y");
-                        if(attribute.isNull() == false) {
-                            offset.y = attribute.toLocal8Bit().toInt();
-                        }
-                        attribute = attributes.value("z");
-                        if(attribute.isNull() == false) {
-                            offset.z = attribute.toLocal8Bit().toInt();
-                        }
-                    }
-                    else if(xml.name() == "time" && merge == false) {
-                        attribute = attributes.value("ms");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->skeletonTime = attribute.toLocal8Bit().toInt();
-                            if(Skeletonizer::isObfuscatedTime(state->skeletonState->skeletonTime)) {
-                                state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
-                            }
-                        }
-                    }
-                    else if(xml.name() == "activeNode") {
+                }
+                xml.skipCurrentElement();
+            }
+        } else if(xml.name() == "branchpoints") {
+            while(xml.readNextStartElement()) {
+                if(xml.name() == "branchpoint") {
+                    QXmlStreamAttributes attributes = xml.attributes();
+                    QStringRef attribute = attributes.value("id");
+                    int nodeID;
+                    if(attribute.isNull() == false) {
                         if(merge == false) {
-                            attribute = attributes.value("id");
-                            if(attribute.isNull() == false) {
-                                activeNodeID = attribute.toLocal8Bit().toInt();
-                            }
+                            nodeID = attribute.toLocal8Bit().toInt();
+                        } else {
+                            nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                         }
+                        branchVector.emplace_back(nodeID);
                     }
-                    else if(xml.name() == "scale") {
-                        attribute = attributes.value("x");
-                        if(attribute.isNull() == false) {
-                            scale.x = attribute.toLocal8Bit().toFloat();
-                        }
-
-                        attribute = attributes.value("y");
-                        if(attribute.isNull() == false) {
-                            scale.y = attribute.toLocal8Bit().toFloat();
-                        }
-
-                        attribute = attributes.value("z");
-                        if(attribute.isNull() == false) {
-                            scale.z = attribute.toLocal8Bit().toFloat();
-                        }
-                    }
-                    else if(xml.name() == "editPosition") {
-                        attribute = attributes.value("x");
-                        if(attribute.isNull() == false)
-                            loadedPosition.x = attribute.toLocal8Bit().toInt();
-
-                        attribute = attributes.value("y");
-                        if(attribute.isNull() == false)
-                            loadedPosition.y = attribute.toLocal8Bit().toInt();
-
-                        attribute = attributes.value("z");
-                        if(attribute.isNull() == false)
-                            loadedPosition.z = attribute.toLocal8Bit().toInt();
-
-                    }
-                    else if(xml.name() == "skeletonVPState") {
-                        int j = 0;
-                        char element [8];
-                        for (j = 0; j < 16; j++){
-                            sprintf (element, "E%d", j);
-                            attribute = attributes.value(element);
-                            state->skeletonState->skeletonVpModelView[j] = attribute.toString().toFloat();
-                        }
-                        glMatrixMode(GL_MODELVIEW);
-                        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-
-                        attribute = attributes.value("translateX");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->translateX = attribute.toString().toFloat();
-                        }
-                        attribute = attributes.value("translateY");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->translateY = attribute.toString().toFloat();
-                        }
-                    }
-                    else if(xml.name() == "vpSettingsZoom") {
-                        attribute = attributes.value("XYPlane");
-                        if(attribute.isNull() == false) {
-                            state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = attribute.toString().toFloat();
-                        }
-                        attribute = attributes.value("XZPlane");
-                        if(attribute.isNull() == false) {
-                            state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = attribute.toString().toFloat();
-                        }
-                        attribute = attributes.value("YZPlane");
-                        if(attribute.isNull() == false) {
-                            state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = attribute.toString().toFloat();
-                        }
-                        attribute = attributes.value("SkelVP");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->zoomLevel = attribute.toString().toFloat();
-                        }
-                    }
-                    else if(xml.name() == "skeletonDisplayMode") {
-                        attribute = attributes.value("displayModeBitFlags");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->displayMode = attribute.toString().toInt();
-                        }
-                    }
-                    else if(xml.name() == "RadiusLocking") {
-                        attribute = attributes.value("enableCommentLocking");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->lockPositions = attribute.toString().toInt();
-                        }
-                        attribute = attributes.value("lockingRadius");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->lockRadius = attribute.toString().toInt();
-                        }
-                        attribute = attributes.value("lockToNodesWithComment");
-                        if(attribute.isNull() == false) {
-                            strcpy(state->skeletonState->onCommentLock, static_cast<const char*>(attribute.toString().toStdString().c_str()));
-                        }
-                    }
-                    else if(merge == false && xml.name() == "idleTime") {
-                        attribute = attributes.value("ms");
-                        if(attribute.isNull() == false) {
-                            state->skeletonState->idleTime = attribute.toString().toInt();
-                            if(Skeletonizer::isObfuscatedTime(state->skeletonState->idleTime)) {
-                                state->skeletonState->idleTime = xorInt(state->skeletonState->idleTime);
-                            }
-                        }
-                    }
-                    xml.skipCurrentElement();
                 }
+                xml.skipCurrentElement();
             }
-            else if(xml.name() == "branchpoints") {
-                xml.readNextStartElement();
-                while(!(xml.tokenType() == QXmlStreamReader::EndElement and xml.name() == "branchpoints")) {
-                    if(xml.name() == "branchpoint" and xml.isStartElement()) {
-                        attributes = xml.attributes();
-                        attribute = attributes.value("id");
-
-                        if(!attribute.isNull()) {
-                            if(!merge) {
-                                nodeID = attribute.toLocal8Bit().toInt();
-                            } else {
-                                nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
-                            }
-
-                            branchVector.push_back(nodeID);
-
+        } else if(xml.name() == "comments") {
+            // comments must be buffered and can only be set after thing nodes were parsed
+            // and the skeleton structure was created. This is necessary, because sometimes the
+            // comments node comes before the thing nodes.
+            while(xml.readNextStartElement()) {
+                if(xml.name() == "comment") {
+                    QXmlStreamAttributes attributes = xml.attributes();
+                    QStringRef attribute = attributes.value("node");
+                    int nodeID;
+                    if(attribute.isNull() == false) {
+                        if(merge == false) {
+                            nodeID = attribute.toLocal8Bit().toInt();
+                        } else {
+                            nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
                         }
                     }
-                    while(xml.readNext() == QXmlStreamReader::Characters) {
+                    attribute = attributes.value("content");
+                    if(attribute.isNull() == false) {
+                        commentsVector.emplace_back(nodeID, attribute.toLocal8Bit());
                     }
                 }
+                xml.skipCurrentElement();
             }
-            else if(xml.name() == "comments") {
-                // comments must be buffered and can only be set after thing nodes were parsed
-                // and the skeleton structure was created. This is necessary, because sometimes the
-                // comments node comes before the thing nodes.
-                while(xml.readNextStartElement()) {
-                    if(xml.name() == "comment") {
-                        attributes = xml.attributes();
-                        attribute = attributes.value("node");
-                        if(attribute.isNull() == false) {
-                            if(merge == false) {
-                                nodeID = attribute.toLocal8Bit().toInt();
-                            }
-                            else {
-                                nodeID = attribute.toLocal8Bit().toInt() + greatestNodeIDbeforeLoading;
-                            }
-                        }
+        } else if(xml.name() == "thing") {
+            QXmlStreamAttributes attributes = xml.attributes();
 
-                        attribute = attributes.value("content");
-                        if(attribute.isNull() == false) {
-                            char *comment = (char*) malloc(1024);
-                            strcpy(comment, attribute.toLocal8Bit().data());
-
-                            commentsVector.push_back(std::pair<int, char *>(nodeID, comment));
-                            //qDebug() << nodeID << " " << comment;
-                            //comments.push_back(std::pair<uint, char*>(nodeID, comment));
-                        }
-                    }
-                    xml.skipCurrentElement();
-                }
+            int neuronID;
+            QStringRef attribute = attributes.value("id");
+            if(attribute.isNull() == false) {
+                neuronID = attribute.toLocal8Bit().toInt();
+            } else {
+                neuronID = 0; // whatever
             }
-            else if(xml.name() == "thing") {
-                attributes = xml.attributes();
+            // color: -1 causes default color assignment
+            color4F neuronColor;
+            attribute = attributes.value("color.r");
+            if(attribute.isNull() == false) {
+                neuronColor.r = attribute.toLocal8Bit().toFloat();
+            } else {
+                neuronColor.r = -1;
+            }
+            attribute = attributes.value("color.g");
+            if(attribute.isNull() == false) {
+                neuronColor.g = attribute.toLocal8Bit().toFloat();
+            } else {
+                neuronColor.g = -1;
+            }
+            attribute = attributes.value("color.b");
+            if(attribute.isNull() == false) {
+                neuronColor.b = attribute.toLocal8Bit().toFloat();
+            } else {
+                neuronColor.b = -1;
+            }
+            attribute = attributes.value("color.a");
+            if(attribute.isNull() == false) {
+                neuronColor.a = attribute.toLocal8Bit().toFloat();
+            } else {
+                neuronColor.a = -1;
+            }
 
-                attribute = attributes.value("id");
-                if(attribute.isNull() == false) {
-                    neuronID = attribute.toLocal8Bit().toInt();
-                }
-                else {
-                    neuronID = 0; // whatever
-                }
-                // color: -1 causes default color assignment
-                attribute = attributes.value("color.r");
-                if(attribute.isNull() == false) {
-                    neuronColor.r = attribute.toLocal8Bit().toFloat();
-                }
-                else {
-                    neuronColor.r = -1;
-                }
-                attribute = attributes.value("color.g");
-                if(attribute.isNull() == false) {
-                    neuronColor.g = attribute.toLocal8Bit().toFloat();
-                }
-                else {
-                    neuronColor.g = -1;
-                }
-                attribute = attributes.value("color.b");
-                if(attribute.isNull() == false) {
-                    neuronColor.b = attribute.toLocal8Bit().toFloat();
-                }
-                else {
-                    neuronColor.b = -1;
-                }
-                attribute = attributes.value("color.a");
-                if(attribute.isNull() == false) {
-                    neuronColor.a = attribute.toLocal8Bit().toFloat();
-                }
-                else {
-                    neuronColor.a = -1;
-                }
-
-                if(merge == false) {
-                    currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
-                    setActiveTreeByID(neuronID);
-                }
-                else {
-                    neuronID += greatestTreeIDbeforeLoading;
-                    currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
-                    setActiveTreeByID(currentTree->treeID);
-                    neuronID = currentTree->treeID;
-                }
+            if(merge == false) {
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
+                setActiveTreeByID(neuronID);
+            } else {
+                neuronID += greatestTreeIDbeforeLoading;
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
+                setActiveTreeByID(currentTree->treeID);
+                neuronID = currentTree->treeID;
+            }
 
                 attribute = attributes.value("comment"); // the tree comment
                 if(attribute.isNull() == false) {
                     addTreeComment(CHANGE_MANUAL, currentTree->treeID, attribute.toLocal8Bit().data());
                 }
 
-                // gate
-                xml.readNextStartElement();
-
+            while (xml.readNextStartElement()) {
                 if(xml.name() == "nodes") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "node") {
                             attributes = xml.attributes();
 
+                            int nodeID;
                             attribute = attributes.value("id");
                             if(attribute.isNull() == false) {
                                 nodeID = attribute.toLocal8Bit().toInt();
@@ -1382,6 +1306,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                 nodeID = 0;
                             }
 
+                            float radius;
                             attribute = attributes.value("radius");
                             if(attribute.isNull() == false) {
                                 radius = attribute.toLocal8Bit().toFloat();
@@ -1389,36 +1314,38 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                 radius = state->skeletonState->defaultNodeRadius;
                             }
 
+                            Coordinate currentCoordinate;
                             attribute = attributes.value("x");
                             if(attribute.isNull() == false) {
-                                currentCoordinate->x = attribute.toLocal8Bit().toInt() - 1;
+                                currentCoordinate.x = attribute.toLocal8Bit().toInt() - 1;
                                 if(globalMagnificationSpecified) {
-                                    currentCoordinate->x = currentCoordinate->x * magnification;
+                                    currentCoordinate.x = currentCoordinate.x * magnification;
                                 }
                             } else {
-                                currentCoordinate->x = 0;
+                                currentCoordinate.x = 0;
                             }
 
                             attribute = attributes.value("y");
                             if(attribute.isNull() == false) {
-                                currentCoordinate->y = attribute.toLocal8Bit().toInt() - 1;
+                                currentCoordinate.y = attribute.toLocal8Bit().toInt() - 1;
                                 if(globalMagnificationSpecified) {
-                                    currentCoordinate->y = currentCoordinate->y * magnification;
+                                    currentCoordinate.y = currentCoordinate.y * magnification;
                                 }
                             } else {
-                                currentCoordinate->y = 0;
+                                currentCoordinate.y = 0;
                             }
 
                             attribute = attributes.value("z");
                             if(attribute.isNull() == false) {
-                                currentCoordinate->z = attribute.toLocal8Bit().toInt() - 1;
+                                currentCoordinate.z = attribute.toLocal8Bit().toInt() - 1;
                                 if(globalMagnificationSpecified) {
-                                    currentCoordinate->z = currentCoordinate->z * magnification;
+                                    currentCoordinate.z = currentCoordinate.z * magnification;
                                 }
                             } else {
-                                currentCoordinate->z = 0;
+                                currentCoordinate.z = 0;
                             }
 
+                            Byte VPtype;
                             attribute = attributes.value("inVp");
                             if(attribute.isNull() == false) {
                                 VPtype = attribute.toLocal8Bit().toInt();
@@ -1432,7 +1359,9 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             } else {
                                 inMag = magnification; // For legacy skeleton files
                             }
+
                             attribute = attributes.value("time");
+                            int time;
                             if(attribute.isNull() == false) {
                                 time = attribute.toLocal8Bit().toInt();
                             } else {
@@ -1440,49 +1369,41 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             }
 
                             if(merge == false) {
-
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, time, false, false);
                             }
                             else {
                                 nodeID += greatestNodeIDbeforeLoading;
-                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
+                                addNode(CHANGE_MANUAL, nodeID, radius, neuronID, &currentCoordinate, VPtype, inMag, time, false, false);
                             }
                         }
                         xml.skipCurrentElement();
                     } // end while nodes
                 }
-
-                // gate
-                xml.readNextStartElement();
-
                 if(xml.name() == "edges") {
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "edge") {
                             attributes = xml.attributes();
                             // Add edge
+                            int sourcecNodeId;
                             attribute = attributes.value("source");
                             if(attribute.isNull() == false) {
-                                nodeID1 = attribute.toLocal8Bit().toInt();
+                                sourcecNodeId = attribute.toLocal8Bit().toInt();
+                            } else {
+                                sourcecNodeId = 0;
                             }
-                            else {
-                                nodeID1 = 0;
-                            }
+                            int targetNodeId;
                             attribute = attributes.value("target");
                             if(attribute.isNull() == false) {
-                                nodeID2 = attribute.toLocal8Bit().toInt();
-                            }
-                             else {
-                                nodeID2 = 0;
+                                targetNodeId = attribute.toLocal8Bit().toInt();
+                            } else {
+                                targetNodeId = 0;
                             }
 
-                            edgeVector.push_back(std::pair<int, int>(nodeID1, nodeID2));
+                            edgeVector.emplace_back(sourcecNodeId, targetNodeId);
                         }
                         xml.skipCurrentElement();
                     }
                 }
-
-                // gate
-                xml.readNextStartElement();
 
                 if(xml.name() == "patches") {
                     uint patchID;
@@ -1548,85 +1469,64 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                         }
                     }
                 }
-            } // end thing
-        } // end start element
-    } // end while
+            }
+        } // end thing
+    }
+    xml.readNext();//</things>
+    if (!xml.isEndDocument()) {
+        qDebug() << "unknown content following after line" << xml.lineNumber();
+        return false;
+    }
+    if(xml.hasError()) {
+        qDebug() << __FILE__ << ":" << __LINE__ << " xml error: " << xml.errorString() << " at " << xml.lineNumber();
+        return false;
+    }
 
-
-    QVectorIterator<std::pair<int, int> >edgeIterator(edgeVector);
-    while(edgeIterator.hasNext()) {
-        std::pair<int, int> pair = edgeIterator.next();
+    for (const auto & elem : edgeVector) {
         if(merge == false) {
-            addSegment(CHANGE_MANUAL, pair.first, pair.second, false);
+            addSegment(CHANGE_MANUAL, elem.first, elem.second, false);
         } else {
-            addSegment(CHANGE_MANUAL, pair.first + greatestNodeIDbeforeLoading, pair.second + greatestNodeIDbeforeLoading, false);
+            addSegment(CHANGE_MANUAL, elem.first + greatestNodeIDbeforeLoading, elem.second + greatestNodeIDbeforeLoading, false);
         }
     }
 
-
-
-    QVectorIterator<int> branchIterator(branchVector);
-    while(branchIterator.hasNext()) {
-        currentNode = findNodeByNodeID(branchIterator.next());
-        if(currentNode)
+    for (const auto & elem : branchVector) {
+        const auto & currentNode = findNodeByNodeID(elem);
+        if(currentNode != nullptr)
             pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
     }
 
-
-    QVectorIterator<std::pair<int, char *> > commentsIterator(commentsVector);
-    while(commentsIterator.hasNext()) {
-        std::pair<int, char *> pair = commentsIterator.next();
-        currentNode = findNodeByNodeID(pair.first);
-        //qDebug() << pair.first;
-        //qDebug() << pair.second;
-        if(currentNode) {
-            addComment(CHANGE_MANUAL, pair.second, currentNode, 0, false);
+    for (const auto & elem : commentsVector) {
+        const auto & currentNode = findNodeByNodeID(elem.first);
+        if(currentNode != nullptr) {
+            addComment(CHANGE_MANUAL, elem.second, currentNode, 0, false);
         }
     }
 
-    /*
-    if(comments.size()) {
-        // if comments were found in the document, add them here,
-        // after the tree structure was created.
-        std::vector<std::pair<uint, char*> >::iterator iter;
-        for(iter = comments.begin(); iter != comments.end(); ++iter) {
-            currentNode = findNodeByNodeID(iter->first);
-            if(currentNode) {
-                addComment(CHANGE_MANUAL,  iter->second, currentNode, 0, false);
-                free(iter->second);
-            }
-        }
-    }*/
-
-
-
-    if(xml.hasError()) {
-        qDebug() << xml.errorString() << " at " << xml.lineNumber();
-    }
     qDebug() << "loading skeleton took: "<< bench.elapsed();
-    file.close();
 
-    if(activeNodeID) {
-        if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false
-           and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
-            if(state->skeletonState->firstTree->firstNode) {
-                setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+    if(!merge) {
+
+        if(activeNodeID) {
+            if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
+                if(state->skeletonState->firstTree->firstNode) {
+                    setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+                }
             }
         }
+
+
+        if((loadedPosition.x != 0) &&
+           (loadedPosition.y != 0) &&
+           (loadedPosition.z != 0)) {
+            Coordinate jump;
+            SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
+                                 loadedPosition.y - 1 - state->viewerState->currentPosition.y,
+                                 loadedPosition.z - 1 - state->viewerState->currentPosition.z);
+            emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
+        }
+
     }
-
-    if((loadedPosition.x != 0) &&
-       (loadedPosition.y != 0) &&
-       (loadedPosition.z != 0)) {
-        Coordinate jump;
-        SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
-                             loadedPosition.y - 1 - state->viewerState->currentPosition.y,
-                             loadedPosition.z - 1 - state->viewerState->currentPosition.z);
-        emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
-    }
-
-
-
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit displayModeChangedSignal();
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
@@ -1828,6 +1728,10 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
 
     if(nodeToDel->comment) {
         delComment(CHANGE_MANUAL, nodeToDel->comment, 0, false);
+    }
+
+    if(nodeToDel->isBranchNode) {
+        state->skeletonState->totalBranchpoints--;
     }
 
      // First, delete all segments pointing towards and away of the nodeToDelhas
@@ -2531,11 +2435,10 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
         if(tree2->next)
             tree2->next->previous = tree2->previous;
     }
-    free(tree2);
-
     if(state->skeletonState->activeTree->treeID == tree2->treeID) {
        setActiveTreeByID(tree1->treeID);
     }
+    free(tree2);
 
     state->skeletonState->treeElements--;
     state->skeletonState->skeletonChanged = true;

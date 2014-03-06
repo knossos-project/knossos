@@ -2,6 +2,7 @@
 #define TREEVIEWTAB_H
 
 #include <QWidget>
+#include <QRadioButton>
 #include <QTableWidget>
 
 class QTableWidgetItem;
@@ -9,7 +10,6 @@ class QHBoxLayout;
 class QVBoxLayout;
 class QLineEdit;
 class QLabel;
-class QRadioButton;
 class QCheckBox;
 class QPushButton;
 class QComboBox;
@@ -75,6 +75,8 @@ public:
     QCheckBox *patchRegExCheck;
     QRadioButton *nodesOfSelectedTreesRadio;
     QRadioButton *allNodesRadio;
+    QRadioButton selectedNodes;//i wanna be special
+
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
     QLabel *displayedNodesTable;
@@ -141,7 +143,6 @@ protected:
     int getActiveTreeRow();
     int getActiveNodeRow();
 signals:
-    void updateListedNodesSignal(int n);
     void updateToolsSignal();
 
     bool deleteSelectedTreesSignal();
@@ -208,17 +209,15 @@ public slots:
     // update node table
     void activeNodeChanged();
     void nodeAdded();
-    void nodesDeleted();
     void branchPushed();
     void branchPopped();
     void nodeCommentChanged(nodeListElement *node);
     void nodeRadiusChanged(nodeListElement *node);
     void nodePositionChanged(nodeListElement *node);
-    void updateTreesTable();
+    void updateTreesTable();    
     void updateNodesTable();
     void updatePatchesTable();
     void update();
-    
     // update patch table
     void activePatchChanged();
     void patchAdded();

@@ -90,6 +90,7 @@ signals:
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
     void updateViewerStateSignal();
+    void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
     void workModeAddSignal();
@@ -145,7 +146,6 @@ signals:
     void nodeAddedSignal();
     void patchAddedSignal();
     void deleteSelectedNodesSignal();
-    void nodesDeletedSignal();
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);

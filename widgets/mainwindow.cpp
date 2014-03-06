@@ -71,7 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     setWindowTitle("KnossosQT");
     this->setWindowIcon(QIcon(":/images/logo.ico"));
-    this->setUnifiedTitleAndToolBarOnMac(true);
 
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
@@ -128,6 +127,7 @@ MainWindow::MainWindow(QWidget *parent) :
     createToolBar();
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
+    setStatusBar(nullptr);
     setGeometry(0, 0, width(), height());
 
     //connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
@@ -142,19 +142,18 @@ MainWindow::MainWindow(QWidget *parent) :
     updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
-
 }
 
 void MainWindow::createViewports() {
-    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, nullptr, VIEWPORT_XY, VP_UPPERLEFT));
-    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
-    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
-    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this, viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
+    viewports[VP_UPPERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), nullptr, VIEWPORT_XY, VP_UPPERLEFT));
+    viewports[VP_LOWERLEFT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_XZ, VP_LOWERLEFT));
+    viewports[VP_UPPERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_YZ, VP_UPPERRIGHT));
+    viewports[VP_LOWERRIGHT] = std::unique_ptr<Viewport>(new Viewport(this->centralWidget(), viewports[VP_UPPERLEFT].get(), VIEWPORT_SKELETON, VP_LOWERRIGHT));
 
-    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_Y_OFFSET + DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERLEFT]->setGeometry(DEFAULT_VP_MARGIN, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+    viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
 }
 
 MainWindow::~MainWindow()
@@ -289,6 +288,16 @@ void MainWindow:: createToolBar() {
     lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
     this->toolBar->addWidget(lockVPOrientationCheckbox);
 
+    loaderThreadsField = new QSpinBox();
+    loaderThreadsField->setMaximum(state->loaderDecompThreadsNumber);
+    loaderThreadsField->setMinimum(1);
+    loaderThreadsField->setMinimumWidth(75);
+    loaderThreadsField->clearFocus();
+    loaderThreadsField->setValue(state->loaderDecompThreadsNumber);
+    loaderThreadsLabel = new QLabel("<font color='black'>Decomp Threads</font>");
+    this->toolBar->addWidget(loaderThreadsLabel);
+    this->toolBar->addWidget(loaderThreadsField);
+
     this->toolBar->addSeparator();
     patchModeRadio = new QRadioButton("Patch Mode");
     patchModeRadio->setToolTip("Enable volume annotation with patches");
@@ -304,6 +313,7 @@ void MainWindow:: createToolBar() {
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
 
+    connect(loaderThreadsField, SIGNAL(editingFinished()), this, SLOT(loaderThreadsFieldChanged()));
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
@@ -958,9 +968,10 @@ void MainWindow::saveAsSlot()
         QFileInfo info(fileName);
         saveFileDirectory = new QString(info.dir().absolutePath());
 
+        /*
         if(state->skeletonState->autoFilenameIncrementBool) {
             updateSkeletonFileName(fileName);
-        }
+        }*/
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
@@ -1084,9 +1095,15 @@ void MainWindow::loadCustomPreferencesSlot()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
     if(!fileName.isEmpty()) {      
-        QSettings::setUserIniPath(fileName);
-        loadSettings();
+        QSettings settings;
 
+        QSettings settingsToLoad(fileName, QSettings::IniFormat);
+        QStringList keys = settingsToLoad.allKeys();
+        for(int i = 0; i < keys.size(); i++) {
+            settings.setValue(keys.at(i), settingsToLoad.value(keys.at(i)));
+        }
+
+        loadSettings();
     }
 }
 
@@ -1126,7 +1143,7 @@ void MainWindow::defaultPreferencesSlot() {
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
         this->setGeometry(QApplication::desktop()->availableGeometry().topLeft().x() + 20,
-                          QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1024, 800);
+                          QApplication::desktop()->availableGeometry().topLeft().y() + 50, 1280, 800);
     }
 }
 
@@ -1240,6 +1257,10 @@ void MainWindow::pasteClipboardCoordinates(){
     } else {
        LOG("Unable to fetch text from clipboard")
     }
+}
+
+void MainWindow::loaderThreadsFieldChanged() {
+    state->loaderDecompThreadsNumber = loaderThreadsField->value();
 }
 
 void MainWindow::coordinateEditingFinished() {
@@ -1477,17 +1498,15 @@ void MainWindow::updateSkeletonFileName(QString &fileName) {
         fileName = fileName.replace(fileName.length() - 7, 3, versionString);
 
     } else if(fileName.contains(withoutVersion)) {
-        //fileName = fileName.insert(fileName.length() - 3, "001.");
+        fileName = fileName.insert(fileName.length() - 3, "001.");
         state->skeletonState->skeletonRevision +=1;
     }
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event) {
+void MainWindow::resizeEvent(QResizeEvent *) {
     if(state->viewerState->defaultVPSizeAndPos) {
         // don't resize viewports when user positioned and resized them manually
-        int width = event->size().width();
-        int height = event->size().height();
-        resizeViewports(width, height);
+        resetViewports();
     }
 }
 
@@ -1614,7 +1633,7 @@ void MainWindow::taskSlot() {
 
 
 void MainWindow::resetViewports() {
-    resizeViewports(width(), height());
+    resizeViewports(centralWidget()->width(), centralWidget()->height());
     state->viewerState->defaultVPSizeAndPos = true;
 }
 
@@ -1686,13 +1705,15 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true)) {
+    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0, true);
+    if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->isBranchNode) {//active node was successfully marked as branch
         emit branchPushedSignal();
     }
 }
 
 void MainWindow::popBranchNodeSlot() {
-    if(popBranchNodeSignal()) {
+    emit popBranchNodeSignal();
+    if (state->skeletonState->activeNode != nullptr && !state->skeletonState->activeNode->isBranchNode) {//active node was successfully unmarked as branch
         emit branchPoppedSignal();
     }
 }
@@ -1836,25 +1857,25 @@ void MainWindow::deactivateLoopSlot() {
 }
 
 void MainWindow::resizeViewports(int width, int height) {
-    int sizeW = (width - 15)  / 2 ;
-    int sizeH = (height - 70) / 2;
+    width = (width - DEFAULT_VP_MARGIN) / 2;
+    height = (height - DEFAULT_VP_MARGIN) / 2;
 
     if(width < height) {
-        viewports[VIEWPORT_XY]->move(5, 60);
-        viewports[VIEWPORT_XZ]->move(5, sizeW+60+5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeW, 60);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeW, sizeW + 60 + 5);
+        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + width);
+        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + width, DEFAULT_VP_MARGIN + width);
         for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeW, sizeW);
+            viewports[i]->resize(width-DEFAULT_VP_MARGIN, width-DEFAULT_VP_MARGIN);
 
         }
     } else if(width > height) {
-        viewports[VIEWPORT_XY]->move(5, 60);
-        viewports[VIEWPORT_XZ]->move(5, sizeH+60+5);
-        viewports[VIEWPORT_YZ]->move(10 + sizeH, 60);
-        viewports[VIEWPORT_SKELETON]->move(10 + sizeH, sizeH + 60 + 5);
+        viewports[VIEWPORT_XY]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_XZ]->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN + height);
+        viewports[VIEWPORT_YZ]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN);
+        viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN + height);
         for(int i = 0; i < 4; i++) {
-            viewports[i]->resize(sizeH, sizeH);
+            viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
             viewports[i]->updateButtonPositions();
         }
     }

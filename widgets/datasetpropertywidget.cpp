@@ -85,7 +85,7 @@ void DatasetPropertyWidget::datasetfileDialogClicked() {
     state->viewerState->renderInterval = FAST;
 }
 
-void DatasetPropertyWidget::closeEvent(QCloseEvent *event) {
+void DatasetPropertyWidget::closeEvent(QCloseEvent *) {
     this->hide();
 }
 
@@ -108,7 +108,7 @@ void DatasetPropertyWidget::processButtonClicked() {
 
 void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     QString dir = this->path->currentText();
-    if(dir.isNull()) {
+    if(dir.isNull() || dir.isEmpty()) {
         if (isGUI) {
             QMessageBox info;
             info.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -149,20 +149,9 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     emit clearAnnotationSignal();
     if (isGUI) {
         emit clearAnnotationSignalGUI();
-    }
-    else {
+    } else {
         emit clearAnnotationSignalNoGUI();
     }
-    this->waitForLoader();
-
-    // From now on we don't really want to *load* anything, just mess around with data structures to get things right
-    state->loaderDummy = true;
-
-    while (state->magnification > 1) {
-        emit changeDatasetMagSignal(MAG_DOWN);
-        this->waitForLoader();
-    }
-
     // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
@@ -207,6 +196,16 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     if(state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
     }
+
+    //Viewer::changeDatasetMag cannot be used when ther’re no other mags available
+    //sets viewport settings according to current mag
+    for(size_t i = 0; i < state->viewerState->numberViewports; i++) {
+        if(state->viewerState->vpConfigs[i].type != VIEWPORT_SKELETON) {
+            state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
+            state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx = 1. / TEXTURE_EDGE_LEN / state->magnification;
+        }
+    }
+
     emit datasetSwitchZoomDefaults();
     this->hide();
 }

@@ -134,6 +134,9 @@ public:
     QToolButton *pasteButton;
     QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *xField, *yField, *zField;
+    QLabel *loaderThreadsLabel;
+    QSpinBox *loaderThreadsField;
+
     QRadioButton *patchModeRadio;
     QRadioButton *skeletonModeRadio;
     QMessageBox *prompt;
@@ -299,6 +302,7 @@ public slots:
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
+    void loaderThreadsFieldChanged();
     void patchModeSelected();
     void skeletonModeSelected();
 
