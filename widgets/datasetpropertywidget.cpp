@@ -150,6 +150,15 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
         emit clearSkeletonSignalNoGUI();
     }
 
+    // BUG BUG BUG
+    // The following code, combined with the way loader::run in currently implemented
+    // (revision 966) contains a minor timing issue that may result in a crash, namely
+    // since loader::loadCubes begins executing in LM_LOCAL mode and ends in LM_FTP,
+    // if at this point in the code we're in LM_LOCAL, and are about an FTP dataset
+    // BUG BUG BUG
+
+    state->loaderDummy = true;
+
     // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
