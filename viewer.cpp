@@ -1298,7 +1298,7 @@ void Viewer::run() {
 
 
             if(call % 1000 == 0) {
-                if(idlingExceeds(1000)) {
+                if(idlingExceeds(60000)) {
                     state->viewerState->renderInterval = SLOW;
                 }
             }

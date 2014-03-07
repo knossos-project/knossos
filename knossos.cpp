@@ -81,34 +81,17 @@ class myEventFilter: public QObject
 
   bool eventFilter(QObject* object,QEvent* event)
   {
+      // update idle time to current time on any user actions except just moving the mouse
       int type = event->type();
-      switch(type)
-      {
-      case QEvent::MouseButtonPress :
-      case QEvent::MouseButtonRelease :
-      case QEvent::MouseButtonDblClick :
-      case QEvent::KeyPress :
-      case QEvent::KeyRelease :
-      case QEvent::Wheel :
-          if (state == NULL) {
-              break;
+      if(type == QEvent::MouseButtonPress
+            || type == QEvent::KeyPress
+            || type == QEvent::Wheel) {
+          if (state != NULL
+                  && state->viewer != NULL
+                  && state->viewer->window->widgetContainer != NULL
+                  && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
+              state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
           }
-          if (state->viewer == NULL) {
-              break;
-          }
-          if (state->viewer->window == NULL) {
-              break;
-          }
-          if (state->viewer->window->widgetContainer == NULL) {
-              break;
-          }
-          if (state->viewer->window->widgetContainer->tracingTimeWidget == NULL) {
-              break;
-          }
-          state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
-          break;
-      default:
-          break;
       }
 
       return QObject::eventFilter(object,event);
