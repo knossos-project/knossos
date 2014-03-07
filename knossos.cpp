@@ -88,6 +88,7 @@ class myEventFilter: public QObject
             || type == QEvent::Wheel) {
           if (state != NULL
                   && state->viewer != NULL
+                  && state->viewer->window != NULL
                   && state->viewer->window->widgetContainer != NULL
                   && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
               state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
