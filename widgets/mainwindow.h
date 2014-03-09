@@ -273,7 +273,6 @@ public slots:
     void viewportSettingsSlot();
 
     /* window menu */
-    void toolsSlot();
     void taskSlot();
     void logSlot();
     void commentShortcutsSlots();
