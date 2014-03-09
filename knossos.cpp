@@ -48,7 +48,6 @@
 
 #include "test/knossostestrunner.h"
 #include "test/testcommentswidget.h"
-#include "test/testtoolswidget.h"
 #include "test/testnavigationwidget.h"
 #include "test/testorthogonalviewport.h"
 

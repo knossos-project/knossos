@@ -94,7 +94,6 @@ signals:
     void moveToNextNodeSignal();
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
-    void updateTools();
     bool popBranchNodeSignal();
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();

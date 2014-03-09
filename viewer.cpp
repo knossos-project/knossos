@@ -1959,7 +1959,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
-   // connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(eventModel, SIGNAL(treeAddedSignal(treeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(eventModel, SIGNAL(nodeAddedSignal()),
@@ -1971,7 +1970,6 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(nodeListElement*)));
-    connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(eventModel, SIGNAL(unselectNodesSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SLOT(clearSelection()));

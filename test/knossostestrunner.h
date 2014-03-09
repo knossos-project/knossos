@@ -9,7 +9,6 @@
 #include "testorthogonalviewport.h"
 #include "testskeletonloadandsave.h"
 #include "testskeletonviewport.h"
-#include "testtoolswidget.h"
 #include "testzoomandmultireswidget.h"
 #include "viewer.h"
 
@@ -36,7 +35,6 @@ protected:
     TestNavigationWidget *testNavigationWidget;
     TestOrthogonalViewport *testOrthogonalViewport;
     TestSkeletonViewport *testSkeletonViewport;
-    TestToolsWidget *testToolsWidget;
     TestZoomAndMultiresWidget *testZoomAndMultiresWidget;
     QTreeWidgetItem *findItem(const QString &name);    
     QPlainTextEdit *editor;

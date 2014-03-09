@@ -22,7 +22,7 @@ signals:
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void setJumpToActiveNodeSignal();
     nodeListElement *findNodeByNodeIDSignal(int id);
-    void updateTools();
+    void updateToolsSignal();
     void updateTreeviewSignal();
 
 public slots:

@@ -104,7 +104,6 @@ signals:
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
-    void updateTools();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();

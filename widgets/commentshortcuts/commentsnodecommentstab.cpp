@@ -143,7 +143,7 @@ void CommentsNodeCommentsTab::branchPointOnlyChecked(bool on) {
 void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
     if(state->skeletonState->selectedCommentNode) {
         strcpy(state->skeletonState->selectedCommentNode->comment->content, item->text().toStdString().c_str());
-        emit updateTools();
+        emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
 }

@@ -310,7 +310,6 @@ void MainWindow:: createToolBar() {
 
     //connect(pythonButton, SIGNAL(clicked()), this, SLOT());
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
-    //connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
     connect(annotationButton, SIGNAL(clicked()), this, SLOT(annotationSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
@@ -695,7 +694,6 @@ void MainWindow::createMenus()
     viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
     windowMenu = menuBar()->addMenu("Windows");
-    //toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
     taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
@@ -1129,16 +1127,6 @@ void MainWindow::viewportSettingsSlot() {
 }
 
 /* window menu functionality */
-
-void MainWindow::toolsSlot()
-{
-    this->widgetContainer->toolsWidget->show();
-    this->widgetContainer->toolsWidget->adjustSize();
-    if(widgetContainer->toolsWidget->pos().x() <= 0 or this->widgetContainer->toolsWidget->pos().y() <= 0)
-        this->widgetContainer->toolsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    toolsAction->setChecked(true);
-    this->widgetContainer->toolsWidget->setFixedSize(this->widgetContainer->toolsWidget->size());
-}
 
 void MainWindow::logSlot()
 {
@@ -1660,25 +1648,25 @@ void MainWindow::popBranchNodeSlot() {
 
 void MainWindow::moveToNextNodeSlot() {
     emit moveToNextNodeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevNodeSlot() {
     emit moveToPrevNodeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevTreeSlot() {
     emit moveToPrevTreeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToNextTreeSlot() {
     emit moveToNextTreeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 

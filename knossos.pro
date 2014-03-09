@@ -34,10 +34,6 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/datasavingwidget.cpp \
     widgets/navigationwidget.cpp \
     widgets/viewportsettingswidget.cpp \
-    widgets/toolswidget.cpp \
-    widgets/tools/toolsquicktabwidget.cpp \
-    widgets/tools/toolstreestabwidget.cpp \
-    widgets/tools/toolsnodestabwidget.cpp \
     widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
@@ -83,7 +79,6 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/tgt.c \
     test/testcommentswidget.cpp \
     test/testskeletonviewport.cpp \
-    test/testtoolswidget.cpp \
     test/testnavigationwidget.cpp \
     test/testzoomandmultireswidget.cpp \
     test/testorthogonalviewport.cpp \
@@ -155,10 +150,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/datasavingwidget.h \
     widgets/navigationwidget.h \
     widgets/viewportsettingswidget.h \
-    widgets/toolswidget.h \
-    widgets/tools/toolsquicktabwidget.h \
-    widgets/tools/toolstreestabwidget.h \
-    widgets/tools/toolsnodestabwidget.h \
     widgets/viewportsettings/vpsliceplaneviewportwidget.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
@@ -178,7 +169,6 @@ HEADERS  += widgets/mainwindow.h \
     ftp.h \
     test/testcommentswidget.h \    
     test/testskeletonviewport.h \
-    test/testtoolswidget.h \
     test/testnavigationwidget.h \
     test/testzoomandmultireswidget.h \
     test/testorthogonalviewport.h \
