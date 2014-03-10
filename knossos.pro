@@ -212,8 +212,17 @@ OTHER_FILES += \
     config.y \
     style.qss
 
-
-DEFINES += REVISION=\\\"$$system(svnversion)\\\"
+exists(.svn) {
+    SVNREV = $$system(svnversion)
+    DEFINES += REVISION=$$SVNREV
+    message(svn revision: $$SVNREV)
+}
+exists(.git) {
+    COMMIT = $$system(git log -1 --pretty=format:%H)
+    GITREV = $$system(git svn find-rev $$COMMIT)
+    DEFINES += REVISION=$$GITREV
+    message(git svn revision: $$GITREV)
+}
 
 macx:QMAKE_MAC_SDK = macosx10.9
 macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
