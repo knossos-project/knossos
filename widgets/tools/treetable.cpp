@@ -19,6 +19,30 @@ void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
     }
 }
 
+void TreeTable::dropEvent(QDropEvent *event) {
+    QTableWidgetItem *droppedOnItem = itemAt(event->pos());
+    if(droppedOnItem == NULL or ::state->skeletonState->selectedNodes.size() == 0) {
+        return;
+    }
+    droppedOnTreeID = item(droppedOnItem->row(), 0)->text().toInt();
+
+    QMessageBox prompt;
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle("Cofirmation required");
+    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
+                            arg(droppedOnTreeID));
+    QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
+    prompt.addButton("Cancel", QMessageBox::ActionRole);
+    prompt.exec();
+    if(prompt.clickedButton() == confirmButton) {
+        for (auto * const node : ::state->skeletonState->selectedNodes) {
+            Skeletonizer::moveNodeToTree(node, droppedOnTreeID);
+        }
+    }
+    emit updateNodesTable();
+}
+
 void TreeTable::focusInEvent(QFocusEvent *) {
     emit focused(this);
 }
@@ -29,30 +53,3 @@ void TreeTable::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-void TreeTable::dropEvent(QDropEvent *event) {
-    QTableWidgetItem *droppedOnItem = itemAt(event->pos());
-    droppedOnTreeID = item(droppedOnItem->row(), 0)->text().toInt();
-    if(droppedOnItem == NULL or ::state->skeletonState->selectedNodes.size() == 0) {
-        return;
-    }
-
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Cofirmation required");
-    prompt.setText(QString("Do you really want to add selected node(s) to tree %1?").arg(droppedOnTreeID));
-    QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        std::vector<nodeListElement *>::iterator iter;
-        for(iter = ::state->skeletonState->selectedNodes.begin();
-            iter != ::state->skeletonState->selectedNodes.end(); ++iter) {
-            Skeletonizer::moveNodeToTree((*iter), droppedOnTreeID);
-        }
-    }
-    for(int i = 0; i < ::state->skeletonState->selectedNodes.size(); ++i) {
-        ::state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    ::state->skeletonState->selectedNodes.clear();
-}

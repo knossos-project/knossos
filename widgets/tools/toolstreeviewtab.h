@@ -5,6 +5,9 @@
 #include <QRadioButton>
 #include <QTableWidget>
 
+#include "widgets/tools/nodetable.h"
+#include "widgets/tools/treetable.h"
+
 class QTableWidgetItem;
 class QHBoxLayout;
 class QVBoxLayout;
@@ -21,41 +24,6 @@ class QMenu;
 struct treeListElement;
 struct nodeListElement;
 struct segmentListElement;
-class TreeTable : public QTableWidget {
-    Q_OBJECT
-public:
-    explicit TreeTable(QWidget *parent);
-    int droppedOnTreeID;
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void dropEvent(QDropEvent *event);
-    void focusInEvent(QFocusEvent *);
-signals:
-    void focused(TreeTable *table);
-    void updateTreeview();
-    void deleteTreesSignal();
-public slots:
-};
-
-class NodeTable : public QTableWidget {
-    Q_OBJECT
-public:
-    explicit NodeTable(QWidget *parent);
-
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void focusInEvent(QFocusEvent *);
-signals:
-    void deleteNodesSignal();
-    void updateNodesTable();
-    void focused(NodeTable *table);
-public slots:
-
-};
 
 class ToolsTreeviewTab : public QWidget
 {
@@ -99,7 +67,6 @@ public:
     QString treeCommentBuffer;
     // tree color editing
     QDialog *treeColorEditDialog;
-    int treeColorEditRow;
     QLabel *rLabel, *gLabel, *bLabel, *aLabel;
     QDoubleSpinBox *rSpin, *gSpin, *bSpin, *aSpin;
     QPushButton *treeColorApplyButton;
@@ -118,7 +85,6 @@ public:
     QPushButton *nodeRadiusApplyButton;
     QPushButton *nodeRadiusCancelButton;
     QVBoxLayout *nodeRadiusLayout;
-    QDialog *moveNodesDialog;
     QLabel *newTreeLabel;
     QSpinBox *newTreeIDSpin;
     QPushButton *moveNodesButton;
@@ -146,7 +112,7 @@ protected:
     int getActiveTreeRow();
     int getActiveNodeRow();
 signals:
-    void updateToolsSignal();
+    void updateAnnotationLabelsSignal();
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
@@ -179,7 +145,7 @@ public slots:
     void mergeTreesAction();
     void restoreColorAction();
     void setTreeCommentAction();
-    void updateTreeCommentBuffer(QString comment);
+    void updateTreeCommentBuffer(const QString & comment);
     void editTreeComments();
 
     // node context menu
@@ -194,14 +160,12 @@ public slots:
     void updateNodeRadiusBuffer(double value);
     void editNodeRadii();
     void deleteNodesAction();
-    void moveNodesClicked();
 
     // update tree table
     void treeActivated();
     void treeAdded(treeListElement *tree);
     void treesDeleted();
     void treesMerged(int treeID1, int treeID2);
-    void treeComponentSplit();
 
     // update node table
     void nodeActivated();

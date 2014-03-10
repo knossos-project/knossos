@@ -90,7 +90,9 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/annotationwidget.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
-    stateInfo.cpp \
+    widgets/tools/nodetable.cpp \
+    widgets/tools/treetable.cpp \
+    stateInfo.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -180,7 +182,8 @@ HEADERS  += widgets/mainwindow.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
-
+    widgets/tools/nodetable.h \
+    widgets/tools/treetable.h
 
 FORMS    += mainwindow.ui
 

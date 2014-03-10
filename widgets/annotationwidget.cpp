@@ -43,7 +43,7 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     mainLayout->addLayout(hLayout);
     setLayout(mainLayout);
 
-    connect(treeviewTab, SIGNAL(updateToolsSignal()), this, SLOT(updateLabels()));
+    connect(treeviewTab, &ToolsTreeviewTab::updateAnnotationLabelsSignal, this, &AnnotationWidget::updateLabels);
 
     connect(commandsTab, SIGNAL(treeActivatedSignal()), treeviewTab, SLOT(treeActivated()));
     connect(commandsTab, SIGNAL(treeAddedSignal(treeListElement*)), treeviewTab, SLOT(treeAdded(treeListElement*)));

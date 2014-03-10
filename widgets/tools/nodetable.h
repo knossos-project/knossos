@@ -11,8 +11,9 @@ public:
     bool selectionProtection;
     void setItem(int row, int column, QTableWidgetItem *item);
 protected:
-    void keyPressEvent(QKeyEvent *event);
-    void focusInEvent(QFocusEvent *);
+    void focusInEvent(QFocusEvent *) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 signals:
     void deleteNodesSignal();
     void updateNodesTable();

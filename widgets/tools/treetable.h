@@ -11,13 +11,13 @@ public:
     bool selectionProtection;
     void setItem(int row, int column, QTableWidgetItem *item);
 protected:
-    void keyPressEvent(QKeyEvent *event);
-    void dropEvent(QDropEvent *event);
-    void focusInEvent(QFocusEvent *);
+    void dropEvent(QDropEvent *event) override;
+    void focusInEvent(QFocusEvent *) override;
+    void keyPressEvent(QKeyEvent *event) override;
 signals:
-    void focused(TreeTable *table);
-    void updateTreeview();
     void deleteTreesSignal();
+    void focused(TreeTable *table);
+    void updateNodesTable();
 public slots:
 };
 

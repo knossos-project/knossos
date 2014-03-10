@@ -19,3 +19,8 @@ void NodeTable::keyPressEvent(QKeyEvent *event) {
         emit deleteNodesSignal();
     }
 }
+
+void NodeTable::mouseReleaseEvent(QMouseEvent *event) {
+    QTableWidget::mouseReleaseEvent(event);//invoke standard behaviour
+    setDragEnabled(true);//re-enable dragging after multi-selection
+}
