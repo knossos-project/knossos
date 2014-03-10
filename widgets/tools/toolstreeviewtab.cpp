@@ -42,6 +42,17 @@
 
 extern stateInfo *state;
 
+template<typename T>
+static void resizeToFit(T table) {
+    // resize every column to size of content, to make them small,
+    // omit comment column, because it might become large
+    table->resizeColumnToContents(NODE_ID);
+    table->resizeColumnToContents(NODE_X);
+    table->resizeColumnToContents(NODE_Y);
+    table->resizeColumnToContents(NODE_Z);
+    table->resizeColumnToContents(NODE_RADIUS);
+}
+
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QWidget(parent), focusedTreeTable(nullptr), focusedNodeTable(nullptr), selectedNodes("selected nodes")
@@ -1401,16 +1412,12 @@ void ToolsTreeviewTab::updateNodesTable() {
     }
 
     nodeTable->selectionProtection = true;
-    //nodeTable->selectionModel()->clearSelection();
-    //nodeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    nodeTable->selectionModel()->clearSelection();
+    nodeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
     nodeTable->selectionProtection = false;
 
-    // resize every column to size of content, to make them small,
-    // omit comment column, because it might become large
-    nodeTable->resizeColumnToContents(NODE_RADIUS);
-    nodeTable->resizeColumnToContents(NODE_X);
-    nodeTable->resizeColumnToContents(NODE_Y);
-    nodeTable->resizeColumnToContents(NODE_Z);
+    resizeToFit(nodeTable);
+
     if(state->skeletonState->totalNodeElements > 0) {
         nodeTable->setRowCount(nodeIndex);
     }
@@ -1533,13 +1540,7 @@ void ToolsTreeviewTab::nodeActivated() {
     insertNode(state->skeletonState->activeNode, activeNodeTable);
     activeNodeTable->setRowCount(1);
 
-    // resize every column to size of content, to make them small,
-    // omit comment column, because it might become large
-    activeNodeTable->resizeColumnToContents(NODE_ID);
-    activeNodeTable->resizeColumnToContents(NODE_X);
-    activeNodeTable->resizeColumnToContents(NODE_Y);
-    activeNodeTable->resizeColumnToContents(NODE_Z);
-    activeNodeTable->resizeColumnToContents(NODE_RADIUS);
+    resizeToFit(activeNodeTable);
 
     treeActivated(); // update active tree table in case of tree switch
     emit updateAnnotationLabelsSignal();
@@ -1551,6 +1552,9 @@ void ToolsTreeviewTab::nodeAdded() {
     }
     nodeActivated();
     insertNode(state->skeletonState->activeNode, nodeTable);
+    if (state->skeletonState->totalNodeElements == 1) {
+        resizeToFit(nodeTable);//we don’t want to slow down insertion of nodes
+    }
     emit updateAnnotationLabelsSignal();
 }
 
@@ -1558,8 +1562,9 @@ void ToolsTreeviewTab::branchPushed() {
     if(branchNodesChckBx->isChecked()) {
         // the active node has become branch point, add it to node table
         insertNode(state->skeletonState->activeNode, nodeTable);
+        resizeToFit(nodeTable);
+        emit updateAnnotationLabelsSignal();
     }
-    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::branchPopped() {
@@ -1723,14 +1728,24 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
         table->removeRow(nodeTable->rowCount() - 1);
     }
 
+    int position = 0;//insert on first position if node is firstnode
+    if (table != activeNodeTable) {
+        for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
+            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->firstNode->nodeID) {
+                position = i+1;//we want to add one row after this
+                break;
+            }
+        }
+    }
+
     QTableWidgetItem *item;
-    table->insertRow(0);
+    table->insertRow(position);
 
     item = new QTableWidgetItem(QString::number(node->nodeID));
     Qt::ItemFlags flags = item->flags();
     flags &= ~Qt::ItemIsEditable;
     item->setFlags(flags);
-    table->setItem(0, NODE_ID, item);
+    table->setItem(position, NODE_ID, item);
     item = new QTableWidgetItem("");
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
@@ -1738,27 +1753,27 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
     if(node->comment) {
         setText(table, item, node->comment->content);
     }
-    table->setItem(0, NODE_COMMENT, item);
+    table->setItem(position, NODE_COMMENT, item);
     item = new QTableWidgetItem(QString::number(node->position.x + 1));
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
-    table->setItem(0, NODE_X, item);
+    table->setItem(position, NODE_X, item);
     item = new QTableWidgetItem(QString::number(node->position.y + 1));
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
-    table->setItem(0, NODE_Y, item);
+    table->setItem(position, NODE_Y, item);
     item = new QTableWidgetItem(QString::number(node->position.z + 1));
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
-    table->setItem(0, NODE_Z, item);
+    table->setItem(position, NODE_Z, item);
     item = new QTableWidgetItem(QString::number(node->radius));
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable;
     item->setFlags(flags);
-    table->setItem(0, NODE_RADIUS, item);
+    table->setItem(position, NODE_RADIUS, item);
 }
 
 int ToolsTreeviewTab::getActiveTreeRow() {
