@@ -124,6 +124,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
     hLayout->addWidget(locktoActiveButton);
     hLayout->addWidget(disableCurrentLockButton);
     mainLayout->addLayout(hLayout);
+    mainLayout->addStretch(50);
 
     setLayout(mainLayout);
 

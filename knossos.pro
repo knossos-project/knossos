@@ -8,7 +8,7 @@ QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt
+CONFIG += qt c++11
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -215,12 +215,13 @@ OTHER_FILES += \
 
 DEFINES += REVISION=\\\"$$system(svnversion)\\\"
 
-mac {
+macx:QMAKE_MAC_SDK = macosx10.9
+macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+macx {
     INCLUDEPATH += /usr/include/Python2.7 \
                    /usr/lib/
                    /usr/include
-    LIBS += -framework Python \
-            -framework GLUT \
+    LIBS += -framework GLUT \
             -L$(QTDIR)/lib -lPythonQt \
             -lcurl
 
