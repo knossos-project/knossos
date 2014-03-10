@@ -79,14 +79,9 @@ signals:
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
-    bool vpListDel(vpList *list);
-    int vpListDelElement( vpList *list,  vpListElement *element);
-    vpList *vpListGenerate(viewerState *viewerState);
-    int vpListAddElement(vpList *vpList, vpConfig *vpConfig);
-    vpList* vpListNew();
 
-    bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
-    bool vpGenerateTexture_arb(struct vpListElement *currentVp);
+    bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
+    bool vpGenerateTexture_arb(vpConfig &currentVp);
 
     bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);

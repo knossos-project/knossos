@@ -129,89 +129,6 @@ Viewer::Viewer(QObject *parent) :
     delay.start();
 }
 
-vpList *Viewer::vpListNew() {
-    vpList *newVpList = NULL;
-
-    newVpList = (vpList *) malloc(sizeof(vpList));
-    if(newVpList == NULL) {
-        LOG("Out of memory.\n")
-        return NULL;
-    }
-
-    newVpList->entry = NULL;
-    newVpList->elements = 0;
-
-    return newVpList;
-}
-
-int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig) {
-    vpListElement *newElement = (vpListElement *) malloc(sizeof(vpListElement));
-    if(newElement == NULL) {
-        qDebug("Out of memory\n");
-        exit(EXIT_FAILURE);
-    }
-
-    newElement->vpConfig = vpConfig;
-    if(vpList->entry != NULL) {
-        vpList->entry->next->previous = newElement;
-        newElement->next = vpList->entry->next;
-        vpList->entry->next = newElement;
-        newElement->previous = vpList->entry;
-    }
-    else {
-        vpList->entry = newElement;
-        vpList->entry->next = newElement;
-        vpList->entry->previous = newElement;
-    }
-    vpList->elements = vpList->elements + 1;
-    return vpList->elements;
-}
-
-vpList *Viewer::vpListGenerate(viewerState *viewerState) {
-    vpList *newVpList = NULL;
-    uint i = 0;
-
-    newVpList = vpListNew();
-    if(newVpList == NULL) {
-        LOG("Error generating new vpList.")
-        _Exit(false);
-    }
-
-    for(i = 0; i < viewerState->numberViewports; i++) {
-        if(viewerState->vpConfigs[i].type == VIEWPORT_SKELETON) {
-            continue;
-        }
-        vpListAddElement(newVpList, &(viewerState->vpConfigs[i]));
-    }
-    return newVpList;
-}
-
-int Viewer::vpListDelElement(vpList *list,  vpListElement *element) {
-    if(element->next == element) {
-        // This is the only element in the list
-        list->entry = NULL;
-    } else {
-        element->next->previous = element->previous;
-        element->previous->next = element->next;
-        list->entry = element->next;
-    }
-    free(element);
-    list->elements = list->elements - 1;
-    return list->elements;
-}
-
-bool Viewer::vpListDel(vpList *list) {
-    while(list->elements > 0) {
-        if(vpListDelElement(list, list->entry) < 0) {
-            LOG("Error deleting element at %p from the slot list %d elements remain in the list.",
-                   list->entry, list->elements);
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool Viewer::resetViewPortData(vpConfig *viewport) {
     // for arbitrary vp orientation
     memset(viewport->viewPortData,
@@ -488,7 +405,7 @@ static int texIndex(uint x,
     return index;
 }
 
-bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState) {
+bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
@@ -502,7 +419,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
-    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
+    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
     currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
@@ -515,7 +432,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     // slice relevant to the texture for this viewport.
     //
     // Rounding should be explicit!
-    switch(currentVp->vpConfig->type) {
+    switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
                    //* (viewerState->currentPosition.z - state->cubeEdgeLength
@@ -534,17 +451,17 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                    * currentPosition_dc.x;
         break;
     default:
-        qDebug("No such slice view: %d.", currentVp->vpConfig->type);
+        qDebug("No such slice view: %d.", currentVp.type);
         return false;
     }
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
-    for(x_dc = 0; x_dc < currentVp->vpConfig->texture.usedTexLengthDc; x_dc++) {
-        for(y_dc = 0; y_dc < currentVp->vpConfig->texture.usedTexLengthDc; y_dc++) {
+    for(x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
+        for(y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
             x_px = x_dc * state->cubeEdgeLength;
             y_px = y_dc * state->cubeEdgeLength;
 
-            switch(currentVp->vpConfig->type) {
+            switch(currentVp.type) {
             // With an x/y-coordinate system in a viewport, we get the following
             // mapping from viewport (slice) coordinates to global (dc)
             // coordinates:
@@ -570,7 +487,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                                upperLeftDc.z + y_dc);
                 break;
             default:
-                qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type);
+                qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp.type);
             }
 
             state->protectCube2Pointer->lock();
@@ -582,13 +499,13 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             // Take care of the data textures.
 
             glBindTexture(GL_TEXTURE_2D,
-                          currentVp->vpConfig->texture.texHandle);
+                          currentVp.texture.texHandle);
 
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
             // This is used to index into the texture. texData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            index = texIndex(x_dc, y_dc, 3, &(currentVp->vpConfig->texture));
+            index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
             if(datacube == HT_FAILURE) {
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -604,7 +521,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
                                dcOffset,
-                               currentVp->vpConfig);
+                               &currentVp);
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -618,12 +535,12 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             //Take care of the overlay textures.
             if(state->overlay) {
                 glBindTexture(GL_TEXTURE_2D,
-                              currentVp->vpConfig->texture.overlayHandle);
+                              currentVp.texture.overlayHandle);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                index = texIndex(x_dc, y_dc, 4, &(currentVp->vpConfig->texture));
+                index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
 
                 if(overlayCube == HT_FAILURE) {
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -640,7 +557,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                     ocSliceExtract(overlayCube,
                                    &(viewerState->overlayData[index]),
                                    dcOffset * OBJID_BYTES,
-                                   currentVp->vpConfig);
+                                   &currentVp);
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -659,7 +576,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     return true;
 }
 
-bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
+bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     Coordinate currentDc, currentPx;
@@ -667,19 +584,19 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
 
     Byte *datacube = NULL, *overlayCube = NULL;
 
-    floatCoordinate *v1 = &currentVp->vpConfig->v1;
-    floatCoordinate *v2 = &currentVp->vpConfig->v2;
-    CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
+    floatCoordinate *v1 = &currentVp.v1;
+    floatCoordinate *v2 = &currentVp.v2;
+    CPY_COORDINATE(rowPx_float, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
     CPY_COORDINATE(currentPx_float, rowPx_float);
 
-    glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
+    glBindTexture(GL_TEXTURE_2D, currentVp.texture.texHandle);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < currentVp->vpConfig->s_max) {
+    while(s < currentVp.s_max) {
         t = 0;
-        while(t < currentVp->vpConfig->t_max) {
+        while(t < currentVp.t_max) {
             SET_COORDINATE(currentPx, roundFloat(currentPx_float.x),
                                       roundFloat(currentPx_float.y),
                                       roundFloat(currentPx_float.z));
@@ -701,7 +618,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
                                                 currentPx_float.z-currentDc.z*state->cubeEdgeLength);
             t_old = t;
             dcSliceExtract_arb(datacube,
-                               currentVp->vpConfig,
+                               &currentVp,
                                &currentPxInDc_float,
                                s, &t);
             SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
@@ -725,7 +642,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
                     state->M*state->cubeEdgeLength,
                     GL_RGB,
                     GL_UNSIGNED_BYTE,
-                    currentVp->vpConfig->viewPortData);
+                    currentVp.viewPortData);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -1214,7 +1131,7 @@ void Viewer::run() {
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
     struct viewerState *viewerState = state->viewerState;
-    struct vpListElement *currentVp = NULL, *nextVp = NULL;
+    //struct vpListElement *currentVp = NULL, *nextVp = NULL;
     uint drawCounter = 0;
 
     state->viewerState->viewerReady = true;
@@ -1226,8 +1143,8 @@ void Viewer::run() {
     // structure.
     // The idea is that we can easily remove the element representing a
     // pending viewport once its texture is completely loaded.
-    viewports = vpListGenerate(viewerState);
-    currentVp = viewports->entry;
+    //viewports = vpListGenerate(viewerState);
+    vpConfig currentVp = state->viewerState->vpConfigs[0];
 
     // for arbitrary viewport orientation
     state->alpha += state->viewerState->alphaCache;
@@ -1261,7 +1178,7 @@ void Viewer::run() {
 
     while(!state->quitSignal && viewports->elements > 0) {
 
-        switch(currentVp->vpConfig->id) {
+        switch(currentVp.id) {
 
         case VP_UPPERLEFT:
             vpUpperLeft->makeCurrent();
@@ -1273,10 +1190,10 @@ void Viewer::run() {
             vpUpperRight->makeCurrent();
             break;
         }
-        nextVp = currentVp->next;
+        //nextVp = currentVp->next;
 
-        if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
-            if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
+        if(currentVp.type != VIEWPORT_SKELETON) {
+            if(currentVp.type != VIEWPORT_ARBITRARY) {
                  vpGenerateTexture(currentVp, viewerState);
             }
             else {
@@ -1302,14 +1219,16 @@ void Viewer::run() {
                     state->viewerState->renderInterval = SLOW;
                 }
             }
-            timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
 
-            vpListDel(viewports);
+            //vpListDelElement(viewports, currentVp);
+
+            //vpListDel(viewports);
             viewerState->userMove = false;
             call += 1;
+            timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
             return;
         }
-        currentVp = nextVp;
+        currentVp = state->viewerState->vpConfigs[drawCounter];
     } //end while(viewports->elements > 0)
 }
 

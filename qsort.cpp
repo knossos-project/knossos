@@ -156,7 +156,8 @@ _quicksort (
 		{
 		  left_ptr += size;
 		  right_ptr -= size;
-		  break;
+
+          break;
 		}
 	    }
 	  while (left_ptr <= right_ptr);
@@ -191,6 +192,7 @@ _quicksort (
               hi = right_ptr;
             }
         }
+
     }
 
   /* Once the BASE_PTR array is partially sorted by quicksort the rest
@@ -245,4 +247,6 @@ _quicksort (
           }
       }
   }
+  if(pivot_buffer)
+      free(pivot_buffer);
 }
