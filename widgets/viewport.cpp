@@ -35,6 +35,8 @@
 
 extern stateInfo *state;
 
+static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
+
 ResizeButton::ResizeButton(QWidget *parent) : QPushButton(parent) {}
 
 void ResizeButton::enterEvent(QEvent *) {

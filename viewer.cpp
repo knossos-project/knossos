@@ -854,7 +854,7 @@ bool Viewer::initViewer() {
                                                      * 3);
 
     /* @arb */
-    for(int i = 0; i < state->viewerState->numberViewports; i++){
+    for (std::size_t i = 0; i < state->viewerState->numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             LOG("Out of memory.")
@@ -998,7 +998,7 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     return true;
 }
 
-bool Viewer::updatePosition(int serverMovement) {
+bool Viewer::updatePosition(int) {
     Coordinate jump;
 
     return true;
@@ -1043,7 +1043,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
         switch(upOrDownFlag) {
         case MAG_DOWN:
-            if(state->magnification > state->lowestAvailableMag) {
+            if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
                 state->magnification /= 2;
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
@@ -1056,7 +1056,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             break;
 
         case MAG_UP:
-            if(state->magnification < state->highestAvailableMag) {
+            if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
                 state->magnification *= 2;
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
@@ -1112,39 +1112,17 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
-    static uint call = 0;
     processUserMove();
-    /*
-    if(!state->viewerState->userMove) {
-        if(QApplication::hasPendingEvents()) {
-            QApplication::processEvents();
-        }
-        timer->singleShot(20 , this, SLOT(run()));
-        return;
-
-    }*/
-
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available.
     // While we are loading the textures, we check for events. Some events
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
-    struct viewerState *viewerState = state->viewerState;
-    //struct vpListElement *currentVp = NULL, *nextVp = NULL;
-    uint drawCounter = 0;
 
     state->viewerState->viewerReady = true;
 
     // Display info about skeleton save path here TODO
-    // This creates a circular doubly linked list of
-    // pending viewports (viewports for which the texture has not yet been
-    // completely loaded) from the viewport-array in the viewerState
-    // structure.
-    // The idea is that we can easily remove the element representing a
-    // pending viewport once its texture is completely loaded.
-    //viewports = vpListGenerate(viewerState);
-    vpConfig currentVp = state->viewerState->vpConfigs[0];
 
     // for arbitrary viewport orientation
     state->alpha += state->viewerState->alphaCache;
@@ -1152,14 +1130,12 @@ void Viewer::run() {
     state->viewerState->alphaCache = state->viewerState->betaCache = 0;
     if (state->alpha >= 360) {
         state->alpha -= 360;
-    }
-    else if (state->alpha < 0) {
+    } else if (state->alpha < 0) {
         state->alpha += 360;
     }
     if (state->beta >= 360) {
         state->beta -= 360;
-    }
-    else if (state->beta < 0) {
+    } else if (state->beta < 0) {
         state->beta += 360;
     }
 
@@ -1176,34 +1152,26 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
-    while(!state->quitSignal && viewports->elements > 0) {
+    for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
+        vpConfig currentVp = state->viewerState->vpConfigs[drawCounter];
 
-        switch(currentVp.id) {
-
-        case VP_UPPERLEFT:
+        if (currentVp.id == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
-            break;
-        case VP_LOWERLEFT:
+        } else if (currentVp.id == VP_LOWERLEFT) {
             vpLowerLeft->makeCurrent();
-            break;
-        case VP_UPPERRIGHT:
+        } else if (currentVp.id == VP_UPPERRIGHT) {
             vpUpperRight->makeCurrent();
-            break;
         }
-        //nextVp = currentVp->next;
 
         if(currentVp.type != VIEWPORT_SKELETON) {
             if(currentVp.type != VIEWPORT_ARBITRARY) {
-                 vpGenerateTexture(currentVp, viewerState);
-            }
-            else {
+                vpGenerateTexture(currentVp, state->viewerState);
+            } else {
                 vpGenerateTexture_arb(currentVp);
             }
         }
-        drawCounter++;
-        if(drawCounter == 3) {
-            drawCounter = 0;
 
+        if(drawCounter == 3) {
             updateViewerState();
             recalcTextureOffsets();
             skeletonizer->updateSkeletonState();
@@ -1213,23 +1181,17 @@ void Viewer::run() {
             vpUpperRight->updateGL();
             vpLowerRight->updateGL();
 
-
-            if(call % 1000 == 0) {
+            static uint call = 0;
+            if (++call % 1000 == 0) {
                 if(idlingExceeds(60000)) {
                     state->viewerState->renderInterval = SLOW;
                 }
             }
-
-            //vpListDelElement(viewports, currentVp);
-
-            //vpListDel(viewports);
-            viewerState->userMove = false;
-            call += 1;
+            state->viewerState->userMove = false;
             timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
             return;
         }
-        currentVp = state->viewerState->vpConfigs[drawCounter];
-    } //end while(viewports->elements > 0)
+    }
 }
 
 /** this method checks if the last call of the method checkIdleTime is longer than <treshold> msec ago.
@@ -1405,7 +1367,7 @@ bool Viewer::userMove_arb(float x, float y, float z, int serverMovement) {
 }
 
 
-int Viewer::findVPnumByWindowCoordinate(uint xScreen, uint yScreen) {
+int Viewer::findVPnumByWindowCoordinate(uint, uint) {
     uint tempNum;
 
     tempNum = -1;

@@ -430,19 +430,6 @@ typedef struct Hashtable{
 
 } Hashtable;
 
-// This is used for a (counting) linked list of vpConfigs that have to be handled
-// (their textures put together from datacube slices)
-struct vpListElement {
-    struct vpConfig *vpConfig;
-    struct vpListElement *next;
-    struct vpListElement *previous;
-};
-
-struct vpList {
-    struct vpListElement *entry;
-    uint elements;
-};
-
 struct stack {
     uint elementsOnStack;
     void **elements;
@@ -658,7 +645,7 @@ public:
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    struct Viewer *viewer;
+    class Viewer *viewer;
     struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
@@ -917,7 +904,7 @@ struct viewerState {
     bool vpOrientationLocked;
     int slicingMode; // MODE_ORTHO or MODE_ARBITRARY
 
-    struct vpConfig *vpConfigs;
+    vpConfig *vpConfigs;
     Byte *texData;
     Byte *overlayData;
     Byte *defaultTexData;

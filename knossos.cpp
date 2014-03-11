@@ -64,7 +64,7 @@
 
 #define NUMTHREADS 4
 
-extern stateInfo *state = NULL;
+stateInfo * state = nullptr;//state lives here
 char logFilename[MAX_PATH] = {0};
 std::unique_ptr<Loader> loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
@@ -510,7 +510,7 @@ bool Knossos::lockSkeleton(uint targetRevision) {
     }
     return true;
 }
-bool Knossos::unlockSkeleton(int increment) {
+bool Knossos::unlockSkeleton(int) {
     /* We cannot increment the revision count if the skeleton change was
      * not successfully commited (i.e. the skeleton changing function encountered
      * an error). In that case, the connection has to be closed and the user
@@ -560,6 +560,7 @@ bool Knossos::sendQuitSignal() {
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
+    loader->wait();//wait for the loader to terminate
     return true;
 }
 
@@ -691,7 +692,6 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 stateInfo *Knossos::emptyState() {
 
     stateInfo *state = new stateInfo();
-    memset(state, 0, sizeof(stateInfo));//initialize memory
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
@@ -795,7 +795,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             int currMagExists = false;
             if (LM_FTP == state->loadMode) {
                 const char *ftpDirDelim = "/";
-                int confSize = 0;
+                //int confSize = 0;
                 sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
                 /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
                 if (EXIT_SUCCESS == downloadFile(currPath, NULL)) {

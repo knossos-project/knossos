@@ -38,7 +38,6 @@
 #define VP_LOWERLEFT 1
 #define VP_UPPERRIGHT 2
 #define VP_LOWERRIGHT 3
-static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
 
 class QPushButton;
 

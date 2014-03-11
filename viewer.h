@@ -60,8 +60,7 @@ public:
 
     floatCoordinate v1, v2, v3;
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
-    vpList *viewports;
-    QTimer *timer;    
+    QTimer *timer;
     int frames;
 
     bool updateZoomCube();

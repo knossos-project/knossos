@@ -324,7 +324,7 @@ void MainWindow:: createToolBar() {
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
 
-void MainWindow::updateTitlebar(bool useFilename) {
+void MainWindow::updateTitlebar(bool) {
     QString title;
     if(!state->skeletonState->skeletonFileAsQString.isNull()) {
         title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
@@ -354,7 +354,7 @@ bool MainWindow::cpBaseDirectory(char *target, QString path){
         qDebug("Path too long.");
         return false;
     }
-    sprintf(target, "%s\0", path.mid(0, hit).toStdString().c_str());
+    sprintf(target, "%s", path.mid(0, hit).toStdString().c_str());
     return true;
 }
 
@@ -1478,7 +1478,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
     event->accept();
 }
 
-void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
+void MainWindow::dragLeaveEvent(QDragLeaveEvent *) {
 }
 
 void MainWindow::openDatasetSlot() {
@@ -1547,7 +1547,7 @@ void MainWindow::taskSlot() {
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {
-            memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
+            state->taskState->taskFile[0] = '\0';
             strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
         }
         attribute = attributes.value("description").toString();
