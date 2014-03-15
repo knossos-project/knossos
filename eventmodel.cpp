@@ -187,10 +187,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return true;
     }
     bool newNode = false;
-    bool treeExists = false;
-    if(state->skeletonState->firstTree != NULL) {
-        treeExists = true;
-    }
+    bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -308,11 +305,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     /* Move to the new node position */
     emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-    if(newNode) {
+    if (newNode) {
         emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
         emit nodeAddedSignal();
-        if(treeExists == false) { // a new tree was created
-            emit treeAddedSignal(state->skeletonState->firstTree);
+        if (newTree) {
+            emit treeAddedSignal(state->skeletonState->activeTree);
         }
     }
     emit updateViewerStateSignal();

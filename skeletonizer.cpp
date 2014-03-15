@@ -1732,13 +1732,14 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
     }
     currentTree->firstNode = NULL;
 
-    if(currentTree == state->skeletonState->firstTree)
+    if (currentTree->previous != nullptr) {
+        currentTree->previous->next = currentTree->next;
+    }
+    if (currentTree->next != nullptr) {
+        currentTree->next->previous = currentTree->previous;
+    }
+    if(currentTree == state->skeletonState->firstTree) {
         state->skeletonState->firstTree = currentTree->next;
-    else {
-        if(currentTree->previous)
-            currentTree->previous->next = currentTree->next;
-        if(currentTree->next)
-            currentTree->next->previous = currentTree->previous;
     }
 
     free(currentTree);
