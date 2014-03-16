@@ -13,29 +13,36 @@ public:
 signals:
     
 public slots:
+    /*
     nodeListElement *new_nodeListElement();
-    nodeListElement *new_nodeListElement(int nodeID, int x, int, int z, float radius = 1.5, int inVp = 1, int inMag = 1, int time = 1, char *comment = 0);
-    int getNodeID(nodeListElement *self);
-    void setNodeID(nodeListElement *self, int nodeID);
-    int getTime(nodeListElement *self);
-    void setTime(nodeListElement *self, int time);
-    float getRadius(nodeListElement *self);
-    void setRadius(nodeListElement *self, float radius);
+    nodeListElement *new_nodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+    */
 
-    void setCoordinate(nodeListElement *self, int x, int y, int z);
-    void setCoordinate(nodeListElement *self, Coordinate coordinate);
-    Coordinate getCoordinate(nodeListElement *self);
-    void setViewport(nodeListElement *self, int viewport);
-    int getViewport(nodeListElement *self);
-    void setMagnification(nodeListElement *self, int magnification);
-    int getMagnification(nodeListElement *self);
+    int node_id(nodeListElement *self);
+    QList<segmentListElement *> *segments(nodeListElement *self);
+    bool is_branch_node(nodeListElement *self);
+    char *comment(nodeListElement *self);
+    int time(nodeListElement *self);
+    float radius(nodeListElement *self);
+    treeListElement *parent_tree(nodeListElement *self);
+    Coordinate coordinate(nodeListElement *self);
+    int mag(nodeListElement *self);
+    int viewport(nodeListElement *self);
+    QString static_nodeListElement_help();
+    /*
+    void set_node_id(nodeListElement *self, int node_id);
+    void set_comment(nodeListElement *self, char *comment);
+    void set_time(nodeListElement *self, int time);
+    void set_radius(nodeListElement *self, float radius);
+    void set_coordinate(nodeListElement *self, int x, int y, int z);
+    void set_viewport(nodeListElement *self, int viewport);
+    void set_mag(nodeListElement *self, int magnification);
 
-    void setParent(nodeListElement *self, treeListElement *parent);
-    treeListElement *getParent(nodeListElement *self);
-    int getParentID(nodeListElement *self);
 
-    void addSegment(nodeListElement *self, segmentListElement *segment);
-    QList<segmentListElement *> *getSegments(nodeListElement *self);
+    void set_parent_tree_id(nodeListElement *self, int id);
+    void set_coordinate(nodeListElement *self, Coordinate coordinate);
+    void set_parent_tree(nodeListElement *self, treeListElement *parent_tree);
+    */
 };
 
 #endif // NODELISTDECORATOR_H

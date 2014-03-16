@@ -1,209 +1,84 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 #include "functions.h"
-#include <PythonQt/PythonQt.h>
-extern stateInfo *state;
 
 
 skeletonState::skeletonState()
 {
 }
 
-int skeletonState::getSkeletonTime() {
-    return state->skeletonState->skeletonTime;
+int skeletonState::skeleton_time() {
+    return skeletonTime;
 }
 
-bool skeletonState::hasUnsavedChanges() {
-    return unsavedChanges;
-}
-
-treeListElement *skeletonState::getFirstTree() {
-    return state->skeletonState->firstTree;
-}
-
-QString skeletonState::getSkeletonFile() {
+QString skeletonState::skeleton_file() {
     return skeletonFileAsQString;
 }
 
-bool skeletonState::fromXml(QString file) {
-   return loadSkeleton(file);
+void skeletonState::from_xml(const QString &filename) {
+   if(!loadSkeleton(filename)) {
+       emit echo(QString("could not load from %1").arg(filename));
+   }
 }
 
-bool skeletonState::toXml(QString file) {
-    return saveSkeleton(file);
-}
-
-void skeletonState::addTree(treeListElement *tree) {
-    if(!tree) {
-
-        qDebug() << "tree is NULL";
-        return;
-    }
-
-    if(!checkTreeParameter(tree->treeID, tree->color.r, tree->color.g, tree->color.b, tree->color.a)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree->treeID, tree->color, false);
-    if(tree->comment) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, tree->treeID, tree->comment);
-    }
-
-    Skeletonizer::setActiveTreeByID(theTree->getTreeID());
-    emit updateToolsSignal();
-    emit treeAddedSignal(theTree);
-
-    nodeListElement *currentNode = theTree->firstNode;
-    while(currentNode) {
-        addNode(currentNode);
-        currentNode = currentNode->next;
-    }
- }
-
-void skeletonState::addTree(int treeID, char *comment) {
-
-    Color color;
-    addTree(treeID, color, QString(comment));
-}
-
-void skeletonState::addTree(int treeID, Color color, QString comment) {
-    if(!checkTreeParameter(treeID, color.r, color.g, color.b, color.a)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-
-    color4F c4f;
-    c4f.r = color.r;
-    c4f.g = color.g;
-    c4f.b = color.b;
-    c4f.a = color.a;
-
-
-    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, treeID, c4f, false);
-    if(comment.isNull() == false) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, treeID, comment.toLocal8Bit().data());
-    }
-
-    Skeletonizer::setActiveTreeByID(treeID);
-    emit updateToolsSignal();
-    emit treeAddedSignal(theTree);
-}
-
-void skeletonState::addTree(int treeID, float r, float g, float b, float a, QString comment) {
-    if(!checkTreeParameter(treeID, r, g, b, a)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-    color4F color;
-    color.r = r;
-    color.g = g;
-    color.b = b;
-    color.a = a;
-
-    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, treeID, color, false);
-    if(comment.isNull() == false) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, treeID, comment.toLocal8Bit().data());
-    }
-
-    Skeletonizer::setActiveTreeByID(treeID);
-    emit updateToolsSignal();
-    emit treeAddedSignal(theTree);
-
-    nodeListElement *currentNode = theTree->firstNode;
-    while(currentNode) {
-        addNode(currentNode);
-        currentNode = currentNode->next;
+void skeletonState::to_xml(const QString &filename) {
+    if(!saveSkeleton(filename)) {
+        emit echo(QString("could not save to %1").arg(filename));
     }
 }
 
-void skeletonState::addNode(nodeListElement *node) {
-    if(!node or !checkNodeParameter(node->nodeID, node->position.x, node->position.y, node->position.z)) {
-        qDebug() << "one of the arguments is in negative range";
+treeListElement *skeletonState::first_tree() {
+    return firstTree;
+}
+
+bool skeletonState::has_unsaved_changes() {
+    return unsavedChanges;
+}
+
+/** @todo update treeview */
+void skeletonState::delete_tree(int tree_id) {
+   if(!Skeletonizer::delTree(CHANGE_MANUAL, tree_id, true)) {
+       emit echo(QString("could not delete the tree with id %1").arg(tree_id));
+   }
+}
+
+void skeletonState::delete_skeleton() {
+    emit clearSkeletonSignal();
+}
+
+void skeletonState::set_active_node(int node_id) {
+    if(!Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node_id)) {
+        emit echo(QString("could not set the node with id %1 to active node").arg(node_id));
+    }
+}
+
+nodeListElement *skeletonState::active_node() {
+    return this->activeNode;
+}
+
+void skeletonState::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
+    if(!checkNodeParameter(node_id, x, y, z)) {
+        emit echo(QString("one of the first four arguments is in negative range. node is rejected"));
         return;
     }
 
-    if(state->skeletonState->activeTree) {
-        node->setParent(state->skeletonState->activeTree);
+    if(inVp < VIEWPORT_XY or inVp > VIEWPORT_ARBITRARY) {
+        emit echo(QString("viewport argument is out of range. node is rejected"));
+        return;
+    }
+
+    Coordinate coordinate(x, y, z);
+    if(Skeletonizer::addNode(CHANGE_MANUAL, node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false, false)) {
+        Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, node_id);
+        emit nodeAddedSignal();
     } else {
-        emit treeAddedSignal(state->skeletonState->firstTree);
-    }
-
-    if(Skeletonizer::addNode(CHANGE_MANUAL, node->nodeID, node->radius, node->getParentID(), &node->position, node->getViewport(), node->getMagnification(), node->getTime(), false, false)) {
-        Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node->nodeID);
-        emit nodeAddedSignal();
-    }
-
-}
-
-void skeletonState::addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time) {
-    if(!checkNodeParameter(nodeID, x, y, z)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-    int activeID = 0;
-    if(state->skeletonState->activeTree) {
-        activeID = activeTree->treeID;
-    }
-
-    Coordinate coordinate;
-    coordinate.x = x;
-    coordinate.y = y;
-    coordinate.z = z;
-
-
-    if(Skeletonizer::addNode(CHANGE_MANUAL, nodeID, radius, activeID, &coordinate, inVp, inMag, time, false, false)) {
-        Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, nodeID);
-        emit nodeAddedSignal();
-    }
-
-}
-
-void skeletonState::addNode(int nodeID, int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time) {
-    if(!checkNodeParameter(nodeID, x, y, z)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-    Coordinate coordinate;
-    coordinate.x = x;
-    coordinate.y = y;
-    coordinate.z = z;
-
-    if(Skeletonizer::addNode(CHANGE_MANUAL, nodeID, radius, parentID, &coordinate, inVp, inMag, time, false, false)) {
-        Skeletonizer::setActiveNode(CHANGE_MANUAL, activeNode, nodeID);
-        emit nodeAddedSignal();
+        emit echo(QString("could not add the node with node id %1").arg(node_id));
     }
 }
 
-void skeletonState::addNode(int x, int y, int z, int viewport) {
-    if(!checkNodeParameter(0, x, y, z)) {
-        qDebug() << "one of the arguments is in negative range";
-        return;
-    }
-
-    Coordinate coordinate;
-    coordinate.x = x;
-    coordinate.y = y;
-    coordinate.z = z;
-
-    if(viewport < VIEWPORT_XY | viewport > VIEWPORT_ARBITRARY) {
-        qDebug() << "viewport is out of range";
-        return;
-    }
-
-    //if(Skeletonizer::addNode(CHANGE_MANUAL)) {
-        emit addNodeSignal(&coordinate, viewport);
-        emit nodeAddedSignal();
-    //}
-}
-
-QList<treeListElement *> *skeletonState::getTrees() {
+QList<treeListElement *> *skeletonState::trees() {
     QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree;
+    treeListElement *currentTree = firstTree;
     while(currentTree) {
         trees->append(currentTree);
         currentTree = currentTree->next;
@@ -211,287 +86,77 @@ QList<treeListElement *> *skeletonState::getTrees() {
     return trees;
 }
 
- // maybe a special case
-void skeletonState::addTrees(QList<treeListElement *> *list)  {
-    if(!list) {
-        qDebug() << "list object is NULL";
+void skeletonState::add_tree(int tree_id, const QString &comment, float r, float g, float b, float a) {
+    color4F color(r, g, b, a);
+    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree_id, color, false);
+    if(!theTree) {
+        emit echo(QString("could not add the tree with tree id %1").arg(tree_id));
         return;
     }
 
-    for(int i = 0; i < list->size(); i++) {
-        treeListElement *currentTree = list->at(i);
-        if(currentTree and !checkTreeParameter(currentTree->treeID, currentTree->color.r, currentTree->color.g, currentTree->color.b, currentTree->color.a)) {
-            return;
+    if(comment.isEmpty() == false) {
+        Skeletonizer::addTreeComment(CHANGE_MANUAL, tree_id, comment.toLocal8Bit().data());
+    }
+
+    Skeletonizer::setActiveTreeByID(tree_id);
+    emit updateToolsSignal();
+    emit treeAddedSignal(theTree);
+
+}
+
+void skeletonState::add_comment(int node_id, char *comment) {
+    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    if(node) {
+        if(!Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false)) {
+            emit echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
         }
-
-        treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, currentTree->treeID, currentTree->color, false);
-        emit treeAddedSignal(currentTree);
-        if(currentTree->comment) {
-            Skeletonizer::addTreeComment(CHANGE_MANUAL, currentTree->treeID, currentTree->comment);
-        }
-
-        nodeListElement *currentNode = theTree->firstNode;
-        while(currentNode) {            
-           addNode(currentNode);
-
-           QList<segmentListElement *> *segments = currentNode->getSegments();
-           for(int i = 0; i < segments->size(); i++) {
-                segmentListElement *segment = segments->at(i);
-                addSegment(segment->source->nodeID, segment->target->nodeID);
-           }
-
-
-            currentNode = currentNode->next;
-        }
-
+    } else {
+        emit echo(QString("no node id id %1 found").arg(node_id));
     }
 }
 
-bool  skeletonState::deleteTree(int id) {
-   return Skeletonizer::delTree(CHANGE_MANUAL, id, true);
-}
+void skeletonState::add_segment(int source_id, int target_id) {
+    if(Skeletonizer::addSegment(CHANGE_MANUAL, source_id, target_id, false)) {
 
-void skeletonState::deleteSkeleton() {
-    emit clearSkeletonSignal();
-}
-
-
-
-void skeletonState::addSegment(int sourceID, int targetID) {
-    Skeletonizer::addSegment(CHANGE_MANUAL, sourceID, targetID, false);
-}
-
-PyObject *skeletonState::addNewSkeleton(PyObject *args) {
-    PyObject *newSkeleton;
-
-    if(!PyArg_Parse(args, "O", &newSkeleton)) {
-        qDebug() << "No object";
-        Py_RETURN_NONE;
+    } else {
+       emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
     }
+}
 
-
-    PyObject *annotations;
-
-    if(PyObject_HasAttrString(newSkeleton, "annotations")) {
-        annotations = PyObject_GetAttrString(newSkeleton, "annotations");
-        qDebug() << "found attribute annotations";
-
-        if(!PySet_Check(annotations)) {
-            qDebug() << "attribute annotations is not from type set";
-            Py_RETURN_NONE;
+void skeletonState::add_branch_node(int node_id) {
+    nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
+    if(currentNode) {
+        if(Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false)) {
+            emit updateToolsSignal();
         } else {
-            qDebug() << "attribute annotations is from type set";
-        }
-
-        int size = PySet_Size(annotations);
-        qDebug() << "there are " << size << " entries in the set";
-
-        PyObject *iterator, *item;
-
-        iterator = PyObject_GetIter(annotations);
-        if(!iterator) {
-            qDebug() << "error getting iterator from annotations";
-            Py_RETURN_NONE;
-        }
-
-        PyObject *skeletonAnnotation;
-        PyObject *nodes;
-        while(item = PyIter_Next(iterator)) {
-            if(!PyArg_Parse(item , "O", &skeletonAnnotation)) {
-                qDebug() << "no object type skeletonAnnotation";
-                Py_RETURN_NONE;
-            }
-
-            nodes = PyObject_GetAttrString(skeletonAnnotation, "nodes");
-            if(!PySet_Check(nodes)) {
-                qDebug() << "attribute nodes in not from type set";
-                Py_RETURN_NONE;
-            } else {
-                qDebug() << "attributes nodes is from type set";
-            }
-
-            size = PySet_Size(nodes);
-            qDebug() << "there are" << size << "entries in the set";
-
-            iterator = PyObject_GetIter(nodes);
-            if(!iterator) {
-                qDebug() << "error getting iterator from nodes";
-            }
-
-            PyObject *skeletonNode;
-            PyObject *data;
-            while(item = PyIter_Next(iterator)) {
-                if(!PyArg_Parse(item, "O", &skeletonNode)) {
-                    qDebug() << "no object type SkeletonNode";
-                    Py_RETURN_NONE;
-                }
-
-                data = PyObject_GetAttrString(skeletonNode, "data");
-
-            }
-
+            emit echo(QString("An unexpected error occured while adding a branch node"));
         }
 
     } else {
-       qDebug() << "no attribute annotations";
+        emit echo(QString("no node with id %1 found").arg(node_id));
     }
 
 }
 
-void skeletonState::setIdleTime(uint idleTime) {
-    state->skeletonState->idleTime = idleTime;
-}
-
-void skeletonState::setSkeletonTime(uint skeletonTime) {
-    state->skeletonState->skeletonTime = skeletonTime;
-}
-
-void skeletonState::setEditPosition(int x, int y, int z) {
-    emit userMoveSignal(x, y, z, TELL_COORDINATE_CHANGE);
-}
-
-void skeletonState::setActiveNode(int id) {
-    Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, id);
-}
-
-void skeletonState::addComment(int nodeID, char *comment) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(nodeID);
-    if(node) {
-        Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false);
-    }
-}
-
-void skeletonState::addBranchNode(int nodeID) {
-    nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(nodeID);
-    if(currentNode)
-        Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
-}
-
-/*
-void skeletonState::parseTree(PyObject *skeletonAnnotation) {
-    PyObject *nodes = PyObject_GetAttrString(skeletonAnnotation, "nodes");
-    if(!nodes) {
-        qDebug() << "no attribute nodes";
-    }
-
-    PyObject *set;
-    if(!PyArg_Parse(nodes, "O", &nodes)) {
-        qDebug() << "attribute node is no object";
-    }
-
-    if(!PySet_Check(set)) {
-        qDebug() << "attribute data is not from type set";
-    }
-
-    PyObject *iterator, *item;
-
-    iterator = PyObject_GetIter(set);
-    if(!iterator) {
-        qDebug() << "could not get the set iterator";
-    }
-
-    PyObject *skeletonNode;
-    while(item = PyIter_Next(iterator)) {
-        if(!PyArg_Parse(item, "O", &skeletonNode)) {
-            qDebug() << "no object type";
-        }
-
-        parseNode(skeletonNode);
-    }
-
-    Py_RETURN_NONE;
+QString skeletonState::help() {
+    return QString("The python representation of knossos. You gain access to the following methods:" \
+                   "\n\n GETTER:" \
+                   "\n trees() : returns a list of trees" \
+                   "\n active_node() : returns the active node object" \
+                   "\n skeleton_file() : returns the file from which the current skeleton is loaded" \
+                   "\n first_tree() : returns the first tree of the knossos skeleton" \
+                   "\n\n SETTER:" \
+                   "\n add_branch_node(node_id) : sets the node with node_id to branch_node" \
+                   "\n add_segment(source_id, target_id) : adds a segment for the nodes. Both nodes must be added before"
+                   "\n add_comment(node_id) : adds a comment for the node. Must be added before" \
+                   "\n add_tree(tree_id, comment, r (opt), g (opt), b (opt), a (opt)) : adds a new tree" \
+                   "\n\t If no color is set then the knossos lookup table sets the color." \
+                   "\n\n add_node(node_id, x, y, z, parent_id (opt), radius (opt), viewport (opt), mag (opt), time (opt))" \
+                   "\n\t adds a node for a parent tree. " \
+                   "\n\t if no parent_id is set then the current active node will be chosen." \
+                   "\n delete_tree(tree_id) : deletes the tree"
+                   "\n delete_skeleton() : deletes the entire skeleton" \
+                   "\n from_xml(filename) : loads a skeleton from a .nml file" \
+                   "\n to_xml(filename) : saves a skeleton to a .nml file");
 
 }
-
-void skeletonState::parseNode(PyObject *skeletonNode) {
-    PyObject *data = PyObject_GetAttrString(skeletonNode, "data");
-
-    if(!data) {
-        qDebug() << "no attribute data";
-    }
-
-    PyObject *dictionary;
-    if(!PyArg_Parse(data, "O", &dictionary)) {
-        qDebug() << "attribute data is no object";
-    }
-
-    if(!PyDict_Check(dictionary)) {
-        qDebug() << "attribute data is not from type object dictionary";
-    }
-
-    float radius;
-    int x, y, z, id, inVp, inMag, time;
-
-    PyObject *result;
-    result = PyDict_GetItemString(dictionary, "id");
-    if(!PyArg_Parse(result, "i", &id)) {
-        qDebug() << "no value for x";
-    }
-
-    result = PyDict_GetItemString(dictionary, "radius");
-    if(!PyArg_Parse(result, "f", &radius)) {
-        qDebug() << "no value for radius";
-    }
-
-    result = PyDict_GetItemString(dictionary, "x");
-    if(!PyArg_Parse(result, "i", &x)) {
-        qDebug() << "no value for x";
-    }
-
-    result = PyDict_GetItemString(dictionary, "y");
-    if(!PyArg_Parse(result, "i", &y)) {
-        qDebug() << "no value for y";
-    }
-
-    result = PyDict_GetItemString(dictionary, "z");
-    if(!PyArg_Parse(result, "i", &z)) {
-        qDebug() << "no value for z";
-    }
-
-    result = PyDict_GetItemString(dictionary, "inMag");
-    if(!PyArg_Parse(result, "i", &inMag)) {
-        qDebug() << "no value for inMag";
-    }
-
-    result = PyDict_GetItemString(dictionary, "inVp");
-    if(!PyArg_Parse(result, "i", &inVp)) {
-        qDebug() << "no value for inVp";
-    }
-
-    result = PyDict_GetItemString(dictionary, "time");
-    if(!PyArg_Parse(result, "i", &time)) {
-        qDebug() << "no value for time";
-    }
-
-    qDebug() << "new node object with attributes: id=" << id << " radius=" << radius << " x=" << x << " y=" << y << " z=" << z;
-
-
-}
-
-void skeletonState::parseNewSkeleton(PyObject *args) {
-    PyObject *newSkeleton;
-
-    if(!PyArg_Parse(args, "O", &newSkeleton)) {
-        qDebug() << "No object";
-        Py_RETURN_NONE;
-    }
-
-    PyObject *annotations;
-
-    if(PyObject_HasAttrString(newSkeleton, "annotations")) {
-        annotations = PyObject_GetAttrString(newSkeleton, "annotations");
-        qDebug() << "found attribute annotations";
-
-        if(!PySet_Check(annotations)) {
-            qDebug() << "attribute annotations is not from type set";
-            Py_RETURN_NONE;
-        } else {
-            qDebug() << "attribute annotations is from type set";
-        }
-
-        parseNewSkeleton(annotations);
-
-     }
-
-}
-*/

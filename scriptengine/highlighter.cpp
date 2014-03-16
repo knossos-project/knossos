@@ -47,8 +47,8 @@ Highlighter::Highlighter(QTextDocument *document) :
     knossosClasses.setForeground(Qt::black);
 
     QStringList knossosPattern;
-    knossosPattern << "\\btreeListElement\\b" << "\\bnodeListElement\\b"
-                   << "\\bColor\\b" << "\\bSkeleton\\b" << "\\bknossos\\b";
+    knossosPattern << "\\btreeListElement\\b" << "\\bnodeListElement\\b" << "\\bsegmentListElement"
+                   << "\\bColor\\b" << "\\bskeleton\\b" << "\\bknossos\\b";
     foreach(const QString &pattern, knossosPattern) {
        rule.pattern = QRegExp(pattern);
        rule.format  = knossosClasses;

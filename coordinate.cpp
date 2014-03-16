@@ -32,9 +32,9 @@ Coordinate::Coordinate() {
 }
 
 Coordinate::Coordinate(int x, int y, int z) {
-    this->setX(x);
-    this->setY(y);
-    this->setZ(z);
+    this->x = x;
+    this->y = y;
+    this->z = z;
 }
 
 /**
@@ -128,42 +128,9 @@ fail:
 
 }
 
-/** test with overloadable operator, maybe obsolet */
 void Coordinate::operator=(Coordinate const &rhs) {
     x = rhs.x;
     y = rhs.y;
     z = rhs.z;
 
-}
-
-void Coordinate::setX(int x) {
-    if(x < 0) {
-        qDebug() << "x is in negative range";
-    }
-
-    this->x = x;
-}
-
-int Coordinate::getX() {
-    return x;
-}
-
-void Coordinate::setY(int y) {
-    if(y < 0) {
-        qDebug() << "y is in negative range";
-    }
-
-    this->y = y;
-}
-
-int Coordinate::getY() {
-    return y;
-}
-
-void Coordinate::setZ(int z) {
-    if(z < 0) {
-        qDebug() << "z is in negative range";
-    }
-
-    this->z = z;
 }

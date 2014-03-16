@@ -14,15 +14,24 @@ public:
 signals:
     
 public slots:
+    /*
     segmentListElement *new_segmentListElement();
     segmentListElement *new_segmentListElement(int sourceID, int targetID);
     segmentListElement *new_segmentListElement(nodeListElement *source, nodeListElement *target);
-    nodeListElement *getSource(segmentListElement *self);
-    void setSource(segmentListElement *self, nodeListElement *source);
-    nodeListElement *getTarget(segmentListElement *self);
-    void setTarget(segmentListElement *self, nodeListElement *target);
-    void setSource(segmentListElement *self, int sourceID);
-    void setTarget(segmentListElement *self, int targetID);
+    */
+
+    nodeListElement *source(segmentListElement *self);
+    nodeListElement *target(segmentListElement *self);
+    int source_id(segmentListElement *self);
+    int target_id(segmentListElement *self);
+    QString static_segmentListElement_help();
+
+    /*
+    void set_source(segmentListElement *self, nodeListElement *source);
+    void set_target(segmentListElement *self, nodeListElement *target);
+    void set_source_id(segmentListElement *self, int sourceID);
+    void set_target_id(segmentListElement *self, int targetID);
+    */
 };
 
 #endif // SEGMENTLISTDECORATOR_H

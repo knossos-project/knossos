@@ -2236,7 +2236,7 @@ void Viewer::rewire() {
     connect(state->skeletonState, SIGNAL(treeAddedSignal(treeListElement *)), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(state->skeletonState, SIGNAL(nodeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(state->skeletonState, SIGNAL(addNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(updateToolsSlot()));
+    connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(state->skeletonState, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonWithoutConfirmation()));
     connect(state->skeletonState, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
 }

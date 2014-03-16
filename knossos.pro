@@ -97,11 +97,9 @@ SOURCES += openjpeg/cio.c \
     test/testskeletonloadandsave.cpp \
     test/knossostestrunner.cpp \        
     scriptengine/scripting.cpp \
-    scriptengine/decorators/skeletondecorator.cpp \
     scriptengine/decorators/treelistdecorator.cpp \
     scriptengine/decorators/nodelistdecorator.cpp \
     scriptengine/decorators/mainwindowdecorator.cpp \
-    scriptengine/decorators/skeletonstatedecorator.cpp \
     skeleton.cpp \
     scriptengine/decorators/colordecorator.cpp \
     nodeListElement.cpp \
@@ -111,7 +109,8 @@ SOURCES += openjpeg/cio.c \
     pattern/observer/iobservable.cpp \
     pattern/observer/iobserver.cpp \
     scriptengine/decorators/coordinatedecorator.cpp \
-    commentListElement.cpp
+    commentListElement.cpp \
+    color4F.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -205,11 +204,9 @@ HEADERS  += widgets/mainwindow.h \
     test/testskeletonloadandsave.h \
     test/knossostestrunner.h \        
     scriptengine/scripting.h \
-    scriptengine/decorators/skeletondecorator.h \
     scriptengine/decorators/treelistdecorator.h \
     scriptengine/decorators/nodelistdecorator.h \
     scriptengine/decorators/mainwindowdecorator.h \
-    scriptengine/decorators/skeletonstatedecorator.h \
     scriptengine/decorators/colordecorator.h \
     scriptengine/decorators/segmentlistdecorator.h \
     scriptengine/highlighter.h \

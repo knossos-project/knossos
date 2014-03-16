@@ -300,6 +300,8 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class Coordinate;
+class color4F;
 class treeListElement;
 class nodeListElement;
 class segmentListElement;
@@ -325,10 +327,10 @@ struct floatCoordinate {
 };
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-class Coordinate{
+class Coordinate {
 public:
     Coordinate();
-    Coordinate(int x, int y, int z);// { this->x = x; this->y = y; this->z = z; }
+    Coordinate(int x, int y, int z);
     int x;
     int y;
     int z;
@@ -338,49 +340,17 @@ public:
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
 
-    void setX(int x);
-    int getX();
-    void setY(int y);
-    int getY();
-    void setZ(int z);
-    int getZ();
 };
 
-/*
-class CoordinateDecorator : public QObject {
-    Q_OBJECT
-public slots:
-    Coordinate *new_Coordinate() { return new Coordinate(); }
-    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
-    int x(Coordinate *self) { return self->x; }
-    void setX(Coordinate *self, int x) { self->x = x; }
-    int y(Coordinate *self) { return self->y; }
-    void setY(Coordinate *self, int y) { self->y = y; }
-    int z(Coordinate *self) { return self->z; }
-    void setZ(Coordinate *self, int z) { self->z = z; }
-};
-*/
-
-class Color {
+class color4F {
 public:
-    Color() {}
-    Color(float r, float g, float b, float a) {
-       this->r = r;
-       this->g = g;
-       this->b = b;
-       this->a = a;
-
-    }
-
-    float r, g, b, a;
-};
-
-typedef struct {
+    color4F();
+    color4F(float r, float g, float b, float a);
         GLfloat r;
         GLfloat g;
         GLfloat b;
         GLfloat a;
-} color4F;
+};
 
 
 
@@ -1051,8 +1021,8 @@ class treeListElement : public QObject {
     Q_OBJECT
 public:
     treeListElement();
-    treeListElement(int treeID, Color color, QString comment);
-    treeListElement(int treeID, float r, float g, float b, float a, QString comment);
+    treeListElement(int treeID, QString comment, color4F color);
+    treeListElement(int treeID, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
 
     treeListElement *next;
     treeListElement *previous;
@@ -1065,26 +1035,14 @@ public:
     char comment[8192];
 
 
-    int getTreeID();
-    void setTreeID(int id);
-    nodeListElement *getRoot();
     QList<nodeListElement *> *getNodes();
-    void setColor(Color color);
-    Color getColor();
-
-
-    void addNode(nodeListElement *node);
-    void addNode(int nodeID, int x, int y, int z);
-    void addNodes(QList<nodeListElement *> *nodeList);
-
-
 
 };
 
 class nodeListElement  {
 public:
     nodeListElement();
-    nodeListElement(int nodeID, int x, int y, int z, float radius, int inVp, int inMag, int time, char *comment);
+    nodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
 
     nodeListElement *next;
     nodeListElement *previous;
@@ -1113,38 +1071,15 @@ public:
     bool selected;
 
 
-    int getNodeID();
-    void setNodeID(int id);
-    void setComment(char *comment);
-    char *getComment();
 
-    int getTime();
-    void setTime(int time);
-    float getRadius();
-    void setRadius(float radius);    
-    void setCoordinate(int x, int y, int z);
-    void setCoordinate(Coordinate coordinate);
-    Coordinate getCoordinate();
-    void setViewport(int viewport);
-    int getViewport();
-    void setMagnification(int magnification);
-    int getMagnification();
-    //void setParent(int treeID);
-    void setParent(treeListElement *parent);
-    treeListElement *getParent();
-    int getParentID();
-    void addSegment(segmentListElement *segment);
     QList<segmentListElement *> *getSegments();
-    segmentListElement *getFirstSegment();
 };
 
 
 
 class segmentListElement {
 public:
-    segmentListElement();
-    segmentListElement(int sourceID, int targetID);
-    segmentListElement(nodeListElement *source, nodeListElement *target);
+    segmentListElement();    
     segmentListElement *next;
     segmentListElement *previous;
 
@@ -1166,16 +1101,6 @@ public:
 
     nodeListElement *source;
     nodeListElement *target;
-
-    void setSource(nodeListElement *source);
-    void setTarget(nodeListElement *target);
-
-    nodeListElement *getSource();
-    nodeListElement *getTarget();
-    void setSource(int sourceID);
-    void setTarget(int targetID);
-    int getSourceID();
-    int getTargetID();
 
 
 };
@@ -1386,86 +1311,27 @@ signals:
     void updateToolsSignal();
     void clearSkeletonSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
+    void echo(QString message);
 public slots:
-    int getSkeletonTime();
-    bool hasUnsavedChanges();
-    treeListElement *getFirstTree();
-    QString getSkeletonFile();
-    bool toXml(QString file);
-    bool fromXml(QString file);
-    void addTree(int treeID, char *comment);
-    void addTree(int treeID, Color color, QString comment);
-    void addTree(treeListElement *tree);
-    void addTree(int treeID, float r, float g, float b, float a, QString comment);
-    void addNode(nodeListElement *node);
-    void addNode(int x, int y, int z, int viewport);
-    void addNode(int nodeID, float radius, int x, int y, int z, int inVp, int inMag, int time);
-    void addNode(int nodeID , int radius, int parentID, int x, int y, int z, int inVp, int inMag, int time);
-    QList<treeListElement *> *getTrees();
-    void addTrees(QList<treeListElement *> *list);
-    bool deleteTree(int id);
-    void deleteSkeleton();
-    void addSegment(int sourceID, int targetID);
-
-
-    //
-    PyObject *addNewSkeleton(PyObject *args);
-    //void parseNewSkeleton(PyObject *newSkeleton);
-    //void parseTree(PyObject *skeletonAnnotation);
-    //void parseNode(PyObject *skeletonNode);
-    void setIdleTime(uint idleTime);
-    void setSkeletonTime(uint skeletonTime);
-    void setEditPosition(int x, int y, int z);
-    void setActiveNode(int id);
-
-    void addComment(int nodeID, char *comment);
-    void addBranchNode(int nodeID);
+    int skeleton_time();
+    QString skeleton_file();
+    void to_xml(const QString &filename);
+    void from_xml(const QString &filename);
+    treeListElement *first_tree();
+    bool has_unsaved_changes();
+    void delete_tree(int tree_id);
+    void delete_skeleton();
+    void set_active_node(int node_id);
+    void add_comment(int node_id, char *comment);
+    nodeListElement *active_node();
+    QList<treeListElement *> *trees();
+    void add_tree(int tree_id, const QString &comment = 0, float r = -1, float g = -1, float b = -1, float a = 1);
+    void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+    void add_segment(int source_id, int target_id);
+    void add_branch_node(int node_id);
+    static QString help();
 
 };
-
-
-#include <QList>
-class Skeleton {
-
-public:
-    Skeleton() { }
-    treeListElement *firstTree = 0;
-    treeListElement *activeTree = 0;
-    nodeListElement *activeNode = 0;
-    QList<treeListElement *> *trees() {
-        QList<treeListElement *> *trees = new QList<treeListElement *>();
-        treeListElement *currentTree = firstTree;
-        while(currentTree)  {
-            trees->append(currentTree);
-            currentTree = currentTree->next;
-        }
-
-        return trees;
-    }
-
-    treeListElement *getFirstTree() {
-        return this->firstTree;
-    }
-
-    treeListElement *getActiveTree() {
-        return this->activeTree;
-    }
-
-    void setActiveTree(int treeID) {
-        treeListElement *currentTree = firstTree;
-        while(currentTree) {
-            if(currentTree->treeID == treeID) {
-                activeTree = currentTree;
-            }
-        }
-    }
-
-    void addTree(treeListElement *tree) {
-
-    }
-};
-
-
 
 
 struct clientState {

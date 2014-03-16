@@ -9,7 +9,7 @@
 
 
 class ColorDecorator;
-class SkeletonDecorator;
+class CoordinateDecorator;
 class TreeListDecorator;
 class NodeListDecorator;
 class SegmentListDecorator;
@@ -25,9 +25,8 @@ public:
 
     //NicePyConsole *console;
     PythonQtScriptingConsole *console;
-
+    CoordinateDecorator *coordinateDecorator;
     ColorDecorator *colorDecorator;
-    SkeletonDecorator *skeletonDecorator;
     TreeListDecorator *treeListDecorator;
     NodeListDecorator *nodeListDecorator;
     SegmentListDecorator *segmentListDecorator;

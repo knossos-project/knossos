@@ -9,19 +9,26 @@ class CoordinateDecorator : public QObject
     Q_OBJECT
 public:
     explicit CoordinateDecorator(QObject *parent = 0);
-    Coordinate *new_Coordinate();
-    Coordinate *new_Coordinate(int x, int y, int z);
-    int getX(Coordinate *self);
-    int getY(Coordinate *self);
-    int getZ(Coordinate *self);
-    void setX(Coordinate *self, int x);
-    void setY(Coordinate *self, int y);
-    void setZ(Coordinate *self, int z);
 
 
 signals:
 
 public slots:
+    /*
+    Coordinate *new_Coordinate();
+    Coordinate *new_Coordinate(int x, int y, int z);
+    */
+
+
+    int x(Coordinate *self);
+    int y(Coordinate *self);
+    int z(Coordinate *self);
+
+    /*
+    void setx(Coordinate *self, int x);
+    void sety(Coordinate *self, int y);
+    void setz(Coordinate *self, int z);
+    */
 
 };
 

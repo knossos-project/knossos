@@ -1068,15 +1068,6 @@ void MainWindow::loadCustomPreferencesSlot()
         }
 
         loadSettings();
-    if(!fileName.isEmpty()) {
-         QSettings settings;
-
-        QSettings settingsToLoad(fileName, QSettings::IniFormat);
-        QStringList keys = settingsToLoad.allKeys();
-        for(int i = 0; i < keys.size(); i++) {
-            settings.setValue(keys.at(i), settingsToLoad.value(keys.at(i)));
-        }
-
 
     loadSettings();
     }

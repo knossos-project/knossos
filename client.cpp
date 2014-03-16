@@ -132,6 +132,7 @@ uint Client::parseInBuffer() {
      *  value so that the message can be correctly removed from the input buffer
      *  after parsing.
      */
+    color4F treeCol;
     while(clientState->inBuffer->length >= 5) {
         switch(clientState->inBuffer->data[0]) {
             case KIKI_HIBACK:
@@ -402,7 +403,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                color4F treeCol;
+
                 treeCol.r = f[0];
                 treeCol.g = f[1];
                 treeCol.b = f[2];

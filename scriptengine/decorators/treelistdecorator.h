@@ -14,25 +14,26 @@ public:
 signals:
     
 public slots:
-    treeListElement *new_treeListElement();
-    treeListElement *new_treeListElement(int treeID, Color color, QString comment);
-    treeListElement *new_treeListElement(int treeID, float r, float g, float b, float a, QString comment);
-    int getTreeID(treeListElement *self);
-    void setTreeID(treeListElement *self, int treeID);
-    nodeListElement *getRoot(treeListElement *self);
-    QList<nodeListElement *> *getNodes(treeListElement *self);
-
-    void addNode(treeListElement *self, nodeListElement *node);
-    void addNode(treeListElement *self, int nodeID, Coordinate coordinate, QString comment);
-    void addNodes(treeListElement *self, QList<nodeListElement *> *nodeList);
-
-    //treeListElement *next(treeListElement *self) { return self->next; }
     /*
-
-    char *comment(treeListElement *self);
-    void setComment(treeListElement *self, char *comment);
+    treeListElement *new_treeListElement();
+    treeListElement *new_treeListElement(int tree_id, QString comment, color4F color);
+    treeListElement *new_treeListElement(int tree_id, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
     */
 
+    color4F color(treeListElement *self);
+    nodeListElement *first_node(treeListElement *self);
+    QList<nodeListElement *> *nodes(treeListElement *self);
+    int tree_id(treeListElement *self);
+    char *comment(treeListElement *self);
+    static QString static_treeListElement_help();
+
+
+    /*
+    void set_tree_id(treeListElement *self, int tree_id);
+    void set_comment(treeListElement *self, char *comment);
+    void set_color(treeListElement *self, float red, float green, float blue, float alpha);
+    void set_color(treeListElement *self, color4F color);
+    */
 };
 
 #endif // TREELISTDECORATOR_H
