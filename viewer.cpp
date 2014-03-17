@@ -27,6 +27,7 @@
 
 #include <QDebug>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QTime>
 
 #include "knossos.h"
 #include "skeletonizer.h"
@@ -735,210 +736,302 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
 }
 
 bool Viewer::vpGenerateVolumeTexture(vpListElement *currentVP) {
-//    if(Patch::activePatch == NULL) {
-//        return false;
-//    }
-//    bool bindTexture = false;
-//    memset(state->viewerState->volumeTexData, 0, sizeof(state->viewerState->volumeTexData));
+    vpConfig vp = *currentVP->vpConfig;
+    memset(state->viewerState->volumeTexData, 0, sizeof(state->viewerState->volumeTexData));
+    if(Patch::fill == false) {
+        glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA,
+                     vp.texture.edgeLengthPx,
+                     vp.texture.edgeLengthPx,
+                     0,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     state->viewerState->volumeTexData);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return false;
+    }
+    if(Patch::activePatch == NULL) {
+        return false;
+    }
+    memset(state->viewerState->volumeTexData, 0, sizeof(state->viewerState->volumeTexData));
+    Byte *texData = new Byte[TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN];
+    memset(texData, 0, TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN);
 
-//    vpConfig vp = *currentVP->vpConfig;
-//    int viewportType = vp.type;
-//    Coordinate lu_data = vp.leftUpperDataPxOnScreen;
-//    floatCoordinate rl_data;
-//    switch(viewportType) {
-//    case VIEWPORT_XY:
-//        rl_data.x = lu_data.x + vp.edgeLength/vp.screenPxXPerDataPx;
-//        rl_data.y = lu_data.y + vp.edgeLength/vp.screenPxYPerDataPx;
-//        break;
-//    case VIEWPORT_XZ:
-//        rl_data.x = lu_data.x + vp.edgeLength/vp.screenPxXPerDataPx;
-//        rl_data.z = lu_data.z + vp.edgeLength/vp.screenPxYPerDataPx;
-//        break;
-//    case VIEWPORT_YZ:
-//        rl_data.y = lu_data.y + vp.edgeLength/vp.screenPxXPerDataPx;
-//        rl_data.z = lu_data.z + vp.edgeLength/vp.screenPxYPerDataPx;
-//        break;
-//    }
+    Coordinate lu_data = vp.leftUpperDataPxOnScreen;
+    floatCoordinate rl_data;
+    switch(vp.type) {
+    case VIEWPORT_XY:
+        rl_data.x = lu_data.x + vp.edgeLength/vp.screenPxXPerDataPx;
+        rl_data.y = lu_data.y + vp.edgeLength/vp.screenPxYPerDataPx;
+        break;
+    case VIEWPORT_XZ:
+        rl_data.x = lu_data.x + vp.edgeLength/vp.screenPxXPerDataPx;
+        rl_data.z = lu_data.z + vp.edgeLength/vp.screenPxYPerDataPx;
+        break;
+    case VIEWPORT_YZ:
+        rl_data.y = lu_data.y + vp.edgeLength/vp.screenPxXPerDataPx;
+        rl_data.z = lu_data.z + vp.edgeLength/vp.screenPxYPerDataPx;
+        break;
+    }
 
-//    Patch *patch = Patch::activePatch;
-//    std::vector<PatchLoop *> loops;
-//    do {
-//        loops = patch->loopsAsVector(viewportType); // get all visible loops
-//        if(loops.size() == 0) {
-//            patch = patch->next;
-//            continue;
-//        }
-//        bindTexture = true;
-//        int colorR = 255 * patch->correspondingTree->color.r;
-//        int colorG = 255 * patch->correspondingTree->color.g;
-//        int colorB = 255 * patch->correspondingTree->color.b;
-//        int colorA = 255 * patch->correspondingTree->color.a;
+    Patch *patch = Patch::activePatch;
+    std::vector<PatchLoop *> loops;
+    do {
+        if(patch->visible == false) {
+            patch = patch->next;
+            continue;
+        }
+        loops = patch->loopsAsVector(vp.type); // get all visible loops
+        if(loops.size() == 0) {
+            patch = patch->next;
+            continue;
+        }
 
-//        for(uint l = 0; l < loops.size(); ++l) {
-//            if(loops[l]->createdInVP != viewportType) {
-//                continue;
-//            }
-//            // discard any loop points not in (data-)y-range of viewport.
-//            // translate rest of points to screen pixel coordinates
-//            std::vector<Coordinate> pixels;
-//            int centroidX = 0, centroidY = 0;
-//            int minX = INT_MAX, maxX = -1;
-//            for(uint i = 0; i < loops[l]->points.size(); ++i) {
-//                Coordinate pixel;
-//                switch(loops[l]->createdInVP) {
-//                case VIEWPORT_XY:
-//                    pixel.x = (loops[l]->points[i].x < lu_data.x)? 0 :
-//                              (loops[l]->points[i].x > rl_data.x)? vp.edgeLength - 1 :
-//                                                roundFloat((loops[l]->points[i].x - lu_data.x) * vp.screenPxXPerDataPx);
-//                    pixel.y = (loops[l]->points[i].y < lu_data.y)? 0 :
-//                              (loops[l]->points[i].y > rl_data.y)? vp.edgeLength - 1 :
-//                                                roundFloat((loops[l]->points[i].y - lu_data.y) * vp.screenPxYPerDataPx);
-//                    break;
-//                case VIEWPORT_XZ:
-//                    if(loops[l]->points[i].z < lu_data.z or loops[l]->points[i].z > rl_data.z) {
-//                        continue;
-//                    }
-//                    pixel.x = (loops[l]->points[i].x < lu_data.x)? 0 :
-//                              (loops[l]->points[i].x > rl_data.x)? vp.edgeLength - 1 :
-//                                                roundFloat((loops[l]->points[i].x - lu_data.x) * vp.screenPxXPerDataPx);
-//                    pixel.y = roundFloat((loops[l]->points[i].z - lu_data.z) * vp.screenPxYPerDataPx);
-//                    break;
-//                case VIEWPORT_YZ:
-//                    if(loops[l]->points[i].z < lu_data.z or loops[l]->points[i].z > rl_data.z) {
-//                        continue;
-//                    }
-//                    pixel.x = (loops[l]->points[i].y < lu_data.y)? 0 :
-//                              (loops[l]->points[i].y > rl_data.y)? vp.edgeLength - 1 :
-//                                                roundFloat((loops[l]->points[i].y - lu_data.y) * vp.screenPxXPerDataPx);
-//                    pixel.y = roundFloat((loops[l]->points[i].z - lu_data.z) * vp.screenPxYPerDataPx);
-//                    break;
-//                }
-//                if(pixels.size() > 0) {
-//                    std::vector<Coordinate> result = getLinePixels(pixels.back().x, pixels.back().y,
-//                                                                   pixel.x, pixel.y);
-//                    for(uint j = 0; j < result.size(); ++j) {
-//                        state->viewerState->volumeTexData[result[j].y][result[j].x][0] = colorR;
-//                        state->viewerState->volumeTexData[result[j].y][result[j].x][1] = colorG;
-//                        state->viewerState->volumeTexData[result[j].y][result[j].x][2] = colorB;
-//                        state->viewerState->volumeTexData[result[j].y][result[j].x][3] = colorA;
-//                    }
-//                }
-//                pixels.push_back(pixel); // store approx. pixel position of loop point
-//                centroidX += pixel.x; centroidY += pixel.y;
-//                minX = (pixel.x < minX)? pixel.x : minX;
-//                maxX = (pixel.x > maxX)? pixel.x : maxX;
-//                state->viewerState->volumeTexData[pixel.y][pixel.x][0] = colorR;
-//                state->viewerState->volumeTexData[pixel.y][pixel.x][1] = colorG;
-//                state->viewerState->volumeTexData[pixel.y][pixel.x][2] = colorB;
-//                state->viewerState->volumeTexData[pixel.y][pixel.x][3] = colorA;
-//            }
-//            if(pixels.size() == 0) {
-//                continue;
-//            }
-//            // now we have all border pixels. start flood fill
-//            // 1. find point that is guaranteed to be inside, by sending horizontal ray through centroid.
-//            //   since loop is closed, it must intersect the object at some point
+        int colorR = 255 * patch->correspondingTree->color.r;
+        int colorG = 255 * patch->correspondingTree->color.g;
+        int colorB = 255 * patch->correspondingTree->color.b;
+        int colorA = 255 * patch->correspondingTree->color.a;
 
-//            centroidX /= pixels.size();
-//            centroidY /= pixels.size();
-//            int rayx0 = (minX == 0)? minX : minX - 1;
-//            int rayx1 = (maxX == TEXTURE_EDGE_LEN - 1)? maxX : maxX - 1;
-//            std::vector<Coordinate> ray = getLinePixels(rayx0, centroidY, rayx1, centroidY);
-//            bool interiorFound = false;
-//            Coordinate interior;
-//            bool lastHit = false;
-//            int count = 0;
-//            for(uint r = 0; r < ray.size(); ++r) {
-//                if(state->viewerState->volumeTexData[ray[r].y][ray[r].x][0] == colorR
-//                    and state->viewerState->volumeTexData[ray[r].y][ray[r].x][1] == colorG
-//                    and state->viewerState->volumeTexData[ray[r].y][ray[r].x][2] == colorB
-//                    and state->viewerState->volumeTexData[ray[r].y][ray[r].x][3] == colorA) {
-//                    if(lastHit == false) {
-//                        count++;
-//                    }
-//                    lastHit = true;
+        for(uint l = 0; l < loops.size(); ++l) {
+            if((int)loops[l]->createdInVP != vp.type or loops[l]->points.size() == 0) {
+                continue;
+            }
+            switch(loops[l]->createdInVP) {
+            case VIEWPORT_XY:
+                if(roundFloat(loops[l]->centroid.z) != state->viewerState->currentPosition.z) {
+                    continue;
+                }
+                break;
+            case VIEWPORT_XZ:
+                if(loops[l]->centroid.y != (float)state->viewerState->currentPosition.y) {
+                    continue;
+                }
+                break;
+            case VIEWPORT_YZ:
+                if(loops[l]->centroid.x != (float)state->viewerState->currentPosition.x) {
+                    continue;
+                }
+                break;
+            }
+
+            // translate points to screen pixel coordinates
+            std::vector<Coordinate> pixels;
+            int centroidY = 0;
+            int minX = INT_MAX, maxX = -1, minY = INT_MAX, maxY = -1;
+            for(uint i = 0; i < loops[l]->points.size(); ++i) {
+                Coordinate pixel;
+                switch(loops[l]->createdInVP) {
+                case VIEWPORT_XY:
+                    pixel.x = (loops[l]->points[i].x < lu_data.x)? 0 :
+                              (loops[l]->points[i].x > rl_data.x)? vp.edgeLength - 1 :
+                                                roundFloat((loops[l]->points[i].x - lu_data.x) * vp.screenPxXPerDataPx);
+                    pixel.y = (loops[l]->points[i].y < lu_data.y)? 0 :
+                              (loops[l]->points[i].y > rl_data.y)? vp.edgeLength - 1 :
+                                                roundFloat((loops[l]->points[i].y - lu_data.y) * vp.screenPxYPerDataPx);
+                    break;
+                case VIEWPORT_XZ:
+                    if(loops[l]->points[i].z < lu_data.z or loops[l]->points[i].z > rl_data.z) {
+                        continue;
+                    }
+                    pixel.x = (loops[l]->points[i].x < lu_data.x)? 0 :
+                              (loops[l]->points[i].x > rl_data.x)? vp.edgeLength - 1 :
+                                                roundFloat((loops[l]->points[i].x - lu_data.x) * vp.screenPxXPerDataPx);
+                    pixel.y = roundFloat((loops[l]->points[i].z - lu_data.z) * vp.screenPxYPerDataPx);
+                    break;
+                case VIEWPORT_YZ:
+                    if(loops[l]->points[i].z < lu_data.z or loops[l]->points[i].z > rl_data.z) {
+                        continue;
+                    }
+                    pixel.x = (loops[l]->points[i].y < lu_data.y)? 0 :
+                              (loops[l]->points[i].y > rl_data.y)? vp.edgeLength - 1 :
+                                                roundFloat((loops[l]->points[i].y - lu_data.y) * vp.screenPxXPerDataPx);
+                    pixel.y = roundFloat((loops[l]->points[i].z - lu_data.z) * vp.screenPxYPerDataPx);
+                    break;
+                }
+                if(pixels.size() > 0) {
+                    std::vector<Coordinate> result = getLinePixels(pixels.back().x, pixels.back().y,
+                                                                   pixel.x, pixel.y, false);
+
+                    for(int j = 0; j < (int)result.size(); ++j) {
+                        if(result[j].x == pixels.back().x and result[j].y == pixels.back().y
+                            and texData[result[j].y * TEXTURE_EDGE_LEN + result[j].x] == 1) {
+                            // line overlap with previous line, and already marked, so skip
+                            continue;
+                        }
+                        if(texData[result[j].y * TEXTURE_EDGE_LEN + result[j].x] == 1
+                                and result[j].y != 0 and result[j].y != (int)vp.edgeLength - 1
+                                and result[j].x != 0 and result[j].x != (int)vp.edgeLength - 1) {
+                            // if not at vp border, and already marked, don't give second mark
+                            continue;
+                        }
+                        texData[result[j].y * TEXTURE_EDGE_LEN + result[j].x]++;
+                        if(texData[result[j].y * TEXTURE_EDGE_LEN + result[j].x] == 1) {
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][0] = colorR;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][1] = colorG;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][2] = colorB;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][3] = colorA;
+                        }
+                        else {
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][0] = 255;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][1] = 0;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][2] = 0;
+                            state->viewerState->volumeTexData[result[j].y][result[j].x][3] = colorA;
+                        }
+                    }
+                }
+                pixels.push_back(pixel); // store approx. pixel position of loop point
+                centroidY += pixel.y;
+                minX = (pixel.x < minX)? pixel.x : minX;
+                maxX = (pixel.x > maxX)? pixel.x : maxX;
+                minY = (pixel.y < minY)? pixel.y : minY;
+                maxY = (pixel.y > maxY)? pixel.y : maxY;
+//                texData[pixel.y * TEXTURE_EDGE_LEN + pixel.x]++;
+//                if(texData[pixel.y * TEXTURE_EDGE_LEN + pixel.x] == 1) {
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][0] = colorR;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][1] = colorG;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][2] = colorB;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][3] = colorA;
 //                }
 //                else {
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][0] = 0;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][1] = 255;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][2] = 0;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][3] = colorA;
-//                    lastHit = false;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][0] = 255;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][1] = 0;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][2] = 0;
+//                    state->viewerState->volumeTexData[pixel.y][pixel.x][3] = colorA;
 //                }
-//                if(count % 2 == 1 and lastHit == false) {
-//                    // ray intersected loop odd number of times -> pixel is inside!
-//                    interiorFound = true;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][0] = 255;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][1] = 0;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][2] = 0;
-////                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][3] = colorA;
-//                    SET_COORDINATE(interior, ray[r].x, ray[r].y, 0);
-//                    break;
-//                }
-//            }
-//            if(interiorFound == false) {
-//                continue;
-//            }
-//            // 2. flood fill loop beginning from this point!
-//            std::vector<Coordinate> stack;
-//            stack.push_back(interior);
-//            while(stack.size() > 0) {
-//                Coordinate p = stack.back();
-//                stack.pop_back();
-//                if(state->viewerState->volumeTexData[p.y][p.x][0] != colorR
-//                   or state->viewerState->volumeTexData[p.y][p.x][1] != colorG
-//                   or state->viewerState->volumeTexData[p.y][p.x][2] != colorB
-//                   or state->viewerState->volumeTexData[p.y][p.x][3] != colorA) {
-//                    // not filled yet
-//                    state->viewerState->volumeTexData[p.y][p.x][0] = colorR;
-//                    state->viewerState->volumeTexData[p.y][p.x][1] = colorG;
-//                    state->viewerState->volumeTexData[p.y][p.x][2] = colorB;
-//                    state->viewerState->volumeTexData[p.y][p.x][3] = colorA;
-//                    Coordinate neighbor; // upper/lower/right/left neighbor of p
-//                    if(p.y != TEXTURE_EDGE_LEN - 1) {
-//                        SET_COORDINATE(neighbor, p.x, p.y + 1, 0);
-//                        stack.push_back(neighbor);
-//                    }
-//                    if(p.y != 0) {
-//                        SET_COORDINATE(neighbor, p.x, p.y - 1, 0);
-//                        stack.push_back(neighbor);
-//                    }
-//                    if(p.x != TEXTURE_EDGE_LEN - 1) {
-//                        SET_COORDINATE(neighbor, p.x + 1, p.y, 0);
-//                        stack.push_back(neighbor);
-//                    }
-//                    if(p.x != 0) {
-//                        SET_COORDINATE(neighbor, p.x - 1, p.y, 0);
-//                        stack.push_back(neighbor);
-//                    }
-//                }
-//            }
-//            // on, to next loop
-//        }
-//        patch = patch->next;
-//    } while(patch != Patch::activePatch);
+            }
+            if(pixels.size() == 0) {
+                continue;
+            }
+            if(texData[pixels.back().y * TEXTURE_EDGE_LEN + pixels.back().x] == 0) {
+                texData[pixels.back().y * TEXTURE_EDGE_LEN + pixels.back().x]++;
+            }
+            // now we have all border pixels. start flood fill
+            // 1. find point that is guaranteed to be inside, by sending horizontal ray through centroid.
+            //   since loop is closed, it must intersect the object at some point
+            centroidY /= pixels.size();
+            int rayx0 = (minX == 0)? minX : minX - 1;
+            int rayx1 = (maxX == vp.edgeLength - 1)? maxX : maxX + 1;
+            std::vector<Coordinate> ray = getLinePixels(rayx0, centroidY, rayx1, centroidY, true);
+            bool candidateFound = false, interiorFound = false;
+            Coordinate interior;
+            bool lastHit = false;
+            int counter = 0;
+            for(uint r = 0; r < ray.size(); ++r) {
+                if(texData[ray[r].y * TEXTURE_EDGE_LEN + ray[r].x] != 0) {
+                    if(lastHit == false) {
+                        counter += texData[ray[r].y * TEXTURE_EDGE_LEN + ray[r].x];
+                    }
+                    lastHit = true;
+                }
+                else {
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][0] = 0;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][1] = 255;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][2] = 0;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][3] = colorA;
+                    lastHit = false;
+                }
+                if(candidateFound == false and counter % 2 == 1 and lastHit == false) {
+                    // ray intersected loop odd number of times -> pixel might be inside!
+                    candidateFound = true;
+                    SET_COORDINATE(interior, ray[r].x, ray[r].y, 0);
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][0] = 255;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][1] = 0;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][2] = 255;
+//                    state->viewerState->volumeTexData[ray[r].y][ray[r].x][3] = colorA;
+                    int counter2 = 0;
+                    for(uint r2 = r + 1; r2 < ray.size(); ++r2) {
+                        if(texData[ray[r2].y * TEXTURE_EDGE_LEN + ray[r2].x] != 0) {
+                            if(lastHit == false) {
+                                counter2 += texData[ray[r2].y * TEXTURE_EDGE_LEN + ray[r2].x];
+                            }
+                            lastHit = true;
+                        }
+                        else {
+                            lastHit = false;
+                        }
+                    }
+                    if(counter2 % 2 == 1) {
+                        interiorFound = true;
+//                        state->viewerState->volumeTexData[interior.y][interior.x][0] = 255;
+//                        state->viewerState->volumeTexData[interior.y][interior.x][1] = 255;
+//                        state->viewerState->volumeTexData[interior.y][interior.x][2] = 0;
+//                        state->viewerState->volumeTexData[interior.y][interior.x][3] = colorA;
+                        break;
+                    }
+                    else {
+                        candidateFound = false;
+                        counter = 0;
+                    }
+                }
+            }
 
-//    if(bindTexture) {
-//        glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
-//        glTexImage2D(GL_TEXTURE_2D,
-//                     0,
-//                     GL_RGBA,
-//                     vp.texture.edgeLengthPx,
-//                     vp.texture.edgeLengthPx,
-//                     0,
-//                     GL_RGBA,
-//                     GL_UNSIGNED_BYTE,
-//                     state->viewerState->volumeTexData);
-//        glBindTexture(GL_TEXTURE_2D, 0);
-//        return true;
-//    }
-//    return false;
+            if(interiorFound == false) {
+                memset(texData, 0, TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN);
+                continue;
+            }
+            // 2. flood fill loop beginning from this point!
+            std::vector<Coordinate> stack;
+            stack.push_back(interior);
+            while(stack.size() > 0) {
+                Coordinate p = stack.back();
+                stack.pop_back();
+                if(p.x > vp.edgeLength - 1 or p.y > vp.edgeLength) {
+                    continue;
+                }
+                if(texData[p.y * TEXTURE_EDGE_LEN + p.x] == 0) {
+                    // not filled yet
+                    texData[p.y * TEXTURE_EDGE_LEN + p.x] = 1;
+                    state->viewerState->volumeTexData[p.y][p.x][0] = colorR;
+                    state->viewerState->volumeTexData[p.y][p.x][1] = colorG;
+                    state->viewerState->volumeTexData[p.y][p.x][2] = colorB;
+                    state->viewerState->volumeTexData[p.y][p.x][3] = 153;
+                    Coordinate neighbor; // upper/lower/right/left neighbor of p
+                    if(p.y != TEXTURE_EDGE_LEN - 1) {
+                        SET_COORDINATE(neighbor, p.x, p.y + 1, 0);
+                        stack.push_back(neighbor);
+                    }
+                    if(p.y != 0) {
+                        SET_COORDINATE(neighbor, p.x, p.y - 1, 0);
+                        stack.push_back(neighbor);
+                    }
+                    if(p.x != TEXTURE_EDGE_LEN - 1) {
+                        SET_COORDINATE(neighbor, p.x + 1, p.y, 0);
+                        stack.push_back(neighbor);
+                    }
+                    if(p.x != 0) {
+                        SET_COORDINATE(neighbor, p.x - 1, p.y, 0);
+                        stack.push_back(neighbor);
+                    }
+                }
+            }
+            memset(texData, 0, TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN);
+            // on, to next loop
+        }
+        patch = patch->next;
+    } while(patch != Patch::activePatch);
+
+    delete texData;
+    texData = NULL;
+    glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 vp.texture.edgeLengthPx,
+                 vp.texture.edgeLengthPx,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 state->viewerState->volumeTexData);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return true;
 }
 
 /**
  * @brief Viewer::getLinePixels uses Bresenham's algorithm
  */
-std::vector<Coordinate> Viewer::getLinePixels(int x0, int y0, int x1, int y1) {
+std::vector<Coordinate> Viewer::getLinePixels(int x0, int y0, int x1, int y1, bool inclusive) {
     std::vector<Coordinate> pixels;
     bool steep = abs(y1 - y0) > abs(x1 - x0);
     if(steep) {
@@ -962,7 +1055,7 @@ std::vector<Coordinate> Viewer::getLinePixels(int x0, int y0, int x1, int y1) {
     int error = deltax / 2;
     int y = y0;
     int ystep = (y0 < y1)? 1 : -1;
-    for(int x = x0; x < x1; ++x) {
+    for(int x = x0; x <= x1; ++x) {
         Coordinate px;
         if(steep) {
             SET_COORDINATE(px, y, x, 0);
@@ -975,6 +1068,9 @@ std::vector<Coordinate> Viewer::getLinePixels(int x0, int y0, int x1, int y1) {
             y = y + ystep;
             error = error + deltax;
         }
+//        if(inclusive == false and (/*(px.x == x0 and px.y == y0) or */(px.x == x1 and px.y == y1))) {
+//            continue;
+//        }
         pixels.push_back(px);
     }
     return pixels;
@@ -1529,8 +1625,8 @@ void Viewer::run() {
 
         if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
             if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
-                 vpGenerateTexture(currentVp, viewerState);
-                 vpGenerateVolumeTexture(currentVp);
+                vpGenerateTexture(currentVp, viewerState);
+                vpGenerateVolumeTexture(currentVp);
             }
             else {
                 vpGenerateTexture_arb(currentVp);
@@ -2269,6 +2365,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperRight, SLOT(setOrientation(int)));
+    connect(eventModel, SIGNAL(checkIdleTimeSignal()), window->widgetContainer->tracingTimeWidget, SLOT(checkIdleTime()));
     //end event handler signals
     // mainwindow signals
     //connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));

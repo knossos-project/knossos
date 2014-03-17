@@ -665,6 +665,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
                 Patch::eraseActiveLoop(*point, VPfound);
             }
             else if(Patch::drawMode == DRAW_CONTINUOUS_LINE) {
+                emit checkIdleTimeSignal();
                 if(Patch::activePatch == NULL) {
                     bool newTree = (state->skeletonState->activeTree == NULL)? true : false;
                     if(newPatchSignal()) {
@@ -1508,7 +1509,7 @@ bool EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
         Patch::hidePatches = true;
     }
     else if(event->key() == Qt::Key_Shift) {
-        if(Patch::patchMode and Qt::KeyboardModifiers() == Qt::NoModifier) {
+        if(Patch::patchMode and VPfound != VIEWPORT_SKELETON and Qt::KeyboardModifiers() == Qt::NoModifier) {
             // loop eraser activated
             Patch::eraseInVP = VPfound;
             Patch::eraserPosX = mouseX;

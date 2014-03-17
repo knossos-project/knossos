@@ -119,7 +119,7 @@ protected:
     void processUserMove();
     QTime delay;
     bool idlingExceeds(uint msec);
-    std::vector<Coordinate> getLinePixels(int x0, int y0, int x1, int y1);
+    std::vector<Coordinate> getLinePixels(int x0, int y0, int x1, int y1, bool inclusive);
 };
 
 #endif // VIEWER_H

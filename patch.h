@@ -65,20 +65,49 @@ public:
     std::vector<floatCoordinate> points;
     std::vector<std::pair<Coordinate, Coordinate> > volumeStripes;
     floatCoordinate centroid;
+    // bounding box coordinates
+    floatCoordinate bboxMin;
+    floatCoordinate bboxMax;
     uint createdInVP;
     int timestamp;
 
     PatchLoop(uint inVP, int time, QObject *parent = 0)
-        : QObject(parent), createdInVP(inVP), timestamp(time) {}
+        : QObject(parent), createdInVP(inVP), timestamp(time) {
+        SET_COORDINATE(bboxMin, INT_MAX, INT_MAX, INT_MAX);
+        SET_COORDINATE(bboxMax, 0, 0, 0);
+    }
 
     PatchLoop(std::vector<floatCoordinate> newPoints, floatCoordinate newCentroid, uint inVP, QObject *parent = 0)
         : QObject(parent), centroid(newCentroid), createdInVP(inVP) {
         points = newPoints;
+        SET_COORDINATE(bboxMin, INT_MAX, INT_MAX, INT_MAX);
+        SET_COORDINATE(bboxMax, 0, 0, 0);
+        for(floatCoordinate p : points) {
+            bboxMin.x = std::min(bboxMin.x, p.x);
+            bboxMin.y = std::min(bboxMin.y, p.y);
+            bboxMin.z = std::min(bboxMin.z, p.z);
+
+            bboxMax.x = std::max(bboxMax.x, p.x);
+            bboxMax.y = std::max(bboxMax.y, p.y);
+            bboxMax.z = std::max(bboxMax.z, p.z);
+        }
+
         timestamp = state->skeletonState->skeletonTime
                     - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
     }
 
     ~PatchLoop() {}
+
+    void addPoint(floatCoordinate p) {
+        points.push_back(p);
+        bboxMin.x = std::min(bboxMin.x, p.x);
+        bboxMin.y = std::min(bboxMin.y, p.y);
+        bboxMin.z = std::min(bboxMin.z, p.z);
+
+        bboxMax.x = std::max(bboxMax.x, p.x);
+        bboxMax.y = std::max(bboxMax.y, p.y);
+        bboxMax.z = std::max(bboxMax.z, p.z);
+    }
 
     void updateCentroid() {
         if(points.size() > 0) {
@@ -118,6 +147,7 @@ public:
     static bool drawing; //! true if patchMode and right mouse button pressed in ortho vp
     static bool newPoints; //! true if a user draw has added new points to the cloud. Only re-triangulate if there are new points
     static GLuint vbo;
+    static bool fill;
     static std::vector<floatCoordinate> activeLine; //! the currently drawn line.
                                                     //! Started on mouse down and added to 'lineBuffer' on mouse release
     static std::vector<std::vector<floatCoordinate> > lineBuffer; //! all lines of the not closed loop yet

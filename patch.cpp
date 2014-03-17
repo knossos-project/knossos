@@ -29,6 +29,7 @@ float Patch::eraserHalfEdge = 10;
 bool Patch::drawing = false;
 bool Patch::newPoints = false;
 GLuint Patch::vbo;
+bool Patch::fill = false;
 
 Patch::Patch(QObject *parent, int newPatchID) : QObject(parent),
     next(this), previous(this), visible(true), numPoints(0), numLoops(0), numTriangles(0) {
@@ -222,6 +223,7 @@ bool Patch::insert(PatchLoop *loop, uint viewportType) {
 //                }
 //            }
 //        }
+        state->skeletonState->unsavedChanges = true;
         return true;
     }
     return false;
@@ -303,6 +305,7 @@ void Patch::lineFinished(floatCoordinate lastPoint, int viewportType) {
         }
     }
     else { // no other lines to check against, check if this single line is already closed
+        // if the last point is not on the same plane with the line end, they should not be connected
         bool otherPlane = false;
         switch(viewportType) {
         case VIEWPORT_XY:

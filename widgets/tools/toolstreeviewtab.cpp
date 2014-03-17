@@ -128,12 +128,16 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     nodeRegExCheck->setToolTip("search by regular expression");
     patchRegExCheck = new QCheckBox("RegEx");
     patchRegExCheck->setToolTip("search by regular expression");
+
     nodesOfSelectedTreesRadio = new QRadioButton("nodes of selected trees");
     nodesOfSelectedTreesRadio->setToolTip("Select the tree(s) by single left click");
     allNodesRadio = new QRadioButton("all nodes");
     allNodesRadio->setChecked(true);
     branchNodesChckBx = new QCheckBox("... with branch mark");
     commentNodesChckBx = new QCheckBox("... with comments");
+
+    fillPatchesChckBx = new QCheckBox("fill patches");
+    fillPatchesChckBx->setChecked(false);
 
     displayedNodesTable = new QLabel("Displayed Nodes:");
     displayedNodesCombo = new QComboBox();
@@ -313,6 +317,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     hLayout->addWidget(patchSearchField);
     hLayout->addWidget(patchRegExCheck);
     vLayout->addLayout(hLayout);
+    vLayout->addWidget(fillPatchesChckBx);
     vLayout->addWidget(activePatchTable);
     vLayout->addWidget(patchTable);
     patchSide->setLayout(vLayout);
@@ -343,6 +348,8 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     connect(commentNodesChckBx, SIGNAL(clicked()), this,SLOT(updateNodesTable()));
     // displayed nodes
     connect(displayedNodesCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(displayedNodesChanged(int)));
+    // patch options
+    connect(fillPatchesChckBx, SIGNAL(clicked(bool)), this, SLOT(fillPatchesChanged(bool)));
     // table click events
 
     connect(activeTreeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(actTreeItemChanged(QTableWidgetItem*)));
@@ -628,12 +635,12 @@ void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
                 patchTable->removeRow(item->row());
                 return;
             }
-            if(item->text() == "show") {
-                item->setText("hide");
+            if(item->text() == "shown") {
+                item->setText("hidden");
                 patch->visible = false;
             }
             else {
-                item->setText("show");
+                item->setText("shown");
                 patch->visible = true;
             }
             if(patch == Patch::activePatch) {
@@ -654,12 +661,12 @@ void ToolsTreeviewTab::itemDoubleClicked(QTableWidgetItem* item) {
                 activePatchTable->clearContents();
                 return;
             }
-            if(item->text() == "show") {
-                item->setText("hide");
+            if(item->text() == "shown") {
+                item->setText("hidden");
                 Patch::activePatch->visible = false;
             }
             else {
-                item->setText("show");
+                item->setText("shown");
                 Patch::activePatch->visible = true;
             }
             for(int i = 0; i < patchTable->rowCount(); ++i) {
@@ -1266,6 +1273,10 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
     }
 
     emit updateToolsSignal();
+}
+
+void ToolsTreeviewTab::fillPatchesChanged(bool checked) {
+    Patch::fill = checked;
 }
 
 void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
@@ -1946,9 +1957,9 @@ void ToolsTreeviewTab::updatePatchesTable() {
         patchTable->setItem(patchIndex, PATCH_COMMENT, item);
 
         // patch visibility
-        item = new QTableWidgetItem("show");
+        item = new QTableWidgetItem("shown");
         if(currentPatch->visible == false) {
-            item->setText("hide");
+            item->setText("hidden");
         }
         flags = item->flags();
         flags &= ~Qt::ItemIsSelectable & ~Qt::ItemIsEditable;
@@ -2400,9 +2411,9 @@ void ToolsTreeviewTab::insertPatch(Patch *patch, KTable *table) {
     }
     table->setItem(0, PATCH_COMMENT, item);
 
-    item = new QTableWidgetItem("show");
+    item = new QTableWidgetItem("shown");
     if(patch->visible == false) {
-        item->setText("hide");
+        item->setText("hidden");
     }
     flags = item->flags();
     flags &= ~Qt::ItemIsSelectable & ~Qt::ItemIsEditable;

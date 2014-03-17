@@ -1467,7 +1467,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                                             if(attribute.isNull() == false) {
                                                 point.z = attribute.toLocal8Bit().toFloat();
                                             }
-                                            loop->points.push_back(point);
+                                            loop->addPoint(point);
                                         }
                                         xml.skipCurrentElement();
                                     }

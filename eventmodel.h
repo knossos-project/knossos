@@ -149,7 +149,7 @@ signals:
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);
-
+    void checkIdleTimeSignal();
 public slots:
 
 };

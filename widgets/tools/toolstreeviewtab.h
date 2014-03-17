@@ -79,6 +79,7 @@ public:
 
     QCheckBox *branchNodesChckBx;
     QCheckBox *commentNodesChckBx;
+    QCheckBox *fillPatchesChckBx;
     QLabel *displayedNodesTable;
     QComboBox *displayedNodesCombo;
     QMenu *treeContextMenu;
@@ -169,6 +170,8 @@ public slots:
     void itemDoubleClicked(QTableWidgetItem*item);
 
     void displayedNodesChanged(int index);
+    void fillPatchesChanged(bool checked);
+
     void actTreeItemChanged(QTableWidgetItem *item);
     void treeItemChanged(QTableWidgetItem* item);
     void actNodeItemChanged(QTableWidgetItem *item);

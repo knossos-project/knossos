@@ -455,8 +455,8 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glVertex3d(1, 1, -1);
     glEnd();
 
-    if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
-        // Draw an orange border to highlight the viewport.
+//    if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
+//        // Draw an orange border to highlight the viewport.
 
         glColor4f(1., 0.3, 0., 1.);
         glBegin(GL_LINE_LOOP);
@@ -469,42 +469,14 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glVertex3d(3, vp.edgeLength - 3, -1);
             //glVertex3d(3, 3, -1);
         glEnd();
-    }
-
-//    // apply volume texture
-//    float width = (float)vp.edgeLength/vp.texture.edgeLengthPx;
-//    if(Patch::patchMode) {
-//        glEnable(GL_TEXTURE_2D);
-//        glDisable(GL_DEPTH_TEST);
-//        glEnable (GL_BLEND);
-//        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        glColor4f(0, 0, 0, 0);
-//        glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
-//        glBegin(GL_QUADS);
-//            glNormal3i(0,0,1);
-//            glTexCoord2f(0, 0);
-//            glVertex3f(0, 0, 0.);
-//            glTexCoord2f(width, 0);
-//            glVertex3f(vp.edgeLength, 0, 0.);
-//            glTexCoord2f(width, width);
-//            glVertex3f(vp.edgeLength, vp.edgeLength, 0.);
-//            glTexCoord2f(0, width);
-//            glVertex3f(0, vp.edgeLength, 0.);
-//        glEnd();
-//        glBindTexture (GL_TEXTURE_2D, 0);
-//        glDisable(GL_TEXTURE_2D);
-//        glEnable(GL_DEPTH_TEST);
-//        glDisable(GL_BLEND);
-//    }
 
     // render node selection box
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     if((uint)state->viewerState->drawNodeSelectSquare == currentVP) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         glLineWidth(1.);
         glBegin(GL_QUADS);
         glColor4f(0, 1., 0, 0.2);
@@ -520,8 +492,19 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glVertex3f(rightLower.x, rightLower.y, 0.f);
             glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
-        glDisable(GL_BLEND);
     }
+
+    if(Patch::patchMode and Patch::eraseInVP == (int)currentVP) {
+        glColor4f(1., 0., 0., 1.);
+        glBegin(GL_LINE_LOOP);
+            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
+            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
+        glEnd();
+    }
+
+    glDisable(GL_BLEND);
 
     if(state->viewerState->showVPLabels && currentVP != VIEWPORT_SKELETON) {
         glColor4f(0, 0, 0, 1);
@@ -533,18 +516,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         sprintf(label, "Height %.2f %cm, Width %.2f %cm", height, 0xb5, width, 0xb5);
         renderText(&pos, label, currentVP, vp.type);
     }
-
     glLineWidth(1.);
-
-    if(Patch::patchMode and Patch::eraseInVP == (int)currentVP) {
-        glColor4f(1., 0., 0., 1.);
-        glBegin(GL_LINE_LOOP);
-            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
-            glVertex3d(Patch::eraserPosX - Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
-            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY + Patch::eraserHalfEdge, 0);
-            glVertex3d(Patch::eraserPosX + Patch::eraserHalfEdge, Patch::eraserPosY - Patch::eraserHalfEdge, 0);
-        glEnd();
-    }
     return true;
 }
 
@@ -555,7 +527,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
     //for displaying data size
-    float width, height;
+    float widthx, height;
     char label[1024];
     Coordinate pos;
 
@@ -580,7 +552,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
-
+    vpConfig vp = state->viewerState->vpConfigs[currentVP];
+    float width = (float)vp.edgeLength/vp.texture.edgeLengthPx;
     if(state->viewerState->selectModeFlag == false) {
         if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
 
@@ -660,6 +633,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
 
+            // data texture
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -681,6 +655,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glDisable(GL_TEXTURE_2D);
             glEnable(GL_DEPTH_TEST);
 
+            // annotation
             glTranslatef(-(float)state->viewerState->currentPosition.x, -(float)state->viewerState->currentPosition.y, -(float)state->viewerState->currentPosition.z);
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
@@ -693,10 +668,56 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             if(state->viewerState->selectModeFlag)
                 glLoadName(3);
 
+            // crosshairs
+            glDisable(GL_DEPTH_TEST);
+            if(state->viewerState->drawVPCrosshairs) {
+                glLineWidth(1.);
+                glBegin(GL_LINES);
+                    glColor4f(0., 1., 0., 0.3);
+                    glVertex3f(-dataPxX, 0.5, -0.0001);
+                    glVertex3f(dataPxX, 0.5, -0.0001);
+
+                    glColor4f(0., 0., 1., 0.3);
+                    glVertex3f(0.5, -dataPxY, -0.0001);
+                    glVertex3f(0.5, dataPxY, -0.0001);
+                glEnd();
+            }
+
+            // textures
+            glEnable(GL_DEPTH_TEST);
             glEnable(GL_TEXTURE_2D);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glColor4f(1., 1., 1., 0.6);
 
+            // apply volume texture
+            if(Patch::hidePatches == false) {
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glOrtho(0, vp.edgeLength, vp.edgeLength, 0, 25, -25);
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
+                glColor4f(0, 0, 0, 0);
+                glBindTexture(GL_TEXTURE_2D, vp.texture.patchTexHandle);
+                glBegin(GL_QUADS);
+                    glNormal3i(0,0,1);
+                    glTexCoord2f(0, 0);
+                    glVertex3f(0, 0, 0);
+                    glTexCoord2f(width, 0);
+                    glVertex3f(vp.edgeLength, 0, 0);
+                    glTexCoord2f(width, width);
+                    glVertex3f(vp.edgeLength, vp.edgeLength, 0);
+                    glTexCoord2f(0, width);
+                    glVertex3f(0, vp.edgeLength, 0);
+                glEnd();
+                glBindTexture(GL_TEXTURE_2D, 0);
+
+                glOrtho(-((float)(state->boundary.x)/ 2.) + (float)state->viewerState->currentPosition.x - dataPxX,
+                    -((float)(state->boundary.x) / 2.) + (float)state->viewerState->currentPosition.x + dataPxX,
+                    -((float)(state->boundary.y) / 2.) + (float)state->viewerState->currentPosition.y - dataPxY,
+                    -((float)(state->boundary.y) / 2.) + (float)state->viewerState->currentPosition.y + dataPxY,
+                    ((float)(state->boundary.z) / 2.) - state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z,
+                    ((float)(state->boundary.z) / 2.) + state->viewerState->depthCutOff - (float)state->viewerState->currentPosition.z);
+            }
             glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.dataTexHandle);
             glBegin(GL_QUADS);
                 glNormal3i(0,0,1);
@@ -730,22 +751,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glEnd();
                 }
             }
-
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
-                glLineWidth(1.);
-                glBegin(GL_LINES);
-                    glColor4f(0., 1., 0., 0.3);
-                    glVertex3f(-dataPxX, 0.5, -0.0001);
-                    glVertex3f(dataPxX, 0.5, -0.0001);
-
-                    glColor4f(0., 0., 1., 0.3);
-                    glVertex3f(0.5, -dataPxY, -0.0001);
-                    glVertex3f(0.5, dataPxY, -0.0001);
-                glEnd();
-            }
-
             break;
         case VIEWPORT_XZ:
             if(!state->viewerState->selectModeFlag) {
@@ -2663,6 +2670,9 @@ void Renderer::renderPatches(uint viewportType) {
         loops = patch->loopsAsVector(viewportType);
 
         for(uint i = 0; i < loops.size(); ++i) {
+            if(loops[i]->createdInVP != viewportType and viewportType != VIEWPORT_SKELETON) {
+                continue;
+            }
             glDeleteBuffers(1, &Patch::vbo);
             glGenBuffers(1, &Patch::vbo);
             glBindBuffer(GL_ARRAY_BUFFER, Patch::vbo);
@@ -2676,6 +2686,7 @@ void Renderer::renderPatches(uint viewportType) {
         }
         patch = patch->next;
     } while(patch != Patch::activePatch);
+
 
     // draw all points
 
