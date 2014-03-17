@@ -79,16 +79,16 @@ void AnnotationWidget::loadSettings() {
     visible = (settings.value(VISIBLE).isNull())? false : settings.value(VISIBLE).toBool();
 
     if(settings.value(SEARCH_FOR_TREE).isNull() == false) {
-        treeviewTab->treeCommentField->setText(settings.value(SEARCH_FOR_TREE).toString());
+        treeviewTab->treeSearchField->setText(settings.value(SEARCH_FOR_TREE).toString());
     }
     else {
-        treeviewTab->treeCommentField->setPlaceholderText("search tree");
+        treeviewTab->treeSearchField->setPlaceholderText("search tree");
     }
     if(settings.value(SEARCH_FOR_NODE).isNull() == false) {
-        treeviewTab->nodeCommentField->setText(settings.value(SEARCH_FOR_NODE).toString());
+        treeviewTab->nodeSearchField->setText(settings.value(SEARCH_FOR_NODE).toString());
     }
     else {
-        treeviewTab->nodeCommentField->setPlaceholderText("search node");
+        treeviewTab->nodeSearchField->setPlaceholderText("search node");
     }
 
     if(settings.value(USE_LAST_RADIUS_AS_DEFAULT).isNull() == false) {
@@ -153,8 +153,8 @@ void AnnotationWidget::saveSettings() {
     settings.setValue(POS_Y, this->geometry().y());
     settings.setValue(VISIBLE, this->isVisible());
 
-    settings.setValue(SEARCH_FOR_TREE, treeviewTab->treeCommentField->text());
-    settings.setValue(SEARCH_FOR_NODE, treeviewTab->nodeCommentField->text());
+    settings.setValue(SEARCH_FOR_TREE, treeviewTab->treeSearchField->text());
+    settings.setValue(SEARCH_FOR_NODE, treeviewTab->nodeSearchField->text());
     settings.setValue(USE_LAST_RADIUS_AS_DEFAULT, commandsTab->useLastRadiusAsDefaultCheck->isChecked());
     settings.setValue(DEFAULT_NODE_RADIUS, commandsTab->defaultRadiusSpin->value());
     settings.setValue(ENABLE_COMMENT_LOCKING, commandsTab->commentLockingCheck->isChecked());

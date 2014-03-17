@@ -267,13 +267,14 @@ void ToolsCommandsTab::disableCurrentLockButtonClicked() {
 }
 
 void ToolsCommandsTab::update() {
+    this->blockSignals(true);//don’t notify changes, because this shall update the display when changes are already done
     activeTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
     activeNodeIDSpin->setMaximum(state->skeletonState->greatestNodeID);
+
     if(state->skeletonState->activeTree) {
         activeTreeLabel->setText(QString("Active Tree: %1").arg(state->skeletonState->activeTree->treeID));
         activeTreeIDSpin->setValue(state->skeletonState->activeTree->treeID);
-    }
-    else {
+    } else {
         activeTreeLabel->setText("Active Tree: None");
         activeTreeIDSpin->setValue(0);
     }
@@ -281,11 +282,11 @@ void ToolsCommandsTab::update() {
     if(state->skeletonState->activeNode) {
         activeNodeLabel->setText(QString("Active Node: %1").arg(state->skeletonState->activeNode->nodeID));
         activeNodeIDSpin->setValue(state->skeletonState->activeNode->nodeID);
-    }
-    else {
+    } else {
         activeNodeLabel->setText("Active Node: None");
         activeNodeIDSpin->setValue(0);
     }
     defaultRadiusSpin->setValue(state->skeletonState->defaultNodeRadius);
     branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
+    this->blockSignals(false);
 }

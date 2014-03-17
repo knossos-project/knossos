@@ -19,7 +19,18 @@ void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
     }
 }
 
-void TreeTable::dropEvent(QDropEvent *event) {
+void TreeTable::setRow(const int row, const QString & treeId, const QColor & treeColor, const QString & cmt) {
+    auto item = new QTableWidgetItem(treeId);
+    item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+    setItem(row, TreeTable::TREE_ID, item);
+    item = new QTableWidgetItem();
+    item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+    item->setBackgroundColor(treeColor);
+    setItem(row, TreeTable::TREE_COLOR, item);
+    setItem(row, TreeTable::TREE_COMMENT, new QTableWidgetItem(cmt));
+}
+
+void TreeTable::dropEvent(QDropEvent * event) {
     QTableWidgetItem *droppedOnItem = itemAt(event->pos());
     if(droppedOnItem == NULL or ::state->skeletonState->selectedNodes.size() == 0) {
         return;
@@ -30,8 +41,7 @@ void TreeTable::dropEvent(QDropEvent *event) {
     prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
     prompt.setIcon(QMessageBox::Question);
     prompt.setWindowTitle("Cofirmation required");
-    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
-                            arg(droppedOnTreeID));
+    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").arg(droppedOnTreeID));
     QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
@@ -40,14 +50,15 @@ void TreeTable::dropEvent(QDropEvent *event) {
             Skeletonizer::moveNodeToTree(node, droppedOnTreeID);
         }
     }
-    emit updateNodesTable();
+    emit nodesUpdateSignal();
+    event->accept();
+    //this prevents the items in the table from being draggable after the drop
+    //setState(DraggingState) is set in the default dragEnterEvent
+    setState(NoState);
 }
 
-void TreeTable::focusInEvent(QFocusEvent *) {
-    emit focused(this);
-}
-
-void TreeTable::keyPressEvent(QKeyEvent *event) {
+void TreeTable::keyPressEvent(QKeyEvent * event) {
+    QTableWidget::keyPressEvent(event);
     if(event->key() == Qt::Key_Delete) {
         emit deleteTreesSignal();
     }

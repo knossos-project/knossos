@@ -6,19 +6,21 @@
 class TreeTable : public QTableWidget {
     Q_OBJECT
 public:
+    enum {
+        TREE_ID, TREE_COLOR, TREE_COMMENT, TREE_COLS
+    };
     explicit TreeTable(QWidget *parent);
     int droppedOnTreeID;
     bool selectionProtection;
     void setItem(int row, int column, QTableWidgetItem *item);
+    void setRow(const int row, const QString & treeId, const QColor & treeColor, const QString & cmt);
 protected:
-    void dropEvent(QDropEvent *event) override;
-    void focusInEvent(QFocusEvent *) override;
-    void keyPressEvent(QKeyEvent *event) override;
+    void dropEvent(QDropEvent*) override;
+    void keyPressEvent(QKeyEvent*) override;
 signals:
     void deleteTreesSignal();
     void focused(TreeTable *table);
-    void updateNodesTable();
-public slots:
+    void nodesUpdateSignal();
 };
 
 #endif // TREETABLE_H
