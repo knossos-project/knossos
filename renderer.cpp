@@ -455,8 +455,8 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glVertex3d(1, 1, -1);
     glEnd();
 
-//    if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
-//        // Draw an orange border to highlight the viewport.
+    if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
+        // Draw an orange border to highlight the viewport.
 
         glColor4f(1., 0.3, 0., 1.);
         glBegin(GL_LINE_LOOP);
@@ -469,7 +469,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
             glVertex3d(3, vp.edgeLength - 3, -1);
             //glVertex3d(3, 3, -1);
         glEnd();
-
+    }
     // render node selection box
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

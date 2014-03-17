@@ -194,7 +194,9 @@ void Patch::addInterpolatedPoint(floatCoordinate p, floatCoordinate q, std::vect
  * @return true on insertion, false otherwise
  */
 bool Patch::insert(Triangle triangle, bool replace) {
-    if(triangles->insert(triangle, centroidTriangle(triangle), replace)) {
+    floatCoordinate bboxMin, bboxMax;
+    bboxMin.x = -1;
+    if(triangles->insert(triangle, centroidTriangle(triangle), replace, bboxMin, bboxMax)) {
         numTriangles++;
         return true;
     }
@@ -211,7 +213,7 @@ bool Patch::insert(Triangle triangle, bool replace) {
 bool Patch::insert(PatchLoop *loop, uint viewportType) {
     if(loop) {
         pos = loop->centroid;
-        loops->insert(loop, loop->centroid, true);
+        loops->insert(loop, loop->centroid, false, loop->bboxMin, loop->bboxMax);
         numLoops++;
         //computeVolume(viewportType, loop);
 
@@ -786,14 +788,14 @@ bool Patch::computeTriangles() {
         triangle.c.x = meshCloud.points[mesh->polygons[tri].vertices[2]].x;
         triangle.c.y = meshCloud.points[mesh->polygons[tri].vertices[2]].y;
         triangle.c.z = meshCloud.points[mesh->polygons[tri].vertices[2]].z;
-        insert(triangle, false);
+        insert(triangle, true);
     }
     updateDistinguishableTriangles();
 }
 
 void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
     // clear triangles in the area around pos
-    triangles->clearObjsInCube(pos, halfCubeSize);
+    triangles->clearObjsInBBox(pos, halfCubeSize);
     std::vector<floatCoordinate> points;
     pointCloud->getObjsInRange(pos, halfCubeSize, points);
 

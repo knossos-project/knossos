@@ -29,7 +29,7 @@
  *    |_2___|__6__|/
  *
  * - a sub-octree is a leaf if all its children are NULL. It does NOT necessarily hold an object.
- * - sub-octrees with children, i.e. internal octrees, do not have objects, only leaves hold them.
+ * - sub-octrees with children, i.e. internal nodes can also hold objects.
  */
 
 extern struct stateInfo *state;
@@ -42,8 +42,8 @@ public:
     float halfEdgeLen;  //! Half the width/height/depth of this node
 
     Octree *children[8]; //! Pointers to child octants
-    std::vector<T> objects;   //! the stored objects, exist only in leaf nodes
-    floatCoordinate point; //! coordinate of the object, (-1, -1, -1) if there is no object
+    std::vector<T> objects;   //! the stored objects
+    std::vector<floatCoordinate> positions; //! object positions. Indices are synchronous with 'objects' vector
 
     Octree(const floatCoordinate center, const float halfEdgeLen)
         : center(center), halfEdgeLen(halfEdgeLen) {
@@ -51,7 +51,6 @@ public:
         for(int i=0; i<8; ++i) {
             children[i] = NULL;
         }
-        point.x = point.y = point.z = -1;
     }
 
     /**
@@ -78,17 +77,15 @@ public:
      */
     Octree(const Octree<T>& copy, int *counter, int viewportType = -1)
         : center(copy.center), halfEdgeLen(copy.halfEdgeLen) {
-        point.x = copy.point.x;
-        point.y = copy.point.y;
-        point.z = copy.point.z;
+        positions = copy.positions;
         for(int i=0; i<8; ++i) {
             children[i] = NULL;
         }
+        if(copy.hasContent()) {
+            (*counter)++;
+            objects = copy.objects;
+        }
         if(copy.isLeaf()) {
-            if(copy.hasContent()) {
-                (*counter)++;
-                objects = copy.objects;
-            }
             return;
         }
         if(viewportType != -1 and halfEdgeLen*2 < 1./state->viewerState->vpConfigs[viewportType].screenPxXPerDataPx) {
@@ -151,12 +148,23 @@ public:
     }
 
     /**
+     * @brief isObjNode
+     * @return true if this node holds an object, false otherwise
+     */
+    bool isObjNode() const {
+        return objects.size() > 0;
+    }
+
+    /**
      * @brief hasContent tells you if this or any sub-octree holds an object
      * @return true if any this or a sub-octree holds an object, false otherwise
      */
     bool hasContent() const {
-        if(isLeaf()) {
-            return point.x != -1;
+        if(objects.size() > 0) {
+            return true;
+        }
+        else if(isLeaf()) {
+            return false;
         }
         for(int i = 0; i < 8; ++i) {
             if(children[i] == NULL) {
@@ -180,6 +188,77 @@ public:
     }
 
     /**
+     * @brief childContainsBBox returns true if given child octant contains given bounding box
+     * @param bboxMin min coordinate of bounding box
+     * @param bboxMax max coordinate of bounding box
+     * @param childOctant the child to check against
+     * @return true if bounding box fits into child octant, false otherwise
+     */
+    bool childContainsBBox(floatCoordinate bboxMin, floatCoordinate bboxMax, int childOctant) {
+        switch(childOctant) {
+        case 0:
+            if(bboxMin.x < center.x - halfEdgeLen or bboxMax.x > center.x
+               or bboxMin.y < center.y - halfEdgeLen or bboxMax.y > center.y
+               or bboxMin.z < center.z - halfEdgeLen or bboxMax.z > center.z) {
+                return false;
+            }
+            break;
+        case 1:
+            if(bboxMin.x < center.x - halfEdgeLen or bboxMax.x > center.x
+               or bboxMin.y < center.y - halfEdgeLen or bboxMax.y > center.y
+               or bboxMin.z < center.z or bboxMax.z > center.z + halfEdgeLen) {
+                return false;
+            }
+            break;
+        case 2:
+            if(bboxMin.x < center.x - halfEdgeLen or bboxMax.x > center.x
+               or bboxMin.y < center.y or bboxMax.y > center.y + halfEdgeLen
+               or bboxMin.z < center.z - halfEdgeLen or bboxMax.z > center.z) {
+                return false;
+            }
+            break;
+        case 3:
+            if(bboxMin.x < center.x - halfEdgeLen or bboxMax.x > center.x
+               or bboxMin.y < center.y or bboxMax.y > center.y + halfEdgeLen
+               or bboxMin.z < center.z or bboxMax.z > center.z + halfEdgeLen) {
+                return false;
+            }
+            break;
+        case 4:
+            if(bboxMin.x < center.x or bboxMax.x > center.x + halfEdgeLen
+               or bboxMin.y < center.y - halfEdgeLen or bboxMax.y > center.y
+               or bboxMin.z < center.z - halfEdgeLen or bboxMax.z > center.z) {
+                return false;
+            }
+            break;
+        case 5:
+            if(bboxMin.x < center.x or bboxMax.x > center.x + halfEdgeLen
+               or bboxMin.y < center.y - halfEdgeLen or bboxMax.y > center.y
+               or bboxMin.z < center.z or bboxMax.z > center.z + halfEdgeLen) {
+                return false;
+            }
+            break;
+        case 6:
+            if(bboxMin.x < center.x or bboxMax.x > center.x + halfEdgeLen
+               or bboxMin.y < center.y or bboxMax.y > center.y + halfEdgeLen
+               or bboxMin.z < center.z - halfEdgeLen or bboxMax.z > center.z) {
+                return false;
+            }
+            break;
+        case 7:
+            if(bboxMin.x < center.x or bboxMax.x > center.x + halfEdgeLen
+               or bboxMin.y < center.y or bboxMax.y > center.y + halfEdgeLen
+               or bboxMin.z < center.z or bboxMax.z > center.z + halfEdgeLen) {
+                return false;
+            }
+            break;
+        default:
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @brief insert inserts a new object into the octree.
      * @param newObject pointer to new object
      * @param pos the object's coordinates
@@ -187,77 +266,165 @@ public:
      *        add object to list (true) or replace old object (false).
      * @return returns true if a new object was added without replacing an existing one, false otherwise.
      */
-    bool insert(T newObject, floatCoordinate pos, bool allowList, std::vector<T> &removedObjs = Octree<T>::dummyVec) {
-        // If this node doesn't have a data point yet assigned
-        // and it is a leaf, then we're done!
+//    bool insert(T newObject, floatCoordinate pos, bool replace, floatCoordinate bboxMin, floatCoordinate bboxMax,
+//                std::vector<T> &removedObjs = Octree<T>::dummyVec) {
+//        // If this node doesn't have an object yet assigned and it is a leaf, then we're done!
+//        if(isLeaf()) {
+//            if(hasContent() == false) {
+//                objects.push_back(newObject);
+//                point = pos;
+//                return true;
+//            }
+//            else {
+//                // We're at a leaf, but there's already something here.
+//                // So make this leaf an interior node and store the old and new data in its leaves.
+//                // Remember the object that was here for a later re-insert
+//                // Do not reset this->point yet, as it is needed for re-insertion below
+
+//                // first check if new object has same coordinate like old obj
+//                if(point.x == pos.x && point.y == pos.y && point.z == pos.z) {
+//                    if(replace) { // replacement asked, so delete old content
+//                        if(&removedObjs != &dummyVec) {
+//                            removedObjs.insert(removedObjs.end(), objects.begin(), objects.end());
+//                        }
+//                        objects.clear();
+//                    }
+//                    objects.push_back(newObject);
+//                    return false;
+//                }
+
+//                std::vector<T> oldObjects = objects;
+
+//                // Find child octants for old and new objects
+//                int oct1 = getOctantFor(point);
+//                int oct2 = getOctantFor(pos);
+//                Octree<T> *o = this;
+//                Octree<T> *otmp = NULL;
+//                floatCoordinate newCenter;
+//                while(oct1 == oct2) { // create new child until old and new object do not collide anymore
+//                    if(bboxMin.x != -1) {
+//                        if(childContainsBBox(bboxMin, bboxMax, oct1) == false) {
+//                            o->objects.push_back(newObject);
+//                            o->objects.insert(o->objects.back(), oldObjects.begin(), oldObjects.end());
+//                            o->point = pos;
+//                            return true;
+//                        }
+//                    }
+//                    newCenter = o->getCenterOfChild(oct1);
+//                    otmp = o;
+//                    o = new Octree<T>(newCenter, otmp->halfEdgeLen*.5f);
+//                    otmp->children[oct1] = o;
+//                    oct1 = o->getOctantFor(point);
+//                    oct2 = o->getOctantFor(pos);
+//                }
+//                // finally insert old and new objects to their new leaves
+//                // if new object's bounding box would not fit into child octant, add it to this node
+//                if(bboxMin.x != -1) {
+//                    if(childContainsBBox(bboxMin, bboxMax, oct1) == false) {
+//                        objects.push_back(newObject);
+//                        point = pos;
+//                        return true;
+//                    }
+//                }
+
+//                newCenter = o->getCenterOfChild(oct1);
+//                o->children[oct1] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
+//                if(oldObjects.size() > 1) {
+//                    for(uint i = 0; i < oldObjects.size(); ++i) {
+//                        o->children[oct1]->insert(oldObjects[i], point, false, bboxMin, bboxMax);
+//                    }
+//                }
+//                else {
+//                     o->children[oct1]->insert(oldObjects[0], point, replace, bboxMin, bboxMax);
+//                }
+//                point.x = point.y = point.z = -1; // now that the old objects are re-inserted, we can reset point
+//                newCenter = o->getCenterOfChild(oct2);
+//                o->children[oct2] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
+//                o->children[oct2]->insert(newObject, pos, replace, bboxMin, bboxMax, removedObjs);
+//                return true;
+//            }
+//        } else {
+//            // We are at an interior node. Insert recursively into the
+//            // appropriate child octant
+
+//            // first check if object is too big for a smaller octant
+//            int octant = getOctantFor(pos);
+//            if(children[octant] != NULL) {
+//                return children[octant]->insert(newObject, pos, replace, bboxMin, bboxMax, removedObjs);
+//            } //child does not exist yet
+//            children[octant] = new Octree<T>(getCenterOfChild(octant), halfEdgeLen*.5f);
+//            children[octant]->objects.push_back(newObject);
+//            children[octant]->point = pos;
+//            return true;
+//        }
+//    }
+
+    bool insert(T newObject, floatCoordinate pos, bool replace, floatCoordinate bboxMin, floatCoordinate bboxMax,
+                std::vector<T> &removedObjs = Octree<T>::dummyVec) {
+        // If this node doesn't have an object yet assigned and it is a leaf, we're done!
         if(isLeaf()) {
             if(hasContent() == false) {
                 objects.push_back(newObject);
-                point = pos;
+                positions.push_back(pos);
                 return true;
             }
             else {
                 // We're at a leaf, but there's already something here.
-                // So make this leaf an interior node and store the old and new data in its leaves.
-                // Save the object that was here for a later re-insert
-                // do not reset this->point yet, as it is needed for re-insertion below
+                // So make this leaf an interior node and store the new data in one of its octants.
 
-                // first check if new object has same coordinate like old obj
-                if(point.x == pos.x && point.y == pos.y && point.z == pos.z) {
-                    if(allowList == false and &removedObjs != &dummyVec) { // replacement asked, so delete old content
-                        removedObjs.insert(removedObjs.end(), objects.begin(), objects.end());
-                        objects.clear();
+                // first, if object has no bounding box, check if new object has same coordinate like an old obj
+                if(bboxMin.x == -1) {
+                    for(uint i = 0; i < positions.size(); ++i) {
+                        if(positions[i].x == pos.x && positions[i].y == pos.y && positions[i].z == pos.z) {
+                            if(replace) {
+                                if(&removedObjs != &dummyVec) {
+                                    removedObjs.push_back(objects[i]);
+                                }
+                                objects.erase(objects.begin() + i);
+                                objects.emplace(objects.begin() + i, newObject);
+                            }
+                            return false;
+                        }
                     }
-                    objects.push_back(newObject);
-                    point = pos;
-                    return false;
                 }
 
-                std::vector<T> oldObjects = objects;
+                // Find child octant for new object
+                int oct = getOctantFor(pos);
 
-                // Find child octants for old and new objects
-                int oct1 = getOctantFor(point);
-                int oct2 = getOctantFor(pos);
+                // if new object's bounding box would not fit into child octant, add it to this node instead
+                if(bboxMin.x != -1) {
+                    if(childContainsBBox(bboxMin, bboxMax, oct) == false) {
+                        objects.push_back(newObject);
+                        positions.push_back(pos);
+                        return true;
+                    }
+                }
+                // object would fit into child octant, so create it
                 Octree<T> *o = this;
-                Octree<T> *otmp = NULL;
                 floatCoordinate newCenter;
-                while(oct1 == oct2) { // create new child until old and new object do not collide anymore
-                    newCenter = o->getCenterOfChild(oct1);
-                    otmp = o;
-                    o = new Octree<T>(newCenter, otmp->halfEdgeLen*.5f);
-                    otmp->children[oct1] = o;
-                    oct1 = o->getOctantFor(point);
-                    oct2 = o->getOctantFor(pos);
-                }
-                // finally insert old and new objects to their new leaves
-                newCenter = o->getCenterOfChild(oct1);
-                o->children[oct1] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
-                if(oldObjects.size() > 1) {
-                    for(uint i = 0; i < oldObjects.size(); ++i) {
-                        o->children[oct1]->insert(oldObjects[i], point, true);
-                    }
-                }
-                else {
-                     o->children[oct1]->insert(oldObjects[0], point, allowList);
-                }
-                point.x = point.y = point.z = -1; // now that the old objects are re-inserted, we can reset point
-                newCenter = o->getCenterOfChild(oct2);
-                o->children[oct2] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
-                o->children[oct2]->insert(newObject, pos, allowList, removedObjs);
+                newCenter = o->getCenterOfChild(oct);
+                o->children[oct] = new Octree<T>(newCenter, o->halfEdgeLen*.5f);
+                o->children[oct]->insert(newObject, pos, replace, bboxMin, bboxMax);
                 return true;
             }
         } else {
-            // We are at an interior node. Insert recursively into the
-            // appropriate child octant
+            // We are at an interior node. Insert recursively into the appropriate child octant
 
             // first check if object is too big for a smaller octant
             int octant = getOctantFor(pos);
+            if(bboxMin.x != -1) {
+                if(childContainsBBox(bboxMin, bboxMax, octant) == false) {
+                    objects.push_back(newObject);
+                    positions.push_back(pos);
+                    return true;
+                }
+            }
+            // object fits into child octant
             if(children[octant] != NULL) {
-                return children[octant]->insert(newObject, pos, allowList, removedObjs);
+                return children[octant]->insert(newObject, pos, replace, bboxMin, bboxMax, removedObjs);
             } //child does not exist yet
             children[octant] = new Octree<T>(getCenterOfChild(octant), halfEdgeLen*.5f);
-            children[octant]->objects.push_back(newObject);
-            children[octant]->point = pos;
+            children[octant]->insert(newObject, pos, replace, bboxMin, bboxMax);
             return true;
         }
     }
@@ -267,13 +434,13 @@ public:
      * @param objs a vector<T> to hold all the 'objects' found in this octree.
      */
     void getAllObjs(std::vector<T> &objs) {
+        if(isObjNode()) {
+            objs.insert(objs.end(), objects.begin(), objects.end());
+        }
         if(isLeaf()) {
-            if(hasContent()) {
-                objs.insert(objs.end(), objects.begin(), objects.end());
-            }
             return;
         }
-        // branch node
+        // interior node
         for(int i = 0; i < 8; i++) {
             if(children[i] == NULL) {
                 continue;
@@ -288,14 +455,14 @@ public:
      * @param viewportType VIEWPORT_XY, VIEWPORT_XZ, VIEWPORT_YZ or VIEWPORT_SKELETON
      */
     void getAllVisibleObjs(std::vector<T> &objs, uint viewportType) {
-        if(isLeaf()) {
-            if(hasContent()) {
-                objs.insert(objs.end(), objects.begin(), objects.end());
-            }
-            return;
-        }
         //check if in frustum
         if(Renderer::cubeInFrustum(center, halfEdgeLen*2, viewportType) == false) {
+            return;
+        }
+        if(isObjNode()) {
+            objs.insert(objs.end(), objects.begin(), objects.end());
+        }
+        if(isLeaf()) {
             return;
         }
         // interior node
@@ -385,15 +552,17 @@ public:
         floatCoordinate p_point, point_q, p_q;
         SUB_ASSIGN_COORDINATE(p_q, q, p);
 
-        if(isLeaf()) {
-            if(hasContent()) {
-                SUB_ASSIGN_COORDINATE(p_point, point, p);
-                SUB_ASSIGN_COORDINATE(point_q, q, point);
+        if(isObjNode()) {
+            for(uint i = 0; i < positions.size(); ++i) {
+                SUB_ASSIGN_COORDINATE(p_point, positions[i], p);
+                SUB_ASSIGN_COORDINATE(point_q, q, positions[i]);
                 if(almostEqual(euclidicNorm(&p_point) + euclidicNorm(&point_q), euclidicNorm(&p_q))) {
-                    results.insert(results.end(), objects.begin(), objects.end());
+                    results.push_back(objects[i]);
                 }
-                return;
             }
+        }
+        if(isLeaf()) {
+            return;
         }
 
         // interior node, check children
@@ -427,27 +596,31 @@ public:
         if(x == -1 and y == -1 and z == -1) {
             return;
         }
-        if(isLeaf()) {
-            if(hasContent()) {
-                if(z == -1) {
+        if(isObjNode()) {
+            if(z == -1) {
+                for(floatCoordinate point : positions) {
                     if(floor(point.x) == x and floor(point.y) == y) {
                         results.push_back(point.z);
-                        return;
-                    }
-                }
-                else if(y == -1) {
-                    if(floor(point.x) == x and floor(point.z) == z) {
-                        results.push_back(point.y);
-                        return;
-                    }
-                }
-                else if(x == -1) {
-                    if(floor(point.y) == y and floor(point.z) == z) {
-                        results.push_back(point.x);
-                        return;
                     }
                 }
             }
+            else if(y == -1) {
+                for(floatCoordinate point : positions) {
+                    if(floor(point.x) == x and floor(point.z) == z) {
+                        results.push_back(point.y);
+                    }
+                }
+            }
+            else if(x == -1) {
+                for(floatCoordinate point : positions) {
+                    if(floor(point.y) == y and floor(point.z) == z) {
+                        results.push_back(point.x);
+                    }
+                }
+            }
+        }
+        if(isLeaf()) {
+            return;
         }
         // interior node, check children
         if(z == -1) {
@@ -482,15 +655,29 @@ public:
      *        Returns NULL if no neighbor is found
      */
     std::pair<floatCoordinate, T> getNearestNeighbor(floatCoordinate pos) {
+        // dummy return for no nearest neighbor
         T dummy;
-        if(isLeaf()) {
-            if(hasContent()) {
-                return std::pair<floatCoordinate, T>(point, objects[0]);
+        floatCoordinate dummyPos;
+        dummyPos.x = -1;
+
+        if(isObjNode()) {
+            float minDist = INT_MAX;
+            int neighbor;
+            for(uint i = 0; i < positions.size(); ++i) {
+                if(minDist > distance(pos, positions[i])) {
+                    minDist = distance(pos, positions[i]);
+                    neighbor = i;
+                }
             }
-            return std::pair<floatCoordinate, T>(point, dummy);
+            return std::pair<floatCoordinate, T>(positions[neighbor], objects[neighbor]);
         }
+        else if(isLeaf()) {
+            return std::pair<floatCoordinate, T>(dummyPos, dummy);
+        }
+
+        // interior node
         if(hasContent() == false) {
-            return std::pair<floatCoordinate, T>(point, dummy);
+            return std::pair<floatCoordinate, T>(dummyPos, dummy);
         }
 
         // rearrange children for faster search
@@ -552,13 +739,11 @@ public:
                 }
             }
         }
-        floatCoordinate distVec;
         std::pair<floatCoordinate, T> neighbor;
         float tmpDist;
         float minDist = INT_MAX;
         for(uint i = 0; i < neighbors.size(); ++i) {
-            SUB_ASSIGN_COORDINATE(distVec, pos, neighbors[i].first);
-            if((tmpDist = euclidicNorm(&distVec)) < minDist) {
+            if((tmpDist = distance(pos, neighbors[i].first)) < minDist) {
                 minDist = tmpDist;
                 neighbor = neighbors[i];
             }
@@ -573,27 +758,31 @@ public:
      * @param results a vector<T> to store all found objects in.
      */
     void getObjsInRange(const floatCoordinate pos, float halfCubeLen, std::vector<T> &results) {
-        // If we're at a leaf node, just see if the current data point is inside
-        // the query bounding box
         floatCoordinate bmin, bmax;
         bmin.x = pos.x - halfCubeLen; bmin.y = pos.y - halfCubeLen; bmin.z = pos.z - halfCubeLen;
         bmax.x = pos.x + halfCubeLen; bmax.y = pos.y + halfCubeLen; bmax.z = pos.z + halfCubeLen;
-        if(isLeaf()) {
-            if(hasContent()) {
-                if(point.x > bmax.x || point.y > bmax.y || point.z > bmax.z) return;
-                if(point.x < bmin.x || point.y < bmin.y || point.z < bmin.z) return;
-                results.insert(results.end(), objects.begin(), objects.end());
-            }
-            return;
-        }
-        // We're at an interior node of the tree.
+
         // First see if octant intersects bounding box
         if(center.x + halfEdgeLen < bmin.x || center.x - halfEdgeLen > bmax.x
            || center.y + halfEdgeLen < bmin.y || center.y - halfEdgeLen > bmax.y
            || center.z + halfEdgeLen < bmin.z || center.z - halfEdgeLen > bmax.z ) {
             return;
         }
-        // octant intersects with bounding box.
+
+        // octant intersects bounding box
+        // check this node's objects
+        if(isObjNode()) {
+            for(uint i = 0; i < positions.size(); ++i) {
+                if(positions[i].x > bmax.x || positions[i].y > bmax.y || positions[i].z > bmax.z) continue;
+                if(positions[i].x < bmin.x || positions[i].y < bmin.y || positions[i].z < bmin.z) continue;
+                results.push_back(objects[i]);
+            }
+        }
+        if(isLeaf()) {
+            return;
+        }
+
+        // We're at an interior node of the tree.
         // check children
         for(int i=0; i<8; ++i) {
             if(children[i] == NULL) {
@@ -611,8 +800,8 @@ public:
 
             // If the query rectangle is outside the child's bounding box,
             // then continue
-            if(cmax.x<bmin.x || cmax.y<bmin.y || cmax.z<bmin.z) continue;
-            if(cmin.x>bmax.x || cmin.y>bmax.y || cmin.z>bmax.z) continue;
+            if(cmax.x < bmin.x || cmax.y < bmin.y || cmax.z < bmin.z) continue;
+            if(cmin.x > bmax.x || cmin.y > bmax.y || cmin.z > bmax.z) continue;
 
             // if child completely in bounding box, simply add all objects of this octree to the result
             if(cmax.x < bmax.x && cmin.x > bmin.x
@@ -644,30 +833,33 @@ public:
      *  |_____________|/
      */
     void getObjsInMargin(floatCoordinate pos, uint halfCubeLen, uint margin, std::vector<T> results) {
+        if(isObjNode()) {
+            for(uint i = 0; i < positions.size(); ++i) {
+                // check if object outside of cube + margin
+                if(positions[i].x > pos.x + halfCubeLen + margin
+                   or positions[i].y > pos.y + halfCubeLen + margin
+                   or positions[i].z > pos.z + halfCubeLen + margin) {
+                    continue;
+                }
+                if(positions[i].x < pos.x - halfCubeLen - margin
+                   or positions[i].y < pos.y - halfCubeLen - margin
+                   or positions[i].z < pos.z - halfCubeLen - margin) {
+                    continue;
+                }
+                // check if object in cube
+                if(positions[i].x < pos.x + halfCubeLen and positions[i].x > pos.x - halfCubeLen
+                   and positions[i].y < pos.y + halfCubeLen and positions[i].y > pos.y - halfCubeLen
+                   and positions[i].z < pos.z + halfCubeLen and positions[i].z > pos.z - halfCubeLen) {
+                    continue;
+                }
+                // object in margin area
+                results.push_back(objects[i]);
+            }
+        }
         if(isLeaf()) {
-            if(hasContent() == false) {
-                return;
-            }
-            // check if object outside of cube + margin
-            if(point.x > pos.x + halfCubeLen + margin
-               or point.y > pos.y + halfCubeLen + margin
-               or point.z > pos.z + halfCubeLen + margin) {
-                return;
-            }
-            if(point.x < pos.x - halfCubeLen - margin
-               or point.y < pos.y - halfCubeLen - margin
-               or point.z < pos.z - halfCubeLen - margin) {
-                return;
-            }
-            // check if object in cube
-            if(point.x < pos.x + halfCubeLen and point.x > pos.x - halfCubeLen
-               and point.y < pos.y + halfCubeLen and point.y > pos.y - halfCubeLen
-               and point.z < pos.z + halfCubeLen and point.z > pos.z - halfCubeLen) {
-                return;
-            }
-            // object in margin area
-            results.insert(results.end(), objects.begin(), objects.end());
-        } // end isleaf
+            return;
+        }
+
         // check if octree intersects margin
         floatCoordinate cmin, cmax;
         cmin.x = center.x - halfEdgeLen;
@@ -727,28 +919,28 @@ public:
     }
 
     /**
-     * @brief remove removes given object from octree. The "=" operator must be defined for this to work.
-     *        When a leaf is passed, this function assumes it is the octree's root without any children
+     * @brief remove removes given object from octree. The "==" operator must be defined for this to work.
      * @param obj the object to be removed
      * @param objPos the object's position
      * @return true if something was removed, false otherwise
      */
     bool remove(T obj, floatCoordinate objPos) {
-        if(isLeaf()) {
-            if(hasContent() == false or COMPARE_COORDINATE(point, objPos) == false) {
-                return false;
-            }
+        if(contains(objPos) == false) {
+            return false;
+        }
+        if(isObjNode()) {
             for(uint i = 0; i < objects.size(); ++i) {
                 if(objects[i] == obj) {
                     objects.erase(objects.begin() + i);
-                    if(objects.size() == 0) {
-                        SET_COORDINATE(point, -1, -1, -1);
-                    }
+                    positions.erase(positions.begin() + i);
                     return true;
                 }
             }
+        }
+        if(isLeaf()) {
             return false;
         }
+
         if(center.x + halfEdgeLen < objPos.x or center.x - halfEdgeLen > objPos.x
            or center.y + halfEdgeLen < objPos.y or center.y - halfEdgeLen > objPos.y
            or center.z + halfEdgeLen < objPos.z or center.z - halfEdgeLen > objPos.z) {
@@ -760,6 +952,10 @@ public:
             }
             if(children[i]->isLeaf() == false) { // not at level above leaf, yet
                 if(children[i]->remove(obj, objPos)) {
+                    if(children[i]->hasContent() == false) {
+                        delete children[i];
+                        children[i] = NULL;
+                    }
                     return true;
                 }
             }
@@ -767,20 +963,16 @@ public:
                 continue;
             }
             else { // found leaf that is not empty
-                bool deleted = false;
                 for(uint j = 0; j < children[i]->objects.size(); ++j) {
                     if(obj == children[i]->objects[j]) {
                         children[i]->objects.erase(children[i]->objects.begin() + j);
-                        deleted = true;
-                        break;
+                        children[i]->positions.erase(children[i]->positions.begin() + j);
+                        if(children[i]->objects.size() == 0) {
+                            delete children[i];
+                            children[i] = NULL;
+                        }
+                        return true;
                     }
-                }
-                if(children[i]->objects.size() == 0) {
-                    delete children[i];
-                    children[i] = NULL;
-                }
-                if(deleted) {
-                    return true;
                 }
             }
         }
@@ -788,33 +980,48 @@ public:
     }
 
     /**
-     * @brief clearObjsInCube deletes all leaves in this octree whose objects are in the specified cube.
-     *        If this octree is a leaf itself, nothing happens.
-     * @param pos the center of the specified cube
-     * @param halfCubeLen half the edge length of specified cube
+     * @brief clearObjsInBBox deletes all objects in specified bounding box
+     * @param pos the center of the bounding box
+     * @param halfCubeLen half the edge length of the bounding box
      */
-    void clearObjsInCube(const floatCoordinate pos, uint halfCubeLen, std::vector<T> &removedObjs = Octree<T>::dummyVec) {
-        if(isLeaf()) {
-            // self-deletion of leaves breaks the octree, because the parent pointer to this child cannot be set to NULL
+    void clearObjsInBBox(const floatCoordinate pos, uint halfCubeLen, std::vector<T> &removedObjs = Octree<T>::dummyVec) {
+        // check if given bounding box completely contains this octree
+        if(center.x - halfEdgeLen > pos.x - halfCubeLen and center.x + halfEdgeLen < pos.x + halfCubeLen
+           and center.y - halfEdgeLen > pos.y - halfCubeLen and center.y + halfEdgeLen < pos.y + halfCubeLen
+           and center.z - halfEdgeLen > pos.z - halfCubeLen and center.z + halfEdgeLen < pos.z + halfCubeLen) {
+            if(&removedObjs != &dummyVec) {
+                getAllObjs(removedObjs);
+            }
+            for(int i = 0; i < 8; ++i) {
+                delete children[i];
+            }
             return;
         }
-        // traverse the octree to one level above a leaf and delete the leaf if its object is inside the cube
+        // bounding box does not completely contain the octree
+
+        if(isObjNode()) {
+            for(uint i = 0; i < positions.size(); ++i) {
+                if(positions[i].x > pos.x - halfCubeLen and positions[i].x < pos.x + halfCubeLen
+                   and positions[i].y > pos.y - halfCubeLen and positions[i].y < pos.y + halfCubeLen
+                   and positions[i].z > pos.z - halfCubeLen and positions[i].z < pos.z + halfCubeLen) {
+                    if(&removedObjs != &dummyVec) {
+                        removedObjs.push_back(objects[i]);
+                    }
+                    objects.erase(objects.begin() + i);
+                    positions.erase(positions.begin() + i);
+                }
+            }
+        }
+        if(isLeaf()) {
+            return;
+        }
+
         for(int i = 0; i < 8; ++i) {
             if(children[i] == NULL) {
                 continue;
             }
-            if(children[i]->isLeaf() == false) { // not at level above leaf yet
-                children[i]->clearObjsInCube(pos, halfCubeLen, removedObjs);
-            }
-            else if(children[i]->hasContent() == false) { // leaf is empty
-                continue;
-            }
-            else if(children[i]->point.x > pos.x - halfCubeLen and children[i]->point.x < pos.x + halfCubeLen
-               and children[i]->point.y > pos.y - halfCubeLen and children[i]->point.y < pos.y + halfCubeLen
-               and children[i]->point.z > pos.z - halfCubeLen and children[i]->point.z < pos.z + halfCubeLen) {
-                if(&removedObjs != &dummyVec) {
-                    removedObjs.insert(removedObjs.end(), children[i]->objects.begin(), children[i]->objects.end());
-                }
+            children[i]->clearObjsInBBox(pos, halfCubeLen, removedObjs);
+            if(children[i]->hasContent() == false) {
                 delete children[i];
                 children[i] = NULL;
             }
@@ -828,18 +1035,22 @@ public:
      * @return true if there is an object in range, false otherwise.
      */
     bool objInRange(floatCoordinate pos, float range) {
-        if(isLeaf()) {
-            if(hasContent() == false) {
-                return false;
+        if(isObjNode()) {
+            for(uint i = 0; i < positions.size(); ++i) {
+                if(positions[i].x <= (pos.x + range) and positions[i].x >= (pos.x - range)
+                   and positions[i].y <= (pos.y + range) and positions[i].y >= (pos.y - range)
+                   and positions[i].z <= (pos.z + range) and positions[i].z >= (pos.z - range)) {
+                    return true;
+                }
             }
-            return point.x <= (pos.x + range) && point.x >= (pos.x - range)
-                   && point.y <= (pos.y + range) && point.y >= (pos.y - range)
-                   && point.z <= (pos.z + range) && point.z >= (pos.z - range);
+        }
+        if(isLeaf()) {
+            return false;
         }
         // interior node. check if octree intersects with range
-        if(center.x+halfEdgeLen < pos.x-range || center.x-halfEdgeLen > pos.x+range
-           || center.y+halfEdgeLen < pos.y-range || center.y-halfEdgeLen > pos.y+range
-           || center.z+halfEdgeLen < pos.z-range || center.z-halfEdgeLen > pos.z+range) {
+        if(center.x + halfEdgeLen < pos.x - range or center.x - halfEdgeLen > pos.x + range
+           or center.y + halfEdgeLen < pos.y - range or center.y - halfEdgeLen > pos.y + range
+           or center.z + halfEdgeLen < pos.z - range or center.z - halfEdgeLen > pos.z + range) {
             return false; //octree is not in range
         }
         //octree intersects with range
@@ -863,13 +1074,13 @@ public:
      * Format:
      *  0: center(1024, 896, 1024)
      *  children:
-     *  0.0: center(512, 384, 512) // internal node
+     *  0.0: center(512, 384, 512)
      *  0.1: center(512, 384, 1536)
      *  0.2: center(512, 1408, 512)
-     *  0.3: center(512, 1408, 1536), point(50, 124, 144) //leaf
+     *  0.3: center(512, 1408, 1536), pos(50, 124, 144), pos(54, 122, 144)
      *  0.4: center(1536, 384, 512)
      *  0.5: center(1536, 384, 1536)
-     *  0.6: center(1536, 1408, 512), point(86, 27, 287)
+     *  0.6: center(1536, 1408, 512), pos(86, 27, 287)
      *  0.7: center(1536, 1408, 1536)
      *
      *  Next level:
@@ -882,19 +1093,26 @@ public:
      *
      **/
     void writeTo(QTextStream &out, QString index) {
-        if(isLeaf()) {
+        if(isObjNode()) {
             out << index
                 << ": center(" << center.x << ", " << center.y << ", " << center.z
-                << "), point(" << point.x << ", " << point.y << ", " << point.z << ")\n";
+                << ")";
+            for(floatCoordinate pos : positions) {
+            out << ", pos(" << pos.x << ", " << pos.y << ", " << pos.z << ")";
+            }
+            out << "\n";
+        }
+        if(isLeaf()) {
             return;
         }
+
         out << index << ": center(" << center.x << ", " << center.y << ", " << center.z << ")\n";
         out << "children:\n";
         for(int i = 0; i < 8; ++i) {
             if(children[i] == NULL) {
                 continue;
             }
-            if(isLeaf() == false) {
+            if(isObjNode() == false) {
                 out << index << "." << i << ": center("
                     << children[i]->center.x
                     << ", " << children[i]->center.y
@@ -905,10 +1123,14 @@ public:
                     << children[i]->center.x
                     << ", "<< children[i]->center.y
                     << ", " << children[i]->center.z
-                    << "), point("
-                    << children[i]->point.x
-                    << ", " << children[i]->point.y
-                    << ", " << children[i]->point.z << ")\n";
+                    << ")";
+                for(uint j = 0; j < children[i]->positions.size(); ++j) {
+                    out << ", pos("
+                        << children[i]->positions[j].x
+                        << ", " << children[i]->positions[j].y
+                        << ", " << children[i]->positions[j].z << ")";
+                }
+                out << "\n";
             }
         }
         out << "\nNext level:\n";
