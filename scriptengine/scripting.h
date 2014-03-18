@@ -13,6 +13,10 @@ class CoordinateDecorator;
 class TreeListDecorator;
 class NodeListDecorator;
 class SegmentListDecorator;
+
+class TransformDecorator;
+class PointDecorator;
+
 class Highlighter;
 
 /** This class intializes the python qt engine */
@@ -30,6 +34,9 @@ public:
     TreeListDecorator *treeListDecorator;
     NodeListDecorator *nodeListDecorator;
     SegmentListDecorator *segmentListDecorator;
+
+    TransformDecorator *transformDecorator;
+    PointDecorator *pointDecorator;
 
     Highlighter *highlighter;
 

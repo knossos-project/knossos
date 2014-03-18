@@ -653,10 +653,17 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(-dataPxX, 0.5, -0.0001);
                     glVertex3f(dataPxX, 0.5, -0.0001);
 
+                    glColor4f(1 ,0, 0 ,0.3);
+                    glVertex3f(-128, 0, -0.0001);
+                    glVertex3f(128, 1, -0.0001);
+
                     glColor4f(0., 0., 1., 0.3);
                     glVertex3f(0.5, -dataPxY, -0.0001);
                     glVertex3f(0.5, dataPxY, -0.0001);
                 glEnd();
+
+
+
             }
 
             break;
@@ -2646,4 +2653,18 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
     }
 
     return true;
+}
+
+
+void Renderer::post_render() {
+    // translate to the coordinate system origin
+    glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
+
+
+    glPushMatrix();
+
+
+
+
+    glPopMatrix();
 }

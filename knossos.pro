@@ -110,7 +110,13 @@ SOURCES += openjpeg/cio.c \
     pattern/observer/iobserver.cpp \
     scriptengine/decorators/coordinatedecorator.cpp \
     commentListElement.cpp \
-    color4F.cpp
+    color4F.cpp \
+    scriptengine/decorators/pointdecorator.cpp \
+    scriptengine/geometry/transform.cpp \
+    scriptengine/geometry/shape.cpp \
+    scriptengine/geometry/point.cpp \
+    scriptengine/decorators/transformdecorator.cpp \
+    scriptengine/geometry/render.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -212,7 +218,13 @@ HEADERS  += widgets/mainwindow.h \
     scriptengine/highlighter.h \
     pattern/observer/iobservable.h \
     pattern/observer/iobserver.h \
-    scriptengine/decorators/coordinatedecorator.h
+    scriptengine/decorators/coordinatedecorator.h \
+    scriptengine/decorators/pointdecorator.h \
+    scriptengine/geometry/transform.h \
+    scriptengine/geometry/shape.h \
+    scriptengine/geometry/point.h \
+    scriptengine/decorators/transformdecorator.h \
+    scriptengine/geometry/render.h
 
 FORMS    += mainwindow.ui
 

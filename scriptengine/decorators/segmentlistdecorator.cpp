@@ -44,7 +44,11 @@ int SegmentListDecorator::target_id(segmentListElement *self) {
 }
 
 QString SegmentListDecorator::static_segmentListElement_help() {
-    return QString("");
+    return QString("the segment class used in knossos. You gain access to the following methods:" \
+                   "source() : returns the source node of the segment" \
+                   "source_id() : returns the source node id of the segment" \
+                   "target() : returns the target node of the segment" \
+                   "target_id() : returns the target node id of the segment");
 }
 
 

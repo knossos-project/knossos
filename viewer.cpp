@@ -2239,6 +2239,7 @@ void Viewer::rewire() {
     connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(state->skeletonState, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonWithoutConfirmation()));
     connect(state->skeletonState, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
+    connect(state->skeletonState, SIGNAL(updateTreeViewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

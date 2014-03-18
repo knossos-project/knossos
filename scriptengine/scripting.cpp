@@ -4,7 +4,18 @@
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
+
+#include "decorators/transformdecorator.h"
+#include "decorators/pointdecorator.h"
+
+#include "geometry/render.h"
+#include "geometry/point.h"
+#include "geometry/transform.h"
+#include "geometry/shape.h"
+
 #include "highlighter.h"
+
+
 #include "knossos-global.h"
 
 extern stateInfo *state;
@@ -45,8 +56,10 @@ void Scripting::run() {
     console->setWindowTitle("Knossos Scripting Console");
     highlighter = new Highlighter(console->document());
 
+    Render render;
 
     ctx.addObject("knossos", state->skeletonState);
+    ctx.addObject("renderer", &render);
 
 
     coordinateDecorator = new CoordinateDecorator();
@@ -54,6 +67,10 @@ void Scripting::run() {
     treeListDecorator = new TreeListDecorator();
     nodeListDecorator = new NodeListDecorator();
     segmentListDecorator = new SegmentListDecorator();
+
+    transformDecorator = new TransformDecorator();
+    pointDecorator = new PointDecorator();
+
 
     qRegisterMetaType<Coordinate>();
 
@@ -75,7 +92,18 @@ void Scripting::run() {
 
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
+
+    QString renderModule("rendering");
+
+    PythonQt::self()->addDecorators(pointDecorator);
+    PythonQt::self()->registerCPPClass("Point", "", renderModule.toLocal8Bit().data());
+
+    PythonQt::self()->addDecorators(transformDecorator);
+    PythonQt::self()->registerCPPClass("Transform", "", renderModule.toLocal8Bit().data());
+
     addDoc();
+
+
 
     connect(state->skeletonState, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
 

@@ -455,6 +455,8 @@ struct assignment {
   */
 //#include "widgets/console.h"
 
+
+
 struct stateInfo {
 
     stateInfo() {}
@@ -1073,6 +1075,7 @@ public:
 
 
     QList<segmentListElement *> *getSegments();
+
 };
 
 
@@ -1312,6 +1315,7 @@ signals:
     void clearSkeletonSignal();
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void echo(QString message);
+    void updateTreeViewSignal();
 public slots:
     int skeleton_time();
     QString skeleton_file();
@@ -1329,6 +1333,9 @@ public slots:
     void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
     void add_segment(int source_id, int target_id);
     void add_branch_node(int node_id);
+    QString cube_data_at(int x, int y, int z);
+    void post_render(int x, int y, int z, int size, float r, float g, float b, float a);
+
     static QString help();
 
 };

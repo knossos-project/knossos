@@ -43,6 +43,7 @@ public slots:
     void set_coordinate(nodeListElement *self, Coordinate coordinate);
     void set_parent_tree(nodeListElement *self, treeListElement *parent_tree);
     */
+
 };
 
 #endif // NODELISTDECORATOR_H

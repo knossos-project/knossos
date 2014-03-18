@@ -74,7 +74,7 @@ public:
     void showButtons();
     void updateButtonPositions();
     EventModel *eventDelegate;
-    Renderer renderer;
+    Renderer *renderer;
 
     static const int MIN_VP_SIZE = 50;
 
@@ -134,6 +134,8 @@ public slots:
     void r180ButtonClicked();
     void resetButtonClicked();
     bool setOrientation(int orientation);
+
+
 };
 
 #endif // VIEWPORT_H

@@ -1,10 +1,15 @@
 #include "knossos-global.h"
 #include "skeletonizer.h"
 #include "functions.h"
+#include <cmath>
+
+extern stateInfo *state;
+
 
 
 skeletonState::skeletonState()
 {
+
 }
 
 int skeletonState::skeleton_time() {
@@ -35,10 +40,11 @@ bool skeletonState::has_unsaved_changes() {
     return unsavedChanges;
 }
 
-/** @todo update treeview */
 void skeletonState::delete_tree(int tree_id) {
    if(!Skeletonizer::delTree(CHANGE_MANUAL, tree_id, true)) {
        emit echo(QString("could not delete the tree with id %1").arg(tree_id));
+   } else {
+       emit updateTreeViewSignal();
    }
 }
 
@@ -137,6 +143,42 @@ void skeletonState::add_branch_node(int node_id) {
     }
 
 }
+QString skeletonState::cube_data_at(int x, int y, int z) {
+    Coordinate position(x, y, z);
+    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
+
+    if(!data) {
+        emit echo(QString("no cube data found"));
+        return 0;
+    }
+
+    QString result;
+    result.resize(state->cubeBytes);
+    for(int i = 0; i < state->cubeBytes; i++) {
+        result[i] = data[i];
+    }
+
+    return result;
+}
+
+
+void skeletonState::post_render(int x, int y, int z, int size, float r, float g, float b, float a) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 QString skeletonState::help() {
     return QString("The python representation of knossos. You gain access to the following methods:" \
