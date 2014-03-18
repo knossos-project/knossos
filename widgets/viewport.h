@@ -74,7 +74,6 @@ public:
     void updateButtonPositions();
     EventModel *eventDelegate;
     Renderer renderer;
-
     static const int MIN_VP_SIZE = 50;
 
 protected:
@@ -89,7 +88,6 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void enterEvent(QEvent *event);
-    //void leaveEvent(QEvent *event);
 
     int xrel(int x);
     int yrel(int y);
@@ -101,7 +99,7 @@ protected:
     bool entered;
     QPushButton *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
-
+    QMenu *contextMenu;
 private:
     bool resizeButtonHold;
     void resizeVP(QMouseEvent *event);
@@ -133,6 +131,7 @@ public slots:
     void r180ButtonClicked();
     void resetButtonClicked();
     bool setOrientation(int orientation);
+    void showContextMenu(const QPoint &point);
 };
 
 #endif // VIEWPORT_H

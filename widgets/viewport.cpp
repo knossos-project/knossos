@@ -63,6 +63,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     to change this behaviour we need to track the mouse position */
 
     //this->setMouseTracking(true);
+    this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->setCursor(Qt::CrossCursor);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus.
                                           // This solves also the problem that viewports had to be clicked
@@ -72,6 +73,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
     resizeButton->show();
 
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
     connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
 
     if(viewportType == VIEWPORT_SKELETON) {
@@ -89,9 +91,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
-
-
-
 }
 
 void Viewport::initializeGL() {
@@ -164,8 +163,6 @@ void Viewport::initializeGL() {
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
-
-
     QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
     qDebug() << versionString;
 }
@@ -231,12 +228,29 @@ void Viewport::resizeGL(int w, int h) {
 void Viewport::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+
     if(state->viewerState->viewerReady) {
         if(this->viewportType != VIEWPORT_SKELETON) {
            this->drawViewport(id);
         }  else {
             this->drawSkeletonViewport();
         }
+    }
+}
+
+void Viewport::showContextMenu(const QPoint &point) {
+    if(viewportType == VIEWPORT_SKELETON) {
+        QMenu menu(this);
+        QMenu *subMenu = menu.addMenu("Change view direction");
+        subMenu->addAction("xy", this, SLOT(xyButtonClicked()));
+        subMenu->addAction("xz", this, SLOT(xzButtonClicked()));
+        subMenu->addAction("yz", this, SLOT(xzButtonClicked()));
+        subMenu->addAction("r90", this, SLOT(r90ButtonClicked()));
+        subMenu->addAction("180", this, SLOT(r180ButtonClicked()));
+        subMenu->addAction("reset", this, SLOT(resetButtonClicked()));
+
+        menu.popup(this->mapToGlobal(point));
+        menu.exec();
     }
 }
 
@@ -388,7 +402,6 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
     }
 }
 
-
 void Viewport::drawViewport(int vpID) {
     renderer.renderOrthogonalVP(vpID);
 }
@@ -460,7 +473,6 @@ bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
 #endif
     return eventDelegate->handleMouseReleaseLeft(event, vpID);
 }
-
 
 void Viewport::enterEvent(QEvent *event) {
     entered = true;

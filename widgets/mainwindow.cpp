@@ -327,10 +327,9 @@ void MainWindow:: createToolBar() {
 void MainWindow::updateTitlebar(bool) {
     QString title;
     if(!state->skeletonState->skeletonFileAsQString.isNull()) {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
-
+       // title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
     } else {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
+       // title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
     }
 
     setWindowTitle(title);
