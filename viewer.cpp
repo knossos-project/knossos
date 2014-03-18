@@ -2135,7 +2135,7 @@ void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_UNIX
         if(time > 200) {
             delay.restart();
         }
@@ -2143,6 +2143,7 @@ void Viewer::processUserMove() {
 #ifdef Q_OS_MAC
         state->autorepeat = true;
 #endif
+
         if(time >= 200 and !state->autorepeat) {
             userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         } else if(state->autorepeat) {
