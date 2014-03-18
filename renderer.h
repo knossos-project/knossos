@@ -27,6 +27,36 @@
 
 #include <QObject>
 #include "knossos-global.h"
+#include <QList>
+
+enum RenderFlags {
+
+};
+
+
+class Transform {
+    int translate;
+    int rotate;
+    int scale;
+};
+
+class AbstractShape {
+public:
+    AbstractShape();
+    uint id;
+    QList<Coordinate *> *vertices;
+    QList<color4F *> *colors;
+    RenderFlags *flags;
+
+};
+
+class Triangle : AbstractShape {
+public:
+    Triangle();
+    Triangle(QList<Coordinate*> *vertices, QList<color4F*> *color, RenderFlags *flag);
+
+};
+
 
 class Viewport;
 class Renderer : public QObject {
@@ -60,6 +90,7 @@ public slots:
     void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
+    void post_render();
 
 };
 

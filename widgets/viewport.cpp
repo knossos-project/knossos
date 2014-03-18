@@ -239,7 +239,7 @@ void Viewport::paintGL() {
 }
 
 void Viewport::showContextMenu(const QPoint &point) {
-    if(viewportType == VIEWPORT_SKELETON) {
+    if(viewportType == VIEWPORT_SKELETON and QApplication::keyboardModifiers() == Qt::ControlModifier) {
         QMenu menu(this);
         QMenu *subMenu = menu.addMenu("Change view direction");
         subMenu->addAction("xy", this, SLOT(xyButtonClicked()));
@@ -390,6 +390,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+
     if(event->key() == Qt::Key_Control) {
         if(Qt::KeyboardModifiers() == Qt::ALT) {
             setCursor(Qt::OpenHandCursor);
