@@ -223,11 +223,12 @@ void MainWindow:: createToolBar() {
     this->toolBar->addSeparator();
 
 
+    /*
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
     pythonButton->setIcon(QIcon(":/images/python.png"));        
     this->toolBar->addWidget(pythonButton);    
-
+    */
 
     taskManagementButton = new QToolButton();
     taskManagementButton->setToolTip("Task Management Widget");
@@ -326,11 +327,15 @@ void MainWindow:: createToolBar() {
 
 void MainWindow::updateTitlebar(bool useFilename) {
 
+
+
+    QString title;
     if(!state->skeletonState->skeletonFileAsQString.isNull()) {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
+        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION)).arg(state->skeletonState->skeletonFileAsQString);
     } else {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
+        //title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
     }    
+    this->setWindowTitle(title);
 }
 
 // -- static methods -- //
