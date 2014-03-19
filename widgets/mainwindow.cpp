@@ -325,15 +325,12 @@ void MainWindow:: createToolBar() {
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
 
-void MainWindow::updateTitlebar(bool useFilename) {
-
-
-
-    QString title;
-    if(!state->skeletonState->skeletonFileAsQString.isNull()) {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION)).arg(state->skeletonState->skeletonFileAsQString);
+void MainWindow::updateTitlebar(bool) {
+    QString title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION);
+    if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
+        title.append(state->skeletonState->skeletonFileAsQString);
     } else {
-        //title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
+        title.append("no skeleton file");
     }    
     this->setWindowTitle(title);
 }

@@ -45,21 +45,6 @@
 
 extern stateInfo *state;
 
-AbstractShape::AbstractShape() {
-
-}
-
-Triangle::Triangle() {
-
-}
-
-Triangle::Triangle(QList<Coordinate *> *vertices, QList<color4F *> *color, RenderFlags *flag) {
-
-    this->vertices = vertices;
-    this->colors = color;
-    this->flags = flag;
-}
-
 Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -221,27 +206,6 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
         }
 
         return true;
-}
-
-void Renderer::post_render() {
-    glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
-
-    glPushMatrix();
-
-    Triangle triangle;
-    glColor4f(0, 1, 1, 1);
-    glBegin(GL_TRIANGLES);
-    glVertex3f(1000, 1000, 1000);
-    glVertex3f(1005, 1000, 1000);
-    glVertex3f(1000, 995, 1000);
-
-
-    glEnd();
-
-
-
-
-    glPopMatrix();
 }
 
 uint Renderer::renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType) {
@@ -634,7 +598,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
             glTranslatef(((float)state->boundary.x / 2.),((float)state->boundary.y / 2.),((float)state->boundary.z / 2.));
 
             renderSkeleton(currentVP, VIEWPORT_XY);
-            post_render();
 
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2.),-((float)state->boundary.z / 2.));
             glTranslatef((float)state->viewerState->currentPosition.x, (float)state->viewerState->currentPosition.y, (float)state->viewerState->currentPosition.z);
