@@ -213,7 +213,8 @@ OTHER_FILES += \
     style.qss
 
 exists(.svn) {
-    SVNREV = $$system(svnversion)
+    #stringify (svnversion ouput maybe not integer)
+    SVNREV = \\\"$$system(svnversion)\\\"
     DEFINES += REVISION=$$SVNREV
     message(svn revision: $$SVNREV)
 }
