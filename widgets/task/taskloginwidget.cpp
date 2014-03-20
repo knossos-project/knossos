@@ -18,6 +18,7 @@ extern stateInfo *state;
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QDialog(parent), taskManagementWidget(NULL)
 {
+    setWindowIcon(QIcon(":/images/icons/task.png"));
     setWindowTitle("Task Login");
     resize(308, 151);
 

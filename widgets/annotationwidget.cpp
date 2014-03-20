@@ -19,6 +19,8 @@ extern stateInfo *state;
 AnnotationWidget::AnnotationWidget(QWidget *parent) :
     QDialog(parent)
 {
+    setWindowIcon(QIcon(":/images/icons/graph.png"));
+    setWindowTitle("Annotation");
     tabs = new QTabWidget(this);
     treeviewTab = new ToolsTreeviewTab(this);
     commandsTab = new ToolsCommandsTab(this);

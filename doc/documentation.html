@@ -45,26 +45,17 @@
                               it.<br />
                               <hr style="color: black;" />
                               <div style="text-align: center;">
-                                <h3 id="start"><span style="font-weight: bold;">Start and
-                                    Main Window of KNOSSOS</span></h3>
+                                <h3 id="start"><span style="font-weight: bold;">Launching KNOSSOS</span></h3>
                                 <span style="color: red;"></span></div>
                               <ul>
-                                <li>Execute the KNOSSOS 4.0 starter.</li>
-                                <li>Choose the desired data set at the top and
-                                  supercube edge at the bottom.</li>
-                                <li>Put in your name below "Profile" to load
-                                  your KNOSSOS profile (or to create it if it
-                                  has not been created before). KNOSSOS saves
-                                  all your settings under this name (assuming
-                                  you close KNOSSOS appropriately) and you can
-                                  reload them with this name the next time you
-                                  start it.</li>
-                                <li>Start the KNOSSOS main window by pressing
-                                  the "Run"-Button.</li>
+                                <li>Execute KNOSSOS 4.0.</li>
+                                <li>Choose the desired dataset at the top-left menu entry: "Dataset" -&gt; "Open".</li>
+								<li>Load a dataset with "Select Dataset Path" or choose from previously used datasets in the drop down menu.</li>
+                                <li>On exit, Knossos remembers the last used dataset and automatically loads it on next start.</li>
                               </ul>
-                              <div style="text-align: center;"><img alt="Knossos Starter"
+                              <div style="text-align: center;"><img alt="Launching Knossos"
 
-                                  src="images/Tut_KnossosStarter.png" /><br />
+                                  src="images/Tut_loadDataset.png" /><br />
                               </div>
                               <ul>
                               </ul>
@@ -111,11 +102,11 @@
                                           by the menu bar in the upper left of
                                           KNOSSOS.</li>
                                         <li>The most relevant KNOSSOS window is
-                                          the tools window:</li>
+                                          the annotation window:</li>
                                       </ul>
-                                      <div style="text-align: center;"><img src="images/Tut_toolsWindow.png"
+                                      <div style="text-align: center;"><img src="images/Tut_treeview.png"
 
-                                          alt="KNOSSOS tools window" /><br />
+                                          alt="KNOSSOS annotation window" /><br />
                                       </div>
                                       <ul>
                                       </ul>
@@ -202,13 +193,13 @@
                                           "Work Mode" in the menu bar.</li>
                                         <li>The currently active node can be
                                           recognized by its number which appears
-                                          beside the point or via the Tools
+                                          beside the point or via the Annotation
                                           window. </li>
                                         <li>You can activate a node by holding
                                           down the "SHIFT" button and
                                           left-clicking it or by simply entering
                                           the desired node ID in the „Active
-                                          Node ID“ field of the "tools" window.
+                                          Node ID“ field of the Annotation window.
                                           Press "x"/"x"+"SHIFT" in one of the
                                           viewports to activate the
                                           next/previous node. To change the
@@ -216,10 +207,10 @@
                                           "z".</li>
                                         <li>To jump to the active node press "s"
                                           or click on "Jump to node" in the
-                                          Tools window.</li>
+                                          Annotation window.</li>
                                         <li>You can delete the active node by
                                           pressing "DEL" on your keyboard or by
-                                          clicking on "Delete Node" in the Tools
+                                          clicking on "Delete Node" in the Annotation
                                           window.</li>
                                         <li>If you want to reposition a node,
                                           simply click on the node with the
@@ -230,10 +221,10 @@
                                           "CTRL" when pressing the right mouse
                                           button. To transform a normal node to
                                           a branch node press "b" or choose
-                                          "Push Branch Node" in the Tools
+                                          "Push Branch Node" in the Annotation
                                           window. To jump to the last placed
                                           branch node, press "j" or use "Pop
-                                          &amp; Jump" in the Tools window. This
+                                          &amp; Jump" in the Annotation window. This
                                           transforms the branch node to a normal
                                           node.</li>
                                         <li>Different node colors indicate
@@ -249,7 +240,7 @@
                                           the second node or hold "SHIFT" and
                                           click on the second node with the
                                           mouse wheel. Alternatively this can
-                                          also be done in the Tools window.</li>
+                                          also be done in the Annotation window.</li>
                                         <li>If you want to delete a huge part of
                                           the skeleton, isolate this part by
                                           unlinking the corresponding nodes and
@@ -263,16 +254,14 @@
                                       <h2 id="comments" style="text-align: center;">Comments</h2>
                                       <ul>
                                         <li>You can add a comment on every tree
-                                          and on every node by using the textboxes
-                                          in the Tools window.</li>
+                                          and on every node by using the lists
+                                          in the Annotation window.</li>
                                         <li>If you use some comments regularly,
                                           you can enter them in the Comment
-                                          Tools window and add them to the
+                                          Settings window and add them to the
                                           active node by pressing "F1" - "F5".</li>
-                                        <li>In the Comment Tools window you can
-                                          also change the comment highlighting.
-                                          In addition, there is a list of all
-                                          comments in the skeleton.</li>
+                                        <li>In the Comment Settings window you can
+                                          also change the comment highlighting.</li>
                                       </ul>
                                       <div style="text-align: center;"><img src="images/Tut_commentsWindow.png"
 
@@ -358,6 +347,14 @@
                                           <td align="right">SHIFT + left click on node</td>
                                           <td>Mark clicked node as active node</td>
                                           </tr>
+										<tr>
+                                          <td align="right">CTRL + left click on node</td>
+                                          <td>Select node for an operation</td>
+                                          </tr>
+										<tr>
+                                          <td align="right">CTRL + left mouse drag</td>
+                                          <td>Pull selection square to select multiple nodes</td>
+                                          </tr>
                                         <tr>
                                           <td align="right">ALT + left click on node<br>(equal to SHIFT + mouse wheel click on node)</td>
                                           <td>Add/delete segment between clicked node and active node</td>
@@ -427,7 +424,7 @@
                                           <td>Zoom in and out of orthogonal viewports</td>
                                           </tr>
                                         <tr>
-                                          <td align="right">CTRL + left mouse drag</td>
+                                          <td align="right">CTRL + ALT + left mouse drag</td>
                                           <td>drag viewport<br>(restore original position by clicking on "reset viewports" in the tool bar)</td>
                                           </tr>
                                         <tr>
@@ -462,8 +459,6 @@
                                         dataset</a></li>
                                     <li><a href="#Supercube_edge">2.5 Supercube
                                         edge</a></li>
-                                    <li><a href="#Synchronize_on_start">2.6
-                                        Synchronize on start</a></li>
                                   </ul>
                                 </li>
                                 <li><a href="#Knossos">3 Knossos</a>
@@ -513,10 +508,6 @@
                                         <li><a href="#Open..._-.3E_Open_Skeleton_File_.5Bopen_file.5D">3.4.1
                                             Open... -&gt; Open Skeleton File
                                             [open file]</a>
-                                          <ul>
-                                            <li><a href="#Merge_with_Open_Skeleton">3.4.1.1
-                                                Merge with Open Skeleton</a></li>
-                                          </ul>
                                         </li>
                                         <li><a href="#Open_recent_Skeleton_File_.28open_recent_file.29">3.4.2
                                             Open recent Skeleton File (open
@@ -575,25 +566,17 @@
                                             Save Custom Preferences As</a></li>
                                         <li><a href="#Dataset_Navigation">3.10.3
                                             Dataset Navigation</a></li>
-                                        <li><a href="#Synchronization">3.10.4
-                                            Synchronization</a>
-                                          <ul>
-                                            <li><a href="#Synchronization_Settings">3.10.4.1
-                                                Synchronization Settings</a></li>
-                                          </ul>
-                                        </li>
                                         <li><a href="#Data_Saving_Options">3.10.5
                                             Data Saving Options</a></li>
                                         <li><a href="#Viewport_Setting">3.10.6
                                             Viewport Setting</a></li>
                                       </ul>
                                     </li>
-                                    <li><a href="#Synchronization_.5Bsynchronize_Knossos.5D">3.11
-                                        Synchronization [synchronize Knossos]</a></li>
-                                    <li><a href="#Tools_window">3.12 Tools
+                                    <li><a href="#Annotation_window">3.12 Annotation
                                         window</a>
                                       <ul>
-                                        <li><a href="#Quick">3.12.1 Quick</a>
+										<li><a href="#Tree_View">3.12.1 Tree View</a>
+                                        <li><a href="#Commands">3.12.2 Commands</a>
                                           <ul>
                                             <li><a href="#Active_Tree_ID">3.12.1.1
                                                 Active Tree ID</a></li>
@@ -605,7 +588,7 @@
                                                 Branch Points</a></li>
                                           </ul>
                                         </li>
-                                        <li><a href="#Trees">3.12.2 Trees</a>
+                                        <li><a href="#Trees">3.12.3 Trees</a>
                                           <ul>
                                             <li><a href="#Active_Tree_ID_2">3.12.2.1
                                                 Active Tree ID</a></li>
@@ -620,7 +603,7 @@
                                                 Components</a></li>
                                           </ul>
                                         </li>
-                                        <li><a href="#Nodes">3.12.3 Nodes</a>
+                                        <li><a href="#Nodes">3.12.4 Nodes</a>
                                           <ul>
                                             <li><a href="#Active_Node_ID_2">3.12.3.1
                                                 Active Node ID</a></li>
@@ -724,8 +707,8 @@
                                     <li><a href="#Windows_.28menu.29">3.17
                                         Windows (menu)</a>
                                       <ul>
-                                        <li><a href="#Tools_window_2">3.17.1
-                                            Tools window</a></li>
+                                        <li><a href="#Annotation_Window">3.17.1
+                                            Annotation window</a></li>
                                         <li><a href="#Comment_Settings">3.17.2
                                             Comment Settings</a></li>
                                         <ul>
@@ -862,29 +845,6 @@
                           </ul>
                         </li>
                       </ul>
-                      <a name="Synchronize_on_start" id="Synchronize_on_start"></a>
-                      <h3>Synchronize on start</h3>
-                      <ul>
-                        <li> Activate this check mark to directly synchronize
-                          Knossos at the beginning. </li>
-                        <li> You also need to activate this if you want to
-                          synchronize two or more datasets on your own computer.
-                          <ul>
-                            <li>In this way, two Knossos windows will open, each
-                              loaded with one dataset. Upon tracing, the
-                              skeleton (and everything else) will also be
-                              traced/done in the other Knossos window. </li>
-                            <li> To do this, activate the checkmark and choose
-                              afterwards two (or more) datasets by selecting
-                              them with your left mouse button while
-                              simultaneously holding down CTRL. </li>
-                          </ul>
-                        </li>
-                        <li> To learn more about synchronization, see <a href="#Synchronization_.5Bsynchronize_Knossos.5D"
-
-                            title="#Synchronization_.5Bsynchronize_Knossos.5D" rel="nofollow">here</a>.
-                        </li>
-                      </ul>
                       <hr style="color: black;" />
                       <a name="Knossos" id="Knossos"></a>
                       <h1>Knossos </h1>
@@ -928,10 +888,10 @@
                           again B on your keyboard.
                           <ul>
                             <li>Another possibility is to click on <b>Pop and
-                                (J)ump</b> in the tools window. See <a href="#Branch_Points"
+                                (J)ump</b> in the annotation window. See <a href="#Branch_Points"
 
                                 title="#Branch_Points" rel="nofollow">Branch
-                                Point(tools window)</a> for further information.
+                                Point(annotation window)</a> for further information.
                             </li>
                           </ul>
                         </li>
@@ -1026,25 +986,19 @@
                           be loaded into Knossos.
                           <ul>
                             <li> Browse through your folders and choose a file. Then click on
-                              "OK" </li>
+                              "Open" </li>
                           </ul>
                         </li>
-                      </ul>
-                      <a name="Merge_with_Open_Skeleton" id="Merge_with_Open_Skeleton"></a>
-                      <h4>Merge with Open Skeleton</h4>
-                      <ul>
-                        <li> If you do not want the current skeleton to be
-                          replaced by the one you are opening, choose <b>Merge</b>
-                          in the appearing prompt.
-                          <ul>
-                            <li> Note: The two skeletons will have the same tree
-                              IDs! If you want to give them again different IDs,
+						<li>Alternatively, simply drag and drop a skeleton file from your
+						  computer onto Knossos, to load it.</li>
+						<li>A dialog will appear to ask you if the current skeleton should be
+						  overriden by the new one or if they should be merged together.</li>
+						<ul>
+						  <li>Note: The two skeletons will have the same tree
+                              IDs! If you want to give them different IDs again,
                               see <a href="#Split_Trees_By_Connected_Components"
-
-                                title="#Split_Trees_By_Connected_Components" rel="nofollow">here</a>.
-                            </li>
-                          </ul>
-                        </li>
+                                title="#Split_Trees_By_Connected_Components" rel="nofollow">here</a>.</li>
+						</ul>
                       </ul>
                       <a name="Open_recent_Skeleton_File_.28open_recent_file.29"
 
@@ -1261,6 +1215,14 @@
                             <td align="right">SHIFT + left click on node</td>
                             <td>Mark clicked node as active node</td>
                             </tr>
+						  <tr>
+							<td align="right">CTRL + left click on node</td>
+							<td>Select node for an operation</td>
+							</tr>
+						  <tr>
+							<td align="right">CTRL + left mouse drag</td>
+							<td>Pull selection square to select multiple nodes</td>
+							</tr>
                           <tr>
                             <td align="right">ALT + left click on node<br>(equal to SHIFT + mouse wheel click on node)</td>
                             <td>Add/delete segment between clicked node and active node</td>
@@ -1330,7 +1292,7 @@
                             <td>Zoom in and out of orthogonal viewports</td>
                             </tr>
                           <tr>
-                            <td align="right">CTRL + left mouse drag</td>
+                            <td align="right">CTRL + ALT + left mouse drag</td>
                             <td>drag viewport<br>(restore original position by clicking on "reset viewports" in the tool bar)</td>
                             </tr>
                           <tr>
@@ -1392,15 +1354,15 @@
                               branch point using J on your keyboard or using
                               your <a href="#Branch_Points" title="#Branch_Points"
 
-                                rel="nofollow">Tools window</a>. </li>
+                                rel="nofollow">annotation window</a>. </li>
                             <li>You can search for nodes with comments using N
-                              and P on your keyboard or your <a href="#Comments"
+                              and P on your keyboard or your <a href="#Tree_View"
 
-                                title="#Comments" rel="nofollow">Tools window</a>.
+                                title="#Tree_View" rel="nofollow">Annotation window</a>.
                               <ul>
                                 <li>There you can also search for a specific
                                   comment by typing it into the field <b>Search
-                                    for</b>. </li>
+                                    node</b>. </li>
                               </ul>
                             </li>
                           </ul>
@@ -1434,10 +1396,7 @@
                           SHIFT key on your keyboard pressed.
                           <ul>
                             <li> Another possibility is to choose the desired
-                              node ID in the tools window (see <a href="#Active_Node_ID_2"
-
-                                title="#Active_Node_ID_2" rel="nofollow">Tools
-                                Window</a>). </li>
+                              node ID in the Annotation window. </li>
                           </ul>
                         </li>
                       </ul>
@@ -1473,34 +1432,12 @@
                             <li> This is helpful, e.g. if you separated two
                               skeleton parts by accident and you want to connect
                               them again. </li>
-                            <li> Another way is to activate one node, to enter
-                              the ID of the other node in the field right beside
-                              the button "Link Node with..." (in the Tools
-                              window, see <a href="#Link_node_with_.28Shift.2BClick.29"
-
-                                title="#Link_node_with_.28Shift.2BClick.29" rel="nofollow">Link
-                                node with</a>) and afterwards clicking on the
-                              button "Link node with..." (see blue circles in
-                              next image) </li>
+                            <li> Another way is to select both nodes in the Annotation
+								window's Tree View and link them by the right-click menu
+								entry "(Un)link nodes". Repeating this unlinks the nodes again.</li>
                           </ul>
                         </li>
                       </ul>
-                      <img width="100%" border="0" alt="" src="images/Tut_full_linkNodes.png" />
-                      <a name="Delete_node_.5Bremove_node.5D" id="Delete_node_.5Bremove_node.5D"></a>
-                      <h3>Delete node [remove node]</h3>
-                      <ul>
-                        <li> You can delete a node by activating it and pressing
-                          DEL on your keyboard.
-                          <ul>
-                            <li> Another way is to click on <b>Delete node
-                                (Del)</b> in the tools window under "Nodes" (see
-                              <a href="#Delete_node_.28Del.29" title="#Delete_node_.28Del.29"
-
-                                rel="nofollow">Delete Node</a>) </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <a name="Delete_segment_.5Bremove_segment.5D" id="Delete_segment_.5Bremove_segment.5D"></a>
                       <h3>Delete segment [remove segment]</h3>
                       <ul>
                         <li> You can delete the connection (segment) between two
@@ -1517,24 +1454,55 @@
                           </ul>
                         </li>
                       </ul>
+                      <a name="Delete_node_.5Bremove_node.5D" id="Delete_node_.5Bremove_node.5D"></a>
+                      <h3>Delete node [remove node]</h3>
+                      <ul>
+                        <li> You can delete a node by selecting it (CTRL+left click) and pressing
+                          DEL on your keyboard.
+                          <ul>
+                            <li> Another way is to use the Tree View of the Annotation window:
+                              <a href="#Tree_View" title="#Tree_View"
+
+                                rel="nofollow">Tree View</a>) </li>
+                          </ul>
+                        </li>
+                      </ul>
                       <a name="Move_node_.5Breposition_node.2C_drag_node.5D" id="Move_node_.5Breposition_node.2C_drag_node.5D"></a>
                       <h3>Move node [reposition node, drag node]</h3>
                       <ul>
                         <li> If you want to move a node (e.g. to bring it to the
                           center of the cell), simply click on the node with the
                           middle mouse button and drag it to another position.
-                          The node does not have to be your active node.  </li>
+                          The node does not have to be your active node.
+						  You can also enter the desired coordinates for the node 
+						  in the Tree View of the Annotation Widget.</li>
                       </ul>
+					  <a name="Select_Nodes" id="Select_Nodes"></a>
+					  <h3>Select nodes [operate on multiple nodes]</h3>
+					  <ul>
+						<li>Sometimes you want to perform actions on multiple nodes,
+							e.g. delete many nodes at once. You do this by <b>selecting</b>
+							nodes in the viewport: CTRL+left-click on a node selects it.
+							CTRL + left mouse drag in the viewport pulls a selection square
+							that selects all nodes within.</li>
+						<li>CTRL + leftclick a selected node to unselect it, or press ESC 
+							to undo the entire node selection.</li>
+						<li>Press DEL to delete all selected nodes.</li>
+						<li>The selected nodes are highlighted in green in both the viewports
+							and the Tree View of the Annotation Window. Right-clicking 
+							on the node list in the Tree View opens a context menu where
+							you can perform many operations on the selected nodes (see <a href="#Tree_View"
+                            title="#Tree_View" rel="nofollow">here</a>).</li>
+					  </ul>
+					  <div style="text-align: center;"><img width="800" src="images/Tut_node_selection.png" alt="node selection" /><br /></div>
+					  <a name="Tree_section" id="Tree_section"></a>
                       <a name="Node_ID" id="Node_ID"></a>
                       <h3>Node ID</h3>
                       <ul>
                         <li> The Node ID of each node is unique among all
                           skeletons traced/loaded in the dataset. Each new added
                           node gets a new ID, starting from 1. This enables you
-                          to relocate each node, e.g. by using the tools window
-                          (see <a href="#Jump_to_Node_.28s.29" title="#Jump_to_Node_.28s.29"
-
-                            rel="nofollow">Jump to node</a>). </li>
+                          to relocate each node. </li>
                       </ul>
                       <hr style="color: black;" />
                       <a name="Preferences_.28menu.29" id="Preferences_.28menu.29"></a>
@@ -1585,37 +1553,6 @@
 
                             rel="nofollow">[1]</a>). </li>
                       </ul>
-                      <a name="Synchronization" id="Synchronization"></a>
-                      <h3>Synchronization</h3>
-                      <ul>
-                        <li> This will open a new window called <b>Synchronization
-                            Settings</b>: </li>
-                        <li> To learn more about synchronization, see <a href="#Synchronization_.5Bsynchronize_Knossos.5D"
-
-                            title="#Synchronization_.5Bsynchronize_Knossos.5D" rel="nofollow">here</a>.
-                        </li>
-                      </ul>
-                      <a name="Synchronization_Settings" id="Synchronization_Settings"></a>
-                      <h4>Synchronization Settings</h4>
-                      <ul>
-                        <li> At the top of the window you see the connection
-                          status of Knossos (e.g. "No connection to server."). </li>
-                        <li> In the field <b>Remote Host</b> you can enter the
-                          ip adress of the host you want to connect to. </li>
-                        <li> In the field <b>Remote Port</b> you have to
-                          specify the port through which the connection should
-                          be initiated. Make sure your firewall does not block
-                          this port. </li>
-                        <li> The buttons <b>Connect</b> and <b>Disconnect</b>
-                          will do what they say =) Use them to establish the
-                          synchronization connection to the other computer.
-                          <ul>
-                            <li>The other computer must also have Knossos
-                              opened and a connection established to the first
-                              computer. </li>
-                          </ul>
-                        </li>
-                      </ul>
                       <a name="Data_Saving_Options" id="Data_Saving_Options"></a>
                       <h3>Data Saving Options</h3>
                       <ul>
@@ -1644,81 +1581,110 @@
                             rel="nofollow">Viewport Settings</a>. </li>
                       </ul>
                       <hr style="color: black;" />
-                      <a name="Synchronization_.5Bsynchronize_Knossos.5D" id="Synchronization_.5Bsynchronize_Knossos.5D"></a>
-                      <h2>Synchronization [synchronize Knossos]</h2>
+                      <a name="Annotation_window" id="Annotation_window"></a>
+                      <h2>Annotation window</h2>
                       <ul>
-                        <li> The Synchronization feature is mainly used, if you
-                          have same datasets but with different resolutions.
-                          Synchronization allows you to watch them
-                          simultaneously in multiple Knossos instances. </li>
-                        <li> There are two types of synchronization:
-                          synchronization on the same computer or
-                          synchronization on different computers using a network
-                          connection.
-                          <ul>
-                            <li>If you want to use this on the same computer,
-                              use the <a href="#Synchronize_on_start" title="#Synchronize_on_start"
-
-                                rel="nofollow">Synchronize on start</a> button
-                              in the Knossos starter menu.
-                              <ul>
-                                <li> You choose two or more datasets in the
-                                  starter menu which will then all be loaded
-                                  each in one Knossos instance. The instances
-                                  will move and react simultaneously if you move
-                                  or do tracing in one of them. </li>
-                                <li> Opening many Knossos instances will of
-                                  course need high computing power and RAM. Thus
-                                  the performance might go down. </li>
-                              </ul>
-                            </li>
-                            <li> You can also synchronize (two!) computers over
-                              network. They will also move and react
-                              simultaneously.
-                              <ul>
-                                <li>To do this start Knossos on both computers
-                                  each with a different dataset. The Knossos
-                                  starter menu has to stay opened in the
-                                  background! </li>
-                                <li> In the preferences menu you then have to
-                                  open the <a href="#Synchronization_.5Bsynchronize_Knossos.5D" title="#Synchronization"
-
-                                    rel="nofollow">Synchronization Settings</a>
-                                  on both computers and enter in each case the
-                                  IP adress and the open port of the other
-                                  computer (port should be the same in both
-                                  cases). </li>
-                                <li>Afterwards click on connect. </li>
-                                <li>If it does not work, make sure that the port
-                                  is not blocked by the firewall of the
-                                  computers. </li>
-                              </ul>
-                            </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <hr style="color: black;" />
-                      <a name="Tools_window" id="Tools_window"></a>
-                      <h2>Tools window</h2>
-                      <ul>
-                        <li> Under "Windows" --&gt; "Tools" you can open an
+                        <li> Under "Windows" --&gt; "Annotation Window" you can open an
                           important, additional window with many features. </li>
                       </ul>
-                      <a name="Quick" id="Quick"></a>
-                      <h3>Quick</h3>
+					  <ul>
+						<li> At the bottom of the window the <b>Total Tree Count</b> and <b>Total Node Count</b>
+							show you the number of trees and nodes in the skeleton. <b>Currently listed Nodes</b>
+							shows you how many nodes are now listed in the "Tree View" of the Annotation Window(see below).</li>
+					  </ul>
+					  <a name="Tree View" id="Tree_View"></a>
+					  <h3>The Tree View</h3>
+					  The Tree View is the first Tab in the Annotation Window. It is separated into a section
+					  to list trees and a section to list nodes. Here you have an overview of your whole annotation process
+					  and you can do several skeleton changing operations.
+					  <div style="text-align: center;"><img src="images/Tut_treeview.png" alt="KNOSSOS annotation window" /><br /></div>
+					  
+					  <a name="Tree_section" id="Tree_section"></a>
+					  <h4>The Tree section</h4>
+					  <ul>
+						<li>Search for trees containing the comment substring entered in the search bar at the top. 
+							 Check the "RegEx" checkbox to enable a search with a regular expression.</li>
+						<li>The list displays all trees with their ID, their color for easy identification and their comment.
+							The active tree is always listed in the first row, separated from the rest.</li>
+						<li>Double-clicking a tree in the list makes it the active tree.</li>
+						<li>Double click the color of a tree, to change it. And change the comment by writing it into the comment field.</li>
+						<li>Select a list entry like in any common table by clicking on it. Select multiple entries in a row by SHIFT+clicking.
+							Select multiple entries not in a row by CTRL+clicking.</li>
+						<li>Perform operations on selected trees by opening the context menu on them with a right click. The context menu includes:
+							<ul>
+							  <li>Set as active tree (needs exactly one selected tree)</li>
+							  <li>Move selected node(s) to this tree (needs exactly one selected tree and at least one selected node)</li>
+							  <li>Merge trees (needs exactly two selected trees, see <a href="#Merge_Trees" title="#Merge_Trees" rel="nofollow">Merge Trees</a>)</li>
+							  <li>Set comment for trees (sets the same comment for all selected trees)</li>
+							  <li>Restore default color (restores the selected trees' colors to default colors)</li>
+							  <li>Delete tree(s) (pressing DEL achieves the same. Deletes all selected trees and their nodes,
+								a confirmation request will show up)</li>
+							</ul></li>
+					  </ul>
+					  <a name="Merge_Trees" id="Merge_Trees"></a>
+                      <h4>Merge Trees</h4>
                       <ul>
-                        <li> In the Quick section, the most important functions
-                          of the other sections are summarized. </li>
-                        <li> <b>Tree count</b> counts the number of trees you
-                          have currently loaded/traced in the dataset, whereas <b>Node
-                            count</b> counts the overall number of nodes you
-                          have placed in the current dataset. </li>
+                        <li> With the <b>Merge Trees</b> function you can give
+                          two trees the same ID, they effectively become components of the same tree.</li>
                       </ul>
+					  <a name="Node_section" id="Node_section"></a>
+					  <h4>The Node section</h4>
+					  <ul>
+					    <li>Search for nodes containing the comment substring entered in the search bar at the top. 
+							 Check the "RegEx" checkbox to enable a search with a regular expression.</li>
+						<li>Filter the displayed nodes after following criteria: 
+							<ul>
+							  <li>nodes of selected trees (shows only the nodes of trees currently selected in the tree list)</li>
+							  <li>selected nodes (shows only nodes that are selected either by the list or in the viewport with CTRL+leftclick on node)</li>
+							  <li>"... with branch mark", "... with comments" are optional filters.</li>
+							  <li>The "Displayed Nodes" drop down restricts the number of displayed nodes to ensure a good performance.
+								  If you cannot find a node in the list, because it exceeds the number of displayed nodes, use the filtering
+								  mechanisms to find it. If more than several thousand nodes are shown in the list, Knossos will run slower.</li>
+							</ul></li>
+						<li>The list displays all nodes with their ID, their radius, position and comment.
+							The active node is always listed in the first row, separated from the rest.</li>
+						<li>Double-clicking a node in the list makes it the active node.</li>
+						<li>Directly edit a node's property by writing into its property fields.</li>
+						<li>Select a list entry like in any common table by clicking on it. Select multiple entries in a row by SHIFT+clicking.
+							Select multiple entries not in a row by CTRL+clicking.</li>
+						<li>Perform operations on selected nodes by opening the context menu on them with a right click. The context menu includes:
+							<ul>
+							  <li>Set as active node (needs exactly one selected node)</li>
+							  <li>Split component from tree (splits the component containing this node from the tree, see
+								<a href="#Split_Trees_By_Connected_Components" 
+								title="#Split_Trees_By_Connected_Components" rel="nofollow">Split Component from tree</a>)</li>
+							  <li>(Un)link nodes (select two nodes, to add or remove a link between them)</li>
+							  <li>Set comment for nodes (sets the same comment for all selected nodes)</li>
+							  <li>Set radius for nodes (sets the same radius for all selected nodes)</li>
+							  <li>Delete node(s) (pressing DEL achieves the same. deletes all selected nodes, a confirmation request will show up)</li>
+							</ul></li>
+						<li>Move selected nodes from one tree to another by dragging and dropping them onto a tree in the tree list.</li>
+					  </ul>
+					  <a name="Split_Trees_By_Connected_Components" id="Split_Trees_By_Connected_Components"></a>
+                      <h4>Split Component from Tree</h4>
+                      <ul>
+                        <li> Choosing <b>Split Component From Tree</b>
+                          checks if the tree with selected node consists of
+                          at least two separate components (i.e. one group of nodes is
+                          not connected with another group of nodes). If this is
+                          the case, then the component with the selected node will 
+						  become a new tree with an individual (new) ID. For example, 
+						  this feature can be used if you traced a very long branch and 
+						  afterwards you recognize that this branch does not belong to your
+                          cell. It is easier to delete the first segment at the
+                          branchpoint, split the two trees with this function
+                          and delete the branch tree, than deleting every single
+                          node of the branch. </li>
+                      </ul>
+					  
+                      <a name="Commands" id="Commands"></a>
+                      <h3>Commands</h3>
+                        In the Commands section, several important functions are accessable.
                       <a name="Active_Tree_ID" id="Active_Tree_ID"></a>
                       <h4>Active Tree ID</h4>
                       <ul>
                         <li> This shows you the currently active tree ID. This
-                          is the three which is also highlighted in red in all
+                          is the tree which is also highlighted in red in all
                           viewports. You can switch to another tree by typing in
                           or toggling to another ID. Using Z/SHIFT+Z will do the same.</li>
                       </ul>
@@ -1728,166 +1694,30 @@
                         <li> This shows you the currently active node ID. You
                           can switch to another node by typing in or toggling to
                           another ID. Using X/SHIFT+X will do the same.</li>
-                        <li> Below that you see the coordinates of the currently
-                          active node. </li>
-                      </ul>
-                      <a name="Comments" id="Comments"></a>
-                      <h4>Comments</h4>
-                      <ul>
-                        <li> In the "Active Node ID" section you can also see
-                          the comment of the currently active node.
-                          <ul>
-                            <li> If you want to make a comment, just type it
-                              into the field <b>Comment:</b>. Comment nodes appear yellow, 
-                              but if they are also branch nodes, they will be blue.</li>
-                            <li> If you want to search for a specific comment
-                              type it into the field <b>Search for:</b> and
-                              click on <b>Find (N)ext</b> or <b>Find
-                                (P)revious</b>. Pressing N or P on your keyboard
-                              will do the same. </li>
-                            <li> Note: The first node of a tree you begin to
-                              trace has always automatically the comment "First
-                              Node". </li>
-                          </ul>
-                        </li>
                       </ul>
                       <a name="Branch_Points" id="Branch_Points"></a>
                       <h4>Branch Points</h4>
                       <ul>
-                        <li> Under <b>Nodes on Stack</b> you can see how many
-                          branchpoints there have been placed yet. </li>
+                        <li> <b>Nodes on Stack</b> shows how many
+                          branchpoints have been placed yet. </li>
                         <li> Clicking on <b>Push (B)ranch Node</b> will
                           transform the currently active node into a
                           branchpoint. Pressing B on your keyboard will do the
                           same. </li>
                         <li> Clicking on <b>Pop &amp; (J)ump</b> will lead you to
                           the last placed branchpoint which simultaneously
-                          becomes again a normal node. Pressing J on your
+                          becomes a normal node again. Pressing J on your
                           keyboard will do the same. </li>
                         <li> Note: The first node of a tree you begin to trace
                           is always automatically transformed into a
                           branchpoint. </li>
                       </ul>
-
-                      <a name="Trees" id="Trees"></a>
-                      <h3>Trees</h3>
-                      <a name="Active_Tree_ID_2" id="Active_Tree_ID_2"></a>
-                      <h4>Active Tree ID</h4>
-                      <ul>
-                        <li> This shows you the currently active tree ID. This
-                          is the tree which is also highlighted in red in all
-                          viewports. You can switch to another tree by typing in
-                          or toggling to another ID. Using Z/SHIFT+Z will do the same.</li>
-                      </ul>
-                      <a name="Delete_Active_Tree" id="Delete_Active_Tree"></a>
-                      <h4>Delete Active Tree</h4>
-                      <ul>
-                        <li> Clicking on <b>Delete Active Tree</b> will -
-                          suprisingly - delete the whole currently active tree.
-                        </li>
-                      </ul>
-                      <a name="New_Tree_.28C.29" id="New_Tree_.28C.29"></a>
-                      <h4>New Tree (C)</h4>
-                      <ul>
-                        <li> Clicking on <b>New Tree (C)</b> will make a new
-                          tree (with new tree ID) when placing the next node.
-                          Pressing C on your keyboard will do the same. </li>
-                      </ul>
-                      <a name="Merge_Trees" id="Merge_Trees"></a>
-                      <h4>Merge Trees</h4>
-                      <ul>
-                        <li> With the <b>Merge Trees</b> function you can give
-                          two trees the same ID. The ID you are typing into the
-                          field <b>ID 1</b> is the ID which will be remained.
-                          The ID in field <b>ID 2</b> will get the ID of the
-                          first field. After typing in both IDs click on <b>Merge
-                            Trees</b> </li>
-                      </ul>
-                      <a name="Split_Trees_By_Connected_Components" id="Split_Trees_By_Connected_Components"></a>
-                      <h4>Split Trees By Connected Components</h4>
-                      <ul>
-                        <li> Clicking on <b>Split Last Component From Tree</b>
-                          checks if the currently active tree consists of
-                          at least two separate components (i.e. one group of nodes is
-                          not connected with another group of nodes). If this is
-                          the case, then the last component will become a new tree with 
-                          an individual (new) ID. For example, this feature can be
-                          used if you traced a very long branch and afterwards
-                          you recognize that this branch does not belong to your
-                          cell. It is easier to delete the first segment at the
-                          branchpoint, split the two trees with this function
-                          and delete the branch tree, than deleting every single
-                          node of the branch. </li>
-                      </ul>
-                      <a name="Nodes" id="Nodes"></a>
-                      <h3>Nodes</h3>
-                      <ul>
-                        <li> <b>Node Count</b> shows you the overall number of
-                          nodes you placed (independent of trees) in the current
-                          dataset. </li>
-                      </ul>
-                      <a name="Active_Node_ID_2" id="Active_Node_ID_2"></a>
-                      <h4>Active Node ID</h4>
-                      <ul>
-                        <li> This shows you the currently active node ID. You
-                          can switch to another node by typing in or toggling to
-                          another ID. Using X/SHIFT+X will do the same.</li>
-                      </ul>
-                      <a name="Jump_to_Node_.28s.29" id="Jump_to_Node_.28s.29"></a>
-                      <h4>Jump to Node (S)</h4>
-                      <ul>
-                        <li> This button will center the viewports on the
-                          currently active node. In this way you can enter a
-                          node ID in the field above and jump to it. Pressing S
-                          on your keyboard will do the same. </li>
-                      </ul>
-                      <a name="Delete_node_.28Del.29" id="Delete_node_.28Del.29"></a>
-                      <h4>Delete node (Del)</h4>
-                      <ul>
-                        <li> This button will delete the currently active node.
-                          Pressing Del on your keyboard will do the same. </li>
-                      </ul>
-                      <a name="Link_node_with_.28Shift.2BClick.29" id="Link_node_with_.28Shift.2BClick.29"></a>
-                      <h4>Link node with <i>(Shift+Click)</i></h4>
-                      <ul>
-                        <li> This button will make a segment between the
-                          currently active node and the node ID you entered into
-                          the field on the right side of the button. Holding
-                          down CTRL while clicking with the middle mouse button
-                          on another node, will do the same. </li>
-                      </ul>
-                      <a name="Comment" id="Comment"></a>
-                      <h4>Comment</h4>
-                      <ul>
-                        <li> The comment function helps you to find specific
-                          nodes again without the need of writing down the ID.
-                          You can make a comment on a node and search for it
-                          again later on.
-                          <ul>
-                            <li> If you want to make a comment, just type it
-                              into the field <b>Comment:</b>. </li>
-                            <li> If you want to search for a specific comment
-                              type it into the field <b>Search for:</b> and
-                              click on <b>Find (N)ext</b> or <b>Find
-                                (P)revious</b>. Pressing N or P on your keyboard
-                              will do the same. </li>
-                            <li> Comment nodes appear in yellow. But if they are also branchnodes, they will be blue.</li>
-                            <li> Note: The first node of a tree you begin to
-                              trace has always automatically the comment "First
-                              Node". </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <a name="Node_Radius" id="Node_Radius"></a>
+					  <a name="Node_Radius" id="Node_Radius"></a>
                       <h4>Node Radius</h4>
                       <ul>
                         <li> Here you can change the radius of the node. This is
                           normally not necessary, except for <b>Volume Tracing</b>
                           jobs. </li>
-                        <li> You can change the radius of the current node by
-                          either typing it into the field <b>Active Node
-                            Radius(SHIFT+wheel)</b> or by holding down the SHIFT
-                          key and scrolling the mouse wheel. </li>
                         <li> You can change the default node radius (when new
                           nodes are placed) by typing in another value in the
                           field <b>Default Node Radius</b> or by clicking on <b>Use
@@ -1914,8 +1744,9 @@
                           nodes in the defined radius around the currently
                           active node. </li>
                         <li> Clicking on <b>Disable Locking</b> will disable
-                          the Locking feature. </li>
+                          the current lock. </li>
                       </ul>
+                      
                       <hr style="color: black;" />
                       <a name="Trees_.5BSkeleton.5D" id="Trees_.5BSkeleton.5D"></a>
                       <h2>Trees [Skeleton] </h2>
@@ -1925,15 +1756,12 @@
                         <li> This feature helps you, if you have to trace more
                           than one skeleton at the same time (e.g. tracing task
                           "dense skeletonization"). </li>
-                        <li> You can start with a new skeleton/tree by pressing
+                        <li> You can start with a new tree by pressing
                           C on your keyboard. The next node you place will start
                           the new tree. This tree has also a new tree ID.
                           <ul>
                             <li> There is also the possibilty to click on <b>New
-                                Tree (C)</b> in the tools window under "Trees"
-                              (see <a href="#New_Tree_.28C.29" title="#New_Tree_.28C.29"
-
-                                rel="nofollow">New Tree</a>). </li>
+                                Tree (C)</b> in the Annotation window under "Commands". </li>
                           </ul>
                         </li>
                       </ul>
@@ -1942,19 +1770,9 @@
                         id="Delete_tree_.5Bremove_tree.2C_delete_skeleton.5D"></a>
                       <h3>Delete tree [remove tree, delete skeleton]</h3>
                       <ul>
-                        <li> You can delete a whole tree by clicking on <b>Delete
-                            Active Tree</b> in the tools window under "Trees"
-                          (see <a href="#Delete_Active_Tree" title="#Delete_Active_Tree"
-
-                            rel="nofollow">Delete Active Tree</a>).
-                          <ul>
-                            <li> Warning: If two skeletons/trees have the same
-                              ID (if you did not separate them by <a href="#Split_Trees_By_Connected_Components"
-
-                                title="#Split_Trees_By_Connected_Components" rel="nofollow">Split
-                                Trees</a> or if you did not make a new tree for
-                              the second skeleton) then both will be deleted! </li>
-                          </ul>
+                        <li> You can delete a whole tree by selecting it by selecting it
+							in the Annotation window's Tree view, see <a href="#Tree_View"
+                                title="#Tree_View" rel="nofollow">Tree View</a>.
                         </li>
                       </ul>
                       <a name="Merge_trees_.5Bmerge_skeletons.5D" id="Merge_trees_.5Bmerge_skeletons.5D"></a>
@@ -1962,10 +1780,9 @@
                       <ul>
                         <li> With the Merge Trees function you can give two
                           trees the same ID. </li>
-                        <li> This can be done in the tools windows under
-                          "Trees". For further information <a href="#Merge_Trees"
-
-                            title="#Merge_Trees" rel="nofollow">Merge Trees</a>.
+                        <li> This can be done in the Annotation window's Tree View.
+							For further information <a href="#Tree_View"
+                            title="#Tree_View" rel="nofollow">Tree View</a>.
                         </li>
                       </ul>
                       <a name="Split_trees_.5Bseparate_trees.2C_split_skeleton.5D"
@@ -1980,17 +1797,14 @@
                         <li> To do this, you need to separate both trees by
                           deleting the node next to the branch point or by
                           deleting the first segment of the branch (see <a href="#Delete_segment_.5Bremove_segment.5D"
-
                             title="#Delete_segment_.5Bremove_segment.5D" rel="nofollow">Delete
                             segment</a>).
                           <ul>
-                            <li>Afterwards click on <b>Split Trees By Connected
-                                Components</b> in the tools window under "Trees"
-                              which gives you different IDs (and color) for the
-                              two skeletons (see <a href="#Split_Trees_By_Connected_Components"
-
+                            <li>Afterwards select a node in one of the tree's components in the Annotation window's tree view
+                               and click on "Split component from tree" in the right-click menu entry.
+							   (see <a href="#Split_Trees_By_Connected_Components"
                                 title="#Split_Trees_By_Connected_Components" rel="nofollow">Split
-                                Trees</a>. </li>
+                                Trees</a>). </li>
                             <li> Then you can delete the whole branch at once
                               (see <a href="#Delete_tree_.5Bremove_tree.2C_delete_skeleton.5D"
 
@@ -2257,16 +2071,16 @@
                       <a name="Windows_.28menu.29" id="Windows_.28menu.29"></a>
                       <h2>Windows (menu)</h2>
                       <ul>
-                        <li> Under "Windows" you can open the Tools window, Task Management,
+                        <li> Under "Windows" you can open the Annotation window, Task Management,
                           Comments, Zoom and Multiresolution Settings and the Tracing Time window.</li>
                       </ul>
-                      <a name="Tools_window_2" id="Tools_window_2"></a>
-                      <h3>Tools window</h3>
+                      <a name="Annotation_window_2" id="Annotation_window_2"></a>
+                      <h3>Annotation window</h3>
                       <ul>
-                        <li> See <a href="#Tools_window" title="#Tools_window"
+                        <li> See <a href="#Annotation_window" title="#Annotation_window"
 
                             rel="nofollow">here</a> for information about the
-                          Tools window </li>
+                          Annotation window </li>
                       </ul>
                       <a name="Comment_Settings" id="Comment_Settings"></a>
                       <h3>Comment Settings</h3>

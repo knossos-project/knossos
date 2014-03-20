@@ -43,7 +43,8 @@ extern  stateInfo *state;
 ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     QDialog(parent), lastZoomSkel(0), userZoomSkel(true)
 {
-    setWindowTitle("Zoom and Multiresolution Settings");
+    setWindowIcon(QIcon(":/images/icons/zoom-in.png"));
+    setWindowTitle("Zoom and Multiresolution");
 
     // top layout
     QGridLayout *topLayout = new QGridLayout();

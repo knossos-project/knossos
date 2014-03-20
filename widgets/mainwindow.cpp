@@ -270,9 +270,9 @@ void MainWindow:: createToolBar() {
     this->toolBar->addWidget(commentShortcutsButton);
 
     annotationButton = new QToolButton();
-    annotationButton->setToolTip("Tools Widget");
+    annotationButton->setToolTip("Annotation Widget");
     annotationButton->setIcon(QIcon(":/images/icons/graph.png"));
-    annotationButton->setToolTip(("Tools Widget"));
+    annotationButton->setToolTip(("Annotation Widget"));
     toolBar->addWidget(annotationButton);
     this->toolBar->addSeparator();
     resetVPsButton = new QPushButton("Reset VP Positions", this);
@@ -326,7 +326,7 @@ void MainWindow:: createToolBar() {
 }
 
 void MainWindow::updateTitlebar(bool) {
-    QString title = QString("KNOSSOS %1 Revision %2 showing").arg(KVERSION).arg(REVISION);
+    QString title = QString("KNOSSOS %1 showing ").arg(KVERSION);
     if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
         title.append(state->skeletonState->skeletonFileAsQString);
     } else {
@@ -558,7 +558,7 @@ void MainWindow::createActions()
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
 
     /* window actions */
-    toolsAction = new QAction(tr("Tools"), this);
+    toolsAction = new QAction(tr("Annotation Widget"), this);
     toolsAction->setCheckable(true);
     //taskLoginAction = new QAction(tr("Task Management"), this);
     //taskLoginAction->setCheckable(true);
@@ -695,7 +695,7 @@ void MainWindow::createMenus()
     taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tools", this, SLOT(annotationSlot()));
+    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Annotation Window", this, SLOT(annotationSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 

@@ -31,8 +31,7 @@
                 <section title="3.8 Moving" ref="documentation.html#Moving_.5Bscrolling.2C_panning.5D"/>
                 <section title="3.9 Nodes" ref="documentation.html#Nodes_.5Bskeleton_nodes.2C_skeleton_points.5D"/>
                 <section title="3.10 Preferences (menu)" ref="documentation.html#Preferences_.28menu.29"/>
-                <section title="3.11 Synchronization" ref="documentation.html#Synchronization_.5Bsynchronize_Knossos.5D"/>
-                <section title="3.12 Tools window" ref="documentation.html#Tools_window"/>
+                <section title="3.12 Annotation window" ref="documentation.html#Annotation_window"/>
                 <section title="3.13 Trees" ref="documentation.html#Trees_.5BSkeleton.5D"/>
                 <section title="3.14 Navigation (menu)" ref="documentation.html#Navigation_.28menu.29"/>
                 <section title="3.15 Viewport" ref="documentation.html#Viewport"/>
@@ -41,9 +40,6 @@
               </section>
             </section>
          </toc>
-         <keywords>
-             <keyword name="branchnode" id="KNOSSOS::branchnode" ref="blatt2A3.htm#Rindfleisch"/>
-         </keywords>
          <files>
              <file>documentation.html</file>
              <file>images/top.jpg</file>
@@ -51,7 +47,9 @@
              <file>images/Tut_commentsWindow.png</file>
              <file>images/Tut_Coordinates.png</file>
              <file>images/Tut_KnossosStarter.png</file>
-             <file>images/Tut_toolsWindow.png</file>
+             <file>images/Tut_treeview.png</file>
+			 <file>images/Tut_loadDataset.png</file>
+			 <file>images/Tut_node_selection.png</file>
              <file>images/Tut_Viewports.png</file>
              <file>images/Tut_full_LinkNodes.png</file>
              <file>images/Tut_full_skelVP.jpg</file>

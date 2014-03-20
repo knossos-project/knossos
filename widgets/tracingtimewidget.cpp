@@ -22,21 +22,24 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "tracingtimewidget.h"
+#include <math.h>
+
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QSettings>
 #include <QSpacerItem>
 #include <QGroupBox>
-#include <math.h>
-#include "knossos-global.h"
+#include <QIcon>
 
+#include "knossos-global.h"
+#include "tracingtimewidget.h"
 extern  stateInfo *state;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)
 {
+    setWindowIcon(QIcon(":/images/icons/appointment.png"));
     this->setWindowTitle("Tracing Time");
     this->setStyleSheet("");
 
