@@ -162,7 +162,9 @@ void WidgetContainer::createAnnotationWidget(QWidget *parent) {
 }
 
 void WidgetContainer::createWidgets(QWidget *parent) {
+#ifdef QT_DEBUG
     createConsoleWidget();
+#endif
     createTracingTimeWidget(parent);
     createCommentsWidget(parent);
     createViewportSettingsWidget(parent);

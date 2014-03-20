@@ -45,8 +45,9 @@ Viewer::Viewer(QObject *parent) :
 
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
+#ifdef QT_DEBUG
     state->console = window->widgetContainer->console;
+#endif
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();
@@ -62,8 +63,6 @@ Viewer::Viewer(QObject *parent) :
      * 3. new Renderer
      * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
     */
-    SET_COORDINATE(state->viewerState->currentPosition, state->boundary.x / 2, state->boundary.y / 2, state->boundary.z / 2);
-	SET_COORDINATE(state->viewerState->lastRecenteringPosition, state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
 
     initViewer();
     skeletonizer = new Skeletonizer();
@@ -87,15 +86,6 @@ Viewer::Viewer(QObject *parent) :
     renderer->refVPYZ = vpUpperRight;
     renderer->refVPSkel = vpLowerRight;
 
-
-    // TODO: to be removed in release version. Jumps to center of e1088_large dataset
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z,
-                   NO_MAG_CHANGE);
-    updateCoordinatesSignal(state->viewerState->currentPosition.x,
-                           state->viewerState->currentPosition.y,
-                           state->viewerState->currentPosition.z);
     frames = 0;
     state->alpha = 0;
     state->beta = 0;

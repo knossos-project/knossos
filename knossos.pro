@@ -8,7 +8,7 @@ QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11
+CONFIG += qt #c++11
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -279,5 +279,5 @@ RESOURCES += \
 
 include(test/config.pri)
 
-QMAKE_CXXFLAGS += -std=c++0x
+QMAKE_CXXFLAGS += -std=gnu++0x #-std=c++0x
 QMAKE_CXXFLAGS_RELEASE += -O3
