@@ -67,6 +67,7 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     topLayout->addWidget(this->skeletonViewportSpinBox, 1, 2);
 
     this->zoomDefaultsButton = new QPushButton("All Zoom defaults");
+    zoomDefaultsButton->setAutoDefault(false);
     topLayout->addWidget(zoomDefaultsButton, 2, 1);
 
     // main layout
