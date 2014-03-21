@@ -45,6 +45,8 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     connect(this->datasetfileDialog, SIGNAL(clicked()), this, SLOT(datasetfileDialogClicked()));
     connect(this->cancelButton, SIGNAL(clicked()), this, SLOT(cancelButtonClicked()));
     connect(this->processButton, SIGNAL(clicked()), this, SLOT(processButtonClicked()));
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 QStringList DatasetPropertyWidget::getRecentDirsItems() {

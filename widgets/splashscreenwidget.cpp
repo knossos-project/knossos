@@ -38,4 +38,5 @@ SplashScreenWidget::SplashScreenWidget(QWidget *parent) :
     mainLayout->addWidget(trick);
     setLayout(mainLayout);
 
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }

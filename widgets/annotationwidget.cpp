@@ -52,6 +52,8 @@ AnnotationWidget::AnnotationWidget(QWidget *parent) :
     connect(commandsTab, SIGNAL(nodeActivatedSignal()), treeviewTab, SLOT(nodeActivated()));
     connect(commandsTab, SIGNAL(branchPushedSignal()), treeviewTab, SLOT(branchPushed()));
     connect(commandsTab, SIGNAL(branchPoppedSignal()), treeviewTab, SLOT(branchPopped()));
+
+   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void AnnotationWidget::updateLabels() {

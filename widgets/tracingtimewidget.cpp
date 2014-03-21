@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2013
@@ -30,34 +30,76 @@
 #include <QSettings>
 #include <QSpacerItem>
 #include <QGroupBox>
+#include <QPalette>
+#include <QColor>
+#include <math.h>
 #include <QIcon>
-
 #include "knossos-global.h"
 #include "tracingtimewidget.h"
+#include <QTableWidget>
+#include <QHeaderView>
 extern  stateInfo *state;
 
 TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QDialog(parent)
 {
+    //setAttribute(Qt::WA_TranslucentBackground, true);
+    const int LEFT = 0, RIGHT = 1;
     setWindowIcon(QIcon(":/images/icons/appointment.png"));
     this->setWindowTitle("Tracing Time");
-    this->setStyleSheet("");
 
-    this->runningTimeLabel = new QLabel("Running Time: 00:00:00");
-    this->tracingTimeLabel = new QLabel("Tracing Time: 00:00:00");
-    this->idleTimeLabel = new QLabel("Idle Time: 00:00:00");
+    runningLabelItem = new QTableWidgetItem("Running Time", QTableWidgetItem::Type);
+    runningLabelItem->setFlags(Qt::NoItemFlags);
+    runningTimeItem = new QTableWidgetItem("00:00:00", QTableWidgetItem::Type);
+    runningTimeItem->setFlags(Qt::NoItemFlags);
+    tracingLabelItem = new QTableWidgetItem("Tracing Time", QTableWidgetItem::Type);
+    tracingLabelItem->setFlags(Qt::NoItemFlags);
+    tracingTimeItem = new QTableWidgetItem("00:00:00");
+    tracingTimeItem->setFlags(Qt::NoItemFlags);
+    idleLabelItem = new QTableWidgetItem("Idle Time", QTableWidgetItem::Type);
+    idleLabelItem->setFlags(Qt::NoItemFlags);
+    idleTimeItem = new QTableWidgetItem("00:00:00");
+    idleTimeItem->setFlags(Qt::NoItemFlags);
 
-    QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(runningTimeLabel);
-    layout->addWidget(tracingTimeLabel);
-    layout->addWidget(idleTimeLabel);
-    layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    this->setLayout(layout);
+    QStringList header;
+    header << "Category" << "Time";
+
+    QTableWidget *table = new QTableWidget(3, 2);
+    table->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+    table->setSizeAdjustPolicy(QTableWidget::AdjustToContents);
+    table->setStyleSheet("color:black;");
+
+    table->setHorizontalHeaderLabels(header);
+    table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->horizontalHeader()->setStyleSheet("::section:horizontal{background-color:#A41B11; font-weight:bold; color:white;} color: black;");
+
+    table->verticalHeader()->setVisible(false);
+    table->verticalHeader()->setAlternatingRowColors(true);
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    table->setItem(0, LEFT, runningLabelItem);
+    table->setItem(0, RIGHT, runningTimeItem);
+    table->setItem(1, LEFT, tracingLabelItem);
+    table->setItem(1, RIGHT, tracingTimeItem);
+    table->setItem(2, LEFT, idleLabelItem);
+    table->setItem(2, RIGHT, idleTimeItem);
+
+    QVBoxLayout *localLayout = new QVBoxLayout();
+    localLayout->addWidget(table);
+
+    QGroupBox *groupBox = new QGroupBox();    
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+
+    //groupBox->setLayout(localLayout);
+    mainLayout->addLayout(localLayout);
+    setLayout(mainLayout);
 
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(refreshTime()));
     timer->start(1000);
 
+   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void TracingTimeWidget::closeEvent(QCloseEvent *event) {
@@ -71,9 +113,9 @@ void TracingTimeWidget::refreshTime() {
     int minutesRunningTime = (int)(time * 0.001/60.0 - hoursRunningTime * 60);
     int secondsRunningTime = (int)(time * 0.001 - hoursRunningTime * 3600 - minutesRunningTime * 60);
 
-    QString forLabel = QString().sprintf("Running Time: \t%02d:%02d:%02d", hoursRunningTime, minutesRunningTime, secondsRunningTime);
+    QString forLabel = QString().sprintf("%02d:%02d:%02d", hoursRunningTime, minutesRunningTime, secondsRunningTime);
 
-    this->runningTimeLabel->setText(forLabel);
+    this->runningTimeItem->setText(forLabel);
 
 }
 
@@ -93,16 +135,16 @@ void TracingTimeWidget::checkIdleTime() {
         int minutesIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) / 60.0 - hoursIdleTime * 60);
         int secondsIdleTime = (int)(floor(state->skeletonState->idleTimeSession * 0.001) - hoursIdleTime * 3600 - minutesIdleTime * 60);
 
-        QString idleString = QString().sprintf("Idle Time: \t%02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
-        this->idleTimeLabel->setText(idleString);
+        QString idleString = QString().sprintf("%02d:%02d:%02d", hoursIdleTime, minutesIdleTime, secondsIdleTime);
+        this->idleTimeItem->setText(idleString);
     }
 
     int hoursTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) / 3600.0);
     int minutesTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) /60.0 - hoursTracingTime * 60);
     int secondsTracingTime = (int)((floor(time *0.001) - floor(state->skeletonState->idleTimeSession *0.001)) - hoursTracingTime * 3600 - minutesTracingTime * 60);
 
-    QString tracingString = QString().sprintf("Tracing Time: \t%02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
-    this->tracingTimeLabel->setText(tracingString);
+    QString tracingString = QString().sprintf("%02d:%02d:%02d", hoursTracingTime, minutesTracingTime, secondsTracingTime);
+    this->tracingTimeItem->setText(tracingString);
 
     state->viewerState->lastIdleTimeCall = QDateTime::currentDateTimeUtc();
     state->viewerState->renderInterval = FAST;

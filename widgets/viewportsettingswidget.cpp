@@ -57,6 +57,8 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(tabs);
     setLayout(layout);
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void ViewportSettingsWidget::closeEvent(QCloseEvent *event) {

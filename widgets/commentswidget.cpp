@@ -59,6 +59,8 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(tabs);
     setLayout(layout);
+
+   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void CommentsWidget::loadSettings() {

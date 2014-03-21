@@ -3,7 +3,10 @@
 #include "documentationwidget.h"
 
 HelpBrowser::HelpBrowser(QHelpEngine *helpEngine, QWidget *parent)
-    : QTextBrowser(parent), helpEngine(helpEngine) {}
+    : QTextBrowser(parent), helpEngine(helpEngine) {
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
 
 QVariant HelpBrowser::loadResource(int type, const QUrl &url) {
     if (url.scheme() == "qthelp")

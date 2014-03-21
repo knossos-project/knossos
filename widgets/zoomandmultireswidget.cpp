@@ -110,6 +110,8 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
 
     connect(this->zoomDefaultsButton, SIGNAL(clicked()), this, SLOT(zoomDefaultsClicked()));
     connect(this->lockDatasetCheckBox, SIGNAL(toggled(bool)), this, SLOT(lockDatasetMagChecked(bool)));
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 /**

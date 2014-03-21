@@ -64,6 +64,8 @@ DataSavingWidget::DataSavingWidget(QWidget *parent) :
     connect(autosaveCheckbox, SIGNAL(clicked(bool)), this, SLOT(autosaveCheckboxChecked(bool)));
     connect(autosaveIntervalSpinBox, SIGNAL(valueChanged(int)), this, SLOT(autosaveIntervalChanged(int)));
     connect(autoincrementFileNameButton, SIGNAL(clicked(bool)), this, SLOT(autonincrementFileNameButtonPushed(bool)));
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 

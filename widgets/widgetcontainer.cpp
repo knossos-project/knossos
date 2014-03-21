@@ -22,6 +22,7 @@ void WidgetContainer::rewire() {
 //    connect(commentsWidget->nodeCommentsTab, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
 }
 
+#include <QGraphicsBlurEffect>
 void WidgetContainer::createConsoleWidget() {
     console = new Console();
     console->setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -37,7 +38,9 @@ void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
     tracingTimeWidget->layout()->activate();
     tracingTimeWidget->move(QApplication::desktop()->screen()->rect().center().x() - tracingTimeWidget->width() - 20,
                             QApplication::desktop()->screen()->rect().bottomRight().y() - tracingTimeWidget->height() - 50);
+    tracingTimeWidget->adjustSize();
     tracingTimeWidget->setFixedSize(tracingTimeWidget->size());
+
 }
 
 void WidgetContainer::createCommentsWidget(QWidget *parent) {
