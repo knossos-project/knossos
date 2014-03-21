@@ -315,7 +315,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         QObject::connect(nodeContextMenu.addAction("(Un)link nodes"), &QAction::triggered, this, &ToolsTreeviewTab::linkNodesAction);
         QObject::connect(nodeContextMenu.addAction("Set comment for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeCommentAction);
         QObject::connect(nodeContextMenu.addAction("Set radius for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeRadiusAction);
-        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "delete node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
+        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
         nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//active node
         nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
@@ -330,7 +330,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         QObject::connect(treeContextMenu.addAction("Set comment for tree"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
         QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
         QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
-        QObject::connect(treeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "Delete tree"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
+        QObject::connect(treeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete tree"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
         treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
