@@ -331,7 +331,7 @@ void TaskManagementMainTab::submitDialogOk() {
     fclose(cookie);
 
     // save first, in case of errors during transmission
-    Skeletonizer::setDefaultSkelFileName();
+    state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
     emit saveSkeletonSignal(); //increment true
 
     //prompt for entering a comment for the submission

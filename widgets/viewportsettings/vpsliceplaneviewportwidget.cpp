@@ -209,10 +209,7 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
     if(!fileName.isEmpty()) {
         this->datasetLutFile->setText(fileName);
         strcpy(state->viewerState->gui->datasetLUTFile, fileName.toStdString().c_str());
-
-        //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
         loadDatasetLUT();
-
     }
 }
 
@@ -240,7 +237,6 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     if(!fileName.isEmpty()) {
         treeLutFile->setText(fileName);
         strcpy(state->viewerState->gui->treeLUTFile, const_cast<char *>(fileName.toStdString().c_str()));
-        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
         state->viewerState->treeLutSet = true;
 
         loadTreeLUT();

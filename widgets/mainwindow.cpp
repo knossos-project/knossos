@@ -50,11 +50,13 @@
 #include <QToolButton>
 #include <QCheckBox>
 #include <QtConcurrent/QtConcurrentRun>
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "GuiConstants.h"
-#include "knossos-global.h"
+
 #include "knossos.h"
+#include "knossos-global.h"
+#include "GuiConstants.h"
+#include "mainwindow.h"
+#include "skeletonizer.h"
+#include "ui_mainwindow.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 
@@ -137,7 +139,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::decorationSignal, this, &MainWindow::showVPDecorationClicked);
-    updateTitlebar(false);
+    updateTitlebar();
     createViewports();
     setAcceptDrops(true);
 }
@@ -326,36 +328,17 @@ void MainWindow:: createToolBar() {
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
 
-void MainWindow::updateTitlebar(bool) {
+void MainWindow::updateTitlebar() {
     QString title = QString("KNOSSOS %1 showing ").arg(KVERSION);
     if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
         title.append(state->skeletonState->skeletonFileAsQString);
     } else {
         title.append("no skeleton file");
     }
-    this->setWindowTitle(title);
+    setWindowTitle(title);
 }
 
 // -- static methods -- //
-
-bool MainWindow::cpBaseDirectory(char *target, QString path){
-    int hit;
-#ifdef Q_OS_UNIX
-    hit = path.indexOf('/');
-#else
-    hit = path.indexOf('\\');
-#endif
-    if(hit == -1) {
-        qDebug() << "no path separator in " << path;
-        return false;
-    }
-    if(hit > 2047) {
-        qDebug("Path too long.");
-        return false;
-    }
-    sprintf(target, "%s", path.mid(0, hit).toStdString().c_str());
-    return true;
-}
 
 /** This method adds a file path to the queue data structure
     Use this method only after checking if the entry is already in the menu
@@ -732,12 +715,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 //file menu functionality
 
-bool MainWindow::loadSkeletonAfterUserDecision
-(const QString &fileName) {
-    if(!fileName.isNull()) {
+bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
+    if(!fileName.isEmpty()) {
         QApplication::processEvents();
-        QFileInfo info(fileName);
-        QString path = info.canonicalPath();
 
         if(state->skeletonState->treeElements > 0) {
             QMessageBox prompt;
@@ -761,13 +741,12 @@ bool MainWindow::loadSkeletonAfterUserDecision
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
-
         bool result = loadSkeletonSignal(fileName);
         //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         //future.waitForFinished();
 
         //emit updateCommentsTableSignal();
-        updateTitlebar(true);
+        updateTitlebar();
         linkWithActiveNodeSlot();
 
         if(!alreadyInMenu(fileName)) {
@@ -777,6 +756,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
         }
         //emit updateToolsSignal();
         emit updateTreeviewSignal();
+        state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
         return result;
     }
     return false;
@@ -802,10 +782,10 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", *this->openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
         QFileInfo info(fileName);
-        openFileDirectory = new QString(info.dir().absolutePath());
+        openFileDirectory = info.dir().absolutePath();
         state->skeletonState->skeletonFileAsQString = fileName;
         loadSkeletonAfterUserDecision(fileName);
     }
@@ -855,9 +835,10 @@ void MainWindow::updateFileHistoryMenu() {
     }
 }
 
-void MainWindow::saveSlot()
-{
-    if(state->skeletonState->firstTree != NULL) {
+void MainWindow::saveSlot() {
+    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no skeleton file is loaded, go ask for one
+        saveAsSlot();
+    } else if(state->skeletonState->firstTree != NULL) {
         if(state->skeletonState->unsavedChanges) {
 
             if(state->skeletonState->autoFilenameIncrementBool) {
@@ -873,7 +854,7 @@ void MainWindow::saveSlot()
                         historyEntryActions[index]->setText(skeletonFileHistory->at(index));
                         becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
                         emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
-                        updateTitlebar(true);
+                        updateTitlebar();
                         state->skeletonState->unsavedChanges = false;
                         state->skeletonState->skeletonChanged = false;
                         return;
@@ -890,15 +871,14 @@ void MainWindow::saveSlot()
                 becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
             }
 
-                updateTitlebar(true);
-                state->skeletonState->unsavedChanges = false;
+            updateTitlebar();
+            state->skeletonState->unsavedChanges = false;
         }
     }
     state->skeletonState->skeletonChanged = false;
 }
 
-void MainWindow::saveAsSlot()
-{
+void MainWindow::saveAsSlot() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
     if(!state->skeletonState->firstTree) {
@@ -911,34 +891,30 @@ void MainWindow::saveAsSlot()
         return;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", *saveFileDirectory, "KNOSSOS Skeleton file(*.nml)");
-    if(!fileName.isEmpty()) {
-        QFileInfo info(fileName);
-        saveFileDirectory = new QString(info.dir().absolutePath());
+    auto file = state->skeletonState->skeletonFileAsQString;
+    if (file.isEmpty()) {
+        file = Skeletonizer::getDefaultSkelFileName();
+    }
+    auto suggestedFile = saveFileDirectory + '/' + QFileInfo(file).fileName();//append filename to last saving dir
 
-        /*
-        if(state->skeletonState->autoFilenameIncrementBool) {
-            updateSkeletonFileName(fileName);
-        }*/
-
-        state->skeletonState->skeletonFileAsQString = fileName;
-
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", suggestedFile, "KNOSSOS Skeleton file(*.nml)");
+    if (!fileName.isEmpty()) {
+        state->skeletonState->skeletonFileAsQString = fileName;//file was actually chosen, save its path
+        saveFileDirectory = QFileInfo(fileName).absolutePath();//remeber last saving dir
         emit saveSkeletonSignal(fileName);
 
-        if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-            addRecentFile(state->skeletonState->skeletonFileAsQString);
+        if(!alreadyInMenu(fileName)) {
+            addRecentFile(fileName);
         } else {
-            becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+            becomeFirstEntry(fileName);
         }
 
-        updateTitlebar(true);
+        updateTitlebar();
         state->skeletonState->unsavedChanges = false;
-
     }
     state->viewerState->renderInterval = FAST;
     state->skeletonState->skeletonChanged = false;
 }
-
 
 void MainWindow::quitSlot()
 {
@@ -975,43 +951,31 @@ void MainWindow::skeletonStatisticsSlot()
 }
 
 
-void MainWindow::clearSkeletonWithoutConfirmation() {
-    emit clearSkeletonSignal(CHANGE_MANUAL, false);
-    updateTitlebar(false);
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
+    clearSkeletonSlotNoGUI();
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    clearSkeleton(true);
+    QMessageBox question;
+    question.setWindowFlags(Qt::WindowStaysOnTopHint);
+    question.setIcon(QMessageBox::Question);
+    question.setWindowTitle("Confirmation required");
+    question.setText("Really clear skeleton (you cannot undo this)?");
+    QPushButton *ok = question.addButton(QMessageBox::Ok);
+    question.addButton(QMessageBox::No);
+    question.exec();
+    if(question.clickedButton() == ok) {
+        clearSkeletonSlotNoGUI();
+    }
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
-    clearSkeleton(false);
-}
-
-void MainWindow::clearSkeleton(bool isGUI)
-{
-    bool isClear = true;
-    if (isGUI) {
-        QMessageBox question;
-        question.setWindowFlags(Qt::WindowStaysOnTopHint);
-        question.setIcon(QMessageBox::Question);
-        question.setWindowTitle("Confirmation required");
-        question.setText("Really clear skeleton (you cannot undo this)?");
-        QPushButton *ok = question.addButton(QMessageBox::Ok);
-        question.addButton(QMessageBox::No);
-        question.exec();
-        if(question.clickedButton() != ok) {
-            isClear = false;
-        }
-    }
-    if (isClear) {
-        emit clearSkeletonSignal(CHANGE_MANUAL, false);
-        updateTitlebar(false);
-        emit updateTreeviewSignal();
-    }
+    emit clearSkeletonSignal(CHANGE_MANUAL, false);
+    state->skeletonState->skeletonFileAsQString = "";//unload skeleton file
+    updateTitlebar();
+    emit updateToolsSignal();
+    emit updateTreeviewSignal();
+    emit updateCommentsTableSignal();
 }
 
 /* view menu functionality */
@@ -1239,9 +1203,8 @@ void MainWindow::saveSettings() {
         }
     }
 
-    settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, *this->openFileDirectory);
-    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, *this->saveFileDirectory);
-
+    settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
+    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
     settings.endGroup();
 
@@ -1290,15 +1253,15 @@ void MainWindow::loadSettings() {
     }
 
     if(!settings.value(OPEN_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
-        openFileDirectory = new QString(settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString());
+        openFileDirectory = settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        openFileDirectory = new QString(QDir::homePath());
+        openFileDirectory = "skeletonFiles";
     }
 
     if(!settings.value(SAVE_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
-        saveFileDirectory = new QString(settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString());
+        saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        saveFileDirectory = new QString(QDir::homePath());
+        saveFileDirectory = "skeletonFiles";
     }
 
     if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {

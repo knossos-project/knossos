@@ -786,12 +786,6 @@ struct guiConfig {
     float actNodeRadius;
 
     // File dialog widget variables and buffers
-    char skeletonDirectory[2048];
-    char datasetLUTDirectory[2048];
-    char datasetImgJDirectory[2048];
-    char treeImgJDirectory[2048];
-    char treeLUTDirectory[2048];
-    char customPrefsDirectory[2048];
     char treeLUTFile[2048];
     char datasetLUTFile[2048];
 

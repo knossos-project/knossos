@@ -62,9 +62,8 @@ public:
     void updateSkeletonFileName(QString &fileName);
 
     void closeEvent(QCloseEvent *event);
-    void updateTitlebar(bool useFilename);
+    void updateTitlebar();
 
-    static bool cpBaseDirectory(char *target, QString path);
     static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
 
@@ -110,15 +109,14 @@ signals:
     void nodeCommentChangedSignal(nodeListElement *node);
     void viewportDecorationSignal(bool visible);
 protected:
-    void clearSkeleton(bool isGUI);
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
-    QString *openFileDirectory;
-    QString *saveFileDirectory;        
+    QString openFileDirectory;
+    QString saveFileDirectory;
 public:
     Ui::MainWindow *ui;
 
