@@ -65,18 +65,16 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     header << "Category" << "Time";
 
     QTableWidget *table = new QTableWidget(3, 2);
-    table->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-    table->setSizeAdjustPolicy(QTableWidget::AdjustToContents);
+    table->setMaximumHeight(100);
     table->setStyleSheet("color:black;");
-
     table->setHorizontalHeaderLabels(header);
     table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     table->horizontalHeader()->setStyleSheet("::section:horizontal{background-color:#A41B11; font-weight:bold; color:white;} color: black;");
 
     table->verticalHeader()->setVisible(false);
-    table->verticalHeader()->setAlternatingRowColors(true);
-    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->verticalHeader()->setMaximumSectionSize(20);
+    table->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     table->setItem(0, LEFT, runningLabelItem);
     table->setItem(0, RIGHT, runningTimeItem);
@@ -84,6 +82,8 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     table->setItem(1, RIGHT, tracingTimeItem);
     table->setItem(2, LEFT, idleLabelItem);
     table->setItem(2, RIGHT, idleTimeItem);
+
+
 
     QVBoxLayout *localLayout = new QVBoxLayout();
     localLayout->addWidget(table);

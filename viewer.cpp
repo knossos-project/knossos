@@ -1104,6 +1104,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
     if (state->quitSignal) {//don’t do shit, when the rest is already going to sleep
+        qDebug() << "viewer returned";
         return;
     }
 
@@ -1326,12 +1327,14 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
-    if(serverMovement == TELL_COORDINATE_CHANGE &&
-        state->clientState->connected == true &&
-        state->clientState->synchronizePosition) {
-        emit broadcastPosition(viewerState->currentPosition.x,
-                                  viewerState->currentPosition.y,
-                                  viewerState->currentPosition.z);
+    if(state->clientState) {
+        if(serverMovement == TELL_COORDINATE_CHANGE &&
+            state->clientState->connected == true &&
+            state->clientState->synchronizePosition) {
+            emit broadcastPosition(viewerState->currentPosition.x,
+                                      viewerState->currentPosition.y,
+                                      viewerState->currentPosition.z);
+        }
     }
 
 

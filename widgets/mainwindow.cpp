@@ -678,6 +678,7 @@ void MainWindow::createMenus()
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", this, SLOT(documentationSlot()), QKeySequence(tr("CTRL+H")));
 }
 
+#include "sleeper.h"
 void MainWindow::closeEvent(QCloseEvent *event) {
     saveSettings();
 
@@ -697,6 +698,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     Knossos::sendQuitSignal();
+    for(int i = 0; i < 4; i++) {
+        viewports[i].get()->setParent(NULL);
+    }
+
     event->accept();//mainwindow takes the qapp with it
 }
 

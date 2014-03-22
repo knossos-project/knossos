@@ -125,12 +125,15 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication a(argc, argv);
+    /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
+       I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
+       As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
+    */
+    Splash splash(":/images/splash.png", 1500);
     QCoreApplication::setOrganizationDomain("MPI");
     QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
     QCoreApplication::setApplicationName("Knossos QT");
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    Splash splash(":/images/splash.png", 1500);
 
     knossos.reset(new Knossos);
 
@@ -550,10 +553,7 @@ bool Knossos::sendRemoteSignal() {
 bool Knossos::sendQuitSignal() {
 
     state->quitSignal = true;
-    QApplication::processEvents();//ensure everything’s done
-
-    Knossos::sendRemoteSignal();
-    Knossos::sendClientSignal();
+    QApplication::processEvents(); //ensure everything’s done
 
     state->protectLoadSignal->lock();
     state->loadSignal = true;
@@ -561,6 +561,11 @@ bool Knossos::sendQuitSignal() {
 
     state->conditionLoadSignal->wakeOne();
     loader->wait();//wait for the loader to terminate
+
+    Knossos::sendRemoteSignal();
+    Knossos::sendClientSignal();
+
+
     return true;
 }
 
