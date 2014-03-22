@@ -115,7 +115,8 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
-    timer->singleShot(10, this, SLOT(run()));
+    state->viewerState->renderInterval = FAST;
+
     delay.start();
 }
 
@@ -1105,6 +1106,10 @@ void Viewer::run() {
     if (state->quitSignal) {//don’t do shit, when the rest is already going to sleep
         return;
     }
+
+    //start the timer before the rendering, else render interval and actual rendering time would accumulate
+    timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
+
     processUserMove();
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
@@ -1181,7 +1186,6 @@ void Viewer::run() {
                 }
             }
             state->viewerState->userMove = false;
-            timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
             return;
         }
     }
