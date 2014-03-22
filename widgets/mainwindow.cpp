@@ -289,23 +289,12 @@ void MainWindow:: createToolBar() {
     lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
     this->toolBar->addWidget(lockVPOrientationCheckbox);
 
-    loaderThreadsField = new QSpinBox();
-    loaderThreadsField->setMaximum(state->loaderDecompThreadsNumber);
-    loaderThreadsField->setMinimum(1);
-    loaderThreadsField->setMinimumWidth(75);
-    loaderThreadsField->clearFocus();
-    loaderThreadsField->setValue(state->loaderDecompThreadsNumber);
-    loaderThreadsLabel = new QLabel("<font color='black'>Decomp Threads</font>");
-    this->toolBar->addWidget(loaderThreadsLabel);
-    this->toolBar->addWidget(loaderThreadsField);
-
     connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
 
-    connect(loaderThreadsField, SIGNAL(editingFinished()), this, SLOT(loaderThreadsFieldChanged()));
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
@@ -322,7 +311,7 @@ void MainWindow:: createToolBar() {
 
     connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(resetVPOrientButton, SIGNAL(clicked()), this, SLOT(resetVPOrientation()));
-    connect(lockVPOrientationCheckbox, SIGNAL(clicked(bool)), this, SLOT(lockVPOrientation(bool)));
+    connect(lockVPOrientationCheckbox, SIGNAL(toggled(bool)), this, SLOT(lockVPOrientation(bool)));
 
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
@@ -1045,10 +1034,6 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-//        saveSettings();
-//        widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
-//        //widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
-//        widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
         emit loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
@@ -1159,10 +1144,6 @@ void MainWindow::pasteClipboardCoordinates(){
     }
 }
 
-void MainWindow::loaderThreadsFieldChanged() {
-    state->loaderDecompThreadsNumber = loaderThreadsField->value();
-}
-
 void MainWindow::coordinateEditingFinished() {
     emit userMoveSignal(xField->value()- 1 - state->viewerState->currentPosition.x,
                         yField->value()- 1 - state->viewerState->currentPosition.y,
@@ -1190,6 +1171,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPXZ_COORD, viewports[VIEWPORT_XZ]->pos());
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
+
+    settings.setValue(VP_LOCK_ORIENTATION, this->lockVPOrientationCheckbox->isChecked());
 
     settings.setValue(WORK_MODE, state->skeletonState->workMode);
 
@@ -1249,6 +1232,12 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_YZ]->move(settings.value(VPYZ_COORD).toPoint());
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
+
+    QVariant lockVPOrientation_value = settings.value(VP_LOCK_ORIENTATION);
+    this->lockVPOrientationCheckbox->setChecked(lockVPOrientation_value.isNull() ?
+                                                    LOCK_VP_ORIENTATION_DEFAULT :
+                                                    lockVPOrientation_value.toBool());
+    emit(lockVPOrientationCheckbox->toggled(lockVPOrientationCheckbox->isChecked()));
 
     if(!settings.value(OPEN_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
         openFileDirectory = settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString();

@@ -61,6 +61,7 @@ const QString VPYZ_SIZE = "vpyz_size";
 const QString VPSKEL_COORD = "vpskel_coord";
 const QString VPSKEL_SIZE = "vpskel_size";
 const QString VP_TAB_INDEX = "vp_tab_index";
+const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";

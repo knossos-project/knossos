@@ -170,12 +170,7 @@ void ZoomAndMultiresWidget::skeletonSpinBoxChanged(double value) {
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
-    lockDatasetCheckBox->setChecked(on); // neccessary, because this slot is not only connected to the checkbox.
-    if(on) {
-        state->viewerState->datasetMagLock = true;
-    } else {
-        state->viewerState->datasetMagLock = false;
-    }
+    state->viewerState->datasetMagLock = on;
 }
 
 /**
@@ -252,9 +247,11 @@ void ZoomAndMultiresWidget::loadSettings() {
         this->skeletonViewportSpinBox->setValue(0);
     }
 
-    state->viewerState->datasetMagLock =
-            (settings.value(LOCK_DATASET_TO_CURRENT_MAG).isNull())? true : settings.value(LOCK_DATASET_TO_CURRENT_MAG).toBool();
-    this->lockDatasetCheckBox->setChecked(state->viewerState->datasetMagLock);
+    QVariant datasetMagLock_value = settings.value(LOCK_DATASET_TO_CURRENT_MAG);
+    this->lockDatasetCheckBox->setChecked(datasetMagLock_value.isNull() ?
+                                                    LOCK_DATASET_ORIENTATION_DEFAULT :
+                                                    datasetMagLock_value.toBool());
+    emit(lockDatasetCheckBox->toggled(lockDatasetCheckBox->isChecked()));
 
     settings.endGroup();
     if(visible) {

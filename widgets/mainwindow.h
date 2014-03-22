@@ -29,6 +29,8 @@
 #include <memory>
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
+#define LOCK_VP_ORIENTATION_DEFAULT (true)
+
 #include <QMainWindow>
 #include <QDropEvent>
 #include <QQueue>
@@ -125,8 +127,6 @@ public:
     QToolButton *pasteButton;
     QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *xField, *yField, *zField;
-    QLabel *loaderThreadsLabel;
-    QSpinBox *loaderThreadsField;
 
     QMessageBox *prompt;
 
@@ -284,7 +284,6 @@ public slots:
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
-    void loaderThreadsFieldChanged();
 
     void uncheckToolsAction();
     void uncheckViewportSettingAction();

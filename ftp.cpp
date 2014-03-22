@@ -70,6 +70,8 @@ int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], i
         curl_easy_setopt(eh, CURLOPT_WRITEFUNCTION, my_fwrite);
         curl_easy_setopt(eh, CURLOPT_WRITEDATA, currentCube);
         curl_easy_setopt(eh, CURLOPT_PRIVATE, currentCube);
+        curl_easy_setopt(eh, CURLOPT_TIMEOUT, 10);
+        curl_easy_setopt(eh, CURLOPT_CONNECTTIMEOUT, 10);
         currentCube->curlHandle = eh;
         curl_multi_add_handle(curlm, eh);
     }

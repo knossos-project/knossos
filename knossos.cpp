@@ -191,7 +191,6 @@ int main(int argc, char *argv[])
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
-    QObject::connect(knossos.get(), &Knossos::lockDatasetMag, viewer.window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::lockDatasetMagChecked);
 
     QObject::connect(&viewer, &Viewer::broadcastPosition, &Client::broadcastPosition);
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
@@ -860,14 +859,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             // search the wrong directories or a wrong path was entered
             LOG("Path does not exist or unsupported data path format.");
             return false;
-        }
-
-        /* Do not enable multires by default, even if more than one dataset was found.
-         * Multires might be confusing to untrained tracers! Experts can easily enable it..
-         * The loaded gui config might lock K to the current mag later on, which is fine. */
-        if(state->highestAvailableMag > 1) {
-            qDebug() << "Decided on datasetMagLock = true";
-            emit lockDatasetMag(true);
         }
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {
