@@ -53,8 +53,6 @@ void Remote::run() {
         state->protectRemoteSignal->lock();
         while(!state->remoteSignal) {
             state->conditionRemoteSignal->wait(state->protectRemoteSignal);
-            if(state->quitSignal)
-                return;
         }
 
         state->remoteSignal = false;

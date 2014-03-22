@@ -934,8 +934,6 @@ void Loader::run() {
             state->conditionLoadFinished->wakeOne();
             state->conditionLoadSignal->wait(state->protectLoadSignal);
             state->loaderBusy = true;
-            if(state->quitSignal)
-                return;
         }
 
         if (true == load()) {

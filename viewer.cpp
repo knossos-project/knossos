@@ -1102,6 +1102,9 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
+    if (state->quitSignal) {//don’t do shit, when the rest is already going to sleep
+        return;
+    }
     processUserMove();
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load

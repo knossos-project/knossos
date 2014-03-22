@@ -551,6 +551,7 @@ bool Knossos::sendRemoteSignal() {
 bool Knossos::sendQuitSignal() {
 
     state->quitSignal = true;
+    QApplication::processEvents();//ensure everything’s done
 
     Knossos::sendRemoteSignal();
     Knossos::sendClientSignal();
@@ -1274,11 +1275,6 @@ void Knossos::loadDefaultTreeLUT() {
 
     }
 }
-
-void rewire() {
-
-}
-
 
 void Knossos::revisionCheck() {
 

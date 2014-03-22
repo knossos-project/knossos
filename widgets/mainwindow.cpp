@@ -698,19 +698,17 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          question.setIcon(QMessageBox::Question);
          question.setWindowTitle("Confirmation required.");
          question.setText("There are unsaved changes. Really Quit?");
-         QPushButton *yes = question.addButton("Yes", QMessageBox::ActionRole);
-         question.addButton("No", QMessageBox::ActionRole);
+         question.addButton("Yes", QMessageBox::ActionRole);
+         const QPushButton * const no = question.addButton("No", QMessageBox::ActionRole);
          question.exec();
-         if(question.clickedButton() == yes) {
-             Knossos::sendQuitSignal();
-         } else {
+         if(question.clickedButton() == no) {
              event->ignore();
-             return;
+             return;//we changed our mind – we dont want to quit anymore
          }
     }
 
-
-    exit(EXIT_SUCCESS);
+    Knossos::sendQuitSignal();
+    event->accept();//mainwindow takes the qapp with it
 }
 
 //file menu functionality
