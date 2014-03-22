@@ -719,19 +719,15 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          question.addButton("No", QMessageBox::ActionRole);
          question.exec();
          if(question.clickedButton() == yes) {
-             event->accept();
+             Knossos::sendQuitSignal();
          } else {
              event->ignore();
              return;
          }
     }
 
-    QWidgetList widgets = QApplication::topLevelWidgets();
-    for(int i = 0; i < widgets.size(); i++) {
-        widgets.at(i)->close();
-    }
-    Knossos::sendQuitSignal();
-    exit(0);
+
+    exit(EXIT_SUCCESS);
 }
 
 //file menu functionality

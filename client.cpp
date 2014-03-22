@@ -732,6 +732,8 @@ void Client::run() {
         state->protectClientSignal->lock();
         while(!state->clientSignal) {
             state->conditionClientSignal->wait(state->protectClientSignal);
+            if(state->quitSignal)
+                return;
         }
 
         state->clientSignal = false;
