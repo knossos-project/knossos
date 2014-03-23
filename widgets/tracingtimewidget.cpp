@@ -73,7 +73,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     table->horizontalHeader()->setStyleSheet("::section:horizontal{font-weight:bold; color:black;} color: black;");
 
     table->verticalHeader()->setVisible(false);
-    //table->verticalHeader()->setMaximumSectionSize(20);
+    table->verticalHeader()->setMaximumSectionSize(20);
     table->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     table->setItem(0, LEFT, runningLabelItem);
