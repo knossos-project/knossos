@@ -164,11 +164,11 @@ MainWindow::~MainWindow()
 void MainWindow:: createToolBar() {
 
     open = new QToolButton();
-    open->setToolTip("Open");
-    open->setIcon(QIcon(":/images/icons/document-open.png"));
+    open->setToolTip("Open Skeleton");
+    open->setIcon(QIcon(":/images/icons/open-skeleton.png"));
 
     save = new QToolButton();
-    save->setToolTip("Save");
+    save->setToolTip("Save Skeleton");
     save->setIcon(QIcon(":/images/icons/document-save.png"));
 
     copyButton = new QToolButton();
@@ -234,19 +234,19 @@ void MainWindow:: createToolBar() {
     */
 
     taskManagementButton = new QToolButton();
-    taskManagementButton->setToolTip("Task Management Widget");
+    taskManagementButton->setToolTip("Task Management");
     taskManagementButton->setIcon(QIcon(":/images/icons/task.png"));
     this->toolBar->addWidget(taskManagementButton);
 
     tracingTimeButton = new QToolButton();
-    tracingTimeButton->setToolTip("Tracing Time Widget");
+    tracingTimeButton->setToolTip("Tracing Time");
     tracingTimeButton->setIcon(QIcon(":/images/icons/appointment.png"));
     this->toolBar->addWidget(tracingTimeButton);
 
     this->toolBar->setBackgroundRole(QPalette::Dark);
 
     zoomAndMultiresButton = new QToolButton();
-    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution Widget");
+    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution");
     zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
     this->toolBar->addWidget(zoomAndMultiresButton);
 
@@ -258,7 +258,7 @@ void MainWindow:: createToolBar() {
     */
 
     viewportSettingsButton = new QToolButton();
-    viewportSettingsButton->setToolTip("Viewport Settings Widget");
+    viewportSettingsButton->setToolTip("Viewport Settings");
     viewportSettingsButton->setIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
     this->toolBar->addWidget(viewportSettingsButton);
 
@@ -268,14 +268,13 @@ void MainWindow:: createToolBar() {
 //    this->toolBar->addWidget(toolsButton);
 
     commentShortcutsButton = new QToolButton();
-    commentShortcutsButton->setToolTip("Comments Shortcut Widget");
+    commentShortcutsButton->setToolTip("Comment Shortcuts");
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
 
     annotationButton = new QToolButton();
-    annotationButton->setToolTip("Annotation Widget");
     annotationButton->setIcon(QIcon(":/images/icons/graph.png"));
-    annotationButton->setToolTip(("Annotation Widget"));
+    annotationButton->setToolTip(("Annotation"));
     toolBar->addWidget(annotationButton);
     this->toolBar->addSeparator();
     resetVPsButton = new QPushButton("Reset VP Positions", this);
@@ -563,22 +562,18 @@ void MainWindow::recentFileSelected() {
     }
 }
 
-void MainWindow::createMenus()
-{
-
-    dataSetMenu = menuBar()->addMenu("Dataset");
-    dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openDatasetSlot()));
-
-    fileMenu = menuBar()->addMenu("Skeleton File");
-    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
+void MainWindow::createMenus() {
+    fileMenu = menuBar()->addMenu("File");
+    fileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...", this, SLOT(openDatasetSlot()));
+    fileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Skeleton File(s)"));
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         recentFileMenu->addAction(historyEntryActions[i]);
     }
 
-    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As...", this, SLOT(saveAsSlot()));
+    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Skeleton", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Skeleton As...", this, SLOT(saveAsSlot()));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 

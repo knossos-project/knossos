@@ -693,6 +693,8 @@ qrc_Resources.cpp: Resources.qrc \
 		icons/task.png \
 		icons/edit-select-all.png \
 		icons/zoom-in.png \
+                icons/open-dataset.png \
+                icons/open-skeleton.png \
 		style.qss
 	/Users/amos/Qt5.0.2/5.0.2/clang_64/bin/rcc -name Resources Resources.qrc -o qrc_Resources.cpp
 
