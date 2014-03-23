@@ -1173,7 +1173,7 @@ void Viewer::run() {
         if(drawCounter == 3) {
             updateViewerState();
             recalcTextureOffsets();
-            skeletonizer->updateSkeletonState();
+            skeletonizer->updateSkeletonState();//autosave
 
             vpUpperLeft->updateGL();
             vpLowerLeft->updateGL();

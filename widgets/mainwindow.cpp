@@ -825,42 +825,29 @@ void MainWindow::updateFileHistoryMenu() {
 void MainWindow::saveSlot() {
     if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no skeleton file is loaded, go ask for one
         saveAsSlot();
-    } else if(state->skeletonState->firstTree != NULL) {
-        if(state->skeletonState->unsavedChanges) {
+    } else if (state->skeletonState->firstTree != nullptr && state->skeletonState->unsavedChanges) {//there’re real changes
+        if (state->skeletonState->autoFilenameIncrementBool) {
+            int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
 
-            if(state->skeletonState->autoFilenameIncrementBool) {
+            updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
 
-                // solution for a clever recent file menu (not yet activated)
-                int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
-
-                updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
-
-                if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
-                    if(index >= 0) {
-                        skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
-                        historyEntryActions[index]->setText(skeletonFileHistory->at(index));
-                        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-                        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
-                        updateTitlebar();
-                        state->skeletonState->unsavedChanges = false;
-                        state->skeletonState->skeletonChanged = false;
-                        return;
-                    }
+            if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
+                if(index != -1) {//replace old filename with updated one
+                    skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
+                    historyEntryActions[index]->setText(skeletonFileHistory->at(index));
                 }
-
             }
-
-            emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
-
-            if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-                addRecentFile(state->skeletonState->skeletonFileAsQString);
-            } else {
-                becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-            }
-
-            updateTitlebar();
-            state->skeletonState->unsavedChanges = false;
         }
+
+        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+
+        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+            addRecentFile(state->skeletonState->skeletonFileAsQString);
+        }
+        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+
+        updateTitlebar();
+        state->skeletonState->unsavedChanges = false;
     }
     state->skeletonState->skeletonChanged = false;
 }
@@ -888,13 +875,13 @@ void MainWindow::saveAsSlot() {
     if (!fileName.isEmpty()) {
         state->skeletonState->skeletonFileAsQString = fileName;//file was actually chosen, save its path
         saveFileDirectory = QFileInfo(fileName).absolutePath();//remeber last saving dir
+
         emit saveSkeletonSignal(fileName);
 
-        if(!alreadyInMenu(fileName)) {
-            addRecentFile(fileName);
-        } else {
-            becomeFirstEntry(fileName);
+        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+            addRecentFile(state->skeletonState->skeletonFileAsQString);
         }
+        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
 
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;

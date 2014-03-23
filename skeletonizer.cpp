@@ -627,15 +627,18 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 }
 
 bool Skeletonizer::updateSkeletonState() {
-
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
-            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
-                state->skeletonState->lastSaveTicks = state->time.elapsed();
-                if (state->skeletonState->skeletonFileAsQString.isEmpty()) {
-                    state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
+            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 300000.0 >= state->skeletonState->autoSaveInterval) {//timeout elapsed
+
+                state->skeletonState->lastSaveTicks = state->time.elapsed();//save timestamp
+
+                if (state->skeletonState->unsavedChanges && state->skeletonState->firstTree != nullptr) {//there’re real changes
+                    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no filename yet
+                        state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
+                    }
+                    emit saveSkeletonSignal();
                 }
-                emit saveSkeletonSignal();
             }
         }
     }
