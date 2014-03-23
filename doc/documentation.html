@@ -663,7 +663,8 @@
                                             Viewport yz (blue viewport)</a></li>
                                         <li><a href="#Viewport_xz_.28green_viewport.29">3.15.3
                                             Viewport xz (green viewport)</a></li>
-                                        <li><a href="#3D_Viewport">3.15.4 3D
+										<li><a href="#Viewport_Arb">3.15.4 Arbitrary Viewport Orientation</a></li>
+                                        <li><a href="#3D_Viewport">3.15.5 3D
                                             Viewport</a></li>
                                       </ul>
                                     </li>
@@ -1895,6 +1896,19 @@
                         <li> By scrolling or using the D/F key you move into
                           y-direction. </li>
                       </ul>
+					  <a name="Viewport_Arb" id="Viewport_Arb"></a>
+                      <h3>Arbitrary Viewport Orientation</h3>
+					  <ul>
+						<li>Instead of being aligned with the coordinate axes, the viewports can have <b>arbitrary orientation</b>.
+						I.e the viewports stay orthogonal to each other, but their angle to the coordinate axes can change.</li>
+						<li>Press <b>"K"</b> or <b>"M"</b> to rotate clock-wise or counter-clockwise <b>around the z-axis</b>.</li>
+						<li>Press <b>"L"</b> or <b>","</b> to rotate clock-wise or counter-clockwise <b>around the y-axis</b>.</li>
+						<li>Keep in mind that in arbitrary orientation you do not have original image quality. But it might help you to understand the morphology better.</li>
+						<li>When you trace in arbitrary orientation mode, each time you place a node the viewports will automatically align orthogonally to tracing direction,
+							or more precisely, the former xy-Viewport will be orthogonal to tracing direction. 
+						<li>To lock the viewports current orientation, tick the "Lock current VP orientation" checkbox in the tool bar</li>
+						<li>To restore the original axes-aligned viewport orientation, press on the button "Restore VP orientation"</li>
+					  </ul>
                       <a name="3D_Viewport" id="3D_Viewport"></a>
                       <h3>3D Viewport</h3>
                       <img width="500" height="488" border="0" alt="" src="images/Tut_full_skelVP.jpg" />
