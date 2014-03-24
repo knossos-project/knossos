@@ -137,7 +137,6 @@ int main(int argc, char *argv[])
 
     knossos.reset(new Knossos);
 
-    //Knossos::loadStyleSheet();
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -982,6 +981,7 @@ bool Knossos::configDefaults() {
     state->lowestAvailableMag = INT_MAX;
     state->highestAvailableMag = 1;
     state->overlay = false;
+    state->newCoord[0] = state->newCoord[1] = state->newCoord[2] = 0;
 
     // For the viewer
     state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
