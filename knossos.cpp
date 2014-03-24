@@ -373,7 +373,7 @@ bool Knossos::initStates() {
 
    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
        LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
-       return false;
+       throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
    }
 
    /* @todo todo emitting signals out of class seems to be problematic
@@ -385,15 +385,15 @@ bool Knossos::initStates() {
 
    state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
    if(state->clientState->inBuffer == NULL) {
-       LOG("Out of memory.")
-       return false;
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->inBuffer malloc fail");
    }
    memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
 
    state->clientState->inBuffer->data = (Byte *)malloc(128);
    if(state->clientState->inBuffer->data == NULL) {
-       LOG("Out of memory.")
-       return false;
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->inBuffer->data malloc fail");
    }
    memset(state->clientState->inBuffer->data, '\0', 128);
 
@@ -402,15 +402,15 @@ bool Knossos::initStates() {
 
    state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
    if(state->clientState->outBuffer == NULL) {
-       LOG("Out of memory.")
-       return false;
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->outBuffer malloc fail");
    }
    memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
 
    state->clientState->outBuffer->data = (Byte *) malloc(128);
    if(state->clientState->outBuffer->data == NULL) {
-       LOG("Out of memory.")
-       return false;
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->outBuffer->data malloc fail");
    }
    memset(state->clientState->outBuffer->data, '\0', 128);
 

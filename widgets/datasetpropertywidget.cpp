@@ -16,9 +16,7 @@
 
 extern  stateInfo *state;
 
-DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
-    QDialog(parent)
-{
+DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     QGridLayout *localLayout = new QGridLayout();
 
@@ -29,13 +27,22 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
     this->path->setInsertPolicy(QComboBox::NoInsert);
     this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     this->path->setEditable(true);
+    supercubeEdgeSpin = new QSpinBox;
+    supercubeEdgeSpin->setRange(3, 7);
+    supercubeEdgeSpin->setSingleStep(2);
+    supercubeEdgeSpin->setValue(state->M);
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    localLayout->addWidget(path, 0, 0);
-    localLayout->addWidget(datasetfileDialog, 0, 1);
-    localLayout->addWidget(processButton, 2,0);
-    localLayout->addWidget(cancelButton, 2, 1);
+    QHBoxLayout * hLayout = new QHBoxLayout;
+    hLayout->addWidget(path);
+    hLayout->addWidget(datasetfileDialog);
+
+    localLayout->addLayout(hLayout, 0, 0, 1, 2);
+    localLayout->addWidget(new QLabel("Data cubes per dimension"), 2, 0);
+    localLayout->addWidget(supercubeEdgeSpin, 2, 1);
+    localLayout->addWidget(processButton, 3, 0);
+    localLayout->addWidget(cancelButton, 3, 1);
 
     localGroup->setLayout(localLayout);
     mainLayout->addWidget(localGroup);
@@ -105,6 +112,9 @@ void DatasetPropertyWidget::cancelButtonClicked() {
 void DatasetPropertyWidget::processButtonClicked() {
     changeDataSet(true);
 }
+
+#include <QApplication>
+#include <QProcess>
 
 void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     QString dir = this->path->currentText();
@@ -216,5 +226,14 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
+
     this->hide();
+    if (isGUI) {
+        //ideally one would use qApp->quit(), but the cleanup steps are not connected to this
+        static_cast<MainWindow*>(parent())->close();//call Knossos cleanup func
+        auto args = qApp->arguments();
+        args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));
+        qDebug() << args;
+        QProcess::startDetached(qApp->arguments()[0], args);
+    }
 }
