@@ -1228,16 +1228,19 @@ void MainWindow::loadSettings() {
                                                     lockVPOrientation_value.toBool());
     emit(lockVPOrientationCheckbox->toggled(lockVPOrientationCheckbox->isChecked()));
 
+    auto autosaveLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/skeletonFiles";
+    QDir().mkpath(autosaveLocation);
+
     if(!settings.value(OPEN_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
         openFileDirectory = settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        openFileDirectory = "skeletonFiles";
+        openFileDirectory = autosaveLocation;
     }
 
     if(!settings.value(SAVE_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
         saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        saveFileDirectory = "skeletonFiles";
+        saveFileDirectory = autosaveLocation;
     }
 
     if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {
