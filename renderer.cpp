@@ -2221,6 +2221,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
             if(currentNode->next && (!(currentNode->numSegs > 2))) {
                 currentSegment = currentNode->next->firstSegment;
                 while(currentSegment) {
+
                     if((currentSegment->target == currentNode) ||
                        (currentSegment->source == currentNode)) {
                         /* Connected, heuristic is allowed */

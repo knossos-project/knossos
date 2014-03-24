@@ -718,7 +718,7 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
             if(prompt.clickedButton() == merge) {
                 state->skeletonState->mergeOnLoadFlag = true;
             } else if(prompt.clickedButton() == override) {
-                state->skeletonState->mergeOnLoadFlag = false;
+                state->skeletonState->mergeOnLoadFlag = false;                
             } else {
                 return false;
             }
@@ -929,20 +929,23 @@ void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    QMessageBox question;
-    question.setWindowFlags(Qt::WindowStaysOnTopHint);
-    question.setIcon(QMessageBox::Question);
-    question.setWindowTitle("Confirmation required");
-    question.setText("Really clear skeleton (you cannot undo this)?");
-    QPushButton *ok = question.addButton(QMessageBox::Ok);
-    question.addButton(QMessageBox::No);
-    question.exec();
-    if(question.clickedButton() == ok) {
-        clearSkeletonSlotNoGUI();
+    if(state->skeletonState->unsavedChanges or state->skeletonState->treeElements > 0) {
+        QMessageBox question;
+        question.setWindowFlags(Qt::WindowStaysOnTopHint);
+        question.setIcon(QMessageBox::Question);
+        question.setWindowTitle("Confirmation required");
+        question.setText("Really clear skeleton (you cannot undo this)?");
+        QPushButton *ok = question.addButton(QMessageBox::Ok);
+        question.addButton(QMessageBox::No);
+        question.exec();
+        if(question.clickedButton() == ok) {
+            clearSkeletonSlotNoGUI();
+        }
     }
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
+
     emit clearSkeletonSignal(CHANGE_MANUAL, false);
     state->skeletonState->skeletonFileAsQString = "";//unload skeleton file
     updateTitlebar();

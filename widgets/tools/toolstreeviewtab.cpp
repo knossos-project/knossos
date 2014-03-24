@@ -72,7 +72,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // active tree table
     activeTreeTable = new TreeTable(this);
     activeTreeTable->setColumnCount(TreeTable::TREE_COLS);
-    activeTreeTable->setFixedHeight(54);
+    activeTreeTable->setMaximumHeight(54);
     activeTreeTable->verticalHeader()->setVisible(false);
     activeTreeTable->setToolTip("The active tree");
     activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_ID, new QTableWidgetItem("Tree ID"));
@@ -104,7 +104,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     // active node table
     activeNodeTable = new NodeTable(this);
     activeNodeTable->setColumnCount(NodeTable::NODE_COLS);
-    activeNodeTable->setFixedHeight(54);
+    activeNodeTable->setMaximumHeight(70);
     activeNodeTable->verticalHeader()->setVisible(false);
     activeNodeTable->setToolTip("The active node");
     activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_ID, new QTableWidgetItem("Node ID"));
@@ -1019,7 +1019,7 @@ void ToolsTreeviewTab::setText(NodeTable *table, QTableWidgetItem *item, QString
 void ToolsTreeviewTab::recreateTreesTable() {
     treeTable->selectionProtection = true;
     treeTable->clearContents();
-    treeTable->setRowCount(state->skeletonState->treeElements);
+    treeTable->setRowCount(state->skeletonState->treeElements);    
     treeTable->selectionProtection = false;
 
     QItemSelection selectedItems = treeTable->selectionModel()->selection();
