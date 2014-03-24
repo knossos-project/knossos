@@ -327,11 +327,6 @@ bool Knossos::commonInitStates() {
 bool Knossos::initStates() {
    state->time.start();
 
-   //General stuff   
-   if(state->M % 2 == 0) {
-       state->M = state->M - 1;
-   }
-
    // For the viewer  
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
@@ -361,24 +356,9 @@ bool Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
-   for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
-       state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
-           state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
-           / (float)state->magnification;       
-       state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-
-   }
-
-   if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-       LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
-       throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
-   }
-
    /* @todo todo emitting signals out of class seems to be problematic
    emit knossos->calcDisplayedEdgeLengthSignal();
    */
-
 
    // For the client
 
@@ -425,8 +405,6 @@ bool Knossos::initStates() {
    // Those values can be calculated from given parameters
    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-   state->cubeSetElements = state->M * state->M * state->M;
-   state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
    state->magnification = 0x1;
    state->lowestAvailableMag = INT_MAX;
    state->highestAvailableMag = 1;
@@ -454,24 +432,6 @@ bool Knossos::initStates() {
     GetTempPathA(MAX_PATH, state->loadFtpCachePath);
     state->loadLocalSystem = LS_WINDOWS;
 #endif
-
-   // We're not doing stuff in parallel, yet. So we skip the locking
-   // part.
-   // This *10 thing is completely arbitrary. The larger the table size,
-   // the lower the chance of getting collisions and the better the loading
-   // order will be respected. *10 doesn't seem to have much of an effect
-   // on performance but we should try to find the optimal value some day.
-   // Btw: A more clever implementation would be to use an array exactly the
-   // size of the supercube and index using the modulo operator.
-   // sadly, that realization came rather late. ;)
-
-   // creating the hashtables is cheap, keeping the datacubes is
-   // memory expensive..
-   for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-       state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       if(i == 0) i = 1;
-   }
 
    return commonInitStates();
 
@@ -976,7 +936,7 @@ bool Knossos::configDefaults() {
     state->offset.y = 0;
     state->offset.z = 0;
     state->cubeEdgeLength = 128;
-    state->M = 3;
+    state->M = 0;//invalid M, so the datasetpropertywidget can tell if M was provided by cmdline
     state->magnification = 1;
     state->lowestAvailableMag = INT_MAX;
     state->highestAvailableMag = 1;

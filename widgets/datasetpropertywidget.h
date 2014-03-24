@@ -10,8 +10,7 @@ class QLineEdit;
 class QPushButton;
 class QSpinBox;
 
-class DatasetPropertyWidget : public QDialog
-{
+class DatasetPropertyWidget : public QDialog {
     Q_OBJECT
 public:
     explicit DatasetPropertyWidget(QWidget *parent = 0);
@@ -24,6 +23,7 @@ protected:
     QComboBox *path;
     QPushButton *datasetfileDialog;
     QSpinBox *supercubeEdgeSpin;
+    QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
@@ -38,6 +38,7 @@ signals:
     void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
+    void supercubeEdgeSpinValueChanged(const int value);
     void cancelButtonClicked();
     void processButtonClicked();
 };
