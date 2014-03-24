@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("KnossosQT");
+    updateTitlebar();
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
     skeletonFileHistory = new QQueue<QString>();
@@ -139,7 +139,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::decorationSignal, this, &MainWindow::showVPDecorationClicked);
-    updateTitlebar();
     createViewports();
     setAcceptDrops(true);
 }
@@ -317,7 +316,7 @@ void MainWindow:: createToolBar() {
 }
 
 void MainWindow::updateTitlebar() {
-    QString title = QString("KNOSSOS %1 showing ").arg(KVERSION);
+    QString title = qApp->applicationDisplayName()+" showing ";
     if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
         title.append(state->skeletonState->skeletonFileAsQString);
     } else {

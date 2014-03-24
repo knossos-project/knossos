@@ -130,9 +130,9 @@ int main(int argc, char *argv[])
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
     Splash splash(":/images/splash.png", 1500);
-    QCoreApplication::setOrganizationDomain("MPI");
-    QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
-    QCoreApplication::setApplicationName("Knossos QT");
+    QCoreApplication::setOrganizationDomain("knossostool.org");
+    QCoreApplication::setOrganizationName("MPIMF");
+    QCoreApplication::setApplicationName(QString("Knossos %1 Beta").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     knossos.reset(new Knossos);
