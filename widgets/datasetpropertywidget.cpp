@@ -24,6 +24,7 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     localGroup = new QGroupBox("Local Dataset");
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
+    datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     this->path = new QComboBox();
     this->path->setInsertPolicy(QComboBox::NoInsert);
     this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
@@ -32,27 +33,27 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     supercubeEdgeSpin->setRange(3, 7);
     supercubeEdgeSpin->setSingleStep(2);
     supercubeEdgeSpin->setValue(state->M);
+    supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     supercubeSizeLabel = new QLabel();
     supercubeEdgeSpinValueChanged(state->M);//init label
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    auto vLayout = new QVBoxLayout;
-    vLayout->addWidget(path);
-    vLayout->addWidget(supercubeSizeLabel);
-    auto vLayout2 = new QVBoxLayout;
-    vLayout2->addWidget(datasetfileDialog);
-    vLayout2->addWidget(supercubeEdgeSpin);
     auto hLayout = new QHBoxLayout;
-    hLayout->addLayout(vLayout);
-    hLayout->addLayout(vLayout2);
+    hLayout->addWidget(path);
+    hLayout->addWidget(datasetfileDialog);
     auto hLayout2 = new QHBoxLayout;
-    hLayout2->addWidget(processButton);
-    hLayout2->addWidget(cancelButton);
+    hLayout2->addWidget(supercubeEdgeSpin);
+    supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
+    hLayout2->addWidget(supercubeSizeLabel);
+    auto hLayout3 = new QHBoxLayout;
+    hLayout3->addWidget(processButton);
+    hLayout3->addWidget(cancelButton);
 
     auto localLayout = new QVBoxLayout();
     localLayout->addLayout(hLayout);
     localLayout->addLayout(hLayout2);
+    localLayout->addLayout(hLayout3);
     localGroup->setLayout(localLayout);
 
     auto mainLayout = new QVBoxLayout();
@@ -252,6 +253,20 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
 
     knossos->commonInitStates();
 
+    if (isGUI && state->M != supercubeEdgeSpin->value()) {
+        auto text = QString("You chose to change the data cache cube edge length. \n")
+                +QString("\nKnossos needs to restart to apply this.\n\n")
+                +QString("You will loose your skeleton if you didn’t save or already cleared it.");
+        if (QMessageBox::question(this, "Knossos restart", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
+            //ideally one would use qApp->quit(), but the cleanup steps are not connected to this
+            static_cast<MainWindow*>(parent())->close();//call Knossos cleanup func
+            auto args = qApp->arguments();
+            args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
+            qDebug() << args;
+            QProcess::startDetached(qApp->arguments()[0], args);
+        }
+    }
+
     this->waitForLoader();
 
     emit changeDatasetMagSignal(DATA_SET);
@@ -285,18 +300,5 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
 
     emit datasetSwitchZoomDefaults();
 
-    if (isGUI && state->M != supercubeEdgeSpin->value()) {
-        auto text = QString("You chose to change the data cache cube edge length. \n")
-                +QString("\nKnossos needs to restart to apply this.\n\n")
-                +QString("You will loose your skeleton if you didn’t save or already cleared it.");
-        if (QMessageBox::question(this, "Knossos restart", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
-            //ideally one would use qApp->quit(), but the cleanup steps are not connected to this
-            static_cast<MainWindow*>(parent())->close();//call Knossos cleanup func
-            auto args = qApp->arguments();
-            args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
-            qDebug() << args;
-            QProcess::startDetached(qApp->arguments()[0], args);
-        }
-    }
     this->hide();
 }

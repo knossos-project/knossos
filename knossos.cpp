@@ -180,7 +180,6 @@ int main(int argc, char *argv[])
     }
     bool datasetLoaded = knossos->initStates();
 
-    Knossos::printConfigValues();
     Viewer viewer;
     state->viewer = &viewer;
     loader.reset(new Loader);
@@ -244,6 +243,7 @@ int main(int argc, char *argv[])
     client.start();
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+    Knossos::printConfigValues();
 
     a.installEventFilter(new myEventFilter());
 
