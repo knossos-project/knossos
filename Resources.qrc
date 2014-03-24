@@ -10,7 +10,7 @@
         <file>icons/dialog-ok.png</file>
         <file>icons/document-open-recent.png</file>
         <file>icons/system-shutdown.png</file>
-        <file>icons/text-x-readme.png</file>
+        <file alias="tip.png">icons/text-x-readme.png</file>
         <file>icons/document-save-as.png</file>
         <file>icons/document-save.png</file>
         <file>icons/document-open.png</file>

@@ -187,29 +187,18 @@ HEADERS  += widgets/mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \
-    knossos.layout \
-    iconv.dll \
-    libfreetype-6.dll \
-    pthreadVC2.dll \
-    zlib1.dll \
-    icon \
+OTHER_FILES += \    
     LICENSE \
     Makefile \
-    splash \
-    knossos.depend \
-    knossos.dev \
+    splash.png \
     default.lut \
-    gmon.out \
     knossos.res \
     knossos_private.res \
     knossos.rc \
     knossos_private.rc \
     logo.ico \
     ChangeLog.txt \
-    defaultSettings.xml \
-    customCursor.xpm \
-    config.y \
+    ChangeLog_v4.txt \
     style.qss
 
 exists(.svn) {

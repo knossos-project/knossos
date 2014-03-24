@@ -91,6 +91,17 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
+
+    if(viewportType == VIEWPORT_XY)
+        this->setToolTip(QString("Viewport %1").arg("XY"));
+    else if(viewportType == VIEWPORT_XZ)
+        this->setToolTip(QString("Viewport %1").arg("XZ"));
+    else if(viewportType == VIEWPORT_YZ)
+        this->setToolTip(QString("Viewport %1").arg("YZ"));
+    else if(viewportType == VIEWPORT_ARBITRARY)
+        this->setToolTip(QString("Viewport %1").arg("Arbitrary"));
+    else if(viewportType == VIEWPORT_SKELETON)
+        this->setToolTip(QString("Skeleton Viewport"));
 }
 
 void Viewport::initializeGL() {
