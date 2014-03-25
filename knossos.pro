@@ -224,7 +224,7 @@ macx {
             -L$(QTDIR)/lib -lPythonQt \
             -lcurl
 
-    #ICON += Knossos.icns
+    ICON += knossos.icns
 }
 
 linux {
