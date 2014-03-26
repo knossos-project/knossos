@@ -785,10 +785,6 @@ struct guiConfig {
     int useLastActNodeRadiusAsDefault;
     float actNodeRadius;
 
-    // File dialog widget variables and buffers
-    char treeLUTFile[2048];
-    char datasetLUTFile[2048];
-
     // dataset navigation settings win buffer variables
     uint stepsPerSec;
     uint recenteringTime;

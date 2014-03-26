@@ -50,8 +50,8 @@ public slots:
     void datasetLinearFilteringChecked(bool on);
     void hightlightIntersectionsChecked(bool on);
     void depthCutoffChanged(double value);
-    void useOwnDatasetColorsChecked(bool on);
-    void useOwnTreeColorsChecked(bool on);
+    void useOwnDatasetColorsCheckStateChanged(int checkState);
+    void useOwnTreeColorsCheckStateChanged(int checkState);
     void useOwnDatasetColorsButtonClicked();
     void useOwnTreeColorButtonClicked();
     void biasSliderMoved(int value);
