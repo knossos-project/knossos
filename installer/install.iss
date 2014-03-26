@@ -6,7 +6,6 @@
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
-#define pythonSetup "python-2.7.3.msi"
 #define KNOSSOS_SRC_PATH "../"
 #define License "../LICENSE"
 
@@ -42,11 +41,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Dirs]
 Name: "{app}\doc"
-Name: "{app}\pattforms"
+Name: "{app}\platforms"
 Name: "{app}\skeletonFiles"
 Name: "{app}\sqldrivers"
-Name: "{app}\task-files"
-Name: "{app}\tools"                             
+Name: "{app}\task-files"                         
 
 [Files]
 Source: "{#KNOSSOS_SRC_PATH}knossos.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -72,7 +70,6 @@ Source: "{#KNOSSOS_SRC_PATH}libstdc++-6.dll"; DestDir: "{app}"; Flags: ignorever
 Source: "{#KNOSSOS_SRC_PATH}libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}PythonQt.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}splash"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#KNOSSOS_SRC_PATH}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#KNOSSOS_SRC_PATH}doc\*"; DestDir: "{app}\doc"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; platforms and sqldrivers are needed by QT
 Source: "{#KNOSSOS_SRC_PATH}platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs 
@@ -87,8 +84,5 @@ Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\knossos.exe"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
        
 
-[Run]
-
-Filename: "{app}\tools\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
 ;Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent
 
