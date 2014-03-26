@@ -1504,23 +1504,6 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
         targetNodeID = segToDel->target->nodeID;
     }
 
-    if(serialize) {
-        saveSerializedSkeleton();
-    }
-
-    if(!segToDel) {
-        LOG("Cannot delete segment, no segment with corresponding node IDs available!")
-        Knossos::unlockSkeleton(false);
-        return false;
-    }
-
-    if(!segToDel) {
-        segToDel = findSegmentByNodeIDs(sourceNodeID, targetNodeID);
-    } else {
-        sourceNodeID = segToDel->source->nodeID;
-        targetNodeID = segToDel->target->nodeID;
-    }
-
     if(!segToDel) {
         LOG("Cannot delete segment, no segment with corresponding node IDs available!")
         Knossos::unlockSkeleton(false);

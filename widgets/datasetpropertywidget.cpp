@@ -77,17 +77,20 @@ QStringList DatasetPropertyWidget::getRecentDirsItems() {
     return recentDirs;
 }
 
-void DatasetPropertyWidget::saveSettings()
-{
+void DatasetPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
     settings.setValue(DATASET_MRU, getRecentDirsItems());
-    settings.setValue(DATASET_M, state->M);
+    if(state->M == 0) {
+        settings.setValue(DATASET_M, 3);
+    }
+    else {
+        settings.setValue(DATASET_M, state->M);
+    }
     settings.endGroup();
 }
 
-void DatasetPropertyWidget::loadSettings()
-{
+void DatasetPropertyWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
     path->clear();
