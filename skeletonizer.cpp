@@ -629,7 +629,8 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 bool Skeletonizer::updateSkeletonState() {
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
-            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 300000.0 >= state->skeletonState->autoSaveInterval) {//timeout elapsed
+            const auto minutes = (state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0;
+            if (minutes >= state->skeletonState->autoSaveInterval) {//timeout elapsed
 
                 state->skeletonState->lastSaveTicks = state->time.elapsed();//save timestamp
 

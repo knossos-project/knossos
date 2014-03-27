@@ -316,11 +316,14 @@ void MainWindow:: createToolBar() {
 }
 
 void MainWindow::updateTitlebar() {
-    QString title = qApp->applicationDisplayName()+" showing ";
+    QString title = qApp->applicationDisplayName() + " showing ";
     if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
         title.append(state->skeletonState->skeletonFileAsQString);
     } else {
         title.append("no skeleton file");
+    }
+    if (state->skeletonState->unsavedChanges) {
+        title.append("*");
     }
     setWindowTitle(title);
 }
@@ -824,7 +827,7 @@ void MainWindow::updateFileHistoryMenu() {
 void MainWindow::saveSlot() {
     if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no skeleton file is loaded, go ask for one
         saveAsSlot();
-    } else if (state->skeletonState->firstTree != nullptr && state->skeletonState->unsavedChanges) {//there’re real changes
+    } else if (state->skeletonState->firstTree != nullptr) {
         if (state->skeletonState->autoFilenameIncrementBool) {
             int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
 

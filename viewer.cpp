@@ -1174,6 +1174,7 @@ void Viewer::run() {
             updateViewerState();
             recalcTextureOffsets();
             skeletonizer->updateSkeletonState();//autosave
+            window->updateTitlebar();//display changes after filename
 
             vpUpperLeft->updateGL();
             vpLowerLeft->updateGL();
