@@ -102,6 +102,7 @@ public slots:
     void activeNodeSelectionChanged();
     void nodeSelectionChanged();
     void nodeItemDoubleClicked(QTableWidgetItem*);
+    void sortComments(const int);
 
     void activateFirstSelectedNode();
     void activateFirstSelectedTree();
@@ -122,12 +123,14 @@ public slots:
     void deleteNodesAction();
 
     // update tree table
+    void recreateTreesTable();
     void treeActivated();
     void treeAdded(treeListElement *tree);
     void treesDeleted();
     void treesMerged(int treeID1, int treeID2);
 
     // update node table
+    void recreateNodesTable();
     void nodeActivated();
     void nodeAdded();
     void branchPushed();
@@ -135,8 +138,7 @@ public slots:
     void nodeCommentChanged(nodeListElement *node);
     void nodeRadiusChanged(nodeListElement *node);
     void nodePositionChanged(nodeListElement *node);
-    void recreateTreesTable();    
-    void recreateNodesTable();
+
     void update();
 };
 

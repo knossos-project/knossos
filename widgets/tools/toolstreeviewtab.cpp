@@ -230,6 +230,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     QObject::connect(nodeTable, &NodeTable::itemChanged, this, &ToolsTreeviewTab::nodeItemChanged);
     QObject::connect(nodeTable, &NodeTable::itemDoubleClicked, this, &ToolsTreeviewTab::nodeItemDoubleClicked);
     QObject::connect(nodeTable, &NodeTable::itemSelectionChanged, this, &ToolsTreeviewTab::nodeSelectionChanged);
+    QObject::connect(nodeTable->horizontalHeader(), &QHeaderView::sectionClicked, this, &ToolsTreeviewTab::sortComments);
 }
 
 void ToolsTreeviewTab::mergeTreesAction() {
@@ -973,6 +974,14 @@ void ToolsTreeviewTab::activateFirstSelectedTree() {
 void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem * item) {
     if (item->column() == NodeTable::NODE_ID) {
         activateFirstSelectedNode();
+    }
+}
+
+void ToolsTreeviewTab::sortComments(const int header_index) {
+    if (header_index == NodeTable::NODE_COMMENT) {
+        static bool sortAscending = true;
+        nodeTable->sortByColumn(1, sortAscending ? Qt::AscendingOrder : Qt::DescendingOrder);
+        sortAscending = !sortAscending;
     }
 }
 
