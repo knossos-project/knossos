@@ -35,6 +35,8 @@
 
 extern stateInfo *state;
 
+static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
+
 ResizeButton::ResizeButton(QWidget *parent) : QPushButton(parent) {}
 
 void ResizeButton::enterEvent(QEvent *) {
@@ -61,6 +63,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     to change this behaviour we need to track the mouse position */
 
     //this->setMouseTracking(true);
+    this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->setCursor(Qt::CrossCursor);
     this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus.
                                           // This solves also the problem that viewports had to be clicked
@@ -70,6 +73,7 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
     resizeButton->show();
 
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
     connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
 
     if(viewportType == VIEWPORT_SKELETON) {
@@ -88,8 +92,16 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
 
-
-
+    if(viewportType == VIEWPORT_XY)
+        this->setToolTip(QString("Viewport %1").arg("XY"));
+    else if(viewportType == VIEWPORT_XZ)
+        this->setToolTip(QString("Viewport %1").arg("XZ"));
+    else if(viewportType == VIEWPORT_YZ)
+        this->setToolTip(QString("Viewport %1").arg("YZ"));
+    else if(viewportType == VIEWPORT_ARBITRARY)
+        this->setToolTip(QString("Viewport %1").arg("Arbitrary"));
+    else if(viewportType == VIEWPORT_SKELETON)
+        this->setToolTip(QString("Skeleton Viewport"));
 }
 
 void Viewport::initializeGL() {
@@ -162,8 +174,6 @@ void Viewport::initializeGL() {
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
-
-
     QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
     qDebug() << versionString;
 }
@@ -229,6 +239,7 @@ void Viewport::resizeGL(int w, int h) {
 void Viewport::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+
     if(state->viewerState->viewerReady) {
         if(this->viewportType != VIEWPORT_SKELETON) {
            this->drawViewport(id);
@@ -236,6 +247,22 @@ void Viewport::paintGL() {
             this->drawSkeletonViewport();
         }
 
+    }
+}
+
+void Viewport::showContextMenu(const QPoint &point) {
+    if(viewportType == VIEWPORT_SKELETON and QApplication::keyboardModifiers() == Qt::ControlModifier) {
+        QMenu menu(this);
+        QMenu *subMenu = menu.addMenu("Change view direction");
+        subMenu->addAction("xy", this, SLOT(xyButtonClicked()));
+        subMenu->addAction("xz", this, SLOT(xzButtonClicked()));
+        subMenu->addAction("yz", this, SLOT(xzButtonClicked()));
+        subMenu->addAction("r90", this, SLOT(r90ButtonClicked()));
+        subMenu->addAction("180", this, SLOT(r180ButtonClicked()));
+        subMenu->addAction("reset", this, SLOT(resetButtonClicked()));
+
+        menu.popup(this->mapToGlobal(point));
+        menu.exec();
     }
 }
 
@@ -375,6 +402,7 @@ void Viewport::wheelEvent(QWheelEvent *event) {
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+
     if(event->key() == Qt::Key_Control) {
         if(Qt::KeyboardModifiers() == Qt::ALT) {
             setCursor(Qt::OpenHandCursor);
@@ -386,7 +414,6 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         //event->ignore();
     }
 }
-
 
 void Viewport::drawViewport(int vpID) {
     renderer->renderOrthogonalVP(vpID);
@@ -460,7 +487,6 @@ bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
 #endif
     return eventDelegate->handleMouseReleaseLeft(event, vpID);
 }
-
 
 void Viewport::enterEvent(QEvent *event) {
     entered = true;

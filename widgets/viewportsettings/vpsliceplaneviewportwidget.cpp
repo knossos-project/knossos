@@ -153,9 +153,9 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(datasetLinearFilteringCheckBox, SIGNAL(clicked(bool)), this, SLOT(datasetLinearFilteringChecked(bool)));
     connect(highlightIntersectionsCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightIntersectionsChecked(bool)));
     connect(depthCutoffSpinBox, SIGNAL(valueChanged(double)), this, SLOT(depthCutoffChanged(double)));
-    connect(useOwnDatasetColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnDatasetColorsChecked(bool)));
+    QObject::connect(useOwnDatasetColorsCheckBox, &QCheckBox::stateChanged, this, &VPSlicePlaneViewportWidget::useOwnDatasetColorsCheckStateChanged);
     connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
-    connect(useOwnTreeColorsCheckBox, SIGNAL(clicked(bool)), this, SLOT(useOwnTreeColorsChecked(bool)));
+    QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::stateChanged, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsCheckStateChanged);
     connect(useOwnTreeColorButton, SIGNAL(clicked()), this, SLOT(useOwnTreeColorButtonClicked()));
     connect(biasSlider, SIGNAL(sliderMoved(int)), this, SLOT(biasSliderMoved(int)));
     connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
@@ -193,26 +193,27 @@ void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
 
 void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
     state->viewerState->depthCutOff = value;
-
 }
 
-void VPSlicePlaneViewportWidget::useOwnDatasetColorsChecked(bool on) {   
-    state->viewerState->datasetColortableOn = on;
-    MainWindow::datasetColorAdjustmentsChanged();
-
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsCheckStateChanged(int checkState) {
+    if (checkState != Qt::Unchecked && datasetLutFile->text().isEmpty()) {//load file if none is cached
+        useOwnDatasetColorsButtonClicked();
+    }
+    if (!datasetLutFile->text().isEmpty()) {//valid filename → apply
+        state->viewerState->datasetColortableOn = (checkState != Qt::Unchecked);
+        MainWindow::datasetColorAdjustmentsChanged();
+    }
 }
-
 
 void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Dataset Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
 
-    if(!fileName.isEmpty()) {
-        this->datasetLutFile->setText(fileName);
-        strcpy(state->viewerState->gui->datasetLUTFile, fileName.toStdString().c_str());
-
-        //MainWindow::cpBaseDirectory(state->viewerState->gui->datasetLUTDirectory, cname, 2028);
+    if (!fileName.isEmpty()) {//load lut and apply
+        datasetLutFile->setText(fileName);
         loadDatasetLUT();
-
+        useOwnDatasetColorsCheckBox->setCheckState(Qt::Checked);
+    } else {
+        useOwnDatasetColorsCheckBox->setCheckState(Qt::Unchecked);
     }
 }
 
@@ -229,22 +230,26 @@ void VPSlicePlaneViewportWidget::loadDatasetLUT() {
 
 }
 
-void VPSlicePlaneViewportWidget::useOwnTreeColorsChecked(bool on) {
-    state->viewerState->treeColortableOn = on;
-    emit treeColorAdjustmentsChangedSignal();
+void VPSlicePlaneViewportWidget::useOwnTreeColorsCheckStateChanged(int checkState) {
+    if (checkState != Qt::Unchecked && treeLutFile->text().isEmpty()) {//load file if none is cached
+        useOwnTreeColorButtonClicked();
+    }
+    if (!treeLutFile->text().isEmpty()) {//valid filename → apply
+        state->viewerState->treeColortableOn = (checkState != Qt::Unchecked);
+        emit treeColorAdjustmentsChangedSignal();
+    }
 }
-
 
 void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Load Tree Color Lookup Table", QDir::homePath(), tr("LUT file (*.lut)"));
+
     if(!fileName.isEmpty()) {
         treeLutFile->setText(fileName);
-        strcpy(state->viewerState->gui->treeLUTFile, const_cast<char *>(fileName.toStdString().c_str()));
-        MainWindow::cpBaseDirectory(state->viewerState->gui->treeLUTDirectory, fileName);
-        state->viewerState->treeLutSet = true;
-
+        state->viewerState->treeLutSet = true;//necessary?
         loadTreeLUT();
-
+        useOwnTreeColorsCheckBox->setCheckState(Qt::Checked);
+    } else {
+        useOwnTreeColorsCheckBox->setCheckState(Qt::Unchecked);
     }
 }
 

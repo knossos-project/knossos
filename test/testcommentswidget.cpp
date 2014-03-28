@@ -3,8 +3,6 @@
 #include "widgets/mainwindow.h"
 #include "widgets/commentswidget.h"
 #include "widgets/viewport.h"
-#include "widgets/toolswidget.h"
-#include "widgets/tools/toolsquicktabwidget.h"
 #include "QtOpenGL/qgl.h"
 #include <QPushButton>
 #include <QMessageBox>
@@ -69,7 +67,7 @@ void TestCommentsWidget::testEnterComments() {
 void TestCommentsWidget::testAddNodeComment() {
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
     CommentShortCutsTab *tab = commentsWidget->shortcutTab;
-    ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
+    //BUG removed code of toolswidget
 
     commentsWidget->setVisible(true);
     Viewport *firstViewport = reference->vpUpperLeft;
@@ -94,15 +92,10 @@ void TestCommentsWidget::testAddNodeComment() {
 
 
         QString usedString = tab->textFields[i]->text();
-        qDebug() << usedString << "_" << tools->toolsQuickTabWidget->commentField->text() << "_" << tools->toolsNodesTabWidget->commentField->text();
-
-        QCOMPARE(tools->toolsQuickTabWidget->commentField->text(), usedString);
-        QCOMPARE(tools->toolsNodesTabWidget->commentField->text(), usedString);
-
-
+        //BUG removed code of toolswidget
         bool found;
         // get the id of the node from the quick tab spinbox
-        int nodeID = tools->toolsQuickTabWidget->activeNodeSpinBox->value();
+        //BUG removed code of toolswidget
         // iterate through the table and find the entry of this node
 
 
@@ -144,7 +137,7 @@ void TestCommentsWidget::testEnableConditionalColoring() {
     for(int i = 0; i < 5; i++) {
         QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
         // we need a comment to check the coloring later
-        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentLabel->setText("Test");
+        //BUG removed code of toolswidget
         // the coloring checkbox will be enabled and a corresponding substring will be defined
 
         int random = i /*rand() % 5 */;
@@ -218,7 +211,7 @@ void TestCommentsWidget::testEnableConditionalRadius() {
         // that´s why another node is needed
         QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
         // we need a comment to check the coloring later
-        reference->window->widgetContainer->toolsWidget->toolsQuickTabWidget->commentField->setText("Test");
+        //BUG removed code of toolswidget
 
         // the coloring checkbox will be enabled and a corresponding substring will be defined
         highlightingTab->substringFields[i]->setText("T");
@@ -240,7 +233,7 @@ void TestCommentsWidget::testCommentsTable() {
 
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
 //    CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
-    ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
+    //BUG removed code of toolswidget
     Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
@@ -251,8 +244,7 @@ void TestCommentsWidget::testCommentsTable() {
     for(int i = 0; i < 5; i++) {
         QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
         if(i > 0) {
-            tools->toolsQuickTabWidget->commentField->setText("Random");
-            QTest::keyClick(tools->toolsQuickTabWidget->commentField, Qt::Key_Return);
+            //BUG removed code of toolswidget
         }
     }
 
@@ -286,7 +278,7 @@ void TestCommentsWidget::testCommentsTablePerformance() {
 
     CommentsWidget *commentsWidget = reference->window->widgetContainer->commentsWidget;
 //    CommentsNodeCommentsTab *nodeCommentsTab = reference->window->widgetContainer->commentsWidget->nodeCommentsTab;
-    ToolsWidget *tools = reference->window->widgetContainer->toolsWidget;
+    //BUG removed code of toolswidget
     Viewport *firstViewport = reference->vpUpperLeft;
 
     QPoint pos = firstViewport->pos();
@@ -302,8 +294,7 @@ void TestCommentsWidget::testCommentsTablePerformance() {
             bench.start();
         }
         QTest::mouseClick(firstViewport, Qt::RightButton, 0, pos);
-        tools->toolsQuickTabWidget->commentField->setText("Random Text");
-        QTest::keyClick(tools->toolsQuickTabWidget->commentField, Qt::Key_Return);
+        //BUG removed code of toolswidget
 
         if(i == n-1) {
             msec = bench.elapsed();

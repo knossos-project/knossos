@@ -10,7 +10,7 @@
         <file>icons/dialog-ok.png</file>
         <file>icons/document-open-recent.png</file>
         <file>icons/system-shutdown.png</file>
-        <file>icons/text-x-readme.png</file>
+        <file alias="tip.png">icons/text-x-readme.png</file>
         <file>icons/document-save-as.png</file>
         <file>icons/document-save.png</file>
         <file>icons/document-open.png</file>
@@ -29,8 +29,10 @@
         <file>icons/network-disconnect.png</file>
         <file>splash.png</file>
         <file>icons/resize.gif</file>
-		<file>icons/graph.png</file>
-		<file>icons/task.png</file>
+        <file>icons/graph.png</file>
+        <file>icons/task.png</file>
+        <file>icons/open-dataset.png</file>
+		<file>icons/open-skeleton.png</file>
     </qresource>
     <qresource prefix="/misc">
         <file>style.qss</file>

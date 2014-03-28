@@ -33,11 +33,20 @@ float ColorDecorator::alpha(color4F *self) {
 }
 
 QString ColorDecorator::static_color4F_help() {
-    return QString("The color class used in knossos. You gain access to the following methods:" \
+    return QString("An instanteable class which stores rgba channels in float coordinates in range [0..1]. Access to attributes only via getter and setter." \
+                   "\n\n CONSTRUCTORS: " \
+                   "\n color4F() : creates an empty color object." \
+                   "\n color4F(red, green, blue, alpha) : creates a color object by specifying all color channels. Excepts a float value in range [0..1]"
+                   "\n\n GETTER: " \
                    "\n red() : returns the red channel of the color" \
                    "\n green() : returns the green channel of the color" \
                    "\n blue() : returns the blue channel of the color" \
-                   "\n alpha() : returns the alpha channel of the color");
+                   "\n alpha() : returns the alpha channel of the color" \
+                   "\n\n SETTER: " \
+                   "\n set_red(red) : sets the red channel of the color. Expects a float value in range [0..1]" \
+                   "\n set_green(green) : sets the green channel of the color. Expects a float value in range [0..1] " \
+                   "\n set_blue(blue) : sets the blue channel of the color. Expects a float value in range [0..1]" \
+                   "\n set_alpha(alpha) : sets the alpha channel of the color. Expects a floats value in range [0..1] ");
 }
 
 

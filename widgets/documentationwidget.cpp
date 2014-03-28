@@ -3,7 +3,10 @@
 #include "documentationwidget.h"
 
 HelpBrowser::HelpBrowser(QHelpEngine *helpEngine, QWidget *parent)
-    : QTextBrowser(parent), helpEngine(helpEngine) {}
+    : QTextBrowser(parent), helpEngine(helpEngine) {
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
 
 QVariant HelpBrowser::loadResource(int type, const QUrl &url) {
     if (url.scheme() == "qthelp")
@@ -23,6 +26,7 @@ DocumentationWidget::DocumentationWidget(QWidget *parent) :
     QHelpContentModel *contentModel = helpEngine->contentModel();
     QHelpContentWidget *contentWidget = helpEngine->contentWidget();
 
+    setWindowIcon(QIcon(":/images/icons/edit-select-all.png"));
     setWindowTitle("Documentation");
     splitter = new QSplitter();
     splitter->addWidget(contentWidget);

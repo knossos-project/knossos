@@ -1,50 +1,71 @@
 #include "datasetpropertywidget.h"
-#include <QVBoxLayout>
-#include <QFileDialog>
-#include <QLineEdit>
-#include <QPushButton>
+
+#include <QApplication>
 #include <QComboBox>
-#include <QMessageBox>
+#include <QFileDialog>
 #include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QProcess>
+#include <QPushButton>
 #include <QSettings>
-#include "knossos-global.h"
-#include "knossos.h"
-#include "GuiConstants.h"
+#include <QVBoxLayout>
+
 #include "ftp.h"
-#include "viewer.h"
+#include "GuiConstants.h"
+#include "knossos.h"
+#include "knossos-global.h"
 #include "mainwindow.h"
+#include "viewer.h"
 
 extern  stateInfo *state;
 
-DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) :
-    QDialog(parent)
-{
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QGridLayout *localLayout = new QGridLayout();
-
+DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) {
     localGroup = new QGroupBox("Local Dataset");
 
     datasetfileDialog = new QPushButton("Select Dataset Path");
+    datasetfileDialog->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     this->path = new QComboBox();
     this->path->setInsertPolicy(QComboBox::NoInsert);
     this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     this->path->setEditable(true);
+    supercubeEdgeSpin = new QSpinBox;
+    supercubeEdgeSpin->setRange(3, 7);
+    supercubeEdgeSpin->setSingleStep(2);
+    supercubeEdgeSpin->setValue(state->M);
+    supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    supercubeSizeLabel = new QLabel();
+    supercubeEdgeSpinValueChanged(state->M);//init label
     cancelButton = new QPushButton("Cancel");
     processButton = new QPushButton("Use");
 
-    localLayout->addWidget(path, 0, 0);
-    localLayout->addWidget(datasetfileDialog, 0, 1);
-    localLayout->addWidget(processButton, 2,0);
-    localLayout->addWidget(cancelButton, 2, 1);
+    auto hLayout = new QHBoxLayout;
+    hLayout->addWidget(path);
+    hLayout->addWidget(datasetfileDialog);
+    auto hLayout2 = new QHBoxLayout;
+    hLayout2->addWidget(supercubeEdgeSpin);
+    supercubeEdgeSpin->setAlignment(Qt::AlignLeft);
+    hLayout2->addWidget(supercubeSizeLabel);
+    auto hLayout3 = new QHBoxLayout;
+    hLayout3->addWidget(processButton);
+    hLayout3->addWidget(cancelButton);
 
+    auto localLayout = new QVBoxLayout();
+    localLayout->addLayout(hLayout);
+    localLayout->addLayout(hLayout2);
+    localLayout->addLayout(hLayout3);
     localGroup->setLayout(localLayout);
-    mainLayout->addWidget(localGroup);
 
+    auto mainLayout = new QVBoxLayout();
+    mainLayout->addWidget(localGroup);
     setLayout(mainLayout);
 
-    connect(this->datasetfileDialog, SIGNAL(clicked()), this, SLOT(datasetfileDialogClicked()));
-    connect(this->cancelButton, SIGNAL(clicked()), this, SLOT(cancelButtonClicked()));
-    connect(this->processButton, SIGNAL(clicked()), this, SLOT(processButtonClicked()));
+    QObject::connect(datasetfileDialog, &QPushButton::clicked, this, &DatasetPropertyWidget::datasetfileDialogClicked);
+    QObject::connect(supercubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetPropertyWidget::supercubeEdgeSpinValueChanged);
+    QObject::connect(cancelButton, &QPushButton::clicked, this, &DatasetPropertyWidget::cancelButtonClicked);
+    QObject::connect(processButton, &QPushButton::clicked, this, &DatasetPropertyWidget::processButtonClicked);
+
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 QStringList DatasetPropertyWidget::getRecentDirsItems() {
@@ -56,21 +77,64 @@ QStringList DatasetPropertyWidget::getRecentDirsItems() {
     return recentDirs;
 }
 
-void DatasetPropertyWidget::saveSettings()
-{
+void DatasetPropertyWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
     settings.setValue(DATASET_MRU, getRecentDirsItems());
+    if(state->M == 0) {
+        settings.setValue(DATASET_M, 3);
+    }
+    else {
+        settings.setValue(DATASET_M, state->M);
+    }
     settings.endGroup();
 }
 
-void DatasetPropertyWidget::loadSettings()
-{
+void DatasetPropertyWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(DATASET_WIDGET);
-    this->path->clear();
-    this->path->insertItems(0, settings.value(DATASET_MRU).toStringList());
+    path->clear();
+    path->insertItems(0, settings.value(DATASET_MRU).toStringList());
+    auto Ms = {3, 5, 7};//possibleSuperCubeSizes
+    if (std::find(std::begin(Ms), std::end(Ms), state->M) == std::end(Ms)) {//M is invalid
+        state->M = settings.value(DATASET_M, 3).toInt();
+    }
     settings.endGroup();
+
+    supercubeEdgeSpin->setValue(state->M);
+    supercubeEdgeSpinValueChanged(state->M);//refill label
+
+    //settings depending on M
+    state->cubeSetElements = state->M * state->M * state->M;
+    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
+
+    for(uint i = 0; i < state->viewerState->numberViewports; i++) {
+        state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx /= static_cast<float>(state->magnification);
+        state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
+    }
+
+    if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
+        LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
+        throw std::runtime_error("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!");
+    }
+
+    // We're not doing stuff in parallel, yet. So we skip the locking
+    // part.
+    // This *10 thing is completely arbitrary. The larger the table size,
+    // the lower the chance of getting collisions and the better the loading
+    // order will be respected. *10 doesn't seem to have much of an effect
+    // on performance but we should try to find the optimal value some day.
+    // Btw: A more clever implementation would be to use an array exactly the
+    // size of the supercube and index using the modulo operator.
+    // sadly, that realization came rather late. ;)
+
+    // creating the hashtables is cheap, keeping the datacubes is
+    // memory expensive..
+    for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
+        state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+        state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
+        if(i == 0) i = 1;
+    }
 }
 
 void DatasetPropertyWidget::datasetfileDialogClicked() {
@@ -81,6 +145,16 @@ void DatasetPropertyWidget::datasetfileDialogClicked() {
         path->setEditText(selectDir);
     }
     state->viewerState->renderInterval = FAST;
+}
+
+void DatasetPropertyWidget::supercubeEdgeSpinValueChanged(const int value) {
+    const auto mibibytes = std::pow(state->cubeEdgeLength, 3) * std::pow(value, 3) / std::pow(1024, 2);
+    auto text = QString("Data cache cube edge length (%1 MiB RAM").arg(mibibytes);
+    if (state->M != supercubeEdgeSpin->value()) {
+        text.append(", restart required");
+    }
+    text.append(")");
+    supercubeSizeLabel->setText(text);
 }
 
 void DatasetPropertyWidget::closeEvent(QCloseEvent *) {
@@ -150,6 +224,15 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
         emit clearSkeletonSignalNoGUI();
     }
 
+    // BUG BUG BUG
+    // The following code, combined with the way loader::run in currently implemented
+    // (revision 966) contains a minor timing issue that may result in a crash, namely
+    // since loader::loadCubes begins executing in LM_LOCAL mode and ends in LM_FTP,
+    // if at this point in the code we're in LM_LOCAL, and are about an FTP dataset
+    // BUG BUG BUG
+
+    state->loaderDummy = true;
+
     // Stupid userMove hack-around. In order to move somewhere, you have to currently be at another supercube.
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
@@ -172,6 +255,20 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     }
 
     knossos->commonInitStates();
+
+    if (isGUI && state->M != supercubeEdgeSpin->value()) {
+        auto text = QString("You chose to change the data cache cube edge length. \n")
+                +QString("\nKnossos needs to restart to apply this.\n\n")
+                +QString("You will loose your skeleton if you didn’t save or already cleared it.");
+        if (QMessageBox::question(this, "Knossos restart", text, QMessageBox::Ok | QMessageBox::Abort) == QMessageBox::Ok) {
+            //ideally one would use qApp->quit(), but the cleanup steps are not connected to this
+            static_cast<MainWindow*>(parent())->close();//call Knossos cleanup func
+            auto args = qApp->arguments();
+            args.append(QString("--supercube-edge=%0").arg(supercubeEdgeSpin->value()));//change M via cmdline so it is not saved on a crash/kill
+            qDebug() << args;
+            QProcess::startDetached(qApp->arguments()[0], args);
+        }
+    }
 
     this->waitForLoader();
 
@@ -205,5 +302,6 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     }
 
     emit datasetSwitchZoomDefaults();
+
     this->hide();
 }

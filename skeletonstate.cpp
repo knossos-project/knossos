@@ -2,6 +2,7 @@
 #include "skeletonizer.h"
 #include "functions.h"
 #include <cmath>
+#include <QFile>
 
 extern stateInfo *state;
 
@@ -9,7 +10,7 @@ extern stateInfo *state;
 
 skeletonState::skeletonState()
 {
-
+    userGeometry = new QList<mesh *>();
 }
 
 int skeletonState::skeleton_time() {
@@ -34,6 +35,11 @@ void skeletonState::to_xml(const QString &filename) {
 
 treeListElement *skeletonState::first_tree() {
     return firstTree;
+}
+
+/** @notyetimplemented */
+void skeletonState::export_converter(const QString &path) {
+
 }
 
 bool skeletonState::has_unsaved_changes() {
@@ -143,62 +149,119 @@ void skeletonState::add_branch_node(int node_id) {
     }
 
 }
-QString skeletonState::cube_data_at(int x, int y, int z) {
-    Coordinate position(x, y, z);
+
+QList<int> *skeletonState::cube_data_at(int x, int y, int z) {
+    Coordinate position(x / state->cubeEdgeLength, y / state->cubeEdgeLength, z / state->cubeEdgeLength);
     Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
 
     if(!data) {
-        emit echo(QString("no cube data found"));
+        emit echo(QString("no cube data found at coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return 0;
     }
 
-    QString result;
-    result.resize(state->cubeBytes);
+     QList<int> *resultList = new QList<int>();
+
     for(int i = 0; i < state->cubeBytes; i++) {
-        result[i] = data[i];
+        resultList->append((int) data[i]);
     }
 
-    return result;
+    return resultList;
 }
 
+QList<QVector<int> > skeletonState::sliced_cube_data_at(int x, int y, int z) {
+    Coordinate position(x / state->cubeEdgeLength, y / state->cubeEdgeLength, z / state->cubeEdgeLength);
+    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
 
-void skeletonState::post_render(int x, int y, int z, int size, float r, float g, float b, float a) {
+    QList<QVector<int> > resultList;
 
+    if(!data) {
+        emit echo(QString("no cube data found at coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
+        return resultList;
+    }
+
+    Byte *xy = new Byte[state->cubeSetBytes];
+    Byte *xz = new Byte[state->cubeSetBytes];
+    Byte *yz = new Byte[state->cubeSetBytes];
+
+    emit sliceExtractSignal(data, xy, &state->viewerState->vpConfigs[VIEWPORT_XY]);
+    emit sliceExtractSignal(data, xz, &state->viewerState->vpConfigs[VIEWPORT_XZ]);
+    emit sliceExtractSignal(data, yz, &state->viewerState->vpConfigs[VIEWPORT_YZ]);
+
+    QVector<int> xyList;
+    QVector<int> xzList;
+    QVector<int> yzList;
+
+    for(int i = 0; i < state->cubeSliceArea; i++) {
+        xyList.append((int) xy[i]);
+        xzList.append((int) xz[i]);
+        yzList.append((int) yz[i]);
+    }
+
+    resultList.append(xyList);
+    resultList.append(xzList);
+    resultList.append(yzList);
+
+    delete [] xy;
+    delete [] xz;
+    delete [] yz;
+    return resultList;
 }
 
+void skeletonState::render_mesh(mesh *mesh) {
+    if(!mesh) {
+        emit echo("Null objects can't be rendered ... nothing to do");
+        return;
+    }
+
+    if(mesh->colsIndex == 0) {
+        emit echo("");
+    }
+
+    if(mesh->vertices == 0) {
+        emit echo("Can't render a mesh without vertices");
+        return;
+    }
+
+    // it's ok if no normals are passed. This has to be checked in render method anyway
 
 
+    if(mesh->mode < GL_POINTS or mesh->mode > GL_POLYGON) {
+        emit echo("Mesh contains an unknown vertex mode");
+    }
+
+    // lots of additional checks could be done
+
+    userGeometry->append(mesh);
 
 
-
-
-
-
-
-
-
+}
 
 
 
 QString skeletonState::help() {
-    return QString("The python representation of knossos. You gain access to the following methods:" \
+    return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \
                    "\n\n GETTER:" \
                    "\n trees() : returns a list of trees" \
                    "\n active_node() : returns the active node object" \
                    "\n skeleton_file() : returns the file from which the current skeleton is loaded" \
                    "\n first_tree() : returns the first tree of the knossos skeleton" \
+                   "\n export_converter(path) : creates a python class in the path which can be used to convert between the NewSkeleton class and KNOSSOS."
                    "\n\n SETTER:" \
                    "\n add_branch_node(node_id) : sets the node with node_id to branch_node" \
                    "\n add_segment(source_id, target_id) : adds a segment for the nodes. Both nodes must be added before"
                    "\n add_comment(node_id) : adds a comment for the node. Must be added before" \
                    "\n add_tree(tree_id, comment, r (opt), g (opt), b (opt), a (opt)) : adds a new tree" \
-                   "\n\t If no color is set then the knossos lookup table sets the color." \
+                   "\n\t If does not mind if no color is specified. The lookup table sets this automatically." \
                    "\n\n add_node(node_id, x, y, z, parent_id (opt), radius (opt), viewport (opt), mag (opt), time (opt))" \
-                   "\n\t adds a node for a parent tree. " \
+                   "\n\t adds a node for a parent tree where a couple of parameter are optional. " \
                    "\n\t if no parent_id is set then the current active node will be chosen." \
-                   "\n delete_tree(tree_id) : deletes the tree"
-                   "\n delete_skeleton() : deletes the entire skeleton" \
+                   "\n delete_tree(tree_id) : deletes the tree with the passed id. Returns a message if no such tree exists." \
+                   "\n delete_skeleton() : deletes the entire skeleton." \
                    "\n from_xml(filename) : loads a skeleton from a .nml file" \
-                   "\n to_xml(filename) : saves a skeleton to a .nml file");
+                   "\n to_xml(filename) : saves a skeleton to a .nml file" \
+                   "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
+                   "\n\t you can extract the integer value of the color via ord(i) where i is the i-th char of the string." \
+                   "\n\t There is also a script which returns a numpy matrix with dimension (1xN)"
+                   "\n render_mesh(mesh) : render the mesh. Call mesh.help() for additional information.");
 
 }

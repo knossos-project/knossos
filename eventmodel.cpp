@@ -187,10 +187,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         return true;
     }
     bool newNode = false;
-    bool treeExists = false;
-    if(state->skeletonState->firstTree != NULL) {
-        treeExists = true;
-    }
+    bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch(state->skeletonState->workMode) {
     case SKELETONIZER_ON_CLICK_DROP_NODE:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
@@ -308,11 +305,11 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     /* Move to the new node position */
     emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-    if(newNode) {
+    if (newNode) {
         emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
         emit nodeAddedSignal();
-        if(treeExists == false) { // a new tree was created
-            emit treeAddedSignal(state->skeletonState->firstTree);
+        if (newTree) {
+            emit treeAddedSignal(state->skeletonState->activeTree);
         }
     }
     emit updateViewerStateSignal();
@@ -605,14 +602,11 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         Coordinate second = state->viewerState->nodeSelectionSquare.second;
         // create square
         int minX, maxX, minY, maxY;
-        minX = (first.x < second.x)? first.x : second.x;
-        maxX = (first.x < second.x)? second.x : first.x;
-        minY = (first.y < second.y)? first.y : second.y;
-        maxY = (first.y < second.y)? second.y : first.y;
-        retrieveAllObjectsBeneathSquareSignal(VPfound, minX + (maxX - minX)/2,
-                                                       minY + (maxY - minY)/2,
-                                                       maxX - minX,
-                                                       maxY - minY);
+        minX = std::min(first.x, second.x);
+        maxX = std::max(first.x, second.x);
+        minY = std::min(first.y, second.y);
+        maxY = std::max(first.y, second.y);
+        emit retrieveAllObjectsBeneathSquareSignal(VPfound, minX, minY, maxX - minX, maxY - minY);
         emit updateTreeviewSignal();
     }
     state->viewerState->drawNodeSelectSquare = -1;
@@ -1242,7 +1236,6 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
     } else if(event->key() == Qt::Key_G) {
         //emit genTestNodesSignal(50000);
-        //emit updateTools();
         // emit updateTreeviewSignal();
 
     } else if(event->key() == Qt::Key_3) {
@@ -1297,15 +1290,14 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             prompt.addButton("No", QMessageBox::ActionRole);
             prompt.exec();
             if(prompt.clickedButton() == confirmButton) {
-                emit deleteSelectedNodesSignal();
-                emit nodesDeletedSignal();
-                state->skeletonState->selectedNodes.clear();
+                emit deleteSelectedNodesSignal();//skeletonizer
+                emit updateTreeviewSignal();//annotation->treeview
             }
         }
         else {
             if(state->skeletonState->activeNode) {
-                emit deleteActiveNodeSignal();
-                emit nodesDeletedSignal();
+                emit deleteActiveNodeSignal();//skeletonizer
+                emit updateTreeviewSignal();//annotation->treeview
             }
         }
     }

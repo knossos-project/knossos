@@ -34,6 +34,8 @@ class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
 
+#define LOCK_DATASET_ORIENTATION_DEFAULT (false)
+
 class ZoomAndMultiresWidget : public QDialog
 {
     friend class TestZoomAndMultiresWidget;

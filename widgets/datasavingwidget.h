@@ -24,8 +24,6 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-//static int count;
-
 
 #include <QDialog>
 

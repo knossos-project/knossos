@@ -1,3 +1,7 @@
+#include "toolstreeviewtab.h"
+
+#include <QColorDialog>
+#include <QInputDialog>
 #include <QTreeWidgetItem>
 #include <QTableWidget>
 #include <QHBoxLayout>
@@ -20,103 +24,22 @@
 #include <QDropEvent>
 
 #include "skeletonizer.h"
-#include "toolstreeviewtab.h"
 
-#define TREE_ID      0
-#define TREE_COLOR   1
-#define TREE_COMMENT 2
-#define TREE_COLS    3
-#define NODE_ID      0
-#define NODE_COMMENT 1
-#define NODE_X       2
-#define NODE_Y       3
-#define NODE_Z       4
-#define NODE_RADIUS  5
-#define NODE_COLS    6
+enum {
+    NODECOMBO_100, NODECOMBO_1000, NODECOMBO_5000, NODECOMBO_ALL
+};
 
-#define NODECOMBO_100 0
-#define NODECOMBO_1000 1
-#define NODECOMBO_5000 2
-#define NODECOMBO_ALL 3
-#define DISPLAY_ALL 0
+enum {
+    DISPLAY_ALL
+};
 
 extern stateInfo *state;
-stateInfo *kState;
-
-TreeTable::TreeTable(QWidget *parent) : QTableWidget(parent), droppedOnTreeID(0), changeByCode(true) {}
-
-void TreeTable::setItem(int row, int column, QTableWidgetItem *item) {
-    if(item != NULL) {
-        changeByCode = true;
-        QTableWidget::setItem(row, column, item);
-        changeByCode = false;
-    }
-}
-
-void TreeTable::focusInEvent(QFocusEvent *) {
-    emit focused(this);
-}
-
-void TreeTable::keyPressEvent(QKeyEvent *event) {
-    if(event->key() == Qt::Key_Delete) {
-        emit deleteTreesSignal();
-    }
-}
-
-void TreeTable::dropEvent(QDropEvent *event) {
-    QTableWidgetItem *droppedOnItem = itemAt(event->pos());
-    droppedOnTreeID = item(droppedOnItem->row(), 0)->text().toInt();
-    if(droppedOnItem == NULL or kState->skeletonState->selectedNodes.size() == 0) {
-        return;
-    }
-
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Cofirmation required");
-    prompt.setText(QString("Do you really want to add selected node(s) to tree %1?").arg(droppedOnTreeID));
-    QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        std::vector<nodeListElement *>::iterator iter;
-        for(iter = kState->skeletonState->selectedNodes.begin();
-            iter != kState->skeletonState->selectedNodes.end(); ++iter) {
-            Skeletonizer::moveNodeToTree((*iter), droppedOnTreeID);
-        }
-    }
-    for(int i = 0; i < kState->skeletonState->selectedNodes.size(); ++i) {
-        kState->skeletonState->selectedNodes[i]->selected = false;
-    }
-    kState->skeletonState->selectedNodes.clear();
-}
-
-// node table
-NodeTable::NodeTable(QWidget *parent) : QTableWidget(parent), changeByCode(true) {}
-
-void NodeTable::setItem(int row, int column, QTableWidgetItem *item) {
-    changeByCode = true;
-    QTableWidget::setItem(row, column, item);
-    changeByCode = false;
-}
-
-void NodeTable::focusInEvent(QFocusEvent *) {
-    emit focused(this);
-}
-
-void NodeTable::keyPressEvent(QKeyEvent *event) {
-    if(event->key() == Qt::Key_Delete) {
-        emit deleteNodesSignal();
-    }
-}
 
 // treeview
 ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
-    QWidget(parent), focusedTreeTable(NULL), focusedNodeTable(NULL),
-    draggedNodeID(0), radiusBuffer(state->skeletonState->defaultNodeRadius), displayedNodes(1000), selectedNodes("selected nodes")
+    QWidget(parent), selectedNodes("selected nodes")
+    , radiusBuffer(state->skeletonState->defaultNodeRadius), draggedNodeID(0), displayedNodes(1000)
 {
-    kState = state;
-
     treeSearchField = new QLineEdit();
     treeSearchField->setPlaceholderText("search tree");    
     treeSearchField->setFocusPolicy(Qt::ClickFocus);
@@ -145,94 +68,76 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
 
 
     // tables
-    QTableWidgetItem *IDCol, *commentCol, *colorCol, // tree table cols
-                     *radiusCol, *xCol, *yCol, *zCol; // node table cols
 
     // active tree table
     activeTreeTable = new TreeTable(this);
-    activeTreeTable->setColumnCount(TREE_COLS);
-    activeTreeTable->setFixedHeight(54);
+    activeTreeTable->setColumnCount(TreeTable::TREE_COLS);
+    activeTreeTable->setMaximumHeight(54);
     activeTreeTable->verticalHeader()->setVisible(false);
     activeTreeTable->setToolTip("The active tree");
-    IDCol = new QTableWidgetItem("Tree ID");
-    colorCol = new QTableWidgetItem("Color");
-    commentCol = new QTableWidgetItem("Comment");
-    activeTreeTable->setHorizontalHeaderItem(TREE_ID, IDCol);
-    activeTreeTable->setHorizontalHeaderItem(TREE_COLOR, colorCol);
-    activeTreeTable->setHorizontalHeaderItem(TREE_COMMENT, commentCol);
+    activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_ID, new QTableWidgetItem("Tree ID"));
+    activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_COLOR, new QTableWidgetItem("Color"));
+    activeTreeTable->setHorizontalHeaderItem(TreeTable::TREE_COMMENT, new QTableWidgetItem("Comment"));
     activeTreeTable->horizontalHeader()->setStretchLastSection(true);
     activeTreeTable->resizeColumnsToContents();
-    activeTreeTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    activeTreeTable->setDragDropMode(QAbstractItemView::DropOnly);
+    activeTreeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
+    activeTreeTable->setDragDropMode(QAbstractItemView::DropOnly);//enables acceptDrops
+    activeTreeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    activeTreeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
 
     // tree table
     treeTable = new TreeTable(this);
-    treeTable->setColumnCount(TREE_COLS);
+    treeTable->setColumnCount(TreeTable::TREE_COLS);
     treeTable->setAlternatingRowColors(true);
     treeTable->verticalHeader()->setVisible(false);
-    IDCol = new QTableWidgetItem("Tree ID");
-    colorCol = new QTableWidgetItem("Color");
-    commentCol = new QTableWidgetItem("Comment");
-    treeTable->setHorizontalHeaderItem(TREE_ID, IDCol);
-    treeTable->setHorizontalHeaderItem(TREE_COLOR, colorCol);
-    treeTable->setHorizontalHeaderItem(TREE_COMMENT, commentCol);
+    treeTable->setHorizontalHeaderItem(TreeTable::TREE_ID, new QTableWidgetItem("Tree ID"));
+    treeTable->setHorizontalHeaderItem(TreeTable::TREE_COLOR, new QTableWidgetItem("Color"));
+    treeTable->setHorizontalHeaderItem(TreeTable::TREE_COMMENT, new QTableWidgetItem("Comment"));
     treeTable->horizontalHeader()->setStretchLastSection(true);
     treeTable->resizeColumnsToContents();
-    treeTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    treeTable->setDragDropMode(QAbstractItemView::DropOnly);
+    treeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
+    treeTable->setDragDropMode(QAbstractItemView::DropOnly);//enables acceptDrops
+    treeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    treeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
 
 
     // active node table
     activeNodeTable = new NodeTable(this);
-    activeNodeTable->setColumnCount(NODE_COLS);
-    activeNodeTable->setFixedHeight(54);
+    activeNodeTable->setColumnCount(NodeTable::NODE_COLS);
+    activeNodeTable->setMaximumHeight(70);
     activeNodeTable->verticalHeader()->setVisible(false);
     activeNodeTable->setToolTip("The active node");
-    IDCol = new QTableWidgetItem("Node ID");
-    commentCol = new QTableWidgetItem("Comment");
-    xCol = new QTableWidgetItem("x");
-    yCol = new QTableWidgetItem("y");
-    zCol = new QTableWidgetItem("z");
-    radiusCol = new QTableWidgetItem("Radius");
-    activeNodeTable->setHorizontalHeaderItem(NODE_ID, IDCol);
-    activeNodeTable->setHorizontalHeaderItem(NODE_COMMENT, commentCol);
-    activeNodeTable->setHorizontalHeaderItem(NODE_X, xCol);
-    activeNodeTable->setHorizontalHeaderItem(NODE_Y, yCol);
-    activeNodeTable->setHorizontalHeaderItem(NODE_Z, zCol);
-    activeNodeTable->setHorizontalHeaderItem(NODE_RADIUS, radiusCol);
-    activeNodeTable->horizontalHeader()->setSectionResizeMode(NODE_COMMENT, QHeaderView::Stretch);
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_ID, new QTableWidgetItem("Node ID"));
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_COMMENT, new QTableWidgetItem("Comment"));
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_X, new QTableWidgetItem("x"));
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_Y, new QTableWidgetItem("y"));
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_Z, new QTableWidgetItem("z"));
+    activeNodeTable->setHorizontalHeaderItem(NodeTable::NODE_RADIUS, new QTableWidgetItem("Radius"));
+    activeNodeTable->horizontalHeader()->setSectionResizeMode(NodeTable::NODE_COMMENT, QHeaderView::Stretch);
     activeNodeTable->resizeColumnsToContents();
-    activeNodeTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    activeNodeTable->setDragEnabled(true);
-    activeNodeTable->setDragDropMode(QAbstractItemView::DragOnly);
+    activeNodeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
+    activeNodeTable->setDragDropMode(QAbstractItemView::DragOnly);//enables dragging
+    activeNodeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    activeNodeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
 
 
     // node table
     nodeTable = new NodeTable(this);
-    nodeTable->setColumnCount(NODE_COLS);
+    nodeTable->setColumnCount(NodeTable::NODE_COLS);
     nodeTable->setAlternatingRowColors(true);
     nodeTable->verticalHeader()->setVisible(false);
-    IDCol = new QTableWidgetItem("Node ID");
-    commentCol = new QTableWidgetItem("Comment");
-    xCol = new QTableWidgetItem("x");
-    yCol = new QTableWidgetItem("y");
-    zCol = new QTableWidgetItem("z");
-    radiusCol = new QTableWidgetItem("Radius");
-    nodeTable->setHorizontalHeaderItem(NODE_ID, IDCol);
-    nodeTable->setHorizontalHeaderItem(NODE_COMMENT, commentCol);
-    nodeTable->setHorizontalHeaderItem(NODE_X, xCol);
-    nodeTable->setHorizontalHeaderItem(NODE_Y, yCol);
-    nodeTable->setHorizontalHeaderItem(NODE_Z, zCol);
-    nodeTable->setHorizontalHeaderItem(NODE_RADIUS, radiusCol);
-    nodeTable->horizontalHeader()->setSectionResizeMode(NODE_COMMENT, QHeaderView::Stretch);
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_ID, new QTableWidgetItem("Node ID"));
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_COMMENT, new QTableWidgetItem("Comment"));
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_X, new QTableWidgetItem("x"));
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_Y, new QTableWidgetItem("y"));
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_Z, new QTableWidgetItem("z"));
+    nodeTable->setHorizontalHeaderItem(NodeTable::NODE_RADIUS, new QTableWidgetItem("Radius"));
+    nodeTable->horizontalHeader()->setSectionResizeMode(NodeTable::NODE_COMMENT, QHeaderView::Stretch);
     nodeTable->resizeColumnsToContents();
-    nodeTable->setContextMenuPolicy(Qt::CustomContextMenu);
-    nodeTable->setDragEnabled(true);
-    nodeTable->setDragDropMode(QAbstractItemView::DragOnly);
+    nodeTable->setContextMenuPolicy(Qt::CustomContextMenu);//enables signal for custom context menu
+    nodeTable->setDragDropMode(QAbstractItemView::DragOnly);//enables dragging
+    nodeTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     nodeTable->setStyleSheet("QTableWidget::item {selection-background-color: #00FF00; selection-color: #000000}");
-    createTreesContextMenu();
-    createNodesContextMenu();
-    createContextMenuDialogs();
 
     mainLayout = new QVBoxLayout();
     QVBoxLayout *vLayout = new QVBoxLayout();
@@ -258,7 +163,7 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     vLayout->addWidget(showLabel);
     vLayout->addWidget(allNodesRadio);
 
-    hLayout = new QHBoxLayout();    
+    hLayout = new QHBoxLayout();
     hLayout->addWidget(nodesOfSelectedTreesRadio);
     hLayout->addWidget(&selectedNodes);
 
@@ -287,281 +192,80 @@ ToolsTreeviewTab::ToolsTreeviewTab(QWidget *parent) :
     setLayout(mainLayout);
 
     // search events
-    connect(treeSearchField, SIGNAL(editingFinished()), this, SLOT(treeSearchChanged()));
-    connect(nodeSearchField, SIGNAL(editingFinished()), this, SLOT(nodeSearchChanged()));
+    QObject::connect(treeSearchField, &QLineEdit::editingFinished, this, &ToolsTreeviewTab::treeSearchChanged);
+    QObject::connect(nodeSearchField, &QLineEdit::editingFinished, this, &ToolsTreeviewTab::nodeSearchChanged);
     // display events
-    connect(allNodesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    connect(nodesOfSelectedTreesRadio, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    QObject::connect(&selectedNodes, &QRadioButton::clicked, this, &ToolsTreeviewTab::updateNodesTable);//special :D
+    QObject::connect(allNodesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
+    QObject::connect(nodesOfSelectedTreesRadio, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
+    QObject::connect(&selectedNodes, &QRadioButton::clicked, this, &ToolsTreeviewTab::recreateNodesTable);//special :D
 
-    connect(branchNodesChckBx, SIGNAL(clicked()), this, SLOT(updateNodesTable()));
-    connect(commentNodesChckBx, SIGNAL(clicked()), this,SLOT(updateNodesTable()));
+    QObject::connect(branchNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
+    QObject::connect(commentNodesChckBx, &QCheckBox::clicked, this, &ToolsTreeviewTab::recreateNodesTable);
     // displayed nodes
-    connect(displayedNodesCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(displayedNodesChanged(int)));
+    QObject::connect(displayedNodesCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ToolsTreeviewTab::displayedNodesChanged);
+
     // table click events
+    QObject::connect(activeTreeTable, &TreeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
+    QObject::connect(activeTreeTable, &TreeTable::deleteTreesSignal, this, &ToolsTreeviewTab::deleteTreesAction);
+    QObject::connect(activeTreeTable, &TreeTable::itemChanged, this, &ToolsTreeviewTab::actTreeItemChanged);
+    QObject::connect(activeTreeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
+    QObject::connect(activeTreeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::activeTreeSelectionChanged);
+    QObject::connect(activeTreeTable, &TreeTable::nodesUpdateSignal, this, &ToolsTreeviewTab::recreateNodesTable);
 
-    connect(activeTreeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(actTreeItemChanged(QTableWidgetItem*)));
-    connect(activeTreeTable, SIGNAL(itemSelectionChanged()), this, SLOT(activeTreeSelected()));
-    connect(activeTreeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(treeContextMenuCalled(QPoint)));
-    connect(activeTreeTable, SIGNAL(focused(TreeTable*)), this, SLOT(setFocused(TreeTable*)));
-    connect(activeTreeTable, SIGNAL(deleteTreesSignal()), this, SLOT(deleteTreesAction()));
+    QObject::connect(treeTable, &TreeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
+    QObject::connect(treeTable, &TreeTable::deleteTreesSignal, this, &ToolsTreeviewTab::deleteTreesAction);
+    QObject::connect(treeTable, &TreeTable::itemChanged, this, &ToolsTreeviewTab::treeItemChanged);
+    QObject::connect(treeTable, &TreeTable::itemDoubleClicked, this, &ToolsTreeviewTab::treeItemDoubleClicked);
+    QObject::connect(treeTable, &TreeTable::itemSelectionChanged, this, &ToolsTreeviewTab::treeSelectionChanged);
+    QObject::connect(treeTable, &TreeTable::nodesUpdateSignal, this, &ToolsTreeviewTab::recreateNodesTable);
 
-    connect(treeTable, SIGNAL(updateTreeview()), this, SLOT(update()));
-    connect(treeTable, SIGNAL(focused(TreeTable*)), this, SLOT(setFocused(TreeTable*)));
-    connect(treeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(treeContextMenuCalled(QPoint)));
-    connect(treeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(treeItemChanged(QTableWidgetItem*)));
-    connect(treeTable, SIGNAL(itemSelectionChanged()), this, SLOT(treeItemSelected()));
-    connect(treeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(treeItemDoubleClicked(QTableWidgetItem*)));
-    connect(treeTable, SIGNAL(deleteTreesSignal()), this, SLOT(deleteTreesAction()));
+    QObject::connect(activeNodeTable, &NodeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
+    QObject::connect(activeNodeTable, &NodeTable::deleteNodesSignal, this, &ToolsTreeviewTab::deleteNodesAction);
+    QObject::connect(activeNodeTable, &NodeTable::itemChanged, this, &ToolsTreeviewTab::actNodeItemChanged);
+    QObject::connect(activeNodeTable, &NodeTable::itemDoubleClicked, this, &ToolsTreeviewTab::nodeItemDoubleClicked);
+    QObject::connect(activeNodeTable, &NodeTable::itemSelectionChanged, this, &ToolsTreeviewTab::activeNodeSelectionChanged);
 
-    connect(activeNodeTable, SIGNAL(itemSelectionChanged()), this, SLOT(activeNodeSelected()));
-    connect(activeNodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(actNodeItemChanged(QTableWidgetItem*)));
-    connect(activeNodeTable, SIGNAL(focused(NodeTable*)), this, SLOT(setFocused(NodeTable*)));
-    connect(activeNodeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(nodeContextMenuCalled(QPoint)));
-    connect(activeNodeTable, SIGNAL(deleteNodesSignal()), this, SLOT(deleteNodesAction()));
-
-    connect(nodeTable, SIGNAL(updateNodesTable()), this, SLOT(updateNodesTable()));
-    connect(nodeTable, SIGNAL(focused(NodeTable*)), this, SLOT(setFocused(NodeTable*)));
-    connect(nodeTable, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(nodeContextMenuCalled(QPoint)));
-    connect(nodeTable, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(nodeItemChanged(QTableWidgetItem*)));
-    connect(nodeTable, SIGNAL(itemSelectionChanged()), this, SLOT(nodeItemSelected()));
-    connect(nodeTable, SIGNAL(itemDoubleClicked(QTableWidgetItem*)), this, SLOT(nodeItemDoubleClicked(QTableWidgetItem*)));
-    connect(nodeTable, SIGNAL(deleteNodesSignal()), this, SLOT(deleteNodesAction()));
-}
-
-void ToolsTreeviewTab::createTreesContextMenu() {
-    treeContextMenu = new QMenu();
-    treeContextMenu->addAction("Set as active tree", this, SLOT(setActiveTreeAction()));
-    treeContextMenu->addAction("Set comment for tree(s)", this, SLOT(setTreeCommentAction()));
-    treeContextMenu->addAction("Merge trees", this, SLOT(mergeTreesAction()));
-    treeContextMenu->addAction("Move selected node(s) to this tree", this, SLOT(moveNodesAction()));
-    treeContextMenu->addAction("Restore default color", this, SLOT(restoreColorAction()));
-    treeContextMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Delete tree(s)", this, SLOT(deleteTreesAction()));
-}
-
-void ToolsTreeviewTab::createNodesContextMenu() {
-    nodeContextMenu = new QMenu();
-    nodeContextMenu->addAction("Set comment for node(s)...", this, SLOT(setNodeCommentAction()));
-    nodeContextMenu->addAction("Set radius for node(s)...", this, SLOT(setNodeRadiusAction()));
-    nodeContextMenu->addAction("(Un)link nodes... ", this, SLOT(linkNodesAction()));
-    nodeContextMenu->addAction("Split component from tree", this, SLOT(splitComponentAction()));
-    nodeContextMenu->addAction(QIcon(":/images/icons/user-trash.png"), "delete node(s)", this, SLOT(deleteNodesAction()));
-
-}
-
-void ToolsTreeviewTab::createContextMenuDialogs() {
-    // for tree table
-    treeCommentEditDialog = new QDialog();
-    treeCommentEditDialog->setWindowTitle("Edit Tree Comment");
-    treeCommentField = new QLineEdit();
-    treeCommentField->setPlaceholderText("Enter comment here");
-    treeApplyButton = new QPushButton("Apply");
-    treeCancelButton = new QPushButton("Cancel");
-    treeCommentLayout = new QVBoxLayout();
-    treeCommentLayout->addWidget(treeCommentField);
-    QHBoxLayout *hLayout = new QHBoxLayout();
-    hLayout->addWidget(treeApplyButton);
-    hLayout->addWidget(treeCancelButton);
-    treeCommentLayout->addLayout(hLayout);
-    treeCommentEditDialog->setLayout(treeCommentLayout);
-    connect(treeCommentField, SIGNAL(textChanged(QString)), this, SLOT(updateTreeCommentBuffer(QString)));
-    connect(treeApplyButton, SIGNAL(clicked()), this, SLOT(editTreeComments()));
-    connect(treeCancelButton, SIGNAL(clicked()), treeCommentEditDialog, SLOT(hide()));
-
-    treeColorEditDialog = new QDialog();
-    treeColorEditDialog->setWindowTitle("Change Tree Color");
-    treeColorEditDialog->setWindowFlags(Qt::WindowStaysOnTopHint);
-    rLabel = new QLabel("R:"); gLabel = new QLabel("G:"); bLabel = new QLabel("B:"); aLabel = new QLabel("A:");
-    rSpin = new QDoubleSpinBox(); gSpin = new QDoubleSpinBox(); bSpin = new QDoubleSpinBox(); aSpin = new QDoubleSpinBox();
-    rSpin->setMaximum(1.); gSpin->setMaximum(1.); bSpin->setMaximum(1.); aSpin->setMaximum(1.);
-    treeColorApplyButton = new QPushButton("Apply");
-    treeColorCancelButton = new QPushButton("Cancel");
-    QVBoxLayout *vLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(rLabel); hLayout->addWidget(rSpin);
-    hLayout->addWidget(gLabel); hLayout->addWidget(gSpin);
-    hLayout->addWidget(bLabel); hLayout->addWidget(bSpin);
-    hLayout->addWidget(aLabel); hLayout->addWidget(aSpin);
-    vLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(treeColorApplyButton);
-    hLayout->addWidget(treeColorCancelButton);
-    vLayout->addLayout(hLayout);
-    treeColorEditDialog->setLayout(vLayout);
-    connect(treeColorApplyButton, SIGNAL(clicked()), this, SLOT(editTreeColor()));
-    connect(treeColorCancelButton, SIGNAL(clicked()), treeColorEditDialog, SLOT(hide()));
-
-    // build node action dialogs
-    nodeCommentEditDialog = new QDialog();
-    nodeCommentEditDialog->setWindowTitle("Edit node comments");
-    nodeCommentField = new QLineEdit();
-    nodeCommentField->setPlaceholderText("Enter comment here");
-    nodeCommentApplyButton = new QPushButton("Apply");
-    nodeCommentCancelButton = new QPushButton("Cancel");
-    nodeCommentLayout = new QVBoxLayout();
-    nodeCommentLayout->addWidget(nodeCommentField);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodeCommentApplyButton);
-    hLayout->addWidget(nodeCommentCancelButton);
-    nodeCommentLayout->addLayout(hLayout);
-    nodeCommentEditDialog->setLayout(nodeCommentLayout);
-
-    nodeRadiusEditDialog = new QDialog();
-    nodeRadiusEditDialog->setWindowTitle("Edit node radii");
-    radiusLabel = new QLabel("new radius:");
-    radiusSpin = new QDoubleSpinBox();
-    radiusSpin->setMaximum(100000);
-    nodeRadiusApplyButton = new QPushButton("Apply");
-    nodeRadiusCancelButton = new QPushButton("Cancel");
-    nodeRadiusLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(radiusLabel);
-    hLayout->addWidget(radiusSpin);
-    nodeRadiusLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(nodeRadiusApplyButton);
-    hLayout->addWidget(nodeRadiusCancelButton);
-    nodeRadiusLayout->addLayout(hLayout);
-    nodeRadiusEditDialog->setLayout(nodeRadiusLayout);
-
-    moveNodesDialog = new QDialog();
-    moveNodesDialog->setWindowTitle("Move nodes");
-    newTreeLabel = new QLabel("New Tree:");
-    newTreeIDSpin = new QSpinBox();
-    //newTreeIDSpin->setMaximum(state->skeletonState->greatestTreeID);
-    moveNodesButton = new QPushButton("Move Nodes");
-    moveNodesCancelButton = new QPushButton("Cancel");
-    QVBoxLayout *moveNodesLayout = new QVBoxLayout();
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(newTreeLabel);
-    hLayout->addWidget(newTreeIDSpin);
-    moveNodesLayout->addLayout(hLayout);
-    hLayout = new QHBoxLayout();
-    hLayout->addWidget(moveNodesButton);
-    hLayout->addWidget(moveNodesCancelButton);
-    moveNodesLayout->addLayout(hLayout);
-    moveNodesDialog->setLayout(moveNodesLayout);
-
-    connect(nodeCommentField, SIGNAL(textChanged(QString)), this, SLOT(updateNodeCommentBuffer(QString)));
-    connect(nodeCommentApplyButton, SIGNAL(clicked()), this, SLOT(editNodeComments()));
-    connect(nodeCommentCancelButton, SIGNAL(clicked()), nodeCommentEditDialog, SLOT(hide()));
-    connect(radiusSpin, SIGNAL(valueChanged(double)), this, SLOT(updateNodeRadiusBuffer(double)));
-    connect(nodeRadiusApplyButton, SIGNAL(clicked()), this, SLOT(editNodeRadii()));
-    connect(nodeRadiusCancelButton, SIGNAL(clicked()), nodeRadiusEditDialog, SLOT(hide()));
-    connect(moveNodesButton, SIGNAL(clicked()), this, SLOT(moveNodesClicked()));
-    connect(moveNodesCancelButton, SIGNAL(clicked()), moveNodesDialog, SLOT(hide()));
-}
-
-void ToolsTreeviewTab::setFocused(TreeTable *table) {
-    focusedTreeTable = table;
-}
-void ToolsTreeviewTab::setFocused(NodeTable *table) {
-    focusedNodeTable = table;
-}
-
-// tree context menu
-void ToolsTreeviewTab::treeContextMenuCalled(QPoint pos) {
-    treeItemSelected();
-    if(focusedTreeTable == activeTreeTable) {
-        treeContextMenu->actions().at(0)->setEnabled(false); // set as active tree action
-        treeContextMenu->actions().at(2)->setEnabled(false); // merge trees action
-    }
-    else {
-        treeContextMenu->actions().at(0)->setEnabled(true);
-        treeContextMenu->actions().at(2)->setEnabled(true);
-    }
-    treeContextMenu->move(focusedTreeTable->mapToGlobal(pos));
-    treeContextMenu->show();
-}
-
-void ToolsTreeviewTab::setActiveTreeAction() {
-    if(state->skeletonState->selectedTrees.size() != 1) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Choose exactly one tree for activating.");
-        prompt.exec();
-    }
-    else {
-        Skeletonizer::setActiveTreeByID(state->skeletonState->selectedTrees[0]->treeID);
-        treeActivated();
-    }
-    state->skeletonState->selectedTrees.clear();
+    QObject::connect(nodeTable, &NodeTable::customContextMenuRequested, this, &ToolsTreeviewTab::contextMenu);
+    QObject::connect(nodeTable, &NodeTable::deleteNodesSignal, this, &ToolsTreeviewTab::deleteNodesAction);
+    QObject::connect(nodeTable, &NodeTable::itemChanged, this, &ToolsTreeviewTab::nodeItemChanged);
+    QObject::connect(nodeTable, &NodeTable::itemDoubleClicked, this, &ToolsTreeviewTab::nodeItemDoubleClicked);
+    QObject::connect(nodeTable, &NodeTable::itemSelectionChanged, this, &ToolsTreeviewTab::nodeSelectionChanged);
 }
 
 void ToolsTreeviewTab::mergeTreesAction() {
     QMessageBox prompt;
-    if(state->skeletonState->selectedTrees.size() != 2) {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Choose exactly two trees for merging.");
-        prompt.exec();
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle("Cofirmation required");
+    prompt.setText("Do you really want to merge selected trees?");
+    QPushButton *confirmButton = prompt.addButton("Merge", QMessageBox::ActionRole);
+    prompt.addButton("Cancel", QMessageBox::ActionRole);
+    prompt.exec();
+    if (prompt.clickedButton() == confirmButton) {
+        int treeID1 = state->skeletonState->selectedTrees[0]->treeID;
+        int treeID2 = state->skeletonState->selectedTrees[1]->treeID;
+        Skeletonizer::mergeTrees(CHANGE_MANUAL, treeID1, treeID2, true);
+        treesMerged(treeID1, treeID2);
     }
-    else {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Do you really want to merge selected trees?");
-        QPushButton *confirmButton = prompt.addButton("Merge", QMessageBox::ActionRole);
-        prompt.addButton("Cancel", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            int treeID1 = state->skeletonState->selectedTrees[0]->treeID;
-            int treeID2 = state->skeletonState->selectedTrees[1]->treeID;
-            Skeletonizer::mergeTrees(CHANGE_MANUAL, treeID1, treeID2, true);
-            treesMerged(treeID1, treeID2);
-        }
-    }
-    state->skeletonState->selectedTrees.clear();
 }
 
 void ToolsTreeviewTab::restoreColorAction() {
-    if(state->skeletonState->selectedTrees.size() == 0) {
-        return;
+    for (auto * tree : state->skeletonState->selectedTrees) {
+        Skeletonizer::restoreDefaultTreeColor(tree);
     }
-    std::vector<treeListElement *>::iterator iter;
-    for(iter = state->skeletonState->selectedTrees.begin();
-        iter != state->skeletonState->selectedTrees.end(); ++iter) {
-        Skeletonizer::restoreDefaultTreeColor(*iter);
-    }
-    updateTreesTable();
-    state->skeletonState->selectedTrees.clear();
+    recreateTreesTable();
 }
 
 void ToolsTreeviewTab::deleteTreesAction() {
-    QMessageBox prompt;
-    QPushButton *confirmButton;
-    if(focusedTreeTable == activeTreeTable) {
+    if(state->skeletonState->selectedTrees.size() == 0) {
+        qDebug("no trees to delete");
+    } else {
+        QMessageBox prompt;
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
         prompt.setIcon(QMessageBox::Question);
         prompt.setWindowTitle("Cofirmation required");
         prompt.setText("Do you really want to delete selected tree(s)?");
-        confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
-        prompt.addButton("Cancel", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            state->skeletonState->selectedTrees.clear();
-            state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
-            emit deleteSelectedTreesSignal();
-            treesDeleted(); // don't need to send selected tree here, it is the active
-        }
-    }
-    else {
-        if(state->skeletonState->selectedTrees.size() == 0) {
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Information);
-            prompt.setWindowTitle("Information");
-            prompt.setText("Select at least one tree for deletion.");
-            prompt.exec();
-            return;
-        }
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Do you really want to delete selected tree(s)?");
-        confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
+        const QPushButton * const confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
         prompt.addButton("Cancel", QMessageBox::ActionRole);
         prompt.exec();
         if(prompt.clickedButton() == confirmButton) {
@@ -569,88 +273,93 @@ void ToolsTreeviewTab::deleteTreesAction() {
             treesDeleted();
         }
     }
-    state->skeletonState->selectedTrees.clear();
 }
 
 void ToolsTreeviewTab::setTreeCommentAction() {
-    if(focusedTreeTable == treeTable and state->skeletonState->selectedTrees.size() == 0) {
-        return;
-    }
-    treeCommentField->setText(treeCommentBuffer);
-    treeCommentEditDialog->exec();
-}
-
-void ToolsTreeviewTab::updateTreeCommentBuffer(QString comment) {
-    treeCommentBuffer = comment;
-}
-
-void ToolsTreeviewTab::editTreeComments() {
-    if(focusedTreeTable == activeTreeTable) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID,
-                                     treeCommentBuffer.toLocal8Bit().data());
-        setText(activeTreeTable, activeTreeTable->item(0, TREE_COMMENT), treeCommentBuffer);
-        int row = getActiveTreeRow();
-        if(row != -1) {
-            setText(treeTable, treeTable->item(row, TREE_COMMENT), treeCommentBuffer);
-        }
-        treeCommentEditDialog->hide();
-        return;
-    }
-
-    if(state->skeletonState->selectedTrees.size() == 0) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Please select at least one tree to edit its comment.");
-        prompt.exec();
-        return;
-    }
-    std::vector<treeListElement *>::iterator iter;
-    for(iter = state->skeletonState->selectedTrees.begin();
-        iter != state->skeletonState->selectedTrees.end(); ++iter) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, (*iter)->treeID, treeCommentBuffer.toLocal8Bit().data());
-        if((*iter) == state->skeletonState->activeTree) {
-            setText(activeTreeTable, activeTreeTable->item(0, TREE_COMMENT), treeCommentBuffer);
+    bool applied = false;
+    auto text = QInputDialog::getText(this, "Edit Tree Comment", "new tree comment", QLineEdit::Normal, treeCommentBuffer, &applied);
+    if (applied) {
+        auto treeCommentBuffer = text;
+        if (activeTreeTable->hasFocus()) {
+            Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, treeCommentBuffer.toLocal8Bit().data());
+            setText(activeTreeTable, activeTreeTable->item(0, TreeTable::TREE_COMMENT), treeCommentBuffer);
+            int row = getActiveTreeRow();
+            if (row != -1) {
+                setText(treeTable, treeTable->item(row, TreeTable::TREE_COMMENT), treeCommentBuffer);
+            }
+        } else {
+            for (auto tree : state->skeletonState->selectedTrees) {
+                Skeletonizer::addTreeComment(CHANGE_MANUAL, tree->treeID, treeCommentBuffer);
+            }
+            recreateTreesTable();
         }
     }
-    treeCommentEditDialog->hide();
-    updateTreesTable();
 }
 
-void ToolsTreeviewTab::editTreeColor() {
-    if(state->skeletonState->selectedTrees.size() != 1) {
-        qDebug("Failed to edit tree color. No tree selected.");
-    }
-    else {
-        state->skeletonState->selectedTrees[0]->color.r = rSpin->value();
-        state->skeletonState->selectedTrees[0]->color.g = gSpin->value();
-        state->skeletonState->selectedTrees[0]->color.b = bSpin->value();
-        state->skeletonState->selectedTrees[0]->color.a = aSpin->value();
-        updateTreeColorCell(treeTable, treeColorEditRow);
-        if(state->skeletonState->selectedTrees[0] == state->skeletonState->activeTree) {
-            updateTreeColorCell(activeTreeTable, 0);
-        }
-        state->skeletonState->selectedTrees.clear();
-    }
-    treeColorEditDialog->hide();
-}
+void ToolsTreeviewTab::contextMenu(QPoint pos) {
+    if (activeNodeTable->hasFocus()) {
+        QMenu nodeContextMenu;
+        QObject::connect(nodeContextMenu.addAction("Jump to"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedNode);
+        QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
+        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "delete active node"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
-// node context menu
-void ToolsTreeviewTab::nodeContextMenuCalled(QPoint pos) {
-    nodeItemSelected();
-    if(focusedNodeTable == activeNodeTable) {
-        nodeContextMenu->actions().at(2)->setEnabled(false); // link nodes needs two selected nodes
+        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to
+        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//del active node
+        //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
+        nodeContextMenu.exec(activeNodeTable->viewport()->mapToGlobal(pos));
+    } else if (nodeTable->hasFocus()) {
+        QMenu nodeContextMenu;
+        QObject::connect(nodeContextMenu.addAction("Set as active node"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedNode);
+        QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
+        QObject::connect(nodeContextMenu.addAction("(Un)link nodes"), &QAction::triggered, this, &ToolsTreeviewTab::linkNodesAction);
+        QObject::connect(nodeContextMenu.addAction("Set comment for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeCommentAction);
+        QObject::connect(nodeContextMenu.addAction("Set radius for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeRadiusAction);
+        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
+
+        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//active node
+        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
+        nodeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
+        nodeContextMenu.actions().at(5)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
+        //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
+        nodeContextMenu.exec(nodeTable->viewport()->mapToGlobal(pos));
+    } else if (activeTreeTable->hasFocus()) {
+        QMenu treeContextMenu;
+        QObject::connect(treeContextMenu.addAction("Set comment for tree"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
+        QObject::connect(treeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete tree"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
+
+        treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
+        treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        treeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
+        treeContextMenu.exec(activeTreeTable->viewport()->mapToGlobal(pos));
+    } else if (treeTable->hasFocus()) {
+        QMenu treeContextMenu;
+        QObject::connect(treeContextMenu.addAction("Set as active tree"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedTree);
+        QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
+        QObject::connect(treeContextMenu.addAction("Merge trees"), &QAction::triggered, this, &ToolsTreeviewTab::mergeTreesAction);
+        QObject::connect(treeContextMenu.addAction("Set comment for tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
+        QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
+        QObject::connect(treeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "Delete tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
+
+        treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() == 1);//set as active tree action
+        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
+        treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() == 2);//merge trees action
+        treeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        treeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        treeContextMenu.actions().at(5)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
+        //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
+        treeContextMenu.exec(treeTable->viewport()->mapToGlobal(pos));
     }
-    else {
-        nodeContextMenu->actions().at(2)->setEnabled(true);
-    }
-    nodeContextMenu->move(focusedNodeTable->mapToGlobal(pos));
-    nodeContextMenu->show();
 }
 
 void ToolsTreeviewTab::deleteNodesAction() {
-    if(focusedNodeTable == activeNodeTable) {
+    if (activeNodeTable->hasFocus()) {
         QMessageBox prompt;
         prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
         prompt.setIcon(QMessageBox::Question);
@@ -660,256 +369,159 @@ void ToolsTreeviewTab::deleteNodesAction() {
         prompt.addButton("Cancel", QMessageBox::ActionRole);
         prompt.exec();
         if(prompt.clickedButton() == confirmButton) {
-            emit delActiveNodeSignal();
-            nodesDeleted(); // No need to send list of deleted nodes. It is the active node
+            emit delActiveNodeSignal();//skeletonizer
+            recreateNodesTable();//removes active node from nodeTable
+            nodeActivated();//removes active node from activeNodeTable
         }
-        return;
+    } else {
+        if(state->skeletonState->selectedNodes.size() == 0) {
+            qDebug("no nodes");
+            return;
+        }
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setWindowTitle("Cofirmation required");
+        prompt.setText("Do you really want to deleted selected node(s)?");
+        QPushButton *confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
+        prompt.addButton("Cancel", QMessageBox::ActionRole);
+        prompt.exec();
+        if(prompt.clickedButton() == confirmButton) {
+            emit deleteSelectedNodesSignal();//skeletonizer
+            recreateNodesTable();//removes nodes from nodeTable
+            nodeActivated();//updates active node
+        }
     }
-    if(state->skeletonState->selectedNodes.size() == 0) {
-        qDebug("no nodes");
-        return;
-    }
-    QMessageBox prompt;
-    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-    prompt.setIcon(QMessageBox::Question);
-    prompt.setWindowTitle("Cofirmation required");
-    prompt.setText("Do you really want to deleted selected node(s)?");
-    QPushButton *confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
-    prompt.addButton("Cancel", QMessageBox::ActionRole);
-    prompt.exec();
-    if(prompt.clickedButton() == confirmButton) {
-        emit deleteSelectedNodesSignal();
-        nodesDeleted();
-    }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
 }
 
 void ToolsTreeviewTab::setNodeRadiusAction() {
-    if(state->skeletonState->selectedNodes.size() == 0) {
-        return;
+    bool applied = false;
+    auto value = QInputDialog::getDouble(this, "Edit Node Radii", "new node radius", radiusBuffer, 0, 100000, 1, &applied);
+    if (applied) {
+        radiusBuffer = value;
+
+        if (activeNodeTable->hasFocus()) {
+            Skeletonizer::editNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, radiusBuffer,
+                                   state->skeletonState->activeNode->position.x,
+                                   state->skeletonState->activeNode->position.y,
+                                   state->skeletonState->activeNode->position.z,
+                                   state->skeletonState->activeNode->createdInMag);
+            setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
+            int row = getActiveNodeRow();
+            if (row != -1) {
+                setText(nodeTable, nodeTable->item(row, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
+            }
+        } else {
+            for (auto node : state->skeletonState->selectedNodes) {
+                if(node == state->skeletonState->activeNode) {
+                    setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
+                }
+                Skeletonizer::editNode(CHANGE_MANUAL, 0, node, radiusBuffer,
+                                       node->position.x, node->position.y, node->position.z, node->createdInMag);
+            }
+            recreateNodesTable();
+        }
     }
-    radiusSpin->setValue(radiusBuffer);
-    nodeRadiusEditDialog->exec();
 }
 
 void ToolsTreeviewTab::linkNodesAction() {
-    if(state->skeletonState->selectedNodes.size() != 2) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Please select exactly two nodes to link with each other.");
-        prompt.exec();
-        return;
+    const auto node0 = state->skeletonState->selectedNodes[0]->nodeID;
+    const auto node1 = state->skeletonState->selectedNodes[1]->nodeID;
+    //segments are only stored and searched in one direction so we have to search for both
+    if (Skeletonizer::findSegmentByNodeIDs(node0, node1) != nullptr) {
+        emit delSegmentSignal(CHANGE_MANUAL, node0, node1, nullptr, true);
+    } else if (Skeletonizer::findSegmentByNodeIDs(node1, node0) != nullptr) {
+        emit delSegmentSignal(CHANGE_MANUAL, node1, node0, nullptr, true);
+    } else{
+        emit addSegmentSignal(CHANGE_MANUAL, node0, node1, true);
     }
-    if(Skeletonizer::findSegmentByNodeIDs(state->skeletonState->selectedNodes[0]->nodeID,
-                                          state->skeletonState->selectedNodes[1]->nodeID)) {
-        emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0]->nodeID,
-                              state->skeletonState->selectedNodes[1]->nodeID, NULL, true);
-        return;
-    }
-    emit addSegmentSignal(CHANGE_MANUAL,
-                          state->skeletonState->selectedNodes[0]->nodeID,
-                          state->skeletonState->selectedNodes[1]->nodeID,
-                          true);
-}
-
-void ToolsTreeviewTab::updateNodeRadiusBuffer(double value) {
-    radiusBuffer = value;
-}
-
-void ToolsTreeviewTab::editNodeRadii() {
-    if(focusedNodeTable == activeNodeTable) {
-        Skeletonizer::editNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, radiusBuffer,
-                               state->skeletonState->activeNode->position.x,
-                               state->skeletonState->activeNode->position.y,
-                               state->skeletonState->activeNode->position.z,
-                               state->skeletonState->activeNode->createdInMag);
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_RADIUS), QString::number(radiusBuffer));
-        int row = getActiveNodeRow();
-        if(row != -1) {
-            setText(nodeTable, nodeTable->item(row, NODE_RADIUS), QString::number(radiusBuffer));
-        }
-        nodeRadiusEditDialog->hide();
-    }
-    else {
-        if(state->skeletonState->selectedNodes.size() == 0) {
-            return;
-        }
-        std::vector<nodeListElement *>::iterator iter;
-        for(iter = state->skeletonState->selectedNodes.begin();
-            iter != state->skeletonState->selectedNodes.end(); ++iter) {
-            if((*iter) == state->skeletonState->activeNode) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_RADIUS), QString::number(radiusBuffer));
-            }
-            Skeletonizer::editNode(CHANGE_MANUAL, 0, *iter, radiusBuffer,
-                                   (*iter)->position.x, (*iter)->position.y, (*iter)->position.z, (*iter)->createdInMag);
-        }
-        nodeRadiusEditDialog->hide();
-        updateNodesTable();
-    }
-}
-
-void ToolsTreeviewTab::moveNodesClicked() {
-    int treeID = newTreeIDSpin->value();
-    treeListElement *tree = Skeletonizer::findTreeByTreeID(treeID);
-    if(tree == NULL) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText(QString("Tree with ID %1 does not exist.").arg(treeID));
-        prompt.exec();
-    }
-    else {
-        std::vector<nodeListElement *>::iterator iter;
-        for(iter = kState->skeletonState->selectedNodes.begin();
-            iter != kState->skeletonState->selectedNodes.end(); ++iter) {
-            Skeletonizer::moveNodeToTree((*iter), treeID);
-        }
-        moveNodesDialog->hide();
-    }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
 }
 
 void ToolsTreeviewTab::splitComponentAction() {
     QMessageBox prompt;
-    if(state->skeletonState->selectedNodes.size() != 1) {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Choose exactly one node whose component should be split from the tree.");
-        prompt.exec();
-    }
-    else {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Do you really want to split the connected component from the tree?");
-        QPushButton *confirmButton = prompt.addButton("Split", QMessageBox::ActionRole);
-        prompt.addButton("Cancel", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            treeListElement *prevActive = state->skeletonState->activeTree;
-            Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->selectedNodes[0]->nodeID, true);
-            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                state->skeletonState->selectedNodes[i]->selected = false;
-            }
-            state->skeletonState->selectedNodes.clear();
-            if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
-                treeComponentSplit();
-            }
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle("Cofirmation required");
+    prompt.setText("Do you really want to split the connected component from the tree?");
+    QPushButton *confirmButton = prompt.addButton("Split", QMessageBox::ActionRole);
+    prompt.addButton("Cancel", QMessageBox::ActionRole);
+    prompt.exec();
+    if(prompt.clickedButton() == confirmButton) {
+        treeListElement *prevActive = state->skeletonState->activeTree;
+        Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->selectedNodes.front()->nodeID, true);
+        if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
+            // when a tree is split, a new tree has been created and made active
+            treeActivated();//add new tree to active tree table
+            insertTree(state->skeletonState->activeTree, treeTable);//add new tree to tree table
+            emit updateAnnotationLabelsSignal();//tree count changed
         }
     }
 }
 
 void ToolsTreeviewTab::moveNodesAction() {
     QMessageBox prompt;
-    if(state->skeletonState->selectedNodes.size() == 0
-            or state->skeletonState->selectedTrees.size() != 1) {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("Choose at least one node to move to exactly one tree.");
-        prompt.exec();
-    }
-    else {
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Confirmation Requested");
-        prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
-                                arg(state->skeletonState->selectedTrees[0]->treeID));
-        QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            for(uint i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                Skeletonizer::moveNodeToTree(state->skeletonState->selectedNodes[i],
-                                             state->skeletonState->selectedTrees[0]->treeID);
-            }
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle("Confirmation Requested");
+    prompt.setText(QString("Do you really want to move selected nodes to tree %1?").
+                            arg(state->skeletonState->selectedTrees.front()->treeID));
+    QPushButton *confirmButton = prompt.addButton("Move", QMessageBox::ActionRole);
+    prompt.addButton("Cancel", QMessageBox::ActionRole);
+    prompt.exec();
+    if(prompt.clickedButton() == confirmButton) {
+        for (auto * const node : state->skeletonState->selectedNodes) {
+            Skeletonizer::moveNodeToTree(node, state->skeletonState->selectedTrees.front()->treeID);
         }
     }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
-    state->skeletonState->selectedTrees.clear();
+    recreateNodesTable();
 }
 
 void ToolsTreeviewTab::setNodeCommentAction() {
-    if(state->skeletonState->selectedNodes.size() == 0) {
-        return;
-    }
-    nodeCommentField->setText(nodeCommentBuffer);
-    nodeCommentEditDialog->exec();
-}
+    bool applied = false;
+    auto text = QInputDialog::getText(this, "Edit Node Comment", "new node comment", QLineEdit::Normal, nodeCommentBuffer, &applied);
+    if (applied) {
+        nodeCommentBuffer = text;
 
-void ToolsTreeviewTab::updateNodeCommentBuffer(QString comment) {
-    nodeCommentBuffer = comment;
-}
-
-void ToolsTreeviewTab::editNodeComments() {
-    if(focusedNodeTable == activeNodeTable) {
-        if(nodeCommentBuffer.length() > 0) {
-            if(state->skeletonState->activeNode->comment == NULL) {
-                Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(),
-                                         state->skeletonState->activeNode, 0, true);
-            }
-            else {
-                Skeletonizer::editComment(CHANGE_MANUAL,
-                                          state->skeletonState->activeNode->comment, 0,
-                                          nodeCommentBuffer.toLocal8Bit().data(),
-                                          state->skeletonState->activeNode, 0, true);
-            }
-        }
-        else {
-            if(state->skeletonState->activeNode->comment != NULL) {
+        if (activeNodeTable->hasFocus()) {
+            if (nodeCommentBuffer.length() > 0) {
+                if(state->skeletonState->activeNode->comment == nullptr) {
+                    Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(),
+                                             state->skeletonState->activeNode, 0, true);
+                } else {
+                    Skeletonizer::editComment(CHANGE_MANUAL,
+                                              state->skeletonState->activeNode->comment, 0,
+                                              nodeCommentBuffer.toLocal8Bit().data(),
+                                              state->skeletonState->activeNode, 0, true);
+                }
+            } else if(state->skeletonState->activeNode->comment != nullptr) {
                 Skeletonizer::delComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment,
                                          state->skeletonState->activeNode->nodeID, true);
             }
-        }
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), nodeCommentBuffer);
-        int row = getActiveNodeRow();
-        if(row != -1) {
-            setText(nodeTable, nodeTable->item(row, NODE_COMMENT), nodeCommentBuffer);
-        }
-        nodeCommentEditDialog->hide();
-        return;
-    }
-    // nodeTable focused
-    if(state->skeletonState->selectedNodes.size() == 0) {
-        return;
-    }
-    std::vector<nodeListElement *>::iterator iter;
-    for(iter = state->skeletonState->selectedNodes.begin();
-        iter != state->skeletonState->selectedNodes.end(); ++iter) {
-        if((*iter) == state->skeletonState->activeNode) {
-            setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), nodeCommentBuffer);
-        }
-        if(nodeCommentBuffer.length() > 0) {
-            if((*iter)->comment == NULL) {
-                Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(), *iter, 0, true);
+            setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), nodeCommentBuffer);
+            int row = getActiveNodeRow();
+            if (row != -1) {
+                setText(nodeTable, nodeTable->item(row, NodeTable::NODE_COMMENT), nodeCommentBuffer);
             }
-            else {
-                Skeletonizer::editComment(CHANGE_MANUAL,
-                                          (*iter)->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), *iter, 0, true);
+        } else {// nodeTable focused
+            for (auto node : state->skeletonState->selectedNodes) {
+                if (node == state->skeletonState->activeNode) {
+                    setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), nodeCommentBuffer);
+                }
+                if(nodeCommentBuffer.length() > 0) {
+                    if (node->comment == nullptr) {
+                        Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(), node, 0, true);
+                    } else {
+                        Skeletonizer::editComment(CHANGE_MANUAL,
+                                                  node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0, true);
+                    }
+                } else if (node-> comment != nullptr) {
+                    Skeletonizer::delComment(CHANGE_MANUAL, node->comment, node->nodeID, true);
+                }
             }
-        }
-        else {
-            if((*iter)-> comment != NULL) {
-                Skeletonizer::delComment(CHANGE_MANUAL, (*iter)->comment, (*iter)->nodeID, true);
-            }
+            recreateNodesTable();
         }
     }
-    nodeCommentEditDialog->hide();
-    updateNodesTable();
 }
-
 
 void ToolsTreeviewTab::treeSearchChanged() {
     if(treeRegExCheck->isChecked() and treeSearchField->text().length() > 0) {
@@ -919,7 +531,7 @@ void ToolsTreeviewTab::treeSearchChanged() {
             return;
         }
     }
-    updateTreesTable();
+    recreateTreesTable();
 }
 void ToolsTreeviewTab::nodeSearchChanged() {
     if(nodeRegExCheck->isChecked() and nodeSearchField->text().length() > 0) {
@@ -929,7 +541,7 @@ void ToolsTreeviewTab::nodeSearchChanged() {
             return;
         }
     }
-    updateNodesTable();
+    recreateNodesTable();
 }
 
 void ToolsTreeviewTab::displayedNodesChanged(int index) {
@@ -940,7 +552,7 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
         displayedNodes = displayedNodesCombo->currentText().toInt();
         break;
     case NODECOMBO_ALL:
-        displayedNodes = 0;
+        displayedNodes = DISPLAY_ALL;
         break;
     default:
         break;
@@ -949,72 +561,21 @@ void ToolsTreeviewTab::displayedNodesChanged(int index) {
     if(displayedNodes == nodeTable->rowCount()) {
         return;
     }
-    else if(displayedNodes != DISPLAY_ALL and displayedNodes < nodeTable->rowCount()) {
-        nodeTable->setRowCount(displayedNodes);
-    }
     else {
-        updateNodesTable();
+        recreateNodesTable();
     }
 
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
-    if(activeTreeTable->changeByCode) {
+    if(activeTreeTable->selectionProtection) {
         return;
     }
-    treeListElement *activeTree = state->skeletonState->activeTree;
-    if(activeTree == NULL) {
-        return;
-    }
-    int activeRow = -1;
-    for(int i = 0; i < treeTable->rowCount(); ++i) {
-        if(treeTable->item(i, TREE_ID)->text().toInt() == activeTree->treeID) {
-            activeRow = i;
-            break;
-        }
-    }
-
-    float value;
-    switch(item->column()) {
-    case TREE_COMMENT: {
-            QString prevComment(activeTree->comment);
-            if(activeRow != -1) {
-                setText(treeTable, treeTable->item(activeRow, TREE_COMMENT), item->text());
-            }
-            Skeletonizer::addTreeComment(CHANGE_MANUAL, activeTree->treeID, item->text().toLocal8Bit().data());
-            // check if tree will be displayed in list
-            if(treeSearchField->text().isEmpty() == false) {
-                if(matchesSearchString(treeSearchField->text(),
-                                       QString(activeTree->comment),
-                                       treeRegExCheck->isChecked()) == false) { // new comment does not match search string
-                    for(int i = 0; i < treeTable->rowCount(); ++i) {
-                        if(treeTable->item(i, TREE_ID)->text().toInt() == activeTree->treeID) {
-                            treeTable->removeRow(i);
-                            break;
-                        }
-                    }
-                }
-                else { // new comment matches search string
-                    if(prevComment.compare(item->text(), Qt::CaseInsensitive) != 0) {
-                        //different from previous comment. So we know, the tree is not in table, at the moment
-                        treeTable->insertRow(0);
-                        insertTree(activeTree, treeTable);
-                    }
-                }
-            }
-            else { // update active tree's comment in tree table
-                for(int i = 0; i < treeTable->rowCount(); ++i) {
-                    if(treeTable->item(i, TREE_ID)->text().toInt() == activeTree->treeID) {
-                        setText(treeTable, treeTable->item(i, TREE_COMMENT), activeTree->comment);
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-    default:
-        break;
+    if (item->column() == TreeTable::TREE_COMMENT) {
+        Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, item->text().toUtf8().data());
+        recreateTreesTable();
+        treeActivated();
     }
 }
 
@@ -1022,17 +583,17 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
 //    if(treeTable->changeByCode) {
 //        return;
 //    }
-    QTableWidgetItem *idItem = treeTable->item(item->row(), TREE_ID);
-    if(idItem == NULL) {
+    QTableWidgetItem *idItem = treeTable->item(item->row(), TreeTable::TREE_ID);
+    if(idItem == nullptr) {
         return;
     }
     treeListElement *selectedTree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
-    if(selectedTree == NULL) {
+    if(selectedTree == nullptr) {
         return;
     }
-    float value;
+
     switch(item->column()) {
-    case TREE_COMMENT: {
+    case TreeTable::TREE_COMMENT: {
             Skeletonizer::addTreeComment(CHANGE_MANUAL, selectedTree->treeID, item->text().toLocal8Bit().data());
             // check if tree will still be displayed in list
             if(treeSearchField->text().isEmpty() == false) {
@@ -1040,7 +601,7 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
                                        QString(selectedTree->comment),
                                        treeRegExCheck->isChecked()) == false) {
                     for(int i = 0; i < treeTable->rowCount(); ++i) {
-                        if(treeTable->item(i, TREE_ID)->text().toInt() == selectedTree->treeID) {
+                        if(treeTable->item(i, TreeTable::TREE_ID)->text().toInt() == selectedTree->treeID) {
                             treeTable->removeRow(i);
                             break;
                         }
@@ -1049,8 +610,8 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
             }
             // update active tree table if necessary
             if(selectedTree == state->skeletonState->activeTree) {
-                if(activeTreeTable->item(0, TREE_COMMENT)) {
-                    setText(activeTreeTable, activeTreeTable->item(0, TREE_COMMENT), item->text());
+                if(activeTreeTable->item(0, TreeTable::TREE_COMMENT)) {
+                    setText(activeTreeTable, activeTreeTable->item(0, TreeTable::TREE_COMMENT), item->text());
                 }
             }
             break;
@@ -1058,31 +619,29 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
     default:
         break;
     }
-    state->skeletonState->selectedTrees.clear();
-    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
-    if(activeNodeTable->changeByCode) {
+    if(activeNodeTable->selectionProtection) {
         return;
     }
     nodeListElement *activeNode = state->skeletonState->activeNode;
-    if(activeNode == NULL) {
+    if(activeNode == nullptr) {
         return;
     }
     int activeRow = -1;
     for(int i = 0; i < nodeTable->rowCount(); ++i) {
-        if((uint)nodeTable->item(i, NODE_ID)->text().toInt() == activeNode->nodeID) {
+        if((uint)nodeTable->item(i, NodeTable::NODE_ID)->text().toInt() == activeNode->nodeID) {
             activeRow = i;
             break;
         }
     }
 
     switch(item->column()) {
-    case NODE_COMMENT:
+    case NodeTable::NODE_COMMENT:
         if(activeNode->comment) {
             if(activeRow != -1) {
-                setText(nodeTable, nodeTable->item(activeRow, NODE_COMMENT), item->text());
+                setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
             }
             if(item->text().length() == 0) {
                 Skeletonizer::delComment(CHANGE_MANUAL, activeNode->comment, 0, true);
@@ -1116,73 +675,69 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
             }
             Skeletonizer::addComment(CHANGE_MANUAL, item->text().toLocal8Bit().data(), activeNode, 0, true);
             if(activeRow != -1) {
-                setText(nodeTable, nodeTable->item(activeRow, NODE_COMMENT), item->text());
+                setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
             }
         }
         break;
-    case NODE_X:
+    case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
             setText(activeNodeTable, item, QString::number(activeNode->position.x + 1));
         } else {
             activeNode->position.x = item->text().toInt() - 1;
         }
         if(activeRow != -1) {
-            setText(nodeTable, nodeTable->item(activeRow, NODE_X), item->text());
+            setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_X), item->text());
         }
         break;
-    case NODE_Y:
+    case NodeTable::NODE_Y:
         if(item->text().toInt() < 1) { // out of bounds
             setText(activeNodeTable, item, QString::number(activeNode->position.y + 1));
         } else {
             activeNode->position.y = item->text().toInt() - 1;
         }
         if(activeRow != -1) {
-            setText(nodeTable, nodeTable->item(activeRow, NODE_Y), item->text());
+            setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_Y), item->text());
         }
         break;
-    case NODE_Z:
+    case NodeTable::NODE_Z:
         if(item->text().toInt() < 1) { // out of bounds
             setText(activeNodeTable, item, QString::number(activeNode->position.z + 1));
         } else {
             activeNode->position.z = item->text().toInt() - 1;
         }
         if(activeRow != -1) {
-            setText(nodeTable, nodeTable->item(activeRow, NODE_Z), item->text());
+            setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_Z), item->text());
         }
         break;
-    case NODE_RADIUS:
+    case NodeTable::NODE_RADIUS:
         activeNode->radius = item->text().toFloat();
         if(activeRow != -1) {
-            setText(nodeTable, nodeTable->item(activeRow, NODE_RADIUS), item->text());
+            setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_RADIUS), item->text());
         }
         break;
     default:
         break;
     }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
-    if(nodeTable->changeByCode) {
+    if(nodeTable->selectionProtection) {
         return;
     }
-    QTableWidgetItem *idItem = nodeTable->item(item->row(), NODE_ID);
-    if(idItem == NULL) {
+    QTableWidgetItem *idItem = nodeTable->item(item->row(), NodeTable::NODE_ID);
+    if(idItem == nullptr) {
         return;
     }
     nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toInt());
-    if(selectedNode == NULL) {
+    if(selectedNode == nullptr) {
         return;
     }
     switch(item->column()) {
-    case NODE_COMMENT:
+    case NodeTable::NODE_COMMENT:
         if(selectedNode == state->skeletonState->activeNode) {
-            if(activeNodeTable->item(0, NODE_COMMENT)) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), item->text());
+            if(activeNodeTable->item(0, NodeTable::NODE_COMMENT)) {
+                setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
             }
         }
         if(selectedNode->comment) {
@@ -1211,185 +766,225 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
             }
             Skeletonizer::addComment(CHANGE_MANUAL, item->text().toLocal8Bit().data(), selectedNode, 0, true);
             if(selectedNode == state->skeletonState->activeNode) {
-                if(activeNodeTable->item(0, NODE_COMMENT)) {
-                    setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), item->text());
+                if(activeNodeTable->item(0, NodeTable::NODE_COMMENT)) {
+                    setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
                 }
             }
         }
         break;
-    case NODE_X:
+    case NodeTable::NODE_X:
         if(item->text().toInt() < 1) { // out of bounds
             setText(nodeTable, item, QString::number(selectedNode->position.x + 1));
         } else {
             selectedNode->position.x = item->text().toInt() - 1;
         }
         if(selectedNode == state->skeletonState->activeNode) {
-            if(activeNodeTable->item(0, NODE_X)) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_X), item->text());
+            if(activeNodeTable->item(0, NodeTable::NODE_X)) {
+                setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_X), item->text());
             }
         }
         break;
-    case NODE_Y:
+    case NodeTable::NODE_Y:
         if(item->text().toInt() < 1) { // out of bounds
             setText(nodeTable, item, QString::number(selectedNode->position.y + 1));
         } else {
             selectedNode->position.y = item->text().toInt() - 1;
         }
         if(selectedNode == state->skeletonState->activeNode) {
-            if(activeNodeTable->item(0, NODE_Y)) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_Y), item->text());
+            if(activeNodeTable->item(0, NodeTable::NODE_Y)) {
+                setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_Y), item->text());
             }
         }
         break;
-    case NODE_Z:
+    case NodeTable::NODE_Z:
         if(item->text().toInt() < 1) { // out of bounds
             setText(nodeTable, item, QString::number(selectedNode->position.z + 1));
         } else {
             selectedNode->position.z = item->text().toInt() - 1;
         }
         if(selectedNode == state->skeletonState->activeNode) {
-            if(activeNodeTable->item(0, NODE_Z)) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_Z), item->text());
+            if(activeNodeTable->item(0, NodeTable::NODE_Z)) {
+                setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_Z), item->text());
             }
         }
         break;
-    case NODE_RADIUS:
+    case NodeTable::NODE_RADIUS:
         selectedNode->radius = item->text().toFloat();
         if(selectedNode == state->skeletonState->activeNode) {
-            if(activeNodeTable->item(0, NODE_RADIUS)) {
-                setText(activeNodeTable, activeNodeTable->item(0, NODE_RADIUS), item->text());
+            if(activeNodeTable->item(0, NodeTable::NODE_RADIUS)) {
+                setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), item->text());
             }
         }
         break;
     default:
         break;
     }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();
 }
 
-void ToolsTreeviewTab::activeTreeSelected() {
+void ToolsTreeviewTab::activeTreeSelectionChanged() {
+    if (activeTreeTable->selectionProtection) {
+        return;
+    }
+
+    treeTable->selectionProtection = true;
     treeTable->clearSelection();
+    treeTable->selectionProtection = false;
+
     state->skeletonState->selectedTrees.clear();
-    QModelIndexList selected = activeTreeTable->selectionModel()->selectedIndexes();
-    if(selected.size() == 1) {
+    QModelIndexList selected = activeTreeTable->selectionModel()->selectedRows();
+    if (selected.size() == 1) {
         state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
+        //select active tree also in treeTable
+        treeTable->selectionProtection = true;
+        treeTable->selectRow(getActiveTreeRow());
+        treeTable->selectionProtection = false;
+
         if(nodesOfSelectedTreesRadio->isChecked()) {
-            updateNodesTable();
+            recreateNodesTable();
         }
     }
 }
 
-void ToolsTreeviewTab::treeItemSelected() {
+void ToolsTreeviewTab::treeSelectionChanged() {
+    if (treeTable->selectionProtection) {
+        return;
+    }
+
+    activeTreeTable->selectionProtection = true;
     activeTreeTable->clearSelection();
+    activeTreeTable->selectionProtection = false;
+
     state->skeletonState->selectedTrees.clear();
-    QModelIndexList selected = treeTable->selectionModel()->selectedIndexes();
-    treeListElement *tree;
+    QModelIndexList selected = treeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        tree = Skeletonizer::findTreeByTreeID(index.data().toInt());
-        if(tree) {
+        treeListElement * const tree = Skeletonizer::findTreeByTreeID(index.data().toInt());
+        if (tree) {
             state->skeletonState->selectedTrees.push_back(tree);
+            //select active tree also in activeTreeTable
+            if (tree == state->skeletonState->activeTree) {
+                activeTreeTable->selectionProtection = true;
+                activeTreeTable->selectRow(0);
+                activeTreeTable->selectionProtection = false;
+            }
         }
     }
-    if(nodesOfSelectedTreesRadio->isChecked()) {
-        updateNodesTable();
+    if (nodesOfSelectedTreesRadio->isChecked()) {
+        recreateNodesTable();
     }
 }
 
 void ToolsTreeviewTab::treeItemDoubleClicked(QTableWidgetItem* item) {
-    if(item->column() == TREE_COLOR) {
-        QTableWidgetItem *idItem = treeTable->item(item->row(), TREE_ID);
-        treeListElement *tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
-        if(tree == NULL) {
-            return;
+    if (item->column() == TreeTable::TREE_ID) {// user wants to activate tree
+        activateFirstSelectedTree();
+    } else if (item->column() == TreeTable::TREE_COLOR) {
+        auto initial_color = state->skeletonState->selectedTrees.front()->color;
+        auto color = QColorDialog::getColor(QColor(255.f*initial_color.r, 255.f*initial_color.g, 255.f*initial_color.b, 255.f*initial_color.a), this, "Select Tree Color", QColorDialog::ShowAlphaChannel);
+        if (color.isValid() == QColorDialog::Accepted) {
+            state->skeletonState->selectedTrees.front()->color.r = color.redF();
+            state->skeletonState->selectedTrees.front()->color.g = color.greenF();
+            state->skeletonState->selectedTrees.front()->color.b = color.blueF();
+            state->skeletonState->selectedTrees.front()->color.a = color.alphaF();
+            updateTreeColorCell(treeTable, treeTable->selectionModel()->selectedRows().front().row());
+            if (state->skeletonState->selectedTrees.front() == state->skeletonState->activeTree) {
+                updateTreeColorCell(activeTreeTable, 0);
+            }
         }
-        state->skeletonState->selectedTrees.clear();
-        state->skeletonState->selectedTrees.push_back(tree);
-        treeColorEditRow = item->row();
-        rSpin->setValue(tree->color.r);
-        gSpin->setValue(tree->color.g);
-        bSpin->setValue(tree->color.b);
-        aSpin->setValue(tree->color.a);
-        treeColorEditDialog->exec(); // don't use show. We have to block other events for this to safely finish
-    }
-    else if(item->column() == TREE_ID) {
-        // user wants to activate tree
-        if(state->skeletonState->selectedTrees.size() != 1) {
-            return;
-        }
-        Skeletonizer::setActiveTreeByID(state->skeletonState->selectedTrees.at(0)->treeID);
-        treeActivated();
-        state->skeletonState->selectedTrees.clear();
     }
 }
 
-void ToolsTreeviewTab::activeNodeSelected() {
-    if (nodeTable->changeByCode) {
+void ToolsTreeviewTab::activeNodeSelectionChanged() {
+    if (activeNodeTable->selectionProtection) {
         return;
     }
 
+    nodeTable->selectionProtection = true;
     nodeTable->clearSelection();
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
-    }
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
+    nodeTable->selectionProtection = false;
+
+    for (auto & selectedNode : state->skeletonState->selectedNodes) {
+        selectedNode->selected = false;
     }
     state->skeletonState->selectedNodes.clear();
-    if(state->skeletonState->activeNode) {
-        state->skeletonState->activeNode->selected = true;
-        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+
+    if (activeNodeTable->selectionModel()->selectedRows().size() == 1) {
+        if (state->skeletonState->activeNode) {
+            state->skeletonState->activeNode->selected = true;
+            state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+        }
+        //selection of active node in nodeTable
+        nodeTable->selectionProtection = true;
+        nodeTable->selectRow(getActiveNodeRow());
+        nodeTable->selectionProtection = false;
+    }
+    //(de)select of active node means 0 or 1 selected node, so this is no performance problem
+    if (selectedNodes.isChecked()) {
+        recreateNodesTable();
     }
 }
 
-void ToolsTreeviewTab::nodeItemSelected() {
-    if (nodeTable->changeByCode) {
+void ToolsTreeviewTab::nodeSelectionChanged() {
+    if (nodeTable->selectionProtection) {
         return;
     }
 
+    activeNodeTable->selectionProtection = true;
     activeNodeTable->clearSelection();
+    activeNodeTable->selectionProtection = false;
 
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
+    for (auto & selectedNode : state->skeletonState->selectedNodes) {
+        selectedNode->selected = false;
     }
     state->skeletonState->selectedNodes.clear();
-    QModelIndexList selected = nodeTable->selectionModel()->selectedIndexes();
-    nodeListElement *node;
+
+    QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        node = Skeletonizer::findNodeByNodeID(index.data().toInt());
-        if(node) {
-            state->skeletonState->selectedNodes.push_back(node);
+        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toInt());
+        //select node
+        if (node != nullptr) {
             node->selected = true;
+            state->skeletonState->selectedNodes.push_back(node);
+        }
+        //select active node also in activeNodeTable
+        if (node == state->skeletonState->activeNode) {
+            activeNodeTable->selectionProtection = true;
+            activeNodeTable->selectRow(0);
+            activeNodeTable->selectionProtection = false;
         }
     }
-    updateNodesTable();
+    nodeTable->setDragEnabled(false);//enable multi-selection on previously unselected elements
 }
-void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem*) {
-    if(state->skeletonState->selectedNodes.size() != 1) {
-        return;
+
+void ToolsTreeviewTab::activateFirstSelectedNode() {
+    if (state->skeletonState->selectedNodes.size() == 1) {
+        emit setActiveNodeSignal(CHANGE_MANUAL, nullptr, state->skeletonState->selectedNodes.front()->nodeID);
+        emit JumpToActiveNodeSignal();
+        nodeActivated();
     }
-    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedNodes.at(0)->nodeID);
-    emit JumpToActiveNodeSignal();
-    nodeActivated();
-    for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-        state->skeletonState->selectedNodes[i]->selected = false;
+}
+
+void ToolsTreeviewTab::activateFirstSelectedTree() {
+    if (state->skeletonState->selectedTrees.size() == 1) {
+        Skeletonizer::setActiveTreeByID(state->skeletonState->selectedTrees.front()->treeID);
+        treeActivated();
     }
-    state->skeletonState->selectedNodes.clear();
+}
+
+void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem * item) {
+    if (item->column() == NodeTable::NODE_ID) {
+        activateFirstSelectedNode();
+    }
 }
 
 void ToolsTreeviewTab::updateTreeColorCell(TreeTable *table, int row) {
-    QTableWidgetItem *idItem = table->item(row, TREE_ID);
-    treeListElement *tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
-    if(tree == NULL) {
-        return;
-    }
-    QColor treeColor = QColor(tree->color.r*255, tree->color.g*255, tree->color.b*255, 153);
-    QTableWidgetItem *colorItem = table->item(row, TREE_COLOR);
-    if(colorItem) {
-        colorItem->setBackgroundColor(treeColor);
+    QTableWidgetItem * const idItem = table->item(row, TreeTable::TREE_ID);
+    treeListElement * const tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
+    if (tree != nullptr) {
+        QColor treeColor = QColor(tree->color.r*255, tree->color.g*255, tree->color.b*255, tree->color.a*255);
+        QTableWidgetItem * const colorItem = table->item(row, TreeTable::TREE_COLOR);
+        if (colorItem != nullptr) {
+            colorItem->setBackgroundColor(treeColor);
+        }
     }
 }
 
@@ -1406,597 +1001,404 @@ bool ToolsTreeviewTab::matchesSearchString(QString searchString, QString string,
 }
 
 void ToolsTreeviewTab::setText(TreeTable *table, QTableWidgetItem *item, QString text) {
-    if(item != NULL) {
-        table->changeByCode = true;
+    if(item != nullptr) {
+        table->selectionProtection = true;
         item->setText(text);
-        table->changeByCode = false;
+        table->selectionProtection = false;
     }
 }
 
 void ToolsTreeviewTab::setText(NodeTable *table, QTableWidgetItem *item, QString text) {
-    if(item != NULL) {
-        table->changeByCode = true;
+    if(item != nullptr) {
+        table->selectionProtection = true;
         item->setText(text);
-        table->changeByCode = false;
+        table->selectionProtection = false;
     }
 }
 
-void ToolsTreeviewTab::updateTreesTable() {
+void ToolsTreeviewTab::recreateTreesTable() {
+    treeTable->selectionProtection = true;
     treeTable->clearContents();
-    treeTable->setRowCount(state->skeletonState->treeElements);
+    treeTable->setRowCount(state->skeletonState->treeElements);    
+    treeTable->selectionProtection = false;
 
-    treeListElement *currentTree = state->skeletonState->firstTree;
-    if(currentTree == NULL) { 
-        return;
-    }
+    QItemSelection selectedItems = treeTable->selectionModel()->selection();
+    std::size_t startIndex;
+    bool blockSelection = false;
 
-    QTableWidgetItem *item;
-    uint treeIndex = 0;
-    while(currentTree) {
+    size_t treeIndex = 0;
+    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
         // filter comment for search string match
         if(treeSearchField->text().length() > 0) {
             if(strlen(currentTree->comment) == 0) {
-                currentTree = currentTree->next;
                 continue;
             }
             if(matchesSearchString(treeSearchField->text(), currentTree->comment, treeRegExCheck->isChecked()) == false) {
-                currentTree = currentTree->next;
                 continue;
             }
         }
-        // tree id
-        Qt::ItemFlags flags;
-        item = new QTableWidgetItem(QString::number(currentTree->treeID));
-        flags = item->flags();
-        flags |= Qt::ItemIsSelectable;
-        flags &= ~Qt::ItemIsEditable;
-        item->setFlags(flags);
-        treeTable->setItem(treeIndex, TREE_ID, item);
-
-        // tree color
-        QColor treeColor = QColor(currentTree->color.r*255,
-                                  currentTree->color.g*255,
-                                  currentTree->color.b*255,
-                                  0.6*255);
-        item = new QTableWidgetItem();
-        flags = item->flags();
-        flags &= ~Qt::ItemIsEditable;
-        item->setFlags(flags);
-        item->setBackgroundColor(treeColor);
-        treeTable->setItem(treeIndex, TREE_COLOR, item);
-
-        // tree comment
-        item = new QTableWidgetItem("");
-        if(currentTree->comment) {
-            setText(treeTable, item, QString(currentTree->comment));
+        //check selection
+        if (std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), currentTree)
+                != std::end(state->skeletonState->selectedTrees)) {//tree is selected
+            if (!blockSelection) {
+                blockSelection = true;
+                startIndex = treeIndex;
+            }
+        } else {
+            if (blockSelection) {
+                selectedItems.select(treeTable->model()->index(startIndex, 0), treeTable->model()->index(treeIndex-1, treeTable->model()->columnCount()-1));
+                blockSelection = false;
+            }
         }
-        treeTable->setItem(treeIndex, TREE_COMMENT, item);
 
-        treeIndex++;
-        currentTree = currentTree->next;
+        treeTable->setRow(treeIndex, QString::number(currentTree->treeID)
+                , QColor(currentTree->color.r*255, currentTree->color.g*255, currentTree->color.b*255, 0.6*255)
+                , currentTree->comment == nullptr ? "" : currentTree->comment);
+
+        treeIndex++;//this is here so it doesn’t get incremented on continue
     }
+
+    if (blockSelection) {
+        selectedItems.select(treeTable->model()->index(startIndex, 0), treeTable->model()->index(treeIndex-1, treeTable->model()->columnCount()-1));
+    }
+
+    treeTable->selectionProtection = true;
+    treeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    treeTable->selectionProtection = false;
 
     treeTable->setRowCount(treeIndex);
 }
 
-void ToolsTreeviewTab::updateNodesTable() {
-    nodeTable->changeByCode = true;
+void ToolsTreeviewTab::recreateNodesTable() {
+    nodeTable->selectionProtection = true;
     nodeTable->clearContents();
-    nodeTable->changeByCode = false;
-
     if(displayedNodes > state->skeletonState->totalNodeElements or displayedNodes == DISPLAY_ALL) {
         nodeTable->setRowCount(state->skeletonState->totalNodeElements);
-    }
-    else {
+    } else {
         nodeTable->setRowCount(displayedNodes);
     }
+    nodeTable->selectionProtection = false;
 
     QItemSelection selectedItems = nodeTable->selectionModel()->selection();
+    std::size_t startIndex;
+    bool blockSelection = false;
 
-    treeListElement *currentTree = state->skeletonState->firstTree;
-    if(currentTree == NULL) {
-        return;
-    }
-    QTableWidgetItem *item;
-    uint nodeIndex = 0;
-    nodeListElement *node;
-    while(currentTree) {
-        node = currentTree->firstNode;
-        while(node and nodeIndex < displayedNodes or (node and displayedNodes == DISPLAY_ALL)) {
+    int nodeIndex = 0;
+    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
+        for (nodeListElement * node = currentTree->firstNode; node != nullptr; node = node->next) {
+            // cap node list elements
+            if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
+                break;
+            }
             // filter for comment search string
-            if(nodeSearchField->text().length() > 0) {
-                if(node->comment == NULL) {
-                    node = node->next;
-                    continue;
-                }
-                if(matchesSearchString(nodeSearchField->text(),
-                                       QString(node->comment->content),
-                                       nodeRegExCheck->isChecked()) == false) {
-                    node = node->next;
+            if (nodeSearchField->text().length() > 0) {
+                if(node->comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node->comment->content), nodeRegExCheck->isChecked())) {
                     continue;
                 }
             }
             // filter for nodes of selected trees
-            if(nodesOfSelectedTreesRadio->isChecked() and state->skeletonState->selectedTrees.size() > 0) {
-                if(std::find(state->skeletonState->selectedTrees.begin(),
-                             state->skeletonState->selectedTrees.end(),
-                             node->correspondingTree)
-                   == state->skeletonState->selectedTrees.end()) {
-                    // node not in one of the selected trees
-                    node = node->next;
+            if (nodesOfSelectedTreesRadio->isChecked()) {
+                if (std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), node->correspondingTree)
+                        == std::end(state->skeletonState->selectedTrees)) {// node not in one of the selected trees
                     continue;
                 }
             }
-            // filter for selected nodes
-            if (selectedNodes.isChecked()) {
-                if (node->selected == false) {
-                    node = node->next;
-                    continue;
-                }
-            }
-            // filter for branch nodes
-            if(branchNodesChckBx->isChecked()) {
-                if(node->isBranchNode == false) {
-                    node = node->next;
-                    continue;
-                }
-            }
-            // filter for comment nodes
-            if(commentNodesChckBx->isChecked()) {
-                if(node->comment == NULL) {
-                    node = node->next;
-                    continue;
-                }
-            }
-            item = new QTableWidgetItem(QString::number(node->nodeID));
-            Qt::ItemFlags flags = item->flags();
-            flags &= ~Qt::ItemIsEditable;
-            item->setFlags(flags);
-            nodeTable->setItem(nodeIndex, NODE_ID, item);
-
-            item = new QTableWidgetItem("");
-            flags = item->flags();
-            flags &= ~Qt::ItemIsSelectable;
-            item->setFlags(flags);
-            if(node->comment) {
-                setText(nodeTable, item, node->comment->content);
-            }
-            nodeTable->setItem(nodeIndex, NODE_COMMENT, item);
-
-            item = new QTableWidgetItem(QString::number(node->position.x + 1));
-            flags = item->flags();
-            flags &= ~Qt::ItemIsSelectable;
-            item->setFlags(flags);
-            nodeTable->setItem(nodeIndex, NODE_X, item);
-
-            item = new QTableWidgetItem(QString::number(node->position.y + 1));
-            flags = item->flags();
-            flags &= ~Qt::ItemIsSelectable;
-            item->setFlags(flags);
-            nodeTable->setItem(nodeIndex, NODE_Y, item);
-
-            item = new QTableWidgetItem(QString::number(node->position.z + 1));
-            flags = item->flags();
-            flags &= ~Qt::ItemIsSelectable;
-            item->setFlags(flags);
-            nodeTable->setItem(nodeIndex, NODE_Z, item);
-
-            item = new QTableWidgetItem(QString::number(node->radius));
-            flags = item->flags();
-            flags &= ~Qt::ItemIsSelectable;
-            item->setFlags(flags);
-            nodeTable->setItem(nodeIndex, NODE_RADIUS, item);
-
-            if (node->selected) {
-                nodeTable->changeByCode = true;
-                nodeTable->selectRow(nodeIndex);
-                nodeTable->changeByCode = false;
-                selectedItems.merge(nodeTable->selectionModel()->selection(), QItemSelectionModel::Select);
+            if ((selectedNodes.isChecked() && !node->selected)
+                    || (branchNodesChckBx->isChecked() && !node->isBranchNode)
+                    || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
+                continue;
             }
 
-            nodeIndex++;
-            node = node->next;
+            nodeTable->setRow(nodeIndex, QString::number(node->nodeID), node->comment == nullptr ? "" : node->comment->content
+                    , QString::number(node->position.x + 1), QString::number(node->position.y + 1), QString::number(node->position.z + 1)
+                    , QString::number(node->radius));
+
+            if (!blockSelection && node->selected) {//start block selection
+                blockSelection = true;
+                startIndex = nodeIndex;
+            }
+            if (blockSelection && !node->selected) {//end block selection
+                selectedItems.select(nodeTable->model()->index(startIndex, 0), nodeTable->model()->index(nodeIndex-1, nodeTable->model()->columnCount()-1));
+                blockSelection = false;
+            }
+
+            ++nodeIndex;
         }
-        currentTree = currentTree->next;
+    }
+    //finish last blockselection – if any
+    if (blockSelection) {
+        selectedItems.select(nodeTable->model()->index(startIndex, 0), nodeTable->model()->index(nodeIndex-1, nodeTable->model()->columnCount()-1));
     }
 
-    nodeTable->changeByCode = true;
+    //apply accumulated selections
+    nodeTable->selectionProtection = true;
     nodeTable->selectionModel()->select(selectedItems, QItemSelectionModel::Select);
-    nodeTable->changeByCode = false;
+    nodeTable->selectionProtection = false;
 
-    // resize every column to size of content, to make them small,
-    // omit comment column, because it might become large
-    nodeTable->resizeColumnToContents(NODE_RADIUS);
-    nodeTable->resizeColumnToContents(NODE_X);
-    nodeTable->resizeColumnToContents(NODE_Y);
-    nodeTable->resizeColumnToContents(NODE_Z);
-    if(state->skeletonState->totalNodeElements > 0) {
-        nodeTable->setRowCount(nodeIndex);
-    }
+    nodeTable->setRowCount(nodeIndex);
+    nodeTable->resizeToFit();
 
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::treeActivated() {
+    //purge
+    activeTreeTable->selectionProtection = true;
     activeTreeTable->clearContents();
-    if(state->skeletonState->activeTree == NULL) {
-        return;
+    activeTreeTable->setRowCount(0);
+    activeTreeTable->selectionProtection = false;
+    //add active tree if present
+    if (state->skeletonState->activeTree != nullptr) {
+        insertTree(state->skeletonState->activeTree, activeTreeTable);
+        //find if active tree is selected
+        const auto & trees = state->skeletonState->selectedTrees;
+        if (std::find(std::begin(trees), std::end(trees), state->skeletonState->activeTree) != std::end(trees)) {
+            activeTreeTable->selectionProtection = true;
+            activeTreeTable->selectRow(0);
+            activeTreeTable->selectionProtection = false;
+        }
     }
-    insertTree(state->skeletonState->activeTree, activeTreeTable);
-    activeTreeTable->setRowCount(1);
-    emit updateToolsSignal();
 }
 
-void ToolsTreeviewTab::treeAdded(treeListElement *tree) {
-    if(tree == NULL) {
-        return;
-    }
-    if(tree->treeID == state->skeletonState->activeTree->treeID) {
-        treeActivated();
-    }
-    insertTree(tree, treeTable);
-    emit updateToolsSignal();
+void ToolsTreeviewTab::treeAdded(treeListElement *) {
+    //no mess here, lazily recreate tables
+    recreateTreesTable();
+    treeActivated();
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::treesDeleted() {
-    if(focusedTreeTable == activeTreeTable) {
-        int activeID = activeTreeTable->item(0, TREE_ID)->text().toInt(); // for deletion in tree table
+    //remove tree
+    if (activeTreeTable->hasFocus()) {
+        const int activeID = activeTreeTable->item(0, TreeTable::TREE_ID)->text().toInt(); // for deletion in tree table
 
-        if(state->skeletonState->activeTree == NULL) {
-            activeTreeTable->clearContents();
-        }
-        else {
-            treeActivated(); // new tree will be active now
-        }
-
-        for(int i = 0; i < treeTable->rowCount(); ++i) {
-            if(treeTable->item(i, TREE_ID)->text().toInt() == activeID) {
+        for (int i = 0; i < treeTable->rowCount(); ++i) {
+            if (treeTable->item(i, TreeTable::TREE_ID)->text().toInt() == activeID) {
                 treeTable->removeRow(i);
                 break;
             }
         }
-    }
-    else { // tree table is focused
-        for(int i = treeTable->rowCount() - 1; i >= 0; --i) {
-            int treeID = treeTable->item(i, TREE_ID)->text().toInt();
-            if(Skeletonizer::findTreeByTreeID(treeID) == NULL) {
+    } else { // tree table is focused
+        for (int i = treeTable->rowCount() - 1; i >= 0; --i) {
+            const int treeID = treeTable->item(i, TreeTable::TREE_ID)->text().toInt();
+            if (Skeletonizer::findTreeByTreeID(treeID) == nullptr) {
                 treeTable->removeRow(i);
             }
-        }
-
-        // might have been the displayed active tree
-        if(activeTreeTable->item(0, TREE_ID) != NULL) {
-            if(state->skeletonState->activeTree == NULL) {
-                activeTreeTable->clearContents();
-            }
-            else if(state->skeletonState->activeTree->treeID != activeTreeTable->item(0, TREE_ID)->text().toInt()) {
-                treeActivated();
-            }
-        }
-    }
-    // displayed active node might have been in the deleted tree
-    if(activeNodeTable->item(0, NODE_ID) != NULL) {
-        if(state->skeletonState->activeNode == NULL) {
-            activeNodeTable->clearContents();
-        }
-        else if(state->skeletonState->activeNode->nodeID != (uint)activeNodeTable->item(0, NODE_ID)->text().toInt()) {
-            nodeActivated();
         }
     }
 
     // remove all nodes of the tree
     int nodeRows = nodeTable->rowCount();
     QVector<int> rowsToDel;
-    for(int i = 0; i < nodeRows; ++i) {
-        if(Skeletonizer::findNodeByNodeID(nodeTable->item(i, NODE_ID)->text().toInt()) == NULL) {
+    for (int i = 0; i < nodeRows; ++i) {
+        if (Skeletonizer::findNodeByNodeID(nodeTable->item(i, NodeTable::NODE_ID)->text().toInt()) == nullptr) {
             rowsToDel.push_back(i);
         }
     }
-    qSort(rowsToDel.begin(), rowsToDel.end());
-    for(int i = rowsToDel.size() - 1; i >= 0; --i) {
+    std::sort(rowsToDel.begin(), rowsToDel.end());
+    for (int i = rowsToDel.size() - 1; i >= 0; --i) {
         nodeTable->removeRow(rowsToDel[i]);
     }
 
-    emit updateToolsSignal(); // update the tree and node count
+    //handle active node/tree table
+    nodeActivated();//also activates tree
+
+    emit updateAnnotationLabelsSignal(); // update the tree and node count
 }
 
-void ToolsTreeviewTab::treesMerged(int treeID1, int treeID2) {
+void ToolsTreeviewTab::treesMerged(int, int treeID2) {
     // remove second tree from tree table
     int rowCount = treeTable->rowCount();
-    for(int i = 0; i < rowCount; ++i) {
-        if(treeTable->item(i, TREE_ID)->text().toInt() == treeID2) {
-            treeTable->removeRow(i);
+    for (int i = 0; i < rowCount; ++i) {
+        if (treeTable->item(i, TreeTable::TREE_ID)->text().toInt() == treeID2) {
+            treeTable->removeRow(i);//the signal emmited here will also trigger recreatation of selected trees
             break;
         }
     }
     // if second tree was active before, update active tree table too
-    QTableWidgetItem *item = activeTreeTable->item(0, TREE_ID);
-    if(item) {
-        if(state->skeletonState->activeTree == NULL) {
-            activeTreeTable->clearContents();
-        }
-        else if(item->text().toInt() != state->skeletonState->activeTree->treeID) {
-            treeActivated();
+    QTableWidgetItem *item = activeTreeTable->item(0, TreeTable::TREE_ID);
+    if (item) {
+        if (item->text().toInt() != state->skeletonState->activeTree->treeID) {
+            treeActivated();//new active tree
         }
     }
-    emit updateToolsSignal();
-}
-
-void ToolsTreeviewTab::treeComponentSplit() {
-    // when a tree is split, a new tree has been created and made active
-    treeActivated();
-    insertTree(state->skeletonState->activeTree, treeTable);
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();//tree count changed
 }
 
 // update active node table
 void ToolsTreeviewTab::nodeActivated() {
+    //purge
+    activeNodeTable->selectionProtection = true;
     activeNodeTable->clearContents();
-    if(state->skeletonState->activeNode == NULL) {
-        if(state->skeletonState->activeTree == NULL) {
-            treeActivated();
+    activeNodeTable->setRowCount(0);
+    activeNodeTable->selectionProtection = false;
+    //add active node if present
+    if (state->skeletonState->activeNode != nullptr) {
+        insertNode(state->skeletonState->activeNode, activeNodeTable);
+        activeNodeTable->resizeToFit();
+        //select
+        if (state->skeletonState->activeNode->selected) {
+            activeNodeTable->selectionProtection = true;
+            activeNodeTable->selectRow(0);
+            activeNodeTable->selectionProtection = false;
         }
-        return;
     }
-    insertNode(state->skeletonState->activeNode, activeNodeTable);
-    activeNodeTable->setRowCount(1);
-
-    // resize every column to size of content, to make them small,
-    // omit comment column, because it might become large
-    activeNodeTable->resizeColumnToContents(NODE_ID);
-    activeNodeTable->resizeColumnToContents(NODE_X);
-    activeNodeTable->resizeColumnToContents(NODE_Y);
-    activeNodeTable->resizeColumnToContents(NODE_Z);
-    activeNodeTable->resizeColumnToContents(NODE_RADIUS);
-
     treeActivated(); // update active tree table in case of tree switch
-    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodeAdded() {
-    if(state->skeletonState->activeNode == NULL) {
+    if(state->skeletonState->activeNode == nullptr) {
         return;
     }
-    nodeActivated();
     insertNode(state->skeletonState->activeNode, nodeTable);
-    emit updateToolsSignal();
-}
-
-void ToolsTreeviewTab::nodesDeleted() {
-    if(focusedNodeTable == activeNodeTable) {
-        int activeID = activeNodeTable->item(0, NODE_ID)->text().toInt(); // to delete from nodeTable
-        nodeActivated(); // a new node might be active now
-        for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if(nodeTable->item(i, NODE_ID)->text().toInt() == activeID) {
-                nodeTable->removeRow(i);
-                break;
-            }
-        }
-        return;
+    nodeActivated();
+    if (state->skeletonState->totalNodeElements == 1) {
+        nodeTable->resizeToFit();//we don’t want to slow down insertion of nodes
     }
-    // nodes have to be deleted in reverse order or the row numbers will shift
-    for(int i = nodeTable->rowCount() - 1; i >= 0; --i) {
-        int nodeID = nodeTable->item(i, NODE_ID)->text().toInt();
-        if(Skeletonizer::findNodeByNodeID(nodeID) == NULL) {
-            nodeTable->removeRow(i);
-        }
-    }
-
-    // update active node table, if active node was deleted
-    if(Skeletonizer::findNodeByNodeID(activeNodeTable->item(0, NODE_ID)->text().toInt()) == nullptr) {
-        nodeActivated(); // also activates tree
-    }
-    state->skeletonState->selectedNodes.clear();
-    emit updateToolsSignal();
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::branchPushed() {
     if(branchNodesChckBx->isChecked()) {
         // the active node has become branch point, add it to node table
         insertNode(state->skeletonState->activeNode, nodeTable);
+        nodeTable->resizeToFit();
+        emit updateAnnotationLabelsSignal();
     }
-    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::branchPopped() {
     if(branchNodesChckBx->isChecked()) {
         // active node is no branch point anymore, remove from node table
         for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if((uint)nodeTable->item(i, NODE_ID)->text().toInt() == state->skeletonState->activeNode->nodeID) {
+            if (nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt() == state->skeletonState->activeNode->nodeID) {
                 nodeTable->removeRow(i);
                 break;
             }
         }
+        emit updateAnnotationLabelsSignal();
     }
-    nodeActivated();
-    emit updateToolsSignal();
 }
 
 void ToolsTreeviewTab::nodeCommentChanged(nodeListElement *node) {
-    if(node == state->skeletonState->activeNode) {
-        if(node->comment) {
-            setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), node->comment->content);
-        }
-        else {
-            setText(activeNodeTable, activeNodeTable->item(0, NODE_COMMENT), "");
-        }
-        for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if(nodeTable->item(i, NODE_ID)->text().toInt() == node->nodeID) {
-                if(node->comment) {
-                    setText(nodeTable, nodeTable->item(i, NODE_COMMENT), QString(node->comment->content));
-                }
-                else {
-                    setText(nodeTable, nodeTable->item(i, NODE_COMMENT), "");
-                }
-                break;
-            }
+    if (node == state->skeletonState->activeNode) {
+        const QString cmt = node->comment == nullptr ? "" : node->comment->content;
+        setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), cmt);
+    }
+    for (int i = 0; i < nodeTable->rowCount(); ++i) {
+        if (nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt() == node->nodeID) {
+            const QString cmt = node->comment == nullptr ? "" : node->comment->content;
+            setText(nodeTable, nodeTable->item(i, NodeTable::NODE_COMMENT), cmt);
+            break;
         }
     }
 }
 
 void ToolsTreeviewTab::nodeRadiusChanged(nodeListElement *node) {
-    if(node == state->skeletonState->activeNode) {
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_RADIUS), QString::number(state->skeletonState->activeNode->radius));
+    if (node == state->skeletonState->activeNode) {
+        setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(state->skeletonState->activeNode->radius));
     }
-    for(int i = 0; i < nodeTable->rowCount(); ++i) {
-        if(nodeTable->item(i, NODE_ID)->text().toInt() == node->nodeID) {
-            setText(nodeTable, nodeTable->item(i, NODE_RADIUS), QString::number(state->skeletonState->activeNode->radius));
+    for (int i = 0; i < nodeTable->rowCount(); ++i) {
+        if (nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt() == node->nodeID) {
+            setText(nodeTable, nodeTable->item(i, NodeTable::NODE_RADIUS), QString::number(state->skeletonState->activeNode->radius));
             break;
         }
     }
 }
 
 void ToolsTreeviewTab::nodePositionChanged(nodeListElement *node) {
-    if(node == state->skeletonState->activeNode) {
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_X), QString::number(node->position.x + 1));
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_Y), QString::number(node->position.y + 1));
-        setText(activeNodeTable, activeNodeTable->item(0, NODE_Z), QString::number(node->position.z + 1));
-
-        for(int i = 0; i < nodeTable->rowCount(); ++i) {
-            if((uint)nodeTable->item(i, NODE_ID)->text().toInt() == node->nodeID) {
-                setText(nodeTable, nodeTable->item(i, NODE_X), QString::number(node->position.x + 1));
-                setText(nodeTable, nodeTable->item(i, NODE_Y), QString::number(node->position.y + 1));
-                setText(nodeTable, nodeTable->item(i, NODE_Z), QString::number(node->position.z + 1));
-                break;
-            }
+    if (node == state->skeletonState->activeNode) {
+        setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_X), QString::number(node->position.x + 1));
+        setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_Y), QString::number(node->position.y + 1));
+        setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_Z), QString::number(node->position.z + 1));
+    }
+    for (int i = 0; i < nodeTable->rowCount(); ++i) {
+        if (nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt() == node->nodeID) {
+            setText(nodeTable, nodeTable->item(i, NodeTable::NODE_X), QString::number(node->position.x + 1));
+            setText(nodeTable, nodeTable->item(i, NodeTable::NODE_Y), QString::number(node->position.y + 1));
+            setText(nodeTable, nodeTable->item(i, NodeTable::NODE_Z), QString::number(node->position.z + 1));
+            break;
         }
     }
 }
 
 void ToolsTreeviewTab::update() {
-    updateTreesTable();
-    updateNodesTable();
-    nodeActivated();
-    emit updateToolsSignal();
+    recreateTreesTable();
+    recreateNodesTable();
+    nodeActivated();//also activates tree
+    emit updateAnnotationLabelsSignal();
 }
 
 void ToolsTreeviewTab::insertTree(treeListElement *tree, TreeTable *table) {
-    if(tree != NULL) {
-        if(table == treeTable) {
-            if(treeSearchField->text().length() > 0) {
-                if(strlen(tree->comment) == 0) {
-                    return;
-                }
-                if(matchesSearchString(treeSearchField->text(), tree->comment, treeRegExCheck->isChecked()) == false) {
-                    return;
-                }
-            }
-        }
-
-        QTableWidgetItem *item;
-        QColor treeColor = QColor(tree->color.r*255,
-                                  tree->color.g*255,
-                                  tree->color.b*255,
-                                  0.6*255);
-        table->insertRow(0);
-        Qt::ItemFlags flags;
-        item = new QTableWidgetItem(QString::number(tree->treeID));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsEditable;
-        item->setFlags(flags);
-        table->setItem(0, TREE_ID, item);
-        item = new QTableWidgetItem();
-        flags = item->flags();
-        flags &= ~Qt::ItemIsEditable;
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        item->setBackgroundColor(treeColor);
-        table->setItem(0, TREE_COLOR, item);
-        item = new QTableWidgetItem(QString(tree->comment));
-        flags = item->flags();
-        flags &= ~Qt::ItemIsSelectable;
-        item->setFlags(flags);
-        table->setItem(0, TREE_COMMENT, item);
+    if (tree == nullptr) {
+        return;
     }
+
+    if (table == treeTable && treeSearchField->text().length() > 0) {
+        if (tree->comment == nullptr) {
+            return;
+        }
+        if (!matchesSearchString(treeSearchField->text(), tree->comment, treeRegExCheck->isChecked())) {
+            return;
+        }
+    }
+
+    table->insertRow(0);
+    table->setRow(0, QString::number(tree->treeID)
+            , QColor(tree->color.r*255, tree->color.g*255, tree->color.b*255, 0.6*255)
+            , tree->comment == nullptr ? "" : tree->comment);
 }
 
 void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
-    if(node == NULL) {
+    if(node == nullptr) {
         return;
     }
 
     if(table == nodeTable) { // first check if node will be filtered out
-        if(nodeSearchField->text().length() > 0) {
-            if(node->comment == NULL) {
-                return;
-            }
-            if(matchesSearchString(nodeSearchField->text(),
-                                   QString(node->comment->content),
-                                   nodeRegExCheck->isChecked()) == false) {
+        if (nodeSearchField->text().length() > 0) {
+            if (node->comment == nullptr || !matchesSearchString(nodeSearchField->text(), QString(node->comment->content), nodeRegExCheck->isChecked()) ) {
                 return;
             }
         }
         // filter for nodes of selected trees
-        if(nodesOfSelectedTreesRadio->isChecked() and state->skeletonState->selectedTrees.size() > 0) {
-            if(std::find(state->skeletonState->selectedTrees.begin(),
-                         state->skeletonState->selectedTrees.end(),
-                         node->correspondingTree)
-               == state->skeletonState->selectedTrees.end()) {
-                // node not in one of the selected trees
+        if (nodesOfSelectedTreesRadio->isChecked() and state->skeletonState->selectedTrees.size() > 0) {
+            if(std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), node->correspondingTree)
+                    == std::end(state->skeletonState->selectedTrees)) {// node not in one of the selected trees
                 return;
             }
         }
-        // filter for branch nodes
-        if(branchNodesChckBx->isChecked()) {
-            if(node->isBranchNode == false) {
-                return;
-            }
-        }
-        // filter for comment nodes
-        if(commentNodesChckBx->isChecked()) {
-            if(node->comment == NULL) {
-                return;
-            }
+        if ((selectedNodes.isChecked() && !node->selected)
+                || (branchNodesChckBx->isChecked() && !node->isBranchNode)
+                || (commentNodesChckBx->isChecked() && node->comment == nullptr)) {
+            return;
         }
     }
 
     // throw away oldest row if displayed nodes maximum is reached
-    if(table == nodeTable and displayedNodes != DISPLAY_ALL and nodeTable->rowCount() >= displayedNodes) {
+    if(table == nodeTable && displayedNodes != DISPLAY_ALL && nodeTable->rowCount() >= displayedNodes) {
         table->removeRow(nodeTable->rowCount() - 1);
     }
 
-    QTableWidgetItem *item;
-    table->insertRow(0);
-
-    item = new QTableWidgetItem(QString::number(node->nodeID));
-    Qt::ItemFlags flags = item->flags();
-    flags &= ~Qt::ItemIsEditable;
-    item->setFlags(flags);
-    table->setItem(0, NODE_ID, item);
-    item = new QTableWidgetItem("");
-    flags = item->flags();
-    flags &= ~Qt::ItemIsSelectable;
-    item->setFlags(flags);
-    if(node->comment) {
-        setText(table, item, node->comment->content);
+    int position = 0;//insert on first position if node is firstnode or on activeNodeTable
+    if (table == nodeTable) {
+        for (int i = 0; i < nodeTable->rowCount(); ++i) {//subsequent nodes are added after the first node of their tree
+            if (nodeTable->item(i, 0)->text().toUInt() == node->correspondingTree->firstNode->nodeID) {
+                position = i+1;//we want to add one row after this
+                break;
+            }
+        }
     }
-    table->setItem(0, NODE_COMMENT, item);
-    item = new QTableWidgetItem(QString::number(node->position.x + 1));
-    flags = item->flags();
-    flags &= ~Qt::ItemIsSelectable;
-    item->setFlags(flags);
-    table->setItem(0, NODE_X, item);
-    item = new QTableWidgetItem(QString::number(node->position.y + 1));
-    flags = item->flags();
-    flags &= ~Qt::ItemIsSelectable;
-    item->setFlags(flags);
-    table->setItem(0, NODE_Y, item);
-    item = new QTableWidgetItem(QString::number(node->position.z + 1));
-    flags = item->flags();
-    flags &= ~Qt::ItemIsSelectable;
-    item->setFlags(flags);
-    table->setItem(0, NODE_Z, item);
-    item = new QTableWidgetItem(QString::number(node->radius));
-    flags = item->flags();
-    flags &= ~Qt::ItemIsSelectable;
-    item->setFlags(flags);
-    table->setItem(0, NODE_RADIUS, item);
+
+    table->insertRow(position);
+    table->setRow(position, QString::number(node->nodeID), node->comment == nullptr ? "" : node->comment->content
+            , QString::number(node->position.x + 1), QString::number(node->position.y + 1), QString::number(node->position.z + 1)
+            , QString::number(node->radius));
 }
 
 int ToolsTreeviewTab::getActiveTreeRow() {
     int activeRow = -1;
     for(int i = 0; i < treeTable->rowCount(); ++i) {
-        if(treeTable->item(i, TREE_ID)->text().toInt() == state->skeletonState->activeTree->treeID) {
+        if(treeTable->item(i, TreeTable::TREE_ID)->text().toInt() == state->skeletonState->activeTree->treeID) {
             activeRow = i;
             break;
         }
@@ -2007,7 +1409,7 @@ int ToolsTreeviewTab::getActiveTreeRow() {
 int ToolsTreeviewTab::getActiveNodeRow() {
     int activeRow = -1;
     for(int i = 0; i < nodeTable->rowCount(); ++i) {
-        if(nodeTable->item(i, NODE_ID)->text().toInt() == state->skeletonState->activeNode->nodeID) {
+        if(nodeTable->item(i, NodeTable::NODE_ID)->text().toUInt() == state->skeletonState->activeNode->nodeID) {
             activeRow = i;
             break;
         }

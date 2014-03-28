@@ -45,8 +45,9 @@ Viewer::Viewer(QObject *parent) :
 
     window = new MainWindow();
     window->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
+#ifdef QT_DEBUG
     //state->console = window->widgetContainer->console;
+#endif
     vpUpperLeft = window->viewports[VIEWPORT_XY].get();
     vpLowerLeft = window->viewports[VIEWPORT_XZ].get();
     vpUpperRight = window->viewports[VIEWPORT_YZ].get();
@@ -62,8 +63,6 @@ Viewer::Viewer(QObject *parent) :
      * 3. new Renderer
      * 4. Load the GUI-Settings (otherwise the initialization of the skeletonizer or the renderer would overwrite some variables)
     */
-    SET_COORDINATE(state->viewerState->currentPosition, state->boundary.x / 2, state->boundary.y / 2, state->boundary.z / 2);
-	SET_COORDINATE(state->viewerState->lastRecenteringPosition, state->viewerState->currentPosition.x, state->viewerState->currentPosition.y, state->viewerState->currentPosition.z);
 
     initViewer();
     skeletonizer = new Skeletonizer();
@@ -87,15 +86,11 @@ Viewer::Viewer(QObject *parent) :
     renderer->refVPYZ = vpUpperRight;
     renderer->refVPSkel = vpLowerRight;
 
+    vpUpperLeft->renderer = renderer;
+    vpLowerLeft->renderer = renderer;
+    vpUpperRight->renderer = renderer;
+    vpLowerRight->renderer = renderer;
 
-    // TODO: to be removed in release version. Jumps to center of e1088_large dataset
-    sendLoadSignal(state->viewerState->currentPosition.x,
-                   state->viewerState->currentPosition.y,
-                   state->viewerState->currentPosition.z,
-                   NO_MAG_CHANGE);
-    updateCoordinatesSignal(state->viewerState->currentPosition.x,
-                           state->viewerState->currentPosition.y,
-                           state->viewerState->currentPosition.z);
     frames = 0;
     state->alpha = 0;
     state->beta = 0;
@@ -125,91 +120,9 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
-    timer->singleShot(10, this, SLOT(run()));
+    state->viewerState->renderInterval = FAST;
+
     delay.start();
-}
-
-vpList *Viewer::vpListNew() {
-    vpList *newVpList = NULL;
-
-    newVpList = (vpList *) malloc(sizeof(vpList));
-    if(newVpList == NULL) {
-        LOG("Out of memory.\n")
-        return NULL;
-    }
-
-    newVpList->entry = NULL;
-    newVpList->elements = 0;
-
-    return newVpList;
-}
-
-int Viewer::vpListAddElement(vpList *vpList, vpConfig *vpConfig) {
-    vpListElement *newElement = (vpListElement *) malloc(sizeof(vpListElement));
-    if(newElement == NULL) {
-        qDebug("Out of memory\n");
-        exit(EXIT_FAILURE);
-    }
-
-    newElement->vpConfig = vpConfig;
-    if(vpList->entry != NULL) {
-        vpList->entry->next->previous = newElement;
-        newElement->next = vpList->entry->next;
-        vpList->entry->next = newElement;
-        newElement->previous = vpList->entry;
-    }
-    else {
-        vpList->entry = newElement;
-        vpList->entry->next = newElement;
-        vpList->entry->previous = newElement;
-    }
-    vpList->elements = vpList->elements + 1;
-    return vpList->elements;
-}
-
-vpList *Viewer::vpListGenerate(viewerState *viewerState) {
-    vpList *newVpList = NULL;
-    uint i = 0;
-
-    newVpList = vpListNew();
-    if(newVpList == NULL) {
-        LOG("Error generating new vpList.")
-        _Exit(false);
-    }
-
-    for(i = 0; i < viewerState->numberViewports; i++) {
-        if(viewerState->vpConfigs[i].type == VIEWPORT_SKELETON) {
-            continue;
-        }
-        vpListAddElement(newVpList, &(viewerState->vpConfigs[i]));
-    }
-    return newVpList;
-}
-
-int Viewer::vpListDelElement(vpList *list,  vpListElement *element) {
-    if(element->next == element) {
-        // This is the only element in the list
-        list->entry = NULL;
-    } else {
-        element->next->previous = element->previous;
-        element->previous->next = element->next;
-        list->entry = element->next;
-    }
-    free(element);
-    list->elements = list->elements - 1;
-    return list->elements;
-}
-
-bool Viewer::vpListDel(vpList *list) {
-    while(list->elements > 0) {
-        if(vpListDelElement(list, list->entry) < 0) {
-            LOG("Error deleting element at %p from the slot list %d elements remain in the list.",
-                   list->entry, list->elements);
-            return false;
-        }
-    }
-
-    return true;
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -488,7 +401,7 @@ static int texIndex(uint x,
     return index;
 }
 
-bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState) {
+bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
 
@@ -502,7 +415,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     CPY_COORDINATE(currPosTrans, viewerState->currentPosition);
     DIV_COORDINATE(currPosTrans, state->magnification);
 
-    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
+    CPY_COORDINATE(leftUpperPxInAbsPxTrans, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(leftUpperPxInAbsPxTrans, state->magnification);
 
     currentPosition_dc = Coordinate::Px2DcCoord(currPosTrans);
@@ -515,7 +428,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     // slice relevant to the texture for this viewport.
     //
     // Rounding should be explicit!
-    switch(currentVp->vpConfig->type) {
+    switch(currentVp.type) {
     case SLICE_XY:
         dcOffset = state->cubeSliceArea
                    //* (viewerState->currentPosition.z - state->cubeEdgeLength
@@ -534,17 +447,17 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                    * currentPosition_dc.x;
         break;
     default:
-        qDebug("No such slice view: %d.", currentVp->vpConfig->type);
+        qDebug("No such slice view: %d.", currentVp.type);
         return false;
     }
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
-    for(x_dc = 0; x_dc < currentVp->vpConfig->texture.usedTexLengthDc; x_dc++) {
-        for(y_dc = 0; y_dc < currentVp->vpConfig->texture.usedTexLengthDc; y_dc++) {
+    for(x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
+        for(y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
             x_px = x_dc * state->cubeEdgeLength;
             y_px = y_dc * state->cubeEdgeLength;
 
-            switch(currentVp->vpConfig->type) {
+            switch(currentVp.type) {
             // With an x/y-coordinate system in a viewport, we get the following
             // mapping from viewport (slice) coordinates to global (dc)
             // coordinates:
@@ -570,7 +483,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                                upperLeftDc.z + y_dc);
                 break;
             default:
-                qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp->vpConfig->type);
+                qDebug("No such slice type (%d) in vpGenerateTexture.", currentVp.type);
             }
 
             state->protectCube2Pointer->lock();
@@ -582,13 +495,13 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             // Take care of the data textures.
 
             glBindTexture(GL_TEXTURE_2D,
-                          currentVp->vpConfig->texture.texHandle);
+                          currentVp.texture.texHandle);
 
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
             // This is used to index into the texture. texData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            index = texIndex(x_dc, y_dc, 3, &(currentVp->vpConfig->texture));
+            index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
             if(datacube == HT_FAILURE) {
                 glTexSubImage2D(GL_TEXTURE_2D,
@@ -604,7 +517,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                 dcSliceExtract(datacube,
                                &(viewerState->texData[index]),
                                dcOffset,
-                               currentVp->vpConfig);
+                               &currentVp);
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -618,12 +531,12 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
             //Take care of the overlay textures.
             if(state->overlay) {
                 glBindTexture(GL_TEXTURE_2D,
-                              currentVp->vpConfig->texture.overlayHandle);
+                              currentVp.texture.overlayHandle);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
                 // This is used to index into the texture. texData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                index = texIndex(x_dc, y_dc, 4, &(currentVp->vpConfig->texture));
+                index = texIndex(x_dc, y_dc, 4, &(currentVp.texture));
 
                 if(overlayCube == HT_FAILURE) {
                     glTexSubImage2D(GL_TEXTURE_2D,
@@ -640,7 +553,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
                     ocSliceExtract(overlayCube,
                                    &(viewerState->overlayData[index]),
                                    dcOffset * OBJID_BYTES,
-                                   currentVp->vpConfig);
+                                   &currentVp);
 
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
@@ -659,7 +572,7 @@ bool Viewer::vpGenerateTexture(vpListElement *currentVp, viewerState *viewerStat
     return true;
 }
 
-bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
+bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     Coordinate currentDc, currentPx;
@@ -667,19 +580,19 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
 
     Byte *datacube = NULL, *overlayCube = NULL;
 
-    floatCoordinate *v1 = &currentVp->vpConfig->v1;
-    floatCoordinate *v2 = &currentVp->vpConfig->v2;
-    CPY_COORDINATE(rowPx_float, currentVp->vpConfig->texture.leftUpperPxInAbsPx);
+    floatCoordinate *v1 = &currentVp.v1;
+    floatCoordinate *v2 = &currentVp.v2;
+    CPY_COORDINATE(rowPx_float, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
     CPY_COORDINATE(currentPx_float, rowPx_float);
 
-    glBindTexture(GL_TEXTURE_2D, currentVp->vpConfig->texture.texHandle);
+    glBindTexture(GL_TEXTURE_2D, currentVp.texture.texHandle);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < currentVp->vpConfig->s_max) {
+    while(s < currentVp.s_max) {
         t = 0;
-        while(t < currentVp->vpConfig->t_max) {
+        while(t < currentVp.t_max) {
             SET_COORDINATE(currentPx, roundFloat(currentPx_float.x),
                                       roundFloat(currentPx_float.y),
                                       roundFloat(currentPx_float.z));
@@ -701,7 +614,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
                                                 currentPx_float.z-currentDc.z*state->cubeEdgeLength);
             t_old = t;
             dcSliceExtract_arb(datacube,
-                               currentVp->vpConfig,
+                               &currentVp,
                                &currentPxInDc_float,
                                s, &t);
             SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
@@ -725,7 +638,7 @@ bool Viewer::vpGenerateTexture_arb(struct vpListElement *currentVp) {
                     state->M*state->cubeEdgeLength,
                     GL_RGB,
                     GL_UNSIGNED_BYTE,
-                    currentVp->vpConfig->viewPortData);
+                    currentVp.viewPortData);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -748,6 +661,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
+    floatCoordinate v1, v2;
     for (i = 0; i < viewerState->numberViewports; i++) {
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
@@ -820,8 +734,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            - (int)((viewerState->vpConfigs[i].texture.displayedEdgeLengthY / 2.)
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
             break;
-        case VIEWPORT_ARBITRARY:
-            floatCoordinate v1, v2;
+        case VIEWPORT_ARBITRARY:           
             CPY_COORDINATE(v1, viewerState->vpConfigs[i].v1);
             CPY_COORDINATE(v2, viewerState->vpConfigs[i].v2);
             SET_COORDINATE(viewerState->vpConfigs[i].leftUpperPxInAbsPx_float,
@@ -937,7 +850,7 @@ bool Viewer::initViewer() {
                                                      * 3);
 
     /* @arb */
-    for(int i = 0; i < state->viewerState->numberViewports; i++){
+    for (std::size_t i = 0; i < state->viewerState->numberViewports; ++i){
         state->viewerState->vpConfigs[i].viewPortData = (Byte *)malloc(TEXTURE_EDGE_LEN * TEXTURE_EDGE_LEN * sizeof(Byte) * 3);
         if(state->viewerState->vpConfigs[i].viewPortData == NULL) {
             LOG("Out of memory.")
@@ -1081,7 +994,7 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     return true;
 }
 
-bool Viewer::updatePosition(int serverMovement) {
+bool Viewer::updatePosition(int) {
     Coordinate jump;
 
     return true;
@@ -1126,7 +1039,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
         switch(upOrDownFlag) {
         case MAG_DOWN:
-            if(state->magnification > state->lowestAvailableMag) {
+            if (static_cast<uint>(state->magnification) > state->lowestAvailableMag) {
                 state->magnification /= 2;
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
@@ -1139,7 +1052,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
             break;
 
         case MAG_UP:
-            if(state->magnification < state->highestAvailableMag) {
+            if (static_cast<uint>(state->magnification)  < state->highestAvailableMag) {
                 state->magnification *= 2;
                 for(i = 0; i < state->viewerState->numberViewports; i++) {
                     if(state->viewerState->vpConfigs[i].type != (uint)VIEWPORT_SKELETON) {
@@ -1195,39 +1108,25 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
   */
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
-    static uint call = 0;
-    processUserMove();
-    /*
-    if(!state->viewerState->userMove) {
-        if(QApplication::hasPendingEvents()) {
-            QApplication::processEvents();
-        }
-        timer->singleShot(20 , this, SLOT(run()));
+    if (state->quitSignal) {//don’t do shit, when the rest is already going to sleep
+        qDebug() << "viewer returned";
         return;
+    }
 
-    }*/
+    //start the timer before the rendering, else render interval and actual rendering time would accumulate
+    timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
 
+    processUserMove();
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available.
     // While we are loading the textures, we check for events. Some events
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
-    viewerState *viewerState = state->viewerState;
-    struct vpListElement *currentVp = NULL, *nextVp = NULL;
-    uint drawCounter = 0;
 
     state->viewerState->viewerReady = true;
 
     // Display info about skeleton save path here TODO
-    // This creates a circular doubly linked list of
-    // pending viewports (viewports for which the texture has not yet been
-    // completely loaded) from the viewport-array in the viewerState
-    // structure.
-    // The idea is that we can easily remove the element representing a
-    // pending viewport once its texture is completely loaded.
-    viewports = vpListGenerate(viewerState);
-    currentVp = viewports->entry;
 
     // for arbitrary viewport orientation
     state->alpha += state->viewerState->alphaCache;
@@ -1235,14 +1134,12 @@ void Viewer::run() {
     state->viewerState->alphaCache = state->viewerState->betaCache = 0;
     if (state->alpha >= 360) {
         state->alpha -= 360;
-    }
-    else if (state->alpha < 0) {
+    } else if (state->alpha < 0) {
         state->alpha += 360;
     }
     if (state->beta >= 360) {
         state->beta -= 360;
-    }
-    else if (state->beta < 0) {
+    } else if (state->beta < 0) {
         state->beta += 360;
     }
 
@@ -1259,58 +1156,46 @@ void Viewer::run() {
     CPY_COORDINATE(state->viewerState->vpConfigs[VP_UPPERRIGHT].n , v1);
     recalcTextureOffsets();
 
-    while(!state->quitSignal && viewports->elements > 0) {
+    for (std::size_t drawCounter = 0; drawCounter < 4 && !state->quitSignal; ++drawCounter) {
+        vpConfig currentVp = state->viewerState->vpConfigs[drawCounter];
 
-        switch(currentVp->vpConfig->id) {
-
-        case VP_UPPERLEFT:
+        if (currentVp.id == VP_UPPERLEFT) {
             vpUpperLeft->makeCurrent();
-            break;
-        case VP_LOWERLEFT:
+        } else if (currentVp.id == VP_LOWERLEFT) {
             vpLowerLeft->makeCurrent();
-            break;
-        case VP_UPPERRIGHT:
+        } else if (currentVp.id == VP_UPPERRIGHT) {
             vpUpperRight->makeCurrent();
-            break;
         }
-        nextVp = currentVp->next;
 
-        if(currentVp->vpConfig->type != VIEWPORT_SKELETON) {
-            if(currentVp->vpConfig->type != VIEWPORT_ARBITRARY) {
-                 vpGenerateTexture(currentVp, viewerState);
-            }
-            else {
+        if(currentVp.type != VIEWPORT_SKELETON) {
+            if(currentVp.type != VIEWPORT_ARBITRARY) {
+                vpGenerateTexture(currentVp, state->viewerState);
+            } else {
                 vpGenerateTexture_arb(currentVp);
             }
         }
-        drawCounter++;
-        if(drawCounter == 3) {
-            drawCounter = 0;
 
+        if(drawCounter == 3) {
             updateViewerState();
             recalcTextureOffsets();
-            skeletonizer->updateSkeletonState();
+            skeletonizer->updateSkeletonState();//autosave
+            window->updateTitlebar();//display changes after filename
 
             vpUpperLeft->updateGL();
             vpLowerLeft->updateGL();
             vpUpperRight->updateGL();
             vpLowerRight->updateGL();
 
-
-            if(call % 1000 == 0) {
-                if(idlingExceeds(1000)) {
+            static uint call = 0;
+            if (++call % 1000 == 0) {
+                if(idlingExceeds(60000)) {
                     state->viewerState->renderInterval = SLOW;
                 }
             }
-            timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
-
-            vpListDel(viewports);
-            viewerState->userMove = false;
-            call += 1;
+            state->viewerState->userMove = false;
             return;
         }
-        currentVp = nextVp;
-    } //end while(viewports->elements > 0)
+    }
 }
 
 /** this method checks if the last call of the method checkIdleTime is longer than <treshold> msec ago.
@@ -1448,12 +1333,14 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
-    if(serverMovement == TELL_COORDINATE_CHANGE &&
-        state->clientState->connected == true &&
-        state->clientState->synchronizePosition) {
-        emit broadcastPosition(viewerState->currentPosition.x,
-                                  viewerState->currentPosition.y,
-                                  viewerState->currentPosition.z);
+    if(state->clientState) {
+        if(serverMovement == TELL_COORDINATE_CHANGE &&
+            state->clientState->connected == true &&
+            state->clientState->synchronizePosition) {
+            emit broadcastPosition(viewerState->currentPosition.x,
+                                      viewerState->currentPosition.y,
+                                      viewerState->currentPosition.z);
+        }
     }
 
 
@@ -1486,7 +1373,7 @@ bool Viewer::userMove_arb(float x, float y, float z, int serverMovement) {
 }
 
 
-int Viewer::findVPnumByWindowCoordinate(uint xScreen, uint yScreen) {
+int Viewer::findVPnumByWindowCoordinate(uint, uint) {
     uint tempNum;
 
     tempNum = -1;
@@ -1949,8 +1836,6 @@ void Viewer::rewire() {
     connect(this, SIGNAL(updateZoomAndMultiresWidgetSignal()),window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(this, SIGNAL(updateCoordinatesSignal(int,int,int)), window, SLOT(updateCoordinateBar(int,int,int)));
     // end viewer signals
-    // renderer signals
-    connect(renderer, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     // skeletonizer signals
     //connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));
@@ -1961,7 +1846,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
-   // connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(eventModel, SIGNAL(treeAddedSignal(treeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(eventModel, SIGNAL(nodeAddedSignal()),
@@ -1969,13 +1853,10 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
-    connect(eventModel, SIGNAL(nodesDeletedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodesDeleted()));
-    QObject::connect(eventModel, &EventModel::nodesDeletedSignal, window->widgetContainer->annotationWidget, &AnnotationWidget::updateLabels);
     connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(nodeListElement*)));
-    connect(eventModel, SIGNAL(updateTools()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(eventModel, SIGNAL(unselectNodesSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SLOT(clearSelection()));
@@ -2236,10 +2117,10 @@ void Viewer::rewire() {
     connect(state->skeletonState, SIGNAL(treeAddedSignal(treeListElement *)), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(state->skeletonState, SIGNAL(nodeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(state->skeletonState, SIGNAL(addNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(state->skeletonState, SIGNAL(updateToolsSignal()), window->widgetContainer->toolsWidget, SLOT(updateToolsSlot()));
     connect(state->skeletonState, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonWithoutConfirmation()));
     connect(state->skeletonState, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(state->skeletonState, SIGNAL(updateTreeViewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
@@ -2269,7 +2150,7 @@ void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
         int time = delay.elapsed();
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_UNIX
         if(time > 200) {
             delay.restart();
         }
@@ -2277,6 +2158,7 @@ void Viewer::processUserMove() {
 #ifdef Q_OS_MAC
         state->autorepeat = true;
 #endif
+
         if(time >= 200 and !state->autorepeat) {
             userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         } else if(state->autorepeat) {

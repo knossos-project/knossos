@@ -77,8 +77,7 @@ void KnossosTestRunner::addTestClasses() {
     testSkeletonViewport = new TestSkeletonViewport();
     testSkeletonViewport->reference = reference;
 
-    testToolsWidget = new TestToolsWidget();
-    testToolsWidget->reference = reference;
+    //BUG removed code of toolswidget
 
     testZoomAndMultiresWidget = new TestZoomAndMultiresWidget();
     testZoomAndMultiresWidget->reference = reference;
@@ -89,7 +88,6 @@ void KnossosTestRunner::addTestClasses() {
     testclassList->append(testNavigationWidget);
     testclassList->append(testOrthogonalViewport);
     testclassList->append(testSkeletonViewport);
-    testclassList->append(testToolsWidget);
     testclassList->append(testZoomAndMultiresWidget);
 
     const QMetaObject *metaObj;

@@ -50,11 +50,13 @@
 #include <QToolButton>
 #include <QCheckBox>
 #include <QtConcurrent/QtConcurrentRun>
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "GuiConstants.h"
-#include "knossos-global.h"
+
 #include "knossos.h"
+#include "knossos-global.h"
+#include "GuiConstants.h"
+#include "mainwindow.h"
+#include "skeletonizer.h"
+#include "ui_mainwindow.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 
@@ -66,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("KnossosQT");
+    updateTitlebar();
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
     skeletonFileHistory = new QQueue<QString>();
@@ -130,13 +132,13 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(widgetContainer->toolsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckToolsAction()));
     connect(widgetContainer->viewportSettingsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckViewportSettingAction()));
     connect(widgetContainer->commentsWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckCommentShortcutsAction()));
+#ifdef QT_DEBUG
     connect(widgetContainer->console, SIGNAL(uncheckSignal()), this, SLOT(uncheckConsoleAction()));
-
+#endif
     connect(widgetContainer->dataSavingWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckDataSavingAction()));
     connect(widgetContainer->navigationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckNavigationAction()));
     connect(widgetContainer->synchronizationWidget, SIGNAL(uncheckSignal()), this, SLOT(uncheckSynchronizationAction()));
     connect(widgetContainer->viewportSettingsWidget, &ViewportSettingsWidget::decorationSignal, this, &MainWindow::showVPDecorationClicked);
-    updateTitlebar(false);
     createViewports();
     setAcceptDrops(true);
 }
@@ -161,11 +163,11 @@ MainWindow::~MainWindow()
 void MainWindow:: createToolBar() {
 
     open = new QToolButton();
-    open->setToolTip("Open");
-    open->setIcon(QIcon(":/images/icons/document-open.png"));
+    open->setToolTip("Open Skeleton");
+    open->setIcon(QIcon(":/images/icons/open-skeleton.png"));
 
     save = new QToolButton();
-    save->setToolTip("Save");
+    save->setToolTip("Save Skeleton");
     save->setIcon(QIcon(":/images/icons/document-save.png"));
 
     copyButton = new QToolButton();
@@ -223,26 +225,27 @@ void MainWindow:: createToolBar() {
     this->toolBar->addSeparator();
 
 
+    /*
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
     pythonButton->setIcon(QIcon(":/images/python.png"));        
     this->toolBar->addWidget(pythonButton);    
-
+    */
 
     taskManagementButton = new QToolButton();
-    taskManagementButton->setToolTip("Task Management Widget");
+    taskManagementButton->setToolTip("Task Management");
     taskManagementButton->setIcon(QIcon(":/images/icons/task.png"));
     this->toolBar->addWidget(taskManagementButton);
 
     tracingTimeButton = new QToolButton();
-    tracingTimeButton->setToolTip("Tracing Time Widget");
+    tracingTimeButton->setToolTip("Tracing Time");
     tracingTimeButton->setIcon(QIcon(":/images/icons/appointment.png"));
     this->toolBar->addWidget(tracingTimeButton);
 
     this->toolBar->setBackgroundRole(QPalette::Dark);
 
     zoomAndMultiresButton = new QToolButton();
-    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution Widget");
+    zoomAndMultiresButton->setToolTip("Zoom and Multiresolution");
     zoomAndMultiresButton->setIcon(QIcon(":/images/icons/zoom-in.png"));
     this->toolBar->addWidget(zoomAndMultiresButton);
 
@@ -254,7 +257,7 @@ void MainWindow:: createToolBar() {
     */
 
     viewportSettingsButton = new QToolButton();
-    viewportSettingsButton->setToolTip("Viewport Settings Widget");
+    viewportSettingsButton->setToolTip("Viewport Settings");
     viewportSettingsButton->setIcon(QIcon(":/images/icons/view-list-icons-symbolic.png"));
     this->toolBar->addWidget(viewportSettingsButton);
 
@@ -264,14 +267,13 @@ void MainWindow:: createToolBar() {
 //    this->toolBar->addWidget(toolsButton);
 
     commentShortcutsButton = new QToolButton();
-    commentShortcutsButton->setToolTip("Comments Shortcut Widget");
+    commentShortcutsButton->setToolTip("Comment Shortcuts");
     commentShortcutsButton->setIcon(QIcon(":/images/icons/insert-text.png"));
     this->toolBar->addWidget(commentShortcutsButton);
 
     annotationButton = new QToolButton();
-    annotationButton->setToolTip("Tools Widget");
     annotationButton->setIcon(QIcon(":/images/icons/graph.png"));
-    annotationButton->setToolTip(("Tools Widget"));
+    annotationButton->setToolTip(("Annotation"));
     toolBar->addWidget(annotationButton);
     this->toolBar->addSeparator();
     resetVPsButton = new QPushButton("Reset VP Positions", this);
@@ -285,23 +287,12 @@ void MainWindow:: createToolBar() {
     lockVPOrientationCheckbox->setToolTip("Lock viewports to current orientation");
     this->toolBar->addWidget(lockVPOrientationCheckbox);
 
-    loaderThreadsField = new QSpinBox();
-    loaderThreadsField->setMaximum(state->loaderDecompThreadsNumber);
-    loaderThreadsField->setMinimum(1);
-    loaderThreadsField->setMinimumWidth(75);
-    loaderThreadsField->clearFocus();
-    loaderThreadsField->setValue(state->loaderDecompThreadsNumber);
-    loaderThreadsLabel = new QLabel("<font color='black'>Decomp Threads</font>");
-    this->toolBar->addWidget(loaderThreadsLabel);
-    this->toolBar->addWidget(loaderThreadsField);
-
     connect(open, SIGNAL(clicked()), this, SLOT(openSlot()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
     connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
 
-    connect(loaderThreadsField, SIGNAL(editingFinished()), this, SLOT(loaderThreadsFieldChanged()));
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(zField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
@@ -310,7 +301,6 @@ void MainWindow:: createToolBar() {
 
     //connect(pythonButton, SIGNAL(clicked()), this, SLOT());
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
-    //connect(toolsButton, SIGNAL(clicked()), this, SLOT(toolsSlot()));
     connect(annotationButton, SIGNAL(clicked()), this, SLOT(annotationSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
     connect(zoomAndMultiresButton, SIGNAL(clicked()), this, SLOT(zoomAndMultiresSlot()));
@@ -319,45 +309,26 @@ void MainWindow:: createToolBar() {
 
     connect(resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(resetVPOrientButton, SIGNAL(clicked()), this, SLOT(resetVPOrientation()));
-    connect(lockVPOrientationCheckbox, SIGNAL(clicked(bool)), this, SLOT(lockVPOrientation(bool)));
+    connect(lockVPOrientationCheckbox, SIGNAL(toggled(bool)), this, SLOT(lockVPOrientation(bool)));
 
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->resetVPsButton, SIGNAL(clicked()), this, SLOT(resetViewports()));
     connect(widgetContainer->viewportSettingsWidget->generalTabWidget->showVPDecorationCheckBox, SIGNAL(clicked()), this, SLOT(showVPDecorationClicked()));
 }
 
-void MainWindow::updateTitlebar(bool useFilename) {
-    QString title;
-    if(!state->skeletonState->skeletonFileAsQString.isNull()) {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg(state->skeletonState->skeletonFileAsQString);
-
+void MainWindow::updateTitlebar() {
+    QString title = qApp->applicationDisplayName() + " showing ";
+    if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
+        title.append(state->skeletonState->skeletonFileAsQString);
     } else {
-        title = QString("KNOSSOS %1 Revision %2 showing %3").arg(KVERSION).arg(REVISION).arg("no skeleton file");
+        title.append("no skeleton file");
     }
-
+    if (state->skeletonState->unsavedChanges) {
+        title.append("*");
+    }
     setWindowTitle(title);
-
 }
 
 // -- static methods -- //
-
-bool MainWindow::cpBaseDirectory(char *target, QString path){
-    int hit;
-#ifdef Q_OS_UNIX
-    hit = path.indexOf('/');
-#else
-    hit = path.indexOf('\\');
-#endif
-    if(hit == -1) {
-        qDebug() << "no path separator in " << path;
-        return false;
-    }
-    if(hit > 2047) {
-        qDebug("Path too long.");
-        return false;
-    }
-    sprintf(target, "%s\0", path.mid(0, hit).toStdString().c_str());
-    return true;
-}
 
 /** This method adds a file path to the queue data structure
     Use this method only after checking if the entry is already in the menu
@@ -561,7 +532,7 @@ void MainWindow::createActions()
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
 
     /* window actions */
-    toolsAction = new QAction(tr("Tools"), this);
+    toolsAction = new QAction(tr("Annotation Widget"), this);
     toolsAction->setCheckable(true);
     //taskLoginAction = new QAction(tr("Task Management"), this);
     //taskLoginAction->setCheckable(true);
@@ -593,22 +564,18 @@ void MainWindow::recentFileSelected() {
     }
 }
 
-void MainWindow::createMenus()
-{
-
-    dataSetMenu = menuBar()->addMenu("Dataset");
-    dataSetMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open", this, SLOT(openDatasetSlot()));
-
-    fileMenu = menuBar()->addMenu("Skeleton File");
-    fileMenu->addAction(QIcon(":/images/icons/document-open.png"), "Open...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent File(s)"));
+void MainWindow::createMenus() {
+    fileMenu = menuBar()->addMenu("File");
+    fileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...", this, SLOT(openDatasetSlot()));
+    fileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Skeleton File(s)"));
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         recentFileMenu->addAction(historyEntryActions[i]);
     }
 
-    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save As...", this, SLOT(saveAsSlot()));
+    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Skeleton", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Skeleton As...", this, SLOT(saveAsSlot()));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
@@ -662,25 +629,18 @@ void MainWindow::createMenus()
     previousCommentAction->setShortcut(QKeySequence(tr("P")));
     previousCommentAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F1Slot()));
-    F1Action->setShortcut(Qt::Key_F1);
-    F1Action->setShortcutContext(Qt::ApplicationShortcut);
+    auto addEditMenuShortcut = [&](const Qt::Key key, const QString & description, void(MainWindow::*const slot)()){
+        auto * action = editMenu->addAction(QIcon(""), description);
+        action->setShortcut(key);
+        action->setShortcutContext(Qt::ApplicationShortcut);
+        QObject::connect(action, &QAction::triggered, this, slot);
+    };
 
-    F2Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F2Slot()));
-    F2Action->setShortcut(Qt::Key_F2);
-    F2Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F3Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F3Slot()));
-    F3Action->setShortcut(Qt::Key_F3);
-    F3Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F1Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F4Slot()));
-    F1Action->setShortcut(Qt::Key_F4);
-    F1Action->setShortcutContext(Qt::ApplicationShortcut);
-
-    F5Action = editMenu->addAction(QIcon(""), "Comment Shortcut", this, SLOT(F5Slot()));
-    F5Action->setShortcut(Qt::Key_F5);
-    F5Action->setShortcutContext(Qt::ApplicationShortcut);
+    addEditMenuShortcut(Qt::Key_F1, "1st Comment Shortcut", &MainWindow::F1Slot);
+    addEditMenuShortcut(Qt::Key_F2, "2nd Comment Shortcut", &MainWindow::F2Slot);
+    addEditMenuShortcut(Qt::Key_F3, "3rd Comment Shortcut", &MainWindow::F3Slot);
+    addEditMenuShortcut(Qt::Key_F4, "4th Comment Shortcut", &MainWindow::F4Slot);
+    addEditMenuShortcut(Qt::Key_F5, "5th Comment Shortcut", &MainWindow::F5Slot);
 
     editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
@@ -702,11 +662,10 @@ void MainWindow::createMenus()
     viewportSettingsAction = preferenceMenu->addAction(QIcon(":/images/icons/view-list-icons-symbolic.png"), "Viewport Settings", this, SLOT(viewportSettingsSlot()));
 
     windowMenu = menuBar()->addMenu("Windows");
-    //toolsAction = windowMenu->addAction(QIcon(":/images/icons/configure-toolbars.png"), "Tools", this, SLOT(toolsSlot()));
     taskAction = windowMenu->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     commentShortcutsAction = windowMenu->addAction(QIcon(":/images/icons/insert-text.png"), "Comment Settings", this, SLOT(commentShortcutsSlots()));
-    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Tools", this, SLOT(annotationSlot()));
+    annotationAction = windowMenu->addAction(QIcon(":/images/icons/graph.png"), "Annotation Window", this, SLOT(annotationSlot()));
     this->zoomAndMultiresAction = windowMenu->addAction(QIcon(":/images/icons/zoom-in.png"), "Zoom and Multiresolution", this, SLOT(zoomAndMultiresSlot()));
     this->tracingTimeAction = windowMenu->addAction(QIcon(":/images/icons/appointment.png"), "Tracing Time", this, SLOT(tracingTimeSlot()));
 
@@ -716,6 +675,7 @@ void MainWindow::createMenus()
     helpMenu->addAction(QIcon(":/images/icons/edit-select-all.png"), "Documentation", this, SLOT(documentationSlot()), QKeySequence(tr("CTRL+H")));
 }
 
+#include "sleeper.h"
 void MainWindow::closeEvent(QCloseEvent *event) {
     saveSettings();
 
@@ -725,33 +685,28 @@ void MainWindow::closeEvent(QCloseEvent *event) {
          question.setIcon(QMessageBox::Question);
          question.setWindowTitle("Confirmation required.");
          question.setText("There are unsaved changes. Really Quit?");
-         QPushButton *yes = question.addButton("Yes", QMessageBox::ActionRole);
-         question.addButton("No", QMessageBox::ActionRole);
+         question.addButton("Yes", QMessageBox::ActionRole);
+         const QPushButton * const no = question.addButton("No", QMessageBox::ActionRole);
          question.exec();
-         if(question.clickedButton() == yes) {
-             event->accept();
-         } else {
+         if(question.clickedButton() == no) {
              event->ignore();
-             return;
+             return;//we changed our mind – we dont want to quit anymore
          }
     }
 
-    QWidgetList widgets = QApplication::topLevelWidgets();
-    for(int i = 0; i < widgets.size(); i++) {
-        widgets.at(i)->close();
-    }
     Knossos::sendQuitSignal();
-    QApplication::quit();
+    for(int i = 0; i < 4; i++) {
+        viewports[i].get()->setParent(NULL);
+    }
+
+    event->accept();//mainwindow takes the qapp with it
 }
 
 //file menu functionality
 
-bool MainWindow::loadSkeletonAfterUserDecision
-(const QString &fileName) {
-    if(!fileName.isNull()) {
+bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
+    if(!fileName.isEmpty()) {
         QApplication::processEvents();
-        QFileInfo info(fileName);
-        QString path = info.canonicalPath();
 
         if(state->skeletonState->treeElements > 0) {
             QMessageBox prompt;
@@ -766,7 +721,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
             if(prompt.clickedButton() == merge) {
                 state->skeletonState->mergeOnLoadFlag = true;
             } else if(prompt.clickedButton() == override) {
-                state->skeletonState->mergeOnLoadFlag = false;
+                state->skeletonState->mergeOnLoadFlag = false;                
             } else {
                 return false;
             }
@@ -775,13 +730,12 @@ bool MainWindow::loadSkeletonAfterUserDecision
 
         state->skeletonState->skeletonFileAsQString = fileName;
 
-
         bool result = loadSkeletonSignal(fileName);
         //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
         //future.waitForFinished();
 
         //emit updateCommentsTableSignal();
-        updateTitlebar(true);
+        updateTitlebar();
         linkWithActiveNodeSlot();
 
         if(!alreadyInMenu(fileName)) {
@@ -791,6 +745,7 @@ bool MainWindow::loadSkeletonAfterUserDecision
         }
         //emit updateToolsSignal();
         emit updateTreeviewSignal();
+        state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
         return result;
     }
     return false;
@@ -816,10 +771,10 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", *this->openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
     if(!fileName.isEmpty()) {
         QFileInfo info(fileName);
-        openFileDirectory = new QString(info.dir().absolutePath());
+        openFileDirectory = info.dir().absolutePath();
         state->skeletonState->skeletonFileAsQString = fileName;
         loadSkeletonAfterUserDecision(fileName);
     }
@@ -869,50 +824,37 @@ void MainWindow::updateFileHistoryMenu() {
     }
 }
 
-void MainWindow::saveSlot()
-{
-    if(state->skeletonState->firstTree != NULL) {
-        if(state->skeletonState->unsavedChanges) {
+void MainWindow::saveSlot() {
+    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no skeleton file is loaded, go ask for one
+        saveAsSlot();
+    } else if (state->skeletonState->firstTree != nullptr) {
+        if (state->skeletonState->autoFilenameIncrementBool) {
+            int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
 
-            if(state->skeletonState->autoFilenameIncrementBool) {
+            updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
 
-                // solution for a clever recent file menu (not yet activated)
-                int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
-
-                updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
-
-                if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
-                    if(index >= 0) {
-                        skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
-                        historyEntryActions[index]->setText(skeletonFileHistory->at(index));
-                        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-                        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
-                        updateTitlebar(true);
-                        state->skeletonState->unsavedChanges = false;
-                        state->skeletonState->skeletonChanged = false;
-                        return;
-                    }
+            if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
+                if(index != -1) {//replace old filename with updated one
+                    skeletonFileHistory->replace(index, state->skeletonState->skeletonFileAsQString);
+                    historyEntryActions[index]->setText(skeletonFileHistory->at(index));
                 }
-
             }
-
-            emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
-
-            if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-                addRecentFile(state->skeletonState->skeletonFileAsQString);
-            } else {
-                becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-            }
-
-                updateTitlebar(true);
-                state->skeletonState->unsavedChanges = false;
         }
+
+        emit saveSkeletonSignal(state->skeletonState->skeletonFileAsQString);
+
+        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+            addRecentFile(state->skeletonState->skeletonFileAsQString);
+        }
+        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+
+        updateTitlebar();
+        state->skeletonState->unsavedChanges = false;
     }
     state->skeletonState->skeletonChanged = false;
 }
 
-void MainWindow::saveAsSlot()
-{
+void MainWindow::saveAsSlot() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
     if(!state->skeletonState->firstTree) {
@@ -925,34 +867,30 @@ void MainWindow::saveAsSlot()
         return;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", *saveFileDirectory, "KNOSSOS Skeleton file(*.nml)");
-    if(!fileName.isEmpty()) {
-        QFileInfo info(fileName);
-        saveFileDirectory = new QString(info.dir().absolutePath());
+    auto file = state->skeletonState->skeletonFileAsQString;
+    if (file.isEmpty()) {
+        file = Skeletonizer::getDefaultSkelFileName();
+    }
+    auto suggestedFile = saveFileDirectory + '/' + QFileInfo(file).fileName();//append filename to last saving dir
 
-        /*
-        if(state->skeletonState->autoFilenameIncrementBool) {
-            updateSkeletonFileName(fileName);
-        }*/
-
-        state->skeletonState->skeletonFileAsQString = fileName;
+    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", suggestedFile, "KNOSSOS Skeleton file(*.nml)");
+    if (!fileName.isEmpty()) {
+        state->skeletonState->skeletonFileAsQString = fileName;//file was actually chosen, save its path
+        saveFileDirectory = QFileInfo(fileName).absolutePath();//remeber last saving dir
 
         emit saveSkeletonSignal(fileName);
 
-        if(!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
             addRecentFile(state->skeletonState->skeletonFileAsQString);
-        } else {
-            becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
         }
+        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
 
-        updateTitlebar(true);
+        updateTitlebar();
         state->skeletonState->unsavedChanges = false;
-
     }
     state->viewerState->renderInterval = FAST;
     state->skeletonState->skeletonChanged = false;
 }
-
 
 void MainWindow::quitSlot()
 {
@@ -989,26 +927,12 @@ void MainWindow::skeletonStatisticsSlot()
 }
 
 
-void MainWindow::clearSkeletonWithoutConfirmation() {
-    emit clearSkeletonSignal(CHANGE_MANUAL, false);
-    updateTitlebar(false);
-    emit updateToolsSignal();
-    emit updateTreeviewSignal();
-    emit updateCommentsTableSignal();
+void MainWindow::clearSkeletonWithoutConfirmation() {//for the tests
+    clearSkeletonSlotNoGUI();
 }
 
 void MainWindow::clearSkeletonSlotGUI() {
-    clearSkeleton(true);
-}
-
-void MainWindow::clearSkeletonSlotNoGUI() {
-    clearSkeleton(false);
-}
-
-void MainWindow::clearSkeleton(bool isGUI)
-{
-    bool isClear = true;
-    if (isGUI) {
+    if(state->skeletonState->unsavedChanges or state->skeletonState->treeElements > 0) {
         QMessageBox question;
         question.setWindowFlags(Qt::WindowStaysOnTopHint);
         question.setIcon(QMessageBox::Question);
@@ -1017,15 +941,20 @@ void MainWindow::clearSkeleton(bool isGUI)
         QPushButton *ok = question.addButton(QMessageBox::Ok);
         question.addButton(QMessageBox::No);
         question.exec();
-        if(question.clickedButton() != ok) {
-            isClear = false;
+        if(question.clickedButton() == ok) {
+            clearSkeletonSlotNoGUI();
         }
     }
-    if (isClear) {
-        emit clearSkeletonSignal(CHANGE_MANUAL, false);
-        updateTitlebar(false);
-        emit updateTreeviewSignal();
-    }
+}
+
+void MainWindow::clearSkeletonSlotNoGUI() {
+
+    emit clearSkeletonSignal(CHANGE_MANUAL, false);
+    state->skeletonState->skeletonFileAsQString = "";//unload skeleton file
+    updateTitlebar();
+    emit updateToolsSignal();
+    emit updateTreeviewSignal();
+    emit updateCommentsTableSignal();
 }
 
 /* view menu functionality */
@@ -1103,10 +1032,6 @@ void MainWindow::defaultPreferencesSlot() {
     if(question.clickedButton() == yes) {
         clearSettings();
         loadSettings();
-//        saveSettings();
-//        widgetContainer->zoomAndMultiresWidget->lockDatasetCheckBox->setChecked(true);
-//        //widgetContainer->toolsWidget->toolsNodesTabWidget->defaultNodeRadiusSpinBox->setValue(1.5);
-//        widgetContainer->dataSavingWidget->autosaveIntervalSpinBox->setValue(5);
         emit loadTreeLUTFallback();
         treeColorAdjustmentsChanged();
         datasetColorAdjustmentsChanged();
@@ -1142,16 +1067,6 @@ void MainWindow::viewportSettingsSlot() {
 }
 
 /* window menu functionality */
-
-void MainWindow::toolsSlot()
-{
-    this->widgetContainer->toolsWidget->show();
-    this->widgetContainer->toolsWidget->adjustSize();
-    if(widgetContainer->toolsWidget->pos().x() <= 0 or this->widgetContainer->toolsWidget->pos().y() <= 0)
-        this->widgetContainer->toolsWidget->move(QWidget::mapToGlobal(mainWidget->pos()));
-    toolsAction->setChecked(true);
-    this->widgetContainer->toolsWidget->setFixedSize(this->widgetContainer->toolsWidget->size());
-}
 
 void MainWindow::logSlot()
 {
@@ -1227,10 +1142,6 @@ void MainWindow::pasteClipboardCoordinates(){
     }
 }
 
-void MainWindow::loaderThreadsFieldChanged() {
-    state->loaderDecompThreadsNumber = loaderThreadsField->value();
-}
-
 void MainWindow::coordinateEditingFinished() {
     emit userMoveSignal(xField->value()- 1 - state->viewerState->currentPosition.x,
                         yField->value()- 1 - state->viewerState->currentPosition.y,
@@ -1259,6 +1170,8 @@ void MainWindow::saveSettings() {
     settings.setValue(VPYZ_COORD, viewports[VIEWPORT_YZ]->pos());
     settings.setValue(VPSKEL_COORD, viewports[VIEWPORT_SKELETON]->pos());
 
+    settings.setValue(VP_LOCK_ORIENTATION, this->lockVPOrientationCheckbox->isChecked());
+
     settings.setValue(WORK_MODE, state->skeletonState->workMode);
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
@@ -1269,15 +1182,16 @@ void MainWindow::saveSettings() {
         }
     }
 
-    settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, *this->openFileDirectory);
-    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, *this->saveFileDirectory);
-
+    settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
+    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
     settings.endGroup();
 
     widgetContainer->datasetPropertyWidget->saveSettings();
     widgetContainer->commentsWidget->saveSettings();
+#ifdef QT_DEBUG
     widgetContainer->console->saveSettings();
+#endif
     widgetContainer->dataSavingWidget->saveSettings();
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
@@ -1317,16 +1231,25 @@ void MainWindow::loadSettings() {
         viewports[VIEWPORT_SKELETON]->move(settings.value(VPSKEL_COORD).toPoint());
     }
 
+    QVariant lockVPOrientation_value = settings.value(VP_LOCK_ORIENTATION);
+    this->lockVPOrientationCheckbox->setChecked(lockVPOrientation_value.isNull() ?
+                                                    LOCK_VP_ORIENTATION_DEFAULT :
+                                                    lockVPOrientation_value.toBool());
+    emit(lockVPOrientationCheckbox->toggled(lockVPOrientationCheckbox->isChecked()));
+
+    auto autosaveLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/skeletonFiles";
+    QDir().mkpath(autosaveLocation);
+
     if(!settings.value(OPEN_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
-        openFileDirectory = new QString(settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString());
+        openFileDirectory = settings.value(OPEN_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        openFileDirectory = new QString(QDir::homePath());
+        openFileDirectory = autosaveLocation;
     }
 
     if(!settings.value(SAVE_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
-        saveFileDirectory = new QString(settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString());
+        saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        saveFileDirectory = new QString(QDir::homePath());
+        saveFileDirectory = autosaveLocation;
     }
 
     if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {
@@ -1383,7 +1306,9 @@ void MainWindow::loadSettings() {
 
     widgetContainer->datasetPropertyWidget->loadSettings();
     widgetContainer->commentsWidget->loadSettings();
+#ifdef QT_DEBUG
     widgetContainer->console->loadSettings();
+#endif
     widgetContainer->dataSavingWidget->loadSettings();
     widgetContainer->zoomAndMultiresWidget->loadSettings();
     widgetContainer->viewportSettingsWidget->loadSettings();
@@ -1503,7 +1428,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
     event->accept();
 }
 
-void MainWindow::dragLeaveEvent(QDragLeaveEvent *event) {
+void MainWindow::dragLeaveEvent(QDragLeaveEvent *) {
 }
 
 void MainWindow::openDatasetSlot() {
@@ -1572,7 +1497,7 @@ void MainWindow::taskSlot() {
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {
-            memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
+            state->taskState->taskFile[0] = '\0';
             strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
         }
         attribute = attributes.value("description").toString();
@@ -1673,25 +1598,25 @@ void MainWindow::popBranchNodeSlot() {
 
 void MainWindow::moveToNextNodeSlot() {
     emit moveToNextNodeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevNodeSlot() {
     emit moveToPrevNodeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToPrevTreeSlot() {
     emit moveToPrevTreeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 
 void MainWindow::moveToNextTreeSlot() {
     emit moveToNextTreeSignal();
-    emit updateTools();
+    emit updateToolsSignal();
     emit updateTreeviewSignal();
 }
 

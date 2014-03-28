@@ -2,13 +2,15 @@
 #define DATASETPROPERTYWIDGET_H
 
 #include <QDialog>
-class QLineEdit;
+
 class QComboBox;
-class QPushButton;
-class QLabel;
 class QGroupBox;
-class DatasetPropertyWidget : public QDialog
-{
+class QLabel;
+class QLineEdit;
+class QPushButton;
+class QSpinBox;
+
+class DatasetPropertyWidget : public QDialog {
     Q_OBJECT
 public:
     explicit DatasetPropertyWidget(QWidget *parent = 0);
@@ -20,6 +22,8 @@ protected:
     QGroupBox *localGroup;
     QComboBox *path;
     QPushButton *datasetfileDialog;
+    QSpinBox *supercubeEdgeSpin;
+    QLabel *supercubeSizeLabel;
     QPushButton *cancelButton;
     QPushButton *processButton;
     void closeEvent(QCloseEvent *event);
@@ -34,6 +38,7 @@ signals:
     void startLoaderSignal();
 public slots:
     void datasetfileDialogClicked();
+    void supercubeEdgeSpinValueChanged(const int value);
     void cancelButtonClicked();
     void processButtonClicked();
 };

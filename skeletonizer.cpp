@@ -108,7 +108,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
     memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
-    setDefaultSkelFileName();
 
     state->skeletonState->prevSkeletonFile = (char*) malloc(8192 * sizeof(char));
     memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
@@ -628,18 +627,22 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 }
 
 bool Skeletonizer::updateSkeletonState() {
-
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
-            if((state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0 >= state->skeletonState->autoSaveInterval) {
-                state->skeletonState->lastSaveTicks = state->time.elapsed();
+            const auto minutes = (state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0;
+            if (minutes >= state->skeletonState->autoSaveInterval) {//timeout elapsed
 
-                emit saveSkeletonSignal();
+                state->skeletonState->lastSaveTicks = state->time.elapsed();//save timestamp
+
+                if (state->skeletonState->unsavedChanges && state->skeletonState->firstTree != nullptr) {//there’re real changes
+                    if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no filename yet
+                        state->skeletonState->skeletonFileAsQString = Skeletonizer::getDefaultSkelFileName();
+                    }
+                    emit saveSkeletonSignal();
+                }
             }
         }
     }
-
-
 
     setSkeletonWorkMode(CHANGE_MANUAL, state->skeletonState->workMode);
     return true;
@@ -737,9 +740,6 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("blrds", KIKI_SKELETONFILENAME, increment, origFilename))
             Client::skeletonSyncBroken();
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -1068,12 +1068,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             state->skeletonState->skeletonTime = xorInt(state->skeletonState->skeletonTime);
                         }
                     }
-                } else if(xml.name() == "activeNode") {
-                    if(merge == false) {
-                        QStringRef attribute = attributes.value("id");
-                        if(attribute.isNull() == false) {
-                            activeNodeID = attribute.toLocal8Bit().toInt();
-                        }
+                } else if(xml.name() == "activeNode" && !merge) {
+                    QStringRef attribute = attributes.value("id");
+                    if(attribute.isNull() == false) {
+                        activeNodeID = attribute.toLocal8Bit().toInt();
                     }
                 } else if(xml.name() == "scale") {
                     QStringRef attribute = attributes.value("x");
@@ -1099,7 +1097,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     if(attribute.isNull() == false)
                         loadedPosition.z = attribute.toLocal8Bit().toInt();
 
-                } else if(xml.name() == "skeletonVPState") {
+                } else if(xml.name() == "skeletonVPState" && !merge) {
                     int j = 0;
                     char element [8];
                     for (j = 0; j < 16; j++){
@@ -1404,58 +1402,50 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     qDebug() << "loading skeleton took: "<< bench.elapsed();
 
-    if(activeNodeID) {
-        if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
-            if(state->skeletonState->firstTree->firstNode) {
-                setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+    if(!merge) {
+
+        if(activeNodeID) {
+            if(setActiveNode(CHANGE_MANUAL, NULL, activeNodeID) == false and state->skeletonState->firstTree) { // if nml has invalid active node ID, simply make first node active
+                if(state->skeletonState->firstTree->firstNode) {
+                    setActiveNode(CHANGE_MANUAL, NULL, state->skeletonState->firstTree->firstNode->nodeID);
+                }
             }
         }
-    }
 
-    if((loadedPosition.x != 0) &&
-       (loadedPosition.y != 0) &&
-       (loadedPosition.z != 0)) {
-        Coordinate jump;
-        SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
-                             loadedPosition.y - 1 - state->viewerState->currentPosition.y,
-                             loadedPosition.z - 1 - state->viewerState->currentPosition.z);
-        emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
-    }
 
+        if((loadedPosition.x != 0) &&
+           (loadedPosition.y != 0) &&
+           (loadedPosition.z != 0)) {
+            Coordinate jump;
+            SET_COORDINATE(jump, loadedPosition.x - 1 - state->viewerState->currentPosition.x,
+                                 loadedPosition.y - 1 - state->viewerState->currentPosition.y,
+                                 loadedPosition.z - 1 - state->viewerState->currentPosition.z);
+            emit userMoveSignal(jump.x, jump.y, jump.z, TELL_COORDINATE_CHANGE);
+        }
+
+    }
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit displayModeChangedSignal();
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }
 
-void Skeletonizer::setDefaultSkelFileName() {
+QString Skeletonizer::getDefaultSkelFileName() {
     // Generate a default file name based on date and time.
-    time_t curtime;
-    struct tm *localtimestruct;
+    auto currentTime = time(nullptr);
+    auto localTime = localtime(&currentTime);
+    if(localTime->tm_year >= 100) {
+        localTime->tm_year -= 100;
+    }
+    auto relativePath = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+"/skeletonFiles/skeleton-%1%2%3-%4%5.000.nml")
+            //value, right aligned padded to width 2, base 10, filled with '0'
+            .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
+            .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
 
-    curtime = time(NULL);
-    localtimestruct = localtime(&curtime);
-    if(localtimestruct->tm_year >= 100)
-        localtimestruct->tm_year -= 100;
-    state->skeletonState->skeletonFileAsQString = "";
-#ifdef Q_OS_UNIX
-    state->skeletonState->skeletonFileAsQString.sprintf(
-            "skeletonFiles/skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#else
-    state->skeletonState->skeletonFileAsQString.sprintf(
-            "skeletonFiles\\skeleton-%.2d%.2d%.2d-%.2d%.2d.000.nml",
-            localtimestruct->tm_mday,
-            localtimestruct->tm_mon + 1,
-            localtimestruct->tm_year,
-            localtimestruct->tm_hour,
-            localtimestruct->tm_min);
-#endif
-    MainWindow::cpBaseDirectory(state->viewerState->gui->skeletonDirectory, state->skeletonState->skeletonFileAsQString);
+    return QFileInfo(relativePath).absoluteFilePath();
 }
 
 bool Skeletonizer::delActiveNode() {
@@ -1515,23 +1505,6 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
         targetNodeID = segToDel->target->nodeID;
     }
 
-    if(serialize) {
-        saveSerializedSkeleton();
-    }
-
-    if(!segToDel) {
-        LOG("Cannot delete segment, no segment with corresponding node IDs available!")
-        Knossos::unlockSkeleton(false);
-        return false;
-    }
-
-    if(!segToDel) {
-        segToDel = findSegmentByNodeIDs(sourceNodeID, targetNodeID);
-    } else {
-        sourceNodeID = segToDel->source->nodeID;
-        targetNodeID = segToDel->target->nodeID;
-    }
-
     if(!segToDel) {
         LOG("Cannot delete segment, no segment with corresponding node IDs available!")
         Knossos::unlockSkeleton(false);
@@ -1579,9 +1552,6 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
         if(!Client::syncMessage("brdd", KIKI_DELSEGMENT, sourceNodeID, targetNodeID)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -1690,9 +1660,6 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
     Knossos::unlockSkeleton(true);
     return true;
 }
@@ -1730,13 +1697,14 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
     }
     currentTree->firstNode = NULL;
 
-    if(currentTree == state->skeletonState->firstTree)
+    if (currentTree->previous != nullptr) {
+        currentTree->previous->next = currentTree->next;
+    }
+    if (currentTree->next != nullptr) {
+        currentTree->next->previous = currentTree->previous;
+    }
+    if(currentTree == state->skeletonState->firstTree) {
         state->skeletonState->firstTree = currentTree->next;
-    else {
-        if(currentTree->previous)
-            currentTree->previous->next = currentTree->next;
-        if(currentTree->next)
-            currentTree->next->previous = currentTree->previous;
     }
 
     free(currentTree);
@@ -1752,9 +1720,6 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
         if(!Client::syncMessage("brd", KIKI_DELTREE, treeID)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -2160,9 +2125,6 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
     Knossos::unlockSkeleton(true);
 
     return true;
@@ -2209,10 +2171,6 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
     state->skeletonState->activeTree = NULL;
     state->skeletonState->activeNode = NULL;
 
-    if(loadingSkeleton == false) {
-        setDefaultSkelFileName();
-    }
-
     state->skeletonState->nodeCounter = newDynArray(1048576);
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
@@ -2229,9 +2187,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
+    state->skeletonState->unsavedChanges = false;
     state->skeletonState->skeletonRevision = 0;
 
     Knossos::unlockSkeleton(true);
@@ -2335,9 +2291,6 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
         if(!Client::syncMessage("brdd", KIKI_MERGETREE, treeID1, treeID2)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
     return true;
@@ -2595,9 +2548,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
 
         Knossos::unlockSkeleton(true);
     }
-    else {
-
-    }
 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
@@ -2699,9 +2649,6 @@ bool Skeletonizer::addTreeComment(int targetRevision, int treeID, QString commen
         if(!Client::syncMessage("blrds", KIKI_ADDTREECOMMENT, treeID, comment.toStdString().c_str())) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -2839,9 +2786,6 @@ bool Skeletonizer::editNode(int targetRevision,
 
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -3201,9 +3145,6 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
     Knossos::unlockSkeleton(true);
 
     return nodeCount;
@@ -3278,9 +3219,6 @@ bool Skeletonizer::addComment(int targetRevision, QString content, nodeListEleme
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
     Knossos::unlockSkeleton(true);
 
     state->skeletonState->totalComments++;
@@ -3349,9 +3287,6 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
         if(!Client::syncMessage("brd", KIKI_DELCOMMENT, nodeID)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -3426,9 +3361,6 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
                     newContent_cstr)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 
@@ -3644,9 +3576,6 @@ exit_popbranchnode:
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
 
     state->skeletonState->totalBranchpoints--;
     Knossos::unlockSkeleton(true);
@@ -3699,9 +3628,6 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
             Client::skeletonSyncBroken();
         }
     }
-    else {
-
-    }
     Knossos::unlockSkeleton(true);
 
     state->skeletonState->totalBranchpoints++;
@@ -3724,9 +3650,6 @@ bool Skeletonizer::setSkeletonWorkMode(int targetRevision, uint workMode) {
         if(!Client::syncMessage("brd", KIKI_SETSKELETONMODE, workMode)) {
             Client::skeletonSyncBroken();
         }
-    }
-    else {
-
     }
     Knossos::unlockSkeleton(true);
 

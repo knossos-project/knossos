@@ -16,11 +16,6 @@
 #include "commentshortcuts/commentshighlightingtab.h"
 #include "commentshortcuts/commentsnodecommentstab.h"
 
-#include "toolswidget.h"
-#include "tools/toolsnodestabwidget.h"
-#include "tools/toolsquicktabwidget.h"
-#include "tools/toolstreestabwidget.h"
-
 #include "viewportsettingswidget.h"
 #include "viewportsettings/vpgeneraltabwidget.h"
 #include "viewportsettings/vpskeletonviewportwidget.h"
@@ -52,7 +47,6 @@ public:
 
     void createNavigationWidget(QWidget *parent);
     void createViewportSettingsWidget(QWidget *parent);
-    void createToolWidget(QWidget *parent);
     void createDataSavingWidget(QWidget *parent);
     void createSychronizationWidget(QWidget *parent);
     void createSplashScreenWidget(QWidget *parent);
@@ -67,7 +61,6 @@ public:
     CommentsWidget *commentsWidget;
     ZoomAndMultiresWidget *zoomAndMultiresWidget;
     NavigationWidget *navigationWidget;
-    ToolsWidget *toolsWidget;
     ViewportSettingsWidget *viewportSettingsWidget;
     DataSavingWidget *dataSavingWidget;
     SynchronizationWidget *synchronizationWidget;

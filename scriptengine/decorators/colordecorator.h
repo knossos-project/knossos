@@ -23,16 +23,13 @@ public slots:
     float blue(color4F *self);
     float green(color4F *self);
     float alpha(color4F *self);
-    QString static_color4F_help();
-
 
     void set_red(color4F *self, float red);
     void set_green(color4F *self, float green);
     void set_blue(color4F *self, float blue);
     void set_alpha(color4F *self, float alpha);
 
-
-
+    QString static_color4F_help();
 };
 
 #endif // COLOR4FDECORATOR_H

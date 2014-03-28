@@ -60,7 +60,7 @@ int NodeListDecorator::viewport(nodeListElement *self) {
 }
 
 QString NodeListDecorator::static_nodeListElement_help() {
-    return QString("the node class of knossos. You gain access to the following methods:" \
+    return QString("A read-only class representing a tree node of the KNOSSOS skeleton. Access to attributes only via getter." \
             "\n node_id() : returns the id of the current node" \
             "\n radius() : returns the radius of the current node" \
             "\n parent_tree() : returns the parent tree object of the current node" \

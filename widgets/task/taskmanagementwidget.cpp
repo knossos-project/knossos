@@ -27,6 +27,7 @@ TaskManagementWidget::TaskManagementWidget(TaskLoginWidget *loginWidget, QWidget
 
     QHBoxLayout *layout = new QHBoxLayout(); // add in layout, so that tabs resize, too
     layout->addWidget(tabs);
+    setWindowIcon(QIcon(":/images/icons/task.png"));
     setWindowTitle("Task Management");
     setLayout(layout);
     connect(mainTab, SIGNAL(hideSignal()), this, SLOT(hide()));

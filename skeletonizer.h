@@ -198,6 +198,7 @@ public:
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
 
+
     bool branchpointUnresolved;
 
     // This is for a workaround around agar bug #171
@@ -334,7 +335,7 @@ public slots:
     static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
     uint addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
 
-    static void setDefaultSkelFileName();
+    static QString getDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
     bool popBranchNode(int targetRevision, int serialize);

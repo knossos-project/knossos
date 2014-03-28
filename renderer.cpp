@@ -77,6 +77,9 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initMesh(&(state->skeletonState->lineVertBuffer), 1024);
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 
+
+
+
 }
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType) {
@@ -207,7 +210,6 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
 
         return true;
 }
-
 
 uint Renderer::renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType) {
 
@@ -392,31 +394,31 @@ uint Renderer::renderViewportBorders(uint currentVP) {
                       state->viewerState->vpConfigs[currentVP].n.x, 1.);
         break;
     }
-    glLineWidth(3.);
+    glLineWidth(2.);
     glBegin(GL_LINES);
-        glVertex3d(2, 1, -1);
+        glVertex3d(1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
         glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
-        glVertex3d(2, state->viewerState->vpConfigs[currentVP].edgeLength - 2, -1);
-        glVertex3d(2, 1, -1);
+        glVertex3d(1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(1, state->viewerState->vpConfigs[currentVP].edgeLength - 1, -1);
+        glVertex3d(1, 1, -1);
     glEnd();
 
     if(state->viewerState->vpConfigs[currentVP].type == state->viewerState->highlightVp) {
         // Draw an orange border to highlight the viewport.
 
         glColor4f(1., 0.3, 0., 1.);
-        glBegin(GL_LINES);
-            glVertex3d(5, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 4, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
-            glVertex3d(5, state->viewerState->vpConfigs[currentVP].edgeLength - 5, -1);
-            glVertex3d(5, 4, -1);
+        glBegin(GL_LINE_LOOP);
+            glVertex3f(3, 3, -1);
+            glVertex3f(state->viewerState->vpConfigs[currentVP].edgeLength - 3, 3, -1);
+            //glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 3, 3, -1);
+            glVertex3f(state->viewerState->vpConfigs[currentVP].edgeLength - 3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            //glVertex3d(state->viewerState->vpConfigs[currentVP].edgeLength - 3, state->viewerState->vpConfigs[currentVP].edgeLength - 4, -1);
+            //glVertex3d(3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            glVertex3f(3, state->viewerState->vpConfigs[currentVP].edgeLength - 3, -1);
+            //glVertex3d(3, 3, -1);
         glEnd();
     }
 
@@ -430,17 +432,17 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         glLineWidth(1.);
         glBegin(GL_QUADS);
         glColor4f(0, 1., 0, 0.2);
-            glVertex3f(leftUpper.x, leftUpper.y, 0);
-            glVertex3f(leftUpper.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
+            glVertex3f(leftUpper.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
         glBegin(GL_LINE_LOOP);
         glColor4f(0, 1., 0, 1);
-            glVertex3f(leftUpper.x, leftUpper.y, 0);
-            glVertex3f(leftUpper.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, rightLower.y, 0);
-            glVertex3f(rightLower.x, leftUpper.y, 0);
+            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
+            glVertex3f(leftUpper.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, rightLower.y, 0.f);
+            glVertex3f(rightLower.x, leftUpper.y, 0.f);
         glEnd();
         glDisable(GL_BLEND);
     }
@@ -1872,34 +1874,22 @@ uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y
 }
 
 void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height) {
-    int i;
-    /* 8192 is really arbitrary. It should be a value dependent on the
-    number of nodes / segments */
-    GLuint selectionBuffer[8192] = {0};
-    GLint hits, openGLviewport[4];
-    GLuint names, *ptr, minZ, *ptrName;
-    ptrName = NULL;
-
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_XZ) {
         refVPXZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_YZ) {
         refVPYZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     } else if(currentVP == VIEWPORT_SKELETON) {
         refVPSkel->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
     }
 
-   // glGetIntegerv(GL_VIEWPORT, openGLviewport);
-
-    glSelectBuffer(8192, selectionBuffer);
+    //4 elems per node: hit_count(always 1), min, max and 1 name
+    //generous amount of addional space for non-node-glloadname-calls
+    std::vector<GLuint> selectionBuffer(state->skeletonState->totalNodeElements * 4 + 2048);
+    glSelectBuffer(selectionBuffer.size(), selectionBuffer.data());
 
     state->viewerState->selectModeFlag = true;
-
     glRenderMode(GL_SELECT);
 
     glInitNames();
@@ -1908,14 +1898,23 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if(currentVP == VIEWPORT_XY)
-        gluPickMatrix(x, refVPXY->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_XZ)
-        gluPickMatrix(x, refVPXZ->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_YZ)
-        gluPickMatrix(x, refVPYZ->height() - y, width, height, openGLviewport);
-    else if(currentVP == VIEWPORT_SKELETON)
-       gluPickMatrix(x, this->refVPSkel->height() - y, width, height, openGLviewport);
+    GLdouble vp_height = refVPSkel->height();
+
+    if(currentVP == VIEWPORT_XY) {
+        vp_height = refVPXY->height();
+    } else if(currentVP == VIEWPORT_XZ) {
+        vp_height = refVPXZ->height();
+    } else if(currentVP == VIEWPORT_YZ) {
+        vp_height = refVPYZ->height();
+    }
+
+    const GLdouble center_x = x + width/2;
+    const GLdouble center_y = vp_height - (y + height/2);//window y top→bottom, ogl y bottom→top
+
+    GLint openGLviewport[4];
+    glGetIntegerv(GL_VIEWPORT, openGLviewport);
+
+    gluPickMatrix(center_x, center_y, width, height, openGLviewport);
 
     if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
         renderSkeletonVP(currentVP);
@@ -1924,30 +1923,29 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
         renderOrthogonalVP(currentVP);
     }
 
-    hits = glRenderMode(GL_RENDER);
+    GLint hits = glRenderMode(GL_RENDER);
     glLoadIdentity();
 
-    ptr = (GLuint *)selectionBuffer;
+    qDebug() << "selection hits: " << hits;
+    for (std::size_t i = 0; i < selectionBuffer.size();) {
+        if (hits == 0) {//if hits was positive and reaches 0
+            //if overflow bit was set hits is negative and we only use the buffer-end-condition
+            break;
+        }
+        --hits;
 
-    minZ = 0xffffffff;
-
-    if(hits == -1) { // overflow tag has been set.
-        hits = 8192;
-    }
-    nodeListElement *foundNode;
-    for(i = 0; i < hits; i++) {
-        names = *ptr;
-        ptr++;
-        if(*(ptr + 2) >= 50)  {
-            minZ = *ptr;
-            ptrName = ptr + 2;
-            foundNode = findNodeByNodeIDSignal(*ptrName - 50);
-            if(foundNode) {
-                foundNode->selected = true;
-                state->skeletonState->selectedNodes.push_back(foundNode);
+        const GLuint hit_count = selectionBuffer[i];
+        if (hit_count > 0) {
+            const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
+            if (name >= GLNAME_NODEID_OFFSET) {
+                nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
+                if (foundNode) {
+                    foundNode->selected = true;
+                    state->skeletonState->selectedNodes.push_back(foundNode);
+                }
             }
         }
-        ptr += names + 2;
+        i = i + 3 + hit_count;
     }
     state->viewerState->selectModeFlag = false;
 }
@@ -2233,6 +2231,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
             if(currentNode->next && (!(currentNode->numSegs > 2))) {
                 currentSegment = currentNode->next->firstSegment;
                 while(currentSegment) {
+
                     if((currentSegment->target == currentNode) ||
                        (currentSegment->source == currentNode)) {
                         /* Connected, heuristic is allowed */
@@ -2245,7 +2244,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 
             currentSegment = currentNode->firstSegment;
-            while(currentSegment && allowHeuristic) {
+            while(currentSegment && allowHeuristic && !state->viewerState->selectModeFlag) {
                 /* isBranchNode tells you only whether the node is on the branch point stack,
                  * not whether it is actually a node connected to more than two other nodes! */
                 if((currentSegment->target == lastNode)
@@ -2349,13 +2348,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
                 }
 
-                /* The first 50 entries of the openGL namespace are reserved
-                for static objects (like slice plane quads...) */
                 if(state->viewerState->selectModeFlag) {
-                    // the active node receives its name later, don't name it twice, or it will be selected twice.
-                    if(currentNode != state->skeletonState->activeNode) {
-                        glLoadName(currentNode->nodeID + 50);
-                    }
+                    glLoadName(GLNAME_NODEID_OFFSET + currentNode->nodeID);
                 }
 
                 /* Changes the current color & radius if the node has a comment */
@@ -2450,10 +2444,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         Skeletonizer::setColorFromNode(state->skeletonState->activeNode, &currentColor);
         currentColor.a = 0.2f;
 
-        if(state->viewerState->selectModeFlag) {
-            glLoadName(state->skeletonState->activeNode->nodeID + 50);
-        }
-
         if(state->skeletonState->overrideNodeRadiusBool)
             renderSphere(&(state->skeletonState->activeNode->position), state->skeletonState->overrideNodeRadiusVal * 1.5, currentColor, currentVP, viewportType);
         else
@@ -2467,6 +2457,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
         renderText(&(state->skeletonState->activeNode->position), textBuffer, currentVP, viewportType);
     }
+
+    renderUserGeometry();
 
     /* Restore modelview matrix */
     glPopMatrix();
@@ -2656,6 +2648,7 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
 }
 
 
+/*
 void Renderer::post_render() {
     // translate to the coordinate system origin
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
@@ -2667,4 +2660,26 @@ void Renderer::post_render() {
 
 
     glPopMatrix();
+}
+*/
+
+void Renderer::renderUserGeometry() {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
+        mesh *currentMesh = state->skeletonState->userGeometry->at(i);
+
+
+        glVertexPointer(3, GL_FLOAT, 0, currentMesh->vertices);
+        //glNormalPointer(3, GL_FLOAT, 0, currentMesh->normals);
+        glColorPointer(4, GL_FLOAT, 0, currentMesh->colors);
+
+        glDrawArrays(currentMesh->mode, 0, currentMesh->vertsIndex);
+    }
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }

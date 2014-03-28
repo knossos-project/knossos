@@ -558,13 +558,6 @@ bool Client::flushOutBuffer() {
     return true;
 }
 
-bool cleanUpClient() {
-    delete state->clientState;
-    state->clientState = NULL;
-
-    return true;
-}
-
 /**
  * @todo autoSaveOffEvent
  * @todo pushEvent
@@ -742,21 +735,16 @@ void Client::run() {
             break;
 
         /* Update state.
-
         clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
         clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
         clientState->remotePort = tempConfig->clientState->remotePort;
         strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
         */
         clientRun(remoteSocket);
-
-        if(state->quitSignal == true)
-            break;
     }
 
-
-        cleanUpClient();
-
+    delete state->clientState;
+    state->clientState = nullptr;
 }
 
 

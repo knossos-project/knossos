@@ -40,7 +40,7 @@ extern  stateInfo *state;
 CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
     QWidget(parent)
 {
-    QFormLayout *layout = new QFormLayout();
+    QGridLayout *layout = new QGridLayout();
 
     labels = new QLabel*[NUM];
     textFields = new QLineEdit*[NUM];
@@ -48,15 +48,17 @@ CommentShortCutsTab::CommentShortCutsTab(QWidget *parent) :
     /* this creates the Strings for the Label F1-F5 */
     for(int i = 0; i < NUM; i++) {
         QString tmp;
-        tmp = QString("F%1").arg((i+1));
+        tmp = QString("F%1:").arg((i+1));
         labels[i] = new QLabel(tmp);
 
         textFields[i] = new QLineEdit();
-        layout->addRow(labels[i], textFields[i]);
+        textFields[i]->setPlaceholderText(QString("Enter a comment for shortcut F%1").arg(i+1));
+        layout->addWidget(labels[i], i, 0);
+        layout->addWidget(textFields[i], i, 1);
     }
 
     button = new QPushButton("Clear Comments Boxes");
-    layout->addWidget(button);
+    layout->addWidget(button, 5, 1);
     this->setLayout(layout);
 
     for(int i = 0; i < 5; i++) {

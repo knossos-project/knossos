@@ -104,7 +104,6 @@ signals:
     void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
-    void updateTools();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
@@ -130,7 +129,6 @@ signals:
     void treeAddedSignal(treeListElement *tree);
     void nodeAddedSignal();
     void deleteSelectedNodesSignal();
-    void nodesDeletedSignal();
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);

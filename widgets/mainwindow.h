@@ -29,6 +29,8 @@
 #include <memory>
 
 #define FILE_DIALOG_HISTORY_MAX_ENTRIES 10
+#define LOCK_VP_ORIENTATION_DEFAULT (true)
+
 #include <QMainWindow>
 #include <QDropEvent>
 #include <QQueue>
@@ -62,9 +64,8 @@ public:
     void updateSkeletonFileName(QString &fileName);
 
     void closeEvent(QCloseEvent *event);
-    void updateTitlebar(bool useFilename);
+    void updateTitlebar();
 
-    static bool cpBaseDirectory(char *target, QString path);
     static void reloadDataSizeWin();
     static void datasetColorAdjustmentsChanged();
 
@@ -94,7 +95,6 @@ signals:
     void moveToNextNodeSignal();
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
-    void updateTools();
     bool popBranchNodeSignal();
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
@@ -111,15 +111,14 @@ signals:
     void nodeCommentChangedSignal(nodeListElement *node);
     void viewportDecorationSignal(bool visible);
 protected:
-    void clearSkeleton(bool isGUI);
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragLeaveEvent(QDragLeaveEvent *event);
     void dropEvent(QDropEvent *event);
     void resizeViewports(int width, int height);
     void becomeFirstEntry(const QString &entry);
-    QString *openFileDirectory;
-    QString *saveFileDirectory;        
+    QString openFileDirectory;
+    QString saveFileDirectory;
 public:
     Ui::MainWindow *ui;
 
@@ -128,8 +127,6 @@ public:
     QToolButton *pasteButton;
     QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *xField, *yField, *zField;
-    QLabel *loaderThreadsLabel;
-    QSpinBox *loaderThreadsField;
 
     QMessageBox *prompt;
 
@@ -177,11 +174,6 @@ public:
     QAction *synchronizationAction;
     QAction *dataSavingOptionsAction;
     QAction *viewportSettingsAction;
-    QAction *F1Action;
-    QAction *F2Action;
-    QAction *F3Action;
-    QAction *F4Action;
-    QAction *F5Action;
 
     /* window actions */
     QAction *toolsAction;
@@ -279,7 +271,6 @@ public slots:
     void viewportSettingsSlot();
 
     /* window menu */
-    void toolsSlot();
     void taskSlot();
     void logSlot();
     void commentShortcutsSlots();
@@ -293,7 +284,6 @@ public slots:
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
-    void loaderThreadsFieldChanged();
 
     void uncheckToolsAction();
     void uncheckViewportSettingAction();

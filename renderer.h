@@ -27,15 +27,20 @@
 
 #include <QObject>
 #include "knossos-global.h"
+#include <QList>
 
 class Viewport;
 class Renderer : public QObject {
     Q_OBJECT
+    /* The first 50 entries of the openGL namespace are reserved
+    for static objects (like slice plane quads...) */
+    const uint GLNAME_NODEID_OFFSET = 50;//glnames for node ids start at this value
     void renderArbitrarySlicePane(const vpConfig &);
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-
+    static bool doubleMeshCapacity(mesh *toDouble);
+    static bool initMesh(mesh *meshToInit, uint initialSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -46,23 +51,15 @@ protected:
     uint renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType);
     uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
-    void renderSkeleton(uint currentVP,uint viewportType);
-    bool doubleMeshCapacity(mesh *toDouble);
-    bool initMesh(mesh *meshToInit, uint initialSize);
+    void renderSkeleton(uint currentVP,uint viewportType);    
     bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
-    bool updateFrustumClippingPlanes(uint viewportType);
-
-signals:
-    nodeListElement *findNodeByNodeIDSignal(int nodeID);
-    
+    bool updateFrustumClippingPlanes(uint viewportType);    
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
-
-    void post_render();
-
+    void renderUserGeometry();
 };
 
 #endif // RENDERER_H

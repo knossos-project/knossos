@@ -44,7 +44,6 @@
 #include <QtNetwork/qhostaddress.h>
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
-#include <PythonQt/PythonQt.h>
 
 #define KVERSION "4.0"
 
@@ -300,12 +299,15 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class floatCoordinate;
 class Coordinate;
 class color4F;
 class treeListElement;
 class nodeListElement;
 class segmentListElement;
 class commentListElement;
+class mesh;
+
 
 //Structures and custom types
 typedef uint8_t Byte;
@@ -320,7 +322,13 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
     return val < base ? res : int_log(val/base, base, res+1);
 }
 
-struct floatCoordinate {
+/** It would be better to add a template parameter T to the class Coordinate. I receive a lot of compiler error because both types are frequently used.
+    I delay this until trunk and branch are completely merged.
+*/
+class floatCoordinate {
+public:
+    floatCoordinate() {}
+    floatCoordinate(float x, float y, float z) { this->x = x; this->y = y; this->z = z; }
     float x;
     float y;
     float z;
@@ -351,8 +359,6 @@ public:
         GLfloat b;
         GLfloat a;
 };
-
-
 
 
 // This structure makes up the linked list that is used to store the data for
@@ -430,9 +436,6 @@ typedef struct Hashtable{
 
 } Hashtable;
 
-// This is used for a (counting) linked list of vpConfigs that have to be handled
-// (their textures put together from datacube slices)
-
 struct stack {
     uint elementsOnStack;
     void **elements;
@@ -453,16 +456,19 @@ struct assignment {
   *
   * It gets instantiated in the main method of knossos.cpp and referenced in almost all important files and classes below the #includes with extern  stateInfo
   */
-//#include "widgets/console.h"
 
+#ifdef QT_DEBUG
+#include "widgets/console.h"
+#endif
 
 
 struct stateInfo {
 
     stateInfo() {}
     uint svnRevision;
-
+#ifdef QT_DEBUG
     //Console *console;
+#endif
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
     // Use overlay cubes to color the data.
@@ -645,7 +651,7 @@ struct stateInfo {
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    struct Viewer *viewer;
+    class Viewer *viewer;
     struct clientState *clientState;
     class skeletonState *skeletonState;
     struct trajectory *trajectories;
@@ -779,16 +785,6 @@ struct guiConfig {
     int useLastActNodeRadiusAsDefault;
     float actNodeRadius;
 
-    // File dialog widget variables and buffers
-    char skeletonDirectory[2048];
-    char datasetLUTDirectory[2048];
-    char datasetImgJDirectory[2048];
-    char treeImgJDirectory[2048];
-    char treeLUTDirectory[2048];
-    char customPrefsDirectory[2048];
-    char treeLUTFile[2048];
-    char datasetLUTFile[2048];
-
     // dataset navigation settings win buffer variables
     uint stepsPerSec;
     uint recenteringTime;
@@ -901,7 +897,7 @@ struct viewerState {
     bool vpOrientationLocked;
     int slicingMode; // MODE_ORTHO or MODE_ARBITRARY
 
-    struct vpConfig *vpConfigs;
+    vpConfig *vpConfigs;
     Byte *texData;
     Byte *overlayData;
     Byte *defaultTexData;
@@ -1120,8 +1116,10 @@ public:
     nodeListElement *node;
 };
 
-
-typedef struct {
+class mesh {
+public:
+    mesh();
+    mesh(uint mode); /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
@@ -1134,7 +1132,9 @@ typedef struct {
     uint vertsIndex;
     uint normsIndex;
     uint colsIndex;
-} mesh;
+    uint mode;
+
+};
 
 // unused ?
 typedef struct {
@@ -1290,6 +1290,7 @@ public:
     // every frame */
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
+    QList<mesh *> *userGeometry;
 
     bool branchpointUnresolved;
 
@@ -1316,6 +1317,7 @@ signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void echo(QString message);
     void updateTreeViewSignal();
+    bool sliceExtractSignal(Byte *datacube, Byte *slice, vpConfig *vpConfig);
 public slots:
     int skeleton_time();
     QString skeleton_file();
@@ -1332,10 +1334,10 @@ public slots:
     void add_tree(int tree_id, const QString &comment = 0, float r = -1, float g = -1, float b = -1, float a = 1);
     void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
     void add_segment(int source_id, int target_id);
-    void add_branch_node(int node_id);
-    QString cube_data_at(int x, int y, int z);
-    void post_render(int x, int y, int z, int size, float r, float g, float b, float a);
-
+    void add_branch_node(int node_id);    
+    QList<int> *cube_data_at(int x, int y, int z);
+    void render_mesh(mesh *mesh);
+    void export_converter(const QString &path);
     static QString help();
 
 };

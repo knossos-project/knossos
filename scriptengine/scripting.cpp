@@ -1,9 +1,11 @@
 #include "scripting.h"
+#include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
 #include "decorators/colordecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/nodelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
+#include "decorators/meshdecorator.h"
 
 #include "decorators/transformdecorator.h"
 #include "decorators/pointdecorator.h"
@@ -14,13 +16,10 @@
 #include "geometry/shape.h"
 
 #include "highlighter.h"
-
-
 #include "knossos-global.h"
 
-extern stateInfo *state;
 
-Q_DECLARE_METATYPE(Coordinate)
+extern stateInfo *state;
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -46,6 +45,8 @@ void Scripting::addDoc() {
 
 void Scripting::run() {
 
+
+
     QFont font("Courier");
     font.setPixelSize(12);    
 
@@ -61,22 +62,35 @@ void Scripting::run() {
     ctx.addObject("knossos", state->skeletonState);
     ctx.addObject("renderer", &render);
 
+    ctx.addVariable("GL_POINTS", GL_POINTS);
+    ctx.addVariable("GL_LINES", GL_LINES);
+    ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
+    ctx.addVariable("GL_LINE_LOOP", GL_LINE_LOOP);
+    ctx.addVariable("GL_TRIANGLES", GL_TRIANGLES);
+    ctx.addVariable("GL_TRIANGLES_STRIP", GL_TRIANGLE_STRIP);
+    ctx.addVariable("GL_TRIANGLE_FAN", GL_TRIANGLE_FAN);
+    ctx.addVariable("GL_QUADS", GL_QUADS);
+    ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
+    ctx.addVariable("GL_POLYGON", GL_POLYGON);
 
+
+    floatCoordinateDecorator = new FloatCoordinateDecorator();
     coordinateDecorator = new CoordinateDecorator();
     colorDecorator = new ColorDecorator();    
     treeListDecorator = new TreeListDecorator();
     nodeListDecorator = new NodeListDecorator();
     segmentListDecorator = new SegmentListDecorator();
+    meshDecorator = new MeshDecorator();
 
     transformDecorator = new TransformDecorator();
     pointDecorator = new PointDecorator();
 
-
-    qRegisterMetaType<Coordinate>();
-
     QString module("internal");
 
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
+
+    PythonQt::self()->addDecorators(floatCoordinateDecorator);
+    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
@@ -92,6 +106,10 @@ void Scripting::run() {
 
     PythonQt::self()->addDecorators(nodeListDecorator);
     PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
+
+    PythonQt::self()->addDecorators(meshDecorator);
+    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
+
 
     QString renderModule("rendering");
 
@@ -115,8 +133,8 @@ void Scripting::run() {
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
-    //PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    //ctx.addObject(name, obj);
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    ctx.addObject(name, obj);
 }
 
 void Scripting::reflect(QObject *obj) {

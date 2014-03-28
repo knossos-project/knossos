@@ -9,10 +9,12 @@
 
 
 class ColorDecorator;
+class FloatCoordinateDecorator;
 class CoordinateDecorator;
 class TreeListDecorator;
 class NodeListDecorator;
 class SegmentListDecorator;
+class MeshDecorator;
 
 class TransformDecorator;
 class PointDecorator;
@@ -30,10 +32,12 @@ public:
     //NicePyConsole *console;
     PythonQtScriptingConsole *console;
     CoordinateDecorator *coordinateDecorator;
+    FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
     TreeListDecorator *treeListDecorator;
     NodeListDecorator *nodeListDecorator;
     SegmentListDecorator *segmentListDecorator;
+    MeshDecorator *meshDecorator;
 
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;

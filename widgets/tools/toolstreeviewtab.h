@@ -5,6 +5,9 @@
 #include <QRadioButton>
 #include <QTableWidget>
 
+#include "widgets/tools/nodetable.h"
+#include "widgets/tools/treetable.h"
+
 class QTableWidgetItem;
 class QHBoxLayout;
 class QVBoxLayout;
@@ -21,42 +24,6 @@ class QMenu;
 class treeListElement;
 class nodeListElement;
 class segmentListElement;
-class TreeTable : public QTableWidget {
-    Q_OBJECT
-public:
-    explicit TreeTable(QWidget *parent);
-    int droppedOnTreeID;
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void dropEvent(QDropEvent *event);
-    void focusInEvent(QFocusEvent *);
-signals:
-    void focused(TreeTable *table);
-    void updateTreeview();
-    void deleteTreesSignal();
-public slots:
-};
-
-class NodeTable : public QTableWidget {
-    Q_OBJECT
-public:
-    explicit NodeTable(QWidget *parent);
-
-    bool changeByCode;
-    void setItem(int row, int column, QTableWidgetItem *item);
-protected:
-    void keyPressEvent(QKeyEvent *event);
-    void focusInEvent(QFocusEvent *);
-signals:
-    void deleteNodesSignal();
-    void nodesDeletedSignal(QModelIndexList selected);
-    void updateNodesTable();
-    void focused(NodeTable *table);
-public slots:
-
-};
 
 class ToolsTreeviewTab : public QWidget
 {
@@ -66,10 +33,8 @@ public:
 
     TreeTable *activeTreeTable;
     TreeTable *treeTable;
-    TreeTable *focusedTreeTable; // holds activeTreeTable or treeTable depending on what is focused by the user
     NodeTable *activeNodeTable;
     NodeTable *nodeTable;
-    NodeTable *focusedNodeTable;
 
     QLineEdit *treeSearchField;
     QLineEdit *nodeSearchField;
@@ -90,42 +55,11 @@ public:
     QWidget *treeSide;
     QWidget *nodeSide;
     QVBoxLayout *mainLayout;
-    // tree action dialogs
-    // tree comment editing
-    QDialog *treeCommentEditDialog;
-    QLineEdit *treeCommentField;
-    QPushButton *treeApplyButton;
-    QPushButton *treeCancelButton;
-    QVBoxLayout *treeCommentLayout;
-    QString treeCommentBuffer;
-    // tree color editing
-    QDialog *treeColorEditDialog;
-    int treeColorEditRow;
-    QLabel *rLabel, *gLabel, *bLabel, *aLabel;
-    QDoubleSpinBox *rSpin, *gSpin, *bSpin, *aSpin;
-    QPushButton *treeColorApplyButton;
-    QPushButton *treeColorCancelButton;
 
-    // node action dialogs
-    QDialog *nodeCommentEditDialog;
-    QLineEdit *nodeCommentField;
-    QPushButton *nodeCommentApplyButton;
-    QPushButton *nodeCommentCancelButton;
-    QVBoxLayout *nodeCommentLayout;
+    //edit dialogs values
     QString nodeCommentBuffer;
-    QDialog *nodeRadiusEditDialog;
-    QLabel *radiusLabel;
-    QDoubleSpinBox *radiusSpin;
-    QPushButton *nodeRadiusApplyButton;
-    QPushButton *nodeRadiusCancelButton;
-    QVBoxLayout *nodeRadiusLayout;
-    QDialog *moveNodesDialog;
-    QLabel *newTreeLabel;
-    QSpinBox *newTreeIDSpin;
-    QPushButton *moveNodesButton;
-    QPushButton *moveNodesCancelButton;
-
     float radiusBuffer;
+    QString treeCommentBuffer;
 
     // drag'n drop buffers
     int draggedNodeID;
@@ -134,9 +68,6 @@ public:
     void updateTreeColorCell(TreeTable *table, int row);
     bool matchesSearchString(QString searchString, QString string, bool useRegEx);
 
-    void createTreesContextMenu();
-    void createNodesContextMenu();
-    void createContextMenuDialogs();
     QPushButton *confirmationPrompt(QString question, QString confirmString);
 
 protected:
@@ -147,7 +78,7 @@ protected:
     int getActiveTreeRow();
     int getActiveNodeRow();
 signals:
-    void updateToolsSignal();
+    void updateAnnotationLabelsSignal();
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
@@ -160,63 +91,53 @@ public slots:
     void nodeSearchChanged();
 
     void displayedNodesChanged(int index);
-    void setFocused(TreeTable *table);
-    void setFocused(NodeTable *table);
     void actTreeItemChanged(QTableWidgetItem *item);
-    void activeTreeSelected();
+    void activeTreeSelectionChanged();
     void treeItemChanged(QTableWidgetItem* item);
-    void treeItemSelected();
+    void treeSelectionChanged();
     void treeItemDoubleClicked(QTableWidgetItem* item);
+
     void actNodeItemChanged(QTableWidgetItem *item);
     void nodeItemChanged(QTableWidgetItem* item);
-    void activeNodeSelected();
-    void nodeItemSelected();
+    void activeNodeSelectionChanged();
+    void nodeSelectionChanged();
     void nodeItemDoubleClicked(QTableWidgetItem*);
+
+    void activateFirstSelectedNode();
+    void activateFirstSelectedTree();
+
+    //context menu
+    void contextMenu(QPoint pos);
     // tree context menu
-    void treeContextMenuCalled(QPoint pos);
-    void setActiveTreeAction();
-    void editTreeColor();
     void deleteTreesAction();
     void mergeTreesAction();
     void restoreColorAction();
     void setTreeCommentAction();
-    void updateTreeCommentBuffer(QString comment);
-    void editTreeComments();
-
     // node context menu
-    void nodeContextMenuCalled(QPoint pos);
     void setNodeRadiusAction();
     void linkNodesAction();
     void moveNodesAction();
     void splitComponentAction();
     void setNodeCommentAction();
-    void updateNodeCommentBuffer(QString comment);
-    void editNodeComments();
-    void updateNodeRadiusBuffer(double value);
-    void editNodeRadii();
     void deleteNodesAction();
-    void moveNodesClicked();
 
     // update tree table
     void treeActivated();
     void treeAdded(treeListElement *tree);
     void treesDeleted();
     void treesMerged(int treeID1, int treeID2);
-    void treeComponentSplit();
 
     // update node table
     void nodeActivated();
     void nodeAdded();
-    void nodesDeleted();
     void branchPushed();
     void branchPopped();
     void nodeCommentChanged(nodeListElement *node);
     void nodeRadiusChanged(nodeListElement *node);
     void nodePositionChanged(nodeListElement *node);
-    void updateTreesTable();    
-    void updateNodesTable();
+    void recreateTreesTable();    
+    void recreateNodesTable();
     void update();
-    
 };
 
 #endif // TREEVIEWTAB_H

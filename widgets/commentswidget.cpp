@@ -46,6 +46,7 @@ extern  stateInfo *state;
 CommentsWidget::CommentsWidget(QWidget *parent) :
     QDialog(parent)
 {
+    setWindowIcon(QIcon(":/images/icons/insert-text.png"));
     setWindowTitle("Comment Settings");
     this->shortcutTab = new CommentShortCutsTab();
     this->highlightingTab = new CommentsHighlightingTab();
@@ -58,6 +59,8 @@ CommentsWidget::CommentsWidget(QWidget *parent) :
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(tabs);
     setLayout(layout);
+
+   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void CommentsWidget::loadSettings() {

@@ -19,10 +19,10 @@ void WidgetContainer::rewire() {
 //    connect(toolsWidget->toolsQuickTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
 //    connect(toolsWidget->toolsNodesTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
 //    connect(toolsWidget->toolsTreesTabWidget, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
-    //connect(annotationWidget->treeviewTab, SIGNAL(updateToolsSignal()), toolsWidget, SLOT(updateToolsSlot()));
 //    connect(commentsWidget->nodeCommentsTab, SIGNAL(updateTreeviewSignal()), annotationWidget->treeviewTab, SLOT(update()));
 }
 
+#include <QGraphicsBlurEffect>
 void WidgetContainer::createConsoleWidget() {
     console = new Console();
     console->setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -38,7 +38,9 @@ void WidgetContainer::createTracingTimeWidget(QWidget *parent) {
     tracingTimeWidget->layout()->activate();
     tracingTimeWidget->move(QApplication::desktop()->screen()->rect().center().x() - tracingTimeWidget->width() - 20,
                             QApplication::desktop()->screen()->rect().bottomRight().y() - tracingTimeWidget->height() - 50);
+    tracingTimeWidget->adjustSize();
     tracingTimeWidget->setFixedSize(tracingTimeWidget->size());
+
 }
 
 void WidgetContainer::createCommentsWidget(QWidget *parent) {
@@ -76,15 +78,6 @@ void WidgetContainer::createNavigationWidget(QWidget *parent) {
     navigationWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - navigationWidget->width() - 20,
                          QApplication::desktop()->screen()->rect().topRight().y() + 50);
     navigationWidget->setFixedSize(navigationWidget->size());
-}
-
-void WidgetContainer::createToolWidget(QWidget *parent) {
-    toolsWidget = new ToolsWidget(parent);
-#ifdef Q_OS_UNIX
-    toolsWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
-#endif
-    toolsWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-
 }
 
 void WidgetContainer::createViewportSettingsWidget(QWidget *parent) {
@@ -172,7 +165,9 @@ void WidgetContainer::createAnnotationWidget(QWidget *parent) {
 }
 
 void WidgetContainer::createWidgets(QWidget *parent) {
+#ifdef QT_DEBUG
     createConsoleWidget();
+#endif
     createTracingTimeWidget(parent);
     createCommentsWidget(parent);
     createViewportSettingsWidget(parent);

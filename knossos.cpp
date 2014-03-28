@@ -25,7 +25,6 @@
 
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
-#include <QTest>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
@@ -45,12 +44,6 @@
 #include "widgets/tracingtimewidget.h"
 #include "scriptengine/scripting.h"
 #include "ftp.h"
-
-#include "test/knossostestrunner.h"
-#include "test/testcommentswidget.h"
-#include "test/testtoolswidget.h"
-#include "test/testnavigationwidget.h"
-#include "test/testorthogonalviewport.h"
 
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
@@ -264,45 +257,6 @@ int main(int argc, char *argv[])
     a.installEventFilter(new myEventFilter());
 
     scripts.run();
-
-    /* TEST */
-    /*
-    TestOrthogonalViewport ortho;
-    ortho.reference = viewer;
-    QTest::qExec(&ortho);
-    */
-
-    /*
-    TestToolsWidget tools;
-    tools.reference = viewer;
-    QTest::qExec(&tools);
-    */
-
-
-//    KnossosTestRunner runner;
-//    runner.reference = viewer;
-//    runner.addTestClasses();
-//    runner.show();
-
-
-
-    /*
-    QStringList args;
-    args << "-silent" << "-o" << "RESULT.xml" << "-xml";
-
-    TestCommentsWidget test;
-    test.reference = viewer;
-
-    QTest::qExec(&test, args);
-    */
-
-
-    /*
-    TestNavigationWidget navigation;
-    navigation.viewerReference = viewer;
-    navigation.remoteReference = remote;
-    QTest::qExec(&navigation);
-    */
 
     return a.exec();
 }

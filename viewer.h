@@ -75,8 +75,7 @@ public:
 
     floatCoordinate v1, v2, v3;
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
-    vpList *viewports;
-    QTimer *timer;    
+    QTimer *timer;
     int frames;
 
     bool updateZoomCube();
@@ -94,16 +93,11 @@ signals:
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
-    bool vpListDel(vpList *list);
-    int vpListDelElement( vpList *list,  vpListElement *element);
-    vpList *vpListGenerate(viewerState *viewerState);
-    int vpListAddElement(vpList *vpList, vpConfig *vpConfig);
-    vpList* vpListNew();
 
-    bool vpGenerateTexture(vpListElement *currentVp, viewerState *viewerState);
-    bool vpGenerateTexture_arb(struct vpListElement *currentVp);
+    bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
+    bool vpGenerateTexture_arb(vpConfig &currentVp);
 
-    bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
+
     bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
 
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
@@ -126,6 +120,7 @@ public slots:
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);
     static bool loadDatasetColorTable(QString path, GLuint *table, int type);
+    bool sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConfig);
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();

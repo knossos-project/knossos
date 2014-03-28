@@ -44,7 +44,7 @@ nodeListElement *TreeListDecorator::first_node(treeListElement *self) {
 }
 
 QString TreeListDecorator::static_treeListElement_help() {
-    return QString("the tree class of knossos. You gain access to the following methods:"
+    return QString("A read-only class representing a tree of the KNOSSOS skeleton. Access to attributes only via getter."
                    "\n tree_id() : returns the id of the current tree"
                    "\n first_node() : returns the first node object of the current tree"
                    "\n comment() : returns the comment of the current tree"

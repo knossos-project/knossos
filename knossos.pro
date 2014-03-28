@@ -5,12 +5,13 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network xml testlib help
+QT       += core gui opengl network xml help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt warn_off
+CONFIG += qt #c++11
 #CONFIG -= app_bundle
+
 
 SOURCES += openjpeg/cio.c \
     openjpeg/bio.c \
@@ -52,6 +53,9 @@ SOURCES += openjpeg/cio.c \
     ftp.cpp \
     task.cpp \
     stateInfo.cpp \
+    color4F.cpp \
+    nodeListElement.cpp \
+    segmentListElement.cpp \
     treeListElement.cpp \
     skeletonstate.cpp \
     treeLUT_fallback.cpp \
@@ -67,10 +71,6 @@ SOURCES += openjpeg/cio.c \
     widgets/datasavingwidget.cpp \
     widgets/navigationwidget.cpp \
     widgets/viewportsettingswidget.cpp \
-    widgets/toolswidget.cpp \
-    widgets/tools/toolsquicktabwidget.cpp \
-    widgets/tools/toolstreestabwidget.cpp \
-    widgets/tools/toolsnodestabwidget.cpp \
     widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
@@ -87,36 +87,9 @@ SOURCES += openjpeg/cio.c \
     widgets/annotationwidget.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
-    test/testcommentswidget.cpp \
-    test/testskeletonviewport.cpp \
-    test/testtoolswidget.cpp \
-    test/testnavigationwidget.cpp \
-    test/testzoomandmultireswidget.cpp \
-    test/testorthogonalviewport.cpp \
-    test/testdatasavingwidget.cpp \
-    test/testskeletonloadandsave.cpp \
-    test/knossostestrunner.cpp \        
-    scriptengine/scripting.cpp \
-    scriptengine/decorators/treelistdecorator.cpp \
-    scriptengine/decorators/nodelistdecorator.cpp \
-    scriptengine/decorators/mainwindowdecorator.cpp \
-    skeleton.cpp \
-    scriptengine/decorators/colordecorator.cpp \
-    nodeListElement.cpp \
-    scriptengine/decorators/segmentlistdecorator.cpp \
-    segmentListElement.cpp \
-    scriptengine/highlighter.cpp \
-    pattern/observer/iobservable.cpp \
-    pattern/observer/iobserver.cpp \
-    scriptengine/decorators/coordinatedecorator.cpp \
-    commentListElement.cpp \
-    color4F.cpp \
-    scriptengine/decorators/pointdecorator.cpp \
-    scriptengine/geometry/transform.cpp \
-    scriptengine/geometry/shape.cpp \
-    scriptengine/geometry/point.cpp \
-    scriptengine/decorators/transformdecorator.cpp \
-    scriptengine/geometry/render.cpp
+    widgets/tools/nodetable.cpp \
+    widgets/tools/treetable.cpp \
+    mesh.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -180,10 +153,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/datasavingwidget.h \
     widgets/navigationwidget.h \
     widgets/viewportsettingswidget.h \
-    widgets/toolswidget.h \
-    widgets/tools/toolsquicktabwidget.h \
-    widgets/tools/toolstreestabwidget.h \
-    widgets/tools/toolsnodestabwidget.h \
     widgets/viewportsettings/vpsliceplaneviewportwidget.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
@@ -200,88 +169,61 @@ HEADERS  += widgets/mainwindow.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
-    test/testcommentswidget.h \    
-    test/testskeletonviewport.h \
-    test/testtoolswidget.h \
-    test/testnavigationwidget.h \
-    test/testzoomandmultireswidget.h \
-    test/testorthogonalviewport.h \
-    test/testdatasavingwidget.h \
-    test/testskeletonloadandsave.h \
-    test/knossostestrunner.h \        
-    scriptengine/scripting.h \
-    scriptengine/decorators/treelistdecorator.h \
-    scriptengine/decorators/nodelistdecorator.h \
-    scriptengine/decorators/mainwindowdecorator.h \
-    scriptengine/decorators/colordecorator.h \
-    scriptengine/decorators/segmentlistdecorator.h \
-    scriptengine/highlighter.h \
-    pattern/observer/iobservable.h \
-    pattern/observer/iobserver.h \
-    scriptengine/decorators/coordinatedecorator.h \
-    scriptengine/decorators/pointdecorator.h \
-    scriptengine/geometry/transform.h \
-    scriptengine/geometry/shape.h \
-    scriptengine/geometry/point.h \
-    scriptengine/decorators/transformdecorator.h \
-    scriptengine/geometry/render.h
+    widgets/tools/nodetable.h \
+    widgets/tools/treetable.h
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \
-    knossos.layout \
-    iconv.dll \
-    libfreetype-6.dll \
-    pthreadVC2.dll \
-    zlib1.dll \
-    icon \
+OTHER_FILES += \    
     LICENSE \
     Makefile \
-    splash \
-    knossos.depend \
-    knossos.dev \
+    splash.png \
     default.lut \
-    gmon.out \
     knossos.res \
     knossos_private.res \
     knossos.rc \
     knossos_private.rc \
     logo.ico \
     ChangeLog.txt \
-    defaultSettings.xml \
-    customCursor.xpm \
-    config.y \
+    ChangeLog_v4.txt \
     style.qss
 
+include(scriptengine/scriptengine.pri)
 
-DEFINES += REVISION=\\\"$$system(svnversion)\\\"
+exists(.svn) {
+    #stringify (svnversion ouput maybe not integer)
+    SVNREV = \\\"$$system(svnversion)\\\"
+    DEFINES += REVISION=$$SVNREV
+    message(svn revision: $$SVNREV)
+}
+exists(.git) {
+    COMMIT = $$system(git log -1 --pretty=format:%H)
+    GITREV = $$system(git svn find-rev $$COMMIT)
+    DEFINES += REVISION=$$GITREV
+    message(git svn revision: $$GITREV)
+}
 
-mac {
-    INCLUDEPATH += /usr/include/Python2.7 \
-                   /usr/lib/
-                   /usr/include
-    LIBS += -framework Python \
-            -framework GLUT \
-            -L$(QTDIR)/lib -lPythonQt \
+macx:QMAKE_MAC_SDK = macosx10.9
+macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+macx {
+    INCLUDEPATH += /usr/lib/ \
+                   /usr/include \
+    LIBS += -framework GLUT \
             -lcurl
 
-    #ICON += Knossos.icns
+    ICON += knossos.icns
 }
 
 linux {
     LIBS += -lGL \
             -lGLU \
-            -lPythonQt \
-            -lPythonQt_QtAll \
             -lglut \
             -lcurl \
             -L/usr/lib/i386-linux-gnu/mesa/lGL \
-            -L/usr/lib/i386-linux-gnu -lpython2.7 \
 
     INCLUDEPATH += /usr/include/GL/ \
             /usr/local/include/ \
-            /usr/local/include/PythonQt/ \
-            /usr/include/python2.7/
+
 }
 
 win32 {
@@ -294,13 +236,7 @@ win32 {
     LIBS += -lcurl.dll \
             #-lglew32 \
             -lglut32 \
-            -lpythonQt$${DEBUG_EXT} \
-            -lpythonQt_QtAll$${DEBUG_EXT} \
             -lwsock32
-
-    INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
-                   C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
-                   C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
 
     RC_FILE = knossos.rc
 }
@@ -309,7 +245,8 @@ win32 {
 RESOURCES += \
     Resources.qrc
 
-include(test/config.pri)
 
-QMAKE_CXXFLAGS += -std=c++0x
+#include(test/test.pri)
+
+QMAKE_CXXFLAGS += -std=gnu++0x #-std=c++0x
 QMAKE_CXXFLAGS_RELEASE += -O3

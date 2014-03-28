@@ -28,6 +28,7 @@
 #include <QDialog>
 
 class QLabel;
+class QTableWidgetItem;
 class TracingTimeWidget : public QDialog
 {
     Q_OBJECT
@@ -40,10 +41,15 @@ public slots:
     void checkIdleTime();
 
 protected:
+    QTableWidgetItem *runningLabelItem;
+    QTableWidgetItem *runningTimeItem;
 
-    QLabel *runningTimeLabel;
-    QLabel *tracingTimeLabel;
-    QLabel *idleTimeLabel;
+    QTableWidgetItem *tracingLabelItem;
+    QTableWidgetItem *tracingTimeItem;
+
+    QTableWidgetItem *idleLabelItem;
+    QTableWidgetItem *idleTimeItem;
+
     QTimer *timer;
     void closeEvent(QCloseEvent *event);
 };

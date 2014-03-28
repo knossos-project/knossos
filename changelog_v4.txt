@@ -28,6 +28,19 @@ v4.1:
 ----------------------------------
 
 
+----------------------------------
+-  Quality                       -
+----------------------------------
+
+- Nicer look and feel
+- Native file dialogs and ui elements
+- Restructured menu:
+  - Icons and shortscut information in the menu bar
+  - Current workmodes are marked with a check
+  - A Toolbar with a collection of important widgets
+- Tooltips
+- Integrated documentation
+
 
 ----------------------------------
 -  Features                      -
@@ -48,4 +61,6 @@ Typical values for 3D EM datasets without obvious compression artefacts are ~1 b
 ----------------------------------
 
 - The synchonization of multiple KNOSSOS instances is currently not supported any more
-
+- The format for custom preferences is now saved in a key value file structure (.conf)
+- A Mac OS X Version (>= version 10.9)
+- Debian Packages for Linux (Tested on Ubuntu [i386/amd64] (>= version 12))

@@ -36,6 +36,7 @@ const QString AUTOINC_FILENAME = "autoinc_filename";
 
 /* DataSet Switch */
 const QString DATASET_MRU = "dataset_mru";
+const QString DATASET_M = "supercube_edge";
 
 /* Zoom and Multires */
 const QString ORTHO_DATA_VIEWPORTS = "orthogonal_data_viewports";
@@ -61,6 +62,7 @@ const QString VPYZ_SIZE = "vpyz_size";
 const QString VPSKEL_COORD = "vpskel_coord";
 const QString VPSKEL_SIZE = "vpskel_size";
 const QString VP_TAB_INDEX = "vp_tab_index";
+const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
 /* Viewport Settings Slice Plane Tab */
 const QString ENABLE_OVERLAY = "enable_overlay";

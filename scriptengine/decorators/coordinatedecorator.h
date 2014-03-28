@@ -18,8 +18,6 @@ public slots:
     Coordinate *new_Coordinate();
     Coordinate *new_Coordinate(int x, int y, int z);
 
-
-
     int x(Coordinate *self);
     int y(Coordinate *self);
     int z(Coordinate *self);
