@@ -32,7 +32,6 @@
 #include <QFont>
 
 #include "eventmodel.h"
-#include "renderer.h"
 
 #define VP_UPPERLEFT 0
 #define VP_LOWERLEFT 1
@@ -73,7 +72,6 @@ public:
     void showButtons();
     void updateButtonPositions();
     EventModel *eventDelegate;
-    Renderer renderer;
     static const int MIN_VP_SIZE = 50;
 
 protected:

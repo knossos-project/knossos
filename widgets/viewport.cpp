@@ -22,16 +22,18 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
-#include "viewport.h"
-#include "eventmodel.h"
-#include "renderer.h"
+#include <QHBoxLayout>
+#include <QPainter>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-#include "sleeper.h"
+
+#include "eventmodel.h"
 #include "functions.h"
-#include <QPainter>
+#include "knossos-global.h"
+#include "renderer.h"
+#include "sleeper.h"
+#include "viewer.h"
+#include "viewport.h"
 
 extern stateInfo *state;
 
@@ -415,11 +417,11 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
 }
 
 void Viewport::drawViewport(int vpID) {
-    renderer.renderOrthogonalVP(vpID);
+    state->viewer->renderer->renderOrthogonalVP(vpID);
 }
 
 void Viewport::drawSkeletonViewport() {
-    renderer.renderSkeletonVP(VIEWPORT_SKELETON);
+    state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
 }
 
 bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {
