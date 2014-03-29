@@ -59,16 +59,10 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 }
 
 void TaskLoginWidget::urlEditingFinished() {
-    memset(state->taskState->host, '\0', sizeof(state->taskState->host));
-    strcpy(state->taskState->host, urlField->text().toStdString().c_str());
-    // cut off trailing slash
-    if(state->taskState->host[strlen(state->taskState->host)-1] == '/') {
-        state->taskState->host[strlen(state->taskState->host)-1] = '\0';
-    }
+    state->taskState->host = urlField->text();
 }
 
 void TaskLoginWidget::loginButtonClicked() {
-    char url[1024];
     CURLcode code;
     long httpCode;
     struct httpResponse response;
@@ -85,28 +79,25 @@ void TaskLoginWidget::loginButtonClicked() {
     sprintf(postdata, "<login><username>%s</username><password>%s</password></login>", username, password);
 
     // build url to send to
-    memset(url, '\0', 1024);
-    strcpy(url, state->taskState->host);
-    strcat(url, "/knossos/session/");
+    auto url = state->taskState->host + "/knossos/session/";
 
     // prepare http response object
     response.length = 0;
     response.content = (char *)calloc(1, response.length+1);
 
     // remove contents of cookie file to fill it with new cookie
-    cookie = fopen(state->taskState->cookieFile, "w");
+    cookie = fopen(state->taskState->cookieFile.toUtf8().constData(), "w");
     if(cookie) {
         fclose(cookie);
     }
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpPOST(url, postdata, &response, &httpCode, state->taskState->cookieFile, &code, 5);
+    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
     if( result == false) {
         serverStatus->setText("<font color='red'>Failed to create cookie. Please check your folder permissions.</font>");
     }
     else if(code == CURLE_OK) {
         if(httpCode == 200) {
-
             QXmlStreamReader xml(response.content);
             if(xml.hasError()) {
                 serverStatus->setText("<font color='red'>Error in transmission. Please try again.</font>");
@@ -128,8 +119,7 @@ void TaskLoginWidget::loginButtonClicked() {
                 }
                 attribute = attributes.value("taskfile").toString();
                 if(attribute.isNull() == false) {
-                    memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
-                    strcpy(state->taskState->taskFile, attribute.toStdString().c_str());
+                    state->taskState->taskFile = attribute;
                 }
                 attribute = attributes.value("description").toString();
                 if(attribute.isNull() == false) {

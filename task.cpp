@@ -111,7 +111,7 @@ bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpC
     return false;
 }
 
-bool taskState::httpFileGET(char *url, char *postdata, FILE *file,
+bool taskState::httpFileGET(char *url, char *postdata, httpResponse * response,
                             struct httpResponse *header, long *httpCode,
                             char *cookiePath, CURLcode *code, long timeout) {
     CURL *handle;
@@ -134,8 +134,8 @@ bool taskState::httpFileGET(char *url, char *postdata, FILE *file,
     if(postdata) {
         curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata);
     }
-    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeToFile);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeHttpResponse);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
     curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
@@ -157,11 +157,6 @@ size_t taskState::writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct
     s->length = new_len;
 
     return size*nmemb;
-}
-
-// for writing http response to file
-size_t taskState::writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    return fwrite(ptr, size, nmemb, stream);
 }
 
 // for sending file contents over http request
@@ -190,7 +185,7 @@ int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char 
 }
 
 void taskState::removeCookie() {
-    if(remove(state->taskState->cookieFile) != 0) {
+    if(QFile(state->taskState->cookieFile).remove()) {
         perror("Failed to delete file.");
     }
 }

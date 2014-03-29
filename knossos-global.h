@@ -700,17 +700,16 @@ struct httpResponse {
 };
 
 struct taskState {
-    char *host;
-    char *cookieFile;
-    char *taskFile;
-    char *taskName;
+    QString host;
+    QString cookieFile;
+    QString taskFile;
+    QString taskName;
 
     static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
-    static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
     static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
     static void removeCookie();
