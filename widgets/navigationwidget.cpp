@@ -51,15 +51,15 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     QFormLayout *formLayout = new QFormLayout();
 
     movementSpeedLabel = new QLabel("Movement Speed:");
-    jumpFramesLabel = new QLabel("Jump Frames");
-    walkFramesLabel = new QLabel("Walk Frames");
+    jumpFramesLabel = new QLabel("Jump Frames (D, F)");
+    walkFramesLabel = new QLabel("Walk Frames (E, R)");
     recenterTimeParallelLabel = new QLabel("Recenter Time parallel [ms]:");
     recenterTimeOrthoLabel = new QLabel("Recenter Time Orthogonal [ms]:");
 
     movementSpeedSpinBox = new QSpinBox();
     movementSpeedSpinBox->setMaximum(1000);
     jumpFramesSpinBox = new QSpinBox;
-    jumpFramesSpinBox->setMaximum(1000);    
+    jumpFramesSpinBox->setMaximum(1000);
     walkFramesSpinBox = new QSpinBox;
     walkFramesSpinBox->setMaximum(1000);
     recenterTimeParallelSpinBox = new QSpinBox();

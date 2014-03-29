@@ -84,8 +84,8 @@ ZoomAndMultiresWidget::ZoomAndMultiresWidget(QWidget *parent) :
     this->lockDatasetCheckBox = new QCheckBox("Lock dataset to current mag");
 
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
-    QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
-    QString lowestActiveMag = QString("Lowest active mag dataset: %1").arg(state->lowestAvailableMag);
+    QString highestActiveMag = QString("Highest available mag dataset: %1").arg(state->highestAvailableMag);
+    QString lowestActiveMag = QString("Lowest available mag dataset: %1").arg(state->lowestAvailableMag);
 
     this->currentActiveMagDatasetLabel = new QLabel(currentActiveMag);
     this->highestActiveMagDatasetLabel = new QLabel(highestActiveMag);
