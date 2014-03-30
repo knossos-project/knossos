@@ -1070,6 +1070,8 @@ bool Knossos::configDefaults() {
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
 
+    state->keyD = state->keyE = state->keyF = state->keyR = false;
+
     return true;
 
 }

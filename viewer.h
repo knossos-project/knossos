@@ -30,6 +30,7 @@
 #include <QDebug>
 #include <QCursor>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QLineEdit>
 #include "knossos-global.h"
 
@@ -109,7 +110,8 @@ protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
     void processUserMove();
-    QTime delay;
+    QElapsedTimer delay;
+    qint64 lastTime;
     bool idlingExceeds(uint msec);
 };
 

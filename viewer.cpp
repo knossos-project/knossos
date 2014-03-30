@@ -56,6 +56,7 @@ Viewer::Viewer(QObject *parent) :
     vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
     timer = new QTimer();
+    lastTime = 0;
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -2134,20 +2135,18 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
 */
 void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
-        int time = delay.elapsed();
+        qint64 time = delay.elapsed();
+        qint64 interval = 200;
 
-#ifndef Q_OS_UNIX
-        if(time > 200) {
-            delay.restart();
-        }
-#endif
 #ifdef Q_OS_MAC
         state->autorepeat = true;
 #endif
 
-        if(time >= 200 and !state->autorepeat) {
-            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
-        } else if(state->autorepeat) {
+        if (state->autorepeat) {
+            interval = 1000 / state->viewerState->stepsPerSec;
+        }
+        if (time - lastTime >= interval) {
+            lastTime = time;
             userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         }
     }
