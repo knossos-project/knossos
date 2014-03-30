@@ -29,10 +29,37 @@
 
 extern stateInfo *state;
 
+namespace clientState {
+
+
+    bool connectAsap = false;
+    int connectionTimeout = 3000;
+    int remotePort = 7890;
+    bool connected = false;
+    Byte synchronizeSkeleton = true;
+    Byte synchronizePosition = true;
+    bool saveMaster = false;
+    char serverAddress[1024];
+    uint myId = 0;
+    bool connectionTried;
+
+    QHostAddress *remoteServer = new QHostAddress();
+    QTcpSocket *remoteSocket = new QTcpSocket();
+    QSet<QTcpSocket *> *socketSet = NULL;
+
+    IOBuffer *inBuffer = new IOBuffer();
+    IOBuffer *outBuffer = new IOBuffer();
+    peerListElement *firstPeer = NULL;
+
+}
+
+
+
 Client::Client(QObject *parent) :
     QThread(parent)
 {
 
+    strncpy(clientState::serverAddress, "localhost", 1024);
     /*
     this->remoteSocket = new QTcpSocket(this);
     connect(this->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()), Qt::QueuedConnection);
@@ -40,9 +67,9 @@ Client::Client(QObject *parent) :
     */
     //remoteSocket->moveToThread(this);
     /*
-    state->clientState->remoteSocket = new QTcpSocket();
-    connect(state->clientState->remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
-    connect(state->clientState->remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
+    clientState::remoteSocket = new QTcpSocket();
+    connect(clientState::remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
+    connect(clientState::remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
     */
 }
 
@@ -63,7 +90,7 @@ bool Client::connectToServer(QTcpSocket *remoteSocket) {
         return false;
     }
 
-    remoteSocket->connectToHost(hostInfo.hostName(), state->clientState->remotePort, QIODevice::ReadWrite);
+    clientState::remoteSocket->connectToHost(hostInfo.hostName(), clientState::remotePort, QIODevice::ReadWrite);
     if(!remoteSocket->waitForConnected(3000)) {
         qDebug() << "cannot establish a socket connection";
         LOG("Cannot establish a socket connection");
@@ -72,8 +99,8 @@ bool Client::connectToServer(QTcpSocket *remoteSocket) {
     }
     qDebug() << "connection established";
     emit sendConnectedState();
-    socketSet = new QSet<QTcpSocket *>();
-    socketSet->insert(state->clientState->remoteSocket);
+    clientState::socketSet = new QSet<QTcpSocket *>();
+    clientState::socketSet->insert(clientState::remoteSocket);
 
 
 
@@ -88,10 +115,10 @@ bool Client::closeConnection(QTcpSocket *remoteSocket) {
            remoteSocket->close();
        }
 
-       state->clientState->connected = false;
+       clientState::connected = false;
 
 
-      state->clientState->connected = false;
+      clientState::connected = false;
       emit sendDisconnectedState();
       return true;
 
@@ -112,7 +139,7 @@ float Client::bytesToFloat(Byte *source) {
 uint Client::parseInBuffer() {
     qDebug() << "in parseInBuffer";
     int messageLen = 0;
-    clientState *clientState = state->clientState;
+
 
     Coordinate *pPosition = NULL;
 
@@ -133,21 +160,21 @@ uint Client::parseInBuffer() {
      *  after parsing.
      */
     color4F treeCol;
-    while(clientState->inBuffer->length >= 5) {
-        switch(clientState->inBuffer->data[0]) {
+    while(clientState::inBuffer->length >= 5) {
+        switch(clientState::inBuffer->data[0]) {
             case KIKI_HIBACK:
-                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
-                clientState->myId = d[0];
+                clientState::myId = d[0];
 
                 break;
 
             case KIKI_POSITION:
-                messageLen = Client::parseInBufferByFmt(17, "xdddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(17, "xdddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -181,14 +208,14 @@ uint Client::parseInBuffer() {
                  *         s: name
                  */
 
-                messageLen = Client::parseInBufferByFmt(-1, "xldfffddds", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(-1, "xldfffddds", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
                     goto loopExit;
 
                 /* LOG("Client id %d received a KIKI_ADVERTISE message: Name: \"%s\" (id %d), scale (%f, %f, %f), offset (%d, %d, %d).",
-                 *       state->clientState->myId,
+                 *       clientState::myId,
                  *       s,
                  *       d[0],
                  *       f[0],
@@ -208,7 +235,7 @@ uint Client::parseInBuffer() {
                  * Format: save master's peer id: d0.
                  */
 
-                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0) {
                     goto critical;
                 }
@@ -219,14 +246,14 @@ uint Client::parseInBuffer() {
                 if(d[0] < 0) {//client Id should be positive
                     break; //ignore this message if invalid
                 }
-                if(state->clientState->myId == (uint)d[0]) {
-                    state->clientState->saveMaster = true;
+                if(clientState::myId == (uint)d[0]) {
+                    clientState::saveMaster = true;
                     LOG("Instance id %d (%s) now autosaving.",
-                        state->clientState->myId,
+                        clientState::myId,
                         state->name)
                 }
                 else {
-                    state->clientState->saveMaster = false;
+                    clientState::saveMaster = false;
                 }
                 break;
 
@@ -238,7 +265,7 @@ uint Client::parseInBuffer() {
                  *
                  */
 
-                messageLen = Client::parseInBufferByFmt(-1, "xldds", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(-1, "xldds", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -248,7 +275,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_WITHDRAW:
-                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -263,7 +290,7 @@ uint Client::parseInBuffer() {
             case KIKI_ADDTREECOMMENT:
                 /* Format: revision, tree id, comment string */
 
-                messageLen = Client::parseInBufferByFmt(-1, "xlds", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(-1, "xlds", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                         goto critical;
                 else if(messageLen == 0)
@@ -277,7 +304,7 @@ uint Client::parseInBuffer() {
             case KIKI_ADDCOMMENT:
                 /* Format: revision, node id, comment string */
 
-                messageLen = Client::parseInBufferByFmt(-1, "xldds", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(-1, "xldds", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -290,7 +317,7 @@ uint Client::parseInBuffer() {
             case KIKI_EDITCOMMENT:
                 /* Format: revision, node id, new node id, new content */
 
-                messageLen = Client::parseInBufferByFmt(-1, "xlddds", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(-1, "xlddds", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -301,7 +328,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_DELCOMMENT:
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -323,7 +350,7 @@ uint Client::parseInBuffer() {
                            position x d7,
                            y d8,
                            z d9 */
-                messageLen = Client::parseInBufferByFmt(45, "xdddfddddddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(45, "xdddfddddddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -348,7 +375,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_EDITNODE:
                 /* Format: revision, peer id, nodeid, radius, from magnification, position x, y, z */
-                messageLen = Client::parseInBufferByFmt(33, "xdddfdddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(33, "xdddfdddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -360,7 +387,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_DELNODE:
                 /* Format: revision, id */
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -374,7 +401,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_ADDSEGMENT:
                 /* Format: revision, source node, target node */
-                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -386,7 +413,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_DELSEGMENT:
                 /* Format: Revision, source node, target node */
-                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -397,7 +424,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_ADDTREE:
-                messageLen = Client::parseInBufferByFmt(21, "xddfff", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(21, "xddfff", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -413,7 +440,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_DELTREE:
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -424,7 +451,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_MERGETREE:
-                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(13, "xddd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -435,7 +462,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_SPLIT_CC:
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -447,7 +474,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_PUSHBRANCH:
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -458,7 +485,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_POPBRANCH:
-                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -470,7 +497,7 @@ uint Client::parseInBuffer() {
                 break;
 
             case KIKI_CLEARSKELETON:
-                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(5, "xd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -482,7 +509,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_SETACTIVENODE:
                 /* Format: Revision, node id */
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -494,7 +521,7 @@ uint Client::parseInBuffer() {
 
             case KIKI_SETSKELETONMODE:
                 /* Format: Revision, work mode */
-                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState->inBuffer);
+                messageLen = Client::parseInBufferByFmt(9, "xdd", f, s, d, clientState::inBuffer);
                 if(messageLen < 0)
                     goto critical;
                 else if(messageLen == 0)
@@ -518,9 +545,9 @@ uint Client::parseInBuffer() {
         }
 
         /* Remove the message we just interpreted from the input buffer */
-        memmove(clientState->inBuffer->data, &clientState->inBuffer->data[messageLen], clientState->inBuffer->length - messageLen);
-        clientState->inBuffer->length = clientState->inBuffer->length - messageLen;
-        memset(&clientState->inBuffer->data[clientState->inBuffer->length], '\0', clientState->inBuffer->size - clientState->inBuffer->length);
+        memmove(clientState::inBuffer->data, &clientState::inBuffer->data[messageLen], clientState::inBuffer->length - messageLen);
+        clientState::inBuffer->length = clientState::inBuffer->length - messageLen;
+        memset(&clientState::inBuffer->data[clientState::inBuffer->length], '\0', clientState::inBuffer->size - clientState::inBuffer->length);
         messageLen = 0;
 
     }
@@ -542,16 +569,16 @@ bool Client::flushOutBuffer() {
 
     state->protectOutBuffer->lock();
 
-    if(state->clientState->outBuffer->length > 0) {
-        char *content = (char *)state->clientState->outBuffer->data;
+    if(clientState::outBuffer->length > 0) {
+        char *content = (char *)clientState::outBuffer->data;
 
 
 
-        //remoteSocket->write(content, state->clientState->outBuffer->length);
+        //remoteSocket->write(content, clientState::outBuffer->length);
         //remoteSocket->flush();
 
-        memset(state->clientState->outBuffer->data, '\0', state->clientState->outBuffer->length);
-        state->clientState->outBuffer->length = 0;
+        memset(clientState::outBuffer->data, '\0', clientState::outBuffer->length);
+        clientState::outBuffer->length = 0;
     }
 
     state->protectOutBuffer->unlock();
@@ -564,7 +591,7 @@ bool Client::flushOutBuffer() {
  * @test byte buffer is temporarily converted to char *(because of the socket read method) and backwards
  */
 bool Client::clientRun(QTcpSocket *remoteSocket) {
-    clientState *clientState = state->clientState;
+
     Byte *message = NULL;
     uint messageLen = 0, nameLen = 0, readLen = 0;
     //SDL_Event autoSaveOffEvent;
@@ -622,7 +649,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
         Client::Client::integerToBytes(&message[5 + nameLen + 16], state->offset.y);
         Client::Client::integerToBytes(&message[5 + nameLen + 20], state->offset.z);
 
-        Client::IOBufferAppend(clientState->outBuffer, message, messageLen, state->protectOutBuffer);
+        Client::IOBufferAppend(clientState::outBuffer, message, messageLen, state->protectOutBuffer);
         memset(message, '\0', 8192 * sizeof(Byte));
 
 
@@ -649,7 +676,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
              * This solution should effectively behave like doing a read with a
              * 100 ms timeout.
              */
-            //SDLNet_CheckSockets(clientState->socketSet, 100); TODO SDLNet_Checksockets immediate crash
+            //SDLNet_CheckSockets(clientState::socketSet, 100); TODO SDLNet_Checksockets immediate crash
 
             char *msg = new char[8192];
             memset(msg, '\0', 8192);
@@ -669,7 +696,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
                 }
 
 
-                Client::IOBufferAppend(clientState->inBuffer, message, readLen, NULL);
+                Client::IOBufferAppend(clientState::inBuffer, message, readLen, NULL);
                 memset(message, '\0', 8192);
             } else {
 
@@ -690,7 +717,7 @@ bool Client::clientRun(QTcpSocket *remoteSocket) {
         }
     }
 
-    state->clientState->saveMaster = false;
+    clientState::saveMaster = false;
     if(!state->skeletonState->autoSaveBool) {
         LOG("Synchronization has ended and this instance will currently not autosave. Please turn autosave on manually if it is required.");
     }
@@ -712,13 +739,13 @@ void Client::run() {
     //connect(remoteSocket, SIGNAL(connected()), this, SLOT(socketConnectionSucceeded()));
     //connect(remoteSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketConnectionFailed(QAbstractSocket::SocketError)));
 
-    clientState *clientState = state->clientState;
+
 
     while(!state->viewerState->viewerReady or state->viewerState->splash) {
         Sleeper::msleep(50);
     }
 
-    if(clientState->connectAsap) {
+    if(clientState::connectAsap) {
         Knossos::sendClientSignal();
     }
 
@@ -735,21 +762,21 @@ void Client::run() {
             break;
 
         /* Update state.
-        clientState->synchronizeSkeleton = tempConfig->clientState->synchronizeSkeleton;
-        clientState->synchronizePosition = tempConfig->clientState->synchronizePosition;
-        clientState->remotePort = tempConfig->clientState->remotePort;
-        strncpy(clientState->serverAddress, tempConfig->clientState->serverAddress, 1024);
+        clientState::synchronizeSkeleton = tempConfig->clientState::synchronizeSkeleton;
+        clientState::synchronizePosition = tempConfig->clientState::synchronizePosition;
+        clientState::remotePort = tempConfig->clientState::remotePort;
+        strncpy(clientState::serverAddress, tempConfig->clientState::serverAddress, 1024);
         */
         clientRun(remoteSocket);
     }
 
-    delete state->clientState;
-    state->clientState = nullptr;
+
+
 }
 
 
 bool Client::broadcastPosition(uint x, uint y, uint z) {
-    clientState *clientState = state->clientState;
+
     Byte *data = NULL;
     uint messageLen;
 
@@ -765,12 +792,12 @@ bool Client::broadcastPosition(uint x, uint y, uint z) {
     data[0] = KIKI_REPEAT;
     Client::Client::integerToBytes(&data[1], messageLen);
     data[5] = KIKI_POSITION;
-    Client::Client::integerToBytes(&data[6], clientState->myId);
+    Client::Client::integerToBytes(&data[6], clientState::myId);
     Client::Client::integerToBytes(&data[10], x);
     Client::Client::integerToBytes(&data[14], y);
     Client::Client::integerToBytes(&data[18], z);
 
-    Client::IOBufferAppend(clientState->outBuffer, data, messageLen, state->protectOutBuffer);
+    Client::IOBufferAppend(clientState::outBuffer, data, messageLen, state->protectOutBuffer);
 
     free(data);
 
@@ -779,7 +806,7 @@ bool Client::broadcastPosition(uint x, uint y, uint z) {
 
 bool Client::skeletonSyncBroken() {
     LOG("Skeletons have gone out of sync, stopping synchronization.")
-    state->clientState->synchronizeSkeleton = false;
+    clientState::synchronizeSkeleton = false;
     return true;
 }
 
@@ -800,13 +827,13 @@ bool Client::floatToBytes(Byte *dest, float source) {
 }
 
 int Client::Wrapper_SDLNet_TCP_Open(void *params) {
-    clientState *cState = (clientState*)params;
-    //clientState->remoteSocket = SDLNet_TCP_Open(&(clientState->remoteServer));
-    cState->connectionTried = true;
+
+    //clientState::remoteSocket = SDLNet_TCP_Open(&(clientState::remoteServer));
+    clientState::connectionTried = true;
     return true;
 }
 
-bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex) {
+bool Client::IOBufferAppend(clientState::IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex) {
     uint newSize = 0, minBufferSize = 0;
     Byte *newDataPtr = NULL;
 
@@ -880,23 +907,22 @@ bool Client::IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, 
 
 bool Client::addPeer(uint id, char *name,
                      float xScale, float yScale, float zScale,
-                     int xOffset, int yOffset, int zOffset) {
-    struct clientState *clientState = state->clientState;
-    struct peerListElement *oldPeer = NULL, *newPeer = NULL;
+                     int xOffset, int yOffset, int zOffset) {    
+    struct clientState::peerListElement *oldPeer = NULL, *newPeer = NULL;
 
-    newPeer = (peerListElement*)malloc(sizeof(struct peerListElement));
+    newPeer = (clientState::peerListElement*)malloc(sizeof(struct clientState::peerListElement));
     if(newPeer == NULL) {
         printf("3Out of memory\n");
         _Exit(false);
     }
-    memset(newPeer, '\0', sizeof(struct peerListElement));
+    memset(newPeer, '\0', sizeof(struct clientState::peerListElement));
 
-    if(clientState->firstPeer == NULL) {
-        clientState->firstPeer = newPeer;
+    if(clientState::firstPeer == NULL) {
+        clientState::firstPeer = newPeer;
         oldPeer = newPeer;
     }
     else {
-        oldPeer = clientState->firstPeer;
+        oldPeer = clientState::firstPeer;
 
         while(oldPeer->next != NULL) {
             oldPeer = oldPeer->next;
@@ -952,8 +978,8 @@ bool Client::syncMessage(const char *fmt, ...) {
     float f;
     int peerLenField = -1;
 
-    if(!state->clientState->synchronizeSkeleton ||
-       !state->clientState->connected) {
+    if(!clientState::synchronizeSkeleton ||
+       !clientState::connected) {
         return true;
     }
     packedBytes = (Byte*)malloc(PACKLEN * sizeof(Byte));
@@ -1044,7 +1070,7 @@ bool Client::syncMessage(const char *fmt, ...) {
     if(peerLenField >= 0) {
         Client::Client::integerToBytes(&packedBytes[peerLenField], len - 5);
     }
-    if(!Client::IOBufferAppend(state->clientState->outBuffer,
+    if(!Client::IOBufferAppend(clientState::outBuffer,
                        packedBytes,
                        len,
                        state->protectOutBuffer)) {
@@ -1061,7 +1087,7 @@ lenoverflow:
 
 int Client::parseInBufferByFmt(int len, const char *fmt,
                                    float *f, Byte *s, int *d,
-                                   struct IOBuffer *buffer) {
+                                   clientState::IOBuffer *buffer) {
     int fIndex = -1;
     int dIndex = -1;
     int pos = 0;
@@ -1138,9 +1164,8 @@ overflow:
     return FAIL;
 }
 
-Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {
-    clientState *clientState = state->clientState;
-    peerListElement *peer = clientState->firstPeer;
+Coordinate* Client::transNetCoordinate(uint id, int x, uint y, int z) {    
+    clientState::peerListElement *peer = clientState::firstPeer;
     Coordinate *outCoordinate = NULL;
 
     while(peer != NULL) {

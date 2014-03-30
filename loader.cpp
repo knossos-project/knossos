@@ -23,7 +23,6 @@
  */
 
 #include <cmath>
-
 #include <dirent.h>
 #include "loader.h"
 #include "knossos.h"

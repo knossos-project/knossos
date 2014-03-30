@@ -3,6 +3,7 @@
 
 #include "knossos-global.h"
 #include "taskmanagementdetailstab.h"
+#include "taskloginwidget.h"
 
 extern  stateInfo *state;
 TaskManagementDetailsTab::TaskManagementDetailsTab(QWidget *parent) :

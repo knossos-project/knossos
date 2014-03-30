@@ -65,48 +65,6 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 std::unique_ptr<Knossos> knossos;
 
-class myEventFilter: public QObject
-{
-  public:
-  myEventFilter():QObject()
-  {};
-  ~myEventFilter(){};
-
-  bool eventFilter(QObject* object,QEvent* event)
-  {
-      int type = event->type();
-      switch(type)
-      {
-      case QEvent::MouseButtonPress :
-      case QEvent::MouseButtonRelease :
-      case QEvent::MouseButtonDblClick :
-      case QEvent::KeyPress :
-      case QEvent::KeyRelease :
-      case QEvent::Wheel :
-          if (state == NULL) {
-              break;
-          }
-          if (state->viewer == NULL) {
-              break;
-          }
-          if (state->viewer->window == NULL) {
-              break;
-          }
-          if (state->viewer->window->widgetContainer == NULL) {
-              break;
-          }
-          if (state->viewer->window->widgetContainer->tracingTimeWidget == NULL) {
-              break;
-          }
-          state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
-          break;
-      default:
-          break;
-      }
-
-      return QObject::eventFilter(object,event);
-  }
-};
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
@@ -189,8 +147,7 @@ int main(int argc, char *argv[])
     bool datasetLoaded = knossos->initStates();
 
     Knossos::printConfigValues();
-    Viewer viewer;
-    state->viewer = &viewer;
+    Viewer viewer;    
     loader.reset(new Loader);
     Remote remote;
     Client client;
@@ -254,7 +211,6 @@ int main(int argc, char *argv[])
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
-    a.installEventFilter(new myEventFilter());
 
     scripts.run();
 
@@ -352,39 +308,39 @@ bool Knossos::initStates() {
 
    // For the client
 
-   state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->inBuffer == NULL) {
+   clientState::inBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
+   if(clientState::inBuffer == NULL) {
        LOG("Out of memory.")
        return false;
    }
-   memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
+   memset(clientState::inBuffer, '\0', sizeof(struct clientState::IOBuffer));
 
-   state->clientState->inBuffer->data = (Byte *)malloc(128);
-   if(state->clientState->inBuffer->data == NULL) {
+   clientState::inBuffer->data = (Byte *)malloc(128);
+   if(clientState::inBuffer->data == NULL) {
        LOG("Out of memory.")
        return false;
    }
-   memset(state->clientState->inBuffer->data, '\0', 128);
+   memset(clientState::inBuffer->data, '\0', 128);
 
-   state->clientState->inBuffer->size = 128;
-   state->clientState->inBuffer->length = 0;
+   clientState::inBuffer->size = 128;
+   clientState::inBuffer->length = 0;
 
-   state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->outBuffer == NULL) {
+   clientState::outBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
+   if(clientState::outBuffer == NULL) {
        LOG("Out of memory.")
        return false;
    }
-   memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
+   memset(clientState::outBuffer, '\0', sizeof(struct clientState::IOBuffer));
 
-   state->clientState->outBuffer->data = (Byte *) malloc(128);
-   if(state->clientState->outBuffer->data == NULL) {
+   clientState::outBuffer->data = (Byte *) malloc(128);
+   if(clientState::outBuffer->data == NULL) {
        LOG("Out of memory.")
        return false;
    }
-   memset(state->clientState->outBuffer->data, '\0', 128);
+   memset(clientState::outBuffer->data, '\0', 128);
 
-   state->clientState->outBuffer->size = 128;
-   state->clientState->outBuffer->length = 0;
+   clientState::outBuffer->size = 128;
+   clientState::outBuffer->length = 0;
 
    // For the skeletonizer   
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
@@ -665,11 +621,9 @@ stateInfo *Knossos::emptyState() {
     memset(state, 0, sizeof(stateInfo));//initialize memory
 
     state->viewerState = new viewerState();
-    state->viewerState->gui = new guiConfig();
-    state->clientState = new clientState();
+    state->viewerState->gui = new guiConfig();   
 
     state->skeletonState = new skeletonState();
-    state->taskState = new taskState();
     return state;
 }
 
@@ -1051,17 +1005,7 @@ bool Knossos::configDefaults() {
     }
 
     // For the GUI
-    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
-
-    // For the client
-    state->clientState->connectAsap = false;
-    state->clientState->connectionTimeout = 3000;
-    state->clientState->remotePort = 7890;
-    strncpy(state->clientState->serverAddress, "localhost", 1024);
-    state->clientState->connected = false;
-    state->clientState->synchronizeSkeleton = true;
-    state->clientState->synchronizePosition = true;
-    state->clientState->saveMaster = false;
+    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");    
 
 
     // For the skeletonizer
@@ -1180,7 +1124,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                     state->clientState->connectAsap = true;
+                     clientState::connectAsap = true;
                      break;
                  case 2:
                      state->scale.x = (float)strtod(rval, NULL);

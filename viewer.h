@@ -34,20 +34,6 @@
 #include "knossos-global.h"
 
 
-struct vpListElement {
-    struct vpConfig *vpConfig;
-    struct vpListElement *next;
-    struct vpListElement *previous;
-};
-
-
-struct vpList {
-    struct vpListElement *entry;
-    uint elements;
-};
-
-
-
 /**
  *
  *  This file contains functions that are called by the managing,
@@ -77,15 +63,11 @@ public:
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
     QTimer *timer;
     int frames;
-
     bool updateZoomCube();
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
-
-
     bool initialized;
     bool moveVPonTop(uint currentVP);
     static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
-
 signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
@@ -93,19 +75,13 @@ signals:
     bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
-
     bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
     bool vpGenerateTexture_arb(vpConfig &currentVp);
-
-
     bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-
     bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
     bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
-
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     void rewire();
 public slots:
@@ -126,7 +102,8 @@ protected:
     bool initViewer();
     void processUserMove();
     QTime delay;
-    bool idlingExceeds(uint msec);
+    bool idlingExceeds(uint msec);    
+    uint lastFrame;
 };
 
 #endif // VIEWER_H

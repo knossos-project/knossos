@@ -25,7 +25,7 @@
 #include <cstring>
 #include <vector>
 
-#include <QProgressDialog>
+
 #include "skeletonizer.h"
 #include "knossos-global.h"
 #include "knossos.h"
@@ -37,17 +37,17 @@ extern stateInfo *state;
 
 Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
-    idleTimeSession = 0;
-    lockRadius = 100;
-    lockPositions = false;
-    strncpy(onCommentLock, "seed", 1024);
-    branchpointUnresolved = false;
-    autoFilenameIncrementBool = true;
-    autoSaveBool = true;
-    autoSaveInterval = 5;
-    skeletonTime = 0;
-    skeletonTimeCorrection = 0;
-    definedSkeletonVpView = -1;
+    state->skeletonState->idleTimeSession = 0;
+    state->skeletonState->lockRadius = 100;
+    state->skeletonState->lockPositions = false;
+    strncpy(state->skeletonState->onCommentLock, "seed", 1024);
+    state->skeletonState->branchpointUnresolved = false;
+    state->skeletonState->autoFilenameIncrementBool = true;
+    state->skeletonState->autoSaveBool = true;
+    state->skeletonState->autoSaveInterval = 5;
+    state->skeletonState->skeletonTime = 0;
+    state->skeletonState->skeletonTimeCorrection = 0;
+    state->skeletonState->definedSkeletonVpView = -1;
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
@@ -627,7 +627,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 }
 
 bool Skeletonizer::updateSkeletonState() {
-    if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
+    if(state->skeletonState->autoSaveBool || clientState::saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
             const auto minutes = (state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0;
             if (minutes >= state->skeletonState->autoSaveInterval) {//timeout elapsed
@@ -1327,7 +1327,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                             if(attribute.isNull() == false) {
                                 time = attribute.toLocal8Bit().toInt();
                             } else {
-                                time = skeletonTime; // For legacy skeleton files
+                                time = state->skeletonState->skeletonTime; // For legacy skeleton files
                             }
 
                             if(merge == false) {
@@ -2026,7 +2026,7 @@ int Skeletonizer::addNode(int targetRevision,
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("brddfddddddd", KIKI_ADDNODE,
-                                              state->clientState->myId,
+                                              clientState::myId,
                                               nodeID,
                                               radius,
                                               treeID,
@@ -2776,7 +2776,7 @@ bool Skeletonizer::editNode(int targetRevision,
 
     if(targetRevision == CHANGE_MANUAL) {
         if(!Client::syncMessage("brddfdddd", KIKI_EDITNODE,
-                                            state->clientState->myId,
+                                            clientState::myId,
                                             nodeID,
                                             newRadius,
                                             inMag,
@@ -4242,46 +4242,6 @@ unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comm
     return -1;
 }
 
-
-void Skeletonizer::setZoomLevel(float value) {
-    this->zoomLevel = value;
-}
-
-void Skeletonizer::setShowIntersections(bool on) {
-    this->showIntersections = on;
-}
-
-void Skeletonizer::setShowXyPlane(bool on) {
-    this->showXYplane = on;
-}
-
-void Skeletonizer::setRotateAroundActiveNode(bool on) {
-    this->rotateAroundActiveNode = on;
-}
-
-void Skeletonizer::setOverrideNodeRadius(bool on) {
-    this->overrideNodeRadiusBool = on;
-}
-
-void Skeletonizer::setSegRadiusToNodeRadius(float value) {
-    this->segRadiusToNodeRadius = value;
-}
-
-void Skeletonizer::setHighlightActiveTree(bool on) {
-    this->highlightActiveTree = on;
-}
-
-void Skeletonizer::setSkeletonChanged(bool on) {
-    this->skeletonChanged = on;
-}
-
-void Skeletonizer::setShowNodeIDs(bool on) {
-    this->showNodeIDs = on;
-}
-
-/*_______________________________________________ */
-/* @todo ACTIVE_TREE_ID durch Widgets */
-
 Byte *Skeletonizer::serializeSkeleton() {
     
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
@@ -4985,4 +4945,40 @@ void Skeletonizer::resetSkeletonMeta() {
     state->skeletonState->idleTimeLast = state->time.elapsed(); // there is no last idle time when resetting
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
+}
+
+void Skeletonizer::setZoomLevel(float value) {
+    state->skeletonState->zoomLevel = value;
+}
+
+void Skeletonizer::setShowIntersections(bool on) {
+    state->skeletonState->showIntersections = on;
+}
+
+void Skeletonizer::setShowXyPlane(bool on) {
+    state->skeletonState->showXYplane = on;
+}
+
+void Skeletonizer::setRotateAroundActiveNode(bool on) {
+    state->skeletonState->rotateAroundActiveNode = on;
+}
+
+void Skeletonizer::setOverrideNodeRadius(bool on) {
+    state->skeletonState->overrideNodeRadiusBool = on;
+}
+
+void Skeletonizer::setSegRadiusToNodeRadius(float value) {
+    state->skeletonState->segRadiusToNodeRadius = value;
+}
+
+void Skeletonizer::setHighlightActiveTree(bool on) {
+    state->skeletonState->highlightActiveTree = on;
+}
+
+void Skeletonizer::setSkeletonChanged(bool on) {
+    state->skeletonState->skeletonChanged = on;
+}
+
+void Skeletonizer::setShowNodeIDs(bool on) {
+    state->skeletonState->showNodeIDs = on;
 }

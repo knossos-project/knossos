@@ -25,26 +25,55 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "knossos-global.h"
+
 #include <QObject>
 #include <QThread>
+#include <QtNetwork/qhostinfo.h>
+#include <QtNetwork/qtcpsocket.h>
+#include <QtNetwork/qhostaddress.h>
 
-// to client
-struct peerListElement {
-    uint id;
-    char *name;
-    floatCoordinate scale;
-    Coordinate offset;
+#include "knossos-global.h"
 
-    struct peerListElement *next;
-};
+namespace clientState {
+    struct IOBuffer {
+        uint size;      // The current maximum size
+        uint length;    // The current amount of data in the buffer
+        Byte *data;
+    };
 
-// to client
-struct IOBuffer {
-    uint size;      // The current maximum size
-    uint length;    // The current amount of data in the buffer
-    Byte *data;
-};
+    struct peerListElement {
+        uint id;
+        char *name;
+        floatCoordinate scale;
+        Coordinate offset;
+
+        struct peerListElement *next;
+    };
+
+
+    extern bool connectAsap;
+    extern int remotePort;
+    extern bool connected;
+    extern Byte synchronizePosition;
+    extern Byte synchronizeSkeleton;
+    extern int connectionTimeout;
+    extern bool connectionTried;
+    extern char serverAddress[1024];
+
+    extern QHostAddress *remoteServer;
+    extern QTcpSocket *remoteSocket;
+    extern QSet<QTcpSocket *> *socketSet;
+    extern uint myId;
+    extern bool saveMaster;
+
+    extern struct peerListElement *firstPeer;
+    extern struct IOBuffer *inBuffer;
+    extern struct IOBuffer *outBuffer;
+}
+
+
+
+
 
 /**
   *
@@ -71,35 +100,16 @@ public:
     static bool integerToBytes(Byte *dest, int source);
     static bool floatToBytes(Byte *dest, float source);
     static int Wrapper_SDLNet_TCP_Open(void *params);
-    static bool IOBufferAppend(struct IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex);
+    static bool IOBufferAppend(clientState::IOBuffer *iobuffer, Byte *data, uint length, QMutex *mutex);
     static bool addPeer(uint id, char *name, float xScale, float yScale, float zScale, int xOffset, int yOffset, int zOffset);
     static bool delPeer(uint id);
     static bool broadcastCoordinate(uint x, uint y, uint z);
     static bool syncMessage(const char *fmt, ...);
-    int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, struct IOBuffer *buffer);
+    int parseInBufferByFmt(int len, const char *fmt, float *f, Byte *s, int *d, clientState::IOBuffer *buffer);
     static Coordinate *transNetCoordinate(unsigned int id, int x, unsigned int y, int z);
 
     uint parseInBuffer();
     bool clientRun(QTcpSocket *remoteSocket);
-
-    bool connectAsap;
-    int remotePort;
-    bool connected;
-    Byte synchronizePosition;
-    Byte synchronizeSkeleton;
-    int connectionTimeout;
-    bool connectionTried;
-    char serverAddress[1024];
-
-    QHostAddress *remoteServer;
-    QTcpSocket *remoteSocket;
-    QSet<QTcpSocket *> *socketSet;
-    uint myId;
-    bool saveMaster;
-
-    struct peerListElement *firstPeer;
-    struct IOBuffer *inBuffer;
-    struct IOBuffer *outBuffer;
 
 
     void run();

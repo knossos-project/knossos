@@ -29,10 +29,8 @@
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
 #include <QDebug>
-#include <QFont>
-
-#include "eventmodel.h"
 #include "renderer.h"
+#include "eventmodel.h"
 
 #define VP_UPPERLEFT 0
 #define VP_LOWERLEFT 1

@@ -34,6 +34,9 @@ SOURCES += scriptengine/scripting.cpp \
     scriptengine/geometry/render.cpp \
 
 
+OTHER_FILES += \
+    python/converter.py \
+    python/examples \
 
 
 macx {

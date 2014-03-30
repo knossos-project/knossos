@@ -74,13 +74,13 @@ void TaskManagementMainTab::logoutButtonClicked() {
     char url[1024];
 
     memset(url, '\0', 1024);
-    strcpy(url, state->taskState->host);
+    strcpy(url, taskState::host);
     strcat(url, "/knossos/session/");
 
     response.length = 0;
     response.content = (char *)calloc(1, 10240);
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpDELETE(url, &response, &httpCode, state->taskState->cookieFile, &code, 5);
+    bool result = taskState::httpDELETE(url, &response, &httpCode, taskState::cookieFile, &code, 5);
     setCursor(Qt::ArrowCursor);
     if(result == false) {
         setResponse("<font color='red'>Request failed. Please check your connection.</font>");
@@ -118,7 +118,7 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
 #endif
 
     memset(url, '\0', 1024);
-    sprintf(url, "%s%s", state->taskState->host, "/knossos/activeTask/lastSubmit/");
+    sprintf(url, "%s%s", taskState::host, "/knossos/activeTask/lastSubmit/");
 
     header.length = 0;
     header.content = (char*)calloc(1, header.length + 1);
@@ -129,7 +129,7 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
         return;
     }
     setCursor(Qt::WaitCursor);
-    success = taskState::httpFileGET(url, NULL, lastNml, &header, &httpCode, state->taskState->cookieFile, &code, 10);
+    success = taskState::httpFileGET(url, NULL, lastNml, &header, &httpCode, taskState::cookieFile, &code, 10);
     setCursor(Qt::ArrowCursor);
     fclose(lastNml);
     if(success == false) {
@@ -183,7 +183,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     bool success;
 
     memset(postdata, '\0', 1024);
-    sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken().toStdString().c_str(), state->taskState->taskFile);
+    sprintf(postdata, "csrfmiddlewaretoken=%s&data=<currentTask>%s</currentTask>", taskState::CSRFToken().toStdString().c_str(), taskState::taskFile);
 
     QDir taskDir("tasks");
     if(taskDir.exists() == false) {
@@ -193,25 +193,25 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
         taskDir.mkdir(".");
     #endif
     }
-    memset(state->taskState->taskFile, '\0', 1024);
+    memset(taskState::taskFile, '\0', 1024);
 #ifdef Q_OS_UNIX
-    sprintf(state->taskState->taskFile, "tasks/task.tmp.nml");
+    sprintf(taskState::taskFile, "tasks/task.tmp.nml");
 #else
-    sprintf(state->taskState->taskFile, "tasks\\task.tmp.nml");
+    sprintf(taskState::taskFile, "tasks\\task.tmp.nml");
 #endif
-    tasknml = fopen(state->taskState->taskFile, "w");
+    tasknml = fopen(taskState::taskFile, "w");
     if(tasknml == NULL) {
         statusLabel->setText("<font color='red'>Failed to get new task. No write permission in this folder.</font>");
         return;
     }
     memset(url, '\0', 1024);
-    sprintf(url, "%s%s", state->taskState->host, "/knossos/newTask/");
+    sprintf(url, "%s%s", taskState::host, "/knossos/newTask/");
 
     header.length = 0;
     header.content = (char *)calloc(1, header.length + 1);
 
     setCursor(Qt::WaitCursor);
-    success = taskState::httpFileGET(url, postdata, tasknml, &header, &httpCode, state->taskState->cookieFile, &code, 5);
+    success = taskState::httpFileGET(url, postdata, tasknml, &header, &httpCode, taskState::cookieFile, &code, 5);
     setCursor(Qt::ArrowCursor);
     fclose(tasknml);
     if(success == false) {
@@ -227,20 +227,20 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
 
     if(httpCode == 400) {
         statusLabel->setText("<font color='red'>Current task not finished or no new task available.</font>");
-        remove(state->taskState->taskFile);
+        remove(taskState::taskFile);
         free(header.content);
         return;
     }
     else if(httpCode == 403) {
         statusLabel->setText("<font color='red'>You are not authenticated. Permission denied.</font>");
-        remove(state->taskState->taskFile);
+        remove(taskState::taskFile);
         free(header.content);
         return;
     }
     else if(httpCode != 200){
         statusLabel->setText("<font color='red'>Error received from server.</font>");
         qDebug(header.content);
-        remove(state->taskState->taskFile);
+        remove(taskState::taskFile);
         free(header.content);
         return;
     }
@@ -249,22 +249,22 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     if(taskState::copyInfoFromHeader(filename, &header, "filename")) {
     #ifdef Q_OS_UNIX
         sprintf(filepath, "tasks/%s", filename);
-        QFile tmpFile(state->taskState->taskFile);
+        QFile tmpFile(taskState::taskFile);
         tmpFile.rename(filepath);
-        memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
-        sprintf(state->taskState->taskFile, "tasks/%s", filename);
+        memset(taskState::taskFile, '\0', sizeof(taskState::taskFile));
+        sprintf(taskState::taskFile, "tasks/%s", filename);
     #else
         sprintf(filepath, "tasks\\%s", filename);
-        QFile tmpFile(state->taskState->taskFile);
+        QFile tmpFile(taskState::taskFile);
         tmpFile.rename(filepath);
-        memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
-        sprintf(state->taskState->taskFile, "tasks\\%s", filename);
+        memset(taskState::taskFile, '\0', sizeof(taskState::taskFile));
+        sprintf(taskState::taskFile, "tasks\\%s", filename);
     #endif
     }
     // get task name
-    memset(state->taskState->taskName, '\0', sizeof(state->taskState->taskName));
-    taskState::copyInfoFromHeader(state->taskState->taskName, &header, "taskname");
-    setTask(QString(state->taskState->taskName));
+    memset(taskState::taskName, '\0', sizeof(taskState::taskName));
+    taskState::copyInfoFromHeader(taskState::taskName, &header, "taskname");
+    setTask(QString(taskState::taskName));
 
     // get task category description and task comment
     memset(description, '\0', sizeof(description));
@@ -275,7 +275,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     QMessageBox prompt;
     prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
     prompt.setIcon(QMessageBox::Information);
-    prompt.setWindowTitle(state->taskState->taskName);
+    prompt.setWindowTitle(taskState::taskName);
     prompt.setText(QString("<p style='width:200px;'><b>Category %1:</b> %2<br><br><b>Task %3:</b> %4</p>")
                    .arg(taskState::getCategory())
                    .arg(description)
@@ -286,7 +286,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     prompt.exec();
     emit setDescriptionSignal(description);
     emit setCommentSignal(comment);
-    emit loadSkeletonSignal(state->taskState->taskFile);
+    emit loadSkeletonSignal(taskState::taskFile);
     setResponse("<font color='green'>Loaded task successfully.</font>");
     free(header.content);
 }
@@ -323,7 +323,7 @@ void TaskManagementMainTab::submitDialogOk() {
     long curl_timeo = -1;
 
     FILE *cookie;
-    cookie = fopen(state->taskState->cookieFile, "r");
+    cookie = fopen(taskState::cookieFile, "r");
     if(cookie == NULL) {
         resetSession("<font color='red'>Could not find session cookie. Please login again.</font>");
         return;
@@ -367,7 +367,7 @@ void TaskManagementMainTab::submitDialogOk() {
         return;
     }
     memset(url, '\0', 1024);
-    strcpy(url, state->taskState->host);
+    strcpy(url, taskState::host);
     strcat(url, "/knossos/activeTask/");
 
     response.length = 0;
@@ -376,7 +376,7 @@ void TaskManagementMainTab::submitDialogOk() {
     curl_easy_setopt(handle, CURLOPT_URL, url);
     curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headerlist);
     curl_easy_setopt(handle, CURLOPT_HTTPPOST, formpost);
-    curl_easy_setopt(handle, CURLOPT_COOKIEFILE, state->taskState->cookieFile);
+    curl_easy_setopt(handle, CURLOPT_COOKIEFILE, taskState::cookieFile);
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, taskState::writeHttpResponse); // use this function to write the response into struct
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, &response); // write response into this struct
     curl_multi_add_handle(multihandle, handle);
@@ -452,7 +452,7 @@ void TaskManagementMainTab::submitDialogOk() {
 
 void TaskManagementMainTab::resetSession(QString message) {
     taskState::removeCookie();
-    memset(state->taskState->taskFile, '\0', sizeof(state->taskState->taskFile));
+    memset(taskState::taskFile, '\0', sizeof(taskState::taskFile));
     taskLoginWidget->setResponse(message);
     setTask("Current: ");
     setActiveUser("Logged in as: ");
@@ -471,7 +471,7 @@ void TaskManagementMainTab::setActiveUser(QString username) {
 }
 
 void TaskManagementMainTab::setTask(QString task) {
-    memset(state->taskState->taskName, '\0', sizeof(state->taskState->taskName));
-    strcpy(state->taskState->taskName, task.toStdString().c_str());
+    memset(taskState::taskName, '\0', sizeof(taskState::taskName));
+    strcpy(taskState::taskName, task.toStdString().c_str());
     currentTaskLabel->setText("Current task: <font color='green'>" + task + "</font>");
 }

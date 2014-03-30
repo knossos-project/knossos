@@ -31,20 +31,12 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
-/** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
 #include <cmath>
-
-#include <curl/curl.h>
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
 #include <QtCore/qmutex.h>
 #include <QtCore/qwaitcondition.h>
-#include <QtNetwork/qhostinfo.h>
-#include <QtNetwork/qtcpsocket.h>
-#include <QtNetwork/qhostaddress.h>
-#include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
-
 #define KVERSION "4.0"
 
 #define FAIL    -1
@@ -397,7 +389,7 @@ struct C2D_Element {
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
 
-typedef struct Hashtable{
+typedef struct Hashtable {
     C2D_Element *listEntry;
     uint tablesize;
     C2D_Element **table;
@@ -651,11 +643,8 @@ struct stateInfo {
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    class Viewer *viewer;
-    struct clientState *clientState;
     class skeletonState *skeletonState;
-    struct trajectory *trajectories;
-    struct taskState *taskState;
+    struct trajectory *trajectories;    
     bool keyD, keyR, keyE, keyF;
     bool modCtrl, modAlt, modShift;
     int newCoord[3];
@@ -693,33 +682,6 @@ public slots:
     Coordinate getBoundary();
 */
 
-};
-
-// to taskwidget
-struct httpResponse {
-    char *content;
-    size_t length;
-};
-
-// to taskwidget
-struct taskState {
-    char *host;
-    char *cookieFile;
-    char *taskFile;
-    char *taskName;
-
-    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
-    static size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
-    static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
-    static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
-    static void removeCookie();
-    static QString CSRFToken();
-    static QString getCategory();
-    static QString getTask();
 };
 
 
@@ -1015,8 +977,7 @@ struct viewerState {
 };
 
 
-class treeListElement : public QObject {
-    Q_OBJECT
+class treeListElement {
 public:
     treeListElement();
     treeListElement(int treeID, QString comment, color4F color);
@@ -1031,8 +992,6 @@ public:
     int colorSetManually;
 
     char comment[8192];
-
-
     QList<nodeListElement *> *getNodes();
 
 };
@@ -1185,7 +1144,6 @@ public:
     char *filterCommentBuffer;
 
     struct stack *branchStack;
-
     struct dynArray *nodeCounter;
     struct dynArray *nodesByNodeID;
 
@@ -1208,9 +1166,7 @@ public:
     float rotdx;
     float rotdy;
     int rotationcounter;
-
     int definedSkeletonVpView;
-
     float translateX, translateY;
 
     // Display list,
@@ -1338,32 +1294,11 @@ public slots:
     QList<int> *cube_data_at(int x, int y, int z);
     void render_mesh(mesh *mesh);
     void export_converter(const QString &path);
+    void save_sys_path(const QString &path);
+    void save_working_directory(const QString &path);
     static QString help();
 
 };
-
-
-struct clientState {
-    bool connectAsap;
-    int remotePort;
-    bool connected;
-    Byte synchronizePosition;
-    Byte synchronizeSkeleton;
-    int connectionTimeout;
-    bool connectionTried;
-    char serverAddress[1024];
-
-    QHostAddress *remoteServer;
-    QTcpSocket *remoteSocket;
-    QSet<QTcpSocket *> *socketSet;
-    uint myId;
-    bool saveMaster;
-
-    struct peerListElement *firstPeer;
-    struct IOBuffer *inBuffer;
-    struct IOBuffer *outBuffer;
-};
-
 
 /* global functions */
 

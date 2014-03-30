@@ -95,6 +95,8 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
 
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(refreshTime()));
+    /* This ensures that energy saving is considered directly after KNOSSOS starts */
+    state->viewerState->lastIdleTimeCall = QDateTime::currentDateTimeUtc();
     timer->start(1000);
 
    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));

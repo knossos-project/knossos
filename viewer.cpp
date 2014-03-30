@@ -22,20 +22,18 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include <cmath>
-
-#include "viewer.h"
 #include <QDebug>
+#include <qopengl.h>
+#include <QtConcurrent/QtConcurrentRun>
+#include "viewer.h"
 #include "knossos.h"
 #include "skeletonizer.h"
 #include "renderer.h"
 #include "widgets/widgetcontainer.h"
-
 #include "sleeper.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 #include "functions.h"
-#include <qopengl.h>
-#include <QtConcurrent/QtConcurrentRun>
 
 extern stateInfo *state;
 
@@ -72,13 +70,13 @@ Viewer::Viewer(QObject *parent) :
 
     rewire();
     window->loadSettings();
+    qApp->installEventFilter(window);
     window->show();
     if(window->pos().x() <= 0 or window->pos().y() <= 0) {
         window->setGeometry(desktop->availableGeometry().topLeft().x() + 20,
                             desktop->availableGeometry().topLeft().y() + 50,
                             1024, 800);
     }
-
 
     // This is needed for the viewport text rendering
     renderer->refVPXY = vpUpperLeft;
@@ -1084,8 +1082,7 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
                             upOrDownFlag);
 
     /* set flags to trigger the necessary renderer updates */
-    state->skeletonState->skeletonChanged = true;
-    skeletonizer->skeletonChanged = true;
+    state->skeletonState->skeletonChanged = true;    
 
     emit updateZoomAndMultiresWidgetSignal();
 
@@ -1186,13 +1183,14 @@ void Viewer::run() {
             vpUpperRight->updateGL();
             vpLowerRight->updateGL();
 
-            static uint call = 0;
-            if (++call % 1000 == 0) {
-                if(idlingExceeds(60000)) {
-                    state->viewerState->renderInterval = SLOW;
-                }
+
+            qDebug() << 1000 / (float)(state->time.elapsed() - lastFrame);
+            if(idlingExceeds(60000)) {
+                state->viewerState->renderInterval = SLOW;
             }
+
             state->viewerState->userMove = false;
+            lastFrame = state->time.elapsed();
             return;
         }
     }
@@ -1296,8 +1294,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     Coordinate newPosition_dc;
 
     //The skeleton VP view has to be updated after a current pos change
-    state->skeletonState->viewChanged = true;
-    skeletonizer->viewChanged = true;
+    state->skeletonState->viewChanged = true;    
     /* @todo case decision for skeletonizer */
     if(state->skeletonState->showIntersections) {
         state->skeletonState->skeletonSliceVPchanged = true;
@@ -1333,6 +1330,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
+    /*
     if(state->clientState) {
         if(serverMovement == TELL_COORDINATE_CHANGE &&
             state->clientState->connected == true &&
@@ -1341,7 +1339,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
                                       viewerState->currentPosition.y,
                                       viewerState->currentPosition.z);
         }
-    }
+    }*/
 
 
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {

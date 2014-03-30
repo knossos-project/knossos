@@ -37,6 +37,7 @@
 #include <QComboBox>
 #include <QUndoStack>
 #include "knossos-global.h"
+#include "widgetcontainer.h"
 
 namespace Ui {
     class MainWindow;
@@ -52,7 +53,7 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 class Viewport;
-class WidgetContainer;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -62,7 +63,7 @@ public:
     ~MainWindow();
 
     void updateSkeletonFileName(QString &fileName);
-
+    bool eventFilter(QObject *object, QEvent *event);
     void closeEvent(QCloseEvent *event);
     void updateTitlebar();
 
@@ -121,7 +122,6 @@ protected:
     QString saveFileDirectory;
 public:
     Ui::MainWindow *ui;
-
     QToolBar *toolBar;
     QToolButton *copyButton;
     QToolButton *pasteButton;

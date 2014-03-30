@@ -20,6 +20,7 @@ class TransformDecorator;
 class PointDecorator;
 
 class Highlighter;
+class QSettings;
 
 /** This class intializes the python qt engine */
 class Scripting : public QThread
@@ -48,9 +49,12 @@ public:
 signals:
     
 public slots:
-    void addScriptingObject(const QString &name, QObject *obj);
+    static void addScriptingObject(const QString &name, QObject *obj);
+    void saveSettings(const QString &key, const QVariant &value);
     void addDoc();
     static void reflect(QObject *obj);
+protected:
+    QSettings *settings;
 };
 
 #endif // SCRIPTING_H

@@ -1,14 +1,18 @@
 #include <stdio.h>
-
 #include <QFile>
+#include <QTextStream>
+#include "widgets/task/taskloginwidget.h"
 
 #include "knossos-global.h"
+extern stateInfo *state;
 
-extern  stateInfo *state;
+namespace taskState {
+char *host = NULL;
+char *cookieFile = NULL;
+char *taskFile = NULL;
+char *taskName = NULL;
 
-// for looking up CURLcode: http://curl.haxx.se/libcurl/c/libcurl-errors.html
-
-bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode,
+bool httpGET(char *url, struct httpResponse *response, long *httpCode,
                         char *cookiePath, CURLcode *code, long timeout) {
     FILE *cookie;
     CURL *handle;
@@ -45,7 +49,7 @@ bool taskState::httpGET(char *url, struct httpResponse *response, long *httpCode
     }
 }
 
-bool taskState::httpPOST(char *url, char *postdata, struct httpResponse *response,
+bool httpPOST(char *url, char *postdata, struct httpResponse *response,
                          long *httpCode, char *cookiePath, CURLcode *code, long timeout) {
     CURL *handle;
     FILE *cookie;
@@ -78,7 +82,7 @@ bool taskState::httpPOST(char *url, char *postdata, struct httpResponse *respons
     return true;
 }
 
-bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpCode,
+bool httpDELETE(char *url, struct httpResponse *response, long *httpCode,
                            char *cookiePath, CURLcode *code, long timeout) {
     CURL *handle;
     FILE *cookie;
@@ -111,7 +115,7 @@ bool taskState::httpDELETE(char *url, struct httpResponse *response, long *httpC
     return false;
 }
 
-bool taskState::httpFileGET(char *url, char *postdata, FILE *file,
+bool httpFileGET(char *url, char *postdata, FILE *file,
                             struct httpResponse *header, long *httpCode,
                             char *cookiePath, CURLcode *code, long timeout) {
     CURL *handle;
@@ -149,7 +153,7 @@ bool taskState::httpFileGET(char *url, char *postdata, FILE *file,
 }
 
 // for writing http response to memory
-size_t taskState::writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s) {
+size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s) {
     size_t new_len = s->length + size*nmemb;
     s->content = (char*)realloc(s->content, new_len+1);
     memcpy(s->content + s->length, ptr, size*nmemb);
@@ -160,18 +164,18 @@ size_t taskState::writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct
 }
 
 // for writing http response to file
-size_t taskState::writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
 // for sending file contents over http request
-size_t taskState::readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
+size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream) {
     return fread(ptr, size, nmemb, (FILE*)stream);
 }
 
 // for retrieving information from response headers. Useful for responses with file content
 // the information should be terminated with an ';' for sucessful parsing
-int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char *info) {
+int copyInfoFromHeader(char *dest, struct httpResponse *header, char *info) {
     uint i, numChars = 0;
     char *pos = strstr(header->content, info);
     if(pos == NULL) {
@@ -189,14 +193,14 @@ int taskState::copyInfoFromHeader(char *dest, struct httpResponse *header, char 
     return true;
 }
 
-void taskState::removeCookie() {
-    if(remove(state->taskState->cookieFile) != 0) {
+void removeCookie() {
+    if(remove(taskState::cookieFile) != 0) {
         perror("Failed to delete file.");
     }
 }
 
-QString taskState::CSRFToken() {
-    QFile cookie(state->taskState->cookieFile);
+QString CSRFToken() {
+    QFile cookie(taskState::cookieFile);
     if(cookie.exists() == false) {
         return NULL;
     }
@@ -218,8 +222,8 @@ QString taskState::CSRFToken() {
     return NULL;
 }
 
-QString taskState::getCategory() {
-    QString taskName = state->taskState->taskName;
+QString getCategory() {
+    QString taskName = taskState::taskName;
     int index = taskName.indexOf("/");
     if(index != -1) {
         return taskName.mid(0, index-1);
@@ -227,11 +231,13 @@ QString taskState::getCategory() {
     return NULL;
 }
 
-QString taskState::getTask() {
-    QString taskName = state->taskState->taskName;
+QString getTask() {
+    QString taskName = taskState::taskName;
     int index = taskName.indexOf("/");
     if(index != -1) {
         return taskName.mid(index+2);
     }
     return NULL;
+}
+
 }

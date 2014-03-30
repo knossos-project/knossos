@@ -1,8 +1,8 @@
+#include <cmath>
+#include <QFile>
 #include "knossos-global.h"
 #include "skeletonizer.h"
 #include "functions.h"
-#include <cmath>
-#include <QFile>
 
 extern stateInfo *state;
 
@@ -168,45 +168,6 @@ QList<int> *skeletonState::cube_data_at(int x, int y, int z) {
     return resultList;
 }
 
-QList<QVector<int> > skeletonState::sliced_cube_data_at(int x, int y, int z) {
-    Coordinate position(x / state->cubeEdgeLength, y / state->cubeEdgeLength, z / state->cubeEdgeLength);
-    Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
-
-    QList<QVector<int> > resultList;
-
-    if(!data) {
-        emit echo(QString("no cube data found at coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
-        return resultList;
-    }
-
-    Byte *xy = new Byte[state->cubeSetBytes];
-    Byte *xz = new Byte[state->cubeSetBytes];
-    Byte *yz = new Byte[state->cubeSetBytes];
-
-    emit sliceExtractSignal(data, xy, &state->viewerState->vpConfigs[VIEWPORT_XY]);
-    emit sliceExtractSignal(data, xz, &state->viewerState->vpConfigs[VIEWPORT_XZ]);
-    emit sliceExtractSignal(data, yz, &state->viewerState->vpConfigs[VIEWPORT_YZ]);
-
-    QVector<int> xyList;
-    QVector<int> xzList;
-    QVector<int> yzList;
-
-    for(int i = 0; i < state->cubeSliceArea; i++) {
-        xyList.append((int) xy[i]);
-        xzList.append((int) xz[i]);
-        yzList.append((int) yz[i]);
-    }
-
-    resultList.append(xyList);
-    resultList.append(xzList);
-    resultList.append(yzList);
-
-    delete [] xy;
-    delete [] xz;
-    delete [] yz;
-    return resultList;
-}
-
 void skeletonState::render_mesh(mesh *mesh) {
     if(!mesh) {
         emit echo("Null objects can't be rendered ... nothing to do");
@@ -233,7 +194,16 @@ void skeletonState::render_mesh(mesh *mesh) {
 
     userGeometry->append(mesh);
 
+}
 
+/** @todo a signal to scripting */
+void skeletonState::save_sys_path(const QString &path) {
+    //Scripting::saveSettings("sys_path", path);
+}
+
+/** @tood a signal to scripting */
+void skeletonState::save_working_directory(const QString &path) {
+    //Scripting::saveSettings("working_dir", path);
 }
 
 
@@ -260,8 +230,8 @@ QString skeletonState::help() {
                    "\n from_xml(filename) : loads a skeleton from a .nml file" \
                    "\n to_xml(filename) : saves a skeleton to a .nml file" \
                    "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
-                   "\n\t you can extract the integer value of the color via ord(i) where i is the i-th char of the string." \
-                   "\n\t There is also a script which returns a numpy matrix with dimension (1xN)"
-                   "\n render_mesh(mesh) : render the mesh. Call mesh.help() for additional information.");
+                   "\n render_mesh(mesh) : render the mesh. Call mesh.help() for additional information." \
+                   "\n save_sys_path(path) : saves the python sys_path from the console" \
+                   "\n save_working_directory(path) : saves the working directory from the console");
 
 }

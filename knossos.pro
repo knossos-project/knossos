@@ -9,7 +9,7 @@ QT       += core gui opengl network xml help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt #c++11
+CONFIG += qt warn_off #c++11
 #CONFIG -= app_bundle
 
 
@@ -51,7 +51,6 @@ SOURCES += openjpeg/cio.c \
     functions.cpp \
     qsort.cpp \
     ftp.cpp \
-    task.cpp \
     stateInfo.cpp \
     color4F.cpp \
     nodeListElement.cpp \
@@ -77,6 +76,7 @@ SOURCES += openjpeg/cio.c \
     widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
     widgets/datasetpropertywidget.cpp \
+    widgets/task/task.cpp \
     widgets/task/taskloginwidget.cpp \
     widgets/task/taskmanagementwidget.cpp \
     widgets/task/taskmanagementmaintab.cpp \
@@ -186,9 +186,10 @@ OTHER_FILES += \
     logo.ico \
     ChangeLog.txt \
     ChangeLog_v4.txt \
-    style.qss
+    style.qss \
 
 include(scriptengine/scriptengine.pri)
+#include(test/test.pri)
 
 exists(.svn) {
     #stringify (svnversion ouput maybe not integer)
@@ -245,8 +246,6 @@ win32 {
 RESOURCES += \
     Resources.qrc
 
-
-#include(test/test.pri)
 
 QMAKE_CXXFLAGS += -std=gnu++0x #-std=c++0x
 QMAKE_CXXFLAGS_RELEASE += -O3

@@ -1,3 +1,4 @@
+#include <QSettings>
 #include "scripting.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
@@ -16,6 +17,7 @@
 #include "geometry/shape.h"
 
 #include "highlighter.h"
+
 #include "knossos-global.h"
 
 
@@ -24,6 +26,7 @@ extern stateInfo *state;
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
 {
+    settings = new QSettings("python_api", "Knossos QT");
 
 }
 
@@ -41,11 +44,23 @@ void Scripting::addDoc() {
     ctx.evalScript("sys.path.append('/home/amos/PyFi')");
     ctx.evalScript("execfile('/home/amos/PyFi/small_test.py')");
 
+    ctx.evalScript("import os");
+
+    // here is simply the convention : Those keys are first available after pathes were saved.
+    if(!settings->value("sys_path").toString().isNull()) {
+        console->consoleMessage("loaded the following sys_pathes:");
+        PythonQt::self()->addSysPath(settings->value("sys_path").toString());
+        console->consoleMessage(QString(settings->value("sys_path").toString()));
+    }
+
+    if(!settings->value("working_directory").isNull()) {
+        ctx.evalScript(QString("os.chdir(%1)").arg(settings->value("working_dir").toString()));
+        console->consoleMessage(QString("changed working directory according to the saved path: %").arg(settings->value("working_dir").toString()));
+    }
+
 }
 
 void Scripting::run() {
-
-
 
     QFont font("Courier");
     font.setPixelSize(12);    
@@ -145,6 +160,9 @@ void Scripting::reflect(QObject *obj) {
 
        qDebug() << method.methodSignature();
     }
-
-
 }
+
+void Scripting::saveSettings(const QString &key, const QVariant &value) {
+    settings->setValue(key, value);
+}
+

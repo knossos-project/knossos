@@ -28,7 +28,7 @@
 
 #include <list>
 #include <vector>
-
+#include <curl/curl.h>
 #include <QObject>
 #include <QSemaphore>
 #include <QThread>

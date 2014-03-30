@@ -2,8 +2,6 @@
 #include "functions.h"
 #include "skeletonizer.h"
 
-extern stateInfo *state;
-
 
 nodeListElement::nodeListElement() {
 

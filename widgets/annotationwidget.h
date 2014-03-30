@@ -7,6 +7,7 @@
 #include "tools/toolstreeviewtab.h"
 #include "tools/toolscommandstab.h"
 
+class ToolsCommandsTab;
 class QVBoxLayout;
 class QLabel;
 class AnnotationWidget : public QDialog
