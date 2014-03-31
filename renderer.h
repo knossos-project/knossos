@@ -39,6 +39,7 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
+    static bool resizeMeshCapacity(mesh *toResize, uint n);
     static bool doubleMeshCapacity(mesh *toDouble);
     static bool initMesh(mesh *meshToInit, uint initialSize);
 protected:

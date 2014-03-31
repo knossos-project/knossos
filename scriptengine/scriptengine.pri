@@ -14,6 +14,7 @@ HEADERS += scriptengine/scripting.h \
     scriptengine/geometry/shape.h \
     scriptengine/geometry/point.h \
     scriptengine/geometry/render.h \
+    scriptengine/proxies/skeletonproxy.h
 
 
 SOURCES += scriptengine/scripting.cpp \
@@ -32,6 +33,7 @@ SOURCES += scriptengine/scripting.cpp \
     scriptengine/geometry/shape.cpp \
     scriptengine/geometry/point.cpp \
     scriptengine/geometry/render.cpp \
+    scriptengine/proxies/skeletonproxy.cpp
 
 
 OTHER_FILES += \

@@ -2472,10 +2472,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 }
 
-bool Renderer::resizeMeshCapacity(mesh *meshToResize, uint n) {
-    (*toResize).vertices = (floatCoordinate *)realloc((*toDouble).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
-    (*toResize).normals = (floatCoordinate *)realloc((*toDouble).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
-    (*toResize).colors = (color4F *)realloc((*toDouble).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
+bool Renderer::resizeMeshCapacity(mesh *toResize, uint n) {
+    (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
+    (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
+    (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
 
     (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
     (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;

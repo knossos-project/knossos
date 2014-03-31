@@ -7,9 +7,10 @@
 #include "decorators/nodelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
 #include "decorators/meshdecorator.h"
-
 #include "decorators/transformdecorator.h"
 #include "decorators/pointdecorator.h"
+
+#include "proxies/skeletonproxy.h"
 
 #include "geometry/render.h"
 #include "geometry/point.h"
@@ -17,7 +18,6 @@
 #include "geometry/shape.h"
 
 #include "highlighter.h"
-
 #include "knossos-global.h"
 
 
@@ -74,7 +74,8 @@ void Scripting::run() {
 
     Render render;
 
-    ctx.addObject("knossos", state->skeletonState);
+    skeletonProxy = new SkeletonProxy();
+    ctx.addObject("knossos", skeletonProxy);
     ctx.addObject("renderer", &render);
 
     ctx.addVariable("GL_POINTS", GL_POINTS);
@@ -96,6 +97,8 @@ void Scripting::run() {
     nodeListDecorator = new NodeListDecorator();
     segmentListDecorator = new SegmentListDecorator();
     meshDecorator = new MeshDecorator();
+
+
 
     transformDecorator = new TransformDecorator();
     pointDecorator = new PointDecorator();
@@ -138,7 +141,9 @@ void Scripting::run() {
 
 
 
-    connect(state->skeletonState, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
+    connect(skeletonProxy, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
+
+
 
     console->resize(800, 300);
     console->setFont(font);

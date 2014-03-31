@@ -56,7 +56,6 @@ SOURCES += openjpeg/cio.c \
     nodeListElement.cpp \
     segmentListElement.cpp \
     treeListElement.cpp \
-    skeletonstate.cpp \
     treeLUT_fallback.cpp \
     sha256.cpp \
     widgets/viewport.cpp \    
@@ -89,7 +88,8 @@ SOURCES += openjpeg/cio.c \
     widgets/tools/toolstreeviewtab.cpp \
     widgets/tools/nodetable.cpp \
     widgets/tools/treetable.cpp \
-    mesh.cpp
+    mesh.cpp \
+
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -170,7 +170,8 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
-    widgets/tools/treetable.h
+    widgets/tools/treetable.h \
+
 
 FORMS    += mainwindow.ui
 

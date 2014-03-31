@@ -2110,15 +2110,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->taskManagementWidget->mainTab, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // -- end task management signals
     // --- end widget signals
-    connect(state->skeletonState, SIGNAL(loadSkeleton(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
-    connect(state->skeletonState, SIGNAL(saveSkeleton(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    connect(state->skeletonState, SIGNAL(treeAddedSignal(treeListElement *)), window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
-    connect(state->skeletonState, SIGNAL(nodeAddedSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
-    connect(state->skeletonState, SIGNAL(addNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    connect(state->skeletonState, SIGNAL(clearSkeletonSignal()), window, SLOT(clearSkeletonWithoutConfirmation()));
-    connect(state->skeletonState, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
-    connect(state->skeletonState, SIGNAL(updateTreeViewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
-    connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
+
 }
 
 bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {

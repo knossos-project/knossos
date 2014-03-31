@@ -16,6 +16,8 @@ class NodeListDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
 
+class SkeletonProxy;
+
 class TransformDecorator;
 class PointDecorator;
 
@@ -39,6 +41,8 @@ public:
     NodeListDecorator *nodeListDecorator;
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
+
+    SkeletonProxy *skeletonProxy;
 
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;

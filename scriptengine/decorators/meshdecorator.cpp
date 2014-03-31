@@ -9,7 +9,7 @@ MeshDecorator::MeshDecorator(QObject *parent) :
 
 mesh *MeshDecorator::new_mesh(uint mode) {
     mesh *instance = new mesh(mode);
-    Renderer::initMesh(mesh, 1);
+    Renderer::initMesh(instance, 1);
     return instance;
 }
 
