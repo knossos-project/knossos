@@ -2472,19 +2472,23 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 }
 
+bool Renderer::resizeMeshCapacity(mesh *meshToResize, uint n) {
+    (*toResize).vertices = (floatCoordinate *)realloc((*toDouble).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
+    (*toResize).normals = (floatCoordinate *)realloc((*toDouble).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
+    (*toResize).colors = (color4F *)realloc((*toDouble).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
+
+    (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
+    (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;
+    (*toResize).colsBuffSize = n * (*toResize).colsBuffSize;
+
+    return true;
+
+}
 
 bool Renderer::doubleMeshCapacity(mesh *toDouble) {
 
-    (*toDouble).vertices = (floatCoordinate *)realloc((*toDouble).vertices, 2 * (*toDouble).vertsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).normals = (floatCoordinate *)realloc((*toDouble).normals, 2 * (*toDouble).normsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).colors = (color4F *)realloc((*toDouble).colors, 2 * (*toDouble).colsBuffSize * sizeof(color4F));
+    return Renderer::resizeMeshCapacity(toDouble, 2);
 
-    (*toDouble).vertsBuffSize = 2 * (*toDouble).vertsBuffSize;
-    (*toDouble).normsBuffSize = 2 * (*toDouble).normsBuffSize;
-    (*toDouble).colsBuffSize = 2 * (*toDouble).colsBuffSize;
-
-
-    return true;
 }
 
 bool Renderer::initMesh(mesh *toInit, uint initialSize) {

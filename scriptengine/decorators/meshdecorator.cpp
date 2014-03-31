@@ -8,7 +8,9 @@ MeshDecorator::MeshDecorator(QObject *parent) :
 }
 
 mesh *MeshDecorator::new_mesh(uint mode) {
-    return new mesh(mode);
+    mesh *instance = new mesh(mode);
+    Renderer::initMesh(mesh, 1);
+    return instance;
 }
 
 QList<floatCoordinate *> *MeshDecorator::vertices(mesh *self) {
@@ -43,10 +45,7 @@ QList<color4F *> *MeshDecorator::colors(mesh *self) {
 }
 
 void MeshDecorator::set_vertices(mesh *self, QList<floatCoordinate *> *vertices) {
-
-    while(vertices->size() > self->vertsBuffSize) {
-        Renderer::doubleMeshCapacity(self);
-    }
+    Renderer::resizeMeshCapacity(self, vertices->size());
 
     for(int i = 0; i < vertices->size(); i++) {
         *(self->vertices++) = *vertices->at(i);
@@ -56,9 +55,7 @@ void MeshDecorator::set_vertices(mesh *self, QList<floatCoordinate *> *vertices)
 }
 
 void MeshDecorator::set_normals(mesh *self, QList<floatCoordinate *> *normals) {
-    while(normals->size() > self->normsBuffSize) {
-        Renderer::doubleMeshCapacity(self);
-    }
+
 
     for(int i = 0; i < normals->size(); i++) {
         *(self->normals++) = *normals->at(i);
@@ -69,9 +66,7 @@ void MeshDecorator::set_normals(mesh *self, QList<floatCoordinate *> *normals) {
 }
 
 void MeshDecorator::set_colors(mesh *self, QList<color4F *> *colors) {
-    while(colors->size() > self->colsBuffSize) {
-        Renderer::doubleMeshCapacity(self);
-    }
+
 
     for(int i = 0; i < colors->size(); i++) {
         *(self->colors++) = *colors->at(i);
