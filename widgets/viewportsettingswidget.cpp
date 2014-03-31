@@ -136,13 +136,13 @@ void ViewportSettingsWidget::loadSettings() {
     this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(state->skeletonState->showIntersections);
 
 
-    state->viewerState->filterType = GL_NEAREST;
+    state->viewerState->filterType = GL_LINEAR;
     if(settings.value(DATASET_LINEAR_FILTERING).isNull() == false) {
-        if(settings.value(DATASET_LINEAR_FILTERING).toBool()) {
-            state->viewerState->filterType = GL_LINEAR;
+        if(settings.value(DATASET_LINEAR_FILTERING).toBool() == false) {
+            state->viewerState->filterType = GL_NEAREST;
         }
     }
-    this->slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked(state->viewerState->filterType);
+    this->slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked((state->viewerState->filterType == GL_LINEAR)? true : false);
 
     state->viewerState->depthCutOff = (settings.value(DEPTH_CUTOFF).isNull())? 5. : settings.value(DEPTH_CUTOFF).toDouble();
     this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(state->viewerState->depthCutOff);
