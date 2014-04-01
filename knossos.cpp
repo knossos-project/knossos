@@ -213,14 +213,14 @@ int main(int argc, char *argv[])
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
-    QObject::connect(scripts.skeletonProxy, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(treeAddedSignal(treeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    QObject::connect(signalDelegate, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
+    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
     scripts.run();
 

@@ -4,9 +4,12 @@
 
 extern stateInfo *state;
 
+SkeletonProxySignalDelegate *signalDelegate = new SkeletonProxySignalDelegate();
+
 SkeletonProxy::SkeletonProxy(QObject *parent) :
     QObject(parent)
 {
+
 }
 
 int SkeletonProxy::skeleton_time() {
@@ -18,14 +21,14 @@ QString SkeletonProxy::skeleton_file() {
 }
 
 void SkeletonProxy::from_xml(const QString &filename) {
-   if(!loadSkeleton(filename)) {
-       emit echo(QString("could not load from %1").arg(filename));
+   if(!signalDelegate->loadSkeleton(filename)) {
+       emit signalDelegate->echo(QString("could not load from %1").arg(filename));
    }
 }
 
 void SkeletonProxy::to_xml(const QString &filename) {
-    if(!saveSkeleton(filename)) {
-        emit echo(QString("could not save to %1").arg(filename));
+    if(!signalDelegate->saveSkeleton(filename)) {
+        emit signalDelegate->echo(QString("could not save to %1").arg(filename));
     }
 }
 
@@ -44,19 +47,19 @@ bool SkeletonProxy::has_unsaved_changes() {
 
 void SkeletonProxy::delete_tree(int tree_id) {
    if(!Skeletonizer::delTree(CHANGE_MANUAL, tree_id, true)) {
-       emit echo(QString("could not delete the tree with id %1").arg(tree_id));
+       emit signalDelegate->echo(QString("could not delete the tree with id %1").arg(tree_id));
    } else {
-       emit updateTreeViewSignal();
+       emit signalDelegate->updateTreeViewSignal();
    }
 }
 
 void SkeletonProxy::delete_skeleton() {
-    emit clearSkeletonSignal();
+    emit signalDelegate->clearSkeletonSignal();
 }
 
 void SkeletonProxy::set_active_node(int node_id) {
     if(!Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node_id)) {
-        emit echo(QString("could not set the node with id %1 to active node").arg(node_id));
+        emit signalDelegate->echo(QString("could not set the node with id %1 to active node").arg(node_id));
     }
 }
 
@@ -66,21 +69,21 @@ nodeListElement *SkeletonProxy::active_node() {
 
 void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_id, float radius, int inVp, int inMag, int time) {
     if(!checkNodeParameter(node_id, x, y, z)) {
-        emit echo(QString("one of the first four arguments is in negative range. node is rejected"));
+        emit signalDelegate->echo(QString("one of the first four arguments is in negative range. node is rejected"));
         return;
     }
 
     if(inVp < VIEWPORT_XY or inVp > VIEWPORT_ARBITRARY) {
-        emit echo(QString("viewport argument is out of range. node is rejected"));
+        emit signalDelegate->echo(QString("viewport argument is out of range. node is rejected"));
         return;
     }
 
     Coordinate coordinate(x, y, z);
     if(Skeletonizer::addNode(CHANGE_MANUAL, node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, state->skeletonState->activeNode, node_id);
-        emit nodeAddedSignal();
+        emit signalDelegate->nodeAddedSignal();
     } else {
-        emit echo(QString("could not add the node with node id %1").arg(node_id));
+        emit signalDelegate->echo(QString("could not add the node with node id %1").arg(node_id));
     }
 }
 
@@ -98,7 +101,7 @@ void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float
     color4F color(r, g, b, a);
     treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree_id, color, false);
     if(!theTree) {
-        emit echo(QString("could not add the tree with tree id %1").arg(tree_id));
+        emit signalDelegate->echo(QString("could not add the tree with tree id %1").arg(tree_id));
         return;
     }
 
@@ -107,8 +110,8 @@ void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float
     }
 
     Skeletonizer::setActiveTreeByID(tree_id);
-    emit updateToolsSignal();
-    emit treeAddedSignal(theTree);
+    emit signalDelegate->updateToolsSignal();
+    emit signalDelegate->treeAddedSignal(theTree);
 
 }
 
@@ -116,10 +119,10 @@ void SkeletonProxy::add_comment(int node_id, char *comment) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     if(node) {
         if(!Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false)) {
-            emit echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
+            emit signalDelegate->echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
         }
     } else {
-        emit echo(QString("no node id id %1 found").arg(node_id));
+        emit signalDelegate->echo(QString("no node id id %1 found").arg(node_id));
     }
 }
 
@@ -127,7 +130,7 @@ void SkeletonProxy::add_segment(int source_id, int target_id) {
     if(Skeletonizer::addSegment(CHANGE_MANUAL, source_id, target_id, false)) {
 
     } else {
-       emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
+       emit signalDelegate->echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
     }
 }
 
@@ -135,13 +138,13 @@ void SkeletonProxy::add_branch_node(int node_id) {
     nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
     if(currentNode) {
         if(Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false)) {
-            emit updateToolsSignal();
+            emit signalDelegate->updateToolsSignal();
         } else {
-            emit echo(QString("An unexpected error occured while adding a branch node"));
+            emit signalDelegate->echo(QString("An unexpected error occured while adding a branch node"));
         }
 
     } else {
-        emit echo(QString("no node with id %1 found").arg(node_id));
+        emit signalDelegate->echo(QString("no node with id %1 found").arg(node_id));
     }
 
 }
@@ -151,7 +154,7 @@ QList<int> *SkeletonProxy::cube_data_at(int x, int y, int z) {
     Byte *data = Hashtable::ht_get(state->Dc2Pointer[(int)std::log2(state->magnification)], position);
 
     if(!data) {
-        emit echo(QString("no cube data found at coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
+        emit signalDelegate->echo(QString("no cube data found at coordinate (%1, %2, %3)").arg(x).arg(y).arg(z));
         return 0;
     }
 
@@ -166,16 +169,16 @@ QList<int> *SkeletonProxy::cube_data_at(int x, int y, int z) {
 
 void SkeletonProxy::render_mesh(mesh *mesh) {
     if(!mesh) {
-        emit echo("Null objects can't be rendered ... nothing to do");
+        emit signalDelegate->echo("Null objects can't be rendered ... nothing to do");
         return;
     }
 
     if(mesh->colsIndex == 0) {
-        emit echo("Can't render a mesh without color");
+        emit signalDelegate->echo("Can't render a mesh without color");
     }
 
     if(mesh->vertsIndex == 0) {
-        emit echo("Can't render a mesh without vertices");
+        emit signalDelegate->echo("Can't render a mesh without vertices");
         return;        
     }
 
@@ -183,7 +186,7 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
 
 
     if(mesh->mode < GL_POINTS or mesh->mode > GL_POLYGON) {
-        emit echo("Mesh contains an unknown vertex mode");
+        emit signalDelegate->echo("Mesh contains an unknown vertex mode");
         return;
 
     }
@@ -198,20 +201,20 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
 void SkeletonProxy::save_sys_path(const QString &path) {
     QFileInfo info(path);
     if(!info.exists()) {
-        emit echo("No valid file path. Please check it again.");
+        emit signalDelegate->echo("No valid file path. Please check it again.");
         return;
     }
 
-    emit saveSettingsSignal("sys_path", path);
+    emit signalDelegate->saveSettingsSignal("sys_path", path);
 }
 
 void SkeletonProxy::save_working_directory(const QString &path) {
     QFileInfo info(path);
     if(!info.exists()) {
-        emit echo("No valid file path. Please check it again");
+        emit signalDelegate->echo("No valid file path. Please check it again");
         return;
     }
-   emit saveSettingsSignal("working_dir", path);
+   emit signalDelegate->saveSettingsSignal("working_dir", path);
 }
 
 QList<mesh *> *SkeletonProxy::user_geom_list() {
@@ -219,7 +222,7 @@ QList<mesh *> *SkeletonProxy::user_geom_list() {
  }
 
 void SkeletonProxy::move_to(int x, int y, int z) {
-    emit userMoveSignal(x, y, z);
+    emit signalDelegate->userMoveSignal(x, y, z);
 }
 
 
@@ -254,5 +257,4 @@ QString SkeletonProxy::help() {
                    "\n render_mesh(mesh) : render the mesh. Call mesh.help() for additional information." \
                    "\n save_sys_path(path) : saves the python sys_path from the console" \
                    "\n save_working_directory(path) : saves the working directory from the console");
-
 }

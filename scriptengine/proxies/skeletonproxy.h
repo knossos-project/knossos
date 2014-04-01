@@ -6,12 +6,9 @@
 #include "knossos-global.h"
 
 
-class SkeletonProxy : public QObject
-{
+/** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
+class SkeletonProxySignalDelegate : public QObject  {
     Q_OBJECT
-public:
-    explicit SkeletonProxy(QObject *parent = 0);
-
 signals:
     bool loadSkeleton(QString file);
     bool saveSkeleton(QString file);
@@ -25,6 +22,18 @@ signals:
     void updateTreeViewSignal();
     bool sliceExtractSignal(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     void saveSettingsSignal(const QString &key, const QVariant &value);
+};
+
+extern SkeletonProxySignalDelegate *signalDelegate;
+
+class SkeletonProxy : public QObject
+{
+    Q_OBJECT
+public:
+    explicit SkeletonProxy(QObject *parent = 0);
+
+signals:
+
 public slots:
     int skeleton_time();
     QString skeleton_file();
@@ -47,11 +56,13 @@ public slots:
     void export_converter(const QString &path);
     void save_sys_path(const QString &path);
     void save_working_directory(const QString &path);
-    static QString help();
+
+
     QList<mesh *> *user_geom_list();
     void move_to(int x, int y, int z);
     void add_text(const QString &path, int x, int y, int z);
 
+    static QString help();
 };
 
 #endif // SKELETONPROXY_H

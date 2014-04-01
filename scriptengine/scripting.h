@@ -7,7 +7,6 @@
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 
-
 class ColorDecorator;
 class FloatCoordinateDecorator;
 class CoordinateDecorator;
@@ -17,7 +16,6 @@ class SegmentListDecorator;
 class MeshDecorator;
 
 class SkeletonProxy;
-
 class TransformDecorator;
 class PointDecorator;
 
@@ -31,8 +29,6 @@ class Scripting : public QThread
 public:
 
     explicit Scripting(QObject *parent = 0);
-
-    //NicePyConsole *console;
     PythonQtScriptingConsole *console;
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;

@@ -59,11 +59,18 @@ void Scripting::addDoc() {
 
     ctx.evalScript("import os");
 
+
+
     // here is simply the convention : Those keys are first available after pathes were saved.
     if(!settings->value("sys_path").toString().isNull()) {
         console->consoleMessage("loaded the following sys_pathes:");
-        PythonQt::self()->addSysPath(settings->value("sys_path").toString());
-        console->consoleMessage(QString(settings->value("sys_path").toString()));
+        QStringList pathList;
+        pathList = settings->value("sys_path").toStringList();
+        foreach(const QString &path, pathList) {
+           PythonQt::self()->addSysPath(settings->value("sys_path").toString());
+           console->consoleMessage(path);
+        }
+
     }
 
     if(!settings->value("working_directory").isNull()) {
@@ -127,8 +134,6 @@ void Scripting::run() {
     PythonQt::self()->addDecorators(meshDecorator);
     PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
 
-
-
     QString renderModule("rendering");
 
     PythonQt::self()->addDecorators(pointDecorator);
@@ -139,12 +144,8 @@ void Scripting::run() {
 
     addDoc();
 
-
-
-    connect(skeletonProxy, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
-    connect(skeletonProxy, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
-
-
+    connect(signalDelegate, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
+    connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
 
     console->resize(800, 300);
     console->setFont(font);
@@ -163,12 +164,11 @@ void Scripting::reflect(QObject *obj) {
 
     for(int i = 0; i < meta->methodCount(); i++) {
         QMetaMethod method = meta->method(i);
-
-       qDebug() << method.methodSignature();
+        qDebug() << method.methodSignature();
     }
 }
 
-void Scripting::saveSettings(const QString &key, const QVariant &value) {
+void Scripting::saveSettings(const QString &key, const QVariant &value) {       
     settings->setValue(key, value);
 }
 
