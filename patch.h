@@ -1,9 +1,6 @@
 #ifndef PATCH_H
 #define PATCH_H
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Delaunay_triangulation_3.h>
-
 #include <pcl/point_types.h>
 #include <pcl/impl/point_types.hpp>
 #include <pcl/kdtree/kdtree.h>
@@ -46,14 +43,6 @@ typedef pcl::PointCloud<pcl_Point>          pcl_Cloud;
 typedef pcl::ConcaveHull<pcl_Point>         pcl_ConcaveHull;
 typedef pcl::SACSegmentation<pcl_Point>     pcl_Segmentation;
 typedef pcl::PolygonMesh                    pcl_Mesh;
-
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Delaunay_triangulation_3<K>  Triangulation;
-typedef K::Point_3                                  CGAL_Point;
-typedef Triangulation::Facet                        CGAL_Facet;
-typedef K::Triangle_3                               CGAL_Triangle;
-typedef Triangulation::Cell_handle                  CGAL_CellHandle;
-typedef Triangulation::Vertex_handle                CGAL_VertexHandle;
 
 #define DRAW_CONTINUOUS_LINE 0 //! draw patch with a continuous line
 #define DRAW_DROP_POINTS 1 //! draw patch by placing points

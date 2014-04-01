@@ -262,7 +262,6 @@ win32 {
             -lglew32 \
             -lglut32 \
             -lwsock32 \
-            -lCGAL.dll \
             -lgmp \
             -lpcl_common -lpcl_segmentation -lpcl_kdtree -lpcl_octree -lpcl_search -lpcl_surface -lpcl_filters -lpcl_features -lpcl_io \
             -lboost_system-gcc47-mt-1_49.dll \

@@ -763,11 +763,10 @@ void Patch::clearTriangles() {
  */
 bool Patch::computeTriangles() {
     std::vector<floatCoordinate> pointCloud = pointCloudAsVector();
-    std::vector<floatCoordinate>::iterator piter;
     pcl_Cloud::Ptr cloud(new pcl_Cloud);
 
-    for(piter = pointCloud.begin(); piter != pointCloud.end(); ++piter) {
-        pcl_Point p = pcl_Point(piter->x, piter->y, piter->z);
+    for(floatCoordinate point : pointCloud) {
+        pcl_Point p = pcl_Point(point->x, point->y, point->z);
         cloud->push_back(p);
     }
 
@@ -799,75 +798,32 @@ void Patch::recomputeTriangles(floatCoordinate pos, uint halfCubeSize) {
     std::vector<floatCoordinate> points;
     pointCloud->getObjsInRange(pos, halfCubeSize, points);
 
-    Triangulation triangulation;
-    std::vector<floatCoordinate>::iterator piter;
-    for(piter = points.begin(); piter != points.end(); ++piter) {
-        CGAL_Point p = CGAL_Point(piter->x, piter->y, piter->z);
-        triangulation.insert(p);
+    pcl_Cloud::Ptr cloud(new pcl_Cloud);
+    for(floatCoordinate point : points) {
+        pcl_Point p = pcl_Point(point->x, point->y, point->z);
+        cloud.insert(p);
     }
-    // also recompute triangles for points around the border of the cube.
-    /*points.clear();
-    Triangulation triangulation2;
-    pointCloud->getObjsInMargin(pos, halfCubeSize, 100, points);
-    for(piter = points.begin(); piter != points.end(); ++piter) {
-        CGAL_Point p = CGAL_Point(piter->x, piter->y, piter->z);
-        triangulation2.insert(p);
-    }*/
-    // insert triangles into patches octree
-    if(triangulation.is_valid() == false || triangulation.dimension() <= 2) {
-        return;
-    }
-/*
-    if(triangulation2.is_valid() == false || triangulation.dimension() <= 2) {
-        return;
-    }*/
-    // iterate over tetrahedrons and extract only the surface triangles
-    std::list<CGAL_CellHandle> cells;
-    triangulation.incident_cells(triangulation.infinite_vertex(),
-                                 std::back_inserter(cells));
-    std::list<CGAL_CellHandle>::iterator iter;
-    CGAL_Triangle cgalTriangle;
-    CGAL_Facet facet;
+
+    pcl_Mesh::Ptr mesh = concaveHull(cloud);
+    meshCloud.clear();
+    pcl::fromPCLPointCloud2(mesh->cloud, meshCloud);
+    this->mesh = *mesh;
+
     Triangle triangle;
-    CGAL_VertexHandle infiniteVertex = triangulation.infinite_vertex();
-    for(iter = cells.begin(); iter != cells.end(); ++iter) {
-        facet = std::make_pair(*iter, (*iter)->index(infiniteVertex));
-        cgalTriangle = triangulation.triangle(facet);
-        triangle.a.x = CGAL::to_double(cgalTriangle.vertex(0).x());
-        triangle.a.y = CGAL::to_double(cgalTriangle.vertex(0).y());
-        triangle.a.z = CGAL::to_double(cgalTriangle.vertex(0).z());
+    for(int tri = 0; tri != mesh->polygons.size(); ++tri) {
+        triangle.a.x = meshCloud.points[mesh->polygons[tri].vertices[0]].x;
+        triangle.a.y = meshCloud.points[mesh->polygons[tri].vertices[0]].y;
+        triangle.a.z = meshCloud.points[mesh->polygons[tri].vertices[0]].z;
 
-        triangle.b.x = CGAL::to_double(cgalTriangle.vertex(1).x());
-        triangle.b.y = CGAL::to_double(cgalTriangle.vertex(1).y());
-        triangle.b.z = CGAL::to_double(cgalTriangle.vertex(1).z());
+        triangle.b.x = meshCloud.points[mesh->polygons[tri].vertices[1]].x;
+        triangle.b.y = meshCloud.points[mesh->polygons[tri].vertices[1]].y;
+        triangle.b.z = meshCloud.points[mesh->polygons[tri].vertices[1]].z;
 
-        triangle.c.x = CGAL::to_double(cgalTriangle.vertex(2).x());
-        triangle.c.y = CGAL::to_double(cgalTriangle.vertex(2).y());
-        triangle.c.z = CGAL::to_double(cgalTriangle.vertex(2).z());
+        triangle.c.x = meshCloud.points[mesh->polygons[tri].vertices[2]].x;
+        triangle.c.y = meshCloud.points[mesh->polygons[tri].vertices[2]].y;
+        triangle.c.z = meshCloud.points[mesh->polygons[tri].vertices[2]].z;
         insert(triangle, true);
     }
-
-  /*  infiniteVertex = triangulation2.infinite_vertex();
-    cells.clear();
-    triangulation2.incident_cells(triangulation2.infinite_vertex(),
-                                 std::back_inserter(cells));
-    for(iter = cells.begin(); iter != cells.end(); ++iter) {
-        facet = std::make_pair(*iter, (*iter)->index(infiniteVertex));
-        cgalTriangle = triangulation2.triangle(facet);
-        triangle = (Triangle*) malloc( sizeof(Triangle));
-        triangle->a.x = CGAL::to_double(cgalTriangle.vertex(0).x());
-        triangle->a.y = CGAL::to_double(cgalTriangle.vertex(0).y());
-        triangle->a.z = CGAL::to_double(cgalTriangle.vertex(0).z());
-
-        triangle->b.x = CGAL::to_double(cgalTriangle.vertex(1).x());
-        triangle->b.y = CGAL::to_double(cgalTriangle.vertex(1).y());
-        triangle->b.z = CGAL::to_double(cgalTriangle.vertex(1).z());
-
-        triangle->c.x = CGAL::to_double(cgalTriangle.vertex(2).x());
-        triangle->c.y = CGAL::to_double(cgalTriangle.vertex(2).y());
-        triangle->c.z = CGAL::to_double(cgalTriangle.vertex(2).z());
-        insert(triangle, true);
-    }*/
     updateDistinguishableTriangles();
 }
 
