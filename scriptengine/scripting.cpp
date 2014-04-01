@@ -28,6 +28,19 @@ Scripting::Scripting(QObject *parent) :
 {
     settings = new QSettings("python_api", "Knossos QT");
 
+    floatCoordinateDecorator = new FloatCoordinateDecorator();
+    coordinateDecorator = new CoordinateDecorator();
+    colorDecorator = new ColorDecorator();
+    treeListDecorator = new TreeListDecorator();
+    nodeListDecorator = new NodeListDecorator();
+    segmentListDecorator = new SegmentListDecorator();
+    meshDecorator = new MeshDecorator();
+
+
+    transformDecorator = new TransformDecorator();
+    pointDecorator = new PointDecorator();
+    skeletonProxy = new SkeletonProxy();
+
 }
 
 
@@ -41,8 +54,8 @@ void Scripting::addDoc() {
     ctx.evalScript("internal.__doc__ = 'This module contains internal data structures which are used in knossos. They are constrained to read-only access in python'");
 
     ctx.evalScript("import sys");
-    ctx.evalScript("sys.path.append('/home/amos/PyFi')");
-    ctx.evalScript("execfile('/home/amos/PyFi/small_test.py')");
+    ctx.evalScript("sys.path.append('/home/knossos/Schreibtisch')");
+    ctx.evalScript("execfile('/home/knossos/Schreibtisch/render_mesh.py')");
 
     ctx.evalScript("import os");
 
@@ -74,9 +87,9 @@ void Scripting::run() {
 
     Render render;
 
-    skeletonProxy = new SkeletonProxy();
+
     ctx.addObject("knossos", skeletonProxy);
-    ctx.addObject("renderer", &render);
+
 
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);
@@ -90,21 +103,7 @@ void Scripting::run() {
     ctx.addVariable("GL_POLYGON", GL_POLYGON);
 
 
-    floatCoordinateDecorator = new FloatCoordinateDecorator();
-    coordinateDecorator = new CoordinateDecorator();
-    colorDecorator = new ColorDecorator();    
-    treeListDecorator = new TreeListDecorator();
-    nodeListDecorator = new NodeListDecorator();
-    segmentListDecorator = new SegmentListDecorator();
-    meshDecorator = new MeshDecorator();
-
-
-
-    transformDecorator = new TransformDecorator();
-    pointDecorator = new PointDecorator();
-
     QString module("internal");
-
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
@@ -126,7 +125,8 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
+
 
 
     QString renderModule("rendering");
@@ -142,6 +142,7 @@ void Scripting::run() {
 
 
     connect(skeletonProxy, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
+    connect(skeletonProxy, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
 
 
 

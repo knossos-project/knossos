@@ -1184,7 +1184,7 @@ void Viewer::run() {
             vpLowerRight->updateGL();
 
 
-            qDebug() << 1000 / (float)(state->time.elapsed() - lastFrame);
+            //qDebug() << 1000 / (float)(state->time.elapsed() - lastFrame);
             if(idlingExceeds(60000)) {
                 state->viewerState->renderInterval = SLOW;
             }

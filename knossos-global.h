@@ -326,6 +326,8 @@ public:
     float z;
 };
 
+Q_DECLARE_METATYPE(floatCoordinate)
+
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 class Coordinate {
 public:
@@ -341,6 +343,8 @@ public:
     void operator=(Coordinate const&rhs);
 
 };
+
+Q_DECLARE_METATYPE(Coordinate)
 
 class color4F {
 public:
@@ -724,46 +728,6 @@ struct viewportTexture {
 
 };
 
-/**
-  * @struct guiConfig
-  * @brief TODO
-  *
-  */
-struct guiConfig {
-    char settingsFile[2048];
-    char titleString[2048];
-
-    // Current position of the user crosshair,
-    //starting at 1 instead 0. This is shown to the user,
-    //KNOSSOS works internally with 0 start indexing.
-    Coordinate oneShiftedCurrPos;
-    Coordinate activeNodeCoord;
-
-    QString lockComment;
-    char *commentBuffer;
-    char *commentSearchBuffer;
-    char *treeCommentBuffer;
-
-    int useLastActNodeRadiusAsDefault;
-    float actNodeRadius;
-
-    // dataset navigation settings win buffer variables
-    uint stepsPerSec;
-    uint recenteringTime;
-    uint dropFrames;
-
-    char *comment1;
-    char *comment2;
-    char *comment3;
-    char *comment4;
-    char *comment5;
-
-    // substrings for comment node highlighting
-    QStringList *commentSubstr;
-    //char **commentSubstr;
-    // colors of color-dropdown in comment node highlighting
-    char **commentColors;
-};
 
 /**
   * @struct vpConfig
@@ -937,7 +901,6 @@ struct viewerState {
     uint workMode;
     bool superCubeChanged;
 
-    struct guiConfig *gui;
 
     int luminanceBias;
     int luminanceRangeDelta;
@@ -1078,7 +1041,7 @@ public:
 class mesh {
 public:
     mesh();
-    mesh(uint mode); /* GL_POINTS, GL_TRIANGLES, etc. */
+    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
@@ -1092,6 +1055,7 @@ public:
     uint normsIndex;
     uint colsIndex;
     uint mode;
+    uint size;
 
 };
 

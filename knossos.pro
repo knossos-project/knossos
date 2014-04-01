@@ -89,6 +89,7 @@ SOURCES += openjpeg/cio.c \
     widgets/tools/nodetable.cpp \
     widgets/tools/treetable.cpp \
     mesh.cpp \
+    widgets/gui.cpp
 
 
 
@@ -171,6 +172,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
     widgets/tools/treetable.h \
+    widgets/gui.h
 
 
 FORMS    += mainwindow.ui

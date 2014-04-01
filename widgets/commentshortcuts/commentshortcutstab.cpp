@@ -34,6 +34,7 @@
 #include <QVariant>
 #include <QMessageBox>
 #include "knossos-global.h"
+#include "widgets/gui.h"
 
 extern  stateInfo *state;
 
@@ -96,15 +97,15 @@ void CommentShortCutsTab::commentChanged(QString comment) {
     QObject *emitter = sender();
 
     if(textFields[0] == emitter) {
-        strcpy(state->viewerState->gui->comment1, comment.toLocal8Bit().data());
+        strcpy(gui::comment1, comment.toLocal8Bit().data());
     } else if(textFields[1] == emitter) {
-       strcpy(state->viewerState->gui->comment2, comment.toLocal8Bit().data());
+       strcpy(gui::comment2, comment.toLocal8Bit().data());
     } else if(textFields[2] == emitter) {
-        strcpy(state->viewerState->gui->comment3, comment.toLocal8Bit().data());
+        strcpy(gui::comment3, comment.toLocal8Bit().data());
      } else if(textFields[3] == emitter) {
-        strcpy(state->viewerState->gui->comment4, comment.toLocal8Bit().data());
+        strcpy(gui::comment4, comment.toLocal8Bit().data());
      } else if(textFields[4] == emitter) {
-        strcpy(state->viewerState->gui->comment5, comment.toLocal8Bit().data());
+        strcpy(gui::comment5, comment.toLocal8Bit().data());
      }
 }
 

@@ -45,6 +45,7 @@
 #include "scriptengine/scripting.h"
 #include "scriptengine/proxies/skeletonproxy.h"
 #include "ftp.h"
+#include "widgets/gui.h"
 
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
@@ -199,15 +200,6 @@ int main(int argc, char *argv[])
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
     QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
     //QObject::connect(scripts.skeletonDecorator, &SkeletonDecorator::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
-    QObject::connect(scripts.skeletonProxy, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(treeAddedSignal(treeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(userMoveSignal(int,int,int,int)), &viewer, SLOT(userMove(int,int,int,int)));
-    QObject::connect(scripts.skeletonProxy, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
-    //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
 
     knossos->loadDefaultTreeLUT();
 
@@ -221,8 +213,17 @@ int main(int argc, char *argv[])
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
 
-
+    QObject::connect(scripts.skeletonProxy, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(treeAddedSignal(treeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(scripts.skeletonProxy, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
     scripts.run();
+
 
     return a.exec();
 }
@@ -631,8 +632,6 @@ stateInfo *Knossos::emptyState() {
     memset(state, 0, sizeof(stateInfo));//initialize memory
 
     state->viewerState = new viewerState();
-    state->viewerState->gui = new guiConfig();   
-
     state->skeletonState = new skeletonState();
     return state;
 }
@@ -1014,8 +1013,6 @@ bool Knossos::configDefaults() {
         state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
     }
 
-    // For the GUI
-    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");    
 
 
     // For the skeletonizer
@@ -1174,8 +1171,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      state->viewerState->overlayVisible = true;
                      break;
                  case 14:
-                     strncpy(state->viewerState->gui->settingsFile, rval, 2000);
-                     strcpy(state->viewerState->gui->settingsFile + strlen(rval), ".xml");
+                     strncpy(gui::settingsFile, rval, 2000);
+                     strcpy(gui::settingsFile + strlen(rval), ".xml");
                      break;
              }
          }

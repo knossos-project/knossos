@@ -32,6 +32,7 @@
 #include "client.h"
 #include "functions.h"
 #include "sha256.h"
+#include "widgets/gui.h"
 
 extern stateInfo *state;
 
@@ -1645,7 +1646,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     free(nodeToDel);
 
     state->skeletonState->totalNodeElements--;
-    //state->viewerState->gui->totalNodes--;
+
 
     setDynArray(state->skeletonState->nodeCounter,
             treeID,
@@ -1937,7 +1938,7 @@ int Skeletonizer::addNode(int targetRevision,
 
     if(respectLocks) {
         if(state->skeletonState->positionLocked) {
-            if(state->viewerState->gui->lockComment == QString(state->skeletonState->onCommentLock)) {
+            if(gui::lockComment == QString(state->skeletonState->onCommentLock)) {
                 unlockPosition();
                 return false;
             }
@@ -4227,15 +4228,15 @@ unsigned int Skeletonizer::commentContainsSubstr(struct commentListElement *comm
     }
     if(index == -1) { //no index specified
         for(i = 0; i < NUM_COMMSUBSTR; i++) {
-            if(state->viewerState->gui->commentSubstr->at(i).length() > 0
-                && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(i).toStdString().c_str())) != NULL) {
+            if(gui::commentSubstr->at(i).length() > 0
+                && strstr(comment->content, const_cast<char *>(gui::commentSubstr->at(i).toStdString().c_str())) != NULL) {
                 return i;
             }
         }
     }
     else if(index > -1 && index < NUM_COMMSUBSTR) {
-        if(state->viewerState->gui->commentSubstr->at(index).length() > 0
-           && strstr(comment->content, const_cast<char *>(state->viewerState->gui->commentSubstr->at(index).toStdString().c_str())) != NULL) {
+        if(gui::commentSubstr->at(index).length() > 0
+           && strstr(comment->content, const_cast<char *>(gui::commentSubstr->at(index).toStdString().c_str())) != NULL) {
             return index;
         }
     }
@@ -4589,7 +4590,7 @@ void Skeletonizer::deserializeSkeleton() {
 
     state->skeletonState->lockPositions = Client::bytesToInt(&serialSkeleton[memPosition]);
 
-    //state->viewerState->gui->commentLockCheckbox->state = state->skeletonState->lockPositions; @todo
+    //gui::commentLockCheckbox->state = state->skeletonState->lockPositions; @todo
 
     memPosition+=sizeof(state->skeletonState->lockPositions);
     state->skeletonState->lockRadius = Client::bytesToInt(&serialSkeleton[memPosition]);

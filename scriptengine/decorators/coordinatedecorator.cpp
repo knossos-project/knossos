@@ -1,9 +1,11 @@
 #include "coordinatedecorator.h"
 #include "knossos-global.h"
 
+
 CoordinateDecorator::CoordinateDecorator(QObject *parent) :
     QObject(parent)
 {
+
 }
 
 

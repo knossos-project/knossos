@@ -40,8 +40,10 @@
 #include "widgetcontainer.h"
 
 namespace Ui {
-    class MainWindow;
+    class MainWindow;     
 }
+
+
 
 class QLabel;
 class QToolBar;

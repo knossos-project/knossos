@@ -20,11 +20,11 @@ signals:
     void nodeAddedSignal();
     void updateToolsSignal();
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void userMoveSignal(int x, int y, int z);
     void echo(QString message);
     void updateTreeViewSignal();
     bool sliceExtractSignal(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-
+    void saveSettingsSignal(const QString &key, const QVariant &value);
 public slots:
     int skeleton_time();
     QString skeleton_file();
@@ -48,6 +48,9 @@ public slots:
     void save_sys_path(const QString &path);
     void save_working_directory(const QString &path);
     static QString help();
+    QList<mesh *> *user_geom_list();
+    void move_to(int x, int y, int z);
+    void add_text(const QString &path, int x, int y, int z);
 
 };
 

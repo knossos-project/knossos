@@ -27,6 +27,7 @@
 #include "knossos.h"
 #include "renderer.h"
 #include "widgets/viewport.h"
+#include "widgets/gui.h"
 
 extern  stateInfo *state;
 
@@ -654,7 +655,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
             emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
         }
 
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+        if(gui::useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;
 
 
@@ -740,7 +741,7 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
         emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
 
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+        if(gui::useLastActNodeRadiusAsDefault)
            state->skeletonState->defaultNodeRadius = radius;
     } else {
         // Skeleton VP

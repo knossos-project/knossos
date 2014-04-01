@@ -38,7 +38,7 @@ SOURCES += scriptengine/scripting.cpp \
 
 OTHER_FILES += \
     python/converter.py \
-    python/examples/pathes.py \
+    python/examples/pathes.py
 
 
 macx {

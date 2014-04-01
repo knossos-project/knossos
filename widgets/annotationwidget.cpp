@@ -13,6 +13,7 @@
 #include "knossos-global.h"
 #include "GuiConstants.h"
 #include "annotationwidget.h"
+#include "widgets/gui.h"
 
 extern stateInfo *state;
 
@@ -126,12 +127,12 @@ void AnnotationWidget::loadSettings() {
     commandsTab->lockingRadiusSpin->setValue(state->skeletonState->lockRadius);
 
     if(settings.value(LOCK_TO_NODES_WITH_COMMENT).isNull() == false) {
-        state->viewerState->gui->lockComment = settings.value(LOCK_TO_NODES_WITH_COMMENT).toString();
+        gui::lockComment = settings.value(LOCK_TO_NODES_WITH_COMMENT).toString();
     }
     else {
-        state->viewerState->gui->lockComment = "seed";
+        gui::lockComment = "seed";
     }
-    commandsTab->commentLockEdit->setText(QString(state->viewerState->gui->lockComment));
+    commandsTab->commentLockEdit->setText(QString(gui::lockComment));
 
     settings.endGroup();
     if(visible) {

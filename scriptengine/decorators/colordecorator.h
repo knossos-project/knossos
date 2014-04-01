@@ -18,7 +18,6 @@ public slots:
     color4F *new_color4F();
     color4F *new_color4F(float r, float g, float b, float a = 1.0);
 
-
     float red(color4F *self);
     float blue(color4F *self);
     float green(color4F *self);

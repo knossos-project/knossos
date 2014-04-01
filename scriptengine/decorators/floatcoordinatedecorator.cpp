@@ -1,9 +1,15 @@
 #include "floatcoordinatedecorator.h"
 #include "knossos-global.h"
+#include <QDebug>
+
+
+
 
 FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) :
     QObject(parent)
 {
+    qRegisterMetaType<floatCoordinate>();
+
 
 }
 
@@ -54,5 +60,7 @@ void FloatCoordinateDecorator::sety(floatCoordinate *self, float y) {
 void FloatCoordinateDecorator::setz(floatCoordinate *self, float z) {
     self->z = z;
 }
+
+
 
 

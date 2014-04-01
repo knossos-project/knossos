@@ -5,6 +5,6 @@ mesh::mesh() {
     Renderer::initMesh(this, 1024);
 }
 
-mesh::mesh(uint type) {
-
+mesh::mesh(int mode) {
+    this->mode = mode;
 }

@@ -1,9 +1,12 @@
 #include "colordecorator.h"
 #include "knossos-global.h"
 
+Q_DECLARE_METATYPE(color4F)
+
 ColorDecorator::ColorDecorator(QObject *parent) :
     QObject(parent)
 {
+    qRegisterMetaType<color4F>();
 }
 
 

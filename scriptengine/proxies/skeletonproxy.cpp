@@ -7,9 +7,7 @@ extern stateInfo *state;
 SkeletonProxy::SkeletonProxy(QObject *parent) :
     QObject(parent)
 {
-    state->skeletonState->userGeometry = new QList<mesh *>();
 }
-
 
 int SkeletonProxy::skeleton_time() {
     return state->skeletonState->skeletonTime;
@@ -173,12 +171,12 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
     }
 
     if(mesh->colsIndex == 0) {
-        emit echo("");
+        emit echo("Can't render a mesh without color");
     }
 
-    if(mesh->vertices == 0) {
+    if(mesh->vertsIndex == 0) {
         emit echo("Can't render a mesh without vertices");
-        return;
+        return;        
     }
 
     // it's ok if no normals are passed. This has to be checked in render method anyway
@@ -186,24 +184,49 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
 
     if(mesh->mode < GL_POINTS or mesh->mode > GL_POLYGON) {
         emit echo("Mesh contains an unknown vertex mode");
+        return;
+
     }
 
-    // lots of additional checks could be done
 
+    // lots of additional checks could be done
+    qDebug() << state->skeletonState->userGeometry;
     state->skeletonState->userGeometry->append(mesh);
 
 }
 
-/** @todo a signal to scripting */
 void SkeletonProxy::save_sys_path(const QString &path) {
-    //Scripting::saveSettings("sys_path", path);
+    QFileInfo info(path);
+    if(!info.exists()) {
+        emit echo("No valid file path. Please check it again.");
+        return;
+    }
+
+    emit saveSettingsSignal("sys_path", path);
 }
 
-/** @tood a signal to scripting */
 void SkeletonProxy::save_working_directory(const QString &path) {
-    //Scripting::saveSettings("working_dir", path);
+    QFileInfo info(path);
+    if(!info.exists()) {
+        emit echo("No valid file path. Please check it again");
+        return;
+    }
+   emit saveSettingsSignal("working_dir", path);
 }
 
+QList<mesh *> *SkeletonProxy::user_geom_list() {
+    return state->skeletonState->userGeometry;
+ }
+
+void SkeletonProxy::move_to(int x, int y, int z) {
+    emit userMoveSignal(x, y, z);
+}
+
+
+/** @not yet implemented */
+void SkeletonProxy::add_text(const QString &path, int x, int y, int z) {
+
+}
 
 
 QString SkeletonProxy::help() {

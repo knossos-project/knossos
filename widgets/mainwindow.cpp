@@ -59,6 +59,7 @@
 #include "ui_mainwindow.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
+#include "widgets/gui.h"
 
 extern  stateInfo *state;
 
@@ -74,11 +75,11 @@ MainWindow::MainWindow(QWidget *parent) :
     skeletonFileHistory = new QQueue<QString>();
     skeletonFileHistory->reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
 
-    state->viewerState->gui->oneShiftedCurrPos.x =
+    gui::oneShiftedCurrPos.x =
         state->viewerState->currentPosition.x + 1;
-    state->viewerState->gui->oneShiftedCurrPos.y =
+    gui::oneShiftedCurrPos.y =
         state->viewerState->currentPosition.y + 1;
-    state->viewerState->gui->oneShiftedCurrPos.z =
+    gui::oneShiftedCurrPos.z =
         state->viewerState->currentPosition.z + 1;
 
     // for task management
@@ -93,29 +94,29 @@ MainWindow::MainWindow(QWidget *parent) :
     state->skeletonState->displayMode = 0;
     state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
 
-    state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
+    gui::commentBuffer = (char*)malloc(10240 * sizeof(char));
+    memset(gui::commentBuffer, '\0', 10240 * sizeof(char));
 
-    state->viewerState->gui->commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
-    memset(state->viewerState->gui->commentSearchBuffer, '\0', 2048 * sizeof(char));
+    gui::commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
+    memset(gui::commentSearchBuffer, '\0', 2048 * sizeof(char));
 
-    state->viewerState->gui->treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
-    memset(state->viewerState->gui->treeCommentBuffer, '\0', 8192 * sizeof(char));
+    gui::treeCommentBuffer = (char*)malloc(8192 * sizeof(char));
+    memset(gui::treeCommentBuffer, '\0', 8192 * sizeof(char));
 
-    state->viewerState->gui->comment1 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment1, '\0', 10240 * sizeof(char));
+    gui::comment1 = (char*)malloc(10240 * sizeof(char));
+    memset(gui::comment1, '\0', 10240 * sizeof(char));
 
-    state->viewerState->gui->comment2 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment2, '\0', 10240 * sizeof(char));
+    gui::comment2 = (char*)malloc(10240 * sizeof(char));
+    memset(gui::comment2, '\0', 10240 * sizeof(char));
 
-    state->viewerState->gui->comment3 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment3, '\0', 10240 * sizeof(char));
+    gui::comment3 = (char*)malloc(10240 * sizeof(char));
+    memset(gui::comment3, '\0', 10240 * sizeof(char));
 
-    state->viewerState->gui->comment4 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment4, '\0', 10240 * sizeof(char));
+    gui::comment4 = (char*)malloc(10240 * sizeof(char));
+    memset(gui::comment4, '\0', 10240 * sizeof(char));
 
-    state->viewerState->gui->comment5 = (char*)malloc(10240 * sizeof(char));
-    memset(state->viewerState->gui->comment5, '\0', 10240 * sizeof(char));
+    gui::comment5 = (char*)malloc(10240 * sizeof(char));
+    memset(gui::comment5, '\0', 10240 * sizeof(char));
 
     createActions();
     createMenus();
@@ -360,23 +361,23 @@ void MainWindow::reloadDataSizeWin(){
     float widthyz = state->viewerState->vpConfigs[VIEWPORT_YZ].displayedlengthInNmX*0.001;
 
     if ((heightxy > 1.0) && (widthxy > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
+        //AG_LabelText(gui::dataSizeLabelxy, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxy, widthxy);
     }
     else{
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxy, "Height %.0f nm, Width %.0f nm", heightxy*1000, widthxy*1000);
+        //AG_LabelText(gui::dataSizeLabelxy, "Height %.0f nm, Width %.0f nm", heightxy*1000, widthxy*1000);
     }
     if ((heightxz > 1.0) && (widthxz > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxz, widthxz);
+        //AG_LabelText(gui::dataSizeLabelxz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightxz, widthxz);
     }
     else{
-       // AG_LabelText(state->viewerState->gui->dataSizeLabelxz, "Height %.0f nm, Width %.0f nm", heightxz*1000, widthxz*1000);
+       // AG_LabelText(gui::dataSizeLabelxz, "Height %.0f nm, Width %.0f nm", heightxz*1000, widthxz*1000);
     }
 
     if ((heightyz > 1.0) && (widthyz > 1.0)){
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightyz, widthyz);
+        //AG_LabelText(gui::dataSizeLabelyz, "Height %.2f \u00B5m, Width %.2f \u00B5m", heightyz, widthyz);
     }
     else{
-        //AG_LabelText(state->viewerState->gui->dataSizeLabelyz, "Height %.0f nm, Width %.0f nm", heightyz*1000, widthyz*1000);
+        //AG_LabelText(gui::dataSizeLabelyz, "Height %.0f nm, Width %.0f nm", heightyz*1000, widthyz*1000);
     }
 }
 
@@ -1575,11 +1576,11 @@ void MainWindow::newTreeSlot() {
 }
 
 void MainWindow::nextCommentNodeSlot() {
-    emit nextCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
+    emit nextCommentSignal(QString(gui::commentSearchBuffer));
 }
 
 void MainWindow::previousCommentNodeSlot() {
-    emit previousCommentSignal(QString(state->viewerState->gui->commentSearchBuffer));
+    emit previousCommentSignal(QString(gui::commentSearchBuffer));
 }
 
 void MainWindow::pushBranchNodeSlot() {
@@ -1628,15 +1629,15 @@ void MainWindow::F1Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    QString comment(state->viewerState->gui->comment1);
+    QString comment(gui::comment1);
 
     if((!state->skeletonState->activeNode->comment) && (!comment.isEmpty())) {
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment1),
+        emit addCommentSignal(CHANGE_MANUAL, QString(gui::comment1),
                               state->skeletonState->activeNode, 0, true);
     } else{
         if (!comment.isEmpty()) {
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment1), state->skeletonState->activeNode, 0, true);
+                                   QString(gui::comment1), state->skeletonState->activeNode, 0, true);
         }
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
@@ -1646,14 +1647,14 @@ void MainWindow::F2Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment2),
+    if((!state->skeletonState->activeNode->comment) && (strncmp(gui::comment2, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, QString(gui::comment2),
                               state->skeletonState->activeNode, 0, true);
     }
     else{
-        if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
+        if(strncmp(gui::comment2, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment2), state->skeletonState->activeNode, 0, true);
+                                   QString(gui::comment2), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
@@ -1662,14 +1663,14 @@ void MainWindow::F3Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment3),
+    if((!state->skeletonState->activeNode->comment) && (strncmp(gui::comment3, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, QString(gui::comment3),
                               state->skeletonState->activeNode, 0, true);
     }
     else{
-       if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
+       if(strncmp(gui::comment3, "", 1) != 0)
             emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
-                                   QString(state->viewerState->gui->comment3), state->skeletonState->activeNode, 0, true);
+                                   QString(gui::comment3), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
@@ -1678,14 +1679,14 @@ void MainWindow::F4Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment4),
+    if((!state->skeletonState->activeNode->comment) && (strncmp(gui::comment4, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, QString(gui::comment4),
                               state->skeletonState->activeNode, 0, true);
     }
     else{
-       if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
+       if (strncmp(gui::comment4, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
-                               QString(state->viewerState->gui->comment4), state->skeletonState->activeNode, 0, true);
+                               QString(gui::comment4), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }
@@ -1694,14 +1695,14 @@ void MainWindow::F5Slot() {
     if(!state->skeletonState->activeNode) {
         return;
     }
-    if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment5),
+    if((!state->skeletonState->activeNode->comment) && (strncmp(gui::comment5, "", 1) != 0)){
+        emit addCommentSignal(CHANGE_MANUAL, QString(gui::comment5),
                               state->skeletonState->activeNode, 0, true);
     }
     else {
-        if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
+        if (strncmp(gui::comment5, "", 1) != 0)
         emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
-                               QString(state->viewerState->gui->comment5), state->skeletonState->activeNode, 0, true);
+                               QString(gui::comment5), state->skeletonState->activeNode, 0, true);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
 }

@@ -78,6 +78,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 
 
+    state->skeletonState->userGeometry = new QList<mesh *>();
 
 
 }
@@ -2137,6 +2138,7 @@ bool Renderer::setRotationState(uint setTo) {
  */
 
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
+
     treeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
@@ -2669,21 +2671,30 @@ void Renderer::post_render() {
 
 void Renderer::renderUserGeometry() {
     glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
+    //glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
-        mesh *currentMesh = state->skeletonState->userGeometry->at(i);
 
+    for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
+
+        mesh *currentMesh = state->skeletonState->userGeometry->at(i);
+        if(currentMesh->mode == GL_POINTS) {
+            glPointSize(currentMesh->size);
+        } else if(currentMesh->mode == GL_LINES) {
+            glLineWidth(currentMesh->size);
+        }
 
         glVertexPointer(3, GL_FLOAT, 0, currentMesh->vertices);
         //glNormalPointer(3, GL_FLOAT, 0, currentMesh->normals);
         glColorPointer(4, GL_FLOAT, 0, currentMesh->colors);
 
         glDrawArrays(currentMesh->mode, 0, currentMesh->vertsIndex);
+        GLenum num = glGetError();
+        if(num)
+            qDebug() << num;
     }
 
     glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+    //glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }

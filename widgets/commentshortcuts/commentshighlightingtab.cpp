@@ -38,6 +38,7 @@
 #include <QKeyEvent>
 #include "../GuiConstants.h"
 #include "knossos-global.h"
+#include "widgets/gui.h"
 
 extern  stateInfo *state;
 static const int N = 5;
@@ -47,8 +48,8 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     QWidget(parent)
 {
 
-    state->viewerState->gui->commentSubstr = new QStringList();
-    state->viewerState->gui->commentColors = new char*[N];
+    gui::commentSubstr = new QStringList();
+    gui::commentColors = new char*[N];
 
     color4F color;
     SET_COLOR(color, 0.13, 0.69, 0.3, 1.);
@@ -91,7 +92,7 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
 
     for(int i = 0; i < N; i++) {
 
-        state->viewerState->gui->commentSubstr->push_back(QString(""));
+        gui::commentSubstr->push_back(QString(""));
         substringFields[i] = new QLineEdit();
         substringFields[i]->setObjectName(QString("%1").arg(i));
         colorComboBox[i] = new QComboBox();
@@ -124,7 +125,7 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     connect(enableCondRadiusCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableCondRadiusChecked(bool)));
 
     for(int i = 0; i < N; i++) {
-        state->viewerState->gui->commentSubstr->replace(i, substringFields[i]->text());
+        gui::commentSubstr->replace(i, substringFields[i]->text());
     }
 
 }
@@ -151,7 +152,7 @@ void CommentsHighlightingTab::substringEntered() {
     QLineEdit *field = (QLineEdit*) sender();
     for(int i = 0; i < N; i++) {
         if(field == substringFields[i]) {
-            state->viewerState->gui->commentSubstr->replace(i, substringFields[i]->text());
+            gui::commentSubstr->replace(i, substringFields[i]->text());
          }
     }
 }

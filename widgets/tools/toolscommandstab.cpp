@@ -9,6 +9,7 @@
 
 #include "skeletonizer.h"
 #include "toolscommandstab.h"
+#include "widgets/gui.h"
 
 extern stateInfo *state;
 
@@ -241,7 +242,7 @@ void ToolsCommandsTab::defaultRadiusSpinChanged(double value) {
 void ToolsCommandsTab::commentLockingCheckChanged(bool on) {
     state->skeletonState->positionLocked = on;
     if(on and commentLockEdit->text().isEmpty() == false) {
-        state->viewerState->gui->lockComment = commentLockEdit->text();
+        gui::lockComment = commentLockEdit->text();
     }
 }
 
@@ -250,7 +251,7 @@ void ToolsCommandsTab::lockingRadiusSpinChanged(int value) {
 }
 
 void ToolsCommandsTab::commentLockEditChanged(QString comment) {
-    state->viewerState->gui->lockComment = comment;
+    gui::lockComment = comment;
 }
 
 void ToolsCommandsTab::locktoActiveButtonClicked() {
