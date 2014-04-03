@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
     GetTempPathA(sizeof(tempPath), tempPath);
     GetTempFileNameA(tempPath, "KNL", 0, logFilename);
 #endif
-#ifdef Q_OS_LINUX
-    const char *file = "/Users/amos/log.txt";
+#ifdef Q_OS_UNIX
+    const char *file = "/tmp/log.txt";
     strcpy(logFilename, file);
 #endif
 
@@ -417,14 +417,8 @@ bool Knossos::initStates() {
    curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(MAX_PATH);
 
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
    const char *tmp = "/tmp/";
-   strcpy(state->loadFtpCachePath, tmp);
-   state->loadLocalSystem = LS_UNIX;
-#endif
-#ifdef Q_OS_MAC
-   // TODO
-   const char *tmp = "/Users/amos/temp/";
    strcpy(state->loadFtpCachePath, tmp);
    state->loadLocalSystem = LS_UNIX;
 #endif
