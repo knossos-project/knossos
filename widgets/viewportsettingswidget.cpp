@@ -270,13 +270,13 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(TREE_LUT_FILE, slicePlaneViewportWidget->treeLutFile->text());
     settings.setValue(TREE_LUT_FILE_USED, slicePlaneViewportWidget->useOwnTreeColorsCheckBox->isChecked());
 
-    settings.setValue(WHOLE_SKELETON, skeletonViewportWidget->wholeSkeletonRadioButton.isChecked());
-    settings.setValue(ONLY_ACTIVE_TREE, skeletonViewportWidget->onlyActiveTreeRadioButton.isChecked());
-    settings.setValue(HIDE_SKELETON, skeletonViewportWidget->hideSkeletonRadioButton.isChecked());
-    settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox.isChecked());
-    settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox.isChecked());
-    settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox.isChecked());
-    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, skeletonViewportWidget->rotateAroundActiveNodeCheckBox.isChecked());
+    settings.setValue(WHOLE_SKELETON, skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
+    settings.setValue(ONLY_ACTIVE_TREE, skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
+    settings.setValue(HIDE_SKELETON, skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
+    settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox->isChecked());
+    settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox->isChecked());
+    settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox->isChecked());
+    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, skeletonViewportWidget->rotateAroundActiveNodeCheckBox->isChecked());
 
     settings.setValue(VP_TAB_INDEX, tabs->currentIndex());
 
