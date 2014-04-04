@@ -37,6 +37,7 @@ class QSlider;
 
 class VPSlicePlaneViewportWidget : public QWidget {
     friend class ViewportSettingsWidget;
+    friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
@@ -47,12 +48,12 @@ signals:
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
 public slots:
-    void skeletonOverlayCheckStateChanged(bool checked);
-    void datasetLinearFilteringChecked(bool on);
-    void hightlightIntersectionsChecked(bool on);
+    void enableSkeletonOverlayClicked(bool checked);
+    void datasetLinearFilteringChecked(bool checked);
+    void hightlightIntersectionsChecked(bool checked);
     void depthCutoffChanged(double value);
-    void useOwnDatasetColorsCheckStateChanged(int checkState);
-    void useOwnTreeColorsCheckStateChanged(int checkState);
+    void useOwnDatasetColorsClicked(bool checked);
+    void useOwnTreeColorsClicked(bool checked);
     void useOwnDatasetColorsButtonClicked();
     void useOwnTreeColorButtonClicked();
     void biasSliderMoved(int value);

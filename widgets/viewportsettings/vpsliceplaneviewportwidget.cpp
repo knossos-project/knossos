@@ -149,13 +149,13 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
 
-    QObject::connect(enableSkeletonOverlayCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::skeletonOverlayCheckStateChanged);
+    QObject::connect(enableSkeletonOverlayCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::enableSkeletonOverlayClicked);
     connect(datasetLinearFilteringCheckBox, SIGNAL(clicked(bool)), this, SLOT(datasetLinearFilteringChecked(bool)));
     connect(highlightIntersectionsCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightIntersectionsChecked(bool)));
     connect(depthCutoffSpinBox, SIGNAL(valueChanged(double)), this, SLOT(depthCutoffChanged(double)));
-    QObject::connect(useOwnDatasetColorsCheckBox, &QCheckBox::stateChanged, this, &VPSlicePlaneViewportWidget::useOwnDatasetColorsCheckStateChanged);
+    QObject::connect(useOwnDatasetColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked);
     connect(useOwnDatasetColorsButton, SIGNAL(clicked()), this, SLOT(useOwnDatasetColorsButtonClicked()));
-    QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::stateChanged, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsCheckStateChanged);
+    QObject::connect(useOwnTreeColorsCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::useOwnTreeColorsClicked);
     connect(useOwnTreeColorButton, SIGNAL(clicked()), this, SLOT(useOwnTreeColorButtonClicked()));
     connect(biasSlider, SIGNAL(sliderMoved(int)), this, SLOT(biasSliderMoved(int)));
     connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
@@ -166,7 +166,7 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }
 
-void VPSlicePlaneViewportWidget::skeletonOverlayCheckStateChanged(bool checked) {
+void VPSlicePlaneViewportWidget::enableSkeletonOverlayClicked(bool checked) {
     if (checked) {
         state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
     } else {
@@ -175,31 +175,30 @@ void VPSlicePlaneViewportWidget::skeletonOverlayCheckStateChanged(bool checked) 
     emit updateViewerStateSignal();
 }
 
-void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool on) {
-    if(on) {
+void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool checked) {
+    if (checked) {
         state->viewerState->filterType = GL_LINEAR;
     } else {
         state->viewerState->filterType = GL_NEAREST;
     }
-
     emit updateViewerStateSignal();
 }
 
-void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool on) {
-    emit showIntersectionsSignal(on);
-    state->skeletonState->showIntersections = on;
+void VPSlicePlaneViewportWidget::hightlightIntersectionsChecked(bool checked) {
+    emit showIntersectionsSignal(checked);
+    state->skeletonState->showIntersections = checked;
 }
 
 void VPSlicePlaneViewportWidget::depthCutoffChanged(double value) {
     state->viewerState->depthCutOff = value;
 }
 
-void VPSlicePlaneViewportWidget::useOwnDatasetColorsCheckStateChanged(int checkState) {
-    if (checkState != Qt::Unchecked && datasetLutFile->text().isEmpty()) {//load file if none is cached
+void VPSlicePlaneViewportWidget::useOwnDatasetColorsClicked(bool checked) {
+    if (checked && datasetLutFile->text().isEmpty()) {//load file if none is cached
         useOwnDatasetColorsButtonClicked();
     }
     if (!datasetLutFile->text().isEmpty()) {//valid filename → apply
-        state->viewerState->datasetColortableOn = (checkState != Qt::Unchecked);
+        state->viewerState->datasetColortableOn = checked;
         MainWindow::datasetColorAdjustmentsChanged();
     }
 }
@@ -210,9 +209,11 @@ void VPSlicePlaneViewportWidget::useOwnDatasetColorsButtonClicked() {
     if (!fileName.isEmpty()) {//load lut and apply
         datasetLutFile->setText(fileName);
         loadDatasetLUT();
-        useOwnDatasetColorsCheckBox->setCheckState(Qt::Checked);
+        useOwnDatasetColorsCheckBox->setChecked(true);
+        useOwnDatasetColorsCheckBox->clicked(true);
     } else {
-        useOwnDatasetColorsCheckBox->setCheckState(Qt::Unchecked);
+        useOwnDatasetColorsCheckBox->setChecked(false);
+        useOwnDatasetColorsCheckBox->clicked(false);
     }
 }
 
@@ -229,12 +230,12 @@ void VPSlicePlaneViewportWidget::loadDatasetLUT() {
 
 }
 
-void VPSlicePlaneViewportWidget::useOwnTreeColorsCheckStateChanged(int checkState) {
-    if (checkState != Qt::Unchecked && treeLutFile->text().isEmpty()) {//load file if none is cached
+void VPSlicePlaneViewportWidget::useOwnTreeColorsClicked(bool checked) {
+    if (checked && treeLutFile->text().isEmpty()) {//load file if none is cached
         useOwnTreeColorButtonClicked();
     }
     if (!treeLutFile->text().isEmpty()) {//valid filename → apply
-        state->viewerState->treeColortableOn = (checkState != Qt::Unchecked);
+        state->viewerState->treeColortableOn = checked;
         emit treeColorAdjustmentsChangedSignal();
     }
 }
@@ -246,9 +247,11 @@ void VPSlicePlaneViewportWidget::useOwnTreeColorButtonClicked() {
         treeLutFile->setText(fileName);
         state->viewerState->treeLutSet = true;//necessary?
         loadTreeLUT();
-        useOwnTreeColorsCheckBox->setCheckState(Qt::Checked);
+        useOwnTreeColorsCheckBox->setChecked(true);
+        useOwnTreeColorsCheckBox->clicked(true);
     } else {
-        useOwnTreeColorsCheckBox->setCheckState(Qt::Unchecked);
+        useOwnTreeColorsCheckBox->setChecked(false);
+        useOwnTreeColorsCheckBox->clicked(false);
     }
 }
 

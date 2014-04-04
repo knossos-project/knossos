@@ -87,10 +87,6 @@ MainWindow::MainWindow(QWidget *parent) :
     state->taskState->taskName = "";
     state->taskState->host = "heidelbrain.org";
 
-    /* init here instead of initSkeletonizer to fix some init order issue */
-    state->skeletonState->displayMode = 0;
-    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-
     state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
 

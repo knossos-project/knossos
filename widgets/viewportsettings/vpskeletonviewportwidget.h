@@ -25,40 +25,48 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include <QCheckBox>
+#include <QFrame>
+#include <QGridLayout>
+#include <QLabel>
+#include <QRadioButton>
+#include <QVBoxLayout>
 #include <QWidget>
 
-class QLabel;
-class QCheckBox;
-class QRadioButton;
 class VPSkeletonViewportWidget : public QWidget
 {
-    friend class ViewportSettingsWidget;
     Q_OBJECT
-public:
-    explicit VPSkeletonViewportWidget(QWidget *parent = 0);
-signals:
-    void showXYPlaneSignal(bool on);
-    void rotateAroundActiveNodeSignal(bool on);
-    void updateViewerStateSignal();
-public slots:
-    void showXYPlaneChecked(bool on);
-    void showXZPlaneChecked(bool on);
-    void showYZPlaneChecked(bool on);
+
+    friend class ViewportSettingsWidget;
+
+    QVBoxLayout mainLayout;
+    QGridLayout gridLayout;
+
+    QLabel skeletonDisplayModesLabel{"Skeleton Display Modes"};
+    QFrame line;
+    QRadioButton wholeSkeletonRadioButton{"Whole Skeleton"};
+    QRadioButton onlyCurrentCubeRadioButton{"Only Current Cube"};
+    QRadioButton onlyActiveTreeRadioButton{"Only Active Tree"};
+    QRadioButton hideSkeletonRadioButton{"Hide Skeleton (fast)"};
+    QLabel datasetVisualizationLabel{"Dataset Visualization"};
+    QFrame line2;
+    QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
+    QCheckBox showXZPlaneCheckBox{"Show XZ Plane"};
+    QCheckBox showYZPlaneCheckBox{"Show YZ Plane"};
+    QLabel view3dlabel{"3D View"};
+    QFrame line3;
+    QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
+
+    void resetDisplayMode();
+//slots
     void wholeSkeletonSelected();
     void onlyCurrentCubeSelected();
     void onlyActiveTreeSelected();
     void hideSkeletonSelected();
-    void rotateAroundActiveNodeChecked(bool on);
-    void resetDisplayMode();
-    void updateDisplayModeRadio();
-
-protected:
-    QLabel *datasetVisualizationLabel, *skeletonDisplayModesLabel;
-    QCheckBox *showXYPlaneCheckBox, *showXZPlaneCheckBox, *showYZPlaneCheckBox;
-    QRadioButton *wholeSkeletonRadioButton, *onlyCurrentCubeRadioButton, *onlyActiveTreeRadioButton, *hideSkeletonRadioButton;
-    QLabel *view3dlabel;
-    QCheckBox *rotateAroundActiveNodeCheckBox;
-    
+public:
+    explicit VPSkeletonViewportWidget(QWidget * const parent = nullptr);
+signals:
+    void updateViewerStateSignal();
 };
 
 #endif // VPSKELETONVIEWPORTWIDGET_H

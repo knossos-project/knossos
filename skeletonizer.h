@@ -184,7 +184,6 @@ signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
-    void displayModeChangedSignal();
 
 public slots:
     static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);

@@ -1837,8 +1837,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));
     connect(skeletonizer, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
-    connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
-                    window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
@@ -2075,14 +2073,10 @@ void Viewer::rewire() {
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget,
                     SIGNAL(updateViewerStateSignal()),
                     this, SLOT(updateViewerState()));
-    //  skeleton vp tab signals
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget,SIGNAL(showXYPlaneSignal(bool)),
-                    skeletonizer, SLOT(setShowXyPlane(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget,
-                    SIGNAL(rotateAroundActiveNodeSignal(bool)),
-                    skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()),
-                    this, SLOT(updateViewerState()));
+    //  skeleton vp tab signals --
+    //i’d better like this in the ctor of the vpsettingswidget, getting skeletonizer and viewer references forwarded
+    const auto svpsettings = window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget;
+    QObject::connect(svpsettings, &VPSkeletonViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  -- end viewport settings widget signals
     //  zoom and multires signals --
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));

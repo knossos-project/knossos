@@ -125,107 +125,93 @@ void ViewportSettingsWidget::loadSettings() {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(true);
     }
 
+
+    state->skeletonState->displayMode = 0;//it needs to get initialized _somewhere_
+    //sp vp settings
     const auto skeletonOverlay = settings.value(ENABLE_SKELETON_OVERLAY, true).toBool();
     slicePlaneViewportWidget->enableSkeletonOverlayCheckBox->setChecked(skeletonOverlay);
     slicePlaneViewportWidget->enableSkeletonOverlayCheckBox->clicked(skeletonOverlay);
 
-    state->skeletonState->showIntersections =
-            (settings.value(HIGHLIGHT_INTERSECTIONS).isNull())? false : settings.value(HIGHLIGHT_INTERSECTIONS).toBool();
-    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(state->skeletonState->showIntersections);
+    const auto intersections = settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool();
+    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(intersections);
+    this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->clicked(intersections);
 
+    const auto linearFiltering = settings.value(DATASET_LINEAR_FILTERING, true).toBool();
+    slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked(linearFiltering);
+    slicePlaneViewportWidget->datasetLinearFilteringCheckBox->clicked(linearFiltering);
 
-    state->viewerState->filterType = GL_LINEAR;
-    if(settings.value(DATASET_LINEAR_FILTERING).isNull() == false) {
-        if(settings.value(DATASET_LINEAR_FILTERING).toBool() == false) {
-            state->viewerState->filterType = GL_NEAREST;
-        }
-    }
-    this->slicePlaneViewportWidget->datasetLinearFilteringCheckBox->setChecked((state->viewerState->filterType == GL_LINEAR)? true : false);
-
-    state->viewerState->depthCutOff = (settings.value(DEPTH_CUTOFF).isNull())? 5. : settings.value(DEPTH_CUTOFF).toDouble();
-    this->slicePlaneViewportWidget->depthCutoffSpinBox->setValue(state->viewerState->depthCutOff);
-
-    state->viewerState->luminanceBias = (settings.value(BIAS).isNull())? 0 : settings.value(BIAS).toInt();
-    this->slicePlaneViewportWidget->biasSpinBox->setValue(state->viewerState->luminanceBias);
-
-    state->viewerState->luminanceRangeDelta = (settings.value(RANGE_DELTA).isNull())? 255 : settings.value(RANGE_DELTA).toInt();
-    this->slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(state->viewerState->luminanceRangeDelta);
-
-    state->viewerState->overlayVisible =
-            (settings.value(ENABLE_COLOR_OVERLAY).isNull())? false : settings.value(ENABLE_COLOR_OVERLAY).toBool();
-    this->slicePlaneViewportWidget->enableColorOverlayCheckBox->setChecked(state->viewerState->overlayVisible);
-
-    state->viewerState->drawVPCrosshairs =
-            (settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).isNull())? true : settings.value(DRAW_INTERSECTIONS_CROSSHAIRS).toBool();
-    this->slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(state->viewerState->drawVPCrosshairs);
-
-    state->viewerState->showVPLabels =
-            (settings.value(SHOW_VIEWPORT_SIZE).isNull())? false : settings.value(SHOW_VIEWPORT_SIZE).toBool();
-    this->slicePlaneViewportWidget->showViewPortsSizeCheckBox->setChecked(state->viewerState->showVPLabels);
-
-    state->skeletonState->showXYplane =
-            (settings.value(SHOW_XY_PLANE).isNull())? false : settings.value(SHOW_XY_PLANE).toBool();
-    this->skeletonViewportWidget->showXYPlaneCheckBox->setChecked(state->skeletonState->showXYplane);
-
-    state->skeletonState->showXZplane =
-            (settings.value(SHOW_XZ_PLANE).isNull())? false : settings.value(SHOW_XZ_PLANE).toBool();
-    this->skeletonViewportWidget->showXZPlaneCheckBox->setChecked(state->skeletonState->showXZplane);
-
-    state->skeletonState->showYZplane =
-            (settings.value(SHOW_YZ_PLANE).isNull())? false : settings.value(SHOW_YZ_PLANE).toBool();
-    this->skeletonViewportWidget->showYZPlaneCheckBox->setChecked(state->skeletonState->showYZplane);
-
-    state->skeletonState->rotateAroundActiveNode =
-            (settings.value(ROTATE_AROUND_ACTIVE_NODE).isNull())? true : settings.value(ROTATE_AROUND_ACTIVE_NODE).toBool();
-    this->skeletonViewportWidget->rotateAroundActiveNodeCheckBox->setChecked(state->skeletonState->rotateAroundActiveNode);
-
-    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-    if(settings.value(WHOLE_SKELETON).isNull() == false) {
-        if(settings.value(WHOLE_SKELETON).toBool() == false) {
-            state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
-        }
-    }
-    this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE);
-
-
-    if(!settings.value(ONLY_ACTIVE_TREE).isNull()) {
-        this->skeletonViewportWidget->onlyActiveTreeRadioButton->setChecked(settings.value(ONLY_ACTIVE_TREE).toBool());
-        bool on = settings.value(ONLY_ACTIVE_TREE).toBool();
-        if(on) {          
-            state->skeletonState->displayMode |= DSP_ACTIVETREE;
-        } else {
-            state->skeletonState->displayMode &= ~DSP_ACTIVETREE;
-        }
-    }
-
-    state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
-    if(settings.value(HIDE_SKELETON).isNull() == false) {
-        if(settings.value(HIDE_SKELETON).toBool()) {
-            state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-        }
-    }
-    this->skeletonViewportWidget->hideSkeletonRadioButton->setChecked(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE);
+    const auto depthCutoff = settings.value(DEPTH_CUTOFF, 5.).toDouble();
+    slicePlaneViewportWidget->depthCutoffSpinBox->setValue(depthCutoff);
+    slicePlaneViewportWidget->depthCutoffSpinBox->valueChanged(depthCutoff);
 
     slicePlaneViewportWidget->datasetLutFile->setText(settings.value(DATASET_LUT_FILE, "").toString());
     if (!slicePlaneViewportWidget->datasetLutFile->text().isEmpty()) {
         slicePlaneViewportWidget->loadDatasetLUT();
     }
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut
-    slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->setChecked(settings.value(DATASET_LUT_FILE_USED, false).toBool());
+    const auto useDatasetLut = settings.value(DATASET_LUT_FILE_USED, false).toBool();
+    slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->setChecked(useDatasetLut);
+    slicePlaneViewportWidget->useOwnDatasetColorsCheckBox->clicked(useDatasetLut);
 
     slicePlaneViewportWidget->treeLutFile->setText(settings.value(TREE_LUT_FILE, "").toString());
     if (!slicePlaneViewportWidget->treeLutFile->text().isEmpty()) {
         slicePlaneViewportWidget->loadTreeLUT();
     }
     //the same applies here
-    slicePlaneViewportWidget->useOwnTreeColorsCheckBox->setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());
+    const auto useTreeLut = settings.value(TREE_LUT_FILE_USED, false).toBool();
+    slicePlaneViewportWidget->useOwnTreeColorsCheckBox->setChecked(useTreeLut);
+    slicePlaneViewportWidget->useOwnTreeColorsCheckBox->clicked(useTreeLut);
 
-    if(this->skeletonViewportWidget->wholeSkeletonRadioButton->isChecked() == false
-        and this->skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked() == false
-        and this->skeletonViewportWidget->hideSkeletonRadioButton->isChecked() == false) {
-        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-        this->skeletonViewportWidget->wholeSkeletonRadioButton->setChecked(true);
-    }
+    const auto luminanceBias = settings.value(BIAS, 0).toInt();
+    slicePlaneViewportWidget->biasSpinBox->setValue(luminanceBias);
+    slicePlaneViewportWidget->biasSpinBox->valueChanged(luminanceBias);
+
+    const auto luminanceRangeDelta = settings.value(RANGE_DELTA, 255).toInt();
+    slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(luminanceRangeDelta);
+    slicePlaneViewportWidget->rangeDeltaSpinBox->valueChanged(luminanceRangeDelta);
+
+    const auto colorOverlay = settings.value(ENABLE_COLOR_OVERLAY, false).toBool();
+    slicePlaneViewportWidget->enableColorOverlayCheckBox->setChecked(colorOverlay);
+    slicePlaneViewportWidget->enableColorOverlayCheckBox->clicked(colorOverlay);
+
+    const auto drawVPCrosshairs = settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool();
+    slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(drawVPCrosshairs);
+    slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->clicked(drawVPCrosshairs);
+
+    const auto showVPLabels = settings.value(SHOW_VIEWPORT_SIZE, false).toBool();
+    slicePlaneViewportWidget->showViewPortsSizeCheckBox->setChecked(showVPLabels);
+    slicePlaneViewportWidget->showViewPortsSizeCheckBox->clicked(showVPLabels);
+
+
+    //skeleton vp settings
+    const auto wholeSkeleton = settings.value(WHOLE_SKELETON, true).toBool();
+    skeletonViewportWidget->wholeSkeletonRadioButton.setChecked(wholeSkeleton);
+    skeletonViewportWidget->wholeSkeletonRadioButton.clicked(wholeSkeleton);
+
+    const auto onlyActiveTree = settings.value(ONLY_ACTIVE_TREE, false).toBool();
+    skeletonViewportWidget->onlyActiveTreeRadioButton.setChecked(onlyActiveTree);
+    skeletonViewportWidget->onlyActiveTreeRadioButton.clicked(onlyActiveTree);
+
+    const auto hideSkeleton = settings.value(HIDE_SKELETON, false).toBool();
+    skeletonViewportWidget->hideSkeletonRadioButton.setChecked(hideSkeleton);
+    skeletonViewportWidget->hideSkeletonRadioButton.clicked(hideSkeleton);
+
+    const auto xyplane = settings.value(SHOW_XY_PLANE, false).toBool();
+    skeletonViewportWidget->showXYPlaneCheckBox.setChecked(xyplane);
+    skeletonViewportWidget->showXYPlaneCheckBox.clicked(xyplane);
+
+    const auto xzplane = settings.value(SHOW_XZ_PLANE, false).toBool();
+    skeletonViewportWidget->showXZPlaneCheckBox.setChecked(xzplane);
+    skeletonViewportWidget->showXZPlaneCheckBox.clicked(xzplane);
+
+    const auto yzplane = settings.value(SHOW_YZ_PLANE, false).toBool();
+    skeletonViewportWidget->showYZPlaneCheckBox.setChecked(yzplane);
+    skeletonViewportWidget->showYZPlaneCheckBox.clicked(yzplane);
+
+    const auto rotateAroundActiveNode = settings.value(ROTATE_AROUND_ACTIVE_NODE, true).toBool();
+    skeletonViewportWidget->rotateAroundActiveNodeCheckBox.setChecked(rotateAroundActiveNode);
+    skeletonViewportWidget->rotateAroundActiveNodeCheckBox.clicked(rotateAroundActiveNode);
+
 
     tabs->setCurrentIndex(settings.value(VP_TAB_INDEX, 0).toInt());
 
@@ -270,17 +256,15 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(TREE_LUT_FILE, slicePlaneViewportWidget->treeLutFile->text());
     settings.setValue(TREE_LUT_FILE_USED, slicePlaneViewportWidget->useOwnTreeColorsCheckBox->isChecked());
 
-    settings.setValue(WHOLE_SKELETON, skeletonViewportWidget->wholeSkeletonRadioButton->isChecked());
-    settings.setValue(ONLY_ACTIVE_TREE, skeletonViewportWidget->onlyActiveTreeRadioButton->isChecked());
-    settings.setValue(HIDE_SKELETON, skeletonViewportWidget->hideSkeletonRadioButton->isChecked());
-    settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox->isChecked());
-    settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox->isChecked());
-    settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox->isChecked());
-    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, skeletonViewportWidget->rotateAroundActiveNodeCheckBox->isChecked());
+    settings.setValue(WHOLE_SKELETON, skeletonViewportWidget->wholeSkeletonRadioButton.isChecked());
+    settings.setValue(ONLY_ACTIVE_TREE, skeletonViewportWidget->onlyActiveTreeRadioButton.isChecked());
+    settings.setValue(HIDE_SKELETON, skeletonViewportWidget->hideSkeletonRadioButton.isChecked());
+    settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox.isChecked());
+    settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox.isChecked());
+    settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox.isChecked());
+    settings.setValue(ROTATE_AROUND_ACTIVE_NODE, skeletonViewportWidget->rotateAroundActiveNodeCheckBox.isChecked());
 
     settings.setValue(VP_TAB_INDEX, tabs->currentIndex());
 
     settings.endGroup();
-
-
 }

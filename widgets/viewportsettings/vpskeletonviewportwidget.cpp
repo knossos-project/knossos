@@ -23,102 +23,61 @@
  */
 
 #include "vpskeletonviewportwidget.h"
-#include <QLabel>
-#include <QFrame>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QVBoxLayout>
-#include <QGridLayout>
 #include "knossos-global.h"
 
-extern  stateInfo *state;
+extern stateInfo * const state;
 
-VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget *parent) :
-    QWidget(parent)
-{
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QGridLayout *gridLayout = new QGridLayout();
+VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWidget(parent) {
+    line.setFrameShape(QFrame::HLine);
+    line.setFrameShadow(QFrame::Sunken);
 
-    datasetVisualizationLabel = new QLabel("Dataset Visualization");
-    showXYPlaneCheckBox = new QCheckBox("Show XY Plane");
-    showXZPlaneCheckBox = new QCheckBox("Show XZ Plane");
-    showYZPlaneCheckBox = new QCheckBox("Show YZ Plane");
+    line2.setFrameShape(QFrame::HLine);
+    line2.setFrameShadow(QFrame::Sunken);
 
-    skeletonDisplayModesLabel = new QLabel("Skeleton Display Modes");
-    wholeSkeletonRadioButton = new QRadioButton("Whole Skeleton");
-    onlyCurrentCubeRadioButton = new QRadioButton("Only Current Cube");
-    onlyActiveTreeRadioButton = new QRadioButton("Only Active Tree");
-    hideSkeletonRadioButton = new QRadioButton("Hide Skeleton (fast)");
-
-    view3dlabel = new QLabel("3D View");
-    rotateAroundActiveNodeCheckBox = new QCheckBox("Rotate Around Active Node");
-    rotateAroundActiveNodeCheckBox->setChecked(true);
-
-    QFrame *line = new QFrame();
-    line->setFrameShape(QFrame::HLine);
-    line->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-
-    QFrame *line3 = new QFrame();
-    line3->setFrameShape(QFrame::HLine);
-    line3->setFrameShadow(QFrame::Sunken);
+    line3.setFrameShape(QFrame::HLine);
+    line3.setFrameShadow(QFrame::Sunken);
 
     int currentGridColumn = 0;
+    gridLayout.addWidget(&skeletonDisplayModesLabel, currentGridColumn++, 0);
+    gridLayout.addWidget(&line, currentGridColumn++, 0);
+    gridLayout.addWidget(&wholeSkeletonRadioButton, currentGridColumn++, 0);
+    gridLayout.addWidget(&onlyActiveTreeRadioButton, currentGridColumn++, 0);
+    //gridLayout.addWidget(&onlyCurrentCubeRadioButton, currentGridColumn++, 0);
+    gridLayout.addWidget(&hideSkeletonRadioButton, currentGridColumn++, 0);
 
-    //gridLayout->addWidget(datasetVisualizationLabel, gridColumn++, 0);
-    gridLayout->addWidget(skeletonDisplayModesLabel, currentGridColumn ++, 0);
-    gridLayout->addWidget(line, currentGridColumn ++, 0);
-    //gridLayout->addWidget(line2, gridColumn++, 1);
-    gridLayout->addWidget(wholeSkeletonRadioButton, currentGridColumn ++, 0);
-    gridLayout->addWidget(onlyActiveTreeRadioButton, currentGridColumn ++, 0);
-    gridLayout->addWidget(hideSkeletonRadioButton, currentGridColumn ++, 0);
+    gridLayout.addWidget(&datasetVisualizationLabel, currentGridColumn++, 0);
+    gridLayout.addWidget(&line2, currentGridColumn++, 0);
+    gridLayout.addWidget(&showXYPlaneCheckBox, currentGridColumn++, 0);
+    gridLayout.addWidget(&showXZPlaneCheckBox, currentGridColumn++, 0);
+    gridLayout.addWidget(&showYZPlaneCheckBox, currentGridColumn++, 0);
 
-    gridLayout->addWidget(showXYPlaneCheckBox, currentGridColumn ++, 0);
-    gridLayout->addWidget(showXZPlaneCheckBox, currentGridColumn ++, 0);
-    gridLayout->addWidget(showYZPlaneCheckBox, currentGridColumn ++, 0);
+    gridLayout.addWidget(&view3dlabel, currentGridColumn++, 0);
+    gridLayout.addWidget(&line3, currentGridColumn++, 0);
+    gridLayout.addWidget(&rotateAroundActiveNodeCheckBox, currentGridColumn++, 0);
 
-    gridLayout->addWidget(view3dlabel, currentGridColumn ++, 0);
-    gridLayout->addWidget(line3, currentGridColumn ++, 0);
-    gridLayout->addWidget(rotateAroundActiveNodeCheckBox, currentGridColumn ++, 0);
+    mainLayout.addLayout(&gridLayout);
+    mainLayout.addStretch(1);//expand vertically with empty space
+    setLayout(&mainLayout);
 
-    mainLayout->addLayout(gridLayout);
-    setLayout(mainLayout);
-    mainLayout->addStretch(50);
-
-    connect(showXYPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXYPlaneChecked(bool)));
-    connect(showYZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showYZPlaneChecked(bool)));
-    connect(showXZPlaneCheckBox, SIGNAL(clicked(bool)), this, SLOT(showXZPlaneChecked(bool)));
-    connect(wholeSkeletonRadioButton, SIGNAL(clicked()), this, SLOT(wholeSkeletonSelected()));
-    connect(onlyCurrentCubeRadioButton, SIGNAL(clicked()), this, SLOT(onlyCurrentCubeSelected()));
-    connect(onlyActiveTreeRadioButton, SIGNAL(clicked()), this, SLOT(onlyActiveTreeSelected()));
-    connect(hideSkeletonRadioButton, SIGNAL(clicked()), this, SLOT(hideSkeletonSelected()));
-    connect(rotateAroundActiveNodeCheckBox, SIGNAL(clicked(bool)), SLOT(rotateAroundActiveNodeChecked(bool)));
-}
-
-void VPSkeletonViewportWidget::showXYPlaneChecked(bool on) {
-    state->skeletonState->showXYplane = on;
-}
-
-void VPSkeletonViewportWidget::showXZPlaneChecked(bool on) {
-    state->skeletonState->showXZplane = on;
-}
-
-void VPSkeletonViewportWidget::showYZPlaneChecked(bool on) {
-    state->skeletonState->showYZplane = on;
+    QObject::connect(&wholeSkeletonRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::wholeSkeletonSelected);
+    //QObject::connect(&onlyCurrentCubeRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::onlyCurrentCubeSelected);
+    QObject::connect(&onlyActiveTreeRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::onlyActiveTreeSelected);
+    QObject::connect(&hideSkeletonRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::hideSkeletonSelected);
+    QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXYplane = checked; });
+    QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showYZplane = checked; });
+    QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
+    QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
 }
 
 void VPSkeletonViewportWidget::wholeSkeletonSelected() {
-   resetDisplayMode();
-   state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE; 
-   emit updateViewerStateSignal();
+    resetDisplayMode();
+    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::onlyCurrentCubeSelected() {
     resetDisplayMode();
-    state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;    
+    state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
     emit updateViewerStateSignal();
 }
 
@@ -134,26 +93,10 @@ void VPSkeletonViewportWidget::hideSkeletonSelected() {
     emit updateViewerStateSignal();
 }
 
-void VPSkeletonViewportWidget::rotateAroundActiveNodeChecked(bool on) {
-    state->skeletonState->rotateAroundActiveNode = on;
-}
-
 void VPSkeletonViewportWidget::resetDisplayMode() {
     state->skeletonState->displayMode &=
             (~DSP_SKEL_VP_WHOLE &
             ~DSP_ACTIVETREE &
             ~DSP_SKEL_VP_HIDE &
             ~DSP_SKEL_VP_CURRENTCUBE);
-}
-
-void VPSkeletonViewportWidget::updateDisplayModeRadio() {
-    if(state->skeletonState->displayMode & DSP_SKEL_VP_WHOLE) {
-        wholeSkeletonRadioButton->setChecked(true);
-    }
-    if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
-        onlyActiveTreeRadioButton->setChecked(true);
-    }
-    if(state->skeletonState->displayMode & DSP_SKEL_VP_HIDE) {
-        hideSkeletonRadioButton->setChecked(true);
-    }
 }
