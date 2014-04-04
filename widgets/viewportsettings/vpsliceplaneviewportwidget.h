@@ -27,14 +27,15 @@
 
 #include <QWidget>
 #include <qgl.h>
+
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
 class QSpinBox;
 class QSlider;
-class VPSlicePlaneViewportWidget : public QWidget
-{
+
+class VPSlicePlaneViewportWidget : public QWidget {
     friend class ViewportSettingsWidget;
     Q_OBJECT
 public:
@@ -46,7 +47,7 @@ signals:
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
 public slots:
-    void enableOverlayChecked(bool on);
+    void skeletonOverlayCheckStateChanged(bool checked);
     void datasetLinearFilteringChecked(bool on);
     void hightlightIntersectionsChecked(bool on);
     void depthCutoffChanged(double value);
@@ -68,7 +69,7 @@ public slots:
 
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
-    QCheckBox *enableOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
+    QCheckBox *enableSkeletonOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
 

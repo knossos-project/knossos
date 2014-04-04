@@ -65,7 +65,7 @@ const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
 /* Viewport Settings Slice Plane Tab */
-const QString ENABLE_OVERLAY = "enable_overlay";
+const QString ENABLE_SKELETON_OVERLAY = "enable_skeleton_overlay";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";
 const QString DEPTH_CUTOFF = "depth_cutoff";
