@@ -876,8 +876,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         state->scale.x /= (float)state->magnification;
         state->scale.y /= (float)state->magnification;
         state->scale.z /= (float)state->magnification;
-
-        state->viewerState->datasetMagLock = true;
     }
     // update the volume boundary
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {

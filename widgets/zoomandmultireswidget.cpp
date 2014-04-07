@@ -210,8 +210,6 @@ void ZoomAndMultiresWidget::update() {
     this->currentActiveMagDatasetLabel->setText(currentActiveMag);
     this->highestActiveMagDatasetLabel->setText(highestActiveMag);
     this->lowestActiveMagDatasetLabel->setText(lowestActiveMag);
-    qDebug() << state->loaderMagnification << " loaderMag";
-
 }
 
 void ZoomAndMultiresWidget::loadSettings() {

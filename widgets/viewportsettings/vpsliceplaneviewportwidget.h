@@ -25,6 +25,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "knossos-global.h"
+
 #include <QWidget>
 #include <qgl.h>
 

@@ -22,6 +22,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "knossos-global.h"
+
 #include "viewportsettingswidget.h"
 #include "viewportsettings/vpgeneraltabwidget.h"
 #include "viewportsettings/vpsliceplaneviewportwidget.h"
@@ -35,7 +37,6 @@
 #include <QVBoxLayout>
 #include <QApplication>
 #include <QDesktopWidget>
-#include "knossos-global.h"
 
 extern stateInfo *state;
 

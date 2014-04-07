@@ -25,13 +25,14 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "eventmodel.h"
+
 #include <QWidget>
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
 #include <QDebug>
 #include <QFont>
 
-#include "eventmodel.h"
 
 #define VP_UPPERLEFT 0
 #define VP_LOWERLEFT 1

@@ -21,8 +21,10 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
-
 #include "vpsliceplaneviewportwidget.h"
+
+#include "widgets/mainwindow.h"
+
 #include <QLabel>
 #include <QFrame>
 #include <QDoubleSpinBox>
@@ -33,12 +35,8 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QFileDialog>
-#include "knossos-global.h"
-#include "widgets/mainwindow.h"
-
 
 extern  stateInfo *state;
-
 
 VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     QWidget(parent)

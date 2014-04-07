@@ -25,6 +25,8 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "knossos-global.h"
+
 #include <array>
 #include <memory>
 
@@ -36,7 +38,6 @@
 #include <QQueue>
 #include <QComboBox>
 #include <QUndoStack>
-#include "knossos-global.h"
 
 namespace Ui {
     class MainWindow;
