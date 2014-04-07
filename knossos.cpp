@@ -405,8 +405,8 @@ bool Knossos::initStates() {
    // Those values can be calculated from given parameters
    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-   state->magnification = 0x1;
-   state->lowestAvailableMag = INT_MAX;
+   state->magnification = 1;
+   state->lowestAvailableMag = 1;
    state->highestAvailableMag = 1;
 
    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
@@ -932,7 +932,7 @@ bool Knossos::configDefaults() {
     state->cubeEdgeLength = 128;
     state->M = 0;//invalid M, so the datasetpropertywidget can tell if M was provided by cmdline
     state->magnification = 1;
-    state->lowestAvailableMag = INT_MAX;
+    state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
     state->overlay = false;
     state->newCoord[0] = state->newCoord[1] = state->newCoord[2] = 0;

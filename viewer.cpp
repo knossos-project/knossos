@@ -2132,7 +2132,7 @@ void Viewer::processUserMove() {
         qint64 time = delay.elapsed();
         qint64 interval = 200;
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
         state->autorepeat = true;
 #endif
 

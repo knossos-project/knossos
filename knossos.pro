@@ -8,7 +8,7 @@ QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt #c++11
+CONFIG += qt
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -187,7 +187,9 @@ HEADERS  += widgets/mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \    
+OTHER_FILES += \
+    doc/* \
+    doc/images/* \
     LICENSE \
     Makefile \
     splash.png \
@@ -224,6 +226,11 @@ macx {
             -L$(QTDIR)/lib -lPythonQt \
             -lcurl
 
+    # copy the content of the doc folder to the build-dir
+    doc.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc
+    doc.files = $$PWD/doc/*
+    INSTALLS += doc
+
     ICON += knossos.icns
 }
 
@@ -239,6 +246,12 @@ linux {
             /usr/local/include/ \
             /usr/local/include/PythonQt/ \
             /usr/include/python2.7/
+
+    # copy the content of the doc folder to the build-dir
+    doc.path = $$OUT_PWD/doc
+    doc.files = $$PWD/doc/*
+    INSTALLS += doc
+
 }
 
 win32 {
@@ -265,6 +278,7 @@ win32 {
 
 RESOURCES += \
     Resources.qrc
+
 
 include(test/config.pri)
 
