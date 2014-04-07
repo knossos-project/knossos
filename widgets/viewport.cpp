@@ -64,6 +64,9 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
     /* per default the widget only receives move event when at least one mouse button is pressed
     to change this behaviour we need to track the mouse position */
 
+#ifdef Q_OS_MAC
+    this->lower();
+#endif
     //this->setMouseTracking(true);
     this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->setCursor(Qt::CrossCursor);
@@ -491,7 +494,20 @@ bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
 void Viewport::enterEvent(QEvent *event) {
     entered = true;
     focus = this->id;
+
+#ifdef Q_OS_MAC
+    this->raise();
+    this->activateWindow();
+#endif
+
     this->setCursor(Qt::CrossCursor);
+}
+
+
+void Viewport::leaveEvent(QEvent *event) {
+#ifdef Q_OS_MAC
+    this->lower();
+#endif
 }
 
 void Viewport::zoomOrthogonals(float step){
@@ -602,7 +618,9 @@ void Viewport::updateButtonPositions() {
 }
 
 void Viewport::moveVP(QMouseEvent *event) {
-    raise();
+    raise();    
+
+
     int x = pos().x() + xrel(event->x());
     int y = pos().y() + yrel(event->y());
 
@@ -619,6 +637,7 @@ void Viewport::moveVP(QMouseEvent *event) {
         move(pos().x(), y);
         state->viewerState->defaultVPSizeAndPos = false;
     }
+
 }
 
 void Viewport::hideButtons() {
