@@ -1566,9 +1566,9 @@ void MainWindow::showVPDecorationClicked() {
 }
 
 void MainWindow::newTreeSlot() {
-    color4F treeCol;
+    Color4F treeCol;
     treeCol.r = -1.;
-    treeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
+    TreeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     emit updateToolsSignal();
     //emit updateTreeviewSignal();
     treeAddedSignal(tree);

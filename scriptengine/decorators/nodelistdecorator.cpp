@@ -43,7 +43,7 @@ float NodeListDecorator::radius(nodeListElement *self) {
     return self->radius;
 }
 
-treeListElement *NodeListDecorator::parent_tree(nodeListElement *self) {
+TreeListElement *NodeListDecorator::parent_tree(nodeListElement *self) {
     return self->correspondingTree;
 }
 

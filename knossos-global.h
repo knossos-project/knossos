@@ -291,14 +291,14 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
-class floatCoordinate;
+class FloatCoordinate;
 class Coordinate;
-class color4F;
-class treeListElement;
+class Color4F;
+class TreeListElement;
 class nodeListElement;
 class segmentListElement;
 class commentListElement;
-class mesh;
+class Mesh;
 
 
 //Structures and custom types
@@ -317,16 +317,17 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
 /** It would be better to add a template parameter T to the class Coordinate. I receive a lot of compiler error because both types are frequently used.
     I delay this until trunk and branch are completely merged.
 */
-class floatCoordinate {
+class FloatCoordinate {
 public:
-    floatCoordinate() {}
-    floatCoordinate(float x, float y, float z) { this->x = x; this->y = y; this->z = z; }
+    FloatCoordinate() {}
+    FloatCoordinate(float x, float y, float z) { this->x = x; this->y = y; this->z = z; }
     float x;
     float y;
     float z;
 };
 
-Q_DECLARE_METATYPE(floatCoordinate)
+Q_DECLARE_METATYPE(FloatCoordinate)
+
 
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
 class Coordinate {
@@ -337,7 +338,7 @@ public:
     int y;
     int z;
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
-    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
+    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, FloatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
@@ -346,10 +347,11 @@ public:
 
 Q_DECLARE_METATYPE(Coordinate)
 
-class color4F {
+
+class Color4F {
 public:
-    color4F();
-    color4F(float r, float g, float b, float a);
+    Color4F();
+    Color4F(float r, float g, float b, float a);
         GLfloat r;
         GLfloat g;
         GLfloat b;
@@ -550,7 +552,7 @@ struct stateInfo {
     Coordinate *magBoundaries[int_log(NUM_MAG_DATASETS)+1];
 
     // pixel-to-nanometer scale
-    floatCoordinate scale;
+    FloatCoordinate scale;
 
     // offset for synchronization between datasets
     Coordinate offset;
@@ -736,11 +738,11 @@ struct viewportTexture {
   */
 struct vpConfig {
     // s*v1 + t*v2 = px
-    floatCoordinate n;
-    floatCoordinate v1; // vector in x direction
-    floatCoordinate v2; // vector in y direction
-    floatCoordinate leftUpperPxInAbsPx_float;
-    floatCoordinate leftUpperDataPxOnScreen_float;
+    FloatCoordinate n;
+    FloatCoordinate v1; // vector in x direction
+    FloatCoordinate v2; // vector in y direction
+    FloatCoordinate leftUpperPxInAbsPx_float;
+    FloatCoordinate leftUpperDataPxOnScreen_float;
     int s_max;
     int t_max;
     int x_offset;
@@ -815,7 +817,7 @@ struct vpConfig {
 struct viewerState {
 
     //Cache for Movements smaller than pixel coordinate
-    floatCoordinate moveCache;
+    FloatCoordinate moveCache;
 	//Orientation
     float alphaCache;
     float betaCache;
@@ -940,18 +942,18 @@ struct viewerState {
 };
 
 
-class treeListElement {
+class TreeListElement {
 public:
-    treeListElement();
-    treeListElement(int treeID, QString comment, color4F color);
-    treeListElement(int treeID, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
+    TreeListElement();
+    TreeListElement(int treeID, QString comment, Color4F color);
+    TreeListElement(int treeID, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
 
-    treeListElement *next;
-    treeListElement *previous;
+    TreeListElement *next;
+    TreeListElement *previous;
     nodeListElement *firstNode;
 
     int treeID;
-    color4F color;
+    Color4F color;
     int colorSetManually;
 
     char comment[8192];
@@ -968,7 +970,7 @@ public:
     nodeListElement *previous;
 
     segmentListElement *firstSegment;
-    treeListElement *correspondingTree;
+    TreeListElement *correspondingTree;
 
     float radius;
 
@@ -1038,13 +1040,13 @@ public:
     nodeListElement *node;
 };
 
-class mesh {
+class Mesh {
 public:
-    mesh();
-    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
-    floatCoordinate *vertices;
-    floatCoordinate *normals;
-    color4F *colors;
+    Mesh();
+    Mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
+    FloatCoordinate *vertices;
+    FloatCoordinate *normals;
+    Color4F *colors;
 
     /* useful for flexible mesh manipulations */
     uint vertsBuffSize;
@@ -1089,12 +1091,12 @@ public:
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    treeListElement *firstTree;
-    treeListElement *activeTree;
+    TreeListElement *firstTree;
+    TreeListElement *activeTree;
     nodeListElement *activeNode;
 
 
-    std::vector<treeListElement *> selectedTrees;
+    std::vector<TreeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
 
     struct serialSkeletonListElement *firstSerialSkeleton;
@@ -1183,7 +1185,7 @@ public:
     int greatestNodeID;
     int greatestTreeID;
 
-    color4F commentColors[NUM_COMMSUBSTR];
+    Color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
     nodeListElement *selectedCommentNode;
 
@@ -1206,9 +1208,9 @@ public:
 
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
-    mesh lineVertBuffer; /* ONLY for lines */
-    mesh pointVertBuffer; /* ONLY for points */
-    QList<mesh *> *userGeometry;
+    Mesh lineVertBuffer; /* ONLY for lines */
+    Mesh pointVertBuffer; /* ONLY for points */
+    QList<Mesh *> *userGeometry;
 
     bool branchpointUnresolved;
 

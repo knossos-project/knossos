@@ -114,13 +114,13 @@ void Scripting::run() {
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("FloatCoordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Color4F", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
     PythonQt::self()->registerCPPClass("segmentListElement", "", module.toLocal8Bit().data());
@@ -132,7 +132,7 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Mesh", "",  module.toLocal8Bit().data());
 
     QString renderModule("rendering");
 

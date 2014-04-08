@@ -447,7 +447,7 @@ void ToolsTreeviewTab::splitComponentAction() {
     prompt.addButton("Cancel", QMessageBox::ActionRole);
     prompt.exec();
     if(prompt.clickedButton() == confirmButton) {
-        treeListElement *prevActive = state->skeletonState->activeTree;
+        TreeListElement *prevActive = state->skeletonState->activeTree;
         Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->selectedNodes.front()->nodeID, true);
         if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
             // when a tree is split, a new tree has been created and made active
@@ -587,7 +587,7 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
     if(idItem == nullptr) {
         return;
     }
-    treeListElement *selectedTree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
+    TreeListElement *selectedTree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
     if(selectedTree == nullptr) {
         return;
     }
@@ -858,7 +858,7 @@ void ToolsTreeviewTab::treeSelectionChanged() {
     state->skeletonState->selectedTrees.clear();
     QModelIndexList selected = treeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        treeListElement * const tree = Skeletonizer::findTreeByTreeID(index.data().toInt());
+        TreeListElement * const tree = Skeletonizer::findTreeByTreeID(index.data().toInt());
         if (tree) {
             state->skeletonState->selectedTrees.push_back(tree);
             //select active tree also in activeTreeTable
@@ -978,7 +978,7 @@ void ToolsTreeviewTab::nodeItemDoubleClicked(QTableWidgetItem * item) {
 
 void ToolsTreeviewTab::updateTreeColorCell(TreeTable *table, int row) {
     QTableWidgetItem * const idItem = table->item(row, TreeTable::TREE_ID);
-    treeListElement * const tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
+    TreeListElement * const tree = Skeletonizer::findTreeByTreeID(idItem->text().toInt());
     if (tree != nullptr) {
         QColor treeColor = QColor(tree->color.r*255, tree->color.g*255, tree->color.b*255, tree->color.a*255);
         QTableWidgetItem * const colorItem = table->item(row, TreeTable::TREE_COLOR);
@@ -1027,7 +1027,7 @@ void ToolsTreeviewTab::recreateTreesTable() {
     bool blockSelection = false;
 
     size_t treeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
+    for (TreeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
         // filter comment for search string match
         if(treeSearchField->text().length() > 0) {
             if(strlen(currentTree->comment) == 0) {
@@ -1084,7 +1084,7 @@ void ToolsTreeviewTab::recreateNodesTable() {
     bool blockSelection = false;
 
     int nodeIndex = 0;
-    for (treeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
+    for (TreeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
         for (nodeListElement * node = currentTree->firstNode; node != nullptr; node = node->next) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
@@ -1160,7 +1160,7 @@ void ToolsTreeviewTab::treeActivated() {
     }
 }
 
-void ToolsTreeviewTab::treeAdded(treeListElement *) {
+void ToolsTreeviewTab::treeAdded(TreeListElement *) {
     //no mess here, lazily recreate tables
     recreateTreesTable();
     treeActivated();
@@ -1329,7 +1329,7 @@ void ToolsTreeviewTab::update() {
     emit updateAnnotationLabelsSignal();
 }
 
-void ToolsTreeviewTab::insertTree(treeListElement *tree, TreeTable *table) {
+void ToolsTreeviewTab::insertTree(TreeListElement *tree, TreeTable *table) {
     if (tree == nullptr) {
         return;
     }

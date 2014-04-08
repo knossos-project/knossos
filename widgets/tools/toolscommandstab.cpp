@@ -146,7 +146,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
 }
 
 void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
-    treeListElement *tree = findTreeByTreeIDSignal(value);
+    TreeListElement *tree = findTreeByTreeIDSignal(value);
     if(tree == NULL) {
         return;
 //        // no tree with this value.
@@ -201,12 +201,12 @@ void ToolsCommandsTab::jumpToActiveButtonClicked() {
 }
 
 void ToolsCommandsTab::newTreeButtonClicked() {
-    color4F treeCol;
+    Color4F treeCol;
     treeCol.r = -1;
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    treeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
+    TreeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit treeAddedSignal(tree);
 }

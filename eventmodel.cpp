@@ -275,7 +275,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING)
             || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR)) {
-            floatCoordinate walkingVector;
+            FloatCoordinate walkingVector;
             walkingVector.x = movement.x;
             walkingVector.y = movement.y;
             walkingVector.z = movement.z;
@@ -799,10 +799,10 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
 
 void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
-    treeListElement *prevTree;
-    treeListElement *nextTree;
+    TreeListElement *prevTree;
+    TreeListElement *nextTree;
     nodeListElement *prevNode;
-    color4F treeCol;
+    Color4F treeCol;
 
     Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);

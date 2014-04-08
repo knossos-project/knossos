@@ -88,13 +88,13 @@ signals:
     void displayModeChangedSignal();
 
 public slots:
-    static nodeListElement *findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition);
+    static nodeListElement *findNearbyNode(TreeListElement *nearbyTree, Coordinate searchPosition);
 
     static nodeListElement *getNodeWithPrevID(nodeListElement *currentNode, bool sameTree);
     static nodeListElement *getNodeWithNextID(nodeListElement *currentNode, bool sameTree);
     static nodeListElement *findNodeByCoordinate(Coordinate *position);
-    static treeListElement *getTreeWithPrevID(treeListElement *currentTree);
-    static treeListElement *getTreeWithNextID(treeListElement *currentTree);
+    static TreeListElement *getTreeWithPrevID(TreeListElement *currentTree);
+    static TreeListElement *getTreeWithNextID(TreeListElement *currentTree);
     static int addNode(int targetRevision,
                     int nodeID,
                     float radius,
@@ -122,11 +122,11 @@ public slots:
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
     void WRAP_popBranchNode();
-    static void setColorFromNode(nodeListElement *node, color4F *color);
+    static void setColorFromNode(nodeListElement *node, Color4F *color);
     static void setRadiusFromNode(nodeListElement *node, float *radius);
     bool delskeletonState(skeletonState *skeletonState);
     bool delTreesFromState(skeletonState *skeletonState);
-    bool delTreeFromState(treeListElement *treeToDel, skeletonState *skeletonState);
+    bool delTreeFromState(TreeListElement *treeToDel, skeletonState *skeletonState);
     static bool hasObfuscatedTime();
     bool delNodeFromState(nodeListElement *nodeToDel, skeletonState *skeletonState);
     bool delCommentFromState(struct commentListElement *commentToDel, skeletonState *skeletonState);
@@ -177,14 +177,14 @@ public slots:
     bool moveToPrevNode();
     bool moveToNextNode();
     static bool moveNodeToTree(nodeListElement *node, int treeID);
-    static treeListElement* findTreeByTreeID(int treeID);
+    static TreeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(int nodeID);
     static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
-    static void restoreDefaultTreeColor(treeListElement *tree);
+    static void restoreDefaultTreeColor(TreeListElement *tree);
     static void restoreDefaultTreeColor();
 
     static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    static TreeListElement *addTreeListElement(int sync, int targetRevision, int treeID, Color4F color, int serialize);
     static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);

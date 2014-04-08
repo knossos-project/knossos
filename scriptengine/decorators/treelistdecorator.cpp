@@ -20,23 +20,23 @@ treeListElement *TreeListDecorator::new_treeListElement(int tree_id, QString com
 }
 */
 
-int TreeListDecorator::tree_id(treeListElement *self) {
+int TreeListDecorator::tree_id(TreeListElement *self) {
     return self->treeID;
 }
 
-char *TreeListDecorator::comment(treeListElement *self) {
+char *TreeListDecorator::comment(TreeListElement *self) {
     return self->comment;
 }
 
-color4F TreeListDecorator::color(treeListElement *self) {
+Color4F TreeListDecorator::color(TreeListElement *self) {
     return self->color;
 }
 
-QList<nodeListElement *> *TreeListDecorator::nodes(treeListElement *self) {
+QList<nodeListElement *> *TreeListDecorator::nodes(TreeListElement *self) {
     return self->getNodes();
 }
 
-nodeListElement *TreeListDecorator::first_node(treeListElement *self) {
+nodeListElement *TreeListDecorator::first_node(TreeListElement *self) {
     return self->firstNode;
 }
 

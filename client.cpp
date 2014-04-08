@@ -159,7 +159,7 @@ uint Client::parseInBuffer() {
      *  value so that the message can be correctly removed from the input buffer
      *  after parsing.
      */
-    color4F treeCol;
+    Color4F treeCol;
     while(clientState::inBuffer->length >= 5) {
         switch(clientState::inBuffer->data[0]) {
             case KIKI_HIBACK:

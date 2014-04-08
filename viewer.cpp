@@ -105,7 +105,7 @@ Viewer::Viewer(QObject *parent) :
                 *2;
     }
 
-    floatCoordinate v1, v2, v3;
+    FloatCoordinate v1, v2, v3;
     getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
@@ -165,12 +165,12 @@ bool Viewer::sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConf
     return true;
 }
 
-bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
+bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort, FloatCoordinate *currentPxInDc_float,
                                        int s, int *t) {
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
-    floatCoordinate *v2 = &(viewPort->v2);
+    FloatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                   roundFloat(currentPxInDc_float->y),
@@ -254,12 +254,12 @@ bool Viewer::sliceExtract_adjust(Byte *datacube,
     return true;
 }
 
-bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
+bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float,
                                      int s, int *t) {
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
-    floatCoordinate *v2 = &(viewPort->v2);
+    FloatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
                                   (roundFloat(currentPxInDc_float->y)),
@@ -318,7 +318,7 @@ bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
     return true;
 }
 
-bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t) {
+bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float, int s, int *t) {
     if(state->viewerState->datasetAdjustmentOn) {
         // Texture type GL_RGB and we need to adjust coloring
         sliceExtract_adjust_arb(datacube, viewPort, currentPxInDc_float, s, t);
@@ -574,12 +574,12 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     Coordinate currentDc, currentPx;
-    floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
+    FloatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
     Byte *datacube = NULL, *overlayCube = NULL;
 
-    floatCoordinate *v1 = &currentVp.v1;
-    floatCoordinate *v2 = &currentVp.v2;
+    FloatCoordinate *v1 = &currentVp.v1;
+    FloatCoordinate *v2 = &currentVp.v2;
     CPY_COORDINATE(rowPx_float, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
     CPY_COORDINATE(currentPx_float, rowPx_float);
@@ -659,7 +659,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
-    floatCoordinate v1, v2;
+    FloatCoordinate v1, v2;
     for (i = 0; i < viewerState->numberViewports; i++) {
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
@@ -1665,8 +1665,8 @@ bool Viewer::recalcTextureOffsets() {
                 state->viewerState->vpConfigs[i].s_max = state->viewerState->vpConfigs[i].t_max =
                         (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2.)))/2)*2;
 
-                floatCoordinate *v1 = &(state->viewerState->vpConfigs[i].v1);
-                floatCoordinate *v2 = &(state->viewerState->vpConfigs[i].v2);
+                FloatCoordinate *v1 = &(state->viewerState->vpConfigs[i].v1);
+                FloatCoordinate *v2 = &(state->viewerState->vpConfigs[i].v2);
                 //Aspect ratio correction..
 
                 //Calculation of new Ratio V1 to V2, V1 is along x
@@ -1844,8 +1844,8 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
-    connect(eventModel, SIGNAL(treeAddedSignal(treeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    connect(eventModel, SIGNAL(treeAddedSignal(TreeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
     connect(eventModel, SIGNAL(nodeAddedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
@@ -1917,8 +1917,8 @@ void Viewer::rewire() {
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
-    connect(window, SIGNAL(addTreeListElementSignal(int,int,int,color4F,int)),
-                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(window, SIGNAL(addTreeListElementSignal(int,int,int,Color4F,int)),
+                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
     connect(window, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
@@ -1942,8 +1942,8 @@ void Viewer::rewire() {
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
     connect(window, SIGNAL(updateTaskCommentSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setComment(QString)));
-    connect(window, SIGNAL(treeAddedSignal(treeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    connect(window, SIGNAL(treeAddedSignal(TreeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
     //end mainwindow signals
     //viewport signals
     connect(vpUpperLeft, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
@@ -2040,8 +2040,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(jumpToNodeSignal()),
                     skeletonizer, SLOT(jumpToActiveNode()));
-    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(addTreeListElement(int,int,int,color4F,int)),
-                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(addTreeListElement(int,int,int,Color4F,int)),
+                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab,
                     SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
                     skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
@@ -2113,7 +2113,7 @@ void Viewer::rewire() {
 
 }
 
-bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
+bool Viewer::getDirectionalVectors(float alpha, float beta, FloatCoordinate *v1, FloatCoordinate *v2, FloatCoordinate *v3) {
 
         //alpha: rotation around z-axis
         //beta: rotation around new (rotated) y-axis

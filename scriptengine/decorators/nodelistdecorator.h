@@ -24,7 +24,7 @@ public slots:
     char *comment(nodeListElement *self);
     int time(nodeListElement *self);
     float radius(nodeListElement *self);
-    treeListElement *parent_tree(nodeListElement *self);
+    TreeListElement *parent_tree(nodeListElement *self);
     Coordinate coordinate(nodeListElement *self);
     int mag(nodeListElement *self);
     int viewport(nodeListElement *self);

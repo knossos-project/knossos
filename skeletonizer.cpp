@@ -240,8 +240,8 @@ segmentListElement *Skeletonizer::addSegmentListElement (segmentListElement **cu
 }
 
 
-treeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
-    treeListElement *currentTree;
+TreeListElement* Skeletonizer::findTreeByTreeID(int treeID) {
+    TreeListElement *currentTree;
 
     currentTree = state->skeletonState->firstTree;
 
@@ -298,7 +298,7 @@ bool Skeletonizer::addSegmentToSkeletonStruct(segmentListElement *segment) {
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *currentNewSkeletonDCsegment;
     float segVectorLength = 0.;
-    floatCoordinate segVector;
+    FloatCoordinate segVector;
     Coordinate currentSegVectorPoint, lastSegVectorPoint;
     Coordinate curMagTargetPos, curMagSourcePos;
 
@@ -429,7 +429,7 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
     skeletonDC *currentSkeletonDC;
     skeletonDCsegment *lastSkeletonDCsegment, *currentSkeletonDCsegment;
     float segVectorLength = 0.;
-    floatCoordinate segVector;
+    FloatCoordinate segVector;
     Coordinate currentSegVectorPoint, lastSegVectorPoint;
     Coordinate curMagTargetPos, curMagSourcePos;
 
@@ -548,7 +548,7 @@ void Skeletonizer::popBranchNodeCanceled() {
 bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype) {
     int addedNodeID;
 
-    color4F treeCol;
+    Color4F treeCol;
     /* -1 causes new color assignment */
     treeCol.r = -1.;
     treeCol.g = -1.;
@@ -748,7 +748,7 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
 }
 
 bool Skeletonizer::saveXmlSkeleton(QString fileName) {
-    treeListElement *currentTree = NULL;
+    TreeListElement *currentTree = NULL;
     nodeListElement *currentNode = NULL;
     PTRSIZEINT currentBranchPointID;
     segmentListElement *currentSegment = NULL;
@@ -971,10 +971,10 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int inMag, magnification = 0;
     int globalMagnificationSpecified = false;
 
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
 
     Coordinate offset;
-    floatCoordinate scale;
+    FloatCoordinate scale;
     Coordinate loadedPosition;
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
     SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
@@ -1214,7 +1214,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 neuronID = 0; // whatever
             }
             // color: -1 causes default color assignment
-            color4F neuronColor;
+            Color4F neuronColor;
             attribute = attributes.value("color.r");
             if(attribute.isNull() == false) {
                 neuronColor.r = attribute.toLocal8Bit().toFloat();
@@ -1460,7 +1460,7 @@ bool Skeletonizer::delActiveNode() {
 }
 
 bool Skeletonizer::delActiveTree() {
-    treeListElement *nextTree = NULL;
+    TreeListElement *nextTree = NULL;
 
     if(state->skeletonState->activeTree) {
         if(state->skeletonState->activeTree->next) {
@@ -1669,7 +1669,7 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
 
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
     nodeListElement *currentNode, *nodeToDel;
 
 
@@ -1727,11 +1727,11 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
     return true;
 }
 
-nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coordinate searchPosition) {
+nodeListElement* Skeletonizer::findNearbyNode(TreeListElement *nearbyTree, Coordinate searchPosition) {
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
-    treeListElement *currentTree = NULL;
-    floatCoordinate distanceVector;
+    TreeListElement *currentTree = NULL;
+    FloatCoordinate distanceVector;
     float smallestDistance = 0;
 
 
@@ -1795,8 +1795,8 @@ nodeListElement* Skeletonizer::findNearbyNode(treeListElement *nearbyTree, Coord
 nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeWithCurrentlySmallestDistance = NULL;
-    treeListElement *currentTree = NULL;
-    floatCoordinate distanceVector;
+    TreeListElement *currentTree = NULL;
+    FloatCoordinate distanceVector;
     float smallestDistance = CATCH_RADIUS;
 
     currentTree = state->skeletonState->firstTree;
@@ -1826,7 +1826,7 @@ nodeListElement* Skeletonizer::findNodeInRadius(Coordinate searchPosition) {
 }
 
 bool Skeletonizer::setActiveTreeByID(int treeID) {
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
     currentTree = findTreeByTreeID(treeID);
     if(!currentTree) {
         LOG("There exists no tree with ID %d!", treeID)
@@ -1916,8 +1916,8 @@ int Skeletonizer::addNode(int targetRevision,
                 int serialize) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     nodeListElement *tempNode = NULL;
-    treeListElement *tempTree = NULL;
-    floatCoordinate lockVector;
+    TreeListElement *tempTree = NULL;
+    FloatCoordinate lockVector;
     uint lockDistance = 0;
 
 
@@ -2047,7 +2047,7 @@ int Skeletonizer::addNode(int targetRevision,
 bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize) {
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
-    floatCoordinate node1, node2;
+    FloatCoordinate node1, node2;
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -2134,7 +2134,7 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
 bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    treeListElement *currentTree, *treeToDel;
+    TreeListElement *currentTree, *treeToDel;
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
@@ -2199,7 +2199,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
 bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
-    treeListElement *tree1, *tree2;
+    TreeListElement *tree1, *tree2;
     nodeListElement *currentNode;
     nodeListElement *firstNode, *lastNode;
 
@@ -2310,7 +2310,7 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, b
             return state->skeletonState->activeNode;
         }
         // no active node, simply return first node found
-        treeListElement *tree = state->skeletonState->firstTree;
+        TreeListElement *tree = state->skeletonState->firstTree;
         while(tree) {
             if(tree->firstNode) {
                 return tree->firstNode;
@@ -2320,7 +2320,7 @@ nodeListElement* Skeletonizer::getNodeWithPrevID(nodeListElement *currentNode, b
         qDebug("no nodes to move to");
         return NULL;
     }
-    treeListElement *tree;
+    TreeListElement *tree;
     if(sameTree) {
          tree = currentNode->correspondingTree;
     }
@@ -2373,7 +2373,7 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
             return state->skeletonState->activeNode;
         }
         // no active node, simply return first node found
-        treeListElement *tree = state->skeletonState->firstTree;
+        TreeListElement *tree = state->skeletonState->firstTree;
         while(tree) {
             if(tree->firstNode) {
                 return tree->firstNode;
@@ -2383,7 +2383,7 @@ nodeListElement* Skeletonizer::getNodeWithNextID(nodeListElement *currentNode, b
         qDebug("no nodes to move to");
         return NULL;
     }
-    treeListElement *tree;
+    TreeListElement *tree;
     if(sameTree) {
          tree = currentNode->correspondingTree;
     }
@@ -2431,7 +2431,7 @@ nodeListElement* Skeletonizer::findNodeByNodeID(int nodeID) {
 
 nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) {
     nodeListElement *currentNode;
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
 
     currentTree = state->skeletonState->firstTree;
 
@@ -2448,7 +2448,7 @@ nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) {
     return NULL;
 }
 
-treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize) {
+TreeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, int treeID, Color4F color, int serialize) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
      //  The variable sync is a workaround for the problem that this function
@@ -2456,7 +2456,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
      // the lock and handle synchronization. If set to false, all synchro
      // routines will be skipped.
 
-    treeListElement *newElement = NULL;
+    TreeListElement *newElement = NULL;
 
     if(sync != false) {
         if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -2474,7 +2474,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         return newElement;
     }
 
-    newElement = (treeListElement*)malloc(sizeof(treeListElement));
+    newElement = (TreeListElement*)malloc(sizeof(TreeListElement));
     if(newElement == NULL) {
         LOG("Out of memory while trying to allocate memory for a new treeListElement.")
         Knossos::unlockSkeleton(false);
@@ -2484,7 +2484,7 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         saveSerializedSkeleton();
     }
 
-    memset(newElement, '\0', sizeof(treeListElement));
+    memset(newElement, '\0', sizeof(TreeListElement));
 
     state->skeletonState->treeElements++;
 
@@ -2558,9 +2558,9 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     return newElement;
 }
 
-treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
-    treeListElement *tree = state->skeletonState->firstTree;
-    treeListElement *prevTree = NULL;
+TreeListElement *Skeletonizer::getTreeWithPrevID(TreeListElement *currentTree) {
+    TreeListElement *tree = state->skeletonState->firstTree;
+    TreeListElement *prevTree = NULL;
     uint idDistance = state->skeletonState->treeElements;
     uint tempDistance = idDistance;
 
@@ -2592,9 +2592,9 @@ treeListElement *Skeletonizer::getTreeWithPrevID(treeListElement *currentTree) {
     return prevTree;
 }
 
-treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
-    treeListElement *tree = state->skeletonState->firstTree;
-    treeListElement *nextTree = NULL;
+TreeListElement* Skeletonizer::getTreeWithNextID(TreeListElement *currentTree) {
+    TreeListElement *tree = state->skeletonState->firstTree;
+    TreeListElement *nextTree = NULL;
     uint idDistance = state->skeletonState->treeElements;
     uint tempDistance = idDistance;
 
@@ -2629,7 +2629,7 @@ treeListElement* Skeletonizer::getTreeWithNextID(treeListElement *currentTree) {
 
 bool Skeletonizer::addTreeComment(int targetRevision, int treeID, QString comment) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-    treeListElement *tree = NULL;
+    TreeListElement *tree = NULL;
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
         LOG("addTreeComment unable to lock.")
@@ -2689,7 +2689,7 @@ bool Skeletonizer::genTestNodes(uint number) {
     int nodeID;
     nodeListElement *node;
     Coordinate pos;
-    color4F treeCol;
+    Color4F treeCol;
     //add new tree for test nodes
     treeCol.r = -1.;
     addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, false);
@@ -2929,7 +2929,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     stack *remainingNodes = NULL;
     stack *componentNodes = NULL;
     nodeListElement *n = NULL, *last = NULL, *node = NULL;
-    treeListElement *newTree = NULL, *currentTree = NULL;
+    TreeListElement *newTree = NULL, *currentTree = NULL;
     segmentListElement *currentEdge = NULL;
     dynArray *treesSeen = NULL;
     int treesCount = 0;
@@ -3078,14 +3078,14 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
      //  behaviour of only splitting strict subgraphs.
 
     for(i = 0; i < treesCount; i++) {
-        currentTree = (treeListElement *)getDynArray(treesSeen, i);
+        currentTree = (TreeListElement *)getDynArray(treesSeen, i);
         id = currentTree->treeID;
         nodeCountAllTrees += (PTRSIZEINT)getDynArray(state->skeletonState->nodeCounter,
                                                      id);
     }
 
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
-        color4F treeCol;
+        Color4F treeCol;
         treeCol.r = -1.;
         newTree = addTreeListElement(false, CHANGE_MANUAL, 0, treeCol, false);
         // Splitting the connected component.
@@ -3695,7 +3695,7 @@ void Skeletonizer::UI_popBranchNode() {
     }
 }
 
-void Skeletonizer::restoreDefaultTreeColor(treeListElement *tree) {
+void Skeletonizer::restoreDefaultTreeColor(TreeListElement *tree) {
     if(tree == NULL) {
         return;
     }
@@ -3716,7 +3716,7 @@ void Skeletonizer::restoreDefaultTreeColor() {
 }
 
 bool Skeletonizer::updateTreeColors() {
-    treeListElement *tree = state->skeletonState->firstTree;
+    TreeListElement *tree = state->skeletonState->firstTree;
     while(tree) {
         uint index = (tree->treeID - 1) % 256;
         tree->color.r = state->viewerState->treeAdjustmentTable[index];
@@ -3754,7 +3754,7 @@ int Skeletonizer::xorInt(int xorMe) {
     return xorMe ^ (int) 5642179165;
 }
 
-void Skeletonizer::setColorFromNode(nodeListElement *node, color4F *color) {
+void Skeletonizer::setColorFromNode(nodeListElement *node, Color4F *color) {
     int nr;
 
     if(node->isBranchNode) { //branch nodes are always blue
@@ -3828,8 +3828,8 @@ bool Skeletonizer::delskeletonState(skeletonState *skeletonState) {
 }
 
 bool Skeletonizer::delTreesFromState(skeletonState *skeletonState) {
-    treeListElement *current;
-    treeListElement *treeToDel;
+    TreeListElement *current;
+    TreeListElement *treeToDel;
 
     if(skeletonState->firstTree == NULL) {
         return false;
@@ -3860,7 +3860,7 @@ bool Skeletonizer::delTreesFromState(skeletonState *skeletonState) {
     return true;
 }
 
-bool Skeletonizer::delTreeFromState(treeListElement *treeToDel, skeletonState *skeletonState) {
+bool Skeletonizer::delTreeFromState(TreeListElement *treeToDel, skeletonState *skeletonState) {
     nodeListElement *currentNode = NULL;
     nodeListElement *nodeToDel = NULL;
 
@@ -4012,7 +4012,7 @@ bool Skeletonizer::delSegmentFromCmd(struct segmentListElement *segToDel) {
 
 bool Skeletonizer::moveToPrevTree() {
 
-    treeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
+    TreeListElement *prevTree = getTreeWithPrevID(state->skeletonState->activeTree);
     nodeListElement *node;
     if(state->skeletonState->activeTree == NULL) {
         return false;
@@ -4050,7 +4050,7 @@ bool Skeletonizer::moveToPrevTree() {
 
 bool Skeletonizer::moveToNextTree() {
 
-    treeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
+    TreeListElement *nextTree = getTreeWithNextID(state->skeletonState->activeTree);
     nodeListElement *node;
 
     if(state->skeletonState->activeTree == NULL) {
@@ -4120,7 +4120,7 @@ bool Skeletonizer::moveToNextNode() {
 }
 
 bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
-    treeListElement *newTree = findTreeByTreeID(treeID);
+    TreeListElement *newTree = findTreeByTreeID(treeID);
     if(node == NULL or newTree == NULL) {
         return false;
     }
@@ -4192,7 +4192,7 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
 }
 
 bool Skeletonizer::deleteSelectedTrees() {
-    std::vector<treeListElement *>::iterator iter;
+    std::vector<TreeListElement *>::iterator iter;
     for(iter = state->skeletonState->selectedTrees.begin();
         iter != state->skeletonState->selectedTrees.end(); ++iter) {
         if(*iter == state->skeletonState->activeTree) {
@@ -4248,7 +4248,7 @@ Byte *Skeletonizer::serializeSkeleton() {
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     PTRSIZEINT currentBranchPointID;
     Byte *serialSkeleton = NULL;
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
     nodeListElement *currentNode;
     struct segmentListElement *currentSegment;
     struct commentListElement *currentComment;
@@ -4526,15 +4526,15 @@ void Skeletonizer::deserializeSkeleton() {
     int memPosition = 0, inMag = 0, time = 0, activeNodeID = 0, activeTreeID = 0, neuronID = 0, nodeID = 0, sourceNodeID = 0, targetNodeID = 0;
     int stringLength = 0;
     char temp[10000];
-    color4F neuronColor;
-    treeListElement *currentTree;
+    Color4F neuronColor;
+    TreeListElement *currentTree;
     nodeListElement *currentNode;
     float radius;
     Byte VPtype;
     uint workMode;
 
     Coordinate offset;
-    floatCoordinate scale;
+    FloatCoordinate scale;
     Coordinate *currentCoordinate, loadedPosition;
 
     SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
@@ -4793,7 +4793,7 @@ int Skeletonizer::getTreeBlockSize(){
     int treeBlockSize = 0;
     
     if(state->skeletonState->firstTree){
-        treeListElement *currentTree = state->skeletonState->firstTree;
+        TreeListElement *currentTree = state->skeletonState->firstTree;
         treeBlockSize+=sizeof(currentTree->treeID);
         treeBlockSize+=sizeof(currentTree->color.r)+sizeof(currentTree->color.b)+sizeof(currentTree->color.g)+sizeof(currentTree->color.a);
         //Number of nodes, Number of segments

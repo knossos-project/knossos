@@ -59,7 +59,7 @@ public:
     Renderer *renderer;
     MainWindow *window;
 
-    floatCoordinate v1, v2, v3;
+    FloatCoordinate v1, v2, v3;
     Viewport *vpUpperLeft, *vpLowerLeft, *vpUpperRight, *vpLowerRight;
     QTimer *timer;
     int frames;
@@ -67,7 +67,7 @@ public:
     static int findVPnumByWindowCoordinate(uint xScreen, uint yScreen);
     bool initialized;
     bool moveVPonTop(uint currentVP);
-    static bool getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3);
+    static bool getDirectionalVectors(float alpha, float beta, FloatCoordinate *v1, FloatCoordinate *v2, FloatCoordinate *v3);
 signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
@@ -77,11 +77,11 @@ protected:
     bool resetViewPortData(vpConfig *viewport);
     bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
     bool vpGenerateTexture_arb(vpConfig &currentVp);
-    bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_standard_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float, int s, int *t);
     bool sliceExtract_adjust(Byte *datacube, Byte *slice, vpConfig *vpConfig);
-    bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float, int s, int *t);
     bool dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig * vpConfig);
-    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t);
+    bool dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float, int s, int *t);
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     void rewire();
 public slots:

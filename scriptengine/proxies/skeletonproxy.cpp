@@ -1,6 +1,7 @@
 #include "skeletonproxy.h"
 #include "functions.h"
 #include "skeletonizer.h"
+#include <QApplication>
 
 extern stateInfo *state;
 
@@ -32,7 +33,7 @@ void SkeletonProxy::to_xml(const QString &filename) {
     }
 }
 
-treeListElement *SkeletonProxy::first_tree() {
+TreeListElement *SkeletonProxy::first_tree() {
     return state->skeletonState->firstTree;
 }
 
@@ -87,9 +88,9 @@ void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
     }
 }
 
-QList<treeListElement *> *SkeletonProxy::trees() {
-    QList<treeListElement *> *trees = new QList<treeListElement *>();
-    treeListElement *currentTree = state->skeletonState->firstTree;
+QList<TreeListElement *> *SkeletonProxy::trees() {
+    QList<TreeListElement *> *trees = new QList<TreeListElement *>();
+    TreeListElement *currentTree = state->skeletonState->firstTree;
     while(currentTree) {
         trees->append(currentTree);
         currentTree = currentTree->next;
@@ -98,8 +99,8 @@ QList<treeListElement *> *SkeletonProxy::trees() {
 }
 
 void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float g, float b, float a) {
-    color4F color(r, g, b, a);
-    treeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree_id, color, false);
+    Color4F color(r, g, b, a);
+    TreeListElement *theTree = Skeletonizer::addTreeListElement(true, CHANGE_MANUAL, tree_id, color, false);
     if(!theTree) {
         emit signalDelegate->echo(QString("could not add the tree with tree id %1").arg(tree_id));
         return;
@@ -167,7 +168,7 @@ QList<int> *SkeletonProxy::cube_data_at(int x, int y, int z) {
     return resultList;
 }
 
-void SkeletonProxy::render_mesh(mesh *mesh) {
+void SkeletonProxy::render_mesh(Mesh *mesh) {
     if(!mesh) {
         emit signalDelegate->echo("Null objects can't be rendered ... nothing to do");
         return;
@@ -193,10 +194,12 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
 
 
     // lots of additional checks could be done
-    qDebug() << state->skeletonState->userGeometry;
+
     state->skeletonState->userGeometry->append(mesh);
 
+
 }
+
 
 void SkeletonProxy::save_sys_path(const QString &path) {
     QFileInfo info(path);
@@ -217,7 +220,7 @@ void SkeletonProxy::save_working_directory(const QString &path) {
    emit signalDelegate->saveSettingsSignal("working_dir", path);
 }
 
-QList<mesh *> *SkeletonProxy::user_geom_list() {
+QList<Mesh *> *SkeletonProxy::user_geom_list() {
     return state->skeletonState->userGeometry;
  }
 
@@ -226,11 +229,22 @@ void SkeletonProxy::move_to(int x, int y, int z) {
 }
 
 
-/** @not yet implemented */
-void SkeletonProxy::add_text(const QString &path, int x, int y, int z) {
+void SkeletonProxy::render_text(const QString &string, int x, int y, int z) {
+    emit signalDelegate->renderTextSignal(new Coordinate(x, y, z), string.toLocal8Bit().data(), 0, 0);
 
 }
 
+void SkeletonProxy::loadStyleSheet(const QString &filename) {
+    QFile file(filename);
+    if(!file.open(QIODevice::ReadOnly)) {
+        emit signalDelegate->echo("Error readint the style sheet file");
+    }
+
+    QString design(file.readAll());
+
+    qApp->setStyleSheet(design);
+    file.close();
+}
 
 QString SkeletonProxy::help() {
     return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \
@@ -254,7 +268,8 @@ QString SkeletonProxy::help() {
                    "\n from_xml(filename) : loads a skeleton from a .nml file" \
                    "\n to_xml(filename) : saves a skeleton to a .nml file" \
                    "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
-                   "\n render_mesh(mesh) : render the mesh. Call mesh.help() for additional information." \
+                   "\n render_mesh(mesh) : renders the mesh. Call mesh.help() for additional information." \
                    "\n save_sys_path(path) : saves the python sys_path from the console" \
+                   "\n move_to(x, y, z) : recenters the viewport coordinates to (x, y, z)" \
                    "\n save_working_directory(path) : saves the working directory from the console");
 }

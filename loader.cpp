@@ -348,7 +348,7 @@ int calc_nonzero_sign(float x) {
     return -1;
 }
 
-void Loader::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics) {
+void Loader::CalcLoadOrderMetric(float halfSc, FloatCoordinate currentMetricPos, FloatCoordinate direction, float *metrics) {
     float distance_from_plane, distance_from_origin, dot_product;
     int i = 0;
 
@@ -397,8 +397,8 @@ int CompareLoadOrderMetric_LoaderWrapper(const void *a, const void *b, const voi
     return thisPtr->CompareLoadOrderMetric(a, b);
 }
 
-floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
-    floatCoordinate xyz[3];
+FloatCoordinate Loader::find_close_xyz(FloatCoordinate direction) {
+    FloatCoordinate xyz[3];
     float dot_products[3];
     int i;
     float max_dot_product;
@@ -426,7 +426,7 @@ floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
 
 uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     Coordinate currentOrigin;
-    floatCoordinate currentMetricPos, direction;
+    FloatCoordinate currentMetricPos, direction;
     LO_Element *DcArray;
     int cubeElemCount;
     int i;

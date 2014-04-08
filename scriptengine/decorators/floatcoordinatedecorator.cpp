@@ -8,36 +8,34 @@
 FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) :
     QObject(parent)
 {
-    qRegisterMetaType<floatCoordinate>();
-
-
+    qRegisterMetaType<FloatCoordinate>();
 }
 
-floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate() {
-    return new floatCoordinate();
+FloatCoordinate *FloatCoordinateDecorator::new_FloatCoordinate() {
+    return new FloatCoordinate();
 }
 
-floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate(float x, float y, float z) {
-    return new floatCoordinate(x, y, z);
+FloatCoordinate *FloatCoordinateDecorator::new_FloatCoordinate(float x, float y, float z) {
+    return new FloatCoordinate(x, y, z);
 }
 
-float FloatCoordinateDecorator::x(floatCoordinate *self) {
+float FloatCoordinateDecorator::x(FloatCoordinate *self) {
     return self->x;
 }
 
-float FloatCoordinateDecorator::y(floatCoordinate *self) {
+float FloatCoordinateDecorator::y(FloatCoordinate *self) {
     return self->y;
 }
 
-float FloatCoordinateDecorator::z(floatCoordinate *self) {
+float FloatCoordinateDecorator::z(FloatCoordinate *self) {
     return self->z;
 }
 
-QString FloatCoordinateDecorator::static_floatCoordinate_help() {
+QString FloatCoordinateDecorator::static_FloatCoordinate_help() {
     return QString("An instanceable class storing 3D coordinates as float. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
-                   "\n floatCoordinate() : creates an empty floatCoordinate object. " \
-                   "\n floatCoordinate(x, y, z) : creates a floatCoordinates object where all dimensions are to specify." \
+                   "\n FloatCoordinate() : creates an empty floatCoordinate object. " \
+                   "\n FloatCoordinate(x, y, z) : creates a floatCoordinates object where all dimensions are to specify." \
                    "\n\n GETTER: " \
                    "\n x() : returns the x value of the coordinate" \
                    "\n y() : returns the y value of the coordinate" \
@@ -49,15 +47,15 @@ QString FloatCoordinateDecorator::static_floatCoordinate_help() {
                    );
 }
 
-void FloatCoordinateDecorator::setx(floatCoordinate *self, float x) {
+void FloatCoordinateDecorator::setx(FloatCoordinate *self, float x) {
     self->x = x;
 }
 
-void FloatCoordinateDecorator::sety(floatCoordinate *self, float y) {
+void FloatCoordinateDecorator::sety(FloatCoordinate *self, float y) {
     self->y = y;
 }
 
-void FloatCoordinateDecorator::setz(floatCoordinate *self, float z) {
+void FloatCoordinateDecorator::setz(FloatCoordinate *self, float z) {
     self->z = z;
 }
 

@@ -1,10 +1,10 @@
 #include "knossos-global.h"
 #include "renderer.h"
 
-mesh::mesh() {
+Mesh::Mesh() {
     Renderer::initMesh(this, 1024);
 }
 
-mesh::mesh(int mode) {
+Mesh::Mesh(int mode) {
     this->mode = mode;
 }

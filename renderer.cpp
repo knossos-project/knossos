@@ -78,14 +78,14 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initMesh(&(state->skeletonState->pointVertBuffer), 1024);
 
 
-    state->skeletonState->userGeometry = new QList<mesh *>();
+    state->skeletonState->userGeometry = new QList<Mesh *>();
 
 
 }
 
-uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType) {
+uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, Color4F color, uint currentVP, uint viewportType) {
     float currentAngle = 0.;
-        floatCoordinate segDirection, tempVec, *tempVec2;
+        FloatCoordinate segDirection, tempVec, *tempVec2;
         GLUquadricObj *gluCylObj = NULL;
 
 
@@ -157,7 +157,7 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         return true;
 }
 
-uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType) {
+uint Renderer::renderSphere(Coordinate *pos, float radius, Color4F color, uint currentVP, uint viewportType) {
     GLUquadricObj *gluSphereObj = NULL;
 
         /* Render only a point if the sphere wouldn't be visible anyway */
@@ -245,7 +245,7 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
         int i, distToCurrPos;
-        floatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
+        FloatCoordinate *tempVec2, tempVec, tempVec3, segDir, intPoint, sTp_local, sSp_local;
         GLUquadricObj *gluCylObj = NULL;
 
         sSp_local.x = (float)segment->source->position.x;
@@ -475,7 +475,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     char label[1024];
     Coordinate pos;
 
-    floatCoordinate *n, *v1, *v2;
+    FloatCoordinate *n, *v1, *v2;
 
     n = &(state->viewerState->vpConfigs[currentVP].n);
 
@@ -1098,6 +1098,9 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
                            0.5 * v1->z + dataPxY * v2->z - 0.0001 * n->z);
             glEnd();
+
+
+
         }
         break;
     }
@@ -1505,7 +1508,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
             glEnd();
             break;
         case VIEWPORT_ARBITRARY:
-            floatCoordinate *n, *v1, *v2;
+            FloatCoordinate *n, *v1, *v2;
             n = &(state->viewerState->vpConfigs[i].n);
             v1 = &(state->viewerState->vpConfigs[i].v1);
             v2 = &(state->viewerState->vpConfigs[i].v2);
@@ -2139,11 +2142,11 @@ bool Renderer::setRotationState(uint setTo) {
 
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
-    treeListElement *currentTree;
+    TreeListElement *currentTree;
     nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
     struct segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
-    floatCoordinate currNodePos;
+    FloatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
     uint skippedCnt = 0;
     uint renderNode;
@@ -2156,7 +2159,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     state->skeletonState->pointVertBuffer.vertsIndex = 0;
     state->skeletonState->pointVertBuffer.normsIndex = 0;
     state->skeletonState->pointVertBuffer.colsIndex = 0;
-    color4F currentColor;
+    Color4F currentColor;
 
     char *textBuffer;
     textBuffer = (char *)malloc(32);
@@ -2474,10 +2477,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
 }
 
-bool Renderer::resizeMeshCapacity(mesh *toResize, uint n) {
-    (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
-    (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
-    (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
+bool Renderer::resizeMeshCapacity(Mesh *toResize, uint n) {
+    (*toResize).vertices = (FloatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(FloatCoordinate));
+    (*toResize).normals = (FloatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(FloatCoordinate));
+    (*toResize).colors = (Color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(Color4F));
 
     (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
     (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;
@@ -2487,18 +2490,18 @@ bool Renderer::resizeMeshCapacity(mesh *toResize, uint n) {
 
 }
 
-bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+bool Renderer::doubleMeshCapacity(Mesh *toDouble) {
 
     return Renderer::resizeMeshCapacity(toDouble, 2);
 
 }
 
-bool Renderer::initMesh(mesh *toInit, uint initialSize) {
+bool Renderer::initMesh(Mesh *toInit, uint initialSize) {
 
 
-    (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    (*toInit).normals = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
-    (*toInit).colors = (color4F *)malloc(initialSize * sizeof(color4F));
+    (*toInit).vertices = (FloatCoordinate *)malloc(initialSize * sizeof(FloatCoordinate));
+    (*toInit).normals = (FloatCoordinate *)malloc(initialSize * sizeof(FloatCoordinate));
+    (*toInit).colors = (Color4F *)malloc(initialSize * sizeof(Color4F));
 
     (*toInit).vertsBuffSize = initialSize;
     (*toInit).normsBuffSize = initialSize;
@@ -2634,7 +2637,7 @@ bool Renderer::updateFrustumClippingPlanes(uint viewportType) {
 }
 
 /* modified public domain code from: http://www.crownandcutlass.com/features/technicaldetails/frustum.html */
-bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportType) {
+bool Renderer::sphereInFrustum(FloatCoordinate pos, float radius, uint viewportType) {
     int p;
 
     /* Include more for rendering when in SELECT mode to avoid picking trouble - 900 px is really arbitrary */
@@ -2674,14 +2677,16 @@ void Renderer::renderUserGeometry() {
     //glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
+    //qDebug() << state->skeletonState->userGeometry->size();
 
     for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
 
-        mesh *currentMesh = state->skeletonState->userGeometry->at(i);
+        Mesh *currentMesh = state->skeletonState->userGeometry->at(i);
         if(currentMesh->mode == GL_POINTS) {
             glPointSize(currentMesh->size);
         } else if(currentMesh->mode == GL_LINES) {
             glLineWidth(currentMesh->size);
+
         }
 
         glVertexPointer(3, GL_FLOAT, 0, currentMesh->vertices);
@@ -2698,3 +2703,4 @@ void Renderer::renderUserGeometry() {
     //glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }
+

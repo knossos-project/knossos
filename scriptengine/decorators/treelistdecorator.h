@@ -20,11 +20,11 @@ public slots:
     treeListElement *new_treeListElement(int tree_id, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
     */
 
-    color4F color(treeListElement *self);
-    nodeListElement *first_node(treeListElement *self);
-    QList<nodeListElement *> *nodes(treeListElement *self);
-    int tree_id(treeListElement *self);
-    char *comment(treeListElement *self);
+    Color4F color(TreeListElement *self);
+    nodeListElement *first_node(TreeListElement *self);
+    QList<nodeListElement *> *nodes(TreeListElement *self);
+    int tree_id(TreeListElement *self);
+    char *comment(TreeListElement *self);
     static QString static_treeListElement_help();
 
 

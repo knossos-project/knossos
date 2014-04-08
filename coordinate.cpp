@@ -55,7 +55,7 @@ bool Coordinate::transCoordinate(Coordinate *outCoordinate,
                                  int x,
                                  int y,
                                  int z,
-                                 floatCoordinate scale, Coordinate offset) {
+                                 FloatCoordinate scale, Coordinate offset) {
 
     /*
      *  Translate a pixel coordinate (x, y, z) relative to a dataset

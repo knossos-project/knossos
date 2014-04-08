@@ -60,8 +60,7 @@ public:
     static bool sendRemoteSignal();
     static bool sendClientSignal();
     static bool sendQuitSignal();
-    static bool sendServerSignal();
-    static void loadStyleSheet();
+    static bool sendServerSignal();    
     void loadDefaultTreeLUT();
 
 signals:
@@ -73,6 +72,9 @@ signals:
 public slots:
     void loadTreeLUTFallback();
     void startLoader();
+
+
+
 };
 
 extern std::unique_ptr<Knossos> knossos;

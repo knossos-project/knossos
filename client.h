@@ -44,7 +44,7 @@ namespace clientState {
     struct peerListElement {
         uint id;
         char *name;
-        floatCoordinate scale;
+        FloatCoordinate scale;
         Coordinate offset;
 
         struct peerListElement *next;

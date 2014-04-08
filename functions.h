@@ -8,16 +8,16 @@
  */
 
 int roundFloat(float number);
-bool normalizeVector(floatCoordinate *v);
-float euclidicNorm(floatCoordinate *v);
-bool normalizeVector(floatCoordinate *v);
-float scalarProduct(floatCoordinate *v1, floatCoordinate *v2);
+bool normalizeVector(FloatCoordinate *v);
+float euclidicNorm(FloatCoordinate *v);
+bool normalizeVector(FloatCoordinate *v);
+float scalarProduct(FloatCoordinate *v1, FloatCoordinate *v2);
 int sgn(float number);
 
 float radToDeg(float rad);
 float degToRad(float deg);
-floatCoordinate *crossProduct(floatCoordinate *v1, floatCoordinate *v2);
-float vectorAngle(floatCoordinate *v1, floatCoordinate *v2);
+FloatCoordinate *crossProduct(FloatCoordinate *v1, FloatCoordinate *v2);
+float vectorAngle(FloatCoordinate *v1, FloatCoordinate *v2);
 bool checkTreeParameter(int id, float r, float g, float b, float a);
 bool checkNodeParameter(int id, int x, int y, int z);
 bool chedNodeID(int id);

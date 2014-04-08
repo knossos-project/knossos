@@ -21,7 +21,7 @@ class QSpinBox;
 class QSplitter;
 class QMenu;
 
-class treeListElement;
+class TreeListElement;
 class nodeListElement;
 class segmentListElement;
 
@@ -71,7 +71,7 @@ public:
     QPushButton *confirmationPrompt(QString question, QString confirmString);
 
 protected:
-    void insertTree(treeListElement *tree, TreeTable *table);
+    void insertTree(TreeListElement *tree, TreeTable *table);
     void insertNode(nodeListElement *node, NodeTable *table);
     void setText(TreeTable *table, QTableWidgetItem *item, QString text);
     void setText(NodeTable *table, QTableWidgetItem *item, QString text);
@@ -123,7 +123,7 @@ public slots:
 
     // update tree table
     void treeActivated();
-    void treeAdded(treeListElement *tree);
+    void treeAdded(TreeListElement *tree);
     void treesDeleted();
     void treesMerged(int treeID1, int treeID2);
 

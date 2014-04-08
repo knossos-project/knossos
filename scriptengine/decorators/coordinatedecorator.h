@@ -21,12 +21,12 @@ public slots:
     int x(Coordinate *self);
     int y(Coordinate *self);
     int z(Coordinate *self);
-    QString static_Coordinate_help();
-
 
     void setx(Coordinate *self, int x);
     void sety(Coordinate *self, int y);
     void setz(Coordinate *self, int z);
+
+    QString static_Coordinate_help();
 
 
 };

@@ -5,7 +5,7 @@
 CoordinateDecorator::CoordinateDecorator(QObject *parent) :
     QObject(parent)
 {
-
+    qRegisterMetaType<Coordinate>();
 }
 
 

@@ -215,15 +215,15 @@ int main(int argc, char *argv[])
 
     QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
     QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(TreeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
     QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     QObject::connect(signalDelegate, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
     QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    //QObject::connect(signalDelegate, SIGNAL(renderTextSignal(Coordinate*,char *,uint,uint)), viewer.renderer, SLOT(renderText(Coordinate*,char*,uint,uint)));
     //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
     scripts.run();
-
 
     return a.exec();
 }
@@ -285,7 +285,7 @@ bool Knossos::initStates() {
    /* @arb */
    state->alpha = 0;
    state->beta = 0;
-   floatCoordinate v1, v2, v3;
+   FloatCoordinate v1, v2, v3;
    Viewer::getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
@@ -1234,17 +1234,5 @@ void Knossos::revisionCheck() {
 
 
 #endif
-
-}
-
-void Knossos::loadStyleSheet() {
-    QFile file(":/misc/style.qss");
-    if(!file.open(QIODevice::ReadOnly)) {
-        qErrnoWarning("Error reading the knossos style sheet file");
-    }
-
-    QString design(file.readAll());
-    qApp->setStyleSheet(design);
-    file.close();
 
 }
