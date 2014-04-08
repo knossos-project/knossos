@@ -52,7 +52,7 @@ SOURCES += openjpeg/cio.c \
     qsort.cpp \
     ftp.cpp \
     stateInfo.cpp \
-    color4F.cpp \
+    Color4F.cpp \
     nodeListElement.cpp \
     segmentListElement.cpp \
     treeListElement.cpp \
@@ -88,7 +88,7 @@ SOURCES += openjpeg/cio.c \
     widgets/tools/toolstreeviewtab.cpp \
     widgets/tools/nodetable.cpp \
     widgets/tools/treetable.cpp \
-    mesh.cpp \
+    Mesh.cpp \
     widgets/gui.cpp
 
 
@@ -177,7 +177,9 @@ HEADERS  += widgets/mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-OTHER_FILES += \    
+OTHER_FILES += \
+    doc/* \
+    doc/images/* \
     LICENSE \
     Makefile \
     splash.png \
@@ -215,6 +217,11 @@ macx {
     LIBS += -framework GLUT \
             -lcurl
 
+    # copy the content of the doc folder to the build-dir
+    doc.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc
+    doc.files = $$PWD/doc/*
+    INSTALLS += doc
+
     ICON += knossos.icns
 }
 
@@ -227,6 +234,12 @@ linux {
 
     INCLUDEPATH += /usr/include/GL/ \
             /usr/local/include/ \
+
+
+    # copy the content of the doc folder to the build-dir
+    doc.path = $$OUT_PWD/doc
+    doc.files = $$PWD/doc/*
+    INSTALLS += doc
 
 }
 

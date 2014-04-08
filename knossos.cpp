@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
     GetTempPathA(sizeof(tempPath), tempPath);
     GetTempFileNameA(tempPath, "KNL", 0, logFilename);
 #endif
-#ifdef Q_OS_LINUX
-    const char *file = "/Users/amos/log.txt";
+#ifdef Q_OS_UNIX
+    const char *file = "/tmp/log.txt";
     strcpy(logFilename, file);
 #endif
 
@@ -362,10 +362,8 @@ bool Knossos::initStates() {
    // Those values can be calculated from given parameters
    state->cubeSliceArea = state->cubeEdgeLength * state->cubeEdgeLength;
    state->cubeBytes = state->cubeEdgeLength * state->cubeEdgeLength * state->cubeEdgeLength;
-   state->cubeSetElements = state->M * state->M * state->M;
-   state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-   state->magnification = 0x1;
-   state->lowestAvailableMag = INT_MAX;
+   state->magnification = 1;
+   state->lowestAvailableMag = 1;
    state->highestAvailableMag = 1;
 
    memset(state->currentDirections, 0, LL_CURRENT_DIRECTIONS_SIZE*sizeof(state->currentDirections[0]));
@@ -376,14 +374,8 @@ bool Knossos::initStates() {
    curl_global_init(CURL_GLOBAL_DEFAULT);
    state->loadFtpCachePath = (char*)malloc(MAX_PATH);
 
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
    const char *tmp = "/tmp/";
-   strcpy(state->loadFtpCachePath, tmp);
-   state->loadLocalSystem = LS_UNIX;
-#endif
-#ifdef Q_OS_MAC
-   // TODO
-   const char *tmp = "/Users/amos/temp/";
    strcpy(state->loadFtpCachePath, tmp);
    state->loadLocalSystem = LS_UNIX;
 #endif
@@ -860,8 +852,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
         state->scale.x /= (float)state->magnification;
         state->scale.y /= (float)state->magnification;
         state->scale.z /= (float)state->magnification;
-
-        state->viewerState->datasetMagLock = true;
     }
     // update the volume boundary
     if((state->boundary.x >= state->boundary.y) && (state->boundary.x >= state->boundary.z)) {
@@ -916,7 +906,7 @@ bool Knossos::configDefaults() {
     state->cubeEdgeLength = 128;
     state->M = 3;
     state->magnification = 1;
-    state->lowestAvailableMag = INT_MAX;
+    state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
     state->overlay = false;
 
@@ -1034,6 +1024,8 @@ bool Knossos::configDefaults() {
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
+
+    state->keyD = state->keyE = state->keyF = state->keyR = false;
 
     return true;
 

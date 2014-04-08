@@ -168,25 +168,25 @@ QList<int> *SkeletonProxy::cube_data_at(int x, int y, int z) {
     return resultList;
 }
 
-void SkeletonProxy::render_mesh(Mesh *mesh) {
-    if(!mesh) {
+void SkeletonProxy::render_mesh(Mesh *Mesh) {
+    if(!Mesh) {
         emit signalDelegate->echo("Null objects can't be rendered ... nothing to do");
         return;
     }
 
-    if(mesh->colsIndex == 0) {
-        emit signalDelegate->echo("Can't render a mesh without color");
+    if(Mesh->colsIndex == 0) {
+        emit signalDelegate->echo("Can't render a Mesh without color");
     }
 
-    if(mesh->vertsIndex == 0) {
-        emit signalDelegate->echo("Can't render a mesh without vertices");
+    if(Mesh->vertsIndex == 0) {
+        emit signalDelegate->echo("Can't render a Mesh without vertices");
         return;        
     }
 
     // it's ok if no normals are passed. This has to be checked in render method anyway
 
 
-    if(mesh->mode < GL_POINTS or mesh->mode > GL_POLYGON) {
+    if(Mesh->mode < GL_POINTS or Mesh->mode > GL_POLYGON) {
         emit signalDelegate->echo("Mesh contains an unknown vertex mode");
         return;
 
@@ -195,7 +195,7 @@ void SkeletonProxy::render_mesh(Mesh *mesh) {
 
     // lots of additional checks could be done
 
-    state->skeletonState->userGeometry->append(mesh);
+    state->skeletonState->userGeometry->append(Mesh);
 
 
 }
@@ -268,7 +268,7 @@ QString SkeletonProxy::help() {
                    "\n from_xml(filename) : loads a skeleton from a .nml file" \
                    "\n to_xml(filename) : saves a skeleton to a .nml file" \
                    "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
-                   "\n render_mesh(mesh) : renders the mesh. Call mesh.help() for additional information." \
+                   "\n render_Mesh(Mesh) : renders the Mesh. Call Mesh.help() for additional information." \
                    "\n save_sys_path(path) : saves the python sys_path from the console" \
                    "\n move_to(x, y, z) : recenters the viewport coordinates to (x, y, z)" \
                    "\n save_working_directory(path) : saves the working directory from the console");

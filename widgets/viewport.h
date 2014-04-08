@@ -25,12 +25,13 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "eventmodel.h"
+
 #include <QWidget>
 #include <QtOpenGL/QGLWidget>
 #include <QtOpenGL>
 #include <QDebug>
 #include "renderer.h"
-#include "eventmodel.h"
 
 #define VP_UPPERLEFT 0
 #define VP_LOWERLEFT 1
@@ -71,9 +72,8 @@ public:
     void showButtons();
     void updateButtonPositions();
     EventModel *eventDelegate;
-    Renderer *renderer;
     static const int MIN_VP_SIZE = 50;
-
+    Renderer *renderer;
 protected:
     void initializeGL();
     void initializeOverlayGL();
@@ -86,6 +86,7 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
     void enterEvent(QEvent *event);
+    void leaveEvent(QEvent *event);
 
     int xrel(int x);
     int yrel(int y);

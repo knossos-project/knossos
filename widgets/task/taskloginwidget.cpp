@@ -60,16 +60,10 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 }
 
 void TaskLoginWidget::urlEditingFinished() {
-    memset(taskState::host, '\0', sizeof(taskState::host));
-    strcpy(taskState::host, urlField->text().toStdString().c_str());
-    // cut off trailing slash
-    if(taskState::host[strlen(taskState::host)-1] == '/') {
-        taskState::host[strlen(taskState::host)-1] = '\0';
-    }
+    taskState::host = urlField->text();
 }
 
 void TaskLoginWidget::loginButtonClicked() {
-    char url[1024];
     CURLcode code;
     long httpCode;
     struct httpResponse response;
@@ -86,28 +80,25 @@ void TaskLoginWidget::loginButtonClicked() {
     sprintf(postdata, "<login><username>%s</username><password>%s</password></login>", username, password);
 
     // build url to send to
-    memset(url, '\0', 1024);
-    strcpy(url, taskState::host);
-    strcat(url, "/knossos/session/");
+    auto url = taskState::host + "/knossos/session/";
 
     // prepare http response object
     response.length = 0;
     response.content = (char *)calloc(1, response.length+1);
 
     // remove contents of cookie file to fill it with new cookie
-    cookie = fopen(taskState::cookieFile, "w");
+    cookie = fopen(taskState::cookieFile.toUtf8().constData(), "w");
     if(cookie) {
         fclose(cookie);
     }
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpPOST(url, postdata, &response, &httpCode, taskState::cookieFile, &code, 5);
+    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, taskState::cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
     if( result == false) {
         serverStatus->setText("<font color='red'>Failed to create cookie. Please check your folder permissions.</font>");
     }
     else if(code == CURLE_OK) {
         if(httpCode == 200) {
-
             QXmlStreamReader xml(response.content);
             if(xml.hasError()) {
                 serverStatus->setText("<font color='red'>Error in transmission. Please try again.</font>");
@@ -129,8 +120,7 @@ void TaskLoginWidget::loginButtonClicked() {
                 }
                 attribute = attributes.value("taskfile").toString();
                 if(attribute.isNull() == false) {
-                    memset(taskState::taskFile, '\0', sizeof(taskState::taskFile));
-                    strcpy(taskState::taskFile, attribute.toStdString().c_str());
+                    taskState::taskFile = attribute;
                 }
                 attribute = attributes.value("description").toString();
                 if(attribute.isNull() == false) {

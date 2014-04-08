@@ -95,16 +95,16 @@ void MeshDecorator::set_size(Mesh *self, uint size) {
 QString MeshDecorator::static_Mesh_help() {
     return QString("An instanceable class for rendering geometry from python. Access to the attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS:" \
-                   "\n Mesh(mode) : Creates a mesh object. The constructor expects an openGL vertex mode constant:" \
+                   "\n Mesh(mode) : Creates a Mesh object. The constructor expects an openGL vertex mode constant:" \
                    "\n\t GL_POINTS, GL_LINES, GL_TRIANGLES, GL_QUADS, GL_POLYGON" \
                    "\n\n GETTER: " \
-                   "\n vertices() : returns a list of float coordinates of the current mesh" \
+                   "\n vertices() : returns a list of float coordinates of the current Mesh" \
                    "\n normals() : returns a list of float coordinates with normal coordinates" \
                    "\n colors() : returns a list of colors" \
                    "\n\n SETTER: " \
-                   "\n set_vertices(vertexList) : excepts a list of floatCoordinates representing vertices" \
-                   "\n set_normals(normalList) : excepts a list of floatCoordinates repesentation normal vectors" \
-                   "\n set_colors(colorList) : excepts a list of color4F objects" \
+                   "\n set_vertices(vertexList) : excepts a list of FloatCoordinates representing vertices" \
+                   "\n set_normals(normalList) : excepts a list of FloatCoordinates repesentation normal vectors" \
+                   "\n set_colors(colorList) : excepts a list of Color4F objects" \
                    "\n set_size(size) : sets the specific size of the geometry: " \
                    "\n if mode is GL_POINTS then size determines the point size." \
                    "\n if mode is GL_LINES then size determines the lines width." \

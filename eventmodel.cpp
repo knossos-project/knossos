@@ -26,6 +26,8 @@
 #include "functions.h"
 #include "knossos.h"
 #include "renderer.h"
+#include "viewer.h"
+#include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
 #include "widgets/gui.h"
 
@@ -1272,14 +1274,13 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        if(state->skeletonState->displayMode & DSP_SLICE_VP_HIDE) {
-            state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
-        }
-        else {
-            state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
-        }
-        state->skeletonState->skeletonChanged = true;
-
+        /* @todo very ugly
+        const auto & spvp = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
+        const auto skeletonVisibiliy = spvp->enableSkeletonOverlayCheckBox->isChecked();
+        spvp->enableSkeletonOverlayCheckBox->setChecked(!skeletonVisibiliy);
+        spvp->enableSkeletonOverlayCheckBox->clicked(!skeletonVisibiliy);
+        state->skeletonState->skeletonChanged = true;//idk
+        */
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
             QMessageBox prompt;

@@ -17,15 +17,15 @@ struct httpResponse {
 
 // to taskwidget
 namespace taskState {
-    extern char *host;
-    extern char *cookieFile;
-    extern char *taskFile;
-    extern char *taskName;
+    extern QString host;
+    extern QString cookieFile;
+    extern QString taskFile;
+    extern QString taskName;
 
     extern bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     extern bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     extern bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    extern bool httpFileGET(char *url, char *postdata, FILE *file, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    extern bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     extern size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
     extern size_t writeToFile(void *ptr, size_t size, size_t nmemb, FILE *stream);
     extern size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);

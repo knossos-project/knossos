@@ -11,7 +11,7 @@ treeListElement *TreeListDecorator::new_treeListElement() {
     return new treeListElement();
 }
 
-treeListElement *TreeListDecorator::new_treeListElement(int tree_id, QString comment, color4F color) {
+treeListElement *TreeListDecorator::new_treeListElement(int tree_id, QString comment, Color4F color) {
     return new treeListElement(tree_id, comment, color);
 }
 
@@ -60,11 +60,11 @@ void TreeListDecorator::set_comment(treeListElement *self, char *comment) {
     }
 }
 
-void TreeListDecorator::set_color(treeListElement *self, color4F color) {
+void TreeListDecorator::set_color(treeListElement *self, Color4F color) {
     self->color = color;
 }
 
 void TreeListDecorator::set_color(treeListElement *self, float red, float green, float blue, float alpha) {
-    self->color = color4F(red, green, blue, alpha);
+    self->color = Color4F(red, green, blue, alpha);
 }
 */

@@ -1,5 +1,5 @@
-#ifndef COLOR4FDECORATOR_H
-#define COLOR4FDECORATOR_H
+#ifndef Color4FDECORATOR_H
+#define Color4FDECORATOR_H
 
 #include <QObject>
 
@@ -31,4 +31,4 @@ public slots:
     QString static_Color4F_help();
 };
 
-#endif // COLOR4FDECORATOR_H
+#endif // Color4FDECORATOR_H

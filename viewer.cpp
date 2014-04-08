@@ -54,6 +54,7 @@ Viewer::Viewer(QObject *parent) :
     vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
     timer = new QTimer();
+    lastTime = 0;
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -1839,8 +1840,6 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(updateLabels()));
     connect(skeletonizer, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(skeletonizer, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
-    connect(skeletonizer, SIGNAL(displayModeChangedSignal()),
-                    window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SLOT(updateDisplayModeRadio()));
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
@@ -1990,8 +1989,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(restoreDefaultTreeColor()));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(splitConnectedComponent(int,int, int)),
 //                    skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
-//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,color4F, int)),
-//                    skeletonizer, SLOT(addTreeListElement(int,int,int,color4F,int)));
+//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,Color4F, int)),
+//                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,QString)),
 //                    skeletonizer, SLOT(addTreeComment(int,int,QString)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)),
@@ -2077,14 +2076,10 @@ void Viewer::rewire() {
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget,
                     SIGNAL(updateViewerStateSignal()),
                     this, SLOT(updateViewerState()));
-    //  skeleton vp tab signals
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget,SIGNAL(showXYPlaneSignal(bool)),
-                    skeletonizer, SLOT(setShowXyPlane(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget,
-                    SIGNAL(rotateAroundActiveNodeSignal(bool)),
-                    skeletonizer, SLOT(setRotateAroundActiveNode(bool)));
-    connect(window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget, SIGNAL(updateViewerStateSignal()),
-                    this, SLOT(updateViewerState()));
+    //  skeleton vp tab signals --
+    //i’d better like this in the ctor of the vpsettingswidget, getting skeletonizer and viewer references forwarded
+    const auto svpsettings = window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget;
+    QObject::connect(svpsettings, &VPSkeletonViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  -- end viewport settings widget signals
     //  zoom and multires signals --
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));
@@ -2138,20 +2133,18 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, FloatCoordinate *v1,
 */
 void Viewer::processUserMove() {
     if(state->keyF or state->keyD) {
-        int time = delay.elapsed();
+        qint64 time = delay.elapsed();
+        qint64 interval = 200;
 
-#ifndef Q_OS_UNIX
-        if(time > 200) {
-            delay.restart();
-        }
-#endif
-#ifdef Q_OS_MAC
+#ifdef Q_OS_UNIX
         state->autorepeat = true;
 #endif
 
-        if(time >= 200 and !state->autorepeat) {
-            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
-        } else if(state->autorepeat) {
+        if (state->autorepeat) {
+            interval = 1000 / state->viewerState->stepsPerSec;
+        }
+        if (time - lastTime >= interval) {
+            lastTime = time;
             userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
         }
     }

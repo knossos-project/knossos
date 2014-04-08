@@ -25,17 +25,21 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "knossos-global.h"
+
 #include <QWidget>
 #include <qgl.h>
+
 class QLabel;
 class QCheckBox;
 class QDoubleSpinBox;
 class QPushButton;
 class QSpinBox;
 class QSlider;
-class VPSlicePlaneViewportWidget : public QWidget
-{
+
+class VPSlicePlaneViewportWidget : public QWidget {
     friend class ViewportSettingsWidget;
+    friend class EventModel;//hotkey 1 in vps – to toggle the skeleton overlay
     Q_OBJECT
 public:
     explicit VPSlicePlaneViewportWidget(QWidget *parent = 0);
@@ -46,12 +50,12 @@ signals:
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
 public slots:
-    void enableOverlayChecked(bool on);
-    void datasetLinearFilteringChecked(bool on);
-    void hightlightIntersectionsChecked(bool on);
+    void enableSkeletonOverlayClicked(bool checked);
+    void datasetLinearFilteringChecked(bool checked);
+    void hightlightIntersectionsChecked(bool checked);
     void depthCutoffChanged(double value);
-    void useOwnDatasetColorsCheckStateChanged(int checkState);
-    void useOwnTreeColorsCheckStateChanged(int checkState);
+    void useOwnDatasetColorsClicked(bool checked);
+    void useOwnTreeColorsClicked(bool checked);
     void useOwnDatasetColorsButtonClicked();
     void useOwnTreeColorButtonClicked();
     void biasSliderMoved(int value);
@@ -68,7 +72,7 @@ public slots:
 
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
-    QCheckBox *enableOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
+    QCheckBox *enableSkeletonOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
 

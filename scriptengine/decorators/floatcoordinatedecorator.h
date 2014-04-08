@@ -1,5 +1,5 @@
-#ifndef FLOATCOORDINATEDECORATOR_H
-#define FLOATCOORDINATEDECORATOR_H
+#ifndef FloatCoordinateDECORATOR_H
+#define FloatCoordinateDECORATOR_H
 
 #include <QObject>
 
@@ -28,4 +28,4 @@ public slots:
 
 };
 
-#endif // FLOATCOORDINATEDECORATOR_H
+#endif // FloatCoordinateDECORATOR_H

@@ -17,7 +17,7 @@ segmentListElement::segmentListElement(nodeListElement *source, nodeListElement 
     this->target = target;
 
 
-    floatCoordinate coordinate;
+    FloatCoordinate coordinate;
     coordinate.x = source->position.x - target->position.x;
     coordinate.y = source->position.y - target->position.y;
     coordinate.z = source->position.z - target->position.z;

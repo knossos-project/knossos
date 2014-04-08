@@ -84,12 +84,8 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     //state->skeletonState->autoFilenameIncrementBool = true;
     state->skeletonState->greatestNodeID = 0;
 
-    state->skeletonState->showXYplane = false;
-    state->skeletonState->showXZplane = false;
-    state->skeletonState->showYZplane = false;
     state->skeletonState->showNodeIDs = false;
     state->skeletonState->highlightActiveTree = true;
-    state->skeletonState->rotateAroundActiveNode = true;
     state->skeletonState->showIntersections = false;
 
     state->skeletonState->displayListSkeletonSkeletonizerVP = 0;
@@ -823,10 +819,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->onCommentLock));
     xml.writeEndElement();
 
-    xml.writeStartElement("skeletonDisplayMode");
-    xml.writeAttribute("displayModeBitFlags", tmp.setNum(state->skeletonState->displayMode));
-    xml.writeEndElement();
-
     xml.writeStartElement("time");
     time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
     xml.writeAttribute("ms", tmp.setNum(time));
@@ -1134,11 +1126,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                     if(attribute.isNull() == false) {
                         state->skeletonState->zoomLevel = attribute.toString().toFloat();
                     }
-                } else if(xml.name() == "skeletonDisplayMode") {
-                    QStringRef attribute = attributes.value("displayModeBitFlags");
-                    if(attribute.isNull() == false) {
-                        state->skeletonState->displayMode = attribute.toString().toInt();
-                    }
                 } else if(xml.name() == "RadiusLocking") {
                     QStringRef attribute = attributes.value("enableCommentLocking");
                     if(attribute.isNull() == false) {
@@ -1426,7 +1413,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     }
     state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-    emit displayModeChangedSignal();
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }

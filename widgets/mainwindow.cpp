@@ -82,20 +82,6 @@ MainWindow::MainWindow(QWidget *parent) :
     gui::oneShiftedCurrPos.z =
         state->viewerState->currentPosition.z + 1;
 
-    // for task management
-    taskState::cookieFile = (char*)calloc(1, sizeof("cookie"));
-    strcpy(taskState::cookieFile, "cookie");
-    taskState::taskFile = (char*)calloc(1, 1024 * sizeof(char));
-    taskState::taskName = (char*)calloc(1, 1024 *sizeof(char));
-    taskState::host = (char*)calloc(1, 10240 * sizeof(char));
-    strcpy(taskState::host, "149.217.51.57:8000");
-
-    /* init here instead of initSkeletonizer to fix some init order issue */
-    state->skeletonState->displayMode = 0;
-    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-
-    gui::commentBuffer = (char*)malloc(10240 * sizeof(char));
-    memset(gui::commentBuffer, '\0', 10240 * sizeof(char));
 
     gui::commentSearchBuffer = (char*)malloc(2048 * sizeof(char));
     memset(gui::commentSearchBuffer, '\0', 2048 * sizeof(char));
@@ -1439,17 +1425,15 @@ void MainWindow::openDatasetSlot() {
 void MainWindow::taskSlot() {
     CURLcode code;
     long httpCode = 0;
-    struct httpResponse response;
-    char url[1024];
 
     // build url to send to
-    memset(url, '\0', 1024);
-    sprintf(url, "%s%s", taskState::host, "/knossos/session/");
+    QString url(QString(taskState::host) + "/knossos/session/");
     // prepare http response object
+    httpResponse response;
     response.length = 0;
     response.content = (char*)calloc(1, response.length+1);
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpGET(url, &response, &httpCode, taskState::cookieFile, &code, 2);
+    bool result = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, taskState::cookieFile.toUtf8().data(), &code, 2);
     setCursor(Qt::ArrowCursor);
     if(result == false) {
         widgetContainer->taskLoginWidget->setResponse("Please login.");
@@ -1498,8 +1482,7 @@ void MainWindow::taskSlot() {
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {
-            taskState::taskFile[0] = '\0';
-            strcpy(taskState::taskFile, attribute.toStdString().c_str());
+            taskState::taskFile = attribute;
         }
         attribute = attributes.value("description").toString();
         if(attribute.isNull() == false) {

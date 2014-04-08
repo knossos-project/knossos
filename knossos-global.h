@@ -1048,7 +1048,7 @@ public:
     FloatCoordinate *normals;
     Color4F *colors;
 
-    /* useful for flexible mesh manipulations */
+    /* useful for flexible Mesh manipulations */
     uint vertsBuffSize;
     uint normsBuffSize;
     uint colsBuffSize;

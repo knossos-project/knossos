@@ -50,16 +50,16 @@ NavigationWidget::NavigationWidget(QWidget *parent) :
     QGroupBox *generalGroup = new QGroupBox("General");
     QFormLayout *formLayout = new QFormLayout();
 
-    movementSpeedLabel = new QLabel("Movement Speed:");
-    jumpFramesLabel = new QLabel("Jump Frames");
-    walkFramesLabel = new QLabel("Walk Frames");
+    movementSpeedLabel = new QLabel("Movement Speed [Frames/s]:");
+    jumpFramesLabel = new QLabel("Jump Frames (D, F)");
+    walkFramesLabel = new QLabel("Walk Frames (E, R)");
     recenterTimeParallelLabel = new QLabel("Recenter Time parallel [ms]:");
     recenterTimeOrthoLabel = new QLabel("Recenter Time Orthogonal [ms]:");
 
     movementSpeedSpinBox = new QSpinBox();
-    movementSpeedSpinBox->setMaximum(1000);
+    movementSpeedSpinBox->setRange(1, 1000);
     jumpFramesSpinBox = new QSpinBox;
-    jumpFramesSpinBox->setMaximum(1000);    
+    jumpFramesSpinBox->setMaximum(1000);
     walkFramesSpinBox = new QSpinBox;
     walkFramesSpinBox->setMaximum(1000);
     recenterTimeParallelSpinBox = new QSpinBox();

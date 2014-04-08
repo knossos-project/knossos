@@ -41,7 +41,7 @@ public:
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
     static bool resizeMeshCapacity(Mesh *toResize, uint n);
     static bool doubleMeshCapacity(Mesh *toDouble);
-    static bool initMesh(Mesh *meshToInit, uint initialSize);
+    static bool initMesh(Mesh *MeshToInit, uint initialSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
@@ -49,19 +49,19 @@ protected:
     uint renderViewportBorders(uint currentVP);
 
     uint renderSegPlaneIntersection(struct segmentListElement *segment);
-
+    void renderText(const Coordinate &pos, const QString &str);
     uint renderSphere(Coordinate *pos, float radius, Color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, Color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);    
     bool sphereInFrustum(FloatCoordinate pos, float radius, uint viewportType);
-    bool updateFrustumClippingPlanes(uint viewportType);    
+    bool updateFrustumClippingPlanes(uint viewportType);
+    
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     void retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
     void renderUserGeometry();
-    uint renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType);
 
 };
 

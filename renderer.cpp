@@ -212,32 +212,19 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, Color4F color, uint c
         return true;
 }
 
-uint Renderer::renderText(Coordinate *pos, char *string, uint currentVP, uint viewportType) {
-
-    /*glDisable(GL_DEPTH_TEST);
-    //glRasterPos3d(pos->x, pos->y, pos->z);
-    if(currentVP == VIEWPORT_XY)
-        refVPXY->renderText(pos->x, pos->y, pos->z, QString(string), font);
-    else if(currentVP == VIEWPORT_XZ)
-        refVPXZ->renderText(pos->x, pos->y, pos->z, QString(string), font);
-    else if(currentVP == VIEWPORT_YZ)
-         refVPYZ->renderText(pos->x, pos->y, pos->z, QString(string), font);
-    else if(currentVP == VIEWPORT_SKELETON)
-        refVPSkel->renderText(pos->x, pos->y, pos->z, QString(string), font);
-
-    glEnable(GL_DEPTH_TEST);
-    return true;*/
-    uchar *c = (uchar *)string;
+void Renderer::renderText(const Coordinate & pos, const QString & str) {
+    glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
-    glRasterPos3d(pos->x, pos->y, pos->z);
+    glRasterPos3d(pos.x, pos.y, pos.z);
 
-    for (; *c != '\0'; c++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+    for (const auto & elem : str) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, elem.unicode());
     }
+
     glEnable(GL_DEPTH_TEST);
-
-    return true;
-
+    if(state->viewerState->lightOnOff) {
+        glEnable(GL_LIGHTING);
+    }
 }
 
 uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
@@ -366,7 +353,6 @@ uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
 
 uint Renderer::renderViewportBorders(uint currentVP) {
     Coordinate pos;
-    char label[1024] = {'\0'};
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     /* define coordinate system for our viewport: left right bottom top near far */
@@ -454,9 +440,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
         float height = state->viewerState->vpConfigs[currentVP].displayedlengthInNmY*0.001;
         SET_COORDINATE(pos, 15, state->viewerState->vpConfigs[currentVP].edgeLength - 10, -1);
 
-
-        sprintf(label, "Height %.2f %cm, Width %.2f %cm", height, 0xb5, width, 0xb5);
-        renderText(&pos, label, currentVP, state->viewerState->vpConfigs[currentVP].type);
+        renderText(pos, QString("Height %0 µm, Width %1 µm").arg(height).arg(width));
     }
 
     glLineWidth(1.);
@@ -466,7 +450,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
 // Currently not used
 /* @todo update from trunk */
-//static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, color4F color)  {}
+//static uint overlayOrthogonalVpPixel(uint currentVP, Coordinate position, Color4F color)  {}
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
@@ -1110,9 +1094,6 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 }
 
 bool Renderer::renderSkeletonVP(uint currentVP) {
-    char * const textBuffer = (char*)malloc(32);
-    memset(textBuffer, '\0', 32);
-
     //glClear(GL_DEPTH_BUFFER_BIT); // better place? TDitem
 
     if(!state->viewerState->selectModeFlag) {
@@ -1694,50 +1675,22 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     /* new position */
     renderSkeleton(VIEWPORT_SKELETON, VIEWPORT_SKELETON);
 
-    Coordinate pos;
-
     // Draw axis description
     glColor4f(0., 0., 0., 1.);
-    memset(textBuffer, '\0', 32);
-    glRasterPos3f((float)-(state->boundary.x) / 2. - 50.,
-                  (float)-(state->boundary.y) / 2. - 50.,
-                  (float)-(state->boundary.z) / 2. - 50.);
 
-    sprintf(textBuffer, "1, 1, 1");
+    const Coordinate root_pos(- state->boundary.x / 2 - 50, - state->boundary.y / 2 - 50, - state->boundary.z / 2 - 50);
 
-    pos.x = (float)-(state->boundary.x) / 2. - 50.;
-    pos.y = (float)-(state->boundary.y) / 2. - 50.;
-    pos.z = (float)-(state->boundary.z) / 2. - 50.;
+    auto pos = root_pos;
+    renderText(pos, QString("1, 1, 1"));
 
-    renderText(&pos, textBuffer, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    pos = Coordinate(- root_pos.x, root_pos.y, root_pos.z);
+    renderText(pos, QString("%0, 1, 1").arg(state->boundary.x + 1));
 
-    memset(textBuffer, '\0', 32);
-    glRasterPos3f((float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50., -(state->boundary.z / 2)- 50.);
-    sprintf(textBuffer, "%d, 1, 1", state->boundary.x + 1);
-    pos.x = (float)(state->boundary.x) / 2. - 50., -(state->boundary.y / 2) - 50.;
-    pos.y = (float)-(state->boundary.y / 2) - 50.;
-    pos.z = (float)-(state->boundary.z) / 2. - 50.;
-    renderText(&pos, textBuffer, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    pos = Coordinate(root_pos.x, - root_pos.y, root_pos.z);
+    renderText(pos, QString("1, %0, 1").arg(state->boundary.y + 1));
 
-    memset(textBuffer, '\0', 32);
-    glRasterPos3f(-(state->boundary.x / 2)- 50., (float)(state->boundary.y) / 2. - 50., -(state->boundary.z / 2)- 50.);
-    sprintf(textBuffer, "1, %d, 1", state->boundary.y + 1);
-
-    pos.x = -(state->boundary.x / 2)- 50.;
-    pos.y = (float)(state->boundary.y) / 2. - 50.;
-    pos.z = -(state->boundary.z / 2)- 50.;
-
-    renderText(&pos, textBuffer, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
-
-    memset(textBuffer, '\0', 32);
-    glRasterPos3f(-(state->boundary.x / 2)- 50., -(state->boundary.y / 2)- 50., (float)(state->boundary.z) / 2. - 50.);
-    sprintf(textBuffer, "1, 1, %d", state->boundary.z + 1);
-
-    pos.x = -(state->boundary.x / 2)- 50.;
-    pos.y = -(state->boundary.y / 2)- 50.;
-    pos.z = (float)(state->boundary.z) / 2. - 50.;
-
-    renderText(&pos, textBuffer, VIEWPORT_SKELETON, VIEWPORT_SKELETON);
+    pos = Coordinate(root_pos.x, root_pos.y, - root_pos.z);
+    renderText(pos, QString("1, 1, %0").arg(state->boundary.z + 1));
 
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
@@ -1747,7 +1700,6 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     glLoadIdentity();
-    free(textBuffer);
     renderViewportBorders(currentVP);
     return true;
 }
@@ -2148,7 +2100,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     float cumDistToLastRenderedNode;
     FloatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
-    uint skippedCnt = 0;
     uint renderNode;
     float currentRadius;
 
@@ -2160,10 +2111,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     state->skeletonState->pointVertBuffer.normsIndex = 0;
     state->skeletonState->pointVertBuffer.colsIndex = 0;
     Color4F currentColor;
-
-    char *textBuffer;
-    textBuffer = (char *)malloc(32);
-    memset(textBuffer, '\0', 32);
 
     if((state->skeletonState->displayMode & DSP_SLICE_VP_HIDE)) {
         if(viewportType != VIEWPORT_SKELETON) {
@@ -2223,7 +2170,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
             if(!sphereInFrustum(currNodePos, currentNode->circRadius, currentVP)) {
                 currentNode = currentNode->next;
                 lastNode = lastRenderedNode = NULL;
-                //skippedCnt++;
                 continue;
             }
 
@@ -2380,13 +2326,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                 /* Render the node description only when option is set. */
                 if(state->skeletonState->showNodeIDs) {
                     glColor4f(0.f, 0.f, 0.f, 1.f);
-                    memset(textBuffer, '\0', 32);
-                    sprintf(textBuffer, "%d", currentNode->nodeID);
-                    renderText(&(currentNode->position), textBuffer, currentVP, viewportType);
+                    renderText(currentNode->position, QString::number(currentNode->nodeID));
                 }
                 lastRenderedNode = currentNode;
             }
-            //else skippedCnt++;
 
             lastNode = currentNode;
 
@@ -2458,9 +2401,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         ignoring state->skeletonState->showNodeIDs */
 
         glColor4f(0., 0., 0., 1.);
-        memset(textBuffer, '\0', 32);
-        sprintf(textBuffer, "%d", state->skeletonState->activeNode->nodeID);
-        renderText(&(state->skeletonState->activeNode->position), textBuffer, currentVP, viewportType);
+        renderText(state->skeletonState->activeNode->position, QString::number(state->skeletonState->activeNode->nodeID));
     }
 
     renderUserGeometry();
@@ -2469,12 +2410,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     glPopMatrix();
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-
-    free(textBuffer);
-    //float tmp = (float)skippedCnt / ((float)state->skeletonState->totalNodeElements +1.f) * 100.f;
-    //LOG("percent nodes skipped in this DL: %f", tmp)
-    return;
-
 }
 
 bool Renderer::resizeMeshCapacity(Mesh *toResize, uint n) {

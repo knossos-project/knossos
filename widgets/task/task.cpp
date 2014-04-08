@@ -7,10 +7,10 @@
 extern stateInfo *state;
 
 namespace taskState {
-char *host = NULL;
-char *cookieFile = NULL;
-char *taskFile = NULL;
-char *taskName = NULL;
+QString host = "heidelbrain.org";
+QString cookieFile = "cookie";
+QString taskFile = "";
+QString taskName = "";
 
 bool httpGET(char *url, struct httpResponse *response, long *httpCode,
                         char *cookiePath, CURLcode *code, long timeout) {
@@ -115,7 +115,7 @@ bool httpDELETE(char *url, struct httpResponse *response, long *httpCode,
     return false;
 }
 
-bool httpFileGET(char *url, char *postdata, FILE *file,
+bool httpFileGET(char *url, char *postdata, httpResponse *response,
                             struct httpResponse *header, long *httpCode,
                             char *cookiePath, CURLcode *code, long timeout) {
     CURL *handle;
@@ -139,7 +139,7 @@ bool httpFileGET(char *url, char *postdata, FILE *file,
         curl_easy_setopt(handle, CURLOPT_POSTFIELDS, postdata);
     }
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, writeToFile);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, writeHttpResponse);
     curl_easy_setopt(handle, CURLOPT_WRITEHEADER, header);
     curl_easy_setopt(handle, CURLOPT_TIMEOUT, timeout);
@@ -194,7 +194,7 @@ int copyInfoFromHeader(char *dest, struct httpResponse *header, char *info) {
 }
 
 void removeCookie() {
-    if(remove(taskState::cookieFile) != 0) {
+    if(QFile(taskState::cookieFile).remove()) {
         perror("Failed to delete file.");
     }
 }

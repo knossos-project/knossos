@@ -1,5 +1,5 @@
-#ifndef MESHDECORATOR_H
-#define MESHDECORATOR_H
+#ifndef MeshDECORATOR_H
+#define MeshDECORATOR_H
 
 #include <QObject>
 #include <QList>
@@ -39,4 +39,4 @@ public slots:
 
 };
 
-#endif // MESHDECORATOR_H
+#endif // MeshDECORATOR_H

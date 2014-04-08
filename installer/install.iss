@@ -96,4 +96,4 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\knossos.exe"; Tasks: desk
 
 [Run]
 ;Filename: "{app}\tools\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent nowait

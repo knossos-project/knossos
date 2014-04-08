@@ -34,8 +34,8 @@ float FloatCoordinateDecorator::z(FloatCoordinate *self) {
 QString FloatCoordinateDecorator::static_FloatCoordinate_help() {
     return QString("An instanceable class storing 3D coordinates as float. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
-                   "\n FloatCoordinate() : creates an empty floatCoordinate object. " \
-                   "\n FloatCoordinate(x, y, z) : creates a floatCoordinates object where all dimensions are to specify." \
+                   "\n FloatCoordinate() : creates an empty FloatCoordinate object. " \
+                   "\n FloatCoordinate(x, y, z) : creates a FloatCoordinates object where all dimensions are to specify." \
                    "\n\n GETTER: " \
                    "\n x() : returns the x value of the coordinate" \
                    "\n y() : returns the y value of the coordinate" \

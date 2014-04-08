@@ -24,12 +24,12 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "widgets/mainwindow.h"
+
 #include <memory>
 
 #include <qobject.h>
 #include <QtOpenGL>
-
-#include "widgets/mainwindow.h"
 
 class Splash {
     QSplashScreen screen;
