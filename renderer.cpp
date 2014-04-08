@@ -227,7 +227,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str) {
     }
 }
 
-uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
+uint Renderer::renderSegPlaneIntersection(struct SegmentListElement *segment) {
     if(!state->skeletonState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
@@ -1894,7 +1894,7 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
         if (hit_count > 0) {
             const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
             if (name >= GLNAME_NODEID_OFFSET) {
-                nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
+                NodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
                 if (foundNode) {
                     foundNode->selected = true;
                     state->skeletonState->selectedNodes.push_back(foundNode);
@@ -2095,8 +2095,8 @@ bool Renderer::setRotationState(uint setTo) {
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 
     TreeListElement *currentTree;
-    nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
-    struct segmentListElement *currentSegment;
+    NodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
+    struct SegmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
     FloatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;

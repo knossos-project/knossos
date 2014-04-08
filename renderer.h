@@ -48,7 +48,7 @@ protected:
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     uint renderViewportBorders(uint currentVP);
 
-    uint renderSegPlaneIntersection(struct segmentListElement *segment);
+    uint renderSegPlaneIntersection(struct SegmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str);
     uint renderSphere(Coordinate *pos, float radius, Color4F color, uint currentVP, uint viewportType);
     uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, Color4F color, uint currentVP, uint viewportType);

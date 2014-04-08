@@ -32,9 +32,10 @@
         <file>icons/graph.png</file>
         <file>icons/task.png</file>
         <file>icons/open-dataset.png</file>
-		<file>icons/open-skeleton.png</file>
+        <file>icons/open-skeleton.png</file>
     </qresource>
     <qresource prefix="/misc">
         <file>style.qss</file>
+        <file>python/converter.py</file>
     </qresource>
 </RCC>

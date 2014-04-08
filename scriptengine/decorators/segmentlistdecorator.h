@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-class segmentListElement;
-class nodeListElement;
+class SegmentListElement;
+class NodeListElement;
 class SegmentListDecorator : public QObject
 {
     Q_OBJECT
@@ -15,22 +15,22 @@ signals:
     
 public slots:
     /*
-    segmentListElement *new_segmentListElement();
-    segmentListElement *new_segmentListElement(int sourceID, int targetID);
-    segmentListElement *new_segmentListElement(nodeListElement *source, nodeListElement *target);
+    SegmentListElement *new_SegmentListElement();
+    SegmentListElement *new_SegmentListElement(int sourceID, int targetID);
+    SegmentListElement *new_SegmentListElement(NodeListElement *source, NodeListElement *target);
     */
 
-    nodeListElement *source(segmentListElement *self);
-    nodeListElement *target(segmentListElement *self);
-    int source_id(segmentListElement *self);
-    int target_id(segmentListElement *self);
-    QString static_segmentListElement_help();
+    NodeListElement *source(SegmentListElement *self);
+    NodeListElement *target(SegmentListElement *self);
+    int source_id(SegmentListElement *self);
+    int target_id(SegmentListElement *self);
+    QString static_SegmentListElement_help();
 
     /*
-    void set_source(segmentListElement *self, nodeListElement *source);
-    void set_target(segmentListElement *self, nodeListElement *target);
-    void set_source_id(segmentListElement *self, int sourceID);
-    void set_target_id(segmentListElement *self, int targetID);
+    void set_source(SegmentListElement *self, NodeListElement *source);
+    void set_target(SegmentListElement *self, NodeListElement *target);
+    void set_source_id(SegmentListElement *self, int sourceID);
+    void set_target_id(SegmentListElement *self, int targetID);
     */
 };
 

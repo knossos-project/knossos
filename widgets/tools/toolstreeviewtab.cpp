@@ -625,7 +625,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
     if(activeNodeTable->selectionProtection) {
         return;
     }
-    nodeListElement *activeNode = state->skeletonState->activeNode;
+    NodeListElement *activeNode = state->skeletonState->activeNode;
     if(activeNode == nullptr) {
         return;
     }
@@ -729,7 +729,7 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
     if(idItem == nullptr) {
         return;
     }
-    nodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toInt());
+    NodeListElement *selectedNode = Skeletonizer::findNodeByNodeID(idItem->text().toInt());
     if(selectedNode == nullptr) {
         return;
     }
@@ -939,7 +939,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
-        nodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toInt());
+        NodeListElement * const node = Skeletonizer::findNodeByNodeID(index.data().toInt());
         //select node
         if (node != nullptr) {
             node->selected = true;
@@ -1085,7 +1085,7 @@ void ToolsTreeviewTab::recreateNodesTable() {
 
     int nodeIndex = 0;
     for (TreeListElement * currentTree = state->skeletonState->firstTree; currentTree != nullptr; currentTree = currentTree->next) {
-        for (nodeListElement * node = currentTree->firstNode; node != nullptr; node = node->next) {
+        for (NodeListElement * node = currentTree->firstNode; node != nullptr; node = node->next) {
             // cap node list elements
             if (displayedNodes != DISPLAY_ALL && nodeIndex >= displayedNodes) {
                 break;
@@ -1280,7 +1280,7 @@ void ToolsTreeviewTab::branchPopped() {
     }
 }
 
-void ToolsTreeviewTab::nodeCommentChanged(nodeListElement *node) {
+void ToolsTreeviewTab::nodeCommentChanged(NodeListElement *node) {
     if (node == state->skeletonState->activeNode) {
         const QString cmt = node->comment == nullptr ? "" : node->comment->content;
         setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), cmt);
@@ -1294,7 +1294,7 @@ void ToolsTreeviewTab::nodeCommentChanged(nodeListElement *node) {
     }
 }
 
-void ToolsTreeviewTab::nodeRadiusChanged(nodeListElement *node) {
+void ToolsTreeviewTab::nodeRadiusChanged(NodeListElement *node) {
     if (node == state->skeletonState->activeNode) {
         setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(state->skeletonState->activeNode->radius));
     }
@@ -1306,7 +1306,7 @@ void ToolsTreeviewTab::nodeRadiusChanged(nodeListElement *node) {
     }
 }
 
-void ToolsTreeviewTab::nodePositionChanged(nodeListElement *node) {
+void ToolsTreeviewTab::nodePositionChanged(NodeListElement *node) {
     if (node == state->skeletonState->activeNode) {
         setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_X), QString::number(node->position.x + 1));
         setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_Y), QString::number(node->position.y + 1));
@@ -1349,7 +1349,7 @@ void ToolsTreeviewTab::insertTree(TreeListElement *tree, TreeTable *table) {
             , tree->comment == nullptr ? "" : tree->comment);
 }
 
-void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
+void ToolsTreeviewTab::insertNode(NodeListElement *node, NodeTable *table) {
     if(node == nullptr) {
         return;
     }

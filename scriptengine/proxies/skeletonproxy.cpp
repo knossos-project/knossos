@@ -2,6 +2,7 @@
 #include "functions.h"
 #include "skeletonizer.h"
 #include <QApplication>
+#include <QFile>
 
 extern stateInfo *state;
 
@@ -39,6 +40,33 @@ TreeListElement *SkeletonProxy::first_tree() {
 
 /** @notyetimplemented */
 void SkeletonProxy::export_converter(const QString &path) {
+    QDir dir(path);
+    if(!dir.exists()) {
+        emit signalDelegate->echo("path does not exist");
+        return;
+    }
+
+    QFile targetFile(path + "converter.py");
+    if(!targetFile.open(QIODevice::WriteOnly)) {
+        emit signalDelegate->echo("error creating a file in this path");
+        return;
+    }
+
+    QTextStream stream(&targetFile);
+
+    QFile converter(":/misc/python/converter.py");
+    if(!converter.open(QIODevice::ReadOnly)) {
+        emit signalDelegate->echo("error while reading the converter from the resource directory");
+        return;
+    }
+
+    stream << converter.readAll();
+
+    converter.close();
+    targetFile.close();
+
+    emit signalDelegate->echo("exported to (" + targetFile.fileName() + ")");
+
 
 }
 
@@ -64,7 +92,7 @@ void SkeletonProxy::set_active_node(int node_id) {
     }
 }
 
-nodeListElement *SkeletonProxy::active_node() {
+NodeListElement *SkeletonProxy::active_node() {
     return state->skeletonState->activeNode;
 }
 
@@ -117,7 +145,7 @@ void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float
 }
 
 void SkeletonProxy::add_comment(int node_id, char *comment) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    NodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     if(node) {
         if(!Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false)) {
             emit signalDelegate->echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
@@ -136,7 +164,7 @@ void SkeletonProxy::add_segment(int source_id, int target_id) {
 }
 
 void SkeletonProxy::add_branch_node(int node_id) {
-    nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
+    NodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
     if(currentNode) {
         if(Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false)) {
             emit signalDelegate->updateToolsSignal();

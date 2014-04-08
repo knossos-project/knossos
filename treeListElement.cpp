@@ -18,10 +18,10 @@ TreeListElement::TreeListElement(int treeID, QString comment, float r, float g, 
     strcpy(this->comment, comment.toLocal8Bit().data());
 }
 
-QList<nodeListElement *> *TreeListElement::getNodes() {
-    QList<nodeListElement *> *nodes = new QList<nodeListElement *>();
+QList<NodeListElement *> *TreeListElement::getNodes() {
+    QList<NodeListElement *> *nodes = new QList<NodeListElement *>();
 
-    nodeListElement *currentNode = firstNode;
+    NodeListElement *currentNode = firstNode;
     while(currentNode) {
         nodes->append(currentNode);
         currentNode = currentNode->next;

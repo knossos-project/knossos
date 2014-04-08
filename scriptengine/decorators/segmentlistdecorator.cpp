@@ -7,43 +7,43 @@ SegmentListDecorator::SegmentListDecorator(QObject *parent) :
 }
 
 /*
-segmentListElement *SegmentListDecorator::new_segmentListElement() {
-    return new segmentListElement();
+SegmentListElement *SegmentListDecorator::new_SegmentListElement() {
+    return new SegmentListElement();
 }
 
-segmentListElement *SegmentListDecorator::new_segmentListElement(int sourceID, int targetID) {
-    return new segmentListElement(sourceID, targetID);
+SegmentListElement *SegmentListDecorator::new_SegmentListElement(int sourceID, int targetID) {
+    return new SegmentListElement(sourceID, targetID);
 }
 
-segmentListElement *SegmentListDecorator::new_segmentListElement(nodeListElement *source, nodeListElement *target) {
-    return new segmentListElement(source, target);
+SegmentListElement *SegmentListDecorator::new_SegmentListElement(NodeListElement *source, NodeListElement *target) {
+    return new SegmentListElement(source, target);
 }
 */
 
 
-nodeListElement *SegmentListDecorator::source(segmentListElement *self) {
+NodeListElement *SegmentListDecorator::source(SegmentListElement *self) {
     return self->source;
 }
 
-nodeListElement *SegmentListDecorator::target(segmentListElement *self) {
+NodeListElement *SegmentListDecorator::target(SegmentListElement *self) {
     return self->target;
 }
 
-int SegmentListDecorator::source_id(segmentListElement *self) {
+int SegmentListDecorator::source_id(SegmentListElement *self) {
     if(self->source)
         return self->source->nodeID;
 
     return 0;
 }
 
-int SegmentListDecorator::target_id(segmentListElement *self) {
+int SegmentListDecorator::target_id(SegmentListElement *self) {
     if(self->target)
         return self->target->nodeID;
 
     return 0;
 }
 
-QString SegmentListDecorator::static_segmentListElement_help() {
+QString SegmentListDecorator::static_SegmentListElement_help() {
     return QString("the read-only class representing a connection between tree nodes of the KNOSSOS skeleton. Access to attributes only via getter and setter." \
                    "source() : returns the source node of the segment" \
                    "source_id() : returns the source node id of the segment" \
@@ -53,19 +53,19 @@ QString SegmentListDecorator::static_segmentListElement_help() {
 
 
 /*
-void SegmentListDecorator::set_source(segmentListElement *self, nodeListElement *source) {
+void SegmentListDecorator::set_source(SegmentListElement *self, NodeListElement *source) {
     self->setSource(source);
 }
 
-void SegmentListDecorator::set_target(segmentListElement *self, nodeListElement *target) {
+void SegmentListDecorator::set_target(SegmentListElement *self, NodeListElement *target) {
     self->setTarget(target);
 }
 
-void SegmentListDecorator::set_source_id(segmentListElement *self, int sourceID) {
+void SegmentListDecorator::set_source_id(SegmentListElement *self, int sourceID) {
     self->setSource(sourceID);
 }
 
-void SegmentListDecorator::set_target_id(segmentListElement *self, int targetID) {
+void SegmentListDecorator::set_target_id(SegmentListElement *self, int targetID) {
     self->setTarget(targetID);
 }*/
 

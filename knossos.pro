@@ -53,9 +53,9 @@ SOURCES += openjpeg/cio.c \
     ftp.cpp \
     stateInfo.cpp \
     Color4F.cpp \
-    nodeListElement.cpp \
-    segmentListElement.cpp \
-    treeListElement.cpp \
+    NodeListElement.cpp \
+    SegmentListElement.cpp \
+    TreeListElement.cpp \
     treeLUT_fallback.cpp \
     sha256.cpp \
     widgets/viewport.cpp \    

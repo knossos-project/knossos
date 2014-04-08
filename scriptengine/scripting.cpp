@@ -123,13 +123,13 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("Color4F", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
-    PythonQt::self()->registerCPPClass("segmentListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("SegmentListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("treeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("TreeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("NodeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
     PythonQt::self()->registerCPPClass("Mesh", "",  module.toLocal8Bit().data());

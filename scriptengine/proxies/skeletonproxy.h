@@ -46,7 +46,7 @@ public slots:
     void delete_skeleton();
     void set_active_node(int node_id);
     void add_comment(int node_id, char *comment);
-    nodeListElement *active_node();
+    NodeListElement *active_node();
     QList<TreeListElement *> *trees();
     void add_tree(int tree_id, const QString &comment = 0, float r = -1, float g = -1, float b = -1, float a = 1);
     void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);

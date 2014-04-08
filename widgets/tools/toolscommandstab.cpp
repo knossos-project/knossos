@@ -171,7 +171,7 @@ void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
 }
 
 void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
-    nodeListElement *node = findNodeByNodeIDSignal(value);
+    NodeListElement *node = findNodeByNodeIDSignal(value);
     if(node == NULL) {
         return;
 //        // no node with this value.

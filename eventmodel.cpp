@@ -41,7 +41,7 @@ EventModel::EventModel(QObject *parent) :
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     uint clickedNode;
-    nodeListElement* newActiveNode;
+    NodeListElement* newActiveNode;
     Coordinate *clickedCoordinate = NULL;
 
     //new active node selected
@@ -563,7 +563,7 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
 
 bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        nodeListElement *selectedNode = NULL;
+        NodeListElement *selectedNode = NULL;
         int diffX = state->viewerState->nodeSelectionSquare.first.x - event->pos().x();
         int diffY = state->viewerState->nodeSelectionSquare.first.y - event->pos().y();
         if((diffX < 5 and diffX > -5) and (diffY < 5 and diffY > -5)) { // interpreted as click instead of drag
@@ -574,7 +574,7 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             }
 
             if(selectedNode) {
-                std::vector<nodeListElement*>::iterator iter;
+                std::vector<NodeListElement*>::iterator iter;
                 //check if already in buffer
                 if((iter = std::find(state->skeletonState->selectedNodes.begin(),
                              state->skeletonState->selectedNodes.end(),
@@ -803,7 +803,7 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
 
     TreeListElement *prevTree;
     TreeListElement *nextTree;
-    nodeListElement *prevNode;
+    NodeListElement *prevNode;
     Color4F treeCol;
 
     Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();

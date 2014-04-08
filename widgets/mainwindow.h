@@ -100,11 +100,11 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, NodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
 
-    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool addCommentSignal(int targetRevision, QString content, NodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, NodeListElement *newNode, int newNodeID, int serialize);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
@@ -112,7 +112,7 @@ signals:
     void treeAddedSignal(TreeListElement *tree);
     void branchPushedSignal();
     void branchPoppedSignal();
-    void nodeCommentChangedSignal(nodeListElement *node);
+    void nodeCommentChangedSignal(NodeListElement *node);
     void viewportDecorationSignal(bool visible);
 protected:
     void resizeEvent(QResizeEvent *event);

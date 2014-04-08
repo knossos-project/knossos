@@ -22,8 +22,8 @@ class QSplitter;
 class QMenu;
 
 class TreeListElement;
-class nodeListElement;
-class segmentListElement;
+class NodeListElement;
+class SegmentListElement;
 
 class ToolsTreeviewTab : public QWidget
 {
@@ -72,7 +72,7 @@ public:
 
 protected:
     void insertTree(TreeListElement *tree, TreeTable *table);
-    void insertNode(nodeListElement *node, NodeTable *table);
+    void insertNode(NodeListElement *node, NodeTable *table);
     void setText(TreeTable *table, QTableWidgetItem *item, QString text);
     void setText(NodeTable *table, QTableWidgetItem *item, QString text);
     int getActiveTreeRow();
@@ -82,10 +82,10 @@ signals:
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
-    void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
+    void setActiveNodeSignal(int revision, NodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, SegmentListElement *segToDel, int serialize);
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
@@ -132,9 +132,9 @@ public slots:
     void nodeAdded();
     void branchPushed();
     void branchPopped();
-    void nodeCommentChanged(nodeListElement *node);
-    void nodeRadiusChanged(nodeListElement *node);
-    void nodePositionChanged(nodeListElement *node);
+    void nodeCommentChanged(NodeListElement *node);
+    void nodeRadiusChanged(NodeListElement *node);
+    void nodePositionChanged(NodeListElement *node);
     void recreateTreesTable();    
     void recreateNodesTable();
     void update();

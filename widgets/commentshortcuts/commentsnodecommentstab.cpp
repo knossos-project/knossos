@@ -49,7 +49,7 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 
 void CommentsNodeCommentsTab::updateCommentsTable() {
     TreeListElement *tree;
-    nodeListElement *node;
+    NodeListElement *node;
     char nodeDisplay[512];
     QString filterNoCase, *commentNoCase;
     bool filtered;

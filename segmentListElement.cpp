@@ -2,17 +2,17 @@
 #include "functions.h"
 #include "skeletonizer.h"
 
-segmentListElement::segmentListElement() {
+SegmentListElement::SegmentListElement() {
 
 }
 
 /*
-segmentListElement::segmentListElement(int sourceID, int targetID) {
+SegmentListElement::SegmentListElement(int sourceID, int targetID) {
 
 
 }
 
-segmentListElement::segmentListElement(nodeListElement *source, nodeListElement *target) {
+SegmentListElement::SegmentListElement(NodeListElement *source, NodeListElement *target) {
     this->source = source;
     this->target = target;
 

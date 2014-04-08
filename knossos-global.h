@@ -295,8 +295,8 @@ class FloatCoordinate;
 class Coordinate;
 class Color4F;
 class TreeListElement;
-class nodeListElement;
-class segmentListElement;
+class NodeListElement;
+class SegmentListElement;
 class commentListElement;
 class Mesh;
 
@@ -796,7 +796,7 @@ struct vpConfig {
     //necessary because the mouse can be outside the VP while the user still wants e.g. to drag the panel
     Byte motionTracking;
 
-    nodeListElement *draggedNode;
+    NodeListElement *draggedNode;
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
@@ -950,26 +950,26 @@ public:
 
     TreeListElement *next;
     TreeListElement *previous;
-    nodeListElement *firstNode;
+    NodeListElement *firstNode;
 
     int treeID;
     Color4F color;
     int colorSetManually;
 
     char comment[8192];
-    QList<nodeListElement *> *getNodes();
+    QList<NodeListElement *> *getNodes();
 
 };
 
-class nodeListElement  {
+class NodeListElement  {
 public:
-    nodeListElement();
-    nodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+    NodeListElement();
+    NodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
 
-    nodeListElement *next;
-    nodeListElement *previous;
+    NodeListElement *next;
+    NodeListElement *previous;
 
-    segmentListElement *firstSegment;
+    SegmentListElement *firstSegment;
     TreeListElement *correspondingTree;
 
     float radius;
@@ -994,20 +994,20 @@ public:
 
 
 
-    QList<segmentListElement *> *getSegments();
+    QList<SegmentListElement *> *getSegments();
 
 };
 
 
 
-class segmentListElement {
+class SegmentListElement {
 public:
-    segmentListElement();    
-    segmentListElement *next;
-    segmentListElement *previous;
+    SegmentListElement();
+    SegmentListElement *next;
+    SegmentListElement *previous;
 
     //Contains the reference to the segment inside the target node
-    segmentListElement *reverseSegment;
+    SegmentListElement *reverseSegment;
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
@@ -1022,8 +1022,8 @@ public:
     //Coordinate pos1;
     //Coordinate pos2;
 
-    nodeListElement *source;
-    nodeListElement *target;
+    NodeListElement *source;
+    NodeListElement *target;
 
 
 };
@@ -1037,7 +1037,7 @@ public:
 
     char *content;
 
-    nodeListElement *node;
+    NodeListElement *node;
 };
 
 class Mesh {
@@ -1093,11 +1093,11 @@ public:
     Hashtable *skeletonDCs;
     TreeListElement *firstTree;
     TreeListElement *activeTree;
-    nodeListElement *activeNode;
+    NodeListElement *activeNode;
 
 
     std::vector<TreeListElement *> selectedTrees;
-    std::vector<nodeListElement *> selectedNodes;
+    std::vector<NodeListElement *> selectedNodes;
 
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;
@@ -1187,7 +1187,7 @@ public:
 
     Color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
-    nodeListElement *selectedCommentNode;
+    NodeListElement *selectedCommentNode;
 
     //If true, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
