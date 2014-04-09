@@ -145,8 +145,8 @@ void ZoomAndMultiresWidget::orthogonalSpinBoxChanged(double value) {
 void ZoomAndMultiresWidget::skeletonSpinBoxChanged(double value) {
     if(userZoomSkel) {
         userZoomSkel = false;
-        if((value > lastZoomSkel and value < lastZoomSkel + 2
-           or value < lastZoomSkel and value > lastZoomSkel - 2) == false) {
+        if ( ((value > lastZoomSkel and value < lastZoomSkel + 2)
+                or (value < lastZoomSkel and value > lastZoomSkel - 2)) == false) {
             // difference at least greater than two,
             // so user entered a number instead of clicking the up and down buttons
             state->skeletonState->zoomLevel = value/100*SKELZOOMMAX;
@@ -187,8 +187,8 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
     emit zoomLevelSignal(0.0);
 }
 
-void ZoomAndMultiresWidget::closeEvent(QCloseEvent *event) {
-    this->hide();   
+void ZoomAndMultiresWidget::closeEvent(QCloseEvent *) {
+    this->hide();
 }
 
 void ZoomAndMultiresWidget::update() {
@@ -204,8 +204,8 @@ void ZoomAndMultiresWidget::update() {
     skeletonViewportSpinBox->setValue(100*state->skeletonState->zoomLevel/SKELZOOMMAX);
 
     QString currentActiveMag = QString("Currently active mag dataset: %1").arg(state->magnification);
-    QString highestActiveMag = QString("Highest active mag dataset: %1").arg(state->highestAvailableMag);
-    QString lowestActiveMag = QString("Lowest active mag dataset: %1").arg(state->lowestAvailableMag);
+    QString highestActiveMag = QString("Highest available mag dataset: %1").arg(state->highestAvailableMag);
+    QString lowestActiveMag = QString("Lowest available mag dataset: %1").arg(state->lowestAvailableMag);
 
     this->currentActiveMagDatasetLabel->setText(currentActiveMag);
     this->highestActiveMagDatasetLabel->setText(highestActiveMag);

@@ -211,7 +211,6 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     }
     else if(httpCode != 200){
         setResponse(QString("<font color='red'>Error received from server.</font><br />%0").arg(response.content));
-        qDebug(header.content);
         QFile(state->taskState->taskFile).remove();
         free(header.content);
         return;

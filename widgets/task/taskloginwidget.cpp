@@ -155,6 +155,6 @@ void TaskLoginWidget::setTaskManagementWidget(TaskManagementWidget *management) 
     taskManagementWidget = management;
 }
 
-void TaskLoginWidget::closeEvent(QCloseEvent *event) {
+void TaskLoginWidget::closeEvent(QCloseEvent *) {
     this->hide();
 }

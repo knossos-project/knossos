@@ -710,7 +710,7 @@ struct taskState {
     static bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
     static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
     static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
-    static int copyInfoFromHeader(char *dest, struct httpResponse *header, char* info);
+    static int copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info);
     static void removeCookie();
     static QString CSRFToken();
     static QString getCategory();
