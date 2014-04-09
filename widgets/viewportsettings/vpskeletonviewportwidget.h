@@ -57,12 +57,11 @@ class VPSkeletonViewportWidget : public QWidget
     QFrame line3;
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
 
-    void resetDisplayMode();
 //slots
-    void wholeSkeletonSelected();
-    void onlyCurrentCubeSelected();
-    void onlyActiveTreeSelected();
-    void hideSkeletonSelected();
+    void wholeSkeletonSelected(bool checked);
+    void onlyCurrentCubeSelected(bool checked);
+    void onlyActiveTreeSelected(bool checked);
+    void hideSkeletonSelected(bool checked);
 public:
     explicit VPSkeletonViewportWidget(QWidget * const parent = nullptr);
 signals:

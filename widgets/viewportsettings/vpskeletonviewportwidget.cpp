@@ -69,34 +69,38 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
 }
 
-void VPSkeletonViewportWidget::wholeSkeletonSelected() {
-    resetDisplayMode();
-    state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+void VPSkeletonViewportWidget::wholeSkeletonSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
+    }
     emit updateViewerStateSignal();
 }
 
-void VPSkeletonViewportWidget::onlyCurrentCubeSelected() {
-    resetDisplayMode();
-    state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
+void VPSkeletonViewportWidget::onlyCurrentCubeSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_SKEL_VP_CURRENTCUBE;
+    }
     emit updateViewerStateSignal();
 }
 
-void VPSkeletonViewportWidget::onlyActiveTreeSelected() {
-    resetDisplayMode();
-    state->skeletonState->displayMode |= DSP_ACTIVETREE;
+void VPSkeletonViewportWidget::onlyActiveTreeSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_ACTIVETREE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_ACTIVETREE;
+    }
     emit updateViewerStateSignal();
 }
 
-void VPSkeletonViewportWidget::hideSkeletonSelected() {
-    resetDisplayMode();
-    state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
+void VPSkeletonViewportWidget::hideSkeletonSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
+    }
     emit updateViewerStateSignal();
-}
-
-void VPSkeletonViewportWidget::resetDisplayMode() {
-    state->skeletonState->displayMode &=
-            (~DSP_SKEL_VP_WHOLE &
-            ~DSP_ACTIVETREE &
-            ~DSP_SKEL_VP_HIDE &
-            ~DSP_SKEL_VP_CURRENTCUBE);
 }
