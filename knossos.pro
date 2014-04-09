@@ -183,7 +183,8 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
-    widgets/tools/treetable.h
+    widgets/tools/treetable.h \
+    turbojpeg.h
 
 FORMS    += mainwindow.ui
 
@@ -266,7 +267,8 @@ win32 {
             -lglut32 \
             #-lpythonQt$${DEBUG_EXT} \
             #-lpythonQt_QtAll$${DEBUG_EXT} \
-            -lwsock32
+            -lwsock32 \
+            -lturbojpeg
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
