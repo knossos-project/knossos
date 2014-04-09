@@ -109,9 +109,6 @@ public slots:
 protected:
     bool calcLeftUpperTexAbsPx();
     bool initViewer();
-    void processUserMove();
-    QElapsedTimer delay;
-    qint64 lastTime;
     bool idlingExceeds(uint msec);
 };
 

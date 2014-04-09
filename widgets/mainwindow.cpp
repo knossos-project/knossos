@@ -1711,7 +1711,6 @@ void MainWindow::resizeViewports(int width, int height) {
         viewports[VIEWPORT_SKELETON]->move(DEFAULT_VP_MARGIN + height, DEFAULT_VP_MARGIN + height);
         for(int i = 0; i < 4; i++) {
             viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
-            viewports[i]->updateButtonPositions();
         }
     }
 }

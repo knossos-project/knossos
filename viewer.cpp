@@ -56,7 +56,6 @@ Viewer::Viewer(QObject *parent) :
     vpUpperLeft->eventDelegate = vpLowerLeft->eventDelegate = vpUpperRight->eventDelegate = vpLowerRight->eventDelegate = eventModel;
 
     timer = new QTimer();
-    lastTime = 0;
 
     /* order of the initialization of the rendering system is
      * 1. initViewer
@@ -117,8 +116,6 @@ Viewer::Viewer(QObject *parent) :
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
     state->viewerState->renderInterval = FAST;
-
-    delay.start();
 }
 
 bool Viewer::resetViewPortData(vpConfig *viewport) {
@@ -1112,7 +1109,18 @@ void Viewer::run() {
     //start the timer before the rendering, else render interval and actual rendering time would accumulate
     timer->singleShot(state->viewerState->renderInterval, this, SLOT(run()));
 
-    processUserMove();
+    static QElapsedTimer baseTime;
+    if (state->viewerKeyRepeat && (state->keyF || state->keyD)) {
+        qint64 interval = 1000 / state->viewerState->stepsPerSec;
+        if (baseTime.elapsed() >= interval) {
+            baseTime.restart();
+            if (state->viewerState->vpConfigs[0].type != VIEWPORT_ARBITRARY) {
+                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
+            } else {
+                userMove_arb(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
+            }
+        }
+    }
     // Event and rendering loop.
     // What happens is that we go through lists of pending texture parts and load
     // them if they are available.
@@ -1365,7 +1373,6 @@ bool Viewer::userMove_arb(float x, float y, float z, int serverMovement) {
     step.z = roundFloat(state->viewerState->moveCache.z);
     SUB_COORDINATE(state->viewerState->moveCache, step);
     return userMove(step.x, step.y, step.z, serverMovement);
-    return false;
 }
 
 
@@ -2116,32 +2123,4 @@ bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1,
         SET_COORDINATE((*v3), (cos(alpha)*sin(beta)), (sin(alpha)*sin(beta)), (cos(beta)));
 
         return true;
-}
-
-/** The platform decisions are unfortunately neccessary because the behaviour of the event handling
- *  differs from platform to platform.
- *  The details here are that key events are recognized by settings flags in the event handler. At the begin of the method run()
- *  we are checking if the keys F or D are still pressed. In this case the new coordinates (which were already calculated in the event-handler) will be passed
- *  to the the method userMove which is from here a direct call, that has no signal and slot delay. This prevents two things. First of all it prevents a strange effect unter windows
- *  that pressing F or D and fast mouse movements had led to delayed mouse event processing. The second thing is that there was a delay between the userMoveSignal from the eventhandler
- *  and the processing of the userMove Slot. The run method was called but the new position was first available in the next frame. Thus rendering an "empty" frame could be prevented.
- *
-*/
-void Viewer::processUserMove() {
-    if(state->keyF or state->keyD) {
-        qint64 time = delay.elapsed();
-        qint64 interval = 200;
-
-#ifdef Q_OS_UNIX
-        state->autorepeat = true;
-#endif
-
-        if (state->autorepeat) {
-            interval = 1000 / state->viewerState->stepsPerSec;
-        }
-        if (time - lastTime >= interval) {
-            lastTime = time;
-            userMove(state->newCoord[0], state->newCoord[1], state->newCoord[2], TELL_COORDINATE_CHANGE);
-        }
-    }
 }

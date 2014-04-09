@@ -441,19 +441,6 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int)floorf(floatHalfSc);
 
-    /*
-    switch (state->viewerState->activeVP) {
-        case VIEWPORT_XY:
-            dz = state->directionSign;
-            break;
-        case VIEWPORT_XZ:
-            dy = state->directionSign;
-            break;
-        case VIEWPORT_YZ:
-            dx = state->directionSign;
-            break;
-    }
-    */
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
         dx += (float)state->currentDirections[i].x;
         dy += (float)state->currentDirections[i].y;

@@ -32,34 +32,19 @@
 #include <QtOpenGL>
 #include <QDebug>
 #include <QFont>
+#include <QPushButton>
 
+class Viewport;
 
-#define VP_UPPERLEFT 0
-#define VP_LOWERLEFT 1
-#define VP_UPPERRIGHT 2
-#define VP_LOWERRIGHT 3
-
-class QPushButton;
+enum {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT};
 
 class ResizeButton : public QPushButton {
+    Q_OBJECT
+    void mouseMoveEvent(QMouseEvent * event) override;
 public:
-    static const int SIZE = 22;
-    explicit ResizeButton(QWidget *parent);
-protected:
-    void enterEvent(QEvent *);
-    void leaveEvent(QEvent *);
-};
-
-class ViewportButton : public QPushButton {
-public:
-    static const int WIDTH = 35;
-    static const int HEIGHT = 20;
-
-    explicit ViewportButton(QString label, QWidget *parent);
-
-protected:
-    void enterEvent(QEvent *);
-    void leaveEvent(QEvent *);
+    explicit ResizeButton(Viewport * parent);
+signals:
+    void vpResize(QMouseEvent * event);
 };
 
 class Viewport : public QGLWidget
@@ -71,48 +56,33 @@ public:
     void drawSkeletonViewport();
     void hideButtons();
     void showButtons();
-    void updateButtonPositions();
     EventModel *eventDelegate;
-    static const int MIN_VP_SIZE = 50;
 
 protected:
     void initializeGL();
     void initializeOverlayGL();
     void resizeGL(int w, int h);
     void paintGL();
+    void enterEvent(QEvent * event);
     void mouseMoveEvent(QMouseEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
-    void enterEvent(QEvent *event);
-    void leaveEvent(QEvent *event);
 
-    int xrel(int x);
-    int yrel(int y);
     uint id; // VP_UPPERLEFT, ...
     int viewportType; // XY_VIEWPORT, ...
-    int lastX; //last x position
-    int lastY; //last y position
+    int baseEventX; //last x position
+    int baseEventY; //last y position
 
-    bool entered;
-    QPushButton *resizeButton;
+    ResizeButton *resizeButton;
     QPushButton *xyButton, *xzButton, *yzButton, *r90Button, *r180Button, *resetButton;
     QMenu *contextMenu;
 private:
     bool resizeButtonHold;
     void resizeVP(QMouseEvent *event);
     void moveVP(QMouseEvent *event);
-    bool handleMouseButtonLeft(QMouseEvent *event, int vpID);
-    bool handleMouseButtonMiddle(QMouseEvent *event, int vpID);
-    bool handleMouseButtonRight(QMouseEvent *event, int vpID);
-    bool handleMouseMotionLeftHold(QMouseEvent *event, int vpID);
-    bool handleMouseMotionMiddleHold(QMouseEvent *event, int vpID);
-    bool handleMouseMotionRightHold(QMouseEvent *event, int vpID);
-    bool handleMouseWheelForward(QWheelEvent *event, int vpID);
-    bool handleMouseWheelBackward(QWheelEvent *event, int vpID);
-    bool handleMouseReleaseLeft(QMouseEvent *event, int vpID);
 signals:    
     void recalcTextureOffsetsSignal();
     void runSignal();
@@ -123,7 +93,6 @@ public slots:
     void zoomOrthogonals(float step);
     void zoomInSkeletonVP();
     void zoomOutSkeletonVP();
-    void resizeButtonClicked();
     void xyButtonClicked();
     void xzButtonClicked();
     void yzButtonClicked();

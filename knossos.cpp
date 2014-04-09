@@ -614,24 +614,23 @@ bool Knossos::readConfigFile(const char *path) {
 }
 
 bool Knossos::printConfigValues() {
-    qDebug("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
-               state->path,
-               state->name,
-               state->boundary.x,
-               state->boundary.y,
-               state->boundary.z,
-               state->scale.x,
-               state->scale.y,
-               state->scale.z,
-               state->cubeBytes,
-               state->cubeEdgeLength,
-               state->cubeSliceArea,
-               state->M,
-               state->cubeSetElements,
-               state->cubeSetBytes,
-               state->boergens);
-
-        return true;
+    qDebug() << QString("Configuration:\n\tExperiment:\n\t\tPath: %0\n\t\tName: %1\n\t\tBoundary (x): %2\n\t\tBoundary (y): %3\n\t\tBoundary (z): %4\n\t\tScale (x): %5\n\t\tScale (y): %6\n\t\tScale (z): %7\n\n\tData:\n\t\tCube bytes: %8\n\t\tCube edge length: %9\n\t\tCube slice area: %10\n\t\tM (cube set edge length): %11\n\t\tCube set elements: %12\n\t\tCube set bytes: %13\n\t\tZ-first cube order: %14\n")
+               .arg(state->path)
+               .arg(state->name)
+               .arg(state->boundary.x)
+               .arg(state->boundary.y)
+               .arg(state->boundary.z)
+               .arg(state->scale.x)
+               .arg(state->scale.y)
+               .arg(state->scale.z)
+               .arg(state->cubeBytes)
+               .arg(state->cubeEdgeLength)
+               .arg(state->cubeSliceArea)
+               .arg(state->M)
+               .arg(state->cubeSetElements)
+               .arg(state->cubeSetBytes)
+               .arg(state->boergens);
+    return true;
 }
 
 bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
@@ -933,7 +932,6 @@ bool Knossos::configDefaults() {
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
     state->overlay = false;
-    state->newCoord[0] = state->newCoord[1] = state->newCoord[2] = 0;
 
     // For the viewer
     state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
@@ -1062,7 +1060,9 @@ bool Knossos::configDefaults() {
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
 
-    state->keyD = state->keyE = state->keyF = state->keyR = false;
+    state->keyD = state->keyF = false;
+    state->repeatDirection = {};
+    state->viewerKeyRepeat = false;
 
     return true;
 

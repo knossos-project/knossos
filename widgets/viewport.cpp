@@ -37,57 +37,57 @@
 
 extern stateInfo *state;
 
-static int focus; /* This variable is needed to distinguish the viewport in case of key events. Needed for OSX, don´t remove */
+ResizeButton::ResizeButton(Viewport * parent) : QPushButton(parent) {}
 
-ResizeButton::ResizeButton(QWidget *parent) : QPushButton(parent) {}
-
-void ResizeButton::enterEvent(QEvent *) {
-    setCursor(Qt::SizeFDiagCursor);
-}
-
-void ResizeButton::leaveEvent(QEvent *) {
-    setCursor(Qt::CrossCursor);
-}
-
-ViewportButton::ViewportButton(QString label, QWidget *parent) : QPushButton(label, parent) {}
-
-void ViewportButton::enterEvent(QEvent *) {
-    setCursor(Qt::ArrowCursor);
-}
-
-void ViewportButton::leaveEvent(QEvent *) {
-    setCursor(Qt::CrossCursor);
+void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
+    emit vpResize(event);
 }
 
 Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint newId) :
-    QGLWidget(parent, shared), viewportType(viewportType), id(newId), resizeButtonHold(false) {
-    /* per default the widget only receives move event when at least one mouse button is pressed
-    to change this behaviour we need to track the mouse position */
-
-#ifdef Q_OS_MAC
-    this->lower();
-#endif
-    //this->setMouseTracking(true);
-    this->setContextMenuPolicy(Qt::CustomContextMenu);
-    this->setCursor(Qt::CrossCursor);
-    this->setFocusPolicy(Qt::WheelFocus); // this means the widget accepts mouse and keyboard focus.
-                                          // This solves also the problem that viewports had to be clicked
-                                          // before the widget know in which viewport the mouse click occured.
+        QGLWidget(parent, shared), id(newId), viewportType(viewportType), resizeButtonHold(false) {
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    setCursor(Qt::CrossCursor);
+    setMouseTracking(true);
+    setFocusPolicy(Qt::WheelFocus);
 
     resizeButton = new ResizeButton(this);
+    resizeButton->setCursor(Qt::SizeFDiagCursor);
     resizeButton->setIcon(QIcon(":/images/icons/resize.gif"));
-    resizeButton->show();
+    resizeButton->setMinimumSize(20, 20);
+    resizeButton->setMaximumSize(resizeButton->minimumSize());
 
+    QObject::connect(resizeButton, &ResizeButton::vpResize, this, &Viewport::resizeVP);
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
-    connect(resizeButton, SIGNAL(pressed()), this, SLOT(resizeButtonClicked()));
+
+    const auto vpLayout = new QVBoxLayout();
+    vpLayout->setMargin(0);//attach buttons to vp border
 
     if(viewportType == VIEWPORT_SKELETON) {
-        xyButton = new ViewportButton("xy", this);
-        xzButton = new ViewportButton("xz", this);
-        yzButton = new ViewportButton("yz", this);
-        r90Button = new ViewportButton("r90", this);
-        r180Button = new ViewportButton("r180", this);
-        resetButton = new ViewportButton("reset", this);
+        xyButton = new QPushButton("xy", this);
+        xzButton = new QPushButton("xz", this);
+        yzButton = new QPushButton("yz", this);
+        r90Button = new QPushButton("r90", this);
+        r180Button = new QPushButton("r180", this);
+        resetButton = new QPushButton("reset", this);
+
+        const auto svpLayout = new QHBoxLayout();
+        svpLayout->setSpacing(0);
+        svpLayout->setAlignment(Qt::AlignTop | Qt::AlignRight);
+
+        for (auto button : {xyButton, xzButton, yzButton}) {
+            button->setMinimumSize(30, 20);
+        }
+        r90Button->setMinimumSize(35, 20);
+        r180Button->setMinimumSize(40, 20);
+        resetButton->setMinimumSize(45, 20);
+
+        for (auto button : {xyButton, xzButton, yzButton, r90Button, r180Button, resetButton}) {
+            button->setMaximumSize(button->minimumSize());
+            button->setCursor(Qt::ArrowCursor);
+            svpLayout->addWidget(button);
+        }
+
+        vpLayout->addLayout(svpLayout);
 
         connect(xyButton, SIGNAL(clicked()), this, SLOT(xyButtonClicked()));
         connect(xzButton, SIGNAL(clicked()), this, SLOT(xzButtonClicked()));
@@ -96,6 +96,9 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
         connect(r180Button, SIGNAL(clicked()), this, SLOT(r180ButtonClicked()));
         connect(resetButton, SIGNAL(clicked()), this, SLOT(resetButtonClicked()));
     }
+    vpLayout->addStretch(1);
+    vpLayout->addWidget(resizeButton, 0, Qt::AlignBottom | Qt::AlignRight);
+    setLayout(vpLayout);
 
     if(viewportType == VIEWPORT_XY)
         this->setToolTip(QString("Viewport %1").arg("XY"));
@@ -110,8 +113,6 @@ Viewport::Viewport(QWidget *parent, QGLWidget *shared, int viewportType, uint ne
 }
 
 void Viewport::initializeGL() {
-    // button geometry has to be defined here, because width() and height() return wrong information before initializeGL
-    updateButtonPositions();
     if(viewportType != VIEWPORT_SKELETON) {
         glGenTextures(1, &state->viewerState->vpConfigs[id].texture.texHandle);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -179,8 +180,9 @@ void Viewport::initializeGL() {
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
-    QString versionString(QLatin1String(reinterpret_cast<const char*>(glGetString(GL_VERSION))));
-    qDebug() << versionString;
+    if(viewportType == VIEWPORT_SKELETON) {//we want only one output
+        qDebug() << reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    }
 }
 
 bool Viewport::setOrientation(int orientation) {
@@ -270,14 +272,9 @@ void Viewport::showContextMenu(const QPoint &point) {
     }
 }
 
-//functions to determine position x/y relative to last position lastX, lastY
-int Viewport::xrel(int x) {
-    return (x - this->lastX);
+void Viewport::enterEvent(QEvent *) {
+    setFocus();//get the keyboard focus on first mouse move so we don’t need permanent mousetracking
 }
-int Viewport::yrel(int y) {
-    return (y - this->lastY);
-}
-
 
 void Viewport::mouseMoveEvent(QMouseEvent *event) {
     bool clickEvent = false;
@@ -289,19 +286,15 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
         if(ctrl and alt) { // drag viewport around
             moveVP(event);
-        }
-        else if(resizeButtonHold) {// resize viewport
-            resizeVP(event);
-        }
-        else {// delegate behaviour
-            handleMouseMotionLeftHold(event, id);
+        } else {// delegate behaviour
+            eventDelegate->handleMouseMotionLeftHold(event, id);
             clickEvent = true;
         }
     } else if(QApplication::mouseButtons() == Qt::MidButton) {
-        handleMouseMotionMiddleHold(event, id);
+        eventDelegate->handleMouseMotionMiddleHold(event, id);
         clickEvent = true;
     } else if(QApplication::mouseButtons() == Qt::RightButton) {
-        handleMouseMotionRightHold(event, id);
+        eventDelegate->handleMouseMotionRightHold(event, id);
         clickEvent = true;
     }
 
@@ -313,50 +306,50 @@ void Viewport::mouseMoveEvent(QMouseEvent *event) {
 
 void Viewport::mousePressEvent(QMouseEvent *event) {
     raise(); //bring this viewport to front
+
     eventDelegate->mouseX = event->x();
     eventDelegate->mouseY = event->y();
+
     if(event->button() == Qt::LeftButton) {
         Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
-        bool ctrl = modifiers.testFlag(Qt::ControlModifier);
-        bool alt = modifiers.testFlag(Qt::AltModifier);
+        const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
+        const auto alt = modifiers.testFlag(Qt::AltModifier);
 
         if(ctrl and alt) { // user wants to drag vp
             setCursor(Qt::ClosedHandCursor);
-            lastX= event->x();
-            lastY = event->y();
-            return;
+            baseEventX = event->x();
+            baseEventY = event->y();
+        } else {
+            eventDelegate->handleMouseButtonLeft(event, id);
         }
-        //this->move(event->x() - this->pos().x(), event->y() - pos().y());
-        handleMouseButtonLeft(event, id);
-    }
-    else if(event->button() == Qt::MiddleButton) {
-        handleMouseButtonMiddle(event, id);
-    }
-    else if(event->button() == Qt::RightButton) {
-        handleMouseButtonRight(event, id);
+    } else if(event->button() == Qt::MiddleButton) {
+        eventDelegate->handleMouseButtonMiddle(event, id);
+    } else if(event->button() == Qt::RightButton) {
+        eventDelegate->handleMouseButtonRight(event, id);
     }
 }
 
 void Viewport::mouseReleaseEvent(QMouseEvent *event) {
-    resizeButtonHold = false; // can only be true, when left mouse button is pressed
     Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
-    bool ctrl = modifiers.testFlag(Qt::ControlModifier);
-    bool alt = modifiers.testFlag(Qt::AltModifier);
+    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
+    const auto alt = modifiers.testFlag(Qt::AltModifier);
 
-    if(ctrl and alt) {
+    if (ctrl && alt) {
         setCursor(Qt::OpenHandCursor);
-    }
-    else if(cursor().shape() != Qt::CrossCursor) {
+    } else if (ctrl) {
+        setCursor(Qt::ArrowCursor);
+    } else {
         setCursor(Qt::CrossCursor);
     }
+
     if(event->button() == Qt::MiddleButton) {
         eventDelegate->handleMouseReleaseMiddle(event, id);
     }
     if(event->button() == Qt::LeftButton) {
-        handleMouseReleaseLeft(event, id);
+        eventDelegate->handleMouseReleaseLeft(event, id);
     }
 
-    for(int i = 0; i < state->viewerState->numberViewports; i++) {
+    for (std::size_t i = 0; i < state->viewerState->numberViewports; i++) {
         state->viewerState->vpConfigs[i].draggedNode = NULL;
         state->viewerState->vpConfigs[i].motionTracking = false;
         state->viewerState->vpConfigs[i].VPmoves = false;
@@ -366,56 +359,65 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-void Viewport::keyReleaseEvent(QKeyEvent *event) {
-    if(event->key() == Qt::Key_Control) {
-        setCursor(Qt::CrossCursor);
-    }
-
-    if(state->keyD) {
-        state->keyD = false;
-        state->autorepeat = false;
-    }else if(state->keyF) {
-        state->keyF = false;
-        state->autorepeat = false;
-    } else if(state->keyE){
-        state->keyE = false;
-    } else if(state->keyR){
-        state->keyR = false;
-    }
-    state->newCoord[0] = 0;
-    state->newCoord[1] = 0;
-    state->newCoord[2] = 0;
-
-    if(state->modCtrl) {
-        state->modCtrl = false;
-    }
-    if(state->modAlt) {
-        state->modAlt = false;
-    }
-    if(state->modShift) {
-        state->modShift = false;
-    }
-}
-
 void Viewport::wheelEvent(QWheelEvent *event) {
     if(event->delta() > 0) {
-        handleMouseWheelForward(event, id);
+        eventDelegate->handleMouseWheelForward(event, id);
     } else {
-        handleMouseWheelBackward(event, id);
+        eventDelegate->handleMouseWheelBackward(event, id);
     }
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {
+    Qt::KeyboardModifiers modifiers = event->modifiers();
+    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
+    const auto alt = modifiers.testFlag(Qt::AltModifier);
 
-    if(event->key() == Qt::Key_Control) {
-        if(Qt::KeyboardModifiers() == Qt::ALT) {
-            setCursor(Qt::OpenHandCursor);
+    if (ctrl && alt) {
+        setCursor(Qt::OpenHandCursor);
+    } else if (ctrl) {
+        setCursor(Qt::ArrowCursor);
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
+
+    state->viewerKeyRepeat = event->isAutoRepeat();
+    if (!event->isAutoRepeat()) {//maybe we need to set it ourselves
+        //autorepeat emulation for systems where isAutoRepeat() does not work as expected
+        //seperate timer for each key, but only one across all vps
+        if (event->key() == Qt::Key_D) {
+            static QElapsedTimer timeBase;
+            state->viewerKeyRepeat = timeBase.restart() < 100;
+        } else if (event->key() == Qt::Key_F) {
+            static QElapsedTimer timeBase;
+            state->viewerKeyRepeat = timeBase.restart() < 100;
         }
     }
-    this->eventDelegate->handleKeyboard(event, focus);
-    if(event->isAutoRepeat()) {
-        state->autorepeat = true;
-        //event->ignore();
+    eventDelegate->handleKeyboard(event, id);
+}
+
+void Viewport::keyReleaseEvent(QKeyEvent *event) {
+    Qt::KeyboardModifiers modifiers = event->modifiers();
+    const auto ctrl = modifiers.testFlag(Qt::ControlModifier);
+    const auto alt = modifiers.testFlag(Qt::AltModifier);
+
+    if (ctrl && alt) {
+        setCursor(Qt::OpenHandCursor);
+    } else if (ctrl) {
+        setCursor(Qt::ArrowCursor);
+    } else {
+        setCursor(Qt::CrossCursor);
+    }
+
+    state->viewerKeyRepeat = false;
+    if (event->key() == Qt::Key_D) {
+        state->keyD = false;
+        state->viewerKeyRepeat = false;
+    } else if (event->key() == Qt::Key_F) {
+        state->keyF = false;
+    } else if (event->key() == Qt::Key_Shift) {//decrease movement speed
+        state->repeatDirection[0] /= 10;
+        state->repeatDirection[1] /= 10;
+        state->repeatDirection[2] /= 10;
     }
 }
 
@@ -425,89 +427,6 @@ void Viewport::drawViewport(int vpID) {
 
 void Viewport::drawSkeletonViewport() {
     state->viewer->renderer->renderSkeletonVP(VIEWPORT_SKELETON);
-}
-
-bool Viewport::handleMouseButtonLeft(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseButtonLeft(event, focus);
-#endif
-    return eventDelegate->handleMouseButtonLeft(event, vpID);
-}
-
-bool Viewport::handleMouseButtonMiddle(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseButtonMiddle(event, focus);
-#endif
-    return eventDelegate->handleMouseButtonMiddle(event, vpID);
-}
-
-bool Viewport::handleMouseButtonRight(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseButtonRight(event, focus);
-#endif
-    return eventDelegate->handleMouseButtonRight(event, vpID);
-}
-
-
-bool Viewport::handleMouseMotionLeftHold(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseMotionLeftHold(event, focus);
-#endif
-    return eventDelegate->handleMouseMotionLeftHold(event, vpID);
-}
-
-bool Viewport::handleMouseMotionMiddleHold(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseMotionMiddleHold(event, focus);
-#endif
-    return eventDelegate->handleMouseMotionMiddleHold(event, vpID);
-}
-
-bool Viewport::handleMouseMotionRightHold(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseMotionRightHold(event, focus);
-#endif
-    return eventDelegate->handleMouseMotionRightHold(event, vpID);
-}
-
-bool Viewport::handleMouseWheelForward(QWheelEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseWheelForward(event, focus);
-#endif
-    return eventDelegate->handleMouseWheelForward(event, vpID);
-}
-
-bool Viewport::handleMouseWheelBackward(QWheelEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseWheelBackward(event, focus);
-#endif
-    return eventDelegate->handleMouseWheelBackward(event, vpID);
-}
-
-bool Viewport::handleMouseReleaseLeft(QMouseEvent *event, int vpID) {
-#ifdef Q_OS_MAC
-    return eventDelegate->handleMouseReleaseLeft(event, focus);
-#endif
-    return eventDelegate->handleMouseReleaseLeft(event, vpID);
-}
-
-void Viewport::enterEvent(QEvent *event) {
-    entered = true;
-    focus = this->id;
-
-#ifdef Q_OS_MAC
-    this->raise();
-    this->activateWindow();
-#endif
-
-    this->setCursor(Qt::CrossCursor);
-}
-
-
-void Viewport::leaveEvent(QEvent *event) {
-#ifdef Q_OS_MAC
-    this->lower();
-#endif
 }
 
 void Viewport::zoomOrthogonals(float step){
@@ -580,64 +499,32 @@ void Viewport::zoomInSkeletonVP() {
 }
 
 void Viewport::resizeVP(QMouseEvent *event) {
-    if(event->x() >= event->y()) {
-        resize(event->x(), event->x());
-    }
-    else {
-        resize(event->y(), event->y());
-    }
-    if(height() < MIN_VP_SIZE) {
-        resize(MIN_VP_SIZE, MIN_VP_SIZE);
-    }
-    else if(pos().y() + height() > parentWidget()->height() - 60) {
-        resize(parentWidget()->height()- pos().y(), parentWidget()->height() - pos().y());
-    }
-    if(width() < MIN_VP_SIZE) {
-        resize(MIN_VP_SIZE, MIN_VP_SIZE);
-    }
-    else if(pos().x() + width() > parentWidget()->width()) {
-        resize(parentWidget()->width() - pos().x(), parentWidget()->width() - pos().x());
-    }
-    updateButtonPositions();
+    raise();//we come from the resize button
+    //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
+    const int MIN_VP_SIZE = 50;
+    const auto position = mapFromGlobal(event->globalPos());
+    const auto horizontalSpace = parentWidget()->width() - x();
+    const auto verticalSpace = parentWidget()->height() - y();
+    const auto size = std::max(MIN_VP_SIZE, std::min({horizontalSpace, verticalSpace, std::max(position.x(), position.y())}));
+
+    resize(size, size);
+
     state->viewerState->defaultVPSizeAndPos = false;
 }
 
-void Viewport::updateButtonPositions() {
-    resizeButton->setGeometry(width() - ResizeButton::SIZE,
-                              height() - ResizeButton::SIZE,
-                              ResizeButton::SIZE,
-                              ResizeButton::SIZE);
-    if(viewportType == VIEWPORT_SKELETON) {
-        xyButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*6, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-        xzButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*5, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-        yzButton->setGeometry(width() - (ViewportButton::WIDTH - 2)*4, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-        r90Button->setGeometry(width() - (ViewportButton::WIDTH - 2)*3, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-        r180Button->setGeometry(width() - (ViewportButton::WIDTH - 2)*2, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-        resetButton->setGeometry(width() - ViewportButton::WIDTH - 2, 2, ViewportButton::WIDTH, ViewportButton::HEIGHT);
-    }
-}
-
 void Viewport::moveVP(QMouseEvent *event) {
-    raise();    
+    //»If you move the widget as a result of the mouse event, use the global position returned by globalPos() to avoid a shaking motion.«
+    const auto position = mapFromGlobal(event->globalPos());
+    const auto horizontalSpace = parentWidget()->width() - width();
+    const auto verticalSpace = parentWidget()->height() - height();
+    const auto desiredX = x() + position.x() - baseEventX;
+    const auto desiredY = y() + position.y() - baseEventY;
 
+    const auto newX = std::max(0, std::min(horizontalSpace, desiredX));
+    const auto newY = std::max(0, std::min(verticalSpace, desiredY));
 
-    int x = pos().x() + xrel(event->x());
-    int y = pos().y() + yrel(event->y());
-
-    if(x >= 0 && x <= (parentWidget()->width() - width())
-       && y >= 0 && y <= (parentWidget()->height() - height())) {
-        move(x, y);
-        state->viewerState->defaultVPSizeAndPos = false;
-    }
-    else if(x >= 0 && x <= (parentWidget()->width() - width())) {
-        move(x, pos().y());
-        state->viewerState->defaultVPSizeAndPos = false;
-    }
-    else if(y >= 0 && y <= (parentWidget()->height() - height())) {
-        move(pos().x(), y);
-        state->viewerState->defaultVPSizeAndPos = false;
-    }
-
+    move(newX, newY);
+    state->viewerState->defaultVPSizeAndPos = false;
 }
 
 void Viewport::hideButtons() {
@@ -662,11 +549,6 @@ void Viewport::showButtons() {
         r180Button->show();
         resetButton->show();
     }
-}
-
-void Viewport::resizeButtonClicked() {
-    resizeButtonHold = true;
-    raise();
 }
 
 void Viewport::xyButtonClicked() {

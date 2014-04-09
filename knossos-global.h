@@ -32,9 +32,10 @@
 #define KNOSSOS_GLOBAL_H
 
 /** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
-#include <cmath>
-
 #include <curl/curl.h>
+
+#include <array>
+#include <cmath>
 
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
@@ -514,7 +515,7 @@ public:
     // state->magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
-    int magnification;
+    uint magnification;
 
     uint compressionRatio;
 
@@ -527,7 +528,7 @@ public:
     uint loaderMagnification;
 
     // Bytes in one datacube: 2^3N
-    uint cubeBytes;
+    std::size_t cubeBytes;
 
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength;
@@ -537,12 +538,12 @@ public:
 
     // Supercube edge length in datacubes.
     int M;
-    uint cubeSetElements;
+    std::size_t cubeSetElements;
 
 
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
-    uint cubeSetBytes;
+    std::size_t cubeSetBytes;
 
 
     // Edge length of the current data set in data pixels.
@@ -619,7 +620,6 @@ public:
     // This gives the current direction whenever userMove is called
     Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
     int currentDirectionsIndex;
-    int directionSign;
 
     // This gives the current position ONLY when the reload
     // boundary has been crossed. Change it through
@@ -653,10 +653,9 @@ public:
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
     struct taskState *taskState;
-    bool keyD, keyR, keyE, keyF;
-    bool modCtrl, modAlt, modShift;
-    int newCoord[3];
-    bool autorepeat;
+    bool keyD, keyF;
+    std::array<float, 3> repeatDirection;
+    bool viewerKeyRepeat;
 
 signals:
 public slots:
