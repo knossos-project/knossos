@@ -79,7 +79,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
 
 }
 
-uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType) {
+uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
     float currentAngle = 0.;
         floatCoordinate segDirection, tempVec, *tempVec2;
         GLUquadricObj *gluCylObj = NULL;
@@ -153,14 +153,14 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
         return true;
 }
 
-uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType) {
+uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint /*viewportType*/) {
     GLUquadricObj *gluSphereObj = NULL;
 
         /* Render only a point if the sphere wouldn't be visible anyway */
 
-        if((state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
+        if(((state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
            * radius > 0.0f) && (state->viewerState->vpConfigs[currentVP].screenPxXPerDataPx
-           * radius < 2.0f) || (state->viewerState->cumDistRenderThres > 19.f)) {
+           * radius < 2.0f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
             /* This is cumbersome, but SELECT mode cannot be used with glDrawArray.
             Color buffer picking brings its own issues on the other hand, so we
@@ -406,7 +406,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     }
 
     // render node selection box
-    if(state->viewerState->drawNodeSelectSquare == currentVP) {
+    if (state->viewerState->drawNodeSelectSquare == static_cast<int>(currentVP)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 
@@ -450,10 +450,6 @@ uint Renderer::renderViewportBorders(uint currentVP) {
 
 bool Renderer::renderOrthogonalVP(uint currentVP) {
     float dataPxX, dataPxY;
-    //for displaying data size
-    float width, height;
-    char label[1024];
-    Coordinate pos;
 
     floatCoordinate *n, *v1, *v2;
 
@@ -1718,104 +1714,16 @@ void Renderer::renderArbitrarySlicePane(const vpConfig & vp) {
     glBindTexture (GL_TEXTURE_2D, 0);
 }
 
-#include "sleeper.h"
 uint Renderer::retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width) {
-    int i;
-    /* 8192 is really arbitrary. It should be a value dependent on the
-    number of nodes / segments */
-
-    GLuint selectionBuffer[8192] = {0};
-    GLint hits, openGLviewport[4];
-    GLuint names, *ptr, minZ, *ptrName;
-    ptrName = NULL;
-
-    if(currentVP == VIEWPORT_XY) {
-        refVPXY->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == VIEWPORT_XZ) {
-        refVPXZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == VIEWPORT_YZ) {
-        refVPYZ->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    } else if(currentVP == VIEWPORT_SKELETON) {
-        refVPSkel->makeCurrent();
-        glGetIntegerv(GL_VIEWPORT, openGLviewport);
-    }
-
-   // glGetIntegerv(GL_VIEWPORT, openGLviewport);
-
-    glSelectBuffer(8192, selectionBuffer);
-
-    state->viewerState->selectModeFlag = true;
-
-    glRenderMode(GL_SELECT);
-
-    glInitNames();
-    glPushName(0);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    if(currentVP == VIEWPORT_XY)
-        gluPickMatrix(x, refVPXY->height() - y, width, width, openGLviewport);
-    else if(currentVP == VIEWPORT_XZ)
-        gluPickMatrix(x, refVPXZ->height() - y, width, width, openGLviewport);
-    else if(currentVP == VIEWPORT_YZ)
-        gluPickMatrix(x, refVPYZ->height() - y, width, width, openGLviewport);
-    else if(currentVP == VIEWPORT_SKELETON)
-       gluPickMatrix(x, this->refVPSkel->height() - y, width, width, openGLviewport);
-
-    if(state->viewerState->vpConfigs[currentVP].type == VIEWPORT_SKELETON) {
-        renderSkeletonVP(currentVP);
+    const auto & nodes = retrieveAllObjectsBeneathSquare(currentVP, x, y, width, width);
+    if (nodes.size() != 0) {
+        return nodes.back()->nodeID;
     } else {
-        glDisable(GL_DEPTH_TEST);
-        renderOrthogonalVP(currentVP);
+        return 0;//no node found
     }
-
-
-
-    hits = glRenderMode(GL_RENDER);
-    glLoadIdentity();
-
-    ptr = (GLuint *)selectionBuffer;
-
-
-    minZ = 0xffffffff;
-    if(hits == -1) {
-        hits = 8192;
-    }
-
-//    for (i = 0; i < hits; i++) { /*  for each hit  */
-//          names = *ptr;
-//          qDebug (" number of names for hit = %d\n", names); ptr++;
-//          qDebug("z1 is %g;", (float) *ptr/0x7fffffff); ptr++;
-//          qDebug("z2 is %g\n", (float) *ptr/0x7fffffff); ptr++;
-//          qDebug("   the name is ");
-//          for (int j = 0; j < names; j++) {     /*  for each name */
-//             qDebug ("%d ", *ptr); ptr++;
-//          }
-//          qDebug("####");
-//       }
-
-    for(i = 0; i < hits; i++) {
-        names = *ptr;
-        ptr++;
-        if((*ptr < minZ) && (*(ptr + 2) >= 50)) {
-            minZ = *ptr;
-            ptrName = ptr + 2;
-        }
-        ptr += names + 2;
-    }
-    state->viewerState->selectModeFlag = false;
-    if(ptrName) {
-        return *ptrName - 50;
-    } else {
-        return false;
-    }       
 }
 
-void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height) {
+std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height) {
     if(currentVP == VIEWPORT_XY) {
         refVPXY->makeCurrent();
     } else if(currentVP == VIEWPORT_XZ) {
@@ -1869,6 +1777,7 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
     glLoadIdentity();
 
     qDebug() << "selection hits: " << hits;
+    std::vector<nodeListElement *> foundNodes;
     for (std::size_t i = 0; i < selectionBuffer.size();) {
         if (hits == 0) {//if hits was positive and reaches 0
             //if overflow bit was set hits is negative and we only use the buffer-end-condition
@@ -1881,15 +1790,16 @@ void Renderer::retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, u
             const GLuint name = selectionBuffer[i+3];//the first name on the stack is the 4th element of the hit record
             if (name >= GLNAME_NODEID_OFFSET) {
                 nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNAME_NODEID_OFFSET);
-                if (foundNode) {
-                    foundNode->selected = true;
-                    state->skeletonState->selectedNodes.push_back(foundNode);
+                if (foundNode != nullptr) {
+                    foundNodes.emplace_back(foundNode);
                 }
             }
         }
         i = i + 3 + hit_count;
     }
     state->viewerState->selectModeFlag = false;
+
+    return foundNodes;
 }
 
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){

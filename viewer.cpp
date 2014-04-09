@@ -1893,10 +1893,6 @@ void Viewer::rewire() {
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
     connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
                     skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
-    connect(eventModel, SIGNAL(retrieveVisibleObjectBeneathSquareSignal(uint,uint,uint,uint)),
-                    renderer, SLOT(retrieveVisibleObjectBeneathSquare(uint,uint,uint,uint)));
-    connect(eventModel, SIGNAL(retrieveAllObjectsBeneathSquareSignal(uint,uint,uint,uint,uint)),
-                    renderer, SLOT(retrieveAllObjectsBeneathSquare(uint,uint,uint,uint,uint)));
     connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));

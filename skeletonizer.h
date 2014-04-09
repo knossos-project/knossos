@@ -231,7 +231,7 @@ public slots:
     bool delSegmentFromCmd(struct segmentListElement *segToDel);
     static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
 
-    bool deleteSelectedTrees();
+    void deleteSelectedTrees();
     void deleteSelectedNodes();
 
     static char *integerChecksum(int32_t in);

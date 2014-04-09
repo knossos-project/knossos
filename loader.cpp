@@ -670,12 +670,14 @@ loadcube_ret:
         state->protectLoaderSlots->unlock();
     }
 
+#ifdef Q_OS_WIN
     if (NULL != _jpegDecompressor) {
         tjDestroy(_jpegDecompressor);
     }
     if (NULL != localCompressedBuf) {
         free(localCompressedBuf);
     }
+#endif
 
     if (retVal) {
         //lts->decompTime = GetTickCount() - tickCount;

@@ -4174,28 +4174,24 @@ bool Skeletonizer::moveNodeToTree(nodeListElement *node, int treeID) {
     return true;
 }
 
-bool Skeletonizer::deleteSelectedTrees() {
-    std::vector<treeListElement *>::iterator iter;
-    for(iter = state->skeletonState->selectedTrees.begin();
-        iter != state->skeletonState->selectedTrees.end(); ++iter) {
-        if(*iter == state->skeletonState->activeTree) {
+void Skeletonizer::deleteSelectedTrees() {
+    for (const auto & elem : state->skeletonState->selectedTrees) {
+        if (elem == state->skeletonState->activeTree) {
             delActiveTree();
-        }
-        else {
-            delTree(CHANGE_MANUAL, (*iter)->treeID, true);
+        } else {
+            delTree(CHANGE_MANUAL, elem->treeID, true);
         }
     }
     state->skeletonState->selectedTrees.clear();
-    return true;
 }
 
 void Skeletonizer::deleteSelectedNodes() {
-    for(int i = state->skeletonState->selectedNodes.size() - 1; i >= 0; --i) {
-        if(state->skeletonState->selectedNodes[i] == state->skeletonState->activeNode) {
+    const auto nodesToDelete = state->skeletonState->selectedNodes;
+    for (auto & elem : nodesToDelete) {
+        if (elem == state->skeletonState->activeNode) {
             delActiveNode();
-        }
-        else {
-            delNode(CHANGE_MANUAL, 0, state->skeletonState->selectedNodes[i], true);
+        } else {
+            delNode(CHANGE_MANUAL, 0, elem, true);
         }
     }
     state->skeletonState->selectedNodes.clear();
