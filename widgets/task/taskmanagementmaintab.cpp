@@ -1,19 +1,20 @@
-#include <QLabel>
-#include <QPushButton>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QFormLayout>
-#include <QDir>
-#include <QMessageBox>
-#include <QLineEdit>
-
 #include <curl/curl.h>
 
 #include "knossos-global.h"
-#include "widgets/mainwindow.h"
 #include "skeletonizer.h"
-#include "taskmanagementwidget.h"
 #include "taskmanagementmaintab.h"
+#include "taskmanagementwidget.h"
+#include "widgets/mainwindow.h"
+
+#include <QByteArray>
+#include <QCheckBox>
+#include <QDir>
+#include <QFormLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 extern stateInfo *state;
 
@@ -158,10 +159,6 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     FILE *tasknml;
     struct httpResponse header;
 
-    char description[8192];
-    char comment[8192];
-    bool success;
-
     auto postdata = QString("csrfmiddlewaretoken=%0&data=<currentTask>%1</currentTask>").arg(taskState::CSRFToken(), state->taskState->taskFile);
 
     QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
@@ -184,7 +181,7 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     httpResponse response;
     response.length = 0;
     response.content = (char *)calloc(1, 10240);
-    success = taskState::httpFileGET(url.toUtf8().data(), postdata.toUtf8().data(), &response, &header, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
+    bool success = taskState::httpFileGET(url.toUtf8().data(), postdata.toUtf8().data(), &response, &header, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
     if(success == false) {
         resetSession(QString("<font color='red'>Could not find session cookie. Please login again.</font><br />%0").arg(response.content));
@@ -231,10 +228,12 @@ void TaskManagementMainTab::startNewTaskButtonClicked() {
     setTask(state->taskState->taskName);
 
     // get task category description and task comment
-    memset(description, '\0', sizeof(description));
-    memset(comment, '\0', sizeof(comment));
-    taskState::copyInfoFromHeader(description, &header, "description");
-    taskState::copyInfoFromHeader(comment, &header, "comment");
+    QByteArray descriptionBuffer(8192, '\0');
+    QByteArray commentBuffer(8192, '\0');
+    taskState::copyInfoFromHeader(descriptionBuffer.data(), &header, "description");
+    taskState::copyInfoFromHeader(commentBuffer.data(), &header, "comment");
+    QString description = QByteArray::fromBase64(descriptionBuffer);
+    QString comment = QByteArray::fromBase64(commentBuffer);
 
     QMessageBox prompt;
     prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
