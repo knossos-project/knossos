@@ -224,7 +224,7 @@ macx {
                    /usr/lib/
                    /usr/include
     LIBS += -framework GLUT \
-            -L$(QTDIR)/lib -lPythonQt \
+            #-L$(QTDIR)/lib -lPythonQt \
             -lcurl
 
     # copy the content of the doc folder to the build-dir

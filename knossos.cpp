@@ -105,6 +105,7 @@ Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QP
     timer.start(timeout_msec);
 }
 
+
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN

@@ -626,7 +626,7 @@ bool EventModel::handleMouseWheelForward(QWheelEvent * /*event*/, int VPfound) {
         return true;
 
 #ifdef Q_OS_MAC
-    if((state->skeletonState->activeNode) and (state->modShift)) {
+    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT )){
 #endif
 #ifdef Q_OS_WIN
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
@@ -659,14 +659,11 @@ bool EventModel::handleMouseWheelForward(QWheelEvent * /*event*/, int VPfound) {
         }
         // Orthogonal VP or outside VP
         else {
-#ifdef Q_OS_MAC
-            // Zoom when CTRL is pressed
-            if(state->modCtrl) {
-#endif
+
 #ifdef Q_OS_WIN
             if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
             if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
                 emit zoomOrthoSignal(-0.1);
@@ -710,12 +707,10 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent * /*event*/, int VPfound) 
 #ifdef Q_OS_WIN
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
 #endif
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
     if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
 #endif
-#ifdef Q_OS_MAC
-    if((state->skeletonState->activeNode) and (state->modShift)) {
-#endif
+
         float radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
 
         emit editNodeSignal(CHANGE_MANUAL,
@@ -738,20 +733,16 @@ bool EventModel::handleMouseWheelBackward(QWheelEvent * /*event*/, int VPfound) 
         }
         // Orthogonal VP or outside VP
         else {
-#ifdef Q_OS_MAC
-            // Zoom when CTRL is pressed
-            if(state->modCtrl) {
-#endif
 #ifdef Q_OS_WIN
                 if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_UNIX
                 if(QApplication::keyboardModifiers() == Qt::CTRL) {
 #endif
                 emit zoomOrthoSignal(+0.1);
-            }
+
             // Move otherwise
-            else {
+            } else {
                 switch(state->viewerState->vpConfigs[VPfound].type) {
                     case VIEWPORT_XY:
                         emit userMoveSignal(0, 0, -state->viewerState->dropFrames
