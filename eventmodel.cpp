@@ -619,161 +619,47 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
     }
 }
 
-bool EventModel::handleMouseWheelForward(QWheelEvent * /*event*/, int VPfound) {
-    float radius;
+void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
+    const int directionSign = event->delta() > 0 ? -1 : 1;
 
-    if(VPfound == -1)
-        return true;
+    if((state->skeletonState->activeNode) and (event->modifiers() == Qt::SHIFT)) {//change node radius
+        float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
 
-#ifdef Q_OS_MAC
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT )){
-#endif
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_LINUX
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-        radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
-
-        emit editNodeSignal(CHANGE_MANUAL,
-                 0,
-                 state->skeletonState->activeNode,
-                 radius,
-                 state->skeletonState->activeNode->position.x,
-                 state->skeletonState->activeNode->position.y,
-                 state->skeletonState->activeNode->position.z,
-                 state->magnification);
-        if(radius > 0.) {
-            emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
-        }
-
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
-           state->skeletonState->defaultNodeRadius = radius;
-
-
-    } else {
-        // Skeleton VP
-        if(VPfound == VIEWPORT_SKELETON) {
-            emit zoomInSkeletonVPSignal();
-        }
-        // Orthogonal VP or outside VP
-        else {
-
-#ifdef Q_OS_WIN
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-#ifdef Q_OS_UNIX
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-                emit zoomOrthoSignal(-0.1);
-            } else { // move otherwiese
-                switch(state->viewerState->vpConfigs[VPfound].type) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(0, 0, state->viewerState->dropFrames
-                            * state->magnification,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(0, state->viewerState->dropFrames
-                            * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(state->viewerState->dropFrames
-                            * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                         emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x * state->viewerState->dropFrames * state->magnification,
-                         state->viewerState->vpConfigs[VPfound].n.y * state->viewerState->dropFrames * state->magnification,
-                         state->viewerState->vpConfigs[VPfound].n.z * state->viewerState->dropFrames * state->magnification,
-                         TELL_COORDINATE_CHANGE);
-
-                    break;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-bool EventModel::handleMouseWheelBackward(QWheelEvent * /*event*/, int VPfound) {
-    if(VPfound == -1)
-        return true;
-
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_UNIX
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-
-        float radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
-
-        emit editNodeSignal(CHANGE_MANUAL,
-                 0,
-                 state->skeletonState->activeNode,
-                 radius,
-                 state->skeletonState->activeNode->position.x,
-                 state->skeletonState->activeNode->position.y,
-                 state->skeletonState->activeNode->position.z,
-                 state->magnification);
+        emit editNodeSignal(CHANGE_MANUAL, 0, state->skeletonState->activeNode, radius
+                 , state->skeletonState->activeNode->position.x
+                 , state->skeletonState->activeNode->position.y
+                 , state->skeletonState->activeNode->position.z
+                 , state->magnification);
 
         emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
 
-        if(state->viewerState->gui->useLastActNodeRadiusAsDefault)
+        if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
            state->skeletonState->defaultNodeRadius = radius;
-    } else {
-        // Skeleton VP
-        if(VPfound == VIEWPORT_SKELETON) {
+        }
+    } else if (VPfound == VIEWPORT_SKELETON) {
+        if (directionSign == -1) {
+            emit zoomInSkeletonVPSignal();
+        } else {
             emit zoomOutSkeletonVPSignal();
         }
-        // Orthogonal VP or outside VP
-        else {
-#ifdef Q_OS_WIN
-                if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-#ifdef Q_OS_UNIX
-                if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-                emit zoomOrthoSignal(+0.1);
-
-            // Move otherwise
-            } else {
-                switch(state->viewerState->vpConfigs[VPfound].type) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(0, 0, -state->viewerState->dropFrames
-                            * state->magnification,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(0, -state->viewerState->dropFrames
-                            * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(-state->viewerState->dropFrames
-                            * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                        emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].n.x * state->viewerState->dropFrames * state->magnification,
-                         -state->viewerState->vpConfigs[VPfound].n.y * state->viewerState->dropFrames * state->magnification,
-                         -state->viewerState->vpConfigs[VPfound].n.z * state->viewerState->dropFrames * state->magnification,
-                         TELL_COORDINATE_CHANGE);
-
-
-                    break;
-                }
-            }
+    } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
+        emit zoomOrthoSignal(directionSign * 0.1);
+    } else {
+        const auto multiplier = directionSign * state->viewerState->dropFrames * state->magnification;
+        const auto type = state->viewerState->vpConfigs[VPfound].type;
+        if (type == VIEWPORT_XY) {
+            emit userMoveSignal(0, 0, multiplier, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_XZ) {
+            emit userMoveSignal(0, multiplier, 0, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_YZ) {
+            emit userMoveSignal(multiplier, 0, 0, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_ARBITRARY) {
+            emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x * multiplier
+                , state->viewerState->vpConfigs[VPfound].n.y * multiplier
+                , state->viewerState->vpConfigs[VPfound].n.z * multiplier
+                , TELL_COORDINATE_CHANGE);
         }
     }
-
-    return true;
 }
 
 void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {

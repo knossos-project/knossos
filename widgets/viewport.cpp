@@ -276,17 +276,18 @@ void Viewport::showContextMenu(const QPoint &point) {
 }
 
 void Viewport::enterEvent(QEvent *) {
+    setFocus();//get the keyboard focus on first mouse move so we don’t need permanent mousetracking (e.g. for D/F Movement)
 #ifdef Q_OS_MAC
-    if(!this->isActiveWindow()) {
+    if (!this->isActiveWindow()) {
         raise();
         activateWindow();
     }
 #endif
 }
 
-void Viewport::leaveEvent(QEvent *event) {
+void Viewport::leaveEvent(QEvent *) {
 #ifdef Q_OS_MAC
-    this->lower();
+    lower();
 #endif
 }
 
@@ -374,11 +375,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void Viewport::wheelEvent(QWheelEvent *event) {
-    if(event->delta() > 0) {
-        eventDelegate->handleMouseWheelForward(event, id);
-    } else {
-        eventDelegate->handleMouseWheelBackward(event, id);
-    }
+    eventDelegate->handleMouseWheel(event, id);
 }
 
 void Viewport::keyPressEvent(QKeyEvent *event) {

@@ -61,8 +61,7 @@ public:
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
     bool handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
     void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
+    void handleMouseWheel(QWheelEvent * const event, int VPfound);
     void handleKeyboard(QKeyEvent *event, int VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
