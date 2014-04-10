@@ -8,7 +8,7 @@ QT       += core gui opengl network xml testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt
+CONFIG += qt c++11# turbojpeg
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -183,8 +183,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
-    widgets/tools/treetable.h \
-    turbojpeg.h
+    widgets/tools/treetable.h
 
 FORMS    += mainwindow.ui
 
@@ -252,7 +251,6 @@ linux {
     doc.path = $$OUT_PWD/doc
     doc.files = $$PWD/doc/*
     INSTALLS += doc
-
 }
 
 win32 {
@@ -268,7 +266,6 @@ win32 {
             #-lpythonQt$${DEBUG_EXT} \
             #-lpythonQt_QtAll$${DEBUG_EXT} \
             -lwsock32 \
-            -lturbojpeg
 
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
@@ -277,12 +274,18 @@ win32 {
     RC_FILE = knossos.rc
 }
 
+turbojpeg {
+    DEFINES += KNOSSOS_USE_TURBOJPEG
+    win32 {
+        INCLUDEPATH += C:/libjpeg-turbo-gcc/include
+        LIBS += -LC:/libjpeg-turbo-gcc/lib
+    }
+    LIBS += -lturbojpeg
+}
 
 RESOURCES += \
     Resources.qrc
 
-
 include(test/config.pri)
 
-QMAKE_CXXFLAGS += -std=gnu++0x #-std=c++0x
 QMAKE_CXXFLAGS_RELEASE += -O3

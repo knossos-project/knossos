@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include "ftp.h"
 
-#ifdef Q_OS_WIN
+#ifdef KNOSSOS_USE_TURBOJPEG
 #include <turbojpeg.h>
 #endif
 
@@ -513,7 +513,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     FILE *cubeFile = NULL;
     size_t readBytes = 0;
     Byte *currentDcSlot = NULL;
-#ifdef Q_OS_WIN
+#ifdef KNOSSOS_USE_TURBOJPEG
     tjhandle _jpegDecompressor = NULL;
     Byte *localCompressedBuf = NULL;
     size_t localCompressedBufSize = 0;
@@ -580,7 +580,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         }
         break;
     case 1000:
-#ifdef Q_OS_WIN
+#ifdef KNOSSOS_USE_TURBOJPEG
         cubeFile = fopen(filename, "rb");
         if(cubeFile == NULL) {
             LOG("fopen failed for %s!\n", filename);
@@ -621,7 +621,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             goto loadcube_fail;
         }
 #else
-        LOG("JPG currently implemented only for Windows!");
+        LOG("JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.");
 #endif
         break;
     case 1001:
@@ -670,7 +670,7 @@ loadcube_ret:
         state->protectLoaderSlots->unlock();
     }
 
-#ifdef Q_OS_WIN
+#ifdef KNOSSOS_USE_TURBOJPEG
     if (NULL != _jpegDecompressor) {
         tjDestroy(_jpegDecompressor);
     }
