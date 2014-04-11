@@ -125,6 +125,7 @@ uint lll_calculate_filename(C_Element *elem) {
     case 0:
         strncpy(typeExtension, "raw", 4);
         snprintf(compressionExtension, 1, "");
+        break;
     case 1000:
         strncpy(typeExtension, "jpg", 4);
         snprintf(compressionExtension, 1, "");
