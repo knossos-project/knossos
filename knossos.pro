@@ -8,7 +8,7 @@ QT       += core gui opengl network testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11# turbojpeg
+CONFIG += qt c++11 turbojpeg
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -221,11 +221,9 @@ macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 macx {
     INCLUDEPATH += /usr/include/Python2.7 \
                    /usr/lib \
-                   /usr/include \
-                   /opt/libjpeg-turbo/include
+                   /usr/include
     LIBS += -framework GLUT \
-            -lcurl \
-            -L/opt/libjpeg-turbo/lib -lturbojpeg
+            -lcurl
 
     # copy the content of the doc folder to the build-dir
     doc.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc
@@ -277,6 +275,10 @@ win32 {
 
 turbojpeg {
     DEFINES += KNOSSOS_USE_TURBOJPEG
+    mac {
+        INCLUDEPATH += /opt/libjpeg-turbo/include
+        LIBS += -L/opt/libjpeg-turbo/lib -lturbojpeg
+    }
     win32 {
         INCLUDEPATH += C:/libjpeg-turbo-gcc/include
         LIBS += -LC:/libjpeg-turbo-gcc/lib
