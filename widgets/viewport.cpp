@@ -391,6 +391,22 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
+    //events
+    //↓          #   #   #   #   #   #   #   # ↑  ↓          #  #  #…
+    //^ os delay ^       ^---^ os key repeat
+
+    //intended behavior:
+    //↓          # # # # # # # # # # # # # # # ↑  ↓          # # # #…
+    //^ os delay ^       ^-^ knossos specified interval
+
+    //after a ›#‹ event state->viewerKeyRepeat instructs the viewer to check in each frame if a move should be performed
+    //›#‹ events are marked isAutoRepeat correctly on Windows
+    //on Mac and Linux only when you move the cursor out of the window (https://bugreports.qt-project.org/browse/QTBUG-21500)
+    //to emulate this the time to the previous time the same event occured is measured
+    //drawbacks of this emulation are:
+    //- you can accidently enable autorepeat – skipping the os delay – although you just pressed 2 times very quickly (falling into the timer threshold)
+    //- autorepeat is not activated until the 3rd press event, not the 2nd, because you need a base event for the timer
+
     if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
         state->viewerKeyRepeat = event->isAutoRepeat();
     }
