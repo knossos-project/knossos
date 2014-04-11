@@ -23,8 +23,7 @@
  */
 
 #include <curl/curl.h>
-#include <QXmlStreamReader>
-#include <QXmlAttributes>
+
 
 #include <QEvent>
 #include <QMenu>
@@ -459,18 +458,23 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
+    /* edit skeleton actions */
     QActionGroup* workModeEditMenuGroup = new QActionGroup(this);
-    addNodeAction = new QAction(tr("Add Node"), this);
+    addNodeAction = new QAction(tr("Add Node(A)"), 0);
     addNodeAction->setCheckable(true);
     addNodeAction->setActionGroup(workModeEditMenuGroup);
-    linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), this);
+    addNodeAction->setShortcut(QKeySequence(tr("A")));
+    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+    linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), 0);
     linkWithActiveNodeAction->setCheckable(true);
     linkWithActiveNodeAction->setActionGroup(workModeEditMenuGroup);
-    dropNodesAction = new QAction(tr("Drop Nodes"), this);
+    linkWithActiveNodeAction->setShortcut(QKeySequence(tr("W")));
+    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+    dropNodesAction = new QAction(tr("Drop Nodes"), 0);
     dropNodesAction->setCheckable(true);
     dropNodesAction->setActionGroup(workModeEditMenuGroup);
-
-    skeletonStatisticsAction = new QAction(tr("Skeleton Statistics"), this);
+    dropNodesAction->setShortcut(QKeySequence(tr("")));
+    dropNodesAction->setShortcutContext(Qt::ApplicationShortcut);
 
 
     if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {
@@ -484,7 +488,7 @@ void MainWindow::createActions()
     connect(addNodeAction, SIGNAL(triggered()), this, SLOT(addNodeSlot()));
     connect(linkWithActiveNodeAction, SIGNAL(triggered()), this, SLOT(linkWithActiveNodeSlot()));
     connect(dropNodesAction, SIGNAL(triggered()), this, SLOT(dropNodesSlot()));
-    connect(skeletonStatisticsAction, SIGNAL(triggered()), this, SLOT(skeletonStatisticsSlot()));
+    //connect(skeletonStatisticsAction, SIGNAL(triggered()), this, SLOT(skeletonStatisticsSlot()));
 
 
     /* view actions */

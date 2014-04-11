@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network xml testlib help
+QT       += core gui opengl network testlib help
 
 TARGET = knossos
 TEMPLATE = app
@@ -220,11 +220,12 @@ macx:QMAKE_MAC_SDK = macosx10.9
 macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 macx {
     INCLUDEPATH += /usr/include/Python2.7 \
-                   /usr/lib/
-                   /usr/include
+                   /usr/lib \
+                   /usr/include \
+                   /opt/libjpeg-turbo/include
     LIBS += -framework GLUT \
-            #-L$(QTDIR)/lib -lPythonQt \
-            -lcurl
+            -lcurl \
+            -L/opt/libjpeg-turbo/lib -lturbojpeg
 
     # copy the content of the doc folder to the build-dir
     doc.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc

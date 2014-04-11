@@ -1864,9 +1864,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
-    connect(eventModel, SIGNAL(workModeAddSignal()), window, SLOT(addNodeSlot()));
-    connect(eventModel, SIGNAL(workModeLinkSignal()), window, SLOT(linkWithActiveNodeSlot()));
+    connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));   
     connect(eventModel, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(eventModel, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
     connect(eventModel, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
