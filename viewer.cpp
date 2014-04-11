@@ -571,7 +571,7 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     Coordinate currentDc, currentPx;
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    Byte *datacube = NULL, *overlayCube = NULL;
+    Byte *datacube = NULL;
 
     floatCoordinate *v1 = &currentVp.v1;
     floatCoordinate *v2 = &currentVp.v2;
@@ -599,7 +599,6 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
 
             state->protectCube2Pointer->lock();
             datacube = Hashtable::ht_get(state->Dc2Pointer[int_log(state->magnification)], currentDc);
-            overlayCube = Hashtable::ht_get(state->Oc2Pointer[int_log(state->magnification)], currentDc);
             state->protectCube2Pointer->unlock();
 
             SET_COORDINATE(currentPxInDc_float, currentPx_float.x-currentDc.x*state->cubeEdgeLength,
@@ -613,10 +612,6 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
             SET_COORDINATE(currentPx_float, currentPx_float.x + v2->x * (t - t_old),
                                             currentPx_float.y + v2->y * (t - t_old),
                                             currentPx_float.z + v2->z * (t - t_old));
-             //  Take care of the overlay textures.
-            if(state->overlay) {
-                //TDITEM handle overlay
-            }
         }
         s++;
         ADD_COORDINATE(rowPx_float, *v1);

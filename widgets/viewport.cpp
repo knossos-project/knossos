@@ -391,16 +391,18 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    state->viewerKeyRepeat = event->isAutoRepeat();
-    if (!event->isAutoRepeat()) {//maybe we need to set it ourselves
+    if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
+        state->viewerKeyRepeat = event->isAutoRepeat();
+    }
+    if (!event->isAutoRepeat()) {//maybe we need to set it ourselves*/
         //autorepeat emulation for systems where isAutoRepeat() does not work as expected
         //seperate timer for each key, but only one across all vps
         if (event->key() == Qt::Key_D) {
             static QElapsedTimer timeBase;
-            state->viewerKeyRepeat = timeBase.restart() < 100;
+            state->viewerKeyRepeat = timeBase.restart() < 150;
         } else if (event->key() == Qt::Key_F) {
             static QElapsedTimer timeBase;
-            state->viewerKeyRepeat = timeBase.restart() < 100;
+            state->viewerKeyRepeat = timeBase.restart() < 150;
         }
     }
     eventDelegate->handleKeyboard(event, id);
@@ -419,10 +421,8 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
 
-    state->viewerKeyRepeat = false;
     if (event->key() == Qt::Key_D) {
         state->keyD = false;
-        state->viewerKeyRepeat = false;
     } else if (event->key() == Qt::Key_F) {
         state->keyF = false;
     } else if (event->key() == Qt::Key_Shift) {//decrease movement speed
