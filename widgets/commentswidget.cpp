@@ -260,7 +260,7 @@ void CommentsWidget::saveSettings() {
     settings.endGroup();
 }
 
-void CommentsWidget::closeEvent(QCloseEvent *event) {
+void CommentsWidget::closeEvent(QCloseEvent */*event*/) {
     this->hide();
     emit this->uncheckSignal();
 }

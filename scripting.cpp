@@ -39,7 +39,8 @@ void Scripting::run() {
 
 }
 
-void Scripting::addScriptingObject(const QString &name, QObject *obj) {
+void Scripting::addScriptingObject(const QString &/*name*/, QObject */*obj*/) {
+    // TODO delete?
     //PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
     //ctx.addObject(name, obj);
 }

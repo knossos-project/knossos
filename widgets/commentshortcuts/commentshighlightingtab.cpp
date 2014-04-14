@@ -161,7 +161,6 @@ void CommentsHighlightingTab::colorChanged(QString color) {
     QComboBox *colorBox = (QComboBox*) sender();
     for(int i = 0; i < N; i++) {
         if(colorBox == colorComboBox[i]) {
-            color4F col;
             if(color == "green") {
                 SET_COLOR(state->skeletonState->commentColors[i], 0.13, 0.69, 0.3, 1.);
             } else if(color == "rose") {

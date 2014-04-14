@@ -50,8 +50,6 @@ CommentsNodeCommentsTab::CommentsNodeCommentsTab(QWidget *parent) :
 void CommentsNodeCommentsTab::updateCommentsTable() {
     struct treeListElement *tree;
     struct nodeListElement *node;
-    char nodeDisplay[512];
-    QString filterNoCase, *commentNoCase;
     bool filtered;
 
     if(filterField->text().isEmpty()) {
@@ -93,7 +91,7 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
 
             if(filtered) {               
                 if(strstr(node->comment->content, filter) != NULL) {
-                    if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
+                    if((branchNodesOnlyCheckbox->isChecked() and node->isBranchNode) or !branchNodesOnlyCheckbox->isChecked()) {
 
                         QTableWidgetItem *nodeID = new QTableWidgetItem(QString::number(node->nodeID));
                         Qt::ItemFlags flags = nodeID->flags();
@@ -110,7 +108,7 @@ void CommentsNodeCommentsTab::updateCommentsTable() {
                     }
                 }
             } else {
-                if(branchNodesOnlyCheckbox->isChecked() and node->isBranchNode or !branchNodesOnlyCheckbox->isChecked()) {
+                if((branchNodesOnlyCheckbox->isChecked() and node->isBranchNode) or !branchNodesOnlyCheckbox->isChecked()) {
                     QTableWidgetItem *nodeID = new QTableWidgetItem(QString::number(node->nodeID));
                     Qt::ItemFlags flags = nodeID->flags();
                     flags |= Qt::ItemIsSelectable;
@@ -135,7 +133,8 @@ void CommentsNodeCommentsTab::filterChanged() {
     updateCommentsTable();
 }
 
-void CommentsNodeCommentsTab::branchPointOnlyChecked(bool on) {
+void CommentsNodeCommentsTab::branchPointOnlyChecked(bool /*on*/) {
+    // TODO delete?
     updateCommentsTable();
 }
 
@@ -148,7 +147,7 @@ void CommentsNodeCommentsTab::commentChanged(QTableWidgetItem *item) {
     }
 }
 
-void CommentsNodeCommentsTab::itemSelected(int row, int col) {
+void CommentsNodeCommentsTab::itemSelected(int row, int /*col*/) {
     QTableWidgetItem *nodeID = nodeTable->item(row, 0);
     QTableWidgetItem *comment = nodeTable->item(row, 1);
 
@@ -159,7 +158,7 @@ void CommentsNodeCommentsTab::itemSelected(int row, int col) {
 }
 
 /** If the row of a table contains node information and is double Clicked then knossos jump to this node   */
-void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
+void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem */*item*/) {
     if(!state->skeletonState->selectedCommentNode)
        return;
 
