@@ -95,7 +95,7 @@ void CommentsWidget::loadSettings() {
     }
     else {
         this->shortcutTab->textFields[1]->clear();
-        state->viewerState->gui->comment2[1] = '\0';
+        state->viewerState->gui->comment2[0] = '\0';
     }
     if(settings.value(COMMENT3).isNull() == false) {
         this->shortcutTab->textFields[2]->setText(settings.value(COMMENT3).toString());
@@ -103,7 +103,7 @@ void CommentsWidget::loadSettings() {
     }
     else {
         this->shortcutTab->textFields[2]->clear();
-        state->viewerState->gui->comment3[2] = '\0';
+        state->viewerState->gui->comment3[0] = '\0';
     }
     if(settings.value(COMMENT4).isNull() == false) {
         this->shortcutTab->textFields[3]->setText(settings.value(COMMENT4).toString());
@@ -111,7 +111,7 @@ void CommentsWidget::loadSettings() {
     }
     else {
         this->shortcutTab->textFields[3]->clear();
-        state->viewerState->gui->comment4[3] = '\0';
+        state->viewerState->gui->comment4[0] = '\0';
     }
     if(settings.value(COMMENT5).isNull() == false) {
         this->shortcutTab->textFields[4]->setText(settings.value(COMMENT5).toString());
@@ -119,7 +119,7 @@ void CommentsWidget::loadSettings() {
     }
     else {
         this->shortcutTab->textFields[4]->clear();
-        state->viewerState->gui->comment5[4] = '\0';
+        state->viewerState->gui->comment5[0] = '\0';
     }
 
     if(settings.value(SUBSTR1).isNull() == false) {
