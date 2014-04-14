@@ -8,7 +8,7 @@ QT       += core gui opengl network testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11 turbojpeg
+CONFIG += qt c++11 copydoc turbojpeg
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -234,50 +234,30 @@ macx {
 }
 
 linux {
-    LIBS += -lGL \
-            -lGLU \
-            #-lPythonQt \
-            -lglut \
-            -lcurl \
-            -L/usr/lib/i386-linux-gnu/mesa/lGL \
-
-    INCLUDEPATH += /usr/include/GL/ \
-            /usr/local/include/ \
-            /usr/local/include/PythonQt/ \
-            /usr/include/python2.7/
-
-    # copy the content of the doc folder to the build-dir
-    doc.path = $$OUT_PWD/doc
-    doc.files = $$PWD/doc/*
-    INSTALLS += doc
+    LIBS += -lcurl
+    LIBS += -lGLU -lglut
 }
 
 win32 {
-    CONFIG(debug, debug|release) {
-        DEBUG_EXT = _d
-    } else {
-        DEBUG_EXT =
-    }
-
-    LIBS += -lcurl.dll \
-            #-lglew32 \
-            -lglut32 \
-            #-lpythonQt$${DEBUG_EXT} \
-            #-lpythonQt_QtAll$${DEBUG_EXT} \
-            -lwsock32 \
-
-    INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
-                   C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
-                   C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
+    LIBS += -lcurl.dll -lwsock32
+    LIBS += -lglut32
 
     RC_FILE = knossos.rc
+}
+
+copydoc:!exists($$OUT_PWD/doc) {
+    copydoctarget.target = copydoc
+    copydoctarget.depends = $$PWD/doc
+    copydoctarget.commands = $(COPY_DIR) $$PWD/doc $$OUT_PWD
+    first.depends = copydoctarget
+    QMAKE_EXTRA_TARGETS += first copydoctarget
 }
 
 turbojpeg {
     DEFINES += KNOSSOS_USE_TURBOJPEG
     mac {
         INCLUDEPATH += /opt/libjpeg-turbo/include
-        LIBS += -L/opt/libjpeg-turbo/lib -lturbojpeg
+        LIBS += -L/opt/libjpeg-turbo/lib
     }
     win32 {
         INCLUDEPATH += C:/libjpeg-turbo-gcc/include
@@ -286,8 +266,7 @@ turbojpeg {
     LIBS += -lturbojpeg
 }
 
-RESOURCES += \
-    Resources.qrc
+RESOURCES += Resources.qrc
 
 include(test/config.pri)
 
