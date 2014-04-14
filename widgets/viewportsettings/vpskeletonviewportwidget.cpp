@@ -71,36 +71,32 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
 
 void VPSkeletonViewportWidget::wholeSkeletonSelected(bool checked) {
     if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
         state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-    } else {
-        state->skeletonState->displayMode &= ~DSP_SKEL_VP_WHOLE;
+        emit updateViewerStateSignal();
     }
-    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::onlyCurrentCubeSelected(bool checked) {
     if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
         state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
-    } else {
-        state->skeletonState->displayMode &= ~DSP_SKEL_VP_CURRENTCUBE;
+        emit updateViewerStateSignal();
     }
-    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::onlyActiveTreeSelected(bool checked) {
     if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
         state->skeletonState->displayMode |= DSP_ACTIVETREE;
-    } else {
-        state->skeletonState->displayMode &= ~DSP_ACTIVETREE;
+        emit updateViewerStateSignal();
     }
-    emit updateViewerStateSignal();
 }
 
 void VPSkeletonViewportWidget::hideSkeletonSelected(bool checked) {
     if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
         state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-    } else {
-        state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
+        emit updateViewerStateSignal();
     }
-    emit updateViewerStateSignal();
 }
