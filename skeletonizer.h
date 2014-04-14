@@ -244,7 +244,7 @@ public slots:
     static bool clearSkeleton(int targetRevision, int loadingSkeleton);
     static bool delActiveNode();
     bool updateSkeletonFileName(int targetRevision, int increment, char *filename);
-    void autoSave();
+    void autoSaveIfElapsed();
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);

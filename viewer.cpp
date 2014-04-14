@@ -1178,7 +1178,7 @@ void Viewer::run() {
         if(drawCounter == 3) {
             updateViewerState();
             recalcTextureOffsets();
-            skeletonizer->autoSave();
+            skeletonizer->autoSaveIfElapsed();
             window->updateTitlebar();//display changes after filename
 
             vpUpperLeft->updateGL();

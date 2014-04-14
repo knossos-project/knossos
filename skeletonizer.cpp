@@ -620,7 +620,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     return targetNodeID;
 }
 
-void Skeletonizer::autoSave() {
+void Skeletonizer::autoSaveIfElapsed() {
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
             const auto minutes = (state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0;
