@@ -86,7 +86,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     QVBoxLayout *localLayout = new QVBoxLayout();
     localLayout->addWidget(table);
 
-    QGroupBox *groupBox = new QGroupBox();    
+    //QGroupBox *groupBox = new QGroupBox();
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     //groupBox->setLayout(localLayout);
@@ -101,7 +101,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
 }
 
 
-void TracingTimeWidget::closeEvent(QCloseEvent *event) {
+void TracingTimeWidget::closeEvent(QCloseEvent */*event*/) {
     this->hide();
 }
 

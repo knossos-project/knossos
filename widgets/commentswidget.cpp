@@ -83,43 +83,43 @@ void CommentsWidget::loadSettings() {
 
     if(settings.value(COMMENT1).isNull() == false) {
         this->shortcutTab->textFields[0]->setText(settings.value(COMMENT1).toString());
-        strcpy(state->viewerState->gui->comment1, settings.value(COMMENT1).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment1, settings.value(COMMENT1).toString().toUtf8());
     }
     else {
         this->shortcutTab->textFields[0]->clear();
-        memset(state->viewerState->gui->comment1, '\0', sizeof(state->viewerState->gui->comment1));
+        state->viewerState->gui->comment1 = '\0';
     }
     if(settings.value(COMMENT2).isNull() == false) {
         this->shortcutTab->textFields[1]->setText(settings.value(COMMENT2).toString());
-        strcpy(state->viewerState->gui->comment2, settings.value(COMMENT2).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment2, settings.value(COMMENT2).toString().toUtf8());
     }
     else {
         this->shortcutTab->textFields[1]->clear();
-        memset(state->viewerState->gui->comment2, '\0', sizeof(state->viewerState->gui->comment2));
+        state->viewerState->gui->comment2 = '\0';
     }
     if(settings.value(COMMENT3).isNull() == false) {
         this->shortcutTab->textFields[2]->setText(settings.value(COMMENT3).toString());
-        strcpy(state->viewerState->gui->comment3, settings.value(COMMENT3).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment3, settings.value(COMMENT3).toString().toUtf8());
     }
     else {
         this->shortcutTab->textFields[2]->clear();
-        memset(state->viewerState->gui->comment3, '\0', sizeof(state->viewerState->gui->comment3));
+        state->viewerState->gui->comment3 = '\0';
     }
     if(settings.value(COMMENT4).isNull() == false) {
         this->shortcutTab->textFields[3]->setText(settings.value(COMMENT4).toString());
-        strcpy(state->viewerState->gui->comment4, settings.value(COMMENT4).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment4, settings.value(COMMENT4).toString().toUtf8());
     }
     else {
         this->shortcutTab->textFields[3]->clear();
-        memset(state->viewerState->gui->comment4, '\0', sizeof(state->viewerState->gui->comment4));
+        state->viewerState->gui->comment4 = '\0';
     }
     if(settings.value(COMMENT5).isNull() == false) {
         this->shortcutTab->textFields[4]->setText(settings.value(COMMENT5).toString());
-        strcpy(state->viewerState->gui->comment5, settings.value(COMMENT5).toString().toStdString().c_str());
+        strcpy(state->viewerState->gui->comment5, settings.value(COMMENT5).toString().toUtf8());
     }
     else {
         this->shortcutTab->textFields[4]->clear();
-        memset(state->viewerState->gui->comment5, '\0', sizeof(state->viewerState->gui->comment5));
+        state->viewerState->gui->comment5 = '\0';
     }
 
     if(settings.value(SUBSTR1).isNull() == false) {

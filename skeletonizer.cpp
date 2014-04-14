@@ -749,7 +749,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     segmentListElement *currentSegment = NULL;
     commentListElement *currentComment = NULL;
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
-    int r;
     int time;
     char *checksum;
 
@@ -943,7 +942,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     }
 
     xml.writeStartElement("branchpoints");
-    while(currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack)) {
+    while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
         xml.writeStartElement("branchpoint");
         xml.writeAttribute("id", tmp.setNum(currentBranchPointID));
         xml.writeEndElement();
@@ -1474,7 +1473,7 @@ bool Skeletonizer::delActiveTree() {
     return true;
 }
 
-bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize) {
+bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int /*serialize*/) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     // Delete the segment out of the segment list and out of the visualization structure!
@@ -1903,7 +1902,6 @@ int Skeletonizer::addNode(int targetRevision,
     nodeListElement *tempNode = NULL;
     treeListElement *tempTree = NULL;
     floatCoordinate lockVector;
-    int lockDistance = 0;
 
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -1932,7 +1930,7 @@ int Skeletonizer::addNode(int targetRevision,
             lockVector.y = (float)position->y - (float)state->skeletonState->lockedPosition.y;
             lockVector.z = (float)position->z - (float)state->skeletonState->lockedPosition.z;
 
-            lockDistance = euclidicNorm(&lockVector);
+            float lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
                 qDebug("Node is too far away from lock point (%d), not adding.", lockDistance);
                 Knossos::unlockSkeleton(false);
@@ -2116,7 +2114,7 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
     return true;
 }
 
-bool Skeletonizer::clearSkeleton(int targetRevision, int loadingSkeleton) {
+bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     treeListElement *currentTree, *treeToDel;
@@ -2723,8 +2721,6 @@ bool Skeletonizer::editNode(int targetRevision,
                  int newZPos,
                  int inMag) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
-
-    segmentListElement *currentSegment = NULL;
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
@@ -3465,7 +3461,8 @@ commentListElement* Skeletonizer::previousComment(QString searchString) {
     return state->skeletonState->currentComment;
 }
 
-bool Skeletonizer::searchInComment(char *searchString, commentListElement *comment) {
+bool Skeletonizer::searchInComment(char */*searchString*/, commentListElement */*comment*/) {
+    // BUG unimplemented method!
     return true;
 }
 
@@ -4544,7 +4541,7 @@ void Skeletonizer::deserializeSkeleton() {
     serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
     int memPosition = 0, inMag = 0, time = 0, activeNodeID = 0, activeTreeID = 0, neuronID = 0, nodeID = 0, sourceNodeID = 0, targetNodeID = 0;
     int stringLength = 0;
-    char temp[10000];
+    char temp[10000]; // BUG its over 9000
     color4F neuronColor;
     struct treeListElement *currentTree;
     struct nodeListElement *currentNode;
@@ -4566,7 +4563,7 @@ void Skeletonizer::deserializeSkeleton() {
         LOG("Out of memory.");
         return;
     }
-    memset(currentCoordinate, '\0', sizeof(currentCoordinate));
+    memset(currentCoordinate, '\0', sizeof(*currentCoordinate));
 
     clearSkeleton(CHANGE_MANUAL, true);
 
