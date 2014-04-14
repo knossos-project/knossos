@@ -20,7 +20,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 {
     setWindowIcon(QIcon(":/images/icons/task.png"));
     setWindowTitle("Task Login");
-    resize(308, 151);
+    setMinimumSize(308, 151);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     QFormLayout *formLayout = new QFormLayout();
@@ -72,7 +72,7 @@ void TaskLoginWidget::loginButtonClicked() {
     char password[512];
     char postdata[1024];
 
-    memset(username, '0', 512);
+    memset(username, '\0', 512);
     memset(password, '\0', 512);
     strcpy(username, usernameField->text().toStdString().c_str());
     strcpy(password, passwordField->text().toStdString().c_str());
