@@ -838,7 +838,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
 uint Loader::loadCubes() {
     int decompThreads = state->loaderDecompThreadsNumber;
 
-    C_Element *currentCube = NULL, *prevCube = NULL, *decompedCube = NULL;
+    C_Element *currentCube = NULL;//, *prevCube = NULL, *decompedCube = NULL;
     uint loadedDc;
     FtpThread *ftpThread;
     ftp_thread_struct fts = {0};

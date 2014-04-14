@@ -726,7 +726,7 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
             state->skeletonState->saveCnt = 0;
         }
 
-        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml\0",
+        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml",
                 skeletonFileBase,
                 state->skeletonState->saveCnt);
     }

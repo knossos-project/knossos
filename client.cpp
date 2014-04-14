@@ -54,7 +54,7 @@ Client::Client(QObject *parent) :
  */
 bool Client::connectToServer(QTcpSocket *remoteSocket) {
     //int timeoutIn100ms = roundFloat((float) state->clientSignal.connectionTimeout / 100.);
-    int timeoutIn100ms = 30; // ??
+    //int timeoutIn100ms = 30; // ??
 
     // lookup the host
     QHostInfo hostInfo = QHostInfo::fromName("localhost");
@@ -402,12 +402,12 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                color4F treeCol;
-                treeCol.r = f[0];
-                treeCol.g = f[1];
-                treeCol.b = f[2];
-                treeCol.a = 1.;
-                //Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol, false);
+               // color4F treeCol;
+               // treeCol.r = f[0];
+               // treeCol.g = f[1];
+               // treeCol.b = f[2];
+               // treeCol.a = 1.;
+               // Skeletonizer::addTreeListElement(true, d[0], d[1], treeCol, false);
 
                 break;
 
@@ -542,10 +542,7 @@ bool Client::flushOutBuffer() {
     state->protectOutBuffer->lock();
 
     if(state->clientState->outBuffer->length > 0) {
-        char *content = (char *)state->clientState->outBuffer->data;
-
-
-
+        //char *content = (char *)state->clientState->outBuffer->data;
         //remoteSocket->write(content, state->clientState->outBuffer->length);
         //remoteSocket->flush();
 
@@ -913,9 +910,10 @@ bool Client::addPeer(uint id, char *name,
     return true;
 }
 
-
-bool Client::delPeer(uint id) {
+bool Client::delPeer(uint /*id*/) {
+    // BUG unimplented method!
     qDebug() << "delPeer() is not implemented.\n";
+    // throw std::runtime_error("delPeer() is not implemented.\n");
     return true;
 }
 
@@ -1175,8 +1173,7 @@ void Client::socketConnectionSucceeded() {
     LOG("Socket connection established")
 }
 
-void Client::socketConnectionFailed(QAbstractSocket::SocketError error) {
+void Client::socketConnectionFailed(QAbstractSocket::SocketError /*error*/) {
     qDebug("error");
     LOG("Connection failed");
-
 }

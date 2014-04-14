@@ -136,7 +136,8 @@ bool Remote::newTrajectory(char *trajName, char *trajectory) {
 /**
  * @todo lex parser
  */
-bool Remote::remoteTrajectory(int trajNumber) {
+bool Remote::remoteTrajectory(int /*trajNumber*/) {
+    // BUG unimplemented method!
     /*
     YY_BUFFER_STATE trajBuffer;
 
@@ -227,9 +228,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
     uint timePerStep = 0;
     uint recenteringTime = 0;
 
-    float tempAlphaCache =  state->viewerState->alphaCache;
+    //float tempAlphaCache =  state->viewerState->alphaCache;
     float tempAlpha = state->alpha;
-    float tempBetaCache =  state->viewerState->betaCache;
+    //float tempBetaCache =  state->viewerState->betaCache;
     float tempBeta = state->beta;
 
     float alpha, beta, dAlpha, dBeta;
