@@ -228,10 +228,6 @@ values. The XY vp always used. */
 
 //  For the skeletonizer
 
-#define SKELETONIZER_ON_CLICK_ADD_NODE 0
-#define SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE 1
-#define SKELETONIZER_ON_CLICK_DEL_NODE 2
-#define SKELETONIZER_ON_CLICK_DROP_NODE 3
 #define SEGMENT_FORWARD 1
 #define SEGMENT_BACKWARD 2
 
@@ -888,7 +884,7 @@ struct viewerState {
 
     //Cache for Movements smaller than pixel coordinate
     floatCoordinate moveCache;
-	//Orientation
+    //Orientation
     float alphaCache;
     float betaCache;
 
@@ -916,7 +912,7 @@ struct viewerState {
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-    //Flag to indicate user repositioning
+	//Flag to indicate user repositioning
 	uint userRepositioning;
 
 	float depthCutOff;
@@ -924,7 +920,7 @@ struct viewerState {
     //Flag to indicate active mouse motion tracking: 0 off, 1 on
     int motionTracking;
 
-	//Stores the current window size in screen pixels
+    //Stores the current window size in screen pixels
     uint screenSizeX;
     uint screenSizeY;
 
@@ -933,7 +929,7 @@ struct viewerState {
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
-	Coordinate currentPosition;
+    Coordinate currentPosition;
     Coordinate lastRecenteringPosition;
 
     uint recenteringTime;
@@ -944,7 +940,7 @@ struct viewerState {
 
     //Keyboard repeat rate
     uint stepsPerSec;
-	GLint filterType;
+    GLint filterType;
     int multisamplingOnOff;
     int lightOnOff;
 
@@ -970,7 +966,7 @@ struct viewerState {
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
-    uint workMode;
+    uint clickReaction;
     bool superCubeChanged;
 
     struct guiConfig *gui;
@@ -1203,7 +1199,6 @@ struct skeletonState {
     struct dynArray *nodesByNodeID;
 
     uint skeletonDCnumber;
-    uint workMode;
     uint volBoundary;
 
     uint totalComments;

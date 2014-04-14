@@ -25,6 +25,7 @@
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
+#include "skeletonizer.h"
 #include "renderer.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"
@@ -91,7 +92,7 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     }
     else {
         // Handle the orthogonal viewports
-        switch(state->viewerState->workMode) {
+        switch(state->viewerState->clickReaction) {
             case ON_CLICK_RECENTER:
                 clickedCoordinate =
                     getCoordinateFromOrthogonalClick(event, VPfound);
@@ -188,22 +189,20 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
-    switch(state->skeletonState->workMode) {
-    case SKELETONIZER_ON_CLICK_DROP_NODE:
+    switch (state->viewer->skeletonizer->getTracingMode()) {
+    case Skeletonizer::TracingMode::unlinkedNodes:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        emit workModeDropSignal();
         break;
-    case SKELETONIZER_ON_CLICK_ADD_NODE:
+    case Skeletonizer::TracingMode::skipNextLink:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        emit workModeLinkSignal();
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
-    case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
-        if(state->skeletonState->activeNode == NULL) {
+    case Skeletonizer::TracingMode::linkedNodes:
+        if (state->skeletonState->activeNode == nullptr) {
             //1. no node to link with
             newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         }
-
 
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
 
@@ -344,7 +343,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                         / ((float)state->viewerState->vpConfigs[i].edgeLength);
                     break;
                 case VIEWPORT_XY:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x())
                         / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
@@ -362,7 +361,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                     }
                     break;
                 case VIEWPORT_XZ:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
                     state->viewerState->vpConfigs[i].userMouseSlideY -=
@@ -378,7 +377,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                     }
                     break;
                 case VIEWPORT_YZ:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
                     state->viewerState->vpConfigs[i].userMouseSlideY -=
@@ -394,7 +393,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) 
                     }
                     break;
                 case VIEWPORT_ARBITRARY:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) {
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
                         break;
                     }
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
@@ -1011,7 +1010,7 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        emit updateSlicePlaneWidgetSignal();    
+        emit updateSlicePlaneWidgetSignal();
 
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
@@ -1026,12 +1025,7 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             emit zoomOutSkeletonVPSignal();
-        }    
-    } else if(event->key() == Qt::Key_A) {
-        emit workModeAddSignal();
-    } else if(event->key() == Qt::Key_W) {
-        emit workModeLinkSignal();
-
+        }
     } else if(event->key() == Qt::Key_V) {
        if(control) {
            emit pasteCoordinateSignal();

@@ -32,6 +32,7 @@
 #include "client.h"
 #include "functions.h"
 #include "sha256.h"
+#include "viewer.h"
 
 extern stateInfo *state;
 
@@ -51,9 +52,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
-    state->skeletonState->workMode = ON_CLICK_DRAG;
-
-    updateSkeletonState();
 
     //Create a new hash-table that holds the skeleton datacubes
     state->skeletonState->skeletonDCs = Hashtable::ht_new(state->skeletonState->skeletonDCnumber);
@@ -584,8 +582,8 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     int targetNodeID;
 
     if(!state->skeletonState->activeNode) {
-        LOG("Please create a node before trying to link nodes.")
-        state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+        LOG("Please create a node before trying to link nodes.");
+        setTracingMode(skipNextLink);
         return false;
     }
 
@@ -622,7 +620,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
     return targetNodeID;
 }
 
-bool Skeletonizer::updateSkeletonState() {
+void Skeletonizer::autoSave() {
     if(state->skeletonState->autoSaveBool || state->clientState->saveMaster) {
         if(state->skeletonState->autoSaveInterval) {
             const auto minutes = (state->time.elapsed() - state->skeletonState->lastSaveTicks) / 60000.0;
@@ -639,9 +637,7 @@ bool Skeletonizer::updateSkeletonState() {
             }
         }
     }
-
-    setSkeletonWorkMode(CHANGE_MANUAL, state->skeletonState->workMode);
-    return true;
+    setSkeletonWorkMode(CHANGE_MANUAL, tracingMode);
 }
 
 bool Skeletonizer::nextCommentlessNode() { return true; }
@@ -955,7 +951,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QString fileName) {    
+bool Skeletonizer::loadXmlSkeleton(QString fileName) {
     int merge = false;
     int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
@@ -1410,7 +1406,7 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         }
 
     }
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    setTracingMode(skipNextLink);
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }
@@ -1468,7 +1464,7 @@ bool Skeletonizer::delActiveTree() {
        return false;
     }
 
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
+    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
 
     return true;
 }
@@ -1932,7 +1928,7 @@ int Skeletonizer::addNode(int targetRevision,
 
             float lockDistance = euclidicNorm(&lockVector);
             if(lockDistance > state->skeletonState->lockRadius) {
-                qDebug("Node is too far away from lock point (%d), not adding.", lockDistance);
+                qDebug("Node is too far away from lock point (%f), not adding.", lockDistance);
                 Knossos::unlockSkeleton(false);
                 return false;
             }
@@ -2159,7 +2155,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
 
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
+    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
 
     state->skeletonState->skeletonRevision++;
     state->skeletonState->unsavedChanges = true;
@@ -2536,6 +2532,9 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
     }
+
+    setTracingMode(TracingMode::skipNextLink);
+
     return newElement;
 }
 
@@ -2645,7 +2644,7 @@ segmentListElement* Skeletonizer::findSegmentByNodeIDs(int sourceNodeID, int tar
     currentNode = findNodeByNodeID(sourceNodeID);
     //qDebug() << "Current Node ID =" << currentNode;
 
-    if(!currentNode) { return NULL;}    
+    if(!currentNode) { return NULL;}
     currentSegment = currentNode->firstSegment;
     //qDebug() << currentSegment;
     while(currentSegment) {
@@ -3066,7 +3065,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = addTreeListElement(false, CHANGE_MANUAL, 0, treeCol, false);
+        newTree = state->viewer->skeletonizer->addTreeListElement(false, CHANGE_MANUAL, 0, treeCol, false);
         // Splitting the connected component.
 
         while((n = (struct nodeListElement *)popStack(componentNodes))) {
@@ -3623,7 +3622,7 @@ bool Skeletonizer::setSkeletonWorkMode(int targetRevision, uint workMode) {
         return false;
     }
 
-    state->skeletonState->workMode = workMode;
+    setTracingMode(static_cast<TracingMode>(workMode));
 
     state->skeletonState->skeletonRevision++;
 
@@ -4260,7 +4259,7 @@ void Skeletonizer::setShowNodeIDs(bool on) {
 /* @todo ACTIVE_TREE_ID durch Widgets */
 
 Byte *Skeletonizer::serializeSkeleton() {
-    
+
     struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
     PTRSIZEINT currentBranchPointID;
     Byte *serialSkeleton = NULL;
@@ -4366,8 +4365,6 @@ Byte *Skeletonizer::serializeSkeleton() {
     qDebug() << "ABSCHNITT 4";
     //Display Mode, Work Mode, Skeleton Time, Active Node
     Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->displayMode);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->workMode);
     memPosition+=sizeof(int32_t);
     Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
     memPosition+=sizeof(int32_t);
@@ -4528,14 +4525,14 @@ Byte *Skeletonizer::serializeSkeleton() {
         memPosition+=sizeof(currentBranchPointID);
 
     }
-    
+
     return NULL;
 
 }
 
 void Skeletonizer::deserializeSkeleton() {
 
-    
+
     Byte *serialSkeleton = NULL;
     uint i = 0, j = 0, totalTreeNumber = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0, totalBranchPointNumber;
     serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
@@ -4621,7 +4618,6 @@ void Skeletonizer::deserializeSkeleton() {
     //state->skeletonState->displayMode = Client::bytesToInt(&serialSkeleton[memPosition]);
     memPosition+=sizeof(state->skeletonState->displayMode);
     workMode = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->workMode);
     memPosition+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
     activeNodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
     memPosition+=sizeof(state->skeletonState->activeNode->nodeID);
@@ -4762,7 +4758,7 @@ void Skeletonizer::deserializeSkeleton() {
 }
 
 void Skeletonizer::deleteLastSerialSkeleton(){
-    
+
     struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
     state->skeletonState->lastSerialSkeleton->next = NULL;
     free(state->skeletonState->lastSerialSkeleton->next);
@@ -4807,7 +4803,7 @@ void Skeletonizer::saveSerializedSkeleton(){
 int Skeletonizer::getTreeBlockSize(){
 
     int treeBlockSize = 0;
-    
+
     if(state->skeletonState->firstTree){
         struct treeListElement *currentTree = state->skeletonState->firstTree;
         treeBlockSize+=sizeof(currentTree->treeID);
@@ -4820,13 +4816,13 @@ int Skeletonizer::getTreeBlockSize(){
             treeBlockSize+=strlen(currentTree->comment);
             currentTree = currentTree->next;
         }
-    } 
+    }
     return treeBlockSize;
 }
 
 int Skeletonizer::getNodeBlockSize(){
     int nodeBlockSize = 0;
-    
+
     struct nodeListElement *currentNode = NULL;
     nodeBlockSize+=sizeof(currentNode->nodeID);
     nodeBlockSize+=sizeof(currentNode->radius);
@@ -4879,7 +4875,6 @@ int Skeletonizer::getVariableBlockSize(){
     variablesBlockSize+=3*sizeof(state->offset.x / state->magnification);
     variablesBlockSize+=sizeof(state->skeletonState->lockPositions)+sizeof(state->skeletonState->lockRadius)+sizeof(int32_t)+strlen(state->skeletonState->onCommentLock);
     variablesBlockSize+=sizeof(state->skeletonState->displayMode);
-    variablesBlockSize+=sizeof(state->skeletonState->workMode);
     variablesBlockSize+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
     variablesBlockSize+=sizeof(state->skeletonState->activeNode->nodeID);
     variablesBlockSize+=3*sizeof(state->viewerState->currentPosition.x);
@@ -4962,4 +4957,20 @@ void Skeletonizer::resetSkeletonMeta() {
     state->skeletonState->idleTimeLast = state->time.elapsed(); // there is no last idle time when resetting
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     strcpy(state->skeletonState->skeletonCreatedInVersion, KVERSION);
+}
+
+Skeletonizer::TracingMode Skeletonizer::getTracingMode() const {
+    return tracingMode;
+}
+
+void Skeletonizer::setTracingMode(TracingMode mode) {
+    tracingMode = mode;//change internal state
+    //adjust gui
+    if (tracingMode == TracingMode::skipNextLink && !state->viewer->window->addNodeAction->isChecked()) {
+        state->viewer->window->addNodeAction->setChecked(true);
+    } else if (tracingMode == TracingMode::linkedNodes && !state->viewer->window->linkWithActiveNodeAction->isChecked()) {
+        state->viewer->window->linkWithActiveNodeAction->setChecked(true);
+    } else if (tracingMode == TracingMode::unlinkedNodes && !state->viewer->window->dropNodesAction->isChecked()) {
+        state->viewer->window->dropNodesAction->setChecked(true);
+    }
 }

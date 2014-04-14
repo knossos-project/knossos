@@ -56,6 +56,7 @@
 #include "mainwindow.h"
 #include "skeletonizer.h"
 #include "ui_mainwindow.h"
+#include "viewer.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 
@@ -214,15 +215,15 @@ void MainWindow:: createToolBar() {
     this->toolBar->addWidget(yLabel);
     this->toolBar->addWidget(yField);
     this->toolBar->addWidget(zLabel);
-    this->toolBar->addWidget(zField);    
+    this->toolBar->addWidget(zField);
     this->toolBar->addSeparator();
 
 
     /*
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
-    pythonButton->setIcon(QIcon(":/images/python.png"));        
-    this->toolBar->addWidget(pythonButton);    
+    pythonButton->setIcon(QIcon(":/images/python.png"));
+    this->toolBar->addWidget(pythonButton);
     */
 
     taskManagementButton = new QToolButton();
@@ -284,7 +285,7 @@ void MainWindow:: createToolBar() {
     connect(save, SIGNAL(clicked()), this, SLOT(saveSlot()));
 
     connect(copyButton, SIGNAL(clicked()), this, SLOT(copyClipboardCoordinates()));
-    connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates())); 
+    connect(pasteButton, SIGNAL(clicked()), this, SLOT(pasteClipboardCoordinates()));
 
     connect(xField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
     connect(yField, SIGNAL(editingFinished()), this, SLOT(coordinateEditingFinished()));
@@ -446,7 +447,6 @@ void MainWindow::datasetColorAdjustmentsChanged() {
        state->viewerState->datasetAdjustmentOn = doAdjust;
 }
 
-
 void MainWindow::createActions()
 {
     /* file actions */
@@ -458,38 +458,29 @@ void MainWindow::createActions()
     }
 
     /* edit skeleton actions */
-    /* edit skeleton actions */
     QActionGroup* workModeEditMenuGroup = new QActionGroup(this);
-    addNodeAction = new QAction(tr("Add Node(A)"), 0);
-    addNodeAction->setCheckable(true);
-    addNodeAction->setActionGroup(workModeEditMenuGroup);
-    addNodeAction->setShortcut(QKeySequence(tr("A")));
-    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
-    linkWithActiveNodeAction = new QAction(tr("Link with Active Node(W)"), 0);
-    linkWithActiveNodeAction->setCheckable(true);
-    linkWithActiveNodeAction->setActionGroup(workModeEditMenuGroup);
-    linkWithActiveNodeAction->setShortcut(QKeySequence(tr("W")));
-    addNodeAction->setShortcutContext(Qt::ApplicationShortcut);
+    addNodeAction = new QAction(tr("Add Node"), 0);
+    addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
+    linkWithActiveNodeAction = new QAction(tr("Link with Active Node"), 0);
+    linkWithActiveNodeAction->setShortcut(QKeySequence(Qt::Key_W));
     dropNodesAction = new QAction(tr("Drop Nodes"), 0);
-    dropNodesAction->setCheckable(true);
-    dropNodesAction->setActionGroup(workModeEditMenuGroup);
-    dropNodesAction->setShortcut(QKeySequence(tr("")));
-    dropNodesAction->setShortcutContext(Qt::ApplicationShortcut);
-
-
-    if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_ADD_NODE) {
-        addNodeAction->setChecked(true);
-    } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE) {
-        linkWithActiveNodeAction->setChecked(true);
-    } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_DROP_NODE) {
-        dropNodesAction->setChecked(true);
+    //dropNodesAction->setShortcut(QKeySequence(tr("")));
+    for (auto & action : {addNodeAction, linkWithActiveNodeAction, dropNodesAction}) {
+        action->setCheckable(true);
+        action->setActionGroup(workModeEditMenuGroup);
+        action->setShortcutContext(Qt::ApplicationShortcut);
     }
 
-    connect(addNodeAction, SIGNAL(triggered()), this, SLOT(addNodeSlot()));
-    connect(linkWithActiveNodeAction, SIGNAL(triggered()), this, SLOT(linkWithActiveNodeSlot()));
-    connect(dropNodesAction, SIGNAL(triggered()), this, SLOT(dropNodesSlot()));
+    QObject::connect(addNodeAction, &QAction::triggered, [](){
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
+    });
+    QObject::connect(linkWithActiveNodeAction, &QAction::triggered, [](){
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
+    });
+    QObject::connect(dropNodesAction, &QAction::triggered, [](){
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::unlinkedNodes);
+    });
     //connect(skeletonStatisticsAction, SIGNAL(triggered()), this, SLOT(skeletonStatisticsSlot()));
-
 
     /* view actions */
     //workModeViewAction = new QAction(tr("Work Mode"), this);
@@ -501,9 +492,9 @@ void MainWindow::createActions()
     recenterOnClickAction->setCheckable(true);
     recenterOnClickAction->setActionGroup(workModeViewMenuGroup);
 
-    if(state->viewerState->workMode == ON_CLICK_DRAG) {
+    if(state->viewerState->clickReaction == ON_CLICK_DRAG) {
         dragDatasetAction->setChecked(true);
-    } else if(state->viewerState->workMode == ON_CLICK_RECENTER) {
+    } else if(state->viewerState->clickReaction == ON_CLICK_RECENTER) {
         recenterOnClickAction->setChecked(true);
     }
 
@@ -526,7 +517,7 @@ void MainWindow::createActions()
     connect(loadCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(loadCustomPreferencesSlot()));
     connect(saveCustomPreferencesAction, SIGNAL(triggered()), this, SLOT(saveCustomPreferencesSlot()));
     connect(defaultPreferencesAction, SIGNAL(triggered()), this, SLOT(defaultPreferencesSlot()));
-    connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));    
+    connect(datasetNavigationAction, SIGNAL(triggered()), this, SLOT(datatasetNavigationSlot()));
     connect(dataSavingOptionsAction, SIGNAL(triggered()), this, SLOT(dataSavingOptionsSlot()));
 
     /* window actions */
@@ -578,10 +569,10 @@ void MainWindow::createMenus() {
     fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(quitSlot()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
     editMenu = menuBar()->addMenu("Edit Skeleton");
-    workModeEditMenu = editMenu->addMenu("Work Mode");
-        workModeEditMenu->addAction(addNodeAction);
-        workModeEditMenu->addAction(linkWithActiveNodeAction);
-        workModeEditMenu->addAction(dropNodesAction);
+    workModeEditMenu = editMenu->addMenu("Tracing Mode");
+    workModeEditMenu->addAction(addNodeAction);
+    workModeEditMenu->addAction(linkWithActiveNodeAction);
+    workModeEditMenu->addAction(dropNodesAction);
 
     //editMenu->addAction(skeletonStatisticsAction);
 
@@ -643,9 +634,9 @@ void MainWindow::createMenus() {
     editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
     viewMenu = menuBar()->addMenu("Navigation");
-    workModeViewMenu = viewMenu->addMenu("Work Mode");
-        workModeViewMenu->addAction(dragDatasetAction);
-        workModeViewMenu->addAction(recenterOnClickAction);
+    workModeViewMenu = viewMenu->addMenu("Navigation Work Mode");
+    workModeViewMenu->addAction(dragDatasetAction);
+    workModeViewMenu->addAction(recenterOnClickAction);
 
     viewMenu->addAction(datasetNavigationAction);
 
@@ -719,7 +710,7 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
             if(prompt.clickedButton() == merge) {
                 state->skeletonState->mergeOnLoadFlag = true;
             } else if(prompt.clickedButton() == override) {
-                state->skeletonState->mergeOnLoadFlag = false;                
+                state->skeletonState->mergeOnLoadFlag = false;
             } else {
                 return false;
             }
@@ -734,7 +725,6 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
 
         //emit updateCommentsTableSignal();
         updateTitlebar();
-        linkWithActiveNodeSlot();
 
         if(!alreadyInMenu(fileName)) {
             addRecentFile(fileName);
@@ -897,22 +887,6 @@ void MainWindow::quitSlot()
 
 /* edit skeleton functionality */
 
-void MainWindow::addNodeSlot()
-{
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
-}
-
-void MainWindow::linkWithActiveNodeSlot()
-{
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE;
-}
-
-void MainWindow::dropNodesSlot()
-{
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_DROP_NODE;
-}
-
-
 void MainWindow::skeletonStatisticsSlot()
 {
     QMessageBox info;
@@ -958,14 +932,14 @@ void MainWindow::clearSkeletonSlotNoGUI() {
 /* view menu functionality */
 
 void MainWindow::dragDatasetSlot() {
-   state->viewerState->workMode = ON_CLICK_DRAG;
+   state->viewerState->clickReaction = ON_CLICK_DRAG;
    if(recenterOnClickAction->isChecked()) {
        recenterOnClickAction->setChecked(false);
    }
 }
 
 void MainWindow::recenterOnClickSlot() {
-   state->viewerState->workMode = ON_CLICK_RECENTER;
+   state->viewerState->clickReaction = ON_CLICK_RECENTER;
    if(dragDatasetAction->isChecked()) {
        dragDatasetAction->setChecked(false);
    }
@@ -983,7 +957,7 @@ void MainWindow::tracingTimeSlot() {
 void MainWindow::loadCustomPreferencesSlot()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Custom Preferences File", QDir::homePath(), "KNOSOS GUI preferences File (*.ini)");
-    if(!fileName.isEmpty()) {      
+    if(!fileName.isEmpty()) {
         QSettings settings;
 
         QSettings settingsToLoad(fileName, QSettings::IniFormat);
@@ -997,12 +971,12 @@ void MainWindow::loadCustomPreferencesSlot()
 }
 
 void MainWindow::saveCustomPreferencesSlot()
-{   
+{
     saveSettings();
     QSettings settings;
     QString originSettings = settings.fileName();
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.ini)");    
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Custom Preferences File As", QDir::homePath(), "KNOSSOS GUI preferences File (*.ini)");
     if(!fileName.isEmpty()) {
         QFile file;
         file.setFileName(originSettings);
@@ -1164,7 +1138,7 @@ void MainWindow::saveSettings() {
 
     settings.setValue(VP_LOCK_ORIENTATION, this->lockVPOrientationCheckbox->isChecked());
 
-    settings.setValue(WORK_MODE, state->skeletonState->workMode);
+    settings.setValue(WORK_MODE, state->viewer->skeletonizer->getTracingMode());
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(i < skeletonFileHistory->size()) {
@@ -1188,8 +1162,8 @@ void MainWindow::saveSettings() {
     widgetContainer->zoomAndMultiresWidget->saveSettings();
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
-    widgetContainer->annotationWidget->saveSettings();    
-    //widgetContainer->toolsWidget->saveSettings();    
+    widgetContainer->annotationWidget->saveSettings();
+    //widgetContainer->toolsWidget->saveSettings();
 }
 
 /**
@@ -1244,14 +1218,8 @@ void MainWindow::loadSettings() {
         saveFileDirectory = autosaveLocation;
     }
 
-    if(!settings.value(WORK_MODE).isNull() and settings.value(WORK_MODE).toUInt()) {
-        state->skeletonState->workMode = settings.value(WORK_MODE).toUInt();
-        if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE) {
-            linkWithActiveNodeSlot();
-        } else if(state->skeletonState->workMode == SKELETONIZER_ON_CLICK_DROP_NODE) {
-            dropNodesSlot();
-        }
-    }
+    const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).value<Skeletonizer::TracingMode>();
+    state->viewer->skeletonizer->setTracingMode(skeletonizerWorkMode);
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
@@ -1282,13 +1250,13 @@ void MainWindow::loadSettings() {
 
     }
     if(!settings.value(LOADED_FILE8).isNull() and !settings.value(LOADED_FILE8).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());      
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE8).toString());
     }
     if(!settings.value(LOADED_FILE9).isNull() and !settings.value(LOADED_FILE9).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE9).toString());
     }
     if(!settings.value(LOADED_FILE10).isNull() and !settings.value(LOADED_FILE10).toString().isEmpty()) {
-        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());      
+        this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE10).toString());
     }
     this->updateFileHistoryMenu();
 
@@ -1560,7 +1528,6 @@ void MainWindow::newTreeSlot() {
     emit updateToolsSignal();
     //emit updateTreeviewSignal();
     treeAddedSignal(tree);
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
 }
 
 void MainWindow::nextCommentNodeSlot() {

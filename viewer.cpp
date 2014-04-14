@@ -70,6 +70,7 @@ Viewer::Viewer(QObject *parent) :
 
     QDesktopWidget *desktop = QApplication::desktop();
 
+    state->viewer = this;
     rewire();
     window->loadSettings();
     window->show();
@@ -1177,7 +1178,7 @@ void Viewer::run() {
         if(drawCounter == 3) {
             updateViewerState();
             recalcTextureOffsets();
-            skeletonizer->updateSkeletonState();//autosave
+            skeletonizer->autoSave();
             window->updateTitlebar();//display changes after filename
 
             vpUpperLeft->updateGL();
@@ -1802,7 +1803,7 @@ bool Viewer::recalcTextureOffsets() {
 
 bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
     state->protectLoadSignal->lock();
-    state->loadSignal = true;  
+    state->loadSignal = true;
     state->datasetChangeSignal = magChanged;
 
     state->previousPositionX = state->currentPositionX;
@@ -1864,7 +1865,7 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(pasteCoordinateSignal()), window, SLOT(pasteClipboardCoordinates()));
     connect(eventModel, SIGNAL(updateViewerStateSignal()), this, SLOT(updateViewerState()));
     connect(eventModel, SIGNAL(updatePositionSignal(int)), this, SLOT(updatePosition(int)));
-    connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));   
+    connect(eventModel, SIGNAL(updateWidgetSignal()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
     connect(eventModel, SIGNAL(deleteActiveNodeSignal()), skeletonizer, SLOT(delActiveNode()));
     connect(eventModel, SIGNAL(genTestNodesSignal(uint)), skeletonizer, SLOT(genTestNodes(uint)));
     connect(eventModel, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));

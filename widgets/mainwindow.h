@@ -57,7 +57,7 @@ class WidgetContainer;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -72,7 +72,7 @@ public:
 
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
-    void recalcTextureOffsetsSignal();    
+    void recalcTextureOffsetsSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal(QString fileName);
@@ -235,7 +235,7 @@ public slots:
     bool loadSkeletonAfterUserDecision(const QString &fileName);
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
-    bool addRecentFile(const QString &fileName);    
+    bool addRecentFile(const QString &fileName);
     //QUndoStack *undoStack;
 
     /* dataset */
@@ -248,9 +248,6 @@ public slots:
     void quitSlot();
 
     /* edit skeleton menu*/
-    void addNodeSlot();
-    void linkWithActiveNodeSlot();
-    void dropNodesSlot();
     void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
@@ -289,12 +286,12 @@ public slots:
     void uncheckToolsAction();
     void uncheckViewportSettingAction();
     void uncheckCommentShortcutsAction();
-    void uncheckConsoleAction();    
+    void uncheckConsoleAction();
     void uncheckDataSavingAction();
 
     void uncheckSynchronizationAction();
     void uncheckNavigationAction();
-    void updateCoordinateBar(int x, int y, int z);  
+    void updateCoordinateBar(int x, int y, int z);
     void recentFileSelected();
     void treeColorAdjustmentsChanged();
     // viewports

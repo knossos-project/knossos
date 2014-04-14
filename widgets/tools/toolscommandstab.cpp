@@ -194,7 +194,6 @@ void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
     return;
 }
 
-
 void ToolsCommandsTab::jumpToActiveButtonClicked() {
     emit jumpToNodeSignal();
 }
@@ -206,7 +205,6 @@ void ToolsCommandsTab::newTreeButtonClicked() {
     treeCol.b = -1;
     treeCol.a = 1;
     treeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
-    state->skeletonState->workMode = SKELETONIZER_ON_CLICK_ADD_NODE;
     emit treeAddedSignal(tree);
 }
 

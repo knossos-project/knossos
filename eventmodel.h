@@ -84,9 +84,7 @@ signals:
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
-    void workModeAddSignal();
-    void workModeLinkSignal();
-    void workModeDropSignal();
+
     void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);

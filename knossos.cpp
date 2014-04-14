@@ -182,7 +182,6 @@ int main(int argc, char *argv[])
     bool datasetLoaded = knossos->initStates();
 
     Viewer viewer;
-    state->viewer = &viewer;
     loader.reset(new Loader);
     Remote remote;
     Client client;
@@ -1056,7 +1055,6 @@ bool Knossos::configDefaults() {
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
-    state->skeletonState->workMode = ON_CLICK_DRAG;
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;

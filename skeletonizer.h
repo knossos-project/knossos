@@ -37,7 +37,7 @@ class Skeletonizer : public QObject
 public:
     explicit Skeletonizer(QObject *parent = 0);
 
-public:    
+public:
     //    skeletonTime is the time spent on the current skeleton in all previous
     //    instances of knossos that worked with the skeleton.
     //    skeletonTimeCorrection is the time that has to be subtracted from
@@ -68,7 +68,6 @@ public:
     struct dynArray *nodesByNodeID;
 
     uint skeletonDCnumber;
-    uint workMode;
     uint volBoundary;
 
     uint totalComments;
@@ -177,7 +176,7 @@ public:
 
     uint skeletonRevision;
 signals:
-    void updatePositionSignal(int serverMovement);        
+    void updatePositionSignal(int serverMovement);
     void saveSkeletonSignal();
     void updateToolsSignal();
     void updateTreeviewSignal();
@@ -245,7 +244,7 @@ public slots:
     static bool clearSkeleton(int targetRevision, int loadingSkeleton);
     static bool delActiveNode();
     bool updateSkeletonFileName(int targetRevision, int increment, char *filename);
-    bool updateSkeletonState();
+    void autoSave();
     bool genTestNodes(uint number);
     bool UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype);
     static bool setActiveNode(int targetRevision, nodeListElement *node, int nodeID);
@@ -263,7 +262,7 @@ public slots:
     static bool addComment(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
     static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
     static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
-    bool jumpToActiveNode();    
+    bool jumpToActiveNode();
     static bool setActiveTreeByID(int treeID);
 
     /* Slots which manipulates attributes */
@@ -294,7 +293,7 @@ public slots:
     static void restoreDefaultTreeColor();
 
     static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    static treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
@@ -324,6 +323,21 @@ public slots:
     static int getCommentBlockSize();
     static int getVariableBlockSize();
     static int getBranchPointBlockSize();
+
+public:
+    enum TracingMode {
+        skipNextLink
+        , linkedNodes
+        , deleteNodes
+        , unlinkedNodes
+    };
+
+    TracingMode getTracingMode() const;
+    void setTracingMode(TracingMode mode);
+private:
+    TracingMode tracingMode;
 };
+
+Q_DECLARE_METATYPE(Skeletonizer::TracingMode);//make enum available to QVariant for loading/saving
 
 #endif // SKELETONIZER_H
