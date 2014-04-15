@@ -1207,7 +1207,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
-        glRotatef(90, 0., 1., 0.);
+        glRotatef(-90, 1., 0., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
 
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
@@ -1237,7 +1237,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
 
-        glRotatef(270, 1., 0., 0.);
+        glRotatef(90, 0., 1., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
@@ -2144,7 +2144,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                                    &(currentNode->position),
                                    currentNode->radius * state->skeletonState->segRadiusToNodeRadius,
                                    currentColor,
-								   currentVP,
+                                   currentVP,
                                    viewportType);
                 }
 
@@ -2174,7 +2174,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                             &(currentSegment->target->position),
                             state->skeletonState->overrideNodeRadiusVal * state->skeletonState->segRadiusToNodeRadius,
                             currentColor,
-							currentVP,
+                            currentVP,
                             viewportType);
                     else
                         renderCylinder(&(currentSegment->source->position),
@@ -2182,7 +2182,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
                             &(currentSegment->target->position),
                             currentSegment->target->radius * state->skeletonState->segRadiusToNodeRadius,
                             currentColor,
-							currentVP,
+                            currentVP,
                             viewportType);
 
                     if(viewportType != VIEWPORT_SKELETON) {
