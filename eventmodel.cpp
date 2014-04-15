@@ -191,15 +191,18 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
+        emit unselectNodesSignal();
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
+        emit unselectNodesSignal();
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
         if (state->skeletonState->activeNode == nullptr) {
             //1. no node to link with
+            emit unselectNodesSignal();
             newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
         }
@@ -208,15 +211,24 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         if(keyMod.testFlag(Qt::ControlModifier)) {
             //2. Add a "stump", a branch node to which we don't automatically move.
+            emit unselectNodesSignal();
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID, true);
+                if(state->skeletonState->activeNode) {
+                    if(state->skeletonState->activeNode->selected == false) {
+                        state->skeletonState->activeNode->selected = true;
+                        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+                        emit updateTreeviewSignal();
+                    }
+                }
             }
             break;
         }
         //3. Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
+        emit unselectNodesSignal();
         newNode = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
@@ -565,16 +577,30 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             // mouse released on same spot on which it was pressed down: single node selection
             int nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
             if(nodeID) {
-                nodeListElement * selectedNode = findNodeByNodeIDSignal(nodeID);
-                if (selectedNode != nullptr) {
+                nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
+                if(selectedNode != nullptr) {
                     auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
                     //check if already in buffer
                     if (iter == std::end(state->skeletonState->selectedNodes)) {
                         selectedNode->selected = true;
                         state->skeletonState->selectedNodes.emplace_back(selectedNode);
-                    } else {
+                        if(state->skeletonState->selectedNodes.size() == 1) {
+                            emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                                     state->skeletonState->selectedNodes[0]->nodeID);
+                        }
+                    }
+                    else if(state->skeletonState->selectedNodes.size() == 1) {
+                        // at least one node must always be selected
+                        return false;
+                    }
+                    else {
                         selectedNode->selected = false;
                         state->skeletonState->selectedNodes.erase(iter);
+                        // whenever exactly one node is selected, it is the active node
+                        if(state->skeletonState->selectedNodes.size() == 1) {
+                            emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                                               state->skeletonState->selectedNodes[0]->nodeID);
+                        }
                     }
                     emit updateTreeviewSignal();
                     return true;
@@ -584,10 +610,6 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         }
 
         // node selection square
-        for (std::size_t i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-            state->skeletonState->selectedNodes[i]->selected = false;
-        }
-        state->skeletonState->selectedNodes.clear();
         emit unselectNodesSignal();
 
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
@@ -603,6 +625,11 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(VPfound, minX, minY, maxX - minX, maxY - minY);
         for (auto & elem : state->skeletonState->selectedNodes) {
             elem->selected = true;
+        }
+        if(state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
+            // at least one must always be selected
+            state->skeletonState->activeNode->selected = true;
+            state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
         }
         emit updateTreeviewSignal();
     }
@@ -1038,41 +1065,47 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         state->skeletonState->skeletonChanged = true;//idk
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Question);
-            prompt.setWindowTitle("Cofirmation required");
-            prompt.setText("Delete selected nodes?");
-            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-            prompt.addButton("No", QMessageBox::ActionRole);
-            prompt.exec();
-            if(prompt.clickedButton() == confirmButton) {
-                emit deleteSelectedNodesSignal();//skeletonizer
-                emit updateTreeviewSignal();//annotation->treeview
+            bool deleteNodes = true;
+            if(state->skeletonState->selectedNodes.size() != 1) {
+                QMessageBox prompt;
+                prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+                prompt.setIcon(QMessageBox::Question);
+                prompt.setWindowTitle("Cofirmation required");
+                prompt.setText("Delete selected nodes?");
+                QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+                prompt.addButton("No", QMessageBox::ActionRole);
+                prompt.exec();
+                deleteNodes = prompt.clickedButton() == confirmButton;
             }
-        }
-        else {
-            if(state->skeletonState->activeNode) {
-                emit deleteActiveNodeSignal();//skeletonizer
+            if(deleteNodes) {
+                emit deleteSelectedNodesSignal();//skeletonizer
                 emit updateTreeviewSignal();//annotation->treeview
             }
         }
     }
     else if(event->key() == Qt::Key_Escape) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Unselect current node selection?");
-        QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-        prompt.addButton("No", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            for (std::size_t i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                state->skeletonState->selectedNodes[i]->selected = false;
+        if(state->skeletonState->selectedNodes.size() == 1
+           && state->skeletonState->activeNode->selected) {
+            // active node must always be selected if nothing else is selected.
+            return;
+        }
+        if(state->skeletonState->selectedNodes.empty() == false) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
+            prompt.setWindowTitle("Cofirmation required");
+            prompt.setText("Unselect current node selection?");
+            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+            prompt.addButton("No", QMessageBox::ActionRole);
+            prompt.exec();
+            if(prompt.clickedButton() == confirmButton) {
+                emit unselectNodesSignal();
+                if(state->skeletonState->activeNode) { // if nothing else is selected, active node is.
+                    state->skeletonState->activeNode->selected = true;
+                    state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+                    emit updateTreeviewSignal();
+                }
             }
-            state->skeletonState->selectedNodes.clear();
-            emit unselectNodesSignal();
         }
     }
     else if(event->key() == Qt::Key_F4) {

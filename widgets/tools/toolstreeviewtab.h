@@ -82,6 +82,7 @@ signals:
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
+    void clearNodeSelectionSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
@@ -130,6 +131,7 @@ public slots:
     void treesMerged(int treeID1, int treeID2);
 
     // update node table
+    void clearNodeTableSelection();
     void recreateNodesTable();
     void nodeActivated();
     void nodeAdded();

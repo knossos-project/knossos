@@ -302,7 +302,7 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         QMenu nodeContextMenu;
         QObject::connect(nodeContextMenu.addAction("Jump to"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedNode);
         QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
-        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "delete active node"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
+        QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete active node"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
         nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to
         nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
@@ -361,33 +361,27 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
 
 void ToolsTreeviewTab::deleteNodesAction() {
     if (activeNodeTable->hasFocus()) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Do you really want to delete the active node?");
-        QPushButton *confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
-        prompt.addButton("Cancel", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            emit delActiveNodeSignal();//skeletonizer
-            recreateNodesTable();//removes active node from nodeTable
-            nodeActivated();//removes active node from activeNodeTable
-        }
+        emit delActiveNodeSignal();//skeletonizer
+        recreateNodesTable();//removes active node from nodeTable
+        nodeActivated();//removes active node from activeNodeTable
     } else {
         if(state->skeletonState->selectedNodes.size() == 0) {
             qDebug("no nodes");
             return;
         }
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Do you really want to deleted selected node(s)?");
-        QPushButton *confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
-        prompt.addButton("Cancel", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
+        bool deleteNodes = true;
+        if(state->skeletonState->selectedNodes.size() != 1) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
+            prompt.setWindowTitle("Cofirmation required");
+            prompt.setText("Do you really want to delet selected node(s)?");
+            QPushButton *confirmButton = prompt.addButton("Delete", QMessageBox::ActionRole);
+            prompt.addButton("Cancel", QMessageBox::ActionRole);
+            prompt.exec();
+            deleteNodes = prompt.clickedButton() == confirmButton;
+        }
+        if(deleteNodes) {
             emit deleteSelectedNodesSignal();//skeletonizer
             recreateNodesTable();//removes nodes from nodeTable
             nodeActivated();//updates active node
@@ -903,10 +897,7 @@ void ToolsTreeviewTab::activeNodeSelectionChanged() {
     nodeTable->clearSelection();
     nodeTable->selectionProtection = false;
 
-    for (auto & selectedNode : state->skeletonState->selectedNodes) {
-        selectedNode->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
+    emit clearNodeSelectionSignal();
 
     if (activeNodeTable->selectionModel()->selectedRows().size() == 1) {
         if (state->skeletonState->activeNode) {
@@ -933,10 +924,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
     activeNodeTable->clearSelection();
     activeNodeTable->selectionProtection = false;
 
-    for (auto & selectedNode : state->skeletonState->selectedNodes) {
-        selectedNode->selected = false;
-    }
-    state->skeletonState->selectedNodes.clear();
+    emit clearNodeSelectionSignal();
 
     QModelIndexList selected = nodeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
@@ -952,6 +940,16 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
             activeNodeTable->selectRow(0);
             activeNodeTable->selectionProtection = false;
         }
+    }
+    if(state->skeletonState->selectedNodes.size() == 1) {
+        setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                           state->skeletonState->selectedNodes[0]->nodeID);
+        update();
+    }
+    else if(state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
+        state->skeletonState->activeNode->selected = true;
+        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+        update();
     }
     nodeTable->setDragEnabled(false);//enable multi-selection on previously unselected elements
 }
@@ -1076,6 +1074,11 @@ void ToolsTreeviewTab::recreateTreesTable() {
     treeTable->selectionProtection = false;
 
     treeTable->setRowCount(treeIndex);
+}
+
+void ToolsTreeviewTab::clearNodeTableSelection() {
+    emit clearNodeSelectionSignal();
+    nodeTable->clearSelection();
 }
 
 void ToolsTreeviewTab::recreateNodesTable() {

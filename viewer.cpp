@@ -1856,7 +1856,7 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(eventModel, SIGNAL(unselectNodesSignal()),
-                    window->widgetContainer->annotationWidget->treeviewTab->nodeTable, SLOT(clearSelection()));
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(clearNodeTableSelection()));
     connect(eventModel, SIGNAL(userMoveSignal(int,int,int,int)), this, SLOT(userMove(int,int,int,int)));
     connect(eventModel, SIGNAL(userMoveArbSignal(float,float,float,int)), this, SLOT(userMove_arb(float,float,float,int)));
     connect(eventModel, SIGNAL(zoomOrthoSignal(float)), vpUpperLeft, SLOT(zoomOrthogonals(float)));
@@ -2010,6 +2010,8 @@ void Viewer::rewire() {
     //  treeview tab signals
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
             skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(clearNodeSelectionSignal()),
+                    skeletonizer, SLOT(clearNodeSelection()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedNodesSignal()),
                     skeletonizer, SLOT(deleteSelectedNodes()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delActiveNodeSignal()),

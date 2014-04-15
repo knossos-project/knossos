@@ -1850,6 +1850,14 @@ bool Skeletonizer::setActiveNode(int targetRevision, nodeListElement *node, int 
     state->skeletonState->viewChanged = true;
     state->skeletonState->skeletonChanged = true;
 
+    clearNodeSelection();
+    if(node) {
+        if(node->selected == false) {
+            node->selected = true;
+            state->skeletonState->selectedNodes.push_back(node);
+        }
+    }
+
     if(node) {
         setActiveTreeByID(node->correspondingTree->treeID);
     }
@@ -2108,6 +2116,13 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
     Knossos::unlockSkeleton(true);
 
     return true;
+}
+
+void Skeletonizer::clearNodeSelection() {
+    for (auto &selectedNode : state->skeletonState->selectedNodes) {
+        selectedNode->selected = false;
+    }
+    state->skeletonState->selectedNodes.clear();
 }
 
 bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
@@ -4191,6 +4206,10 @@ void Skeletonizer::deleteSelectedNodes() {
         }
     }
     state->skeletonState->selectedNodes.clear();
+    if(state->skeletonState->activeNode) {
+        state->skeletonState->activeNode->selected = true;
+        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+    }
 }
 
 // index optionally specifies substr, range is [-1, NUM_COMMSUBSTR - 1].
