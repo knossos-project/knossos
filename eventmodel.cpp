@@ -569,31 +569,28 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/)
     return true;
 }
 
-bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
+void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
         int diffX = state->viewerState->nodeSelectionSquare.first.x - event->pos().x();
         int diffY = state->viewerState->nodeSelectionSquare.first.y - event->pos().y();
-        if((diffX < 5 and diffX > -5) and (diffY < 5 and diffY > -5)) { // interpreted as click instead of drag
+        if (diffX < 5 && diffX > -5 && diffY < 5 && diffY > -5) { // interpreted as click instead of drag
             // mouse released on same spot on which it was pressed down: single node selection
             int nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
-            if(nodeID) {
+            if (nodeID != 0) {
                 nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
-                if(selectedNode != nullptr) {
-                    auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
+                if (selectedNode != nullptr) {
                     //check if already in buffer
-                    if (iter == std::end(state->skeletonState->selectedNodes)) {
+                    auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
+                    if (iter == std::end(state->skeletonState->selectedNodes)) {//clicked node was not selected
                         selectedNode->selected = true;
                         state->skeletonState->selectedNodes.emplace_back(selectedNode);
                         if(state->skeletonState->selectedNodes.size() == 1) {
                             emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
                                                      state->skeletonState->selectedNodes[0]->nodeID);
                         }
-                    }
-                    else if(state->skeletonState->selectedNodes.size() == 1) {
-                        // at least one node must always be selected
-                        return false;
-                    }
-                    else {
+                        emit updateTreeviewSignal();
+                    } else if (state->skeletonState->selectedNodes.size() != 1) {
+                        //clicked node was selected → unselect, but one shall not unselect the active node
                         selectedNode->selected = false;
                         state->skeletonState->selectedNodes.erase(iter);
                         // whenever exactly one node is selected, it is the active node
@@ -601,41 +598,40 @@ bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
                             emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
                                                                state->skeletonState->selectedNodes[0]->nodeID);
                         }
+                        emit updateTreeviewSignal();
                     }
-                    emit updateTreeviewSignal();
-                    return true;
                 }
             }
-            return false; // no selected node, do nothing
+        } else {
+            // node selection square
+            state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
+            state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+            Coordinate first = state->viewerState->nodeSelectionSquare.first;
+            Coordinate second = state->viewerState->nodeSelectionSquare.second;
+            // create square
+            int minX, maxX, minY, maxY;
+            minX = std::min(first.x, second.x);
+            maxX = std::max(first.x, second.x);
+            minY = std::min(first.y, second.y);
+            maxY = std::max(first.y, second.y);
+            //unselect all nodes before retrieving new selection
+            for (auto & elem : state->skeletonState->selectedNodes) {
+                elem->selected = false;
+            }
+            state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(VPfound, minX, minY, maxX - minX, maxY - minY);
+            //mark all found nodes as selected
+            for (auto & elem : state->skeletonState->selectedNodes) {
+                elem->selected = true;
+            }
+            if (state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
+                // at least one must always be selected
+                state->skeletonState->activeNode->selected = true;
+                state->skeletonState->selectedNodes.emplace_back(state->skeletonState->activeNode);
+            }
+            emit updateTreeviewSignal();
         }
-
-        // node selection square
-        emit unselectNodesSignal();
-
-        state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
-        state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
-        Coordinate first = state->viewerState->nodeSelectionSquare.first;
-        Coordinate second = state->viewerState->nodeSelectionSquare.second;
-        // create square
-        int minX, maxX, minY, maxY;
-        minX = std::min(first.x, second.x);
-        maxX = std::max(first.x, second.x);
-        minY = std::min(first.y, second.y);
-        maxY = std::max(first.y, second.y);
-        state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(VPfound, minX, minY, maxX - minX, maxY - minY);
-        for (auto & elem : state->skeletonState->selectedNodes) {
-            elem->selected = true;
-        }
-        if(state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
-            // at least one must always be selected
-            state->skeletonState->activeNode->selected = true;
-            state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
-        }
-        emit updateTreeviewSignal();
     }
     state->viewerState->drawNodeSelectSquare = -1;
-
-    return true;
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
