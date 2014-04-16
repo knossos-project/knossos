@@ -616,7 +616,11 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
             for (auto & elem : state->skeletonState->selectedNodes) {
                 elem->selected = true;
             }
-            if (state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
+            if(state->skeletonState->selectedNodes.size() == 1) {
+                setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                                   state->skeletonState->selectedNodes[0]->nodeID);
+            }
+            else if (state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
                 // at least one must always be selected
                 state->skeletonState->activeNode->selected = true;
                 state->skeletonState->selectedNodes.emplace_back(state->skeletonState->activeNode);
@@ -1089,11 +1093,6 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             prompt.exec();
             if(prompt.clickedButton() == confirmButton) {
                 emit unselectNodesSignal();
-                if(state->skeletonState->activeNode) { // if nothing else is selected, active node is.
-                    state->skeletonState->activeNode->selected = true;
-                    state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
-                    emit updateTreeviewSignal();
-                }
             }
         }
     }

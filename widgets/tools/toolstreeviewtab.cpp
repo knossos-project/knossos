@@ -893,6 +893,14 @@ void ToolsTreeviewTab::activeNodeSelectionChanged() {
         return;
     }
 
+    if(activeNodeTable->selectionModel()->selectedRows().empty()) {
+        // don't allow deselection of active node
+        activeNodeTable->selectionProtection = true;
+        activeNodeTable->selectRow(0);
+        activeNodeTable->selectionProtection = false;
+        return;
+    }
+
     nodeTable->selectionProtection = true;
     nodeTable->clearSelection();
     nodeTable->selectionProtection = false;
@@ -934,23 +942,23 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
             node->selected = true;
             state->skeletonState->selectedNodes.push_back(node);
         }
-        //select active node also in activeNodeTable
-        if (node == state->skeletonState->activeNode) {
-            activeNodeTable->selectionProtection = true;
-            activeNodeTable->selectRow(0);
-            activeNodeTable->selectionProtection = false;
-        }
     }
+
     if(state->skeletonState->selectedNodes.size() == 1) {
         setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
                                            state->skeletonState->selectedNodes[0]->nodeID);
         update();
     }
+
     else if(state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
         state->skeletonState->activeNode->selected = true;
         state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
         update();
     }
+    else if(state->skeletonState->selectedNodes.size() > 1) {
+        nodeActivated();
+    }
+
     nodeTable->setDragEnabled(false);//enable multi-selection on previously unselected elements
 }
 
@@ -1244,17 +1252,24 @@ void ToolsTreeviewTab::nodeActivated() {
     activeNodeTable->clearContents();
     activeNodeTable->setRowCount(0);
     activeNodeTable->selectionProtection = false;
-    //add active node if present
-    if (state->skeletonState->activeNode != nullptr) {
+
+    //add active node if present and only selected node
+    if (state->skeletonState->activeNode != nullptr && state->skeletonState->selectedNodes.size() == 1) {
         insertNode(state->skeletonState->activeNode, activeNodeTable);
+
         activeNodeTable->resizeToFit();
-        //select
-        if (state->skeletonState->activeNode->selected) {
-            activeNodeTable->selectionProtection = true;
-            activeNodeTable->selectRow(0);
-            activeNodeTable->selectionProtection = false;
-        }
+        activeNodeTable->selectionProtection = true;
+        activeNodeTable->selectRow(0);
+        activeNodeTable->selectionProtection = false;
+
+        nodeTable->selectionProtection = true;
+        nodeTable->clearSelection();
+        nodeTable->setSelectionMode(QAbstractItemView::SingleSelection);
+        nodeTable->selectRow(getActiveNodeRow());
+        nodeTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
+        nodeTable->selectionProtection = false;
     }
+
     treeActivated(); // update active tree table in case of tree switch
 }
 
