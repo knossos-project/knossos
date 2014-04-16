@@ -329,7 +329,6 @@ public:
     enum TracingMode {
         skipNextLink
         , linkedNodes
-        , deleteNodes
         , unlinkedNodes
     };
 
@@ -338,7 +337,5 @@ public:
 private:
     TracingMode tracingMode;
 };
-
-Q_DECLARE_METATYPE(Skeletonizer::TracingMode);//make enum available to QVariant for loading/saving
 
 #endif // SKELETONIZER_H

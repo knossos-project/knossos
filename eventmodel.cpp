@@ -191,26 +191,19 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
     switch (state->viewer->skeletonizer->getTracingMode()) {
     case Skeletonizer::TracingMode::unlinkedNodes:
-        emit unselectNodesSignal();
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         break;
     case Skeletonizer::TracingMode::skipNextLink:
-        emit unselectNodesSignal();
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
     case Skeletonizer::TracingMode::linkedNodes:
-        if (state->skeletonState->activeNode == nullptr) {
-            //1. no node to link with
-            emit unselectNodesSignal();
+        if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
+            //no node to link with or no empty tree
             newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
-        }
-
-        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-
-        if(keyMod.testFlag(Qt::ControlModifier)) {
-            //2. Add a "stump", a branch node to which we don't automatically move.
+        } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
+            //Add a "stump", a branch node to which we don't automatically move.
             emit unselectNodesSignal();
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
@@ -226,7 +219,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             }
             break;
         }
-        //3. Add a node and apply tracing modes
+        //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
         emit unselectNodesSignal();
         newNode = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,

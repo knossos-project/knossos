@@ -583,7 +583,6 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
 
     if(!state->skeletonState->activeNode) {
         LOG("Please create a node before trying to link nodes.");
-        setTracingMode(skipNextLink);
         return false;
     }
 
@@ -1406,7 +1405,6 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
         }
 
     }
-    setTracingMode(skipNextLink);
     state->skeletonState->skeletonTimeCorrection = state->time.elapsed();
     return true;
 }
@@ -1463,8 +1461,6 @@ bool Skeletonizer::delActiveTree() {
        LOG("No active tree available.")
        return false;
     }
-
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);
 
     return true;
 }
@@ -2170,8 +2166,6 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
     state->skeletonState->nodesByNodeID = newDynArray(1048576);
     state->skeletonState->branchStack = newStack(1048576);
 
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::skipNextLink);
-
     state->skeletonState->skeletonRevision++;
     state->skeletonState->unsavedChanges = true;
 
@@ -2547,8 +2541,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
     if(treeID == 1) {
         Skeletonizer::setActiveTreeByID(1);
     }
-
-    setTracingMode(TracingMode::skipNextLink);
 
     return newElement;
 }

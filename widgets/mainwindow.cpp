@@ -459,12 +459,10 @@ void MainWindow::createActions()
 
     /* edit skeleton actions */
     QActionGroup* workModeEditMenuGroup = new QActionGroup(this);
-    addNodeAction = new QAction(tr("Add Node"), 0);
+    addNodeAction = new QAction(tr("Add one unlinked Node"), this);
     addNodeAction->setShortcut(QKeySequence(Qt::Key_A));
-    linkWithActiveNodeAction = new QAction(tr("Link with Active Node"), 0);
-    linkWithActiveNodeAction->setShortcut(QKeySequence(Qt::Key_W));
-    dropNodesAction = new QAction(tr("Drop Nodes"), 0);
-    //dropNodesAction->setShortcut(QKeySequence(tr("")));
+    linkWithActiveNodeAction = new QAction(tr("Add linked Nodes"), this);
+    dropNodesAction = new QAction(tr("Add unlinked Nodes"), this);
     for (auto & action : {addNodeAction, linkWithActiveNodeAction, dropNodesAction}) {
         action->setCheckable(true);
         action->setActionGroup(workModeEditMenuGroup);
@@ -1138,7 +1136,7 @@ void MainWindow::saveSettings() {
 
     settings.setValue(VP_LOCK_ORIENTATION, this->lockVPOrientationCheckbox->isChecked());
 
-    settings.setValue(WORK_MODE, state->viewer->skeletonizer->getTracingMode());
+    settings.setValue(WORK_MODE, static_cast<uint>(state->viewer->skeletonizer->getTracingMode()));
 
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         if(i < skeletonFileHistory->size()) {
@@ -1218,8 +1216,8 @@ void MainWindow::loadSettings() {
         saveFileDirectory = autosaveLocation;
     }
 
-    const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).value<Skeletonizer::TracingMode>();
-    state->viewer->skeletonizer->setTracingMode(skeletonizerWorkMode);
+    const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
+    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(skeletonizerWorkMode));
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
