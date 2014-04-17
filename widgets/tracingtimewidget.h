@@ -35,7 +35,14 @@ class TracingTimeWidget : public QDialog
 public:
     explicit TracingTimeWidget(QWidget *parent = 0);
 signals:
-    void uncheckSignal();
+    void visibilityChanged(bool);
+private:
+    void showEvent(QShowEvent *) override {
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *) override {
+        emit visibilityChanged(false);
+    }
 public slots:
     void refreshTime();
     void checkIdleTime();
@@ -51,7 +58,6 @@ protected:
     QTableWidgetItem *idleTimeItem;
 
     QTimer *timer;
-    void closeEvent(QCloseEvent *event);
 };
 
 

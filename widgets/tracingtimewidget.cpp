@@ -71,7 +71,7 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     table->horizontalHeader()->setStyleSheet("::section:horizontal{font-weight:bold; color:black;}");
-    table->verticalHeader()->setVisible(false);    
+    table->verticalHeader()->setVisible(false);
     table->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     table->setItem(0, LEFT, runningLabelItem);
@@ -98,11 +98,6 @@ TracingTimeWidget::TracingTimeWidget(QWidget *parent) :
     timer->start(1000);
 
    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-}
-
-
-void TracingTimeWidget::closeEvent(QCloseEvent */*event*/) {
-    this->hide();
 }
 
 void TracingTimeWidget::refreshTime() {

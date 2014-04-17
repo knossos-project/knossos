@@ -59,11 +59,6 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void ViewportSettingsWidget::closeEvent(QCloseEvent *) {
-    this->hide();
-    emit uncheckSignal();
-}
-
 void ViewportSettingsWidget::loadSettings() {
     int width, height, x, y;
     bool visible;
@@ -120,7 +115,6 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(settings.value(SHOW_VP_DECORATION).isNull() == false) {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
-        emit decorationSignal();
     }
     else {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(true);

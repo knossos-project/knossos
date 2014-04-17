@@ -43,24 +43,20 @@
 
 extern  stateInfo *state;
 
-CommentsWidget::CommentsWidget(QWidget *parent) :
-    QDialog(parent)
-{
+CommentsWidget::CommentsWidget(QWidget *parent) : QDialog(parent) {
     setWindowIcon(QIcon(":/images/icons/insert-text.png"));
     setWindowTitle("Comment Settings");
     this->shortcutTab = new CommentShortCutsTab();
     this->highlightingTab = new CommentsHighlightingTab();
-//    this->nodeCommentsTab = new CommentsNodeCommentsTab();
 
     tabs = new QTabWidget(this);
     tabs->addTab(shortcutTab, "Shortcuts");
     tabs->addTab(highlightingTab, "Highlighting");
-//    tabs->addTab(nodeCommentsTab, "Node Comments");
     QVBoxLayout *layout = new QVBoxLayout();
     layout->addWidget(tabs);
     setLayout(layout);
 
-   this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 void CommentsWidget::loadSettings() {
@@ -158,7 +154,7 @@ void CommentsWidget::loadSettings() {
         this->highlightingTab->substringFields[4]->clear();
     }
 
-    this->highlightingTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());    
+    this->highlightingTab->colorComboBox[0]->setCurrentIndex(settings.value(COLOR1).toInt());
     this->highlightingTab->colorComboBox[1]->setCurrentIndex(settings.value(COLOR2).toInt());
     this->highlightingTab->colorComboBox[2]->setCurrentIndex(settings.value(COLOR3).toInt());
     this->highlightingTab->colorComboBox[3]->setCurrentIndex(settings.value(COLOR4).toInt());
@@ -258,9 +254,4 @@ void CommentsWidget::saveSettings() {
     settings.setValue(COMMENTS_TAB_INDEX, this->tabs->currentIndex());
 
     settings.endGroup();
-}
-
-void CommentsWidget::closeEvent(QCloseEvent */*event*/) {
-    this->hide();
-    emit this->uncheckSignal();
 }

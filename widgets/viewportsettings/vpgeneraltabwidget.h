@@ -42,11 +42,13 @@ public:
     QPushButton *resetVPsButton;
     QCheckBox *showVPDecorationCheckBox;
 signals:
-    void overrideNodeRadiusSignal(bool on);
     void highlightActiveTreeSignal(bool on);
-    void skeletonChangedSignal(bool on);
-    void showNodeID(bool on);
+    void overrideNodeRadiusSignal(bool on);
     void segRadiusToNodeRadiusSignal(float value);
+    void setViewportDecorations(bool);
+    void showNodeID(bool on);
+    void skeletonChangedSignal(bool on);
+    void resetViewportPositions();
 
 public slots:
     void lightEffectsChecked(bool on);

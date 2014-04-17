@@ -187,10 +187,6 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
     emit zoomLevelSignal(0.0);
 }
 
-void ZoomAndMultiresWidget::closeEvent(QCloseEvent *) {
-    this->hide();
-}
-
 void ZoomAndMultiresWidget::update() {
     orthogonalDataViewportLabel->setText(QString("Orthogonal Data Viewport (mag %1)").arg(state->magnification));
     float vpZoomPercent;

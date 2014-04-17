@@ -2,6 +2,7 @@
 #define ANNOTATIONWIDGET_H
 
 #include <QDialog>
+#include <QShowEvent>
 #include <QTabWidget>
 
 #include "tools/toolstreeviewtab.h"
@@ -22,7 +23,15 @@ protected:
     QLabel *treeCountLabel;
     QLabel *nodeCountLabel;
     QLabel *listedNodesLabel;
-
+signals:
+    void visibilityChanged(bool);
+private:
+    void showEvent(QShowEvent *) override {
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *) override {
+        emit visibilityChanged(false);
+    }
 public slots:
     void updateLabels();
     void saveSettings();

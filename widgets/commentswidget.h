@@ -32,23 +32,25 @@ class QTabWidget;
 class CommentShortCutsTab;
 class CommentsHighlightingTab;
 class CommentsNodeCommentsTab;
-class CommentsWidget : public QDialog
-{
+
+class CommentsWidget : public QDialog {
     Q_OBJECT
+    QTabWidget *tabs;
 public:
-    explicit CommentsWidget(QWidget *parent = 0);    
+    explicit CommentsWidget(QWidget *parent = 0);
     void loadSettings();
     void saveSettings();
     CommentShortCutsTab *shortcutTab;
     CommentsHighlightingTab *highlightingTab;
-//    CommentsNodeCommentsTab *nodeCommentsTab;
 signals:
-    void uncheckSignal();
-public slots:
-
-protected:
-    void closeEvent(QCloseEvent *event);
-    QTabWidget *tabs;
+    void visibilityChanged(bool);
+private:
+    void showEvent(QShowEvent *) override {
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *) override {
+        emit visibilityChanged(false);
+    }
 };
 
 #endif // COMMENTSWIDGET_H

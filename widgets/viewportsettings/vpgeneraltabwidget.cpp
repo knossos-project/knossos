@@ -23,16 +23,20 @@
  */
 
 #include "vpgeneraltabwidget.h"
-#include <QLabel>
-#include <QCheckBox>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QGridLayout>
-#include <QFrame>
+
 #include "knossos-global.h"
+
+#include "widgets/mainwindow.h"
+
+#include <QCheckBox>
+#include <QDoubleSpinBox>
+#include <QFrame>
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QVBoxLayout>
 
 extern  stateInfo *state;
 
@@ -116,12 +120,14 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     connect(overrideNodeRadiusSpinBox, SIGNAL(valueChanged(double)), this, SLOT(overrideNodeRadiusChanged(double)));
 
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
+
+    QObject::connect(showVPDecorationCheckBox, &QCheckBox::toggled, this, &VPGeneralTabWidget::setViewportDecorations);
+    QObject::connect(resetVPsButton, &QPushButton::clicked, this, &VPGeneralTabWidget::resetViewportPositions);
 }
 
 void VPGeneralTabWidget::lightEffectsChecked(bool on) {
     state->viewerState->lightOnOff = on;
 }
-
 
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
     emit highlightActiveTreeSignal(on);

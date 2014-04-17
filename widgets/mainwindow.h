@@ -110,7 +110,6 @@ signals:
     void branchPushedSignal();
     void branchPoppedSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
-    void viewportDecorationSignal(bool visible);
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -123,107 +122,31 @@ protected:
 public:
     Ui::MainWindow *ui;
 
-    QToolBar *toolBar;
-    QToolButton *copyButton;
-    QToolButton *pasteButton;
-    QLabel *xLabel, *yLabel, *zLabel;
     QSpinBox *xField, *yField, *zField;
-
-    QMessageBox *prompt;
-
-    QWidget *mainWidget;
-    QGridLayout *gridLayout;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
     WidgetContainer *widgetContainer;
 
-    /* file actions */
-    QAction *recentFileAction;
     QAction **historyEntryActions;
 
-    /* edit skeleton actions */
     QAction *addNodeAction;
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
-    QAction *skeletonStatisticsAction;
-    QAction *clearSkeletonAction;
 
-    QAction *newTreeAction;
-    QAction *nextCommentAction;
-    QAction *previousCommentAction;
-    QAction *pushBranchNodeAction;
-    QAction *popBranchNodeAction;
-    QAction *moveToPrevNodeAction;
-    QAction *moveToNextNodeAction;
-    QAction *moveToPrevTreeAction;
-    QAction *moveToNextTreeAction;
-    QAction *jumpToActiveNodeAction;
-
-    /* view actions */
-    QAction *workModeViewAction;
     QAction *dragDatasetAction;
     QAction *recenterOnClickAction;
-    QAction *zoomAndMultiresAction;
-    QAction *tracingTimeAction;
-
-    /* preferences actions */
-    QAction *loadCustomPreferencesAction;
-    QAction *saveCustomPreferencesAction;
-    QAction *defaultPreferencesAction;
-    QAction *datasetNavigationAction;
-    QAction *synchronizationAction;
-    QAction *dataSavingOptionsAction;
-    QAction *viewportSettingsAction;
-
-    /* window actions */
-    QAction *toolsAction;
-    QAction *taskAction;
-    QAction *logAction;
-    QAction *commentShortcutsAction;
-    QAction *annotationAction;
-
-    /* help actions */
-    QAction *aboutAction;
-
-    /* Qmenu-points */
-    QMenuBar *customBar;
-    QMenu *dataSetMenu;
-    QMenu *fileMenu;
-    QMenu *recentFileMenu;
-    QMenu *editMenu;
-    QMenu *workModeEditMenu;
-    QMenu *viewMenu;
-    QMenu *workModeViewMenu;
-    QMenu *preferenceMenu;
-    QMenu *windowMenu;
-    QMenu *helpMenu;
 
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
-
-    QToolButton *open, *save;
-    QToolButton *pythonButton;
-    QToolButton *tracingTimeButton;
-    QToolButton *zoomAndMultiresButton;
-    QToolButton *syncButton;
-    QToolButton *viewportSettingsButton;
-    QToolButton *toolsButton;
-    QToolButton *commentShortcutsButton;
-    QPushButton *resetVPsButton;
-    QPushButton *resetVPOrientButton;
     QCheckBox *lockVPOrientationCheckbox;
-    QToolButton *taskManagementButton;
-    QToolButton *annotationButton;
 
     void createViewports();
 
     // for creating action, menus and the toolbar
-    void createActions();
     void createMenus();
     void createToolBar();
-
 
     // for save, load and clear settings
     void saveSettings();
@@ -238,14 +161,11 @@ public slots:
     bool addRecentFile(const QString &fileName);
     //QUndoStack *undoStack;
 
-    /* dataset */
-    void openDatasetSlot();
     /* skeleton menu */
     void openSlot();
     void openSlot(const QString &fileName); // for the drag n drop version
     void saveSlot();
     void saveAsSlot();
-    void quitSlot();
 
     /* edit skeleton menu*/
     void skeletonStatisticsSlot();
@@ -256,41 +176,22 @@ public slots:
     /* view menu */
     void dragDatasetSlot();
     void recenterOnClickSlot();
-    void zoomAndMultiresSlot();
-    void tracingTimeSlot();
 
     /* preferences menu */
     void loadCustomPreferencesSlot();
     void saveCustomPreferencesSlot();
     void defaultPreferencesSlot();
-    void datatasetNavigationSlot();
     void synchronizationSlot();
-    void dataSavingOptionsSlot();
-    void viewportSettingsSlot();
 
     /* window menu */
     void taskSlot();
     void logSlot();
-    void commentShortcutsSlots();
-    void annotationSlot();
-
-    /* help menu */
-    void aboutSlot();
-    void documentationSlot();
 
     /* toolbar slots */
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
 
-    void uncheckToolsAction();
-    void uncheckViewportSettingAction();
-    void uncheckCommentShortcutsAction();
-    void uncheckConsoleAction();
-    void uncheckDataSavingAction();
-
-    void uncheckSynchronizationAction();
-    void uncheckNavigationAction();
     void updateCoordinateBar(int x, int y, int z);
     void recentFileSelected();
     void treeColorAdjustmentsChanged();
@@ -316,7 +217,6 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
-
 };
 
 #endif // MAINWINDOW_H
