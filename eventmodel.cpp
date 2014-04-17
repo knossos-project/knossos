@@ -1051,10 +1051,10 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        const auto & spvp = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-        const auto skeletonVisibiliy = spvp->enableSkeletonOverlayCheckBox->isChecked();
-        spvp->enableSkeletonOverlayCheckBox->setChecked(!skeletonVisibiliy);
-        spvp->enableSkeletonOverlayCheckBox->clicked(!skeletonVisibiliy);
+        const auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->generalTabWidget;
+        const auto hideSkeletonOrtho = vpSettings->hideSkeletonOrthoVPsCheckBox.isChecked();
+        vpSettings->hideSkeletonOrthoVPsCheckBox.setChecked(!hideSkeletonOrtho);
+        vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
         state->skeletonState->skeletonChanged = true;//idk
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {

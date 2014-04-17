@@ -44,10 +44,6 @@ class VPSkeletonViewportWidget : public QWidget
 
     QLabel skeletonDisplayModesLabel{"Skeleton Display Modes"};
     QFrame line;
-    QRadioButton wholeSkeletonRadioButton{"Whole Skeleton"};
-    QRadioButton onlyCurrentCubeRadioButton{"Only Current Cube"};
-    QRadioButton onlyActiveTreeRadioButton{"Only Active Tree"};
-    QRadioButton hideSkeletonRadioButton{"Hide Skeleton (fast)"};
     QLabel datasetVisualizationLabel{"Dataset Visualization"};
     QFrame line2;
     QCheckBox showXYPlaneCheckBox{"Show XY Plane"};
@@ -58,14 +54,10 @@ class VPSkeletonViewportWidget : public QWidget
     QCheckBox rotateAroundActiveNodeCheckBox{"Rotate Around Active Node"};
 
 //slots
-    void wholeSkeletonSelected(bool checked);
-    void onlyCurrentCubeSelected(bool checked);
-    void onlyActiveTreeSelected(bool checked);
-    void hideSkeletonSelected(bool checked);
 public:
     explicit VPSkeletonViewportWidget(QWidget * const parent = nullptr);
 signals:
-    void updateViewerStateSignal();
+
 };
 
 #endif // VPSKELETONVIEWPORTWIDGET_H

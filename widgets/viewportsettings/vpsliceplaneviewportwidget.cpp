@@ -47,7 +47,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     skeletonOverlayLabel = new QLabel("Skeleton Overlay");
     voxelFilteringLabel = new QLabel("Voxel Filtering");
 
-    enableSkeletonOverlayCheckBox = new QCheckBox("Enable Skeleton Overlay");
     highlightIntersectionsCheckBox = new QCheckBox("Highlight Intersections");
     datasetLinearFilteringCheckBox = new QCheckBox("Dataset Linear Filtering");
 
@@ -117,9 +116,8 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(voxelFilteringLabel, 0, 3);
     gridLayout->addWidget(line, 1, 0, 1, 2);
     gridLayout->addWidget(line2, 1, 3, 1, 3);
-    gridLayout->addWidget(enableSkeletonOverlayCheckBox, 2, 0);
     gridLayout->addWidget(datasetLinearFilteringCheckBox, 2, 3);
-    gridLayout->addWidget(highlightIntersectionsCheckBox, 3, 0);
+    gridLayout->addWidget(highlightIntersectionsCheckBox, 2, 0);
     gridLayout->addWidget(depthCutoffLabel, 4, 0);
     gridLayout->addWidget(depthCutoffSpinBox, 4, 1);
     gridLayout->addWidget(colorLookupTablesLabel, 7, 0);
@@ -147,7 +145,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     mainLayout->addLayout(gridLayout);
     setLayout(mainLayout);
 
-    QObject::connect(enableSkeletonOverlayCheckBox, &QCheckBox::clicked, this, &VPSlicePlaneViewportWidget::enableSkeletonOverlayClicked);
     connect(datasetLinearFilteringCheckBox, SIGNAL(clicked(bool)), this, SLOT(datasetLinearFilteringChecked(bool)));
     connect(highlightIntersectionsCheckBox, SIGNAL(clicked(bool)), this, SLOT(hightlightIntersectionsChecked(bool)));
     connect(depthCutoffSpinBox, SIGNAL(valueChanged(double)), this, SLOT(depthCutoffChanged(double)));
@@ -162,15 +159,6 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(enableColorOverlayCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableColorOverlayChecked(bool)));
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
-}
-
-void VPSlicePlaneViewportWidget::enableSkeletonOverlayClicked(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
-    } else {
-        state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
-    }
-    emit updateViewerStateSignal();
 }
 
 void VPSlicePlaneViewportWidget::datasetLinearFilteringChecked(bool checked) {

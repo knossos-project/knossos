@@ -1811,6 +1811,12 @@ bool Skeletonizer::setActiveTreeByID(int treeID) {
 
 
     state->skeletonState->activeTree = currentTree;
+
+    clearTreeSelection();
+    if(currentTree->selected == false) {
+        currentTree->selected = true;
+        state->skeletonState->selectedTrees.push_back(currentTree);
+    }
     state->skeletonState->skeletonChanged = true;
     state->skeletonState->unsavedChanges = true;
     return true;
@@ -2112,6 +2118,13 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
     Knossos::unlockSkeleton(true);
 
     return true;
+}
+
+void Skeletonizer::clearTreeSelection() {
+    for (auto &selectedTree : state->skeletonState->selectedTrees) {
+        selectedTree->selected = false;
+    }
+    state->skeletonState->selectedTrees.clear();
 }
 
 void Skeletonizer::clearNodeSelection() {
@@ -2488,6 +2501,9 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
             newElement->treeID++;
         }
     }
+    clearTreeSelection();
+    newElement->selected = true;
+    state->skeletonState->selectedTrees.push_back(newElement);
 
     // calling function sets values < 0 when no color was specified
     if(color.r < 0) {//Set a tree color
@@ -4186,6 +4202,10 @@ void Skeletonizer::deleteSelectedTrees() {
         }
     }
     state->skeletonState->selectedTrees.clear();
+    if(state->skeletonState->activeTree) {
+        state->skeletonState->activeTree->selected = true;
+        state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
+    }
 }
 
 void Skeletonizer::deleteSelectedNodes() {

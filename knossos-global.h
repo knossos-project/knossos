@@ -246,7 +246,7 @@ values. The XY vp always used. */
 #define DSP_SKEL_VP_CURRENTCUBE 2
 #define DSP_SKEL_VP_HIDE        4
 #define DSP_SLICE_VP_HIDE       8
-#define DSP_ACTIVETREE          16
+#define DSP_SELECTED_TREES      16
 #define DSP_LINES_POINTS        32
 
 #define CATCH_RADIUS            10
@@ -1025,6 +1025,7 @@ public:
 
     int treeID;
     color4F color;
+    bool selected;
     int colorSetManually;
 
     char comment[8192];

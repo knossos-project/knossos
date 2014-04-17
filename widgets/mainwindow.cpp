@@ -1317,7 +1317,6 @@ void MainWindow::newTreeSlot() {
     treeCol.r = -1.;
     treeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     emit updateToolsSignal();
-    //emit updateTreeviewSignal();
     treeAddedSignal(tree);
 }
 

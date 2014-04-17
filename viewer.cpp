@@ -2010,6 +2010,8 @@ void Viewer::rewire() {
     //  treeview tab signals
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
             skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(clearTreeSelectionSignal()),
+                    skeletonizer, SLOT(clearTreeSelection()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(clearNodeSelectionSignal()),
                     skeletonizer, SLOT(clearNodeSelection()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedNodesSignal()),
@@ -2057,6 +2059,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(setSkeletonChanged(bool)));
     connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, SIGNAL(showNodeID(bool)),
                     skeletonizer, SLOT(setShowNodeIDs(bool)));
+    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget,
+                     &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  slice plane vps tab signals
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SIGNAL(showIntersectionsSignal(bool)),
                     skeletonizer, SLOT(setShowIntersections(bool)));
@@ -2072,10 +2076,7 @@ void Viewer::rewire() {
     connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget,
                     SIGNAL(updateViewerStateSignal()),
                     this, SLOT(updateViewerState()));
-    //  skeleton vp tab signals --
-    //i’d better like this in the ctor of the vpsettingswidget, getting skeletonizer and viewer references forwarded
-    const auto svpsettings = window->widgetContainer->viewportSettingsWidget->skeletonViewportWidget;
-    QObject::connect(svpsettings, &VPSkeletonViewportWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
+
     //  -- end viewport settings widget signals
     //  zoom and multires signals --
     connect(window->widgetContainer->zoomAndMultiresWidget, SIGNAL(zoomInSkeletonVPSignal()), vpLowerRight, SLOT(zoomInSkeletonVP()));

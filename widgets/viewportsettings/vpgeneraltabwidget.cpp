@@ -22,30 +22,23 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
-#include "vpgeneraltabwidget.h"
-
-#include "knossos-global.h"
-
-#include "widgets/mainwindow.h"
-
-#include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QFrame>
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
+
+#include "knossos-global.h"
+#include "vpgeneraltabwidget.h"
+#include "widgets/mainwindow.h"
 
 extern  stateInfo *state;
 
 VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
     QWidget(parent)
 {
-
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-
     this->skeletonVisualizationLabel = new QLabel("Skeleton Visualization");
 
     this->lightEffectsCheckBox = new QCheckBox("Light Effects");
@@ -73,38 +66,62 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
 
     this->showVPDecorationCheckBox = new QCheckBox("Show Viewport Decorations");
     this->showVPDecorationCheckBox->setChecked(true);
-    this->resetVPsButton = new QPushButton("Reset Viewports");
+    this->resetVPsButton = new QPushButton("Reset Viewport Positions And Sizes");
     this->resetVPsButton->setFocusPolicy(Qt::NoFocus);
+
+    QVBoxLayout *leftSide = new QVBoxLayout();
 
     QFrame *line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
 
-    QFrame *line2 = new QFrame();
-    line2->setFrameShape(QFrame::HLine);
-    line2->setFrameShadow(QFrame::Sunken);
-
-
-    mainLayout->addWidget(this->skeletonVisualizationLabel);
-    mainLayout->addWidget(line);
-    mainLayout->addWidget(this->lightEffectsCheckBox);
-    mainLayout->addWidget(this->hightlightActiveTreeCheckBox);
-    mainLayout->addWidget(this->showAllNodeIdsCheckBox);
-
+    leftSide->addWidget(this->skeletonVisualizationLabel);
+    leftSide->addWidget(line);
+    leftSide->addWidget(this->lightEffectsCheckBox);
+    leftSide->addWidget(this->hightlightActiveTreeCheckBox);
+    leftSide->addWidget(this->showAllNodeIdsCheckBox);
     QHBoxLayout *hLayout = new QHBoxLayout();
     hLayout->addWidget(this->renderingQualityLabel);
     hLayout->addWidget(this->renderingQualitySpinBox);
+    leftSide->addLayout(hLayout);
+
+    QVBoxLayout *rightSide = new QVBoxLayout();
+    rightSide->addWidget(new QLabel("Skeleton Display Mode"));
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    rightSide->addWidget(line);
+    rightSide->addWidget(&wholeSkeletonRadioButton);
+    rightSide->addWidget(&onlySelectedTreesRadioButton);
+    rightSide->addWidget(&hideSkeletonOrthoVPsCheckBox);
+    rightSide->addWidget(&hideSkeletonSkelVPCheckBox);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+
+    hLayout = new QHBoxLayout();
+    hLayout->addLayout(leftSide);
+    hLayout->addLayout(rightSide);
     mainLayout->addLayout(hLayout);
 
-    QHBoxLayout *hLayout2 = new QHBoxLayout();
-    hLayout2->addWidget(this->overrideNodeRadiusCheckBox);
-    hLayout2->addWidget(this->overrideNodeRadiusSpinBox);
-    mainLayout->addLayout(hLayout2);
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
-    QHBoxLayout *hLayout3 = new QHBoxLayout();
-    hLayout3->addWidget(this->edgeNodeRadiusRatioLabel);
-    hLayout3->addWidget(this->edgeNodeRadiusRatioSpinBox);
-    mainLayout->addLayout(hLayout3);
+    hLayout = new QHBoxLayout();
+    hLayout->addWidget(this->overrideNodeRadiusCheckBox);
+    hLayout->addWidget(this->overrideNodeRadiusSpinBox);
+    mainLayout->addLayout(hLayout);
+
+    hLayout = new QHBoxLayout();
+    hLayout->addWidget(this->edgeNodeRadiusRatioLabel);
+    hLayout->addWidget(this->edgeNodeRadiusRatioSpinBox);
+    mainLayout->addLayout(hLayout);
+
+    line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    mainLayout->addWidget(line);
 
     mainLayout->addWidget(this->showVPDecorationCheckBox);
     mainLayout->addWidget(this->resetVPsButton);
@@ -121,6 +138,12 @@ VPGeneralTabWidget::VPGeneralTabWidget(QWidget *parent) :
 
     connect(edgeNodeRadiusRatioSpinBox, SIGNAL(valueChanged(double)), this, SLOT(edgeNodeRadiusRatioChanged(double)));
 
+    QObject::connect(&wholeSkeletonRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::wholeSkeletonSelected);
+    //QObject::connect(&onlyCurrentCubeRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::onlyCurrentCubeSelected);
+    QObject::connect(&onlySelectedTreesRadioButton, &QRadioButton::clicked, this, &VPGeneralTabWidget::onlySelectedTreesSelected);
+    QObject::connect(&hideSkeletonOrthoVPsCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonOrthoVPClicked);
+    QObject::connect(&hideSkeletonSkelVPCheckBox, &QCheckBox::clicked, this, &VPGeneralTabWidget::hideSkeletonSkelVPClicked);
+
     QObject::connect(showVPDecorationCheckBox, &QCheckBox::toggled, this, &VPGeneralTabWidget::setViewportDecorations);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &VPGeneralTabWidget::resetViewportPositions);
 }
@@ -136,7 +159,6 @@ void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
     state->skeletonState->highlightActiveTree = on;
     state->skeletonState->skeletonChanged = true;
 }
-
 
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
     emit showNodeID(on);
@@ -165,4 +187,47 @@ void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
 
 void VPGeneralTabWidget::renderingQualityChanged(int value) {
     state->viewerState->cumDistRenderThres = value;
+}
+
+void VPGeneralTabWidget::wholeSkeletonSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
+        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+        emit updateViewerStateSignal();
+    }
+}
+
+void VPGeneralTabWidget::onlyCurrentCubeSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
+        state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
+        emit updateViewerStateSignal();
+    }
+}
+
+void VPGeneralTabWidget::onlySelectedTreesSelected(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
+        state->skeletonState->displayMode |= DSP_SELECTED_TREES;
+        emit updateViewerStateSignal();
+    }
+}
+
+void VPGeneralTabWidget::hideSkeletonSkelVPClicked(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
+    }
+    else {
+        state->skeletonState->displayMode &= ~DSP_SKEL_VP_HIDE;
+    }
+    emit updateViewerStateSignal();
+}
+
+void VPGeneralTabWidget::hideSkeletonOrthoVPClicked(bool checked) {
+    if (checked) {
+        state->skeletonState->displayMode |= DSP_SLICE_VP_HIDE;
+    } else {
+        state->skeletonState->displayMode &= ~DSP_SLICE_VP_HIDE;
+    }
+    emit updateViewerStateSignal();
 }

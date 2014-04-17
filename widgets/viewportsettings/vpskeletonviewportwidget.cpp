@@ -38,12 +38,6 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     line3.setFrameShadow(QFrame::Sunken);
 
     int currentGridColumn = 0;
-    gridLayout.addWidget(&skeletonDisplayModesLabel, currentGridColumn++, 0);
-    gridLayout.addWidget(&line, currentGridColumn++, 0);
-    gridLayout.addWidget(&wholeSkeletonRadioButton, currentGridColumn++, 0);
-    gridLayout.addWidget(&onlyActiveTreeRadioButton, currentGridColumn++, 0);
-    //gridLayout.addWidget(&onlyCurrentCubeRadioButton, currentGridColumn++, 0);
-    gridLayout.addWidget(&hideSkeletonRadioButton, currentGridColumn++, 0);
 
     gridLayout.addWidget(&datasetVisualizationLabel, currentGridColumn++, 0);
     gridLayout.addWidget(&line2, currentGridColumn++, 0);
@@ -59,44 +53,8 @@ VPSkeletonViewportWidget::VPSkeletonViewportWidget(QWidget * const parent) : QWi
     mainLayout.addStretch(1);//expand vertically with empty space
     setLayout(&mainLayout);
 
-    QObject::connect(&wholeSkeletonRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::wholeSkeletonSelected);
-    //QObject::connect(&onlyCurrentCubeRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::onlyCurrentCubeSelected);
-    QObject::connect(&onlyActiveTreeRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::onlyActiveTreeSelected);
-    QObject::connect(&hideSkeletonRadioButton, &QRadioButton::clicked, this, &VPSkeletonViewportWidget::hideSkeletonSelected);
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXYplane = checked; });
     QObject::connect(&showYZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showYZplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->showXZplane = checked; });
     QObject::connect(&rotateAroundActiveNodeCheckBox, &QCheckBox::clicked, [](bool checked){state->skeletonState->rotateAroundActiveNode = checked; });
-}
-
-void VPSkeletonViewportWidget::wholeSkeletonSelected(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
-        emit updateViewerStateSignal();
-    }
-}
-
-void VPSkeletonViewportWidget::onlyCurrentCubeSelected(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
-        emit updateViewerStateSignal();
-    }
-}
-
-void VPSkeletonViewportWidget::onlyActiveTreeSelected(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_ACTIVETREE;
-        emit updateViewerStateSignal();
-    }
-}
-
-void VPSkeletonViewportWidget::hideSkeletonSelected(bool checked) {
-    if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_ACTIVETREE & ~DSP_SKEL_VP_HIDE & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_SKEL_VP_HIDE;
-        emit updateViewerStateSignal();
-    }
 }

@@ -271,7 +271,10 @@ void ToolsTreeviewTab::deleteTreesAction() {
         prompt.exec();
         if(prompt.clickedButton() == confirmButton) {
             emit deleteSelectedTreesSignal();
-            treesDeleted();
+            recreateTreesTable();
+            recreateNodesTable();
+            treeActivated();
+            nodeActivated();
         }
     }
 }
@@ -822,11 +825,19 @@ void ToolsTreeviewTab::activeTreeSelectionChanged() {
         return;
     }
 
+    if(activeTreeTable->selectionModel()->selectedRows().empty()) {
+        // don't allow deselection of active node
+        activeTreeTable->selectionProtection = true;
+        activeTreeTable->selectRow(0);
+        activeTreeTable->selectionProtection = false;
+        return;
+    }
+
     treeTable->selectionProtection = true;
     treeTable->clearSelection();
     treeTable->selectionProtection = false;
 
-    state->skeletonState->selectedTrees.clear();
+    emit clearTreeSelectionSignal();
     QModelIndexList selected = activeTreeTable->selectionModel()->selectedRows();
     if (selected.size() == 1) {
         state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
@@ -850,20 +861,31 @@ void ToolsTreeviewTab::treeSelectionChanged() {
     activeTreeTable->clearSelection();
     activeTreeTable->selectionProtection = false;
 
-    state->skeletonState->selectedTrees.clear();
+    emit clearTreeSelectionSignal();
+
     QModelIndexList selected = treeTable->selectionModel()->selectedRows();
     foreach(QModelIndex index, selected) {
         treeListElement * const tree = Skeletonizer::findTreeByTreeID(index.data().toInt());
         if (tree) {
+            tree->selected = true;
             state->skeletonState->selectedTrees.push_back(tree);
-            //select active tree also in activeTreeTable
-            if (tree == state->skeletonState->activeTree) {
-                activeTreeTable->selectionProtection = true;
-                activeTreeTable->selectRow(0);
-                activeTreeTable->selectionProtection = false;
-            }
         }
     }
+
+    if(state->skeletonState->selectedTrees.size() == 1) {
+        activateFirstSelectedTree();
+    }
+
+    else if(state->skeletonState->selectedTrees.empty() && state->skeletonState->activeTree) {
+        state->skeletonState->activeTree->selected = true;
+        state->skeletonState->selectedTrees.push_back(state->skeletonState->activeTree);
+        update();
+    }
+
+    else if(state->skeletonState->selectedTrees.size() > 1) {
+        treeActivated();
+    }
+
     if (nodesOfSelectedTreesRadio->isChecked()) {
         recreateNodesTable();
     }
@@ -945,9 +967,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
     }
 
     if(state->skeletonState->selectedNodes.size() == 1) {
-        setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
-                                           state->skeletonState->selectedNodes[0]->nodeID);
-        update();
+        activateFirstSelectedNode();
     }
 
     else if(state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
@@ -1053,8 +1073,7 @@ void ToolsTreeviewTab::recreateTreesTable() {
             }
         }
         //check selection
-        if (std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), currentTree)
-                != std::end(state->skeletonState->selectedTrees)) {//tree is selected
+        if (currentTree->selected) {//tree is selected
             if (!blockSelection) {
                 blockSelection = true;
                 startIndex = treeIndex;
@@ -1118,8 +1137,7 @@ void ToolsTreeviewTab::recreateNodesTable() {
             }
             // filter for nodes of selected trees
             if (nodesOfSelectedTreesRadio->isChecked()) {
-                if (std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), node->correspondingTree)
-                        == std::end(state->skeletonState->selectedTrees)) {// node not in one of the selected trees
+                if (node->correspondingTree->selected == false) {// node not in one of the selected trees
                     continue;
                 }
             }
@@ -1167,16 +1185,19 @@ void ToolsTreeviewTab::treeActivated() {
     activeTreeTable->clearContents();
     activeTreeTable->setRowCount(0);
     activeTreeTable->selectionProtection = false;
-    //add active tree if present
-    if (state->skeletonState->activeTree != nullptr) {
+    //add active tree if present and only selected tree
+    if (state->skeletonState->activeTree != nullptr && state->skeletonState->selectedTrees.size() == 1) {
         insertTree(state->skeletonState->activeTree, activeTreeTable);
-        //find if active tree is selected
-        const auto & trees = state->skeletonState->selectedTrees;
-        if (std::find(std::begin(trees), std::end(trees), state->skeletonState->activeTree) != std::end(trees)) {
-            activeTreeTable->selectionProtection = true;
-            activeTreeTable->selectRow(0);
-            activeTreeTable->selectionProtection = false;
-        }
+        activeTreeTable->selectionProtection = true;
+        activeTreeTable->selectRow(0);
+        activeTreeTable->selectionProtection = false;
+
+        treeTable->selectionProtection = true;
+        treeTable->clearSelection();
+        treeTable->setSelectionMode(QAbstractItemView::SingleSelection);
+        treeTable->selectRow(getActiveTreeRow());
+        treeTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
+        treeTable->selectionProtection = false;
     }
 }
 
@@ -1389,8 +1410,7 @@ void ToolsTreeviewTab::insertNode(nodeListElement *node, NodeTable *table) {
         }
         // filter for nodes of selected trees
         if (nodesOfSelectedTreesRadio->isChecked() and state->skeletonState->selectedTrees.size() > 0) {
-            if(std::find(std::begin(state->skeletonState->selectedTrees), std::end(state->skeletonState->selectedTrees), node->correspondingTree)
-                    == std::end(state->skeletonState->selectedTrees)) {// node not in one of the selected trees
+            if(node->correspondingTree->selected == false) {// node not in one of the selected trees
                 return;
             }
         }

@@ -241,6 +241,7 @@ public slots:
     void UI_popBranchNode();
     static bool delTree(int targetRevision, int treeID, int serialize);
     static bool delActiveTree();
+    static void clearTreeSelection();
     static void clearNodeSelection();
     static bool clearSkeleton(int targetRevision, int loadingSkeleton);
     static bool delActiveNode();

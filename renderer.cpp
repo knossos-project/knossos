@@ -2040,8 +2040,8 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         lastRenderedNode = NULL;
         cumDistToLastRenderedNode = 0.f;
 
-        if(state->skeletonState->displayMode & DSP_ACTIVETREE) {
-            if(currentTree != state->skeletonState->activeTree) {
+        if(state->skeletonState->displayMode & DSP_SELECTED_TREES) {
+            if(currentTree->selected == false) {
                 currentTree = currentTree->next;
                 continue;
             }

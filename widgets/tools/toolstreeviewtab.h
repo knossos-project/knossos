@@ -82,6 +82,7 @@ signals:
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
+    void clearTreeSelectionSignal();
     void clearNodeSelectionSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
