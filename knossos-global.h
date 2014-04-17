@@ -511,7 +511,8 @@ public:
     // state->magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
-    uint magnification;
+    // do not change to uint, it causes bugs in the display of higher mag datasets
+    int magnification;
 
     uint compressionRatio;
 
