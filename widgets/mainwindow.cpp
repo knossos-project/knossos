@@ -1191,7 +1191,7 @@ void MainWindow::taskSlot() {
     long httpCode = 0;
 
     // build url to send to
-    QString url(QString(state->taskState->host) + "/knossos/session/");
+    const auto url = state->taskState->host + "/knossos/session/";
     // prepare http response object
     httpResponse response;
     response.length = 0;
@@ -1248,11 +1248,11 @@ void MainWindow::taskSlot() {
         if(attribute.isNull() == false) {
             state->taskState->taskFile = attribute;
         }
-        attribute = attributes.value("description").toString();
+        attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
         if(attribute.isNull() == false) {
             emit updateTaskDescriptionSignal(attribute);
         }
-        attribute = attributes.value("comment").toString();
+        attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
         if(attribute.isNull() == false) {
             emit updateTaskCommentSignal(attribute);
         }

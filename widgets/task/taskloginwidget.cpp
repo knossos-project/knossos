@@ -79,7 +79,7 @@ void TaskLoginWidget::loginButtonClicked() {
     sprintf(postdata, "<login><username>%s</username><password>%s</password></login>", username, password);
 
     // build url to send to
-    auto url = state->taskState->host + "/knossos/session/";
+    const auto url = state->taskState->host + "/knossos/session/";
 
     // prepare http response object
     response.length = 0;
@@ -121,11 +121,11 @@ void TaskLoginWidget::loginButtonClicked() {
                 if(attribute.isNull() == false) {
                     state->taskState->taskFile = attribute;
                 }
-                attribute = attributes.value("description").toString();
+                attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
                 if(attribute.isNull() == false) {
                     taskManagementWidget->detailsTab->setDescription(attribute);
                 }
-                attribute = attributes.value("comment").toString();
+                attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
                 if(attribute.isNull() == false) {
                     taskManagementWidget->detailsTab->setComment(attribute);
                 }
