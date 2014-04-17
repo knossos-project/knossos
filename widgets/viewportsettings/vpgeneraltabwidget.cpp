@@ -191,23 +191,23 @@ void VPGeneralTabWidget::renderingQualityChanged(int value) {
 
 void VPGeneralTabWidget::wholeSkeletonSelected(bool checked) {
     if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_SKEL_VP_WHOLE;
+        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
+        state->skeletonState->displayMode |= DSP_WHOLE;
         emit updateViewerStateSignal();
     }
 }
 
 void VPGeneralTabWidget::onlyCurrentCubeSelected(bool checked) {
     if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
-        state->skeletonState->displayMode |= DSP_SKEL_VP_CURRENTCUBE;
+        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
+        state->skeletonState->displayMode |= DSP_CURRENTCUBE;
         emit updateViewerStateSignal();
     }
 }
 
 void VPGeneralTabWidget::onlySelectedTreesSelected(bool checked) {
     if (checked) {
-        state->skeletonState->displayMode &= (~DSP_SKEL_VP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_SKEL_VP_CURRENTCUBE);
+        state->skeletonState->displayMode &= (~DSP_WHOLE & ~DSP_SELECTED_TREES & ~DSP_CURRENTCUBE);
         state->skeletonState->displayMode |= DSP_SELECTED_TREES;
         emit updateViewerStateSignal();
     }

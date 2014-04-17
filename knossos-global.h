@@ -242,8 +242,8 @@ values. The XY vp always used. */
 #define NODE_VISITED 1
 #define NODE_PRISTINE 0
 
-#define DSP_SKEL_VP_WHOLE       1
-#define DSP_SKEL_VP_CURRENTCUBE 2
+#define DSP_WHOLE           1
+#define DSP_CURRENTCUBE      2
 #define DSP_SKEL_VP_HIDE        4
 #define DSP_SLICE_VP_HIDE       8
 #define DSP_SELECTED_TREES      16

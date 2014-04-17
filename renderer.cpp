@@ -2278,7 +2278,10 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     //LOG("verts points: %d", state->skeletonState->pointVertBuffer.vertsIndex)
 
     /* Highlight active node */
-    if(state->skeletonState->activeNode) {
+    if(state->skeletonState->activeNode
+       && (state->skeletonState->displayMode & DSP_WHOLE
+           || (state->skeletonState->displayMode & DSP_SELECTED_TREES
+               && state->skeletonState->activeNode->correspondingTree->selected))) {
         /* Set the default color for the active node */
         SET_COLOR(currentColor, 1.f, 0.f, 0.f, 0.2f);
 
