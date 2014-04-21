@@ -82,7 +82,9 @@ MainWindow::MainWindow(QWidget *parent) :
         state->viewerState->currentPosition.z + 1;
 
     // for task management
-    state->taskState->cookieFile = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks/cookie";
+    QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
+    taskDir.mkpath(".");
+    state->taskState->cookieFile = taskDir.absolutePath() + "/cookie";
     state->taskState->taskFile = "";
     state->taskState->taskName = "";
     state->taskState->host = "heidelbrain.org";
