@@ -221,9 +221,11 @@ int main(int argc, char *argv[])
     QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
     QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+
     //QObject::connect(signalDelegate, SIGNAL(renderTextSignal(Coordinate*,char *,uint,uint)), viewer.renderer, SLOT(renderText(Coordinate*,char*,uint,uint)));
     //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
-    scripts.run();
+    scripts.start();
+    //QObject::connect(viewer.window->pythonButton, SIGNAL(clicked()), scripts.console, SLOT(showNormal()));
 
     return a.exec();
 }

@@ -1,5 +1,6 @@
 #include "highlighter.h"
 
+
 Highlighter::Highlighter(QTextDocument *document) :
     QSyntaxHighlighter(document)
 {

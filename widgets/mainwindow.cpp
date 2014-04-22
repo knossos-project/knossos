@@ -140,6 +140,7 @@ void MainWindow::createViewports() {
     viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
+
 }
 
 MainWindow::~MainWindow()
@@ -212,12 +213,11 @@ void MainWindow:: createToolBar() {
     this->toolBar->addSeparator();
 
 
-    /*
     pythonButton = new QToolButton();
     pythonButton->setToolTip("Python");
     pythonButton->setIcon(QIcon(":/images/python.png"));        
-    this->toolBar->addWidget(pythonButton);    
-    */
+    this->toolBar->addWidget(pythonButton);
+
 
     taskManagementButton = new QToolButton();
     taskManagementButton->setToolTip("Task Management");
@@ -286,7 +286,6 @@ void MainWindow:: createToolBar() {
 
     //connect(syncButton, SIGNAL(clicked()), this, SLOT(synchronizationSlot()));
 
-    //connect(pythonButton, SIGNAL(clicked()), this, SLOT());
     connect(tracingTimeButton, SIGNAL(clicked()), this, SLOT(tracingTimeSlot()));
     connect(annotationButton, SIGNAL(clicked()), this, SLOT(annotationSlot()));
     connect(viewportSettingsButton, SIGNAL(clicked()), this, SLOT(viewportSettingsSlot()));
@@ -1735,3 +1734,5 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event) {
 
     return QObject::eventFilter(object,event);
 }
+
+

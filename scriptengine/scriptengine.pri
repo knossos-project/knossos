@@ -38,22 +38,30 @@ SOURCES += scriptengine/scripting.cpp \
 
 OTHER_FILES += \
     python/converter.py \
-    python/examples/pathes.py
+    python/examples/pathes.py \
+    python/user/custom_graphics_view.py \
+    python/user/images/* \
 
 
 macx {
     INCLUDEPATH += /usr/include/Python2.7 \
     LIBS += -L$(QTDIR)/lib -lPythonQt \
             -framework Python \
+
+    # copy the content of the python folder to the build-dir
+    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc
+    scripts.files = $$PWD/python/*
+    INSTALLS += scripts
 }
 
 linux {
     LIBS += -lPythonQt \
             -lPythonQt_QtAll \
-            -L/usr/lib/i386-linux-gnu -lpython2.7 \
+            -L/home/amos/anaconda/lib/python2.7 -lpython2.7
 
     INCLUDEPATH += /usr/local/include/PythonQt/ \
                    /usr/include/python2.7/
+
 }
 
 win32 {
@@ -70,5 +78,10 @@ win32 {
     INCLUDEPATH += C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\python2.7 \
                    C:\Qt\Qt5.1.0\Tools\mingw48_32\opt\include\
                    C:\Qt\Qt5.1.0\5.1.0\mingw48_32\include
+
+    # copy the content of the python folder to the build-dir
+    scripts.path = $$OUT_PWD/python
+    scripts.files = $$PWD/python/*
+    INSTALLS += scripts
 
 }

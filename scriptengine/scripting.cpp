@@ -19,9 +19,33 @@
 
 #include "highlighter.h"
 #include "knossos-global.h"
-
+#include "sleeper.h"
+#include "widgets/mainwindow.h"
+#include <PythonQt/PythonQtStdIn.h>
 
 extern stateInfo *state;
+static QString message;
+
+static QString f(void *data) {
+    qDebug() << "from stdin";
+
+
+    QFile file;
+    if(file.open(stdout, QIODevice::ReadWrite | QIODevice::Unbuffered)) {
+        qDebug() << file.readAll();
+
+        uint l = file.write("unger");
+        if(l == -1) {
+            qDebug() << "error";
+        }
+        file.close();
+        return QString("unger");
+    }
+
+    return message;
+}
+
+
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -41,6 +65,34 @@ Scripting::Scripting(QObject *parent) :
     pointDecorator = new PointDecorator();
     skeletonProxy = new SkeletonProxy();
 
+
+}
+
+void Scripting::executeFromUserDirectory(PythonQtObjectPtr &ctx) {
+
+    QDir scriptDir("./python/user");
+    QStringList endings;
+    endings << "*.py";
+    scriptDir.setNameFilters(endings);
+    QFileInfoList entries = scriptDir.entryInfoList();
+
+
+
+    foreach(const QFileInfo &script, entries) {
+        QString path = script.absolutePath();
+        QFile file(script.canonicalFilePath());
+
+        qDebug() << script.canonicalFilePath();
+
+        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
+            continue;
+        }
+
+        QTextStream stream(&file);
+        QString content =  stream.readAll();
+        ctx.evalScript(content);
+    }
+
 }
 
 
@@ -53,16 +105,11 @@ void Scripting::addDoc() {
     ctx.evalScript("from knossos_python_api import *");
     ctx.evalScript("internal.__doc__ = 'This module contains internal data structures which are used in knossos. They are constrained to read-only access in python'");
 
-    ctx.evalScript("import sys");
-    ctx.evalScript("sys.path.append('/home/knossos/Schreibtisch')");
-    ctx.evalScript("execfile('/home/knossos/Schreibtisch/render_mesh.py')");
-
+    ctx.evalScript("import sys");    
     ctx.evalScript("import os");
 
-
-
     // here is simply the convention : Those keys are first available after pathes were saved.
-    if(!settings->value("sys_path").toString().isNull()) {
+    if(!settings->value("sys_path").isNull()) {
         console->consoleMessage("loaded the following sys_pathes:");
         QStringList pathList;
         pathList = settings->value("sys_path").toStringList();
@@ -85,19 +132,26 @@ void Scripting::run() {
     QFont font("Courier");
     font.setPixelSize(12);    
 
-    PythonQt::init(PythonQt::RedirectStdOut, QString("knossos_python_api").toLocal8Bit());
+    PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    PythonQt_QtAll::init();
 
-    console = new PythonQtScriptingConsole(NULL, ctx);
-    console->setWindowTitle("Knossos Scripting Console");
-    highlighter = new Highlighter(console->document());
 
-    Render render;
+    ctx.addObject("app", qApp);
+    ctx.evalScript("import sys");
+    ctx.evalScript("sys.argv = ['']");
+    ctx.evalScript("from PythonQt import *");
+    ctx.evalScript("execfile('includes.py')");
 
+    ctx.evalScript("sys.stdout = open('/home/amos/log.txt', 'w')");
+    ctx.evalScript("sys.stdout.write('created')");
+    ctx.evalScript("sys.stderr = open('/home/amos/error.txt', 'w')");
+
+    ctx.evalScript("import IPython");
+    ctx.evalScript("IPython.embed_kernel()");
+    ctx.evalScript("python/terminal.py");
 
     ctx.addObject("knossos", skeletonProxy);
-
-
     ctx.addVariable("GL_POINTS", GL_POINTS);
     ctx.addVariable("GL_LINES", GL_LINES);
     ctx.addVariable("GL_LINE_STRIP", GL_LINE_STRIP);
@@ -134,24 +188,29 @@ void Scripting::run() {
     PythonQt::self()->addDecorators(meshDecorator);
     PythonQt::self()->registerCPPClass("Mesh", "",  module.toLocal8Bit().data());
 
-    QString renderModule("rendering");
-
-    PythonQt::self()->addDecorators(pointDecorator);
-    PythonQt::self()->registerCPPClass("Point", "", renderModule.toLocal8Bit().data());
-
-    PythonQt::self()->addDecorators(transformDecorator);
-    PythonQt::self()->registerCPPClass("Transform", "", renderModule.toLocal8Bit().data());
-
-    addDoc();
+    /*
 
     connect(signalDelegate, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
     connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
 
-    console->resize(800, 300);
-    console->setFont(font);
-    console->show();
+    connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
+    connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
 
-    exec();
+    */
+
+
+
+    //PythonQt::self()->setRedirectStdInCallback(f, &message);
+
+
+
+
+    //addDoc();
+   // executeFromUserDirectory(ctx);
+
+
+    ctx.evalScript("sys.stdout.close()");
+    ctx.evalScript("sys.stderr.close()");
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
@@ -159,16 +218,27 @@ void Scripting::addScriptingObject(const QString &name, QObject *obj) {
     ctx.addObject(name, obj);
 }
 
-void Scripting::reflect(QObject *obj) {
-    const QMetaObject *meta = obj->metaObject();
-
-    for(int i = 0; i < meta->methodCount(); i++) {
-        QMetaMethod method = meta->method(i);
-        qDebug() << method.methodSignature();
-    }
-}
-
 void Scripting::saveSettings(const QString &key, const QVariant &value) {       
     settings->setValue(key, value);
 }
 
+void Scripting::out(const QString &out) {
+    qDebug() << "from stdout";
+    qDebug() << out;
+
+    QFile file;
+    if(file.open(stdout, QIODevice::ReadOnly)) {
+        qDebug() << file.readAll();
+    }
+
+}
+
+void Scripting::err(const QString &err) {
+    qDebug() << "from stderr";
+    qDebug() << err;
+
+}
+
+void Scripting::read() {
+   console->consoleMessage(QString(process->readAll()));
+}

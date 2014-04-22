@@ -322,6 +322,7 @@ public slots:
     void F4Slot();
     void F5Slot();
 
+
 };
 
 #endif // MAINWINDOW_H

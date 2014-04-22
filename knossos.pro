@@ -7,10 +7,12 @@
 
 QT       += core gui opengl network xml help
 
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt warn_off #c++11
-#CONFIG -= app_bundle
+CONFIG += warn_off #c++11
+#CONFIG += console
 
 
 SOURCES += openjpeg/cio.c \
@@ -239,7 +241,11 @@ linux {
     # copy the content of the doc folder to the build-dir
     doc.path = $$OUT_PWD/doc
     doc.files = $$PWD/doc/*
-    INSTALLS += doc
+
+    scripts.path = $$OUT_PWD/python
+    scripts.files = $$PWD/python/*
+
+    INSTALLS += doc python
 
 }
 

@@ -5,7 +5,6 @@
 #include <QList>
 #include "knossos-global.h"
 
-
 /** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
 class SkeletonProxySignalDelegate : public QObject  {
     Q_OBJECT
@@ -63,6 +62,7 @@ public slots:
     QList<Mesh *> *user_geom_list();
     void move_to(int x, int y, int z);
     void render_text(const QString &path, int x, int y, int z);
+
 
     static QString help();
 };

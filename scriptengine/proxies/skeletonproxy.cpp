@@ -274,6 +274,8 @@ void SkeletonProxy::loadStyleSheet(const QString &filename) {
     file.close();
 }
 
+
+
 QString SkeletonProxy::help() {
     return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \
                    "\n\n GETTER:" \
