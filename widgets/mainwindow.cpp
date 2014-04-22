@@ -1132,24 +1132,15 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     if case2 an initial revision will be inserted.
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
-void MainWindow::updateSkeletonFileName(QString &fileName) {
-    QRegExp withVersion("[a-zA-Z0-9/_-\]+\\.[0-9]{3}\\.nml$");
-    QRegExp withoutVersion("[a-zA-Z0-9/_-\]+.nml$");
-
-    if(fileName.contains(withVersion)) {
-        QString versionString = fileName.section("", fileName.length() - 6, fileName.length() - 4);
-        int version = versionString.toInt();
-        version += 1;
-        state->skeletonState->skeletonRevision +=1;
-        versionString = QString("%1").arg(version);
-        while(versionString.length() < 3) {
-            versionString.push_front("0");
-        }
-        fileName = fileName.replace(fileName.length() - 7, 3, versionString);
-
-    } else if(fileName.contains(withoutVersion)) {
-        fileName = fileName.insert(fileName.length() - 3, "001.");
-        state->skeletonState->skeletonRevision +=1;
+void MainWindow::updateSkeletonFileName(QString & fileName) {
+    const QRegExp versionRegEx("(\\.)([0-9]{3})\\.nml$");
+    ++state->skeletonState->skeletonRevision;
+    if (versionRegEx.indexIn(fileName) != -1) {
+        const auto versionIndex = versionRegEx.pos(2);//get second regex aka version without dot and nml
+        const auto incrementedVersion = fileName.midRef(versionIndex, 3).toInt() + 1;//3 chars following the dot
+        fileName.replace(versionIndex, 3, QString("%1").arg(incrementedVersion, 3, 10, QChar('0')));//pad with zeroes
+    } else {
+        fileName.insert(fileName.length() - 3, "001.");
     }
 }
 
