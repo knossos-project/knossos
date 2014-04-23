@@ -1,5 +1,5 @@
 #define MyAppName "Knossos"
-#define MyAppVersion "4.0"
+#define MyAppVersion "4.0 Beta 2"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
 #define MyAppExeName "knossos.exe"
@@ -22,7 +22,7 @@ DefaultGroupName={#MyAppName} {#MyAppVersion}
 LicenseFile={#License}
 OutputBaseFilename=knossos-setup{#MyAppVersion}
 SetupIconFile=logo.ico
-WizardSmallImageFile=logo.bmp       
+WizardSmallImageFile=logo.bmp
 WizardImageFile=bar.bmp
 Compression=lzma
 SolidCompression=yes
@@ -40,8 +40,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Dirs]
 Name: "{app}\sqldrivers"
 Name: "{app}\platforms"
-Name: "{app}\doc"                            
-      
+Name: "{app}\doc"
+
 [Files]
 Source: "{#KNOSSOS_SRC_PATH}knossos.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#KNOSSOS_SRC_PATH}glew32.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -81,7 +81,7 @@ Source: "{#KNOSSOS_SRC_PATH}logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "{#KNOSSOS_SRC_PATH}platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#KNOSSOS_SRC_PATH}sqldrivers\*"; DestDir: "{app}\sqldrivers"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#KNOSSOS_SRC_PATH}doc\*"; DestDir: "{app}\doc"; Flags: ignoreversion recursesubdirs createallsubdirs  
+Source: "{#KNOSSOS_SRC_PATH}doc\*"; DestDir: "{app}\doc"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Source: "{#KNOSSOS_SRC_PATH}skeletonFiles\*"; DestDir: "{app}\skeletonFiles"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Source: "{#KNOSSOS_SRC_PATH}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -91,8 +91,8 @@ Type: files; Name: "{app}"
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\knossos.exe" ; IconFilename: "{app}\logo.ico"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\knossos.exe"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
-       
+Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\knossos.exe"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
+
 
 [Run]
 ;Filename: "{app}\tools\{#pythonSetup}"; Description: "Install Python (python runtime environment required, installation recommended if you are unsure)" ; Flags: shellexec postinstall skipifsilent

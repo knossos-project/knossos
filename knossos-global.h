@@ -47,7 +47,7 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.0"
+#define KVERSION "4.0 Beta 2"
 
 #define FAIL    -1
 
@@ -715,8 +715,8 @@ struct taskState {
 };
 
 struct trajectory {
-		char name[64];
-		char *source;
+        char name[64];
+        char *source;
 };
 
 /**
@@ -752,8 +752,8 @@ struct viewportTexture {
     //Coordinates of crosshair inside VP
     float xOffset, yOffset;
 
-	// Current zoom level. 1: no zoom; near 0: maximum zoom.
-	float zoomLevel;
+    // Current zoom level. 1: no zoom; near 0: maximum zoom.
+    float zoomLevel;
 
 };
 
@@ -913,10 +913,10 @@ struct viewerState {
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-	//Flag to indicate user repositioning
-	uint userRepositioning;
+    //Flag to indicate user repositioning
+    uint userRepositioning;
 
-	float depthCutOff;
+    float depthCutOff;
 
     //Flag to indicate active mouse motion tracking: 0 off, 1 on
     int motionTracking;
@@ -1413,11 +1413,11 @@ struct clientState {
     )
 
 #define ADD_COORDINATE(c1, c2) \
-	{ \
-			(c1).x += (c2).x; \
-			(c1).y += (c2).y; \
-			(c1).z += (c2).z; \
-	}
+    { \
+            (c1).x += (c2).x; \
+            (c1).y += (c2).y; \
+            (c1).z += (c2).z; \
+    }
 
 #define MUL_COORDINATE(c1, f) \
     {\
@@ -1427,25 +1427,25 @@ struct clientState {
     }
 
 #define SUB_COORDINATE(c1, c2) \
-	{ \
-			(c1).x -= (c2).x; \
-			(c1).y -= (c2).y; \
-			(c1).z -= (c2).z; \
-	}
+    { \
+            (c1).x -= (c2).x; \
+            (c1).y -= (c2).y; \
+            (c1).z -= (c2).z; \
+    }
 
 #define DIV_COORDINATE(c1, c2) \
-	{ \
-			(c1).x /= (c2); \
-			(c1).y /= (c2); \
-			(c1).z /= (c2); \
-	}
+    { \
+            (c1).x /= (c2); \
+            (c1).y /= (c2); \
+            (c1).z /= (c2); \
+    }
 
 #define CPY_COORDINATE(c1, c2) \
-	{ \
-			(c1).x = (c2).x; \
-			(c1).y = (c2).y; \
-			(c1).z = (c2).z; \
-	}
+    { \
+            (c1).x = (c2).x; \
+            (c1).y = (c2).y; \
+            (c1).z = (c2).z; \
+    }
 
 // This is used by the hash function. It rotates the bits by n to the left. It
 // works analogously to the 8086 assembly instruction ROL and should actually

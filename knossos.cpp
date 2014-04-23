@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     //Splash splash(":/images/splash.png", 1500);
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
-    QCoreApplication::setApplicationName(QString("Knossos %1 Beta").arg(KVERSION));
+    QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     knossos.reset(new Knossos);
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     loader.reset(new Loader);
     Remote remote;
     Client client;
-    
+
     Scripting scripts;
     scripts.skeletonReference = viewer.skeletonizer;
      //scripts.stateReference = state;
@@ -327,7 +327,7 @@ bool Knossos::commonInitStates() {
 bool Knossos::initStates() {
    state->time.start();
 
-   // For the viewer  
+   // For the viewer
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
    state->viewerState->autoTracingSteps = 10;
@@ -396,7 +396,7 @@ bool Knossos::initStates() {
    state->clientState->outBuffer->size = 128;
    state->clientState->outBuffer->length = 0;
 
-   // For the skeletonizer   
+   // For the skeletonizer
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
    state->skeletonState->idleTime = 0;
    state->skeletonState->idleTimeNow = 0;
@@ -1204,7 +1204,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      break;
              }
          }
-     }     
+     }
  }
 
  return true;
