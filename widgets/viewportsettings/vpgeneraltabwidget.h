@@ -26,12 +26,12 @@
  */
 
 #include <QWidget>
+#include <QRadioButton>
+#include <QCheckBox>
 
 class QLabel;
-class QCheckBox;
 class QSpinBox;
 class QDoubleSpinBox;
-class QRadioButton;
 class QPushButton;
 class VPGeneralTabWidget : public QWidget
 {
@@ -41,12 +41,16 @@ public:
     explicit VPGeneralTabWidget(QWidget *parent = 0);
     QPushButton *resetVPsButton;
     QCheckBox *showVPDecorationCheckBox;
+    QCheckBox hideSkeletonOrthoVPsCheckBox{"Hide Skeleton in Ortho VPs"};
 signals:
-    void overrideNodeRadiusSignal(bool on);
     void highlightActiveTreeSignal(bool on);
-    void skeletonChangedSignal(bool on);
-    void showNodeID(bool on);
+    void overrideNodeRadiusSignal(bool on);
     void segRadiusToNodeRadiusSignal(float value);
+    void setViewportDecorations(bool);
+    void showNodeID(bool on);
+    void skeletonChangedSignal(bool on);
+    void resetViewportPositions();
+    void updateViewerStateSignal();
 
 public slots:
     void lightEffectsChecked(bool on);
@@ -56,6 +60,12 @@ public slots:
     void overrideNodeRadiusChanged(double value);
     void edgeNodeRadiusRatioChanged(double value);
     void renderingQualityChanged(int value);
+    // skeleton visibility
+    void wholeSkeletonSelected(bool checked);
+    void onlyCurrentCubeSelected(bool checked);
+    void onlySelectedTreesSelected(bool checked);
+    void hideSkeletonOrthoVPClicked(bool checked);
+    void hideSkeletonSkelVPClicked(bool checked);
 
 protected:
     QLabel *skeletonVisualizationLabel;
@@ -66,6 +76,11 @@ protected:
     QCheckBox *showAllNodeIdsCheckBox;
     QCheckBox *overrideNodeRadiusCheckBox;
     QDoubleSpinBox *overrideNodeRadiusSpinBox;
+
+    QRadioButton wholeSkeletonRadioButton{"Whole Skeleton"};
+    QRadioButton onlyCurrentCubeRadioButton{"Only Current Cube"};
+    QRadioButton onlySelectedTreesRadioButton{"Only Selected Trees"};
+    QCheckBox hideSkeletonSkelVPCheckBox{"Hide Skeleton  In Skeleton VP (fast)"};
 
     QDoubleSpinBox *edgeNodeRadiusRatioSpinBox;
     QLabel *edgeNodeRadiusRatioLabel;

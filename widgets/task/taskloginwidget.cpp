@@ -15,19 +15,18 @@
 
 extern stateInfo *state;
 
-
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QDialog(parent), taskManagementWidget(NULL)
 {
     setWindowIcon(QIcon(":/images/icons/task.png"));
     setWindowTitle("Task Login");
-    resize(308, 151);
+    setMinimumSize(308, 151);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     QFormLayout *formLayout = new QFormLayout();
 
     urlField = new QLineEdit();
-    urlField->setText(taskState::host);
+    urlField->setText(state->taskState->host);
     usernameField = new QLineEdit();
     passwordField = new QLineEdit();
     serverStatus = new QLabel("Please Login");
@@ -60,7 +59,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 }
 
 void TaskLoginWidget::urlEditingFinished() {
-    taskState::host = urlField->text();
+    state->taskState->host = urlField->text();
 }
 
 void TaskLoginWidget::loginButtonClicked() {
@@ -73,26 +72,26 @@ void TaskLoginWidget::loginButtonClicked() {
     char password[512];
     char postdata[1024];
 
-    memset(username, '0', 512);
+    memset(username, '\0', 512);
     memset(password, '\0', 512);
     strcpy(username, usernameField->text().toStdString().c_str());
     strcpy(password, passwordField->text().toStdString().c_str());
     sprintf(postdata, "<login><username>%s</username><password>%s</password></login>", username, password);
 
     // build url to send to
-    auto url = taskState::host + "/knossos/session/";
+    const auto url = state->taskState->host + "/knossos/session/";
 
     // prepare http response object
     response.length = 0;
     response.content = (char *)calloc(1, response.length+1);
 
     // remove contents of cookie file to fill it with new cookie
-    cookie = fopen(taskState::cookieFile.toUtf8().constData(), "w");
+    cookie = fopen(state->taskState->cookieFile.toUtf8().constData(), "w");
     if(cookie) {
         fclose(cookie);
     }
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, taskState::cookieFile.toUtf8().data(), &code, 5);
+    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
     if( result == false) {
         serverStatus->setText("<font color='red'>Failed to create cookie. Please check your folder permissions.</font>");
@@ -120,13 +119,13 @@ void TaskLoginWidget::loginButtonClicked() {
                 }
                 attribute = attributes.value("taskfile").toString();
                 if(attribute.isNull() == false) {
-                    taskState::taskFile = attribute;
+                    state->taskState->taskFile = attribute;
                 }
-                attribute = attributes.value("description").toString();
+                attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
                 if(attribute.isNull() == false) {
                     taskManagementWidget->detailsTab->setDescription(attribute);
                 }
-                attribute = attributes.value("comment").toString();
+                attribute = QByteArray::fromBase64(attributes.value("comment").toUtf8());
                 if(attribute.isNull() == false) {
                     taskManagementWidget->detailsTab->setComment(attribute);
                 }
@@ -156,6 +155,6 @@ void TaskLoginWidget::setTaskManagementWidget(TaskManagementWidget *management) 
     taskManagementWidget = management;
 }
 
-void TaskLoginWidget::closeEvent(QCloseEvent *event) {
+void TaskLoginWidget::closeEvent(QCloseEvent *) {
     this->hide();
 }

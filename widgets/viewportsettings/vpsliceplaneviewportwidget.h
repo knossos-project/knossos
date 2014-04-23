@@ -50,7 +50,6 @@ signals:
     bool loadTreeColorTableSignal(QString path, float *table, int type);
     void treeColorAdjustmentsChangedSignal();
 public slots:
-    void enableSkeletonOverlayClicked(bool checked);
     void datasetLinearFilteringChecked(bool checked);
     void hightlightIntersectionsChecked(bool checked);
     void depthCutoffChanged(double value);
@@ -72,7 +71,7 @@ public slots:
 
 protected:
     QLabel *skeletonOverlayLabel, *voxelFilteringLabel;
-    QCheckBox *enableSkeletonOverlayCheckBox, *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
+    QCheckBox *highlightIntersectionsCheckBox, *datasetLinearFilteringCheckBox;
     QLabel *depthCutoffLabel;
     QDoubleSpinBox *depthCutoffSpinBox;
 

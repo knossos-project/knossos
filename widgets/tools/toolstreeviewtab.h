@@ -21,9 +21,9 @@ class QSpinBox;
 class QSplitter;
 class QMenu;
 
-class TreeListElement;
-class NodeListElement;
-class SegmentListElement;
+struct treeListElement;
+struct nodeListElement;
+struct segmentListElement;
 
 class ToolsTreeviewTab : public QWidget
 {
@@ -71,8 +71,8 @@ public:
     QPushButton *confirmationPrompt(QString question, QString confirmString);
 
 protected:
-    void insertTree(TreeListElement *tree, TreeTable *table);
-    void insertNode(NodeListElement *node, NodeTable *table);
+    void insertTree(treeListElement *tree, TreeTable *table);
+    void insertNode(nodeListElement *node, NodeTable *table);
     void setText(TreeTable *table, QTableWidgetItem *item, QString text);
     void setText(NodeTable *table, QTableWidgetItem *item, QString text);
     int getActiveTreeRow();
@@ -82,10 +82,12 @@ signals:
     void deleteSelectedTreesSignal();
     void delActiveNodeSignal();
     void deleteSelectedNodesSignal();
-    void setActiveNodeSignal(int revision, NodeListElement *node, int nodeID);
+    void clearTreeSelectionSignal();
+    void clearNodeSelectionSignal();
+    void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
     bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, SegmentListElement *segToDel, int serialize);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();
@@ -102,6 +104,7 @@ public slots:
     void activeNodeSelectionChanged();
     void nodeSelectionChanged();
     void nodeItemDoubleClicked(QTableWidgetItem*);
+    void sortComments(const int);
 
     void activateFirstSelectedNode();
     void activateFirstSelectedTree();
@@ -122,21 +125,23 @@ public slots:
     void deleteNodesAction();
 
     // update tree table
+    void recreateTreesTable();
     void treeActivated();
-    void treeAdded(TreeListElement *tree);
+    void treeAdded(treeListElement *tree);
     void treesDeleted();
     void treesMerged(int treeID1, int treeID2);
 
     // update node table
+    void clearNodeTableSelection();
+    void recreateNodesTable();
     void nodeActivated();
     void nodeAdded();
     void branchPushed();
     void branchPopped();
-    void nodeCommentChanged(NodeListElement *node);
-    void nodeRadiusChanged(NodeListElement *node);
-    void nodePositionChanged(NodeListElement *node);
-    void recreateTreesTable();    
-    void recreateNodesTable();
+    void nodeCommentChanged(nodeListElement *node);
+    void nodeRadiusChanged(nodeListElement *node);
+    void nodePositionChanged(nodeListElement *node);
+
     void update();
 };
 
