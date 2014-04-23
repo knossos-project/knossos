@@ -529,7 +529,7 @@ bool Skeletonizer::delSegmentFromSkeletonStruct(segmentListElement *segment) {
 
 /** @todo cleanup */
 void Skeletonizer::WRAP_popBranchNode() {
-    popBranchNode(CHANGE_MANUAL, false);
+    popBranchNode(CHANGE_MANUAL);
     state->skeletonState->askingPopBranchConfirmation = false;
 }
 
@@ -549,7 +549,7 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
     treeCol.a = 1.;
 
     if(!state->skeletonState->activeTree)
-        addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, false);
+        addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
 
     addedNodeID = addNode(CHANGE_MANUAL,
                           0,
@@ -571,8 +571,8 @@ bool Skeletonizer::UI_addSkeletonNode(Coordinate *clickedCoordinate, Byte VPtype
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, true, true, NULL, addedNodeID, false);
-        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID, false);
+        pushBranchNode(CHANGE_MANUAL, true, true, NULL, addedNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, addedNodeID);
     }
 
     return true;
@@ -601,7 +601,7 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
         return false;
     }
 
-    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID, false);
+    addSegment(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, targetNodeID);
 
     if(makeNodeActive) {
         setActiveNode(CHANGE_MANUAL, NULL, targetNodeID);
@@ -610,8 +610,8 @@ uint Skeletonizer::addSkeletonNodeAndLinkWithActive(Coordinate *clickedCoordinat
                                state->skeletonState->activeTree->treeID) == 1) {
         /* First node in this tree */
 
-        pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID, false);
-        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID, false);
+        pushBranchNode(CHANGE_MANUAL, true, true, NULL, targetNodeID);
+        addComment(CHANGE_MANUAL, "First Node", NULL, targetNodeID);
         emit updateToolsSignal();
         emit updateTreeviewSignal();
     }
@@ -764,7 +764,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     while((currentBranchPointID =
           (PTRSIZEINT)popStack(tempReverseStack))) {
         currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(CHANGE_MANUAL, false, false, currentNode, 0, false);
+        pushBranchNode(CHANGE_MANUAL, false, false, currentNode, 0);
     }
 
     QFile file(fileName);
@@ -1221,11 +1221,11 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
             }
 
             if(merge == false) {
-                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(neuronID);
             } else {
                 neuronID += greatestTreeIDbeforeLoading;
-                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
+                currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
             }
@@ -1362,22 +1362,22 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
 
     for (const auto & elem : edgeVector) {
         if(merge == false) {
-            addSegment(CHANGE_MANUAL, elem.first, elem.second, false);
+            addSegment(CHANGE_MANUAL, elem.first, elem.second);
         } else {
-            addSegment(CHANGE_MANUAL, elem.first + greatestNodeIDbeforeLoading, elem.second + greatestNodeIDbeforeLoading, false);
+            addSegment(CHANGE_MANUAL, elem.first + greatestNodeIDbeforeLoading, elem.second + greatestNodeIDbeforeLoading);
         }
     }
 
     for (const auto & elem : branchVector) {
         const auto & currentNode = findNodeByNodeID(elem);
         if(currentNode != nullptr)
-            pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
+            pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0);
     }
 
     for (const auto & elem : commentsVector) {
         const auto & currentNode = findNodeByNodeID(elem.first);
         if(currentNode != nullptr) {
-            addComment(CHANGE_MANUAL, elem.second, currentNode, 0, false);
+            addComment(CHANGE_MANUAL, elem.second, currentNode, 0);
         }
     }
 
@@ -1429,7 +1429,7 @@ QString Skeletonizer::getDefaultSkelFileName() {
 
 bool Skeletonizer::delActiveNode() {
     if(state->skeletonState->activeNode) {
-        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, true);
+        delNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode);
     }
     else {
         return false;
@@ -1448,7 +1448,7 @@ bool Skeletonizer::delActiveTree() {
             nextTree = state->skeletonState->activeTree->previous;
         }
 
-        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, true);
+        delTree(CHANGE_MANUAL, state->skeletonState->activeTree->treeID);
 
         if(nextTree) {
             setActiveTreeByID(nextTree->treeID);
@@ -1465,7 +1465,7 @@ bool Skeletonizer::delActiveTree() {
     return true;
 }
 
-bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int /*serialize*/) {
+bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     // Delete the segment out of the segment list and out of the visualization structure!
@@ -1539,7 +1539,7 @@ bool Skeletonizer::delSegment(int targetRevision, int sourceNodeID, int targetNo
  * We have to delete the node from 2 structures: the skeleton's nested linked list structure
  * and the skeleton visualization structure (hashtable with skeletonDCs).
  */
-bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize) {
+bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     struct segmentListElement *currentSegment;
@@ -1564,12 +1564,8 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
 
     treeID = nodeToDel->correspondingTree->treeID;
 
-    if(serialize){
-        saveSerializedSkeleton();
-    }
-
     if(nodeToDel->comment) {
-        delComment(CHANGE_MANUAL, nodeToDel->comment, 0, false);
+        delComment(CHANGE_MANUAL, nodeToDel->comment, 0);
     }
 
     if(nodeToDel->isBranchNode) {
@@ -1586,9 +1582,9 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
         tempNext = currentSegment->next;
 
         if(currentSegment->flag == SEGMENT_FORWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment, false);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment);
         else if(currentSegment->flag == SEGMENT_BACKWARD)
-            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment, false);
+            delSegment(CHANGE_MANUAL, 0,0, currentSegment->reverseSegment);
 
         currentSegment = tempNext;
     }
@@ -1641,7 +1637,7 @@ bool Skeletonizer::delNode(int targetRevision, int nodeID, nodeListElement *node
     return true;
 }
 
-bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
+bool Skeletonizer::delTree(int targetRevision, int treeID) {
 
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
@@ -1662,15 +1658,11 @@ bool Skeletonizer::delTree(int targetRevision, int treeID, int serialize) {
         return false;
     }
 
-    if(serialize) {
-        saveSerializedSkeleton();
-    }
-
     currentNode = currentTree->firstNode;
     while(currentNode) {
         nodeToDel = currentNode;
         currentNode = nodeToDel->next;
-        delNode(CHANGE_MANUAL, 0, nodeToDel, false);
+        delNode(CHANGE_MANUAL, 0, nodeToDel);
     }
     currentTree->firstNode = NULL;
 
@@ -1962,10 +1954,6 @@ int Skeletonizer::addNode(int targetRevision,
         return false;
     }
 
-    if(serialize) {
-        saveSerializedSkeleton();
-    }
-
     // One node more in all trees
     state->skeletonState->totalNodeElements++;
 
@@ -2033,7 +2021,7 @@ int Skeletonizer::addNode(int targetRevision,
     return nodeID;
 }
 
-bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize) {
+bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNodeID) {
     nodeListElement *targetNode, *sourceNode;
     segmentListElement *sourceSeg;
     floatCoordinate node1, node2;
@@ -2064,10 +2052,6 @@ bool Skeletonizer::addSegment(int targetRevision, int sourceNodeID, int targetNo
         LOG("Cannot link node with itself!")
         Knossos::unlockSkeleton(false);
         return false;
-    }
-
-    if(serialize){
-        saveSerializedSkeleton();
     }
 
     //One segment more in all trees
@@ -2148,7 +2132,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
     while(currentTree) {
         treeToDel = currentTree;
         currentTree = treeToDel->next;
-        delTree(CHANGE_MANUAL, treeToDel->treeID, true);
+        delTree(CHANGE_MANUAL, treeToDel->treeID);
     }
 
     state->skeletonState->activeNode = NULL;
@@ -2197,7 +2181,7 @@ bool Skeletonizer::clearSkeleton(int targetRevision, int /*loadingSkeleton*/) {
     return true;
 }
 
-bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize) {
+bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     treeListElement *tree1, *tree2;
@@ -2220,10 +2204,6 @@ bool Skeletonizer::mergeTrees(int targetRevision, int treeID1, int treeID2, int 
         LOG("Could not merge trees, provided IDs are not valid!")
         Knossos::unlockSkeleton(false);
         return false;
-    }
-
-    if(serialize) {
-        saveSerializedSkeleton();
     }
 
     currentNode = tree2->firstNode;
@@ -2449,7 +2429,7 @@ nodeListElement* Skeletonizer::findNodeByCoordinate(Coordinate *position) {
     return NULL;
 }
 
-treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize) {
+treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, int treeID, color4F color) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
      //  The variable sync is a workaround for the problem that this function
@@ -2481,10 +2461,6 @@ treeListElement* Skeletonizer::addTreeListElement(int sync, int targetRevision, 
         Knossos::unlockSkeleton(false);
         return NULL;
     }
-    if(serialize){
-        saveSerializedSkeleton();
-    }
-
     memset(newElement, '\0', sizeof(struct treeListElement));
 
     state->skeletonState->treeElements++;
@@ -2695,7 +2671,7 @@ bool Skeletonizer::genTestNodes(uint number) {
     color4F treeCol;
     //add new tree for test nodes
     treeCol.r = -1.;
-    addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, false);
+    addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
 
     srand(time(NULL));
     pos.x = (int)(((double)rand() / (double)RAND_MAX) * (double)state->boundary.x);
@@ -2924,7 +2900,7 @@ dynArray* Skeletonizer::newDynArray(int size) {
     return newArray;
 }
 
-int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int serialize) {
+int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     stack *remainingNodes = NULL;
@@ -2993,10 +2969,6 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     if(visitedRight == NULL || visitedLeft == NULL) {
         LOG("Out of memory.")
         _Exit(false);
-    }
-
-    if(serialize){
-        saveSerializedSkeleton();
     }
 
     memset(visitedLeft, NODE_PRISTINE, 16384);
@@ -3088,7 +3060,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     if(treesCount > 1 || nodeCount < nodeCountAllTrees) {
         color4F treeCol;
         treeCol.r = -1.;
-        newTree = state->viewer->skeletonizer->addTreeListElement(false, CHANGE_MANUAL, 0, treeCol, false);
+        newTree = state->viewer->skeletonizer->addTreeListElement(false, CHANGE_MANUAL, 0, treeCol);
         // Splitting the connected component.
 
         while((n = (struct nodeListElement *)popStack(componentNodes))) {
@@ -3152,7 +3124,7 @@ int Skeletonizer::splitConnectedComponent(int targetRevision, int nodeID, int se
     return nodeCount;
 }
 
-bool Skeletonizer::addComment(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize) {
+bool Skeletonizer::addComment(int targetRevision, QString content, nodeListElement *node, int nodeID) {
     //This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     commentListElement *newComment;
@@ -3182,10 +3154,6 @@ bool Skeletonizer::addComment(int targetRevision, QString content, nodeListEleme
     if(content_cstr) {
         strncpy(newComment->content, content_cstr, strlen(content_cstr));
         state->skeletonState->skeletonChanged = true;
-    }
-
-    if(serialize) {
-        saveSerializedSkeleton();
     }
 
     if(!state->skeletonState->currentComment) {
@@ -3227,7 +3195,7 @@ bool Skeletonizer::addComment(int targetRevision, QString content, nodeListEleme
     return true;
 }
 
-bool Skeletonizer::delComment(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize) {
+bool Skeletonizer::delComment(int targetRevision, commentListElement *currentComment, int commentNodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     int nodeID = 0;
@@ -3249,10 +3217,6 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
         LOG("Please provide a valid comment element to delete!")
         Knossos::unlockSkeleton(false);
         return false;
-    }
-
-    if(serialize){
-       saveSerializedSkeleton();
     }
 
     if(currentComment->content) {
@@ -3296,7 +3260,7 @@ bool Skeletonizer::delComment(int targetRevision, commentListElement *currentCom
     return true;
 }
 
-bool Skeletonizer::editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize) {
+bool Skeletonizer::editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     // this function also seems to be kind of useless as you could do just the same
     // thing with addComment() with minimal changes ....?
@@ -3316,10 +3280,6 @@ bool Skeletonizer::editComment(int targetRevision, commentListElement *currentCo
         LOG("Please provide a valid comment element to edit!")
         Knossos::unlockSkeleton(false);
         return false;
-    }
-
-    if(serialize){
-        saveSerializedSkeleton();
     }
 
     nodeID = currentComment->node->nodeID;
@@ -3509,7 +3469,7 @@ bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
 }
 
 /* @todo loader gets out of sync (endless loop) */
-bool Skeletonizer::popBranchNode(int targetRevision, int serialize) {
+bool Skeletonizer::popBranchNode(int targetRevision) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
     // SYNCHRO BUG:
     // both instances will have to confirm branch point deletion if
@@ -3521,10 +3481,6 @@ bool Skeletonizer::popBranchNode(int targetRevision, int serialize) {
     if(Knossos::lockSkeleton(targetRevision) == false) {
         Knossos::unlockSkeleton(false);
         return false;
-    }
-
-    if(serialize){
-        saveSerializedSkeleton();
     }
 
     // Nodes on the branch stack may not actually exist anymore
@@ -3586,7 +3542,7 @@ exit_popbranchnode:
 }
 
 bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
-                                  nodeListElement *branchNode, int branchNodeID, int serialize) {
+                                  nodeListElement *branchNode, int branchNodeID) {
     // This is a SYNCHRONIZABLE skeleton function. Be a bit careful.
 
     if(Knossos::lockSkeleton(targetRevision) == false) {
@@ -3597,10 +3553,6 @@ bool Skeletonizer::pushBranchNode(int targetRevision, int setBranchNodeFlag, int
         branchNode = findNodeByNodeID(branchNodeID);
     }
     if(branchNode) {
-        if(serialize){
-            saveSerializedSkeleton();
-        }
-
         if(branchNode->isBranchNode == 0 || !checkDoubleBranchpoint) {
             pushStack(state->skeletonState->branchStack, (void *)(PTRSIZEINT)branchNode->nodeID);
             if(setBranchNodeFlag) {
@@ -4198,7 +4150,7 @@ void Skeletonizer::deleteSelectedTrees() {
         if (elem == state->skeletonState->activeTree) {
             delActiveTree();
         } else {
-            delTree(CHANGE_MANUAL, elem->treeID, true);
+            delTree(CHANGE_MANUAL, elem->treeID);
         }
     }
     state->skeletonState->selectedTrees.clear();
@@ -4214,7 +4166,7 @@ void Skeletonizer::deleteSelectedNodes() {
         if (elem == state->skeletonState->activeNode) {
             delActiveNode();
         } else {
-            delNode(CHANGE_MANUAL, 0, elem, true);
+            delNode(CHANGE_MANUAL, 0, elem);
         }
     }
     state->skeletonState->selectedNodes.clear();
@@ -4284,551 +4236,6 @@ void Skeletonizer::setSkeletonChanged(bool on) {
 
 void Skeletonizer::setShowNodeIDs(bool on) {
     this->showNodeIDs = on;
-}
-
-/*_______________________________________________ */
-/* @todo ACTIVE_TREE_ID durch Widgets */
-
-Byte *Skeletonizer::serializeSkeleton() {
-
-    struct stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
-    PTRSIZEINT currentBranchPointID;
-    Byte *serialSkeleton = NULL;
-    struct treeListElement *currentTree;
-    struct nodeListElement *currentNode;
-    struct segmentListElement *currentSegment;
-    struct commentListElement *currentComment;
-
-    qDebug() << "ABSCHNITT 1";
-    uint32_t i = 0, memPosition = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0;
-    uint32_t variablesBlockSize = getVariableBlockSize();
-    uint32_t treeBlockSize = getTreeBlockSize();
-    uint32_t nodeBlockSize = getNodeBlockSize();
-    uint32_t segmentBlockSize = getSegmentBlockSize();
-    uint32_t commentBlockSize = getCommentBlockSize();
-    uint32_t branchPointBlockSize = getBranchPointBlockSize();
-
-    reverseBranchStack = newStack(2048);
-    tempReverseStack = newStack(2048);
-
-    qDebug() << "ABSCHNITT 2";
-    while((currentBranchPointID =
-        (PTRSIZEINT)popStack(state->skeletonState->branchStack))) {
-        pushStack(reverseBranchStack, (void *)currentBranchPointID);
-        pushStack(tempReverseStack, (void *)currentBranchPointID);
-    }
-    while((currentBranchPointID =
-          (PTRSIZEINT)popStack(tempReverseStack))) {
-        currentNode = (struct nodeListElement *)findNodeByNodeID(currentBranchPointID);
-        pushBranchNode(CHANGE_MANUAL, false, false, currentNode, 0, false);
-    }
-
-
-    uint32_t serializedSkeletonSize = variablesBlockSize * sizeof(Byte)
-                                    + treeBlockSize * sizeof(Byte)
-                                    + nodeBlockSize * sizeof(Byte) * state->skeletonState->totalNodeElements
-                                    + segmentBlockSize * sizeof(Byte) * state->skeletonState->totalSegmentElements
-                                    + commentBlockSize * sizeof(Byte)
-                                    + branchPointBlockSize * sizeof(Byte);
-
-    if(serializedSkeletonSize > 1000000) {
-        qDebug() << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
-    }
-
-    serialSkeleton = (Byte *)malloc(serializedSkeletonSize);
-    if(serialSkeleton == NULL){
-        LOG("Out of memory");
-        _Exit(false);
-    }
-    memset(serialSkeleton, '\0', serializedSkeletonSize);
-
-    qDebug() << "ABSCHNITT 3";
-    //Experiment name
-    Client::integerToBytes(&serialSkeleton[memPosition], strlen(state->name));
-    memPosition+=sizeof(int32_t);
-    strncpy((char *)&serialSkeleton[memPosition], state->name, strlen(state->name));
-    memPosition+=strlen(state->name);
-
-    //KNOSSOS version
-    Client::integerToBytes(&serialSkeleton[memPosition], strlen(KVERSION));
-    memPosition+=sizeof(int32_t);
-    strncpy((char *)&serialSkeleton[memPosition], KVERSION, strlen(KVERSION));
-    memPosition+=strlen(KVERSION);
-
-    //Created in version
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonCreatedInVersion));
-    memPosition+=sizeof(int32_t);
-    strncpy((char *)&serialSkeleton[memPosition], state->skeletonState->skeletonCreatedInVersion, strlen(state->skeletonState->skeletonCreatedInVersion));
-    memPosition+=strlen(state->skeletonState->skeletonCreatedInVersion);
-
-    //Last saved in version
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], strlen(state->skeletonState->skeletonLastSavedInVersion));
-    memPosition+=sizeof(int32_t);
-    strncpy((char *)&serialSkeleton[memPosition], state->skeletonState->skeletonLastSavedInVersion, strlen(state->skeletonState->skeletonLastSavedInVersion));
-    memPosition+=strlen(state->skeletonState->skeletonLastSavedInVersion);
-
-    //Scale
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->scale.x / state->magnification);
-    memPosition+=sizeof(float);
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->scale.y / state->magnification);
-    memPosition+=sizeof(float);
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->scale.z / state->magnification);
-    memPosition+=sizeof(float);
-
-    //Offset
-    Client::integerToBytes(&serialSkeleton[memPosition], state->offset.x / state->magnification);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->offset.y / state->magnification);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->offset.z / state->magnification);
-    memPosition+=sizeof(int32_t);
-
-    //LockOnComment
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockPositions);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->lockRadius);
-    memPosition+=sizeof(long unsigned int);
-    Client::integerToBytes(&serialSkeleton[memPosition], strlen(state->skeletonState->onCommentLock));
-    memPosition+=sizeof(int32_t);
-    strncpy((char *)&serialSkeleton[memPosition], state->skeletonState->onCommentLock, strlen(state->skeletonState->onCommentLock));
-    memPosition+=strlen(state->skeletonState->onCommentLock);
-
-    qDebug() << "ABSCHNITT 4";
-    //Display Mode, Work Mode, Skeleton Time, Active Node
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->displayMode);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
-    memPosition+=sizeof(int32_t);
-    if(state->skeletonState->activeNode){
-        Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->activeNode->nodeID);
-    }
-    else{
-        Client::integerToBytes(&serialSkeleton[memPosition], 0);
-    }
-    memPosition+=sizeof(int32_t);
-
-    //Current Position
-    Client::integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.x);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.y);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], state->viewerState->currentPosition.z);
-    memPosition+=sizeof(int32_t);
-
-    qDebug() << "ABSCHNITT 5";
-    //SkeletonViewport Display
-    for (i = 0; i < 16; i++){
-        Client::floatToBytes(&serialSkeleton[memPosition], state->skeletonState->skeletonVpModelView[i]);
-        memPosition+=sizeof(float);
-    }
-    Client::floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateX);
-    memPosition+=sizeof(float);
-    Client::floatToBytes(&serialSkeleton[memPosition], state->skeletonState->translateY);
-    memPosition+=sizeof(float);
-
-    //Zoom Levels
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
-    memPosition+=sizeof(float);
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel);
-    memPosition+=sizeof(float);
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel);
-    memPosition+=sizeof(float);
-    Client::floatToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->zoomLevel);
-    memPosition+=sizeof(float);
-
-    //Idle Time, Tree Elements
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->idleTime);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->activeTree->treeID);
-    memPosition+=sizeof(int32_t);
-    Client::integerToBytes((Byte *)&serialSkeleton[memPosition], state->skeletonState->treeElements);
-    memPosition+=sizeof(int32_t);
-
-    currentTree = state->skeletonState->firstTree;
-    if((currentTree == NULL) && (state->skeletonState->currentComment == NULL)) {
-        return nullptr; //No Skeleton to save
-    }
-
-        while(currentTree) {
-        Client::integerToBytes(&serialSkeleton[memPosition], currentTree->treeID);
-        memPosition+=sizeof(int32_t);
-        if(currentTree->colorSetManually){
-            Client::floatToBytes(&serialSkeleton[memPosition], currentTree->color.r);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], currentTree->color.b);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], currentTree->color.g);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], currentTree->color.a);
-            memPosition+=sizeof(float);
-        }
-        else{
-            Client::floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], -1);
-            memPosition+=sizeof(float);
-            Client::floatToBytes(&serialSkeleton[memPosition], 1);
-            memPosition+=sizeof(float);
-        }
-        Client::integerToBytes(&serialSkeleton[memPosition], strlen(currentTree->comment));
-        memPosition+=sizeof(int32_t);
-        strncpy((char *)&serialSkeleton[memPosition], currentTree->comment, strlen(currentTree->comment));
-        memPosition+=strlen(currentTree->comment);
-
-        memPosition+=sizeof(int32_t);
-        currentNode = currentTree->firstNode;
-        totalNodeNumber = 0;
-        while(currentNode){
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->nodeID);
-            memPosition+=sizeof(int32_t);
-            Client::floatToBytes(&serialSkeleton[memPosition], currentNode->radius);
-            memPosition+=sizeof(float);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->position.x);
-            memPosition+=sizeof(int32_t);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->position.y);
-            memPosition+=sizeof(int32_t);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->position.z);
-            memPosition+=sizeof(int32_t);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->createdInVp);
-            memPosition+=sizeof(currentNode->createdInVp);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->createdInMag);
-            memPosition+=sizeof(int32_t);
-            Client::integerToBytes(&serialSkeleton[memPosition], currentNode->timestamp);
-            memPosition+=sizeof(int32_t);
-            currentNode = currentNode->next;
-            totalNodeNumber++;
-        }
-        memPosition-=nodeBlockSize * totalNodeNumber + sizeof(int32_t);
-        Client::integerToBytes(&serialSkeleton[memPosition], totalNodeNumber);
-        memPosition+=nodeBlockSize * totalNodeNumber + sizeof(int32_t);
-
-    currentTree = currentTree->next;
-    }
-    memPosition+=sizeof(int32_t);
-    currentTree = state->skeletonState->firstTree;
-    totalSegmentNumber = 0;
-    while(currentTree){
-        currentNode = currentTree->firstNode;
-        while(currentNode){
-            currentSegment = currentNode->firstSegment;
-            while(currentSegment){
-                if(currentSegment->flag == SEGMENT_FORWARD){
-                    Client::integerToBytes(&serialSkeleton[memPosition], currentSegment->source->nodeID);
-                    memPosition+=sizeof(int32_t);
-                    Client::integerToBytes(&serialSkeleton[memPosition], currentSegment->target->nodeID);
-                    memPosition+=sizeof(int32_t);
-                    totalSegmentNumber++;
-                }
-                currentSegment = currentSegment->next;
-            }
-            currentNode = currentNode->next;
-        }
-        currentTree = currentTree->next;
-    }
-    memPosition-=totalSegmentNumber*segmentBlockSize+sizeof(int32_t);
-    Client::integerToBytes(&serialSkeleton[memPosition], totalSegmentNumber);
-    memPosition+=totalSegmentNumber*segmentBlockSize+sizeof(int32_t);
-
-    memPosition+=sizeof(int32_t);
-    if(state->skeletonState->currentComment){
-        currentComment = state->skeletonState->currentComment;
-        do {
-            Client::integerToBytes(&serialSkeleton[memPosition], currentComment->node->nodeID);
-            memPosition+=sizeof(int32_t);
-            Client::integerToBytes(&serialSkeleton[memPosition], strlen(currentComment->content));
-            memPosition+=sizeof(int32_t);
-            strncpy((char *)&serialSkeleton[memPosition], currentComment->content, strlen(currentComment->content));
-            memPosition+=strlen(currentComment->content);
-            currentComment = currentComment->next;
-            totalCommentNumber++;
-        } while (currentComment != state->skeletonState->currentComment);
-    }
-    memPosition-=commentBlockSize;
-    Client::integerToBytes(&serialSkeleton[memPosition], totalCommentNumber);
-    memPosition+=commentBlockSize;
-
-    Client::integerToBytes(&serialSkeleton[memPosition], state->skeletonState->branchStack->elementsOnStack);
-    memPosition+=sizeof(int32_t);
-    while((currentBranchPointID = (PTRSIZEINT)popStack(reverseBranchStack))) {
-        Client::integerToBytes(&serialSkeleton[memPosition], currentBranchPointID);
-        memPosition+=sizeof(currentBranchPointID);
-
-    }
-
-    return NULL;
-
-}
-
-void Skeletonizer::deserializeSkeleton() {
-
-
-    Byte *serialSkeleton = NULL;
-    uint i = 0, j = 0, totalTreeNumber = 0, totalNodeNumber = 0, totalSegmentNumber = 0, totalCommentNumber = 0, totalBranchPointNumber;
-    serialSkeleton = state->skeletonState->lastSerialSkeleton->content;
-    int memPosition = 0, inMag = 0, time = 0, activeNodeID = 0, activeTreeID = 0, neuronID = 0, nodeID = 0, sourceNodeID = 0, targetNodeID = 0;
-    int stringLength = 0;
-    char temp[10000]; // BUG its over 9000
-    color4F neuronColor;
-    struct treeListElement *currentTree;
-    struct nodeListElement *currentNode;
-    float radius;
-    Byte VPtype;
-    uint workMode;
-
-    Coordinate offset;
-    floatCoordinate scale;
-    Coordinate *currentCoordinate, loadedPosition;
-
-    SET_COORDINATE(offset, state->offset.x, state->offset.y, state->offset.z);
-    SET_COORDINATE(scale, state->scale.x, state->scale.y, state->scale.z);
-    SET_COORDINATE(loadedPosition, 0, 0, 0);
-
-
-    currentCoordinate = (Coordinate *)malloc(sizeof(Coordinate));
-    if(currentCoordinate == NULL) {
-        LOG("Out of memory.");
-        return;
-    }
-    memset(currentCoordinate, '\0', sizeof(*currentCoordinate));
-
-    clearSkeleton(CHANGE_MANUAL, true);
-
-
-    stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(stringLength);
-    //memset(state->name, '\0', sizeof(state->name));
-    //strncpy(state->name, &serialSkeleton[memPosition], stringLength);
-    memPosition+=stringLength;
-
-    stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(stringLength);
-    memPosition+=stringLength;
-
-    stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(stringLength);
-    memset(state->skeletonState->skeletonCreatedInVersion, '\0', sizeof(state->skeletonState->skeletonCreatedInVersion));
-    strncpy(state->skeletonState->skeletonCreatedInVersion, (char *)&serialSkeleton[memPosition], stringLength);
-    memPosition+=stringLength;
-
-    stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(stringLength);
-    memset(state->skeletonState->skeletonLastSavedInVersion, '\0', sizeof(state->skeletonState->skeletonLastSavedInVersion));
-    strncpy(state->skeletonState->skeletonLastSavedInVersion, (char *)&serialSkeleton[memPosition], stringLength);
-    memPosition+=stringLength;
-
-    scale.x = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->scale.x / state->magnification);
-    scale.y = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->scale.y / state->magnification);
-    scale.z = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->scale.z / state->magnification);
-
-    offset.x = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->offset.x / state->magnification);
-    offset.y = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->offset.x / state->magnification);
-    offset.z = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->offset.x / state->magnification);
-
-    state->skeletonState->lockPositions = Client::bytesToInt(&serialSkeleton[memPosition]);
-
-    //state->viewerState->gui->commentLockCheckbox->state = state->skeletonState->lockPositions; @todo
-
-    memPosition+=sizeof(state->skeletonState->lockPositions);
-    state->skeletonState->lockRadius = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(long unsigned int);
-
-    stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(stringLength);
-    memset(state->skeletonState->onCommentLock, '\0', sizeof(state->skeletonState->onCommentLock));
-    strncpy(state->skeletonState->onCommentLock, (char *)&serialSkeleton[memPosition], stringLength);
-    memPosition+=stringLength;
-
-    //state->skeletonState->displayMode = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->displayMode);
-    workMode = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed());
-    activeNodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->activeNode->nodeID);
-
-    loadedPosition.x = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->currentPosition.x);
-    loadedPosition.y = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->currentPosition.y);
-    loadedPosition.z = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->currentPosition.z);
-
-     for (i = 0; i < 16; i++){
-//        state->skeletonState->skeletonVpModelView[i] = Client::bytesToFloat(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(state->skeletonState->skeletonVpModelView[i]);
-    }
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-
-//    state->skeletonState->translateX = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->translateX);
-    //state->skeletonState->translateY = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->translateY);
-
-    state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->vpConfigs[VIEWPORT_XY].texture.zoomLevel);
-    state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->vpConfigs[VIEWPORT_XZ].texture.zoomLevel);
-    state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->viewerState->vpConfigs[VIEWPORT_YZ].texture.zoomLevel);
-    state->skeletonState->zoomLevel = Client::bytesToFloat(&serialSkeleton[memPosition]);
-    memPosition+=+sizeof(state->skeletonState->zoomLevel);
-
-    memPosition+=sizeof(state->skeletonState->idleTime);
-
-
-    activeTreeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(activeTreeID);
-
-    totalTreeNumber = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(state->skeletonState->treeElements);
-
-    for (i = 0; i < totalTreeNumber; i++){
-        neuronID = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(neuronID);
-
-        neuronColor.r = Client::bytesToFloat(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(neuronColor.r);
-        neuronColor.b = Client::bytesToFloat(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(neuronColor.b);
-        neuronColor.g = Client::bytesToFloat(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(neuronColor.g);
-        neuronColor.a = Client::bytesToFloat(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(neuronColor.a);
-
-        currentTree = addTreeListElement(true, CHANGE_MANUAL, neuronID, neuronColor, false);
-        setActiveTreeByID(neuronID);
-
-        stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(stringLength);
-        memset(temp, '\0', sizeof(temp));
-        strncpy(temp, (char *)&serialSkeleton[memPosition], stringLength);
-        memPosition+=stringLength;
-
-        totalNodeNumber = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(int);
-
-        for (j = 0; j < totalNodeNumber; j++){
-            nodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(nodeID);
-
-            radius = Client::bytesToFloat(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(radius);
-
-            currentCoordinate->x = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(currentCoordinate->x);
-            currentCoordinate->y = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(currentCoordinate->y);
-            currentCoordinate->z = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(currentCoordinate->z);
-
-            VPtype = serialSkeleton[memPosition];
-            memPosition+=sizeof(VPtype);
-            inMag = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(inMag);
-            time = Client::bytesToInt(&serialSkeleton[memPosition]);
-            memPosition+=sizeof(time);
-
-            addNode(CHANGE_MANUAL, nodeID, radius, neuronID, currentCoordinate, VPtype, inMag, time, false, false);
-        }
-    }
-
-    totalSegmentNumber = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(totalSegmentNumber);
-    for(i = 0; i < totalSegmentNumber; i++){
-        sourceNodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(sourceNodeID);
-        targetNodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(targetNodeID);
-        addSegment(CHANGE_MANUAL, sourceNodeID, targetNodeID, false);
-    }
-    totalCommentNumber = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(totalCommentNumber);
-    for(i = 0; i < totalCommentNumber; i++){
-        nodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(nodeID);
-        currentNode = findNodeByNodeID(nodeID);
-
-        stringLength = Client::bytesToInt(&serialSkeleton[memPosition]);
-        memPosition+=sizeof(stringLength);
-        memset(temp, '\0', sizeof(temp));
-        strncpy(temp, (char *)&serialSkeleton[memPosition], stringLength);
-        memPosition+=stringLength;
-
-        if(temp && currentNode) {
-            addComment(CHANGE_MANUAL, (char *)temp, currentNode, 0, false);
-        }
-    }
-
-    totalBranchPointNumber = Client::bytesToInt(&serialSkeleton[memPosition]);
-    memPosition+=sizeof(totalBranchPointNumber);
-    for (i = 0; i < totalBranchPointNumber; i++){
-        nodeID = Client::bytesToInt(&serialSkeleton[memPosition]);
-        currentNode = findNodeByNodeID(nodeID);
-        if(currentNode){
-            pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false);
-        }
-        memPosition+=sizeof(nodeID);
-    }
-
-    if(activeNodeID!=0){
-        setActiveNode(CHANGE_MANUAL, NULL, activeNodeID);
-    }
-
-
-    emit setRecenteringPositionSignal(loadedPosition.x, loadedPosition.y, loadedPosition.z);
-    Knossos::sendRemoteSignal();
-
-}
-
-void Skeletonizer::deleteLastSerialSkeleton(){
-
-    struct serialSkeletonListElement *newLastSerialSkeleton = state->skeletonState->lastSerialSkeleton->previous;
-    state->skeletonState->lastSerialSkeleton->next = NULL;
-    free(state->skeletonState->lastSerialSkeleton->next);
-    state->skeletonState->lastSerialSkeleton->previous = NULL;
-    free(state->skeletonState->lastSerialSkeleton->previous);
-    state->skeletonState->lastSerialSkeleton = NULL;
-    free(state->skeletonState->lastSerialSkeleton);
-    state->skeletonState->lastSerialSkeleton = newLastSerialSkeleton;
-    state->skeletonState->serialSkeletonCounter--;
-}
-
-void Skeletonizer::saveSerializedSkeleton(){
-/*
-    struct serialSkeletonListElement *serialSkeleton = NULL;
-    serialSkeleton = (serialSkeletonListElement *)malloc(sizeof(*serialSkeleton));
-    serialSkeleton->content = (Byte *)serializeSkeleton();
-
-    if (state->skeletonState->serialSkeletonCounter == 0){
-        state->skeletonState->firstSerialSkeleton = serialSkeleton;
-        state->skeletonState->lastSerialSkeleton = serialSkeleton;
-    }
-    else{
-        state->skeletonState->lastSerialSkeleton->next = serialSkeleton;
-        serialSkeleton->previous = state->skeletonState->lastSerialSkeleton;
-        state->skeletonState->lastSerialSkeleton = state->skeletonState->lastSerialSkeleton->next;
-    }
-    state->skeletonState->serialSkeletonCounter++;
-    while (state->skeletonState->serialSkeletonCounter > state->skeletonState->maxUndoSteps){
-        struct serialSkeletonListElement *newFirstSerialSkeleton = state->skeletonState->firstSerialSkeleton->next;
-        state->skeletonState->firstSerialSkeleton->next = NULL;
-        free(state->skeletonState->firstSerialSkeleton->next);
-        state->skeletonState->firstSerialSkeleton = NULL;
-        free(state->skeletonState->firstSerialSkeleton);
-        state->skeletonState->firstSerialSkeleton = newFirstSerialSkeleton;
-        state->skeletonState->firstSerialSkeleton->previous = NULL;
-        free(state->skeletonState->firstSerialSkeleton->previous);
-        state->skeletonState->serialSkeletonCounter--;
-    }
-*/
 }
 
 int Skeletonizer::getTreeBlockSize(){
@@ -4924,18 +4331,6 @@ int Skeletonizer::getBranchPointBlockSize(){
     branchPointBlockSize+=sizeof(int);
     branchPointBlockSize+=state->skeletonState->branchStack->elementsOnStack* sizeof(PTRSIZEINT);
     return branchPointBlockSize;
-}
-
-void Skeletonizer::undo() {
-    /*qDebug() << " entered : undo";
-    if(state->skeletonState->serialSkeletonCounter > 0){
-        deleteLastSerialSkeleton();
-    }
-*/
-}
-
-void Skeletonizer::redo() {
-
 }
 
 bool Skeletonizer::isObfuscatedTime(int time) {

@@ -60,9 +60,9 @@ signals:
     void setActiveNodeSignal(int revision, nodeListElement *node, int id);
 
     void jumpToNodeSignal();
-    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
-                              nodeListElement *branchNode, int branchNodeID, int serialize);
+                              nodeListElement *branchNode, int branchNodeID);
     bool popBranchNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();

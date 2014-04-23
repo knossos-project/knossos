@@ -86,8 +86,8 @@ signals:
     void clearNodeSelectionSignal();
     void setActiveNodeSignal(int revision, nodeListElement *node, int nodeID);
     void JumpToActiveNodeSignal();
-    bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+    bool addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
 public slots:
     void treeSearchChanged();
     void nodeSearchChanged();

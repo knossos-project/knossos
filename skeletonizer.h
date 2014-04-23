@@ -239,7 +239,7 @@ public slots:
     static void resetSkeletonMeta();
 
     void UI_popBranchNode();
-    static bool delTree(int targetRevision, int treeID, int serialize);
+    static bool delTree(int targetRevision, int treeID);
     static bool delActiveTree();
     static void clearTreeSelection();
     static void clearNodeSelection();
@@ -258,12 +258,12 @@ public slots:
     commentListElement *previousComment(QString searchString);
     bool previousCommentlessNode();
     bool nextCommentlessNode();
-    static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+    static bool delSegment(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
     static bool editNode(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
-    static bool addComment(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
-    static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
-    static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
+    static bool delNode(int targetRevision, int nodeID, nodeListElement *nodeToDel);
+    static bool addComment(int targetRevision, QString content, nodeListElement *node, int nodeID);
+    static bool editComment(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
+    static bool delComment(int targetRevision, commentListElement *currentComment, int commentNodeID);
     bool jumpToActiveNode();
     static bool setActiveTreeByID(int treeID);
 
@@ -282,7 +282,7 @@ public slots:
     bool loadXmlSkeleton(QString fileName);
     bool saveXmlSkeleton(QString fileName);
 
-    static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    static bool pushBranchNode(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     bool moveToNextTree();
     bool moveToPrevTree();
     bool moveToPrevNode();
@@ -290,13 +290,13 @@ public slots:
     static bool moveNodeToTree(nodeListElement *node, int treeID);
     static treeListElement* findTreeByTreeID(int treeID);
     static nodeListElement *findNodeByNodeID(int nodeID);
-    static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
+    static bool addSegment(int targetRevision, int sourceNodeID, int targetNodeID);
     static void restoreDefaultTreeColor(treeListElement *tree);
     static void restoreDefaultTreeColor();
 
-    static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
+    static int splitConnectedComponent(int targetRevision, int nodeID);
+    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color);
+    static bool mergeTrees(int targetRevision, int treeID1, int treeID2);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
     static segmentListElement *findSegmentByNodeIDs(int sourceNodeID, int targetNodeID);
@@ -305,19 +305,10 @@ public slots:
     static QString getDefaultSkelFileName();
     bool searchInComment(char *searchString, commentListElement *comment);
     void popBranchNodeCanceled();
-    bool popBranchNode(int targetRevision, int serialize);
+    bool popBranchNode(int targetRevision);
     static bool delNodeFromSkeletonStruct(nodeListElement *node);
     static bool updateCircRadius(struct nodeListElement *node);
     static int xorInt(int xorMe);
-
-    static void saveSerializedSkeleton();
-    void undo();
-    void redo();
-    static Byte *serializeSkeleton();
-    void deserializeSkeleton();
-    void deleteLastSerialSkeleton();
-
-
 
     static int getTreeBlockSize();
     static int getNodeBlockSize();

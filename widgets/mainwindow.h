@@ -88,7 +88,7 @@ signals:
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 
-    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color);
     void nextCommentSignal(QString searchString);
     void previousCommentSignal(QString searchString);
     /* */
@@ -97,11 +97,11 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     void jumpToActiveNodeSignal();
 
-    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
+    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);

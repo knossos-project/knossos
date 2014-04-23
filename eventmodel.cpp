@@ -99,11 +99,11 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
-                    emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL, true);
+                    emit delSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, NULL);
                 } else if(findSegmentByNodeIDSignal(clickedNode, state->skeletonState->activeNode->nodeID)) {
-                    emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL, true);
+                    emit delSegmentSignal(CHANGE_MANUAL, clickedNode, state->skeletonState->activeNode->nodeID, NULL);
                 } else{
-                    emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, true);
+                    emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
                 }
             }
         }
@@ -128,15 +128,15 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    state->skeletonState->activeNode->nodeID,
                                    clickedNode,
-                                   0, true);
+                                   0);
                     } else if(findSegmentByNodeIDSignal(clickedNode,
                                             state->skeletonState->activeNode->nodeID)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
                                    clickedNode,
                                    state->skeletonState->activeNode->nodeID,
-                                   0, true);
+                                   0);
                     } else {
-                        emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode, true);
+                        emit addSegmentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->nodeID, clickedNode);
                     }
                 }
             }
@@ -187,7 +187,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
-                emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID, true);
+                emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID);
                 if(state->skeletonState->activeNode) {
                     if(state->skeletonState->activeNode->selected == false) {
                         state->skeletonState->activeNode->selected = true;

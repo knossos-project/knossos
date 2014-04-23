@@ -282,7 +282,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit addCommentSignal(d[0], (char *)s, NULL, d[1], false);
+                emit addCommentSignal(d[0], (char *)s, NULL, d[1]);
 
                 break;
 
@@ -295,7 +295,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit editCommentSignal(d[0], NULL, d[1], (char *)s, NULL, d[2], false);
+                emit editCommentSignal(d[0], NULL, d[1], (char *)s, NULL, d[2]);
 
                 break;
 
@@ -306,7 +306,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delCommentSignal(d[0], NULL, d[1], false);
+                emit delCommentSignal(d[0], NULL, d[1]);
 
                 break;
 
@@ -367,7 +367,7 @@ uint Client::parseInBuffer() {
 
                 LOG("DELNODE: Received revision %d", d[0])
 
-                emit delNodeSignal(d[0], d[1], NULL, false);
+                emit delNodeSignal(d[0], d[1], NULL);
 
                 break;
 
@@ -379,7 +379,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::addSegment(d[0], d[1], d[2], false);
+                Skeletonizer::addSegment(d[0], d[1], d[2]);
 
                 break;
 
@@ -391,7 +391,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delSegmentSignal(d[0], d[1], d[2], NULL, false);
+                emit delSegmentSignal(d[0], d[1], d[2], NULL);
 
                 break;
 
@@ -418,7 +418,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit delTreeSignal(d[0], d[1], false);
+                emit delTreeSignal(d[0], d[1]);
 
                 break;
 
@@ -429,7 +429,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                Skeletonizer::mergeTrees(d[0], d[1], d[2], false);
+                Skeletonizer::mergeTrees(d[0], d[1], d[2]);
 
                 break;
 
@@ -452,7 +452,7 @@ uint Client::parseInBuffer() {
                 else if(messageLen == 0)
                     goto loopExit;
 
-                emit pushBranchNodeSignal(d[0], true, true, NULL, d[1], false);
+                emit pushBranchNodeSignal(d[0], true, true, NULL, d[1]);
 
                 break;
 
@@ -785,7 +785,7 @@ int Client::bytesToInt(Byte *source) {
     return dest;
 }
 
-bool Client::Client::integerToBytes(Byte *dest, int source) {    
+bool Client::Client::integerToBytes(Byte *dest, int source) {
     memcpy(dest, &source, sizeof(int));
     return true;
 }
