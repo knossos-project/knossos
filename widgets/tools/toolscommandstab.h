@@ -54,21 +54,21 @@ protected:
     QVBoxLayout *mainLayout;
 
 signals:
-    TreeListElement *findTreeByTreeIDSignal(int value);
-    NodeListElement *findNodeByNodeIDSignal(int value);
+    treeListElement *findTreeByTreeIDSignal(int value);
+    nodeListElement *findNodeByNodeIDSignal(int value);
     void setActiveTreeSignal(int id);
-    void setActiveNodeSignal(int revision, NodeListElement *node, int id);
+    void setActiveNodeSignal(int revision, nodeListElement *node, int id);
 
     void jumpToNodeSignal();
-    TreeListElement *addTreeListElement(int sync, int targetRevision, int treeID, Color4F color, int serialize);
+    treeListElement *addtreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
-                              NodeListElement *branchNode, int branchNodeID, int serialize);
+                              nodeListElement *branchNode, int branchNodeID, int serialize);
     bool popBranchNodeSignal();
-    void lockPositionSignal(Coordinate coordinate);
+    void lockPositionSignal(Coordinate Coordinate);
     void unlockPositionSignal();
 
     void treeActivatedSignal();
-    void treeAddedSignal(TreeListElement *tree);
+    void treeAddedSignal(treeListElement *tree);
     void nodeActivatedSignal();
     void branchPushedSignal();
     void branchPoppedSignal();

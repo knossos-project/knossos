@@ -8,54 +8,54 @@
 FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) :
     QObject(parent)
 {
-    qRegisterMetaType<FloatCoordinate>();
+    qRegisterMetaType<floatCoordinate>();
 }
 
-FloatCoordinate *FloatCoordinateDecorator::new_FloatCoordinate() {
-    return new FloatCoordinate();
+floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate() {
+    return new floatCoordinate();
 }
 
-FloatCoordinate *FloatCoordinateDecorator::new_FloatCoordinate(float x, float y, float z) {
-    return new FloatCoordinate(x, y, z);
+floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate(float x, float y, float z) {
+    return new floatCoordinate(x, y, z);
 }
 
-float FloatCoordinateDecorator::x(FloatCoordinate *self) {
+float FloatCoordinateDecorator::x(floatCoordinate *self) {
     return self->x;
 }
 
-float FloatCoordinateDecorator::y(FloatCoordinate *self) {
+float FloatCoordinateDecorator::y(floatCoordinate *self) {
     return self->y;
 }
 
-float FloatCoordinateDecorator::z(FloatCoordinate *self) {
+float FloatCoordinateDecorator::z(floatCoordinate *self) {
     return self->z;
 }
 
-QString FloatCoordinateDecorator::static_FloatCoordinate_help() {
+QString FloatCoordinateDecorator::static_floatCoordinate_help() {
     return QString("An instanceable class storing 3D coordinates as float. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
-                   "\n FloatCoordinate() : creates an empty FloatCoordinate object. " \
-                   "\n FloatCoordinate(x, y, z) : creates a FloatCoordinates object where all dimensions are to specify." \
+                   "\n floatCoordinate() : creates an empty floatCoordinate object. " \
+                   "\n floatCoordinate(x, y, z) : creates a FloatCoordinates object where all dimensions are to specify." \
                    "\n\n GETTER: " \
-                   "\n x() : returns the x value of the coordinate" \
-                   "\n y() : returns the y value of the coordinate" \
-                   "\n z() : returns the z value of the coordinate"
+                   "\n x() : returns the x value of the Coordinate" \
+                   "\n y() : returns the y value of the Coordinate" \
+                   "\n z() : returns the z value of the Coordinate"
                    "\n\n SETTER: " \
-                   "\n setx(x) : sets the x value of the coordinate, expects float " \
-                   "\n sety(y) : sets the y value of the coordinate, expects float " \
-                   "\n setz(z) : sets the z value of the coordinate, excpets float "
+                   "\n setx(x) : sets the x value of the Coordinate, expects float " \
+                   "\n sety(y) : sets the y value of the Coordinate, expects float " \
+                   "\n setz(z) : sets the z value of the Coordinate, excpets float "
                    );
 }
 
-void FloatCoordinateDecorator::setx(FloatCoordinate *self, float x) {
+void FloatCoordinateDecorator::setx(floatCoordinate *self, float x) {
     self->x = x;
 }
 
-void FloatCoordinateDecorator::sety(FloatCoordinate *self, float y) {
+void FloatCoordinateDecorator::sety(floatCoordinate *self, float y) {
     self->y = y;
 }
 
-void FloatCoordinateDecorator::setz(FloatCoordinate *self, float z) {
+void FloatCoordinateDecorator::setz(floatCoordinate *self, float z) {
     self->z = z;
 }
 

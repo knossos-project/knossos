@@ -3,11 +3,11 @@
 #include "skeletonizer.h"
 
 
-NodeListElement::NodeListElement() {
+nodeListElement::nodeListElement() {
 
 }
 
-NodeListElement::NodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time) {
+nodeListElement::nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time) {
     this->nodeID = nodeID;
     this->radius = radius;
 
@@ -18,9 +18,9 @@ NodeListElement::NodeListElement(int nodeID, int x, int y, int z, int parentID, 
 
 }
 
-QList<SegmentListElement *> *NodeListElement::getSegments() {
-    QList<SegmentListElement *> *segments = new QList<SegmentListElement *>();
-    SegmentListElement *currentSegment = firstSegment;
+QList<segmentListElement *> *nodeListElement::getSegments() {
+    QList<segmentListElement *> *segments = new QList<segmentListElement *>();
+    segmentListElement *currentSegment = firstSegment;
     while(currentSegment) {
         segments->append(currentSegment);
         currentSegment = currentSegment->next;

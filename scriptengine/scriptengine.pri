@@ -42,16 +42,19 @@ OTHER_FILES += \
     python/user/custom_graphics_view.py \
     python/user/images/* \
 
-
+macx:QMAKE_MAC_SDK = macosx10.8
+macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
 macx {
-    INCLUDEPATH += /usr/include/Python2.7 \
-    LIBS += -L$(QTDIR)/lib -lPythonQt \
-            -framework Python \
+    INCLUDEPATH += /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Python.framework/Headers \
+                   $(QTDIR)/include \
+    LIBS += -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Python.framework/Versions/2.7/lib -lpython2.7 \
+            -L$(QTDIR)/lib/ -lPythonQt \
+
 
     # copy the content of the python folder to the build-dir
-    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc
-    scripts.files = $$PWD/python/*
-    INSTALLS += scripts
+    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc \
+    scripts.files = $$PWD/python/* \
+    INSTALLS += scripts \
 }
 
 linux {

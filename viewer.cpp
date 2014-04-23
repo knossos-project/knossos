@@ -79,6 +79,7 @@ Viewer::Viewer(QObject *parent) :
                             1024, 800);
     }
 
+    renderer = new Renderer();
     // This is needed for the viewport text rendering
     renderer->refVPXY = vpUpperLeft;
     renderer->refVPXZ = vpLowerLeft;
@@ -106,7 +107,7 @@ Viewer::Viewer(QObject *parent) :
                 *2;
     }
 
-    FloatCoordinate v1, v2, v3;
+    floatCoordinate v1, v2, v3;
     getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
     CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
@@ -164,12 +165,12 @@ bool Viewer::sliceExtract_standard(Byte *datacube, Byte *slice, vpConfig *vpConf
     return true;
 }
 
-bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort, FloatCoordinate *currentPxInDc_float,
+bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
                                        int s, int *t) {
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
-    FloatCoordinate *v2 = &(viewPort->v2);
+    floatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                   roundFloat(currentPxInDc_float->y),
@@ -253,12 +254,12 @@ bool Viewer::sliceExtract_adjust(Byte *datacube,
     return true;
 }
 
-bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float,
+bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float,
                                      int s, int *t) {
     Byte *slice = viewPort->viewPortData;
     Coordinate currentPxInDc;
     int sliceIndex = 0, dcIndex = 0;
-    FloatCoordinate *v2 = &(viewPort->v2);
+    floatCoordinate *v2 = &(viewPort->v2);
 
     SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
                                   (roundFloat(currentPxInDc_float->y)),
@@ -317,7 +318,7 @@ bool Viewer::dcSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
     return true;
 }
 
-bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, FloatCoordinate *currentPxInDc_float, int s, int *t) {
+bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordinate *currentPxInDc_float, int s, int *t) {
     if(state->viewerState->datasetAdjustmentOn) {
         // Texture type GL_RGB and we need to adjust coloring
         sliceExtract_adjust_arb(datacube, viewPort, currentPxInDc_float, s, t);
@@ -419,7 +420,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
 
     upperLeftDc = Coordinate::Px2DcCoord(leftUpperPxInAbsPxTrans);
 
-    // We calculate the coordinate of the DC that holds the slice that makes up the upper left
+    // We calculate the Coordinate of the DC that holds the slice that makes up the upper left
     // corner of our texture.
     // dcOffset is the offset by which we can index into a datacube to extract the first byte of
     // slice relevant to the texture for this viewport.
@@ -447,7 +448,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
         qDebug("No such slice view: %d.", currentVp.type);
         return false;
     }
-    // We iterate over the texture with x and y being in a temporary coordinate
+    // We iterate over the texture with x and y being in a temporary Coordinate
     // system local to this texture.
     for(x_dc = 0; x_dc < currentVp.texture.usedTexLengthDc; x_dc++) {
         for(y_dc = 0; y_dc < currentVp.texture.usedTexLengthDc; y_dc++) {
@@ -455,7 +456,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             y_px = y_dc * state->cubeEdgeLength;
 
             switch(currentVp.type) {
-            // With an x/y-coordinate system in a viewport, we get the following
+            // With an x/y-Coordinate system in a viewport, we get the following
             // mapping from viewport (slice) coordinates to global (dc)
             // coordinates:
             // XY-slice: x local is x global, y local is y global
@@ -573,12 +574,12 @@ bool Viewer::vpGenerateTexture_arb(vpConfig &currentVp) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
     Coordinate currentDc, currentPx;
-    FloatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
+    floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
     Byte *datacube = NULL;
 
-    FloatCoordinate *v1 = &currentVp.v1;
-    FloatCoordinate *v2 = &currentVp.v2;
+    floatCoordinate *v1 = &currentVp.v1;
+    floatCoordinate *v2 = &currentVp.v2;
     CPY_COORDINATE(rowPx_float, currentVp.texture.leftUpperPxInAbsPx);
     DIV_COORDINATE(rowPx_float, state->magnification);
     CPY_COORDINATE(currentPx_float, rowPx_float);
@@ -653,11 +654,11 @@ bool Viewer::calcLeftUpperTexAbsPx() {
     //iterate over all viewports
     //this function has to be called after the texture changed or the user moved, in the sense of a
     //realignment of the data
-    FloatCoordinate v1, v2;
+    floatCoordinate v1, v2;
     for (i = 0; i < viewerState->numberViewports; i++) {
         switch (viewerState->vpConfigs[i].type) {
         case VIEWPORT_XY:
-            //Set the coordinate of left upper data pixel currently stored in the texture
+            //Set the Coordinate of left upper data pixel currently stored in the texture
             //viewerState->vpConfigs[i].texture.usedTexLengthDc is state->M and even int.. very funny
             // this guy is always in mag1, even if a different mag dataset is active!!!
             // this might be buggy for very high mags, test that!
@@ -672,7 +673,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
             //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y > 1000000){ LOG("uninit y %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.y)}
             //if(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z > 1000000){ LOG("uninit z %d", viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx.z)}
 
-            //Set the coordinate of left upper data pixel currently displayed on screen
+            //Set the Coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
@@ -685,7 +686,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            viewerState->currentPosition.z);
             break;
         case VIEWPORT_XZ:
-            //Set the coordinate of left upper data pixel currently stored in the texture
+            //Set the Coordinate of left upper data pixel currently stored in the texture
             SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
                            (currentPosition_dc.x - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
                            * state->cubeEdgeLength * state->magnification,
@@ -693,7 +694,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            (currentPosition_dc.z - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
                            * state->cubeEdgeLength * state->magnification);
 
-            //Set the coordinate of left upper data pixel currently displayed on screen
+            //Set the Coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
@@ -706,7 +707,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                             / viewerState->vpConfigs[i].texture.texUnitsPerDataPx));
             break;
         case VIEWPORT_YZ:
-            //Set the coordinate of left upper data pixel currently stored in the texture
+            //Set the Coordinate of left upper data pixel currently stored in the texture
             SET_COORDINATE(viewerState->vpConfigs[i].texture.leftUpperPxInAbsPx,
                            currentPosition_dc.x * state->cubeEdgeLength   * state->magnification,
                            (currentPosition_dc.y - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
@@ -714,7 +715,7 @@ bool Viewer::calcLeftUpperTexAbsPx() {
                            (currentPosition_dc.z - (viewerState->vpConfigs[i].texture.usedTexLengthDc / 2))
                            * state->cubeEdgeLength * state->magnification);
 
-            //Set the coordinate of left upper data pixel currently displayed on screen
+            //Set the Coordinate of left upper data pixel currently displayed on screen
             //The following lines are dependent on the current VP orientation, so rotation of VPs messes that
             //stuff up! A more general solution would be better.
             SET_COORDINATE(state->viewerState->vpConfigs[i].leftUpperDataPxOnScreen,
@@ -1304,7 +1305,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     if(state->skeletonState->showIntersections) {
         state->skeletonState->skeletonSliceVPchanged = true;
     }
-    // This determines whether the server will broadcast the coordinate change
+    // This determines whether the server will broadcast the Coordinate change
     // to its client or not.
 
     lastPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
@@ -1338,8 +1339,8 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     /*
     if(state->clientState) {
         if(serverMovement == TELL_COORDINATE_CHANGE &&
-            state->clientState->connected == true &&
-            state->clientState->synchronizePosition) {
+            clientState::connected == true &&
+            clientState::synchronizePosition) {
             emit broadcastPosition(viewerState->currentPosition.x,
                                       viewerState->currentPosition.y,
                                       viewerState->currentPosition.z);
@@ -1383,12 +1384,12 @@ int Viewer::findVPnumByWindowCoordinate(uint, uint) {
     for(i = 0; i < state->viewerState->numberViewports; i++) {
         if((xScreen >= state->viewerState->vpConfigs[i].lowerLeftCorner.x) && (xScreen <= (state->viewerState->vpConfigs[i].lowerLeftCorner.x + state->viewerState->vpConfigs[i].edgeLength))) {
             if((yScreen >= (((state->viewerState->vpConfigs[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1) - state->viewerState->vpConfigs[i].edgeLength)) && (yScreen <= ((state->viewerState->vpConfigs[i].lowerLeftCorner.y - state->viewerState->screenSizeY) * -1))) {
-                //Window coordinate lies in that VP
+                //Window Coordinate lies in that VP
                 tempNum = i;
             }
         }
     }
-    //The VP on top (if there are multiple VPs on this coordinate) or -1 is returned.
+    //The VP on top (if there are multiple VPs on this Coordinate) or -1 is returned.
     */
     return tempNum;
 }
@@ -1455,7 +1456,7 @@ bool Viewer::recalcTextureOffsets() {
                     / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                // Pixels on the screen per 1 unit in the data coordinate system at the
+                // Pixels on the screen per 1 unit in the data Coordinate system at the
                 // original magnification. These guys appear to be unused!!! jk 14.5.12
                 //state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
                 //    state->viewerState->vpConfigs[i].screenPxXPerDataPx *
@@ -1538,7 +1539,7 @@ bool Viewer::recalcTextureOffsets() {
                     / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY
                     / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                // Pixels on the screen per 1 unit in the data coordinate system at the
+                // Pixels on the screen per 1 unit in the data Coordinate system at the
                 // original magnification.
                 state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
                     state->viewerState->vpConfigs[i].screenPxXPerDataPx
@@ -1617,7 +1618,7 @@ bool Viewer::recalcTextureOffsets() {
                         / (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthX
                         / state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                        // Pixels on the screen per 1 unit in the data coordinate system at the
+                        // Pixels on the screen per 1 unit in the data Coordinate system at the
                         // original magnification.
                 state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
                         state->viewerState->vpConfigs[i].screenPxXPerDataPx
@@ -1669,8 +1670,8 @@ bool Viewer::recalcTextureOffsets() {
                 state->viewerState->vpConfigs[i].s_max = state->viewerState->vpConfigs[i].t_max =
                         (((int)((state->M/2+1)*state->cubeEdgeLength/sqrt(2.)))/2)*2;
 
-                FloatCoordinate *v1 = &(state->viewerState->vpConfigs[i].v1);
-                FloatCoordinate *v2 = &(state->viewerState->vpConfigs[i].v2);
+                floatCoordinate *v1 = &(state->viewerState->vpConfigs[i].v1);
+                floatCoordinate *v2 = &(state->viewerState->vpConfigs[i].v2);
                 //Aspect ratio correction..
 
                 //Calculation of new Ratio V1 to V2, V1 is along x
@@ -1734,7 +1735,7 @@ bool Viewer::recalcTextureOffsets() {
                     (state->viewerState->vpConfigs[i].texture.displayedEdgeLengthY /
                      state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx);
 
-                // Pixels on the screen per 1 unit in the data coordinate system at the
+                // Pixels on the screen per 1 unit in the data Coordinate system at the
                 // original magnification. These guys appear to be unused!!! jk 14.5.12
                 state->viewerState->vpConfigs[i].screenPxXPerOrigMagUnit =
                     state->viewerState->vpConfigs[i].screenPxXPerDataPx *
@@ -1811,7 +1812,7 @@ bool Viewer::sendLoadSignal(uint x, uint y, uint z, int magChanged) {
 
     state->previousPositionX = state->currentPositionX;
 
-    // Convert the coordinate to the right mag. The loader
+    // Convert the Coordinate to the right mag. The loader
     // is agnostic to the different dataset magnifications.
     // The int division is hopefully not too much of an issue here
     SET_COORDINATE(state->currentPositionX,
@@ -1846,17 +1847,17 @@ void Viewer::rewire() {
     connect(skeletonizer, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
     // end skeletonizer signals
     //event model signals
-    connect(eventModel, SIGNAL(treeAddedSignal(TreeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
+    connect(eventModel, SIGNAL(treeAddedSignal(treeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     connect(eventModel, SIGNAL(nodeAddedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     connect(eventModel, SIGNAL(nodeActivatedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeActivated()));
     connect(eventModel, SIGNAL(deleteSelectedNodesSignal()), skeletonizer, SLOT(deleteSelectedNodes()));
-    connect(eventModel, SIGNAL(nodeRadiusChangedSignal(NodeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(NodeListElement*)));
-    connect(eventModel, SIGNAL(nodePositionChangedSignal(NodeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(NodeListElement*)));
+    connect(eventModel, SIGNAL(nodeRadiusChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeRadiusChanged(nodeListElement*)));
+    connect(eventModel, SIGNAL(nodePositionChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodePositionChanged(nodeListElement*)));
     connect(eventModel, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(eventModel, SIGNAL(unselectNodesSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(clearNodeTableSelection()));
@@ -1874,22 +1875,22 @@ void Viewer::rewire() {
     connect(eventModel, SIGNAL(addSkeletonNodeSignal(Coordinate*,Byte)), skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
     connect(eventModel, SIGNAL(addSkeletonNodeAndLinkWithActiveSignal(Coordinate*,Byte,int)),
                     skeletonizer, SLOT(addSkeletonNodeAndLinkWithActive(Coordinate*,Byte,int)));
-    connect(eventModel, SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-                    skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
+    connect(eventModel, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(eventModel, SIGNAL(previousCommentlessNodeSignal()), skeletonizer, SLOT(previousCommentlessNode()));
     connect(eventModel, SIGNAL(saveSkeletonSignal()), window, SLOT(saveSlot()));
-    connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,SegmentListElement*,int)),
-                    skeletonizer, SLOT(delSegment(int,int,int,SegmentListElement*,int)));
+    connect(eventModel, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
+                    skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(eventModel, SIGNAL(addSegmentSignal(int,int,int,int)), skeletonizer, SLOT(addSegment(int,int,int,int)));
-    connect(eventModel, SIGNAL(editNodeSignal(int,int,NodeListElement*,float,int,int,int,int)),
-                    skeletonizer, SLOT(editNode(int,int,NodeListElement*,float,int,int,int,int)));
+    connect(eventModel, SIGNAL(editNodeSignal(int,int,nodeListElement*,float,int,int,int,int)),
+                    skeletonizer, SLOT(editNode(int,int,nodeListElement*,float,int,int,int,int)));
     connect(eventModel, SIGNAL(findNodeInRadiusSignal(Coordinate)), skeletonizer, SLOT(findNodeInRadius(Coordinate)));
     connect(eventModel, SIGNAL(findSegmentByNodeIDSignal(int,int)), skeletonizer, SLOT(findSegmentByNodeIDs(int,int)));
     connect(eventModel, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
     connect(eventModel, SIGNAL(updateSlicePlaneWidgetSignal()),
                     window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, SLOT(updateIntersection()));
-    connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,NodeListElement*,int,int)),
-                    skeletonizer, SLOT(pushBranchNode(int,int,int,NodeListElement*,int,int)));
+    connect(eventModel, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(eventModel, SIGNAL(undoSignal()), skeletonizer, SLOT(undo()));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpUpperLeft, SLOT(setOrientation(int)));
     connect(eventModel, SIGNAL(setViewportOrientationSignal(int)), vpLowerLeft, SLOT(setOrientation(int)));
@@ -1901,8 +1902,8 @@ void Viewer::rewire() {
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPushed()));
     connect(window, SIGNAL(branchPoppedSignal()),
                     window->widgetContainer->annotationWidget->treeviewTab, SLOT(branchPopped()));
-    connect(window, SIGNAL(nodeCommentChangedSignal(NodeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeCommentChanged(NodeListElement*)));
+    connect(window, SIGNAL(nodeCommentChangedSignal(nodeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeCommentChanged(nodeListElement*)));
     connect(window, SIGNAL(updateToolsSignal()), window->widgetContainer->annotationWidget, SLOT(update()));
     connect(window, SIGNAL(updateTreeviewSignal()), window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
     connect(window, SIGNAL(userMoveSignal(int, int, int, int)), this, SLOT(userMove(int,int,int,int)));
@@ -1913,8 +1914,8 @@ void Viewer::rewire() {
     connect(window, SIGNAL(saveSkeletonSignal(QString)), skeletonizer, SLOT(saveXmlSkeleton(QString)));
     connect(window, SIGNAL(loadSkeletonSignal(QString)), skeletonizer, SLOT(loadXmlSkeleton(QString)));
     connect(window, SIGNAL(updateTreeColorsSignal()), skeletonizer, SLOT(updateTreeColors()));
-    connect(window, SIGNAL(addTreeListElementSignal(int,int,int,Color4F,int)),
-                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
+    connect(window, SIGNAL(addtreeListElementSignal(int,int,int,color4F,int)),
+                    skeletonizer, SLOT(addtreeListElement(int,int,int,color4F,int)));
     connect(window, SIGNAL(stopRenderTimerSignal()), timer, SLOT(stop()));
     connect(window, SIGNAL(startRenderTimerSignal(int)), timer, SLOT(start(int)));
     connect(window, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
@@ -1924,22 +1925,22 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(updateSkeletonFileName(int,int,char*)));
     connect(window, SIGNAL(moveToNextNodeSignal()), skeletonizer, SLOT(moveToNextNode()));
     connect(window, SIGNAL(moveToPrevNodeSignal()), skeletonizer, SLOT(moveToPrevNode()));
-    connect(window, SIGNAL(pushBranchNodeSignal(int,int,int,NodeListElement*,int,int)),
-                    skeletonizer, SLOT(pushBranchNode(int,int,int,NodeListElement*,int,int)));
+    connect(window, SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(window, SIGNAL(popBranchNodeSignal()), skeletonizer, SLOT(UI_popBranchNode()));
     connect(window, SIGNAL(jumpToActiveNodeSignal()), skeletonizer, SLOT(jumpToActiveNode()));
     connect(window, SIGNAL(moveToPrevTreeSignal()), skeletonizer, SLOT(moveToPrevTree()));
     connect(window, SIGNAL(moveToNextTreeSignal()), skeletonizer, SLOT(moveToNextTree()));
-    connect(window, SIGNAL(addCommentSignal(int,QString,NodeListElement*,int,int)),
-                    skeletonizer, SLOT(addComment(int,QString,NodeListElement*,int,int)));
-    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,QString,NodeListElement*,int,int)),
-                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,NodeListElement*,int,int)));
+    connect(window, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
+    connect(window, SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
     connect(window, SIGNAL(updateTaskDescriptionSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setDescription(QString)));
     connect(window, SIGNAL(updateTaskCommentSignal(QString)),
                     window->widgetContainer->taskManagementWidget->detailsTab, SLOT(setComment(QString)));
-    connect(window, SIGNAL(treeAddedSignal(TreeListElement*)),
-                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
+    connect(window, SIGNAL(treeAddedSignal(treeListElement*)),
+                    window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     //end mainwindow signals
     //viewport signals
     connect(vpUpperLeft, SIGNAL(updateZoomAndMultiresWidget()), window->widgetContainer->zoomAndMultiresWidget, SLOT(update()));
@@ -1963,13 +1964,13 @@ void Viewer::rewire() {
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(findTreeByTreeIDSignal(int)), skeletonizer, SLOT(findTreeByTreeID(int)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(findNodeByNodeIDSignal(int)), skeletonizer, SLOT(findNodeByNodeID(int)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveTreeSignal(int)), skeletonizer, SLOT(setActiveTreeByID(int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-//                    skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
-//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,QString,NodeListElement*,int,int)),
-//                    skeletonizer, SLOT(addComment(int,QString,NodeListElement*,int,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+//                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
+//    connect(window->widgetContainer->toolsWidget, SIGNAL(addCommentSignal(int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(addComment(int,QString,nodeListElement*,int,int)));
 //    connect(window->widgetContainer->toolsWidget,
-//                    SIGNAL(editCommentSignal(int,commentListElement*,int,QString,NodeListElement*,int,int)),
-//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,NodeListElement*,int,int)));
+//                    SIGNAL(editCommentSignal(int,commentListElement*,int,QString,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(editComment(int,commentListElement*,int,QString,nodeListElement*,int,int)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(nextCommentSignal(QString)), skeletonizer, SLOT(nextComment(QString)));
 //    connect(window->widgetContainer->toolsWidget, SIGNAL(previousCommentSignal(QString)),
 //                    skeletonizer, SLOT(previousComment(QString)));
@@ -1977,8 +1978,8 @@ void Viewer::rewire() {
 //    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget, SIGNAL(popBranchNodeSignal()),
 //                    skeletonizer, SLOT(UI_popBranchNode()));
 //    connect(window->widgetContainer->toolsWidget->toolsQuickTabWidget,
-//                    SIGNAL(pushBranchNodeSignal(int,int,int,NodeListElement*,int,int)),
-//                    skeletonizer, SLOT(pushBranchNode(int,int,int,NodeListElement*,int,int)));
+//                    SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+//                    skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
 //    //  tools trees tab signals
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(delActiveTreeSignal()),
 //                    skeletonizer, SLOT(delActiveTree()));
@@ -1986,8 +1987,8 @@ void Viewer::rewire() {
 //                    skeletonizer, SLOT(restoreDefaultTreeColor()));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(splitConnectedComponent(int,int, int)),
 //                    skeletonizer, SLOT(splitConnectedComponent(int,int,int)));
-//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeListElement(int,int,int,Color4F, int)),
-//                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
+//    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addtreeListElement(int,int,int,color4F, int)),
+//                    skeletonizer, SLOT(addtreeListElement(int,int,int,color4F,int)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(addTreeComment(int,int,QString)),
 //                    skeletonizer, SLOT(addTreeComment(int,int,QString)));
 //    connect(window->widgetContainer->toolsWidget->toolsTreesTabWidget, SIGNAL(mergeTrees(int,int,int,int)),
@@ -2004,15 +2005,15 @@ void Viewer::rewire() {
 //    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(deleteActiveNodeSignal()),
 //                    skeletonizer, SLOT(delActiveNode()));
 //    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget,
-//                    SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-//                    skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
+//                    SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+//                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 //    connect(window->widgetContainer->toolsWidget->toolsNodesTabWidget, SIGNAL(findNodeByNodeIDSignal(int)),
 //                    skeletonizer, SLOT(findNodeByNodeID(int)));
     //  -- end tools widget signals
     //  tools widget signals --
     //  treeview tab signals
-    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-            skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+            skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(clearTreeSelectionSignal()),
                     skeletonizer, SLOT(clearTreeSelection()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(clearNodeSelectionSignal()),
@@ -2025,8 +2026,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(jumpToActiveNode()));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(addSegmentSignal(int,int,int,int)),
                     skeletonizer, SLOT(addSegment(int,int,int,int)));
-    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delSegmentSignal(int,int,int,SegmentListElement*,int)),
-                    skeletonizer, SLOT(delSegment(int,int,int,SegmentListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(delSegmentSignal(int,int,int,segmentListElement*,int)),
+                    skeletonizer, SLOT(delSegment(int,int,int,segmentListElement*,int)));
     connect(window->widgetContainer->annotationWidget->treeviewTab, SIGNAL(deleteSelectedTreesSignal()),
                     skeletonizer, SLOT(deleteSelectedTrees()));
     // commands tab signals
@@ -2036,15 +2037,15 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(findNodeByNodeID(int)));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(setActiveTreeSignal(int)),
                     skeletonizer, SLOT(setActiveTreeByID(int)));
-    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-                    skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
+    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(jumpToNodeSignal()),
                     skeletonizer, SLOT(jumpToActiveNode()));
-    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(addTreeListElement(int,int,int,Color4F,int)),
-                    skeletonizer, SLOT(addTreeListElement(int,int,int,Color4F,int)));
+    connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(addtreeListElement(int,int,int,color4F,int)),
+                    skeletonizer, SLOT(addtreeListElement(int,int,int,color4F,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab,
-                    SIGNAL(pushBranchNodeSignal(int,int,int,NodeListElement*,int,int)),
-                    skeletonizer, SLOT(pushBranchNode(int,int,int,NodeListElement*,int,int)));
+                    SIGNAL(pushBranchNodeSignal(int,int,int,nodeListElement*,int,int)),
+                    skeletonizer, SLOT(pushBranchNode(int,int,int,nodeListElement*,int,int)));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(popBranchNodeSignal()),
                     skeletonizer, SLOT(UI_popBranchNode()));
     connect(window->widgetContainer->annotationWidget->commandsTab, SIGNAL(lockPositionSignal(Coordinate)),
@@ -2088,8 +2089,8 @@ void Viewer::rewire() {
                     skeletonizer, SLOT(setZoomLevel(float)));
     //  -- end zoom and multires signals
     // comments widget signals --
-//    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,NodeListElement*,int)),
-//                    skeletonizer, SLOT(setActiveNode(int,NodeListElement*,int)));
+//    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setActiveNodeSignal(int,nodeListElement*,int)),
+//                    skeletonizer, SLOT(setActiveNode(int,nodeListElement*,int)));
 //    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(setJumpToActiveNodeSignal()),
 //                    skeletonizer, SLOT(jumpToActiveNode()));
 //    connect(window->widgetContainer->commentsWidget->nodeCommentsTab, SIGNAL(findNodeByNodeIDSignal(int)),
@@ -2108,7 +2109,7 @@ void Viewer::rewire() {
 
 }
 
-bool Viewer::getDirectionalVectors(float alpha, float beta, FloatCoordinate *v1, FloatCoordinate *v2, FloatCoordinate *v3) {
+bool Viewer::getDirectionalVectors(float alpha, float beta, floatCoordinate *v1, floatCoordinate *v2, floatCoordinate *v3) {
 
         //alpha: rotation around z-axis
         //beta: rotation around new (rotated) y-axis

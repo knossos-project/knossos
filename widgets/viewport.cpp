@@ -156,8 +156,8 @@ void Viewport::initializeGL() {
     glMatrixMode(GL_PROJECTION);
     //reset it
     glLoadIdentity();
-    //define coordinate system for our viewport: left right bottom top near far
-    //coordinate values
+    //define Coordinate system for our viewport: left right bottom top near far
+    //Coordinate values
     glOrtho(0, state->viewerState->vpConfigs[id].edgeLength,
             state->viewerState->vpConfigs[id].edgeLength, 0, 25, -25);
     //select the modelview matrix for modification

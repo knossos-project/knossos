@@ -55,11 +55,11 @@ bool Coordinate::transCoordinate(Coordinate *outCoordinate,
                                  int x,
                                  int y,
                                  int z,
-                                 FloatCoordinate scale, Coordinate offset) {
+                                 floatCoordinate scale, Coordinate offset) {
 
     /*
-     *  Translate a pixel coordinate (x, y, z) relative to a dataset
-     *  with scale scale and offset offset to pixel coordinate outCoordinate
+     *  Translate a pixel Coordinate (x, y, z) relative to a dataset
+     *  with scale scale and offset offset to pixel Coordinate outCoordinate
      *  relative to the current dataset.
      */
 
@@ -79,7 +79,7 @@ bool Coordinate::transCoordinate(Coordinate *outCoordinate,
     return true;
 }
 
-/** This method parses a coordinate string seperated with delimeters [],(),/,;,- */
+/** This method parses a Coordinate string seperated with delimeters [],(),/,;,- */
 Coordinate *Coordinate::parseRawCoordinateString(char *string) {
     Coordinate *extractedCoords = NULL;
     char coordStr[strlen(string)];
@@ -108,15 +108,15 @@ Coordinate *Coordinate::parseRawCoordinateString(char *string) {
     }
 
     if((extractedCoords->x = atoi(coords[0])) < 0) {
-        LOG("Error converting paste string to coordinate")
+        LOG("Error converting paste string to Coordinate")
         goto fail;
     }
     if((extractedCoords->y = atoi(coords[1])) < 0) {
-        LOG("Error converting paste string to coordinate")
+        LOG("Error converting paste string to Coordinate")
         goto fail;
     }
     if((extractedCoords->z = atoi(coords[2])) < 0) {
-        LOG("Error converting paste string to coordinate")
+        LOG("Error converting paste string to Coordinate")
         goto fail;
     }
 

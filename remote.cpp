@@ -40,7 +40,7 @@ Remote::Remote(QObject *parent) :
 }
 
 void Remote::run() {
-    FloatCoordinate currToNext; //distance vector
+    floatCoordinate currToNext; //distance vector
     // remoteSignal is != false as long as the remote is active.
     // Checking for remoteSignal is therefore a way of seeing if the remote
     // is available for doing something.
@@ -218,12 +218,12 @@ bool Remote::remoteWalk(int x, int y, int z) {
     *
     */
 
-    FloatCoordinate singleMove;
-    FloatCoordinate residuals;
+    floatCoordinate singleMove;
+    floatCoordinate residuals;
     Coordinate doMove;
     int totalMoves = 0, i = 0;
     int eventDelay = 0;
-    FloatCoordinate walkVector;
+    floatCoordinate walkVector;
     float walkLength = 0.;
     uint timePerStep = 0;
     uint recenteringTime = 0;

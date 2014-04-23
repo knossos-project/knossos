@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class FloatCoordinate;
+class floatCoordinate;
 class FloatCoordinateDecorator : public QObject
 {
     Q_OBJECT
@@ -13,17 +13,17 @@ public:
 signals:
 
 public slots:
-    FloatCoordinate *new_FloatCoordinate();
-    FloatCoordinate *new_FloatCoordinate(float x, float y, float z);
-    float x(FloatCoordinate *self);
-    float y(FloatCoordinate *self);
-    float z(FloatCoordinate *self);
+    floatCoordinate *new_floatCoordinate();
+    floatCoordinate *new_floatCoordinate(float x, float y, float z);
+    float x(floatCoordinate *self);
+    float y(floatCoordinate *self);
+    float z(floatCoordinate *self);
 
-    void setx(FloatCoordinate *self, float x);
-    void sety(FloatCoordinate *self, float y);
-    void setz(FloatCoordinate *self, float z);
+    void setx(floatCoordinate *self, float x);
+    void sety(floatCoordinate *self, float y);
+    void setz(floatCoordinate *self, float z);
 
-    QString static_FloatCoordinate_help();
+    QString static_floatCoordinate_help();
 
 
 };

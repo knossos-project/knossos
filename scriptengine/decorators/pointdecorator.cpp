@@ -10,6 +10,6 @@ PointDecorator::PointDecorator(QObject *parent) :
 
 
 
-Point *PointDecorator::new_Point(Transform *transform, Coordinate *origin, uint size, Color4F *color) {
+Point *PointDecorator::new_Point(Transform *transform, Coordinate *origin, uint size, color4F *color) {
 
 }

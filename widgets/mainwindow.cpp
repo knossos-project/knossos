@@ -84,10 +84,11 @@ MainWindow::MainWindow(QWidget *parent) :
     // for task management
     QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
     taskDir.mkpath(".");
-    state->taskState->cookieFile = taskDir.absolutePath() + "/cookie";
-    state->taskState->taskFile = "";
-    state->taskState->taskName = "";
-    state->taskState->host = "heidelbrain.org";
+
+    taskState::cookieFile = taskDir.absolutePath() + "/cookie";
+    taskState::taskFile = "";
+    taskState::taskName = "";
+    taskState::host = "heidelbrain.org";
 
     state->viewerState->gui->commentBuffer = (char*)malloc(10240 * sizeof(char));
     memset(state->viewerState->gui->commentBuffer, '\0', 10240 * sizeof(char));
@@ -1184,13 +1185,13 @@ void MainWindow::taskSlot() {
     long httpCode = 0;
 
     // build url to send to
-    const auto url = state->taskState->host + "/knossos/session/";
+    const auto url = taskState::host + "/knossos/session/";
     // prepare http response object
     httpResponse response;
     response.length = 0;
     response.content = (char*)calloc(1, response.length+1);
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 2);
+    bool result = taskState::httpGET(url.toUtf8().data(), &response, &httpCode, taskState::cookieFile.toUtf8().data(), &code, 2);
     setCursor(Qt::ArrowCursor);
     if(result == false) {
         widgetContainer->taskLoginWidget->setResponse("Please login.");
@@ -1239,7 +1240,7 @@ void MainWindow::taskSlot() {
         }
         attribute = attributes.value("taskFile").toString();
         if(attribute.isNull() == false) {
-            state->taskState->taskFile = attribute;
+            taskState::taskFile = attribute;
         }
         attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
         if(attribute.isNull() == false) {
@@ -1308,7 +1309,7 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
-    treeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
+    treeListElement *tree = addtreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol, true);
     emit updateToolsSignal();
     treeAddedSignal(tree);
 }

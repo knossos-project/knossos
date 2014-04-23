@@ -15,6 +15,9 @@
 
 extern stateInfo *state;
 
+
+
+
 TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QDialog(parent), taskManagementWidget(NULL)
 {
@@ -26,7 +29,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
     QFormLayout *formLayout = new QFormLayout();
 
     urlField = new QLineEdit();
-    urlField->setText(state->taskState->host);
+    urlField->setText(taskState::host);
     usernameField = new QLineEdit();
     passwordField = new QLineEdit();
     serverStatus = new QLabel("Please Login");
@@ -59,7 +62,7 @@ TaskLoginWidget::TaskLoginWidget(QWidget *parent) :
 }
 
 void TaskLoginWidget::urlEditingFinished() {
-    state->taskState->host = urlField->text();
+    taskState::host = urlField->text();
 }
 
 void TaskLoginWidget::loginButtonClicked() {
@@ -79,19 +82,19 @@ void TaskLoginWidget::loginButtonClicked() {
     sprintf(postdata, "<login><username>%s</username><password>%s</password></login>", username, password);
 
     // build url to send to
-    const auto url = state->taskState->host + "/knossos/session/";
+    const auto url = taskState::host + "/knossos/session/";
 
     // prepare http response object
     response.length = 0;
     response.content = (char *)calloc(1, response.length+1);
 
     // remove contents of cookie file to fill it with new cookie
-    cookie = fopen(state->taskState->cookieFile.toUtf8().constData(), "w");
+    cookie = fopen(taskState::cookieFile.toUtf8().constData(), "w");
     if(cookie) {
         fclose(cookie);
     }
     setCursor(Qt::WaitCursor);
-    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, state->taskState->cookieFile.toUtf8().data(), &code, 5);
+    bool result = taskState::httpPOST(url.toUtf8().data(), postdata, &response, &httpCode, taskState::cookieFile.toUtf8().data(), &code, 5);
     setCursor(Qt::ArrowCursor);
     if( result == false) {
         serverStatus->setText("<font color='red'>Failed to create cookie. Please check your folder permissions.</font>");
@@ -119,7 +122,7 @@ void TaskLoginWidget::loginButtonClicked() {
                 }
                 attribute = attributes.value("taskfile").toString();
                 if(attribute.isNull() == false) {
-                    state->taskState->taskFile = attribute;
+                    taskState::taskFile = attribute;
                 }
                 attribute = QByteArray::fromBase64(attributes.value("description").toUtf8());
                 if(attribute.isNull() == false) {

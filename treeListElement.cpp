@@ -2,26 +2,26 @@
 #include "skeletonizer.h"
 #include "functions.h"
 
-TreeListElement::TreeListElement() {
+treeListElement::treeListElement() {
 
 }
 
-TreeListElement::TreeListElement(int treeID, QString comment, Color4F color) {
+treeListElement::treeListElement(int treeID, QString comment, color4F color) {
     this->treeID = treeID;
     this->color = color;
     strcpy(this->comment, comment.toLocal8Bit().data());
 }
 
-TreeListElement::TreeListElement(int treeID, QString comment, float r, float g, float b, float a) {
+treeListElement::treeListElement(int treeID, QString comment, float r, float g, float b, float a) {
     this->treeID = treeID;
-    this->color = Color4F(r, g, b, a);
+    this->color = color4F(r, g, b, a);
     strcpy(this->comment, comment.toLocal8Bit().data());
 }
 
-QList<NodeListElement *> *TreeListElement::getNodes() {
-    QList<NodeListElement *> *nodes = new QList<NodeListElement *>();
+QList<nodeListElement *> *treeListElement::getNodes() {
+    QList<nodeListElement *> *nodes = new QList<nodeListElement *>();
 
-    NodeListElement *currentNode = firstNode;
+    nodeListElement *currentNode = firstNode;
     while(currentNode) {
         nodes->append(currentNode);
         currentNode = currentNode->next;

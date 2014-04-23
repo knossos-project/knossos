@@ -54,11 +54,11 @@ public:
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    struct treeListElement *firstTree;
-    struct treeListElement *activeTree;
-    struct nodeListElement *activeNode;
+    treeListElement *firstTree;
+    treeListElement *activeTree;
+    nodeListElement *activeNode;
 
-    struct commentListElement *currentComment;
+    commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
 
@@ -98,7 +98,7 @@ public:
     // Display list, which applies the basic openGL operations before the skeleton is rendered.
     //(Light settings, view rotations, translations...)
     GLuint displayListView;
-    // Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on
+    // Display list, which renders the 3 orthogonal slice planes, the Coordinate axes, and so on
     GLuint displayListDataset;
 
     // Stores the model view matrix for user performed VP rotations.
@@ -165,6 +165,7 @@ public:
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
 
+
     bool branchpointUnresolved;
 
     // This is for a workaround around agar bug #171
@@ -213,22 +214,22 @@ public slots:
     static dynArray *newDynArray(int size);
 
     static bool delSegmentFromSkeletonStruct(segmentListElement *segment);
-    static nodeListElement *addNodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
-    static segmentListElement* addSegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
+    static nodeListElement *addnodeListElement(int nodeID, float radius, nodeListElement **currentNode, Coordinate *position, int inMag);
+    static segmentListElement* addsegmentListElement (segmentListElement **currentSegment, nodeListElement *sourceNode, nodeListElement *targetNode);
 
     static bool addNodeToSkeletonStruct(nodeListElement *node);
     static bool addSegmentToSkeletonStruct(segmentListElement *segment);
     void WRAP_popBranchNode();
-    static void setColorFromNode(struct nodeListElement *node, color4F *color);
-    static void setRadiusFromNode(struct nodeListElement *node, float *radius);
+    static void setColorFromNode(nodeListElement *node, color4F *color);
+    static void setRadiusFromNode(nodeListElement *node, float *radius);
     bool delSkelState(skeletonState *skelState);
     bool delTreesFromState(skeletonState *skelState);
-    bool delTreeFromState(struct treeListElement *treeToDel, struct skeletonState *skelState);
+    bool delTreeFromState(treeListElement *treeToDel, struct skeletonState *skelState);
     static bool hasObfuscatedTime();
-    bool delNodeFromState(struct nodeListElement *nodeToDel, struct skeletonState *skelState);
-    bool delCommentFromState(struct commentListElement *commentToDel, struct skeletonState *skelState);
-    bool delSegmentFromCmd(struct segmentListElement *segToDel);
-    static unsigned int commentContainsSubstr(struct commentListElement *comment, int index);
+    bool delNodeFromState(nodeListElement *nodeToDel, struct skeletonState *skelState);
+    bool delCommentFromState(commentListElement *commentToDel, struct skeletonState *skelState);
+    bool delSegmentFromCmd(segmentListElement *segToDel);
+    static unsigned int commentContainsSubstr(commentListElement *comment, int index);
 
     void deleteSelectedTrees();
     void deleteSelectedNodes();
@@ -295,7 +296,7 @@ public slots:
     static void restoreDefaultTreeColor();
 
     static int splitConnectedComponent(int targetRevision, int nodeID, int serialize);
-    treeListElement *addTreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    static treeListElement *addtreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
     static bool mergeTrees(int targetRevision, int treeID1, int treeID2, int serialize);
     static bool updateTreeColors();
     static nodeListElement *findNodeInRadius(Coordinate searchPosition);
@@ -307,7 +308,7 @@ public slots:
     void popBranchNodeCanceled();
     bool popBranchNode(int targetRevision, int serialize);
     static bool delNodeFromSkeletonStruct(nodeListElement *node);
-    static bool updateCircRadius(struct nodeListElement *node);
+    static bool updateCircRadius(nodeListElement *node);
     static int xorInt(int xorMe);
 
     static void saveSerializedSkeleton();

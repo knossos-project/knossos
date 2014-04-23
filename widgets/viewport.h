@@ -26,6 +26,7 @@
  */
 
 #include "eventmodel.h"
+#include "renderer.h"
 
 #include <QWidget>
 #include <QtOpenGL/QGLWidget>
@@ -57,7 +58,7 @@ public:
     void hideButtons();
     void showButtons();
     EventModel *eventDelegate;
-
+    Renderer *renderer;
 protected:
     void initializeGL();
     void initializeOverlayGL();

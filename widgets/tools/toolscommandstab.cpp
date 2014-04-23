@@ -146,7 +146,7 @@ ToolsCommandsTab::ToolsCommandsTab(QWidget *parent) :
 }
 
 void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
-    TreeListElement *tree = findTreeByTreeIDSignal(value);
+    treeListElement *tree = findTreeByTreeIDSignal(value);
     if(tree == NULL) {
         return;
 //        // no tree with this value.
@@ -171,7 +171,7 @@ void ToolsCommandsTab::activeTreeIDSpinChanged(int value) {
 }
 
 void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
-    NodeListElement *node = findNodeByNodeIDSignal(value);
+    nodeListElement *node = findNodeByNodeIDSignal(value);
     if(node == NULL) {
         return;
 //        // no node with this value.
@@ -200,12 +200,12 @@ void ToolsCommandsTab::jumpToActiveButtonClicked() {
 }
 
 void ToolsCommandsTab::newTreeButtonClicked() {
-    Color4F treeCol;
+    color4F treeCol;
     treeCol.r = -1;
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    TreeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
+    treeListElement *tree = addtreeListElement(true, CHANGE_MANUAL, 0, treeCol, true);
     emit treeAddedSignal(tree);
 }
 

@@ -139,7 +139,7 @@ values. The XY vp always used. */
 #define CUBE_DATA       0
 #define CUBE_OVERLAY    1
 
-// Those are used to determine if the coordinate change should be passed on to
+// Those are used to determine if the Coordinate change should be passed on to
 // clients by the server.
 #define SILENT_COORDINATE_CHANGE 0
 #define TELL_COORDINATE_CHANGE 1
@@ -297,6 +297,14 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
+class floatCoordinate;
+class Coordinate;
+class color4F;
+class treeListElement;
+class nodeListElement;
+class segmentListElement;
+class mesh;
+
 //Structures and custom types
 typedef uint8_t Byte;
 
@@ -310,17 +318,23 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
     return val < base ? res : int_log(val/base, base, res+1);
 }
 
-struct floatCoordinate {
+class floatCoordinate {
+public:
+    floatCoordinate() {}
+    floatCoordinate(float x, float y, float z) {this->x = x; this->y = y; this->z = z; }
     float x;
     float y;
     float z;
 };
 
+Q_DECLARE_METATYPE(floatCoordinate)
+
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
+
 class Coordinate{
 public:
-    Coordinate() { }
-    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
+    Coordinate();
+    Coordinate(int x, int y, int z);
     int x;
     int y;
     int z;
@@ -332,6 +346,9 @@ public:
 
 };
 
+Q_DECLARE_METATYPE(Coordinate)
+
+/*
 class CoordinateDecorator : public QObject {
     Q_OBJECT
 public slots:
@@ -344,22 +361,26 @@ public slots:
     int z(Coordinate *self) { return self->z; }
     void setZ(Coordinate *self, int z) { self->z = z; }
 };
+*/
 
-typedef struct {
+class color4F {
+public:
+    color4F();
+    color4F(float r, float g, float b, float a);
         GLfloat r;
         GLfloat g;
         GLfloat b;
         GLfloat a;
-} color4F;
+};
 
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
 // defined by the pointer in the hash table structure below.
 //
-// * coordinate is of type coordinate (as defined in coordinate.h) and i used
+// * Coordinate is of type Coordinate (as defined in Coordinate.h) and i used
 //   as the key in the hash table.
 // * datacube is a pointer to the datacube that is to be associated with the
-//   coordinate coordinate.
+//   Coordinate Coordinate.
 // * next is a pointer to another structure of the same type.
 //   someElement->next->previous = someElement should always hold true.
 // * previous should behave in analogy to next
@@ -369,7 +390,7 @@ typedef struct {
 //   NULL else.
 
 struct C2D_Element {
-        Coordinate coordinate;
+        Coordinate Coordinate;
         Byte *datacube;
         C2D_Element *previous;
         C2D_Element *next;
@@ -383,7 +404,7 @@ struct C2D_Element {
 //
 // * listEntry is a dummy element in the list that is used only to enter the
 //   list. Its Datacube-pointer is set to NULL and its Coordinates to (-1, -1,
-//   -1). As the coordinate system begins at (0, 0, 0), that's invalid.
+//   -1). As the Coordinate system begins at (0, 0, 0), that's invalid.
 // * tablesize stores the size of the table and is always a power of two.
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
@@ -458,7 +479,7 @@ struct assignment {
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-    stateInfo();
+    stateInfo() {}
     uint svnRevision;
 #ifdef QT_DEBUG
     Console *console;
@@ -638,24 +659,24 @@ public:
     // Dc2Pointer and Oc2Pointer provide a mappings from cube
     // coordinates to pointers to datacubes / overlay cubes loaded
     // into memory.
-    // It is a set of key (cube coordinate) / value (pointer) pairs.
+    // It is a set of key (cube Coordinate) / value (pointer) pairs.
     // Whenever we access a datacube in memory, we do so through
     // this structure.
     Hashtable *Dc2Pointer[int_log(NUM_MAG_DATASETS)+1];
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    class Viewer *viewer;
-    struct clientState *clientState;
+    class Viewer *viewer;    
     struct skeletonState *skeletonState;
     struct trajectory *trajectories;
-    struct taskState *taskState;
+
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;
     bool viewerKeyRepeat;
 
 signals:
 public slots:
+    /*
     uint getSvnRevision();
     float getAlpha();
     float getBeta();
@@ -683,41 +704,15 @@ public slots:
     uint getCubeSetElements();
     uint getCubeSetBytes();
     Coordinate getBoundary();
-
+    */
 
 
 
 
 };
 
-struct httpResponse {
-    char *content;
-    size_t length;
-};
 
-struct taskState {
-    QString host;
-    QString cookieFile;
-    QString taskFile;
-    QString taskName;
 
-    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
-    static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
-    static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
-    static int copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info);
-    static void removeCookie();
-    static QString CSRFToken();
-    static QString getCategory();
-    static QString getTask();
-};
-
-struct trajectory {
-		char name[64];
-		char *source;
-};
 
 /**
   * @struct viewportTexture
@@ -729,7 +724,7 @@ struct viewportTexture {
     uint texHandle;
     uint overlayHandle;
 
-    //The absPx coordinate of the upper left corner of the texture actually stored in *texture
+    //The absPx Coordinate of the upper left corner of the texture actually stored in *texture
     Coordinate leftUpperPxInAbsPx;
     uint edgeLengthDc;
     uint edgeLengthPx;
@@ -819,10 +814,10 @@ struct vpConfig {
 
     struct viewportTexture texture;
 
-    //The absPx coordinate of the upper left corner pixel of the currently on screen displayed data
+    //The absPx Coordinate of the upper left corner pixel of the currently on screen displayed data
     Coordinate leftUpperDataPxOnScreen;
 
-    //This is a bit confusing..the screen coordinate system has always
+    //This is a bit confusing..the screen Coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed
     //data pixels can have a different axis. Keep this in mind.
     //These values depend on texUnitsPerDataPx (in struct viewportTexture),
@@ -845,9 +840,9 @@ struct vpConfig {
     uint id; // id e {VP_UPPERLEFT, VP_LOWERLEFT, VP_UPPERRIGHT, VP_LOWERRIGHT}
     // CORRECT THIS COMMENT TODO BUG
     //lower left corner of viewport in screen pixel coords (max: window borders)
-    //we use here the lower left corner, because the openGL intrinsic coordinate system
+    //we use here the lower left corner, because the openGL intrinsic Coordinate system
     //is defined over the lower left window corner. All operations inside the viewports
-    //use a coordinate system with lowest coordinates in the upper left corner.
+    //use a Coordinate system with lowest coordinates in the upper left corner.
     Coordinate upperLeftCorner;
     //edge length in screen pixel coordinates; only squarish VPs are allowed
 
@@ -863,7 +858,7 @@ struct vpConfig {
     //necessary because the mouse can be outside the VP while the user still wants e.g. to drag the panel
     Byte motionTracking;
 
-    struct nodeListElement *draggedNode;
+    nodeListElement *draggedNode;
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
@@ -883,7 +878,7 @@ struct vpConfig {
   */
 struct viewerState {
 
-    //Cache for Movements smaller than pixel coordinate
+    //Cache for Movements smaller than pixel Coordinate
     floatCoordinate moveCache;
     //Orientation
     float alphaCache;
@@ -1009,20 +1004,28 @@ struct viewerState {
     uint renderInterval;
 };
 
-struct commentListElement {
-    struct commentListElement *next;
-    struct commentListElement *previous;
+class commentListElement {
+public:
+    commentListElement() {}
+    commentListElement *next;
+    commentListElement *previous;
 
     char *content;
 
-    struct nodeListElement *node;
+    nodeListElement *node;
 };
 
-struct treeListElement {
+Q_DECLARE_METATYPE(commentListElement)
+
+class treeListElement {
 public:
-    struct treeListElement *next;
-    struct treeListElement *previous;
-    struct nodeListElement *firstNode;
+    treeListElement();
+    treeListElement(int treeID, QString comment, color4F color);
+    treeListElement(int treeID, QString comment, float r, float g, float b, float a);
+
+    treeListElement *next;
+    treeListElement *previous;
+    nodeListElement *firstNode;
 
     int treeID;
     color4F color;
@@ -1030,9 +1033,10 @@ public:
     int colorSetManually;
 
     char comment[8192];
+    QList<nodeListElement *> *getNodes();
 };
 
-//class TreeListElementDecorator : public QObject {
+//class treeListElementDecorator : public QObject {
 //    Q_OBJECT
 //public slots:
 //    treeListElement *new_treeListElement() { return new treeListElement(); }
@@ -1046,13 +1050,17 @@ public:
 
 //};
 
-struct nodeListElement {
-    struct nodeListElement *next;
-    struct nodeListElement *previous;
+class nodeListElement {
+public:
+   nodeListElement();
+   nodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time);
 
-    struct segmentListElement *firstSegment;
+    nodeListElement *next;
+    nodeListElement *previous;
 
-    struct treeListElement *correspondingTree;
+    segmentListElement *firstSegment;
+
+    treeListElement *correspondingTree;
 
     float radius;
 
@@ -1061,7 +1069,7 @@ struct nodeListElement {
     Byte createdInMag;
     int timestamp;
 
-    struct commentListElement *comment;
+    commentListElement *comment;
 
     // counts forward AND backward segments!!!
     int numSegs;
@@ -1073,15 +1081,19 @@ struct nodeListElement {
     Coordinate position;
     bool isBranchNode;
     bool selected;
+
+    QList<segmentListElement *> *getSegments();
 };
 
 
-struct segmentListElement {
-    struct segmentListElement *next;
-    struct segmentListElement *previous;
+class segmentListElement {
+public:
+    segmentListElement() {}
+    segmentListElement *next;
+    segmentListElement *previous;
 
     //Contains the reference to the segment inside the target node
-    struct segmentListElement *reverseSegment;
+    segmentListElement *reverseSegment;
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
@@ -1096,8 +1108,8 @@ struct segmentListElement {
     //Coordinate pos1;
     //Coordinate pos2;
 
-    struct nodeListElement *source;
-    struct nodeListElement *target;
+    nodeListElement *source;
+    nodeListElement *target;
 };
 
 struct serialSkeletonListElement {
@@ -1112,12 +1124,12 @@ struct skeletonDC {
 };
 
 struct skeletonDCnode {
-    struct nodeListElement *node;
+    nodeListElement *node;
     struct skeletonDCnode *next;
 };
 
 struct skeletonDCsegment {
-    struct segmentListElement *segment;
+    segmentListElement *segment;
     struct skeletonDCsegment *next;
 };
 
@@ -1130,13 +1142,11 @@ struct peerListElement {
     struct peerListElement *next;
 };
 
-struct IOBuffer {
-    uint size;      // The current maximum size
-    uint length;    // The current amount of data in the buffer
-    Byte *data;
-};
 
-typedef struct {
+class mesh {
+public:
+    mesh();
+    mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
     floatCoordinate *vertices;
     floatCoordinate *normals;
     color4F *colors;
@@ -1149,7 +1159,9 @@ typedef struct {
     uint vertsIndex;
     uint normsIndex;
     uint colsIndex;
-} mesh;
+    uint mode;
+    uint size;
+};
 
 typedef struct {
         GLbyte r;
@@ -1180,9 +1192,9 @@ struct skeletonState {
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    struct treeListElement *firstTree;
-    struct treeListElement *activeTree;
-    struct nodeListElement *activeNode;
+    treeListElement *firstTree;
+    treeListElement *activeTree;
+    nodeListElement *activeNode;
 
     std::vector<treeListElement *> selectedTrees;
     std::vector<nodeListElement *> selectedNodes;
@@ -1190,7 +1202,7 @@ struct skeletonState {
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;
 
-    struct commentListElement *currentComment;
+    commentListElement *currentComment;
     char *commentBuffer;
     char *searchStrBuffer;
     char *filterCommentBuffer;
@@ -1232,7 +1244,7 @@ struct skeletonState {
     // Display list, which applies the basic openGL operations before the skeleton is rendered.
     //(Light settings, view rotations, translations...)
     GLuint displayListView;
-    // Display list, which renders the 3 orthogonal slice planes, the coordinate axes, and so on
+    // Display list, which renders the 3 orthogonal slice planes, the Coordinate axes, and so on
     GLuint displayListDataset;
 
     // Stores the model view matrix for user performed VP rotations.
@@ -1300,6 +1312,7 @@ struct skeletonState {
     // every frame */
     mesh lineVertBuffer; /* ONLY for lines */
     mesh pointVertBuffer; /* ONLY for points */
+    QList<mesh *> *userGeometry;
 
     bool branchpointUnresolved;
 
@@ -1317,28 +1330,6 @@ struct skeletonState {
     QString skeletonFileAsQString;
 };
 
-struct clientState {
-    bool connectAsap;
-    int remotePort;
-    bool connected;
-    Byte synchronizePosition;
-    Byte synchronizeSkeleton;
-    int connectionTimeout;
-    bool connectionTried;
-    char serverAddress[1024];
-
-    QHostAddress *remoteServer;
-    QTcpSocket *remoteSocket;
-    QSet<QTcpSocket *> *socketSet;
-    uint myId;
-    bool saveMaster;
-
-    struct peerListElement *firstPeer;
-    struct IOBuffer *inBuffer;
-    struct IOBuffer *outBuffer;
-};
-
-
 /* global functions */
 
 /* Macros */
@@ -1353,11 +1344,11 @@ struct clientState {
 #define ABS(x) (((x) >= 0) ? (x) : -(x))
 #define SQR(x) ((x)*(x))
 
-#define SET_COORDINATE(coordinate, a, b, c) \
+#define SET_COORDINATE(Coordinate, a, b, c) \
         { \
-        (coordinate).x = (a); \
-        (coordinate).y = (b); \
-        (coordinate).z = (c); \
+        (Coordinate).x = (a); \
+        (Coordinate).y = (b); \
+        (Coordinate).z = (c); \
         }
 
 #define CALC_VECTOR_NORM(v) \
@@ -1380,9 +1371,9 @@ struct clientState {
     ( \
         ABS(CALC_DOT_PRODUCT((point), (plane))) / CALC_VECTOR_NORM((plane)) \
     )
-#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(coordinate, ox, oy, oz, offset_array) \
+#define SET_COORDINATE_FROM_ORIGIN_OFFSETS(Coordinate, ox, oy, oz, offset_array) \
     { \
-        SET_COORDINATE((coordinate), \
+        SET_COORDINATE((Coordinate), \
                        (ox) + (offset_array)[0], \
                        (oy) + (offset_array)[1], \
                        (oz) + (offset_array)[2]); \

@@ -88,7 +88,7 @@ signals:
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 
-    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
+    treeListElement *addtreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
     void nextCommentSignal(QString searchString);
     void previousCommentSignal(QString searchString);
     /* */

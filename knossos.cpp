@@ -43,7 +43,7 @@
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
-#include "scripting.h"
+#include "scriptengine/scripting.h"
 #include "ftp.h"
 
 #include "test/knossostestrunner.h"
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
     Client client;
     
     Scripting scripts;
-    scripts.skeletonReference = viewer.skeletonizer;
+    //scripts.skeletonReference = viewer.skeletonizer;
      //scripts.stateReference = state;
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
@@ -362,39 +362,39 @@ bool Knossos::initStates() {
 
    // For the client
 
-   state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->inBuffer == NULL) {
+   clientState::inBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
+   if(clientState::inBuffer == NULL) {
        LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->inBuffer malloc fail");
+       throw std::runtime_error("clientState::inBuffer malloc fail");
    }
-   memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
+   memset(clientState::inBuffer, '\0', sizeof(struct clientState::IOBuffer));
 
-   state->clientState->inBuffer->data = (Byte *)malloc(128);
-   if(state->clientState->inBuffer->data == NULL) {
+   clientState::inBuffer->data = (Byte *)malloc(128);
+   if(clientState::inBuffer->data == NULL) {
        LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->inBuffer->data malloc fail");
+       throw std::runtime_error("clientState::inBuffer->data malloc fail");
    }
-   memset(state->clientState->inBuffer->data, '\0', 128);
+   memset(clientState::inBuffer->data, '\0', 128);
 
-   state->clientState->inBuffer->size = 128;
-   state->clientState->inBuffer->length = 0;
+   clientState::inBuffer->size = 128;
+   clientState::inBuffer->length = 0;
 
-   state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->outBuffer == NULL) {
+   clientState::outBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
+   if(clientState::outBuffer == NULL) {
        LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->outBuffer malloc fail");
+       throw std::runtime_error("clientState::outBuffer malloc fail");
    }
-   memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
+   memset(clientState::outBuffer, '\0', sizeof(struct clientState::IOBuffer));
 
-   state->clientState->outBuffer->data = (Byte *) malloc(128);
-   if(state->clientState->outBuffer->data == NULL) {
+   clientState::outBuffer->data = (Byte *) malloc(128);
+   if(clientState::outBuffer->data == NULL) {
        LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->outBuffer->data malloc fail");
+       throw std::runtime_error("clientState::outBuffer->data malloc fail");
    }
-   memset(state->clientState->outBuffer->data, '\0', 128);
+   memset(clientState::outBuffer->data, '\0', 128);
 
-   state->clientState->outBuffer->size = 128;
-   state->clientState->outBuffer->length = 0;
+   clientState::outBuffer->size = 128;
+   clientState::outBuffer->length = 0;
 
    // For the skeletonizer   
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
@@ -652,10 +652,9 @@ stateInfo *Knossos::emptyState() {
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
-    state->clientState = new clientState();
 
     state->skeletonState = new skeletonState();
-    state->taskState = new taskState();
+
     return state;
 }
 
@@ -1030,14 +1029,14 @@ bool Knossos::configDefaults() {
     snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
 
     // For the client
-    state->clientState->connectAsap = false;
-    state->clientState->connectionTimeout = 3000;
-    state->clientState->remotePort = 7890;
-    strncpy(state->clientState->serverAddress, "localhost", 1024);
-    state->clientState->connected = false;
-    state->clientState->synchronizeSkeleton = true;
-    state->clientState->synchronizePosition = true;
-    state->clientState->saveMaster = false;
+    clientState::connectAsap = false;
+    clientState::connectionTimeout = 3000;
+    clientState::remotePort = 7890;
+    strncpy(clientState::serverAddress, "localhost", 1024);
+    clientState::connected = false;
+    clientState::synchronizeSkeleton = true;
+    clientState::synchronizePosition = true;
+    clientState::saveMaster = false;
 
 
     // For the skeletonizer
@@ -1159,7 +1158,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                     state->clientState->connectAsap = true;
+                     clientState::connectAsap = true;
                      break;
                  case 2:
                      state->scale.x = (float)strtod(rval, NULL);
@@ -1260,14 +1259,3 @@ void Knossos::revisionCheck() {
 
 }
 
-void Knossos::loadStyleSheet() {
-    QFile file(":/misc/style.qss");
-    if(!file.open(QIODevice::ReadOnly)) {
-        qErrnoWarning("Error reading the knossos style sheet file");
-    }
-
-    QString design(file.readAll());
-    qApp->setStyleSheet(design);
-    file.close();
-
-}

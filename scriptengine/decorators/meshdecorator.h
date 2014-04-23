@@ -14,17 +14,17 @@ public:
 signals:
 
 public slots:
-    Mesh *new_Mesh(uint mode);
-    QList<FloatCoordinate *> *vertices(Mesh *self);
-    QList<FloatCoordinate *> *normals(Mesh *self);
-    QList<Color4F *> *colors(Mesh *self);
+    mesh *new_mesh(uint mode);
+    QList<floatCoordinate *> *vertices(mesh *self);
+    QList<floatCoordinate *> *normals(mesh *self);
+    QList<color4F *> *colors(mesh *self);
 
-    void set_vertices(Mesh *self, QList<QVariant> &vertices);
-    void set_normals (Mesh *self, QList<QVariant> &normals);
-    void set_colors (Mesh *self, QList<QVariant> &vertices);
-    void set_size(Mesh *self, uint size);
+    void set_vertices(mesh *self, QList<QVariant> &vertices);
+    void set_normals (mesh *self, QList<QVariant> &normals);
+    void set_colors (mesh *self, QList<QVariant> &vertices);
+    void set_size(mesh *self, uint size);
 
-    QString static_Mesh_help();
+    QString static_mesh_help();
 
 
     /*

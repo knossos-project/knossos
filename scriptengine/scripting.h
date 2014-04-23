@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <PythonQt/PythonQt.h>
-#include <PythonQt_QtAll/PythonQt_QtAll.h>
+//#include <PythonQt_QtAll/PythonQt_QtAll.h>
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 #include <QProcess>

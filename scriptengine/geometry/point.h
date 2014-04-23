@@ -3,13 +3,13 @@
 
 #include "shape.h"
 
-class Color4F;
+class color4F;
 class Point : public Shape
 {
 public:
-    Point(Transform *transform = 0, Coordinate *origin = 0, uint size = 0, Color4F *color = 0);
+    Point(Transform *transform = 0, Coordinate *origin = 0, uint size = 0, color4F *color = 0);
     uint size;
-    Color4F *color;
+    color4F *color;
 };
 
 #endif // POINT_H

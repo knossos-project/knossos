@@ -656,7 +656,7 @@ OPJ_BOOL FUNCTION (     opj_tcd_t *p_tcd,                        \
                                                                     \
         p = p_tile_no % l_cp->tw;       /* tile coordinates */      \
         q = p_tile_no / l_cp->tw;                                   \
-        /*fprintf(stderr, "Tile coordinate = %d,%d\n", p, q);*/     \
+        /*fprintf(stderr, "Tile Coordinate = %d,%d\n", p, q);*/     \
                                                                     \
         /* 4 borders of the tile rescale on the image if necessary */                                                                                                                                             \
         l_tile->x0 = opj_int_max(l_cp->tx0 + p * l_cp->tdx, l_image->x0);                                                                                                                                             \

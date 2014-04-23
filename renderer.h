@@ -39,21 +39,21 @@ class Renderer : public QObject {
 public:
     explicit Renderer(QObject *parent = 0);
     Viewport *refVPXY, *refVPXZ, *refVPYZ, *refVPSkel;
-    static bool resizeMeshCapacity(Mesh *toResize, uint n);
-    static bool doubleMeshCapacity(Mesh *toDouble);
-    static bool initMesh(Mesh *MeshToInit, uint initialSize);
+    static bool resizemeshCapacity(mesh *toResize, uint n);
+    static bool doublemeshCapacity(mesh *toDouble);
+    static bool initmesh(mesh *meshToInit, uint initialSize);
 protected:
     bool setRotationState(uint setTo);
     bool rotateSkeletonViewport();
     bool updateRotationStateMatrix(float M1[16], float M2[16]);
     uint renderViewportBorders(uint currentVP);
 
-    uint renderSegPlaneIntersection(struct SegmentListElement *segment);
+    uint renderSegPlaneIntersection(segmentListElement *segment);
     void renderText(const Coordinate &pos, const QString &str);
-    uint renderSphere(Coordinate *pos, float radius, Color4F color, uint currentVP, uint viewportType);
-    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, Color4F color, uint currentVP, uint viewportType);
+    uint renderSphere(Coordinate *pos, float radius, color4F color, uint currentVP, uint viewportType);
+    uint renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint viewportType);
     void renderSkeleton(uint currentVP,uint viewportType);    
-    bool sphereInFrustum(FloatCoordinate pos, float radius, uint viewportType);
+    bool sphereInFrustum(floatCoordinate pos, float radius, uint viewportType);
     bool updateFrustumClippingPlanes(uint viewportType);
     
 public slots:

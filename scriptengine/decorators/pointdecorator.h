@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class Color4F;
+class color4F;
 class Coordinate;
 class Point;
 class Transform;
@@ -16,7 +16,7 @@ public:
 signals:
 
 public slots:
-   Point *new_Point(Transform *transform = 0, Coordinate *origin = 0, uint size = 0, Color4F *color = 0);
+   Point *new_Point(Transform *transform = 0, Coordinate *origin = 0, uint size = 0, color4F *color = 0);
 };
 
 #endif // POINTDECORATOR_H

@@ -54,7 +54,7 @@ For Loader file loader
 #define LM_FTP      1
 
 struct C_Element {
-    Coordinate coordinate;
+    Coordinate Coordinate;
 
     char *filename;
     char *path;
@@ -110,8 +110,8 @@ protected:
 };
 
 struct LO_Element {
-        Coordinate coordinate;
-        Coordinate offset;
+        Coordinate Coordinate;
+        class Coordinate offset;
         float loadOrderMetrics[LL_METRIC_NUM];
 };
 
@@ -134,8 +134,8 @@ private:
     bool initLoader();
     bool initialized;
     uint prevLoaderMagnification;
-    void CalcLoadOrderMetric(float halfSc, FloatCoordinate currentMetricPos, FloatCoordinate direction, float *metrics);
-    FloatCoordinate find_close_xyz(FloatCoordinate direction);
+    void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, floatCoordinate direction, float *metrics);
+    floatCoordinate find_close_xyz(floatCoordinate direction);
     int addCubicDcSet(int xBase, int yBase, int zBase, int edgeLen, C_Element *target, Hashtable *currentLoadedHash);
     uint DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash);
     void loadCube(loadcube_thread_struct *lts);

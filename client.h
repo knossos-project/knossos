@@ -44,7 +44,7 @@ namespace clientState {
     struct peerListElement {
         uint id;
         char *name;
-        FloatCoordinate scale;
+        floatCoordinate scale;
         Coordinate offset;
 
         struct peerListElement *next;
@@ -70,8 +70,6 @@ namespace clientState {
     extern struct IOBuffer *inBuffer;
     extern struct IOBuffer *outBuffer;
 }
-
-
 
 
 
@@ -116,20 +114,20 @@ public:
 signals:
     void finished();
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
-    void setActiveNodeSignal(int targetRevision, NodeListElement *node, int nodeID);
+    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
     void addTreeCommentSignal(int targetRevision, int treeID, QString comment);
     void remoteJumpSignal(int x, int y, int z);
     void skeletonWorkModeSignal(int targetRevision, uint workMode);
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, SegmentListElement *segToDel, int serialize);
-    void editNodeSignal(int targetRevision, int nodeID, NodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    void delNodeSignal(int targetRevision, int nodeID, NodeListElement *nodeToDel, int serialize);
+    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
+    void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void delNodeSignal(int targetRevision, int nodeID, nodeListElement *nodeToDel, int serialize);
     void delTreeSignal(int targetRevision, int treeID, int serialize);
-    void addCommentSignal(int targetRevision, const char *content, NodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, NodeListElement *newNode, int newNodeID, int serialize);
+    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
     bool delCommentSignal(int targetRevision, commentListElement *currentComment, int commentNodeID, int serialize);
     void popBranchNodeSignal();
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, NodeListElement *branchNode, int branchNodeID, int serialize);
+    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void sendConnectedState();
     void sendDisconnectedState();
 public slots:
@@ -137,5 +135,6 @@ public slots:
     void socketConnectionFailed(QAbstractSocket::SocketError error);
     static bool broadcastPosition(uint x, uint y, uint z);
 };
+
 
 #endif // CLIENT_H

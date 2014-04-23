@@ -49,7 +49,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     uint i;
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     /* Initialize the basic model view matrix for the skeleton VP
-    Perform basic coordinate system rotations */
+    Perform basic Coordinate system rotations */
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -74,8 +74,8 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
         state->viewerState->vpConfigs[i].displayList = glGenLists(1);
     }
 
-    initMesh(&(state->skeletonState->lineVertBuffer), 1024);
-    initMesh(&(state->skeletonState->pointVertBuffer), 1024);
+    initmesh(&(state->skeletonState->lineVertBuffer), 1024);
+    initmesh(&(state->skeletonState->pointVertBuffer), 1024);
 
 }
 
@@ -91,7 +91,7 @@ uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *to
             * topRadius < 1.f)) || (state->viewerState->cumDistRenderThres > 19.f)) {
 
             if(state->skeletonState->lineVertBuffer.vertsBuffSize < state->skeletonState->lineVertBuffer.vertsIndex + 2)
-                doubleMeshCapacity(&(state->skeletonState->lineVertBuffer));
+                doublemeshCapacity(&(state->skeletonState->lineVertBuffer));
 
             SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex], (float)base->x, (float)base->y, (float)base->z);
             SET_COORDINATE(state->skeletonState->lineVertBuffer.vertices[state->skeletonState->lineVertBuffer.vertsIndex + 1], (float)top->x, (float)top->y, (float)top->z);
@@ -174,7 +174,7 @@ uint Renderer::renderSphere(Coordinate *pos, float radius, color4F color, uint c
             }
             else {
                 if(state->skeletonState->pointVertBuffer.vertsBuffSize < state->skeletonState->pointVertBuffer.vertsIndex + 2)
-                    doubleMeshCapacity(&(state->skeletonState->pointVertBuffer));
+                    doublemeshCapacity(&(state->skeletonState->pointVertBuffer));
 
                 SET_COORDINATE(state->skeletonState->pointVertBuffer.vertices[state->skeletonState->pointVertBuffer.vertsIndex], (float)pos->x, (float)pos->y, (float)pos->z);
                 state->skeletonState->pointVertBuffer.colors[state->skeletonState->pointVertBuffer.vertsIndex] = color;
@@ -223,7 +223,7 @@ void Renderer::renderText(const Coordinate & pos, const QString & str) {
     }
 }
 
-uint Renderer::renderSegPlaneIntersection(struct segmentListElement *segment) {
+uint Renderer::renderSegPlaneIntersection(segmentListElement *segment) {
     if(!state->skeletonState->showIntersections) return true;
 
         float p[2][3], a, currentAngle, length, radius, distSourceInter, sSr_local, sTr_local;
@@ -351,7 +351,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     Coordinate pos;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    /* define coordinate system for our viewport: left right bottom top near far */
+    /* define Coordinate system for our viewport: left right bottom top near far */
     glOrtho(0, state->viewerState->vpConfigs[currentVP].edgeLength,
             state->viewerState->vpConfigs[currentVP].edgeLength, 0, 25, -25);
 
@@ -1147,7 +1147,7 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
 
 
-    // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
+    // perform user defined Coordinate system rotations. use single matrix multiplication as opt.! TDitem
     if(state->skeletonState->rotdx || state->skeletonState->rotdy) {
         if((state->skeletonState->rotateAroundActiveNode) && (state->skeletonState->activeNode)) {
             glTranslatef(-((float)state->boundary.x / 2.),-((float)state->boundary.y / 2),-((float)state->boundary.z / 2.));
@@ -1989,9 +1989,9 @@ bool Renderer::setRotationState(uint setTo) {
  */
 
 void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
-    struct treeListElement *currentTree;
-    struct nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
-    struct segmentListElement *currentSegment;
+    treeListElement *currentTree;
+    nodeListElement *currentNode, *lastNode = NULL, *lastRenderedNode = NULL;
+    segmentListElement *currentSegment;
     float cumDistToLastRenderedNode;
     floatCoordinate currNodePos;
     uint virtualSegRendered, allowHeuristic;
@@ -2028,7 +2028,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
     glPushMatrix();
 
     /* Rendering of objects starts always at the origin of our data pixel
-    coordinate system. Thus, we have to translate there. */
+    Coordinate system. Thus, we have to translate there. */
     glTranslatef(-(float)state->boundary.x / 2. + 0.5,-(float)state->boundary.y / 2. + 0.5,-(float)state->boundary.z / 2. + 0.5);
 
     /* We iterate over the whole tree structure. */
@@ -2302,6 +2302,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
         renderText(state->skeletonState->activeNode->position, QString::number(state->skeletonState->activeNode->nodeID));
     }
 
+    renderUserGeometry();
     /* Restore modelview matrix */
     glPopMatrix();
     glDisable(GL_CULL_FACE);
@@ -2309,7 +2310,7 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 }
 
 
-bool Renderer::doubleMeshCapacity(mesh *toDouble) {
+bool Renderer::doublemeshCapacity(mesh *toDouble) {
 
     (*toDouble).vertices = (floatCoordinate *)realloc((*toDouble).vertices, 2 * (*toDouble).vertsBuffSize * sizeof(floatCoordinate));
     (*toDouble).normals = (floatCoordinate *)realloc((*toDouble).normals, 2 * (*toDouble).normsBuffSize * sizeof(floatCoordinate));
@@ -2323,7 +2324,7 @@ bool Renderer::doubleMeshCapacity(mesh *toDouble) {
     return true;
 }
 
-bool Renderer::initMesh(mesh *toInit, uint initialSize) {
+bool Renderer::initmesh(mesh *toInit, uint initialSize) {
 
 
     (*toInit).vertices = (floatCoordinate *)malloc(initialSize * sizeof(floatCoordinate));
@@ -2481,4 +2482,36 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
     }
 
     return true;
+}
+
+void Renderer::renderUserGeometry() {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    //qDebug() << state->skeletonState->userGeometry->size();
+
+    for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
+
+        mesh *currentMesh = state->skeletonState->userGeometry->at(i);
+        if(currentMesh->mode == GL_POINTS) {
+            glPointSize(currentMesh->size);
+        } else if(currentMesh->mode == GL_LINES) {
+            glLineWidth(currentMesh->size);
+
+        }
+
+        glVertexPointer(3, GL_FLOAT, 0, currentMesh->vertices);
+        //glNormalPointer(3, GL_FLOAT, 0, currentMesh->normals);
+        glColorPointer(4, GL_FLOAT, 0, currentMesh->colors);
+
+        glDrawArrays(currentMesh->mode, 0, currentMesh->vertsIndex);
+        GLenum num = glGetError();
+        if(num)
+            qDebug() << num;
+    }
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    //glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }

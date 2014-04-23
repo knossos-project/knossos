@@ -42,7 +42,7 @@
 
 extern  stateInfo *state;
 static const int N = 5;
-static QMap<QString, Color4F> colorMap;
+static QMap<QString, color4F> colorMap;
 
 CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     QWidget(parent)
@@ -51,7 +51,7 @@ CommentsHighlightingTab::CommentsHighlightingTab(QWidget *parent) :
     gui::commentSubstr = new QStringList();
     gui::commentColors = new char*[N];
 
-    Color4F color;
+    color4F color;
     SET_COLOR(color, 0.13, 0.69, 0.3, 1.);
     colorMap.insert(GREEN, color);
     SET_COLOR(color, 0.94, 0.89, 0.69, 1.);

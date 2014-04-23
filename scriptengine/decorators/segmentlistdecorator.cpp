@@ -7,36 +7,36 @@ SegmentListDecorator::SegmentListDecorator(QObject *parent) :
 }
 
 /*
-SegmentListElement *SegmentListDecorator::new_SegmentListElement() {
-    return new SegmentListElement();
+segmentListElement *SegmentListDecorator::new_SegmentListElement() {
+    return new segmentListElement();
 }
 
-SegmentListElement *SegmentListDecorator::new_SegmentListElement(int sourceID, int targetID) {
-    return new SegmentListElement(sourceID, targetID);
+segmentListElement *SegmentListDecorator::new_SegmentListElement(int sourceID, int targetID) {
+    return new segmentListElement(sourceID, targetID);
 }
 
-SegmentListElement *SegmentListDecorator::new_SegmentListElement(NodeListElement *source, NodeListElement *target) {
-    return new SegmentListElement(source, target);
+segmentListElement *SegmentListDecorator::new_SegmentListElement(nodeListElement *source, nodeListElement *target) {
+    return new segmentListElement(source, target);
 }
 */
 
 
-NodeListElement *SegmentListDecorator::source(SegmentListElement *self) {
+nodeListElement *SegmentListDecorator::source(segmentListElement *self) {
     return self->source;
 }
 
-NodeListElement *SegmentListDecorator::target(SegmentListElement *self) {
+nodeListElement *SegmentListDecorator::target(segmentListElement *self) {
     return self->target;
 }
 
-int SegmentListDecorator::source_id(SegmentListElement *self) {
+int SegmentListDecorator::source_id(segmentListElement *self) {
     if(self->source)
         return self->source->nodeID;
 
     return 0;
 }
 
-int SegmentListDecorator::target_id(SegmentListElement *self) {
+int SegmentListDecorator::target_id(segmentListElement *self) {
     if(self->target)
         return self->target->nodeID;
 
@@ -53,19 +53,19 @@ QString SegmentListDecorator::static_SegmentListElement_help() {
 
 
 /*
-void SegmentListDecorator::set_source(SegmentListElement *self, NodeListElement *source) {
+void SegmentListDecorator::set_source(segmentListElement *self, nodeListElement *source) {
     self->setSource(source);
 }
 
-void SegmentListDecorator::set_target(SegmentListElement *self, NodeListElement *target) {
+void SegmentListDecorator::set_target(segmentListElement *self, nodeListElement *target) {
     self->setTarget(target);
 }
 
-void SegmentListDecorator::set_source_id(SegmentListElement *self, int sourceID) {
+void SegmentListDecorator::set_source_id(segmentListElement *self, int sourceID) {
     self->setSource(sourceID);
 }
 
-void SegmentListDecorator::set_target_id(SegmentListElement *self, int targetID) {
+void SegmentListDecorator::set_target_id(segmentListElement *self, int targetID) {
     self->setTarget(targetID);
 }*/
 

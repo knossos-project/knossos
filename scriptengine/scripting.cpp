@@ -22,6 +22,8 @@
 #include "sleeper.h"
 #include "widgets/mainwindow.h"
 #include <PythonQt/PythonQtStdIn.h>
+#include <QDir>
+#include <QFileInfoList>
 
 extern stateInfo *state;
 static QString message;
@@ -134,10 +136,10 @@ void Scripting::run() {
 
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    PythonQt_QtAll::init();
+    //PythonQt_QtAll::init();
 
 
-    ctx.addObject("app", qApp);
+    //ctx.addObject("app", qApp);
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");
     ctx.evalScript("from PythonQt import *");
@@ -168,25 +170,25 @@ void Scripting::run() {
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("FloatCoordinate", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("Color4F", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
-    PythonQt::self()->registerCPPClass("SegmentListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("segmentListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("TreeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("treeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("NodeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("Mesh", "",  module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
 
     /*
 

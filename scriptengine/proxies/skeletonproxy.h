@@ -11,8 +11,8 @@ class SkeletonProxySignalDelegate : public QObject  {
 signals:
     bool loadSkeleton(QString file);
     bool saveSkeleton(QString file);
-    bool addNodeSignal(Coordinate *coordinate, Byte VPtype);
-    void treeAddedSignal(TreeListElement *tree);
+    bool addNodeSignal(Coordinate *Coordinate, Byte VPtype);
+    void treeAddedSignal(treeListElement *tree);
     void nodeAddedSignal();
     void updateToolsSignal();
     void clearSkeletonSignal();
@@ -39,27 +39,27 @@ public slots:
     QString skeleton_file();
     void to_xml(const QString &filename);
     void from_xml(const QString &filename);
-    TreeListElement *first_tree();
+    treeListElement *first_tree();
     bool has_unsaved_changes();
     void delete_tree(int tree_id);
     void delete_skeleton();
     void set_active_node(int node_id);
     void add_comment(int node_id, char *comment);
-    NodeListElement *active_node();
-    QList<TreeListElement *> *trees();
+    nodeListElement *active_node();
+    QList<treeListElement *> *trees();
     void add_tree(int tree_id, const QString &comment = 0, float r = -1, float g = -1, float b = -1, float a = 1);
     void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
     void add_segment(int source_id, int target_id);
     void add_branch_node(int node_id);
     QList<int> *cube_data_at(int x, int y, int z);
-    void render_mesh(Mesh *Mesh);
+    void render_mesh(mesh *mesh);
 
     void export_converter(const QString &path);
     void save_sys_path(const QString &path);
     void save_working_directory(const QString &path);
 
     void loadStyleSheet(const QString &path);
-    QList<Mesh *> *user_geom_list();
+    QList<mesh *> *user_geom_list();
     void move_to(int x, int y, int z);
     void render_text(const QString &path, int x, int y, int z);
 

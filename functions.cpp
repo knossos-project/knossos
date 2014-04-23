@@ -8,15 +8,15 @@ int roundFloat(float number) {
     else return (int)(number - 0.5);
 }
 
-float scalarProduct(FloatCoordinate *v1, FloatCoordinate *v2) {
+float scalarProduct(floatCoordinate *v1, floatCoordinate *v2) {
     return ((v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z));
 }
 
-float euclidicNorm(FloatCoordinate *v) {
+float euclidicNorm(floatCoordinate *v) {
     return sqrt(scalarProduct(v, v));
 }
 
-bool normalizeVector(FloatCoordinate *v) {
+bool normalizeVector(floatCoordinate *v) {
     float norm = euclidicNorm(v);
     v->x /= norm;
     v->y /= norm;
@@ -40,16 +40,16 @@ float degToRad(float deg) {
     return ((deg / 180.) * PI);
 }
 
-FloatCoordinate* crossProduct(FloatCoordinate *v1, FloatCoordinate *v2) {
-    FloatCoordinate *result = NULL;
-    result = (FloatCoordinate*)malloc(sizeof(FloatCoordinate));
+floatCoordinate* crossProduct(floatCoordinate *v1, floatCoordinate *v2) {
+    floatCoordinate *result = NULL;
+    result = (floatCoordinate*)malloc(sizeof(floatCoordinate));
     result->x = v1->y * v2->z - v1->z * v2->y;
     result->y = v1->z * v2->x - v1->x * v2->z;
     result->z = v1->x * v2->y - v1->y * v2->x;
     return result;
 }
 
-float vectorAngle(FloatCoordinate *v1, FloatCoordinate *v2) {
+float vectorAngle(floatCoordinate *v1, floatCoordinate *v2) {
     return ((float)acos((double)(scalarProduct(v1, v2)) / (euclidicNorm(v1)*euclidicNorm(v2))));
 }
 

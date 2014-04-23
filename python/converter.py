@@ -141,7 +141,7 @@ class Converter:
 	parent = node.parent_tree()
 	if parent:
 	    pid = parent.tree_id()	
-	pos = node.coordinate()
+	pos = node.Coordinate()
 	x = pos.x()
 	y = pos.y()
 	z = pos.z()

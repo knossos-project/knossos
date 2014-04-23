@@ -1,45 +1,45 @@
 #include "colordecorator.h"
 #include "knossos-global.h"
 
-Q_DECLARE_METATYPE(Color4F)
+Q_DECLARE_METATYPE(color4F)
 
 ColorDecorator::ColorDecorator(QObject *parent) :
     QObject(parent)
 {
-    qRegisterMetaType<Color4F>();
+    qRegisterMetaType<color4F>();
 }
 
 
-Color4F *ColorDecorator::new_Color4F() {
-    return new Color4F();
+color4F *ColorDecorator::new_Color4F() {
+    return new color4F();
 }
 
-Color4F *ColorDecorator::new_Color4F(float r, float g, float b, float a) {
-    return new Color4F(r, g, b, a);
+color4F *ColorDecorator::new_Color4F(float r, float g, float b, float a) {
+    return new color4F(r, g, b, a);
 }
 
 
-float ColorDecorator::red(Color4F *self) {
+float ColorDecorator::red(color4F *self) {
     return self->r;
 }
 
-float ColorDecorator::green(Color4F *self) {
+float ColorDecorator::green(color4F *self) {
     return self->g;
 }
 
-float ColorDecorator::blue(Color4F *self) {
+float ColorDecorator::blue(color4F *self) {
     return self->b;
 }
 
-float ColorDecorator::alpha(Color4F *self) {
+float ColorDecorator::alpha(color4F *self) {
     return self->a;
 }
 
 QString ColorDecorator::static_Color4F_help() {
     return QString("An instanteable class which stores rgba channels in float coordinates in range [0..1]. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
-                   "\n Color4F() : creates an empty color object." \
-                   "\n Color4F(red, green, blue, alpha) : creates a color object by specifying all color channels. Excepts a float value in range [0..1]"
+                   "\n color4F() : creates an empty color object." \
+                   "\n color4F(red, green, blue, alpha) : creates a color object by specifying all color channels. Excepts a float value in range [0..1]"
                    "\n\n GETTER: " \
                    "\n red() : returns the red channel of the color" \
                    "\n green() : returns the green channel of the color" \
@@ -53,19 +53,19 @@ QString ColorDecorator::static_Color4F_help() {
 }
 
 
-void ColorDecorator::set_red(Color4F *self, float red) {
+void ColorDecorator::set_red(color4F *self, float red) {
     self->r = red;
 }
 
-void ColorDecorator::set_green(Color4F *self, float green) {
+void ColorDecorator::set_green(color4F *self, float green) {
     self->g = green;
 }
 
-void ColorDecorator::set_blue(Color4F *self, float blue) {
+void ColorDecorator::set_blue(color4F *self, float blue) {
     self->r = blue;
 }
 
-void ColorDecorator::set_alpha(Color4F *self, float alpha) {
+void ColorDecorator::set_alpha(color4F *self, float alpha) {
     self->a = alpha;
 }
 

@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <curl/curl.h>
+#include <curl/easy.h>
+#include <curl/multi.h>
 
 class QLabel;
 class QLineEdit;

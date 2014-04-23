@@ -3,38 +3,38 @@
 #include "renderer.h"
 #include <QDebug>
 
-Q_DECLARE_METATYPE(Color4F)
-Q_DECLARE_METATYPE(Mesh)
+Q_DECLARE_METATYPE(color4F)
+Q_DECLARE_METATYPE(mesh)
 
 
 
 MeshDecorator::MeshDecorator(QObject *parent) :
     QObject(parent)
 {
-    qRegisterMetaType<Mesh>();
+    qRegisterMetaType<mesh>();
 
 }
 
-Mesh *MeshDecorator::new_Mesh(uint mode) {
-    Mesh *instance = new Mesh(mode);
-    Renderer::initMesh(instance, 2);
+mesh *MeshDecorator::new_mesh(uint mode) {
+    mesh *instance = new mesh(mode);
+    Renderer::initmesh(instance, 2);
     return instance;
 }
 
-QList<FloatCoordinate *> *MeshDecorator::vertices(Mesh *self) {
-    QList<FloatCoordinate *> *vertices = new QList<FloatCoordinate *>();
+QList<floatCoordinate *> *MeshDecorator::vertices(mesh *self) {
+    QList<floatCoordinate *> *vertices = new QList<floatCoordinate *>();
     for(int i = 0; i < self->vertsIndex; i++) {
-        FloatCoordinate *currentVertex = self->vertices++;
+        floatCoordinate *currentVertex = self->vertices++;
         vertices->append(currentVertex);
     }
 
     return vertices;
 }
 
-QList<FloatCoordinate *> *MeshDecorator::normals(Mesh *self) {
-    QList<FloatCoordinate *> *normals = new QList<FloatCoordinate *>();
+QList<floatCoordinate *> *MeshDecorator::normals(mesh *self) {
+    QList<floatCoordinate *> *normals = new QList<floatCoordinate *>();
     for(int i = 0; i < self->normsIndex; i++) {
-        FloatCoordinate *currentNormal = self->normals++;
+        floatCoordinate *currentNormal = self->normals++;
         normals->append(currentNormal);
     }
 
@@ -42,33 +42,33 @@ QList<FloatCoordinate *> *MeshDecorator::normals(Mesh *self) {
 }
 
 
-QList<Color4F *> *MeshDecorator::colors(Mesh *self) {
-    QList<Color4F *> *colors = new QList<Color4F *>();
+QList<color4F *> *MeshDecorator::colors(mesh *self) {
+    QList<color4F *> *colors = new QList<color4F *>();
     for(int i = 0; i < self->colsIndex; i++) {
-        Color4F *currentColor = self->colors++;
+        color4F *currentColor = self->colors++;
         colors->append(currentColor);
     }
 
     return colors;
 }
 
-void MeshDecorator::set_vertices(Mesh *self, QList<QVariant> &vertices) {
-    Renderer::resizeMeshCapacity(self, vertices.size());
+void MeshDecorator::set_vertices(mesh *self, QList<QVariant> &vertices) {
+    Renderer::resizemeshCapacity(self, vertices.size());
 
     for(int i = 0; i < vertices.size(); i++) {
-        if(vertices.at(i).canConvert<FloatCoordinate>()) {
-            self->vertices[i] = vertices.at(i).value<FloatCoordinate>();
+        if(vertices.at(i).canConvert<floatCoordinate>()) {
+            self->vertices[i] = vertices.at(i).value<floatCoordinate>();
         }
     }
 
     self->vertsIndex = vertices.size();
 }
 
-void MeshDecorator::set_normals(Mesh *self, QList<QVariant> &normals) {
+void MeshDecorator::set_normals(mesh *self, QList<QVariant> &normals) {
 
     for(int i = 0; i < normals.size(); i++) {
-        if(normals.at(i).canConvert<FloatCoordinate>()) {
-            self->normals[i] = normals.at(i).value<FloatCoordinate>();
+        if(normals.at(i).canConvert<floatCoordinate>()) {
+            self->normals[i] = normals.at(i).value<floatCoordinate>();
         }
     }
 
@@ -77,34 +77,34 @@ void MeshDecorator::set_normals(Mesh *self, QList<QVariant> &normals) {
 
 }
 
-void MeshDecorator::set_colors(Mesh *self, QList<QVariant> &colors) {
+void MeshDecorator::set_colors(mesh *self, QList<QVariant> &colors) {
 
     for(int i = 0; i < colors.size(); i++) {
-        self->colors[i] = colors.at(i).value<Color4F>();
+        self->colors[i] = colors.at(i).value<color4F>();
     }
 
     self->colsIndex = colors.size();
 
 }
 
-void MeshDecorator::set_size(Mesh *self, uint size) {
+void MeshDecorator::set_size(mesh *self, uint size) {
     self->size = size;
 }
 
 /** @todo check the size-commands for the other modes */
-QString MeshDecorator::static_Mesh_help() {
+QString MeshDecorator::static_mesh_help() {
     return QString("An instanceable class for rendering geometry from python. Access to the attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS:" \
-                   "\n Mesh(mode) : Creates a Mesh object. The constructor expects an openGL vertex mode constant:" \
+                   "\n mesh(mode) : Creates a mesh object. The constructor expects an openGL vertex mode constant:" \
                    "\n\t GL_POINTS, GL_LINES, GL_TRIANGLES, GL_QUADS, GL_POLYGON" \
                    "\n\n GETTER: " \
-                   "\n vertices() : returns a list of float coordinates of the current Mesh" \
+                   "\n vertices() : returns a list of float coordinates of the current mesh" \
                    "\n normals() : returns a list of float coordinates with normal coordinates" \
                    "\n colors() : returns a list of colors" \
                    "\n\n SETTER: " \
                    "\n set_vertices(vertexList) : excepts a list of FloatCoordinates representing vertices" \
                    "\n set_normals(normalList) : excepts a list of FloatCoordinates repesentation normal vectors" \
-                   "\n set_colors(colorList) : excepts a list of Color4F objects" \
+                   "\n set_colors(colorList) : excepts a list of color4F objects" \
                    "\n set_size(size) : sets the specific size of the geometry: " \
                    "\n if mode is GL_POINTS then size determines the point size." \
                    "\n if mode is GL_LINES then size determines the lines width." \
