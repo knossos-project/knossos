@@ -948,7 +948,7 @@ struct viewerState {
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     bool drawVPCrosshairs;
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
-    int drawNodeSelectSquare;
+    int nodeSelectSquareVpId;
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     //Show height/width-labels inside VPs

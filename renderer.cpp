@@ -406,7 +406,7 @@ uint Renderer::renderViewportBorders(uint currentVP) {
     }
 
     // render node selection box
-    if (state->viewerState->drawNodeSelectSquare == static_cast<int>(currentVP)) {
+    if (state->viewerState->nodeSelectSquareVpId == static_cast<int>(currentVP)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
 

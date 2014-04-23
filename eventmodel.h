@@ -65,13 +65,13 @@ public:
     void handleKeyboard(QKeyEvent *event, int VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
+    void startNodeSelection(int x, int y, int vpId);
+    void nodeSelection(int x, int y, int vpId);
     int xrel(int x);
     int yrel(int y);
     int mouseX;
     int mouseY;
     bool grap;
-protected:
-
 signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void userMoveArbSignal(float x, float y, float z, int serverMovement);
@@ -127,8 +127,6 @@ signals:
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(nodeListElement *node);
     void nodePositionChangedSignal(nodeListElement *node);
-public slots:
-
 };
 
 #endif // EVENTMODEL_H
