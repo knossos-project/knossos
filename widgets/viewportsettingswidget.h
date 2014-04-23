@@ -35,6 +35,7 @@ class VPSkeletonViewportWidget;
 class ViewportSettingsWidget : public QDialog
 {
     Q_OBJECT
+    QTabWidget *tabs;
 public:
     explicit ViewportSettingsWidget(QWidget *parent = 0);
     VPGeneralTabWidget *generalTabWidget;
@@ -43,14 +44,14 @@ public:
     void loadSettings();
     void saveSettings();
 signals:
-    void uncheckSignal();
-    void decorationSignal();
-public slots:
-
-protected:
-    void closeEvent(QCloseEvent *event);
-    QTabWidget *tabs;
-    
+    void visibilityChanged(bool);
+private:
+    void showEvent(QShowEvent *) override {
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *) override {
+        emit visibilityChanged(false);
+    }
 };
 
 #endif // VIEWPORTSETTINGSWIDGET_H

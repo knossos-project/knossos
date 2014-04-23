@@ -43,7 +43,7 @@ class ZoomAndMultiresWidget : public QDialog
     Q_OBJECT
 public:
     explicit ZoomAndMultiresWidget(QWidget *parent = 0);
-        
+
 public slots:
     void zoomDefaultsClicked();
     void lockDatasetMagChecked(bool on);
@@ -52,8 +52,6 @@ public slots:
     void update();
     void loadSettings();
     void saveSettings();
-protected:
-    void closeEvent(QCloseEvent *event);
 protected:
     /*! Necessary helper variables to enable relative (instead of constant) incrementation/decrementation of zoom spin boxes.
      * Zoom steps become smaller with higher zoom levels and vice versa (smoother impression to the user).
@@ -77,8 +75,15 @@ protected:
 signals:
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
-    void uncheckSignal();
     void zoomLevelSignal(float value);
+    void visibilityChanged(bool);
+private:
+    void showEvent(QShowEvent *) override {
+        emit visibilityChanged(true);
+    }
+    void hideEvent(QHideEvent *) override {
+        emit visibilityChanged(false);
+    }
 };
 
 #endif // ZOOMANDMULTIRESWIDGET_H

@@ -38,13 +38,10 @@
 #include <QQueue>
 #include <QComboBox>
 #include <QUndoStack>
-#include "widgetcontainer.h"
 
 namespace Ui {
-    class MainWindow;     
+    class MainWindow;
 }
-
-
 
 class QLabel;
 class QToolBar;
@@ -56,17 +53,17 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 class Viewport;
-
+class WidgetContainer;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
     void updateSkeletonFileName(QString &fileName);
-    bool eventFilter(QObject *object, QEvent *event);
+
     void closeEvent(QCloseEvent *event);
     void updateTitlebar();
 
@@ -75,7 +72,7 @@ public:
 
 signals:
     bool changeDatasetMagSignal(uint serverMovement);
-    void recalcTextureOffsetsSignal();    
+    void recalcTextureOffsetsSignal();
     void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
     void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
     bool loadSkeletonSignal(QString fileName);
@@ -91,7 +88,7 @@ signals:
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 
-    TreeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, Color4F color, int serialize);
+    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color, int serialize);
     void nextCommentSignal(QString searchString);
     void previousCommentSignal(QString searchString);
     /* */
@@ -100,20 +97,19 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, NodeListElement *branchNode, int branchNodeID, int serialize);
+    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
     void jumpToActiveNodeSignal();
 
-    bool addCommentSignal(int targetRevision, QString content, NodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, NodeListElement *newNode, int newNodeID, int serialize);
+    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID, int serialize);
+    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID, int serialize);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
 
-    void treeAddedSignal(TreeListElement *tree);
+    void treeAddedSignal(treeListElement *tree);
     void branchPushedSignal();
     void branchPoppedSignal();
-    void nodeCommentChangedSignal(NodeListElement *node);
-    void viewportDecorationSignal(bool visible);
+    void nodeCommentChangedSignal(nodeListElement *node);
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -125,107 +121,32 @@ protected:
     QString saveFileDirectory;
 public:
     Ui::MainWindow *ui;
-    QToolBar *toolBar;
-    QToolButton *copyButton;
-    QToolButton *pasteButton;
-    QLabel *xLabel, *yLabel, *zLabel;
+
     QSpinBox *xField, *yField, *zField;
-
-    QMessageBox *prompt;
-
-    QWidget *mainWidget;
-    QGridLayout *gridLayout;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
     // contains all widgets
     WidgetContainer *widgetContainer;
 
-    /* file actions */
-    QAction *recentFileAction;
     QAction **historyEntryActions;
 
-    /* edit skeleton actions */
     QAction *addNodeAction;
     QAction *linkWithActiveNodeAction;
     QAction *dropNodesAction;
-    QAction *skeletonStatisticsAction;
-    QAction *clearSkeletonAction;
 
-    QAction *newTreeAction;
-    QAction *nextCommentAction;
-    QAction *previousCommentAction;
-    QAction *pushBranchNodeAction;
-    QAction *popBranchNodeAction;
-    QAction *moveToPrevNodeAction;
-    QAction *moveToNextNodeAction;
-    QAction *moveToPrevTreeAction;
-    QAction *moveToNextTreeAction;
-    QAction *jumpToActiveNodeAction;
-
-    /* view actions */
-    QAction *workModeViewAction;
     QAction *dragDatasetAction;
     QAction *recenterOnClickAction;
-    QAction *zoomAndMultiresAction;
-    QAction *tracingTimeAction;
-
-    /* preferences actions */
-    QAction *loadCustomPreferencesAction;
-    QAction *saveCustomPreferencesAction;
-    QAction *defaultPreferencesAction;
-    QAction *datasetNavigationAction;
-    QAction *synchronizationAction;
-    QAction *dataSavingOptionsAction;
-    QAction *viewportSettingsAction;
-
-    /* window actions */
-    QAction *toolsAction;
-    QAction *taskAction;
-    QAction *logAction;
-    QAction *commentShortcutsAction;
-    QAction *annotationAction;
-
-    /* help actions */
-    QAction *aboutAction;
-
-    /* Qmenu-points */
-    QMenuBar *customBar;
-    QMenu *dataSetMenu;
-    QMenu *fileMenu;
-    QMenu *recentFileMenu;
-    QMenu *editMenu;
-    QMenu *workModeEditMenu;
-    QMenu *viewMenu;
-    QMenu *workModeViewMenu;
-    QMenu *preferenceMenu;
-    QMenu *windowMenu;
-    QMenu *helpMenu;
 
     QQueue<QString> *skeletonFileHistory;
     QFile *loadedFile;
 
-
-    QToolButton *open, *save;
-    QToolButton *pythonButton;
-    QToolButton *tracingTimeButton;
-    QToolButton *zoomAndMultiresButton;
-    QToolButton *syncButton;
-    QToolButton *viewportSettingsButton;
-    QToolButton *toolsButton;
-    QToolButton *commentShortcutsButton;
-    QPushButton *resetVPsButton;
-    QPushButton *resetVPOrientButton;
     QCheckBox *lockVPOrientationCheckbox;
-    QToolButton *taskManagementButton;
-    QToolButton *annotationButton;
 
     void createViewports();
 
     // for creating action, menus and the toolbar
-    void createActions();
     void createMenus();
     void createToolBar();
-
 
     // for save, load and clear settings
     void saveSettings();
@@ -237,22 +158,16 @@ public slots:
     bool loadSkeletonAfterUserDecision(const QString &fileName);
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
-    bool addRecentFile(const QString &fileName);    
+    bool addRecentFile(const QString &fileName);
+    //QUndoStack *undoStack;
 
-
-    /* dataset */
-    void openDatasetSlot();
     /* skeleton menu */
     void openSlot();
     void openSlot(const QString &fileName); // for the drag n drop version
     void saveSlot();
     void saveAsSlot();
-    void quitSlot();
 
     /* edit skeleton menu*/
-    void addNodeSlot();
-    void linkWithActiveNodeSlot();
-    void dropNodesSlot();
     void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();
@@ -261,42 +176,23 @@ public slots:
     /* view menu */
     void dragDatasetSlot();
     void recenterOnClickSlot();
-    void zoomAndMultiresSlot();
-    void tracingTimeSlot();
 
     /* preferences menu */
     void loadCustomPreferencesSlot();
     void saveCustomPreferencesSlot();
     void defaultPreferencesSlot();
-    void datatasetNavigationSlot();
     void synchronizationSlot();
-    void dataSavingOptionsSlot();
-    void viewportSettingsSlot();
 
     /* window menu */
     void taskSlot();
     void logSlot();
-    void commentShortcutsSlots();
-    void annotationSlot();
-
-    /* help menu */
-    void aboutSlot();
-    void documentationSlot();
 
     /* toolbar slots */
     void copyClipboardCoordinates();
     void pasteClipboardCoordinates();
     void coordinateEditingFinished();
 
-    void uncheckToolsAction();
-    void uncheckViewportSettingAction();
-    void uncheckCommentShortcutsAction();
-    void uncheckConsoleAction();    
-    void uncheckDataSavingAction();
-
-    void uncheckSynchronizationAction();
-    void uncheckNavigationAction();
-    void updateCoordinateBar(int x, int y, int z);  
+    void updateCoordinateBar(int x, int y, int z);
     void recentFileSelected();
     void treeColorAdjustmentsChanged();
     // viewports
@@ -321,8 +217,6 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
-
-
 };
 
 #endif // MAINWINDOW_H

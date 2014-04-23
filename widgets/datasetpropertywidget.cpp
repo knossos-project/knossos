@@ -30,7 +30,11 @@ DatasetPropertyWidget::DatasetPropertyWidget(QWidget *parent) : QDialog(parent) 
     this->path->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     this->path->setEditable(true);
     supercubeEdgeSpin = new QSpinBox;
-    supercubeEdgeSpin->setRange(3, 7);
+    int maxM = TEXTURE_EDGE_LEN / state->cubeEdgeLength;
+    if (maxM % 2 == 0) {
+        maxM -= 1;//set maxM to the next odd value
+    }
+    supercubeEdgeSpin->setRange(3, maxM);
     supercubeEdgeSpin->setSingleStep(2);
     supercubeEdgeSpin->setValue(state->M);
     supercubeEdgeSpin->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -95,8 +99,7 @@ void DatasetPropertyWidget::loadSettings() {
     settings.beginGroup(DATASET_WIDGET);
     path->clear();
     path->insertItems(0, settings.value(DATASET_MRU).toStringList());
-    auto Ms = {3, 5, 7};//possibleSuperCubeSizes
-    if (std::find(std::begin(Ms), std::end(Ms), state->M) == std::end(Ms)) {//M is invalid
+    if (state->M == 0) {//M is invalid
         state->M = settings.value(DATASET_M, 3).toInt();
     }
     settings.endGroup();

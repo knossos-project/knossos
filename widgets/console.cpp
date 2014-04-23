@@ -51,7 +51,7 @@ void Console::resizeEvent(QResizeEvent *event) {
     this->setPalette(palette);
 }
 
-void Console::closeEvent(QCloseEvent *event) {
+void Console::closeEvent(QCloseEvent */*event*/) {
     this->hide();
     emit uncheckSignal();
 }
@@ -84,8 +84,8 @@ void Console::saveSettings() {
 
 /** used by the LOG macro, see knossos-global.h
 */
-void Console::log(const char *fmt, ...) {
-
+void Console::log(const char */*fmt*/, ...) {
+    // TODO delete?
     /*
 
     va_list args;

@@ -123,7 +123,7 @@ void DataSavingWidget::saveSettings() {
     settings.endGroup();
 }
 
-void DataSavingWidget::closeEvent(QCloseEvent *event) {
+void DataSavingWidget::closeEvent(QCloseEvent */*event*/) {
     this->hide();
     emit uncheckSignal();
 }

@@ -48,6 +48,10 @@ const QString LIGHT_EFFECTS = "light_effects";
 const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString SHOW_ALL_NODE_ID = "show_all_node_id";
 const QString RENDERING_QUALITY = "rendering_quality";
+const QString WHOLE_SKELETON = "whole_skeleton";
+const QString ONLY_SELECTED_TREES = "only_selected_trees";
+const QString HIDE_SKELETON_ORTHOVPS = "hide_skeleton_orthovps";
+const QString HIDE_SKELETON_SKELVP = "hide_skeleton_skelvp";
 const QString OVERRIDE_NODES_RADIUS_CHECKED = "override_nodes_radius_checked";
 const QString OVERRIDE_NODES_RADIUS_VALUE = "override_nodes_radius_value";
 const QString EDGE_TO_NODE_RADIUS = "edge_to_node_radius";
@@ -65,7 +69,6 @@ const QString VP_TAB_INDEX = "vp_tab_index";
 const QString VP_LOCK_ORIENTATION = "lock_vp_orientation";
 
 /* Viewport Settings Slice Plane Tab */
-const QString ENABLE_SKELETON_OVERLAY = "enable_skeleton_overlay";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";
 const QString DEPTH_CUTOFF = "depth_cutoff";
@@ -84,9 +87,6 @@ const QString SHOW_XY_PLANE = "show_xy_plane";
 const QString SHOW_XZ_PLANE = "show_xz_plane";
 const QString SHOW_YZ_PLANE = "show_yz_plane";
 const QString ROTATE_AROUND_ACTIVE_NODE = "rotate_around_active_node";
-const QString WHOLE_SKELETON = "whole_skeleton";
-const QString ONLY_ACTIVE_TREE = "only_active_tree";
-const QString HIDE_SKELETON = "hide_skeleton";
 
 /* Navigation Widget */
 const QString MOVEMENT_SPEED = "movement_speed";

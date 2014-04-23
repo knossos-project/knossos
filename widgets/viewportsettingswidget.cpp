@@ -59,11 +59,6 @@ ViewportSettingsWidget::ViewportSettingsWidget(QWidget *parent) : QDialog(parent
     this->setWindowFlags(this->windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
-void ViewportSettingsWidget::closeEvent(QCloseEvent *) {
-    this->hide();
-    emit uncheckSignal();
-}
-
 void ViewportSettingsWidget::loadSettings() {
     int width, height, x, y;
     bool visible;
@@ -102,6 +97,23 @@ void ViewportSettingsWidget::loadSettings() {
             (settings.value(RENDERING_QUALITY).isNull())? 7. : settings.value(RENDERING_QUALITY).toInt();
     this->generalTabWidget->renderingQualitySpinBox->setValue((int)state->viewerState->cumDistRenderThres);
 
+    state->skeletonState->displayMode = 0;//it needs to get initialized _somewhere_
+    const auto wholeSkeleton = settings.value(WHOLE_SKELETON, true).toBool();
+    generalTabWidget->wholeSkeletonRadioButton.setChecked(wholeSkeleton);
+    generalTabWidget->wholeSkeletonRadioButton.clicked(wholeSkeleton);
+
+    const auto onlyActiveTree = settings.value(ONLY_SELECTED_TREES, false).toBool();
+    generalTabWidget->onlySelectedTreesRadioButton.setChecked(onlyActiveTree);
+    generalTabWidget->onlySelectedTreesRadioButton.clicked(onlyActiveTree);
+
+    const auto hideSkeletonOrthoVPs = settings.value(HIDE_SKELETON_ORTHOVPS, false).toBool();
+    generalTabWidget->hideSkeletonOrthoVPsCheckBox.setChecked(hideSkeletonOrthoVPs);
+    generalTabWidget->hideSkeletonOrthoVPsCheckBox.clicked(hideSkeletonOrthoVPs);
+
+    const auto hideSkeletonSkelVP = settings.value(HIDE_SKELETON_SKELVP, false).toBool();
+    generalTabWidget->hideSkeletonSkelVPCheckBox.setChecked(hideSkeletonSkelVP);
+    generalTabWidget->hideSkeletonSkelVPCheckBox.clicked(hideSkeletonSkelVP);
+
     state->skeletonState->overrideNodeRadiusBool =
             (settings.value(OVERRIDE_NODES_RADIUS_CHECKED).isNull())? false : settings.value(OVERRIDE_NODES_RADIUS_CHECKED).toBool();
     this->generalTabWidget->overrideNodeRadiusCheckBox->setChecked(state->skeletonState->overrideNodeRadiusBool);
@@ -120,19 +132,12 @@ void ViewportSettingsWidget::loadSettings() {
 
     if(settings.value(SHOW_VP_DECORATION).isNull() == false) {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(settings.value(SHOW_VP_DECORATION).toBool());
-        emit decorationSignal();
     }
     else {
         this->generalTabWidget->showVPDecorationCheckBox->setChecked(true);
     }
 
-
-    state->skeletonState->displayMode = 0;//it needs to get initialized _somewhere_
     //sp vp settings
-    const auto skeletonOverlay = settings.value(ENABLE_SKELETON_OVERLAY, true).toBool();
-    slicePlaneViewportWidget->enableSkeletonOverlayCheckBox->setChecked(skeletonOverlay);
-    slicePlaneViewportWidget->enableSkeletonOverlayCheckBox->clicked(skeletonOverlay);
-
     const auto intersections = settings.value(HIGHLIGHT_INTERSECTIONS, false).toBool();
     this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->setChecked(intersections);
     this->slicePlaneViewportWidget->highlightIntersectionsCheckBox->clicked(intersections);
@@ -185,18 +190,6 @@ void ViewportSettingsWidget::loadSettings() {
 
 
     //skeleton vp settings
-    const auto wholeSkeleton = settings.value(WHOLE_SKELETON, true).toBool();
-    skeletonViewportWidget->wholeSkeletonRadioButton.setChecked(wholeSkeleton);
-    skeletonViewportWidget->wholeSkeletonRadioButton.clicked(wholeSkeleton);
-
-    const auto onlyActiveTree = settings.value(ONLY_ACTIVE_TREE, false).toBool();
-    skeletonViewportWidget->onlyActiveTreeRadioButton.setChecked(onlyActiveTree);
-    skeletonViewportWidget->onlyActiveTreeRadioButton.clicked(onlyActiveTree);
-
-    const auto hideSkeleton = settings.value(HIDE_SKELETON, false).toBool();
-    skeletonViewportWidget->hideSkeletonRadioButton.setChecked(hideSkeleton);
-    skeletonViewportWidget->hideSkeletonRadioButton.clicked(hideSkeleton);
-
     const auto xyplane = settings.value(SHOW_XY_PLANE, false).toBool();
     skeletonViewportWidget->showXYPlaneCheckBox.setChecked(xyplane);
     skeletonViewportWidget->showXYPlaneCheckBox.clicked(xyplane);
@@ -239,11 +232,14 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(SHOW_ALL_NODE_ID, generalTabWidget->showAllNodeIdsCheckBox->isChecked());
     settings.setValue(EDGE_TO_NODE_RADIUS, generalTabWidget->edgeNodeRadiusRatioSpinBox->value());
     settings.setValue(RENDERING_QUALITY, generalTabWidget->renderingQualitySpinBox->value());
+    settings.setValue(WHOLE_SKELETON, generalTabWidget->wholeSkeletonRadioButton.isChecked());
+    settings.setValue(ONLY_SELECTED_TREES, generalTabWidget->onlySelectedTreesRadioButton.isChecked());
+    settings.setValue(HIDE_SKELETON_ORTHOVPS, generalTabWidget->hideSkeletonOrthoVPsCheckBox.isChecked());
+    settings.setValue(HIDE_SKELETON_SKELVP, generalTabWidget->hideSkeletonSkelVPCheckBox.isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_CHECKED, generalTabWidget->overrideNodeRadiusCheckBox->isChecked());
     settings.setValue(OVERRIDE_NODES_RADIUS_VALUE, generalTabWidget->overrideNodeRadiusSpinBox->value());
     settings.setValue(SHOW_VP_DECORATION, generalTabWidget->showVPDecorationCheckBox->isChecked());
 
-    settings.setValue(ENABLE_SKELETON_OVERLAY, slicePlaneViewportWidget->enableSkeletonOverlayCheckBox->isChecked());
     settings.setValue(HIGHLIGHT_INTERSECTIONS, slicePlaneViewportWidget->highlightIntersectionsCheckBox->isChecked());
     settings.setValue(DATASET_LINEAR_FILTERING, slicePlaneViewportWidget->datasetLinearFilteringCheckBox->isChecked());
     settings.setValue(DEPTH_CUTOFF, slicePlaneViewportWidget->depthCutoffSpinBox->value());
@@ -257,9 +253,6 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(TREE_LUT_FILE, slicePlaneViewportWidget->treeLutFile->text());
     settings.setValue(TREE_LUT_FILE_USED, slicePlaneViewportWidget->useOwnTreeColorsCheckBox->isChecked());
 
-    settings.setValue(WHOLE_SKELETON, skeletonViewportWidget->wholeSkeletonRadioButton.isChecked());
-    settings.setValue(ONLY_ACTIVE_TREE, skeletonViewportWidget->onlyActiveTreeRadioButton.isChecked());
-    settings.setValue(HIDE_SKELETON, skeletonViewportWidget->hideSkeletonRadioButton.isChecked());
     settings.setValue(SHOW_XY_PLANE, skeletonViewportWidget->showXYPlaneCheckBox.isChecked());
     settings.setValue(SHOW_XZ_PLANE, skeletonViewportWidget->showXZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_YZ_PLANE, skeletonViewportWidget->showYZPlaneCheckBox.isChecked());

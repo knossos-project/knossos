@@ -55,7 +55,6 @@ public slots:
     void numberOfStepsChanged(int value);
 protected:
     void closeEvent(QCloseEvent *event);
-    void resizeEvent(QResizeEvent *event);
 
     QLabel *generalLabel;
     QLabel *movementSpeedLabel;
