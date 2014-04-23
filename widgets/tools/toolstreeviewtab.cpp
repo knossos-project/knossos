@@ -303,30 +303,26 @@ void ToolsTreeviewTab::setTreeCommentAction() {
 void ToolsTreeviewTab::contextMenu(QPoint pos) {
     if (activeNodeTable->hasFocus()) {
         QMenu nodeContextMenu;
-        QObject::connect(nodeContextMenu.addAction("Jump to"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedNode);
         QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
         QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete active node"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
-        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//jump to
-        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
-        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//del active node
+        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//del active node
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(activeNodeTable->viewport()->mapToGlobal(pos));
     } else if (nodeTable->hasFocus()) {
         QMenu nodeContextMenu;
-        QObject::connect(nodeContextMenu.addAction("Set as active node"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedNode);
         QObject::connect(nodeContextMenu.addAction("Split component from tree"), &QAction::triggered, this, &ToolsTreeviewTab::splitComponentAction);
         QObject::connect(nodeContextMenu.addAction("(Un)link nodes"), &QAction::triggered, this, &ToolsTreeviewTab::linkNodesAction);
         QObject::connect(nodeContextMenu.addAction("Set comment for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeCommentAction);
         QObject::connect(nodeContextMenu.addAction("Set radius for node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setNodeRadiusAction);
         QObject::connect(nodeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "(DEL)ete node(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteNodesAction);
 
-        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//active node
-        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
-        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedNodes.size() == 2);//link nodes needs two selected nodes
+        nodeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
         nodeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
         nodeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
-        nodeContextMenu.actions().at(5)->setEnabled(state->skeletonState->selectedNodes.size() > 0);
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeTable->viewport()->mapToGlobal(pos));
     } else if (activeTreeTable->hasFocus()) {
@@ -344,19 +340,17 @@ void ToolsTreeviewTab::contextMenu(QPoint pos) {
         treeContextMenu.exec(activeTreeTable->viewport()->mapToGlobal(pos));
     } else if (treeTable->hasFocus()) {
         QMenu treeContextMenu;
-        QObject::connect(treeContextMenu.addAction("Set as active tree"), &QAction::triggered, this, &ToolsTreeviewTab::activateFirstSelectedTree);
         QObject::connect(treeContextMenu.addAction("Move selected node(s) to this tree"), &QAction::triggered, this, &ToolsTreeviewTab::moveNodesAction);
         QObject::connect(treeContextMenu.addAction("Merge trees"), &QAction::triggered, this, &ToolsTreeviewTab::mergeTreesAction);
         QObject::connect(treeContextMenu.addAction("Set comment for tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::setTreeCommentAction);
         QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, this, &ToolsTreeviewTab::restoreColorAction);
         QObject::connect(treeContextMenu.addAction(QIcon(":/images/icons/user-trash.png"), "Delete tree(s)"), &QAction::triggered, this, &ToolsTreeviewTab::deleteTreesAction);
 
-        treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() == 1);//set as active tree action
-        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
-        treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() == 2);//merge trees action
+        treeContextMenu.actions().at(0)->setEnabled(state->skeletonState->selectedTrees.size() == 1 && state->skeletonState->selectedNodes.size() > 0);//move nodes
+        treeContextMenu.actions().at(1)->setEnabled(state->skeletonState->selectedTrees.size() == 2);//merge trees action
+        treeContextMenu.actions().at(2)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         treeContextMenu.actions().at(3)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         treeContextMenu.actions().at(4)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
-        treeContextMenu.actions().at(5)->setEnabled(state->skeletonState->selectedTrees.size() > 0);
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         treeContextMenu.exec(treeTable->viewport()->mapToGlobal(pos));
     }
