@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network testlib help
+QT += core gui opengl network help# testlib
 
 TARGET = knossos
 TEMPLATE = app
@@ -77,14 +77,14 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/t2.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
-    test/testcommentswidget.cpp \
-    test/testskeletonviewport.cpp \
-    test/testnavigationwidget.cpp \
-    test/testzoomandmultireswidget.cpp \
-    test/testorthogonalviewport.cpp \
-    test/testdatasavingwidget.cpp \
-    test/testskeletonloadandsave.cpp \
-    test/knossostestrunner.cpp \
+    #test/testcommentswidget.cpp \
+    #test/testskeletonviewport.cpp \
+    #test/testnavigationwidget.cpp \
+    #test/testzoomandmultireswidget.cpp \
+    #test/testorthogonalviewport.cpp \
+    #test/testdatasavingwidget.cpp \
+    #test/testskeletonloadandsave.cpp \
+    #test/knossostestrunner.cpp \
     sha256.cpp \
     widgets/documentationwidget.cpp \
     widgets/annotationwidget.cpp \
@@ -169,14 +169,14 @@ HEADERS  += widgets/mainwindow.h \
     decorators/mainwindowdecorator.h \
     scripting.h \
     ftp.h \
-    test/testcommentswidget.h \    
-    test/testskeletonviewport.h \
-    test/testnavigationwidget.h \
-    test/testzoomandmultireswidget.h \
-    test/testorthogonalviewport.h \
-    test/testdatasavingwidget.h \
-    test/testskeletonloadandsave.h \
-    test/knossostestrunner.h \
+    #test/testcommentswidget.h \
+    #test/testskeletonviewport.h \
+    #test/testnavigationwidget.h \
+    #test/testzoomandmultireswidget.h \
+    #test/testorthogonalviewport.h \
+    #test/testdatasavingwidget.h \
+    #test/testskeletonloadandsave.h \
+    #test/knossostestrunner.h \
     sha256.h \
     widgets/documentationwidget.h \
     widgets/annotationwidget.h \

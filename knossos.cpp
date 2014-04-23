@@ -25,7 +25,7 @@
 
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
-#include <QTest>
+//#include <QTest>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
@@ -46,10 +46,10 @@
 #include "scripting.h"
 #include "ftp.h"
 
-#include "test/knossostestrunner.h"
-#include "test/testcommentswidget.h"
-#include "test/testnavigationwidget.h"
-#include "test/testorthogonalviewport.h"
+//#include "test/knossostestrunner.h"
+//#include "test/testcommentswidget.h"
+//#include "test/testnavigationwidget.h"
+//#include "test/testorthogonalviewport.h"
 
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
