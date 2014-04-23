@@ -25,11 +25,13 @@
 #include "eventmodel.h"
 #include "functions.h"
 #include "knossos.h"
+#include "skeletonizer.h"
 #include "renderer.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
-#include "widgets/gui.h"
+
+#include <cstdlib>
 
 extern  stateInfo *state;
 
@@ -41,13 +43,11 @@ EventModel::EventModel(QObject *parent) :
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     uint clickedNode;
-    NodeListElement* newActiveNode;
-    Coordinate *clickedCoordinate = NULL;
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
         //first assume that user managed to hit the node
-        clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
+        clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
         if(clickedNode) {
             emit setActiveNodeSignal(CHANGE_MANUAL, NULL, clickedNode);
@@ -71,52 +71,31 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
 //            }
 //        }
         return false;
-    }
-
-    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        state->viewerState->nodeSelectionSquare.first.x = event->pos().x();
-        state->viewerState->nodeSelectionSquare.first.y = event->pos().y();
-
-        // reset second point from a possible previous selection square.
-        CPY_COORDINATE(state->viewerState->nodeSelectionSquare.second,
-                       state->viewerState->nodeSelectionSquare.first);
-        state->viewerState->drawNodeSelectSquare = VPfound;
-        return true;
-    }
-
-    // check in which type of VP the user clicked and perform appropriate operation
-    if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
-        // Activate motion tracking for this VP
+    } else if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+        startNodeSelection(event->pos().x(), event->pos().y(), VPfound);
+    } else if(state->viewerState->vpConfigs[VPfound].type == VIEWPORT_SKELETON) {
+        // always drag in skeleton vp
         state->viewerState->vpConfigs[VPfound].motionTracking = 1;
-
-        return true;
-    }
-    else {
-        // Handle the orthogonal viewports
-        switch(state->viewerState->workMode) {
-            case ON_CLICK_RECENTER:
-                clickedCoordinate =
-                    getCoordinateFromOrthogonalClick(event, VPfound);
-                if(clickedCoordinate == NULL)
-                    return true;
-
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
-                emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
-                Knossos::sendRemoteSignal();
-                break;
-
-            case ON_CLICK_DRAG:
-                // Activate motion tracking for this VP
-                state->viewerState->vpConfigs[VPfound].motionTracking = 1;
-                break;
+    } else {
+        // check click mode of orthogonal viewports
+        if (state->viewerState->clickReaction == ON_CLICK_RECENTER) {
+            Coordinate *clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
+            if(clickedCoordinate == NULL) {
+                return true;
             }
+            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
+            emit setRecenteringPositionSignal(clickedCoordinate->x, clickedCoordinate->y, clickedCoordinate->z);
+            free(clickedCoordinate);
+            Knossos::sendRemoteSignal();
+        } else {// Activate motion tracking for this VP
+            state->viewerState->vpConfigs[VPfound].motionTracking = 1;
+        }
     }
 
 
     //Set Connection between Active Node and Clicked Node
     if(QApplication::keyboardModifiers() == Qt::ALT) {
-        int clickedNode;
-        clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
+        int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
         if(clickedNode) {
             if(state->skeletonState->activeNode) {
                 if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID, clickedNode)) {
@@ -129,15 +108,13 @@ bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
             }
         }
     }
-
-    free(clickedCoordinate);
     return true;
 }
 
 bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
-    int clickedNode = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->x(), event->y(), 10);
+    int clickedNode = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->x(), event->y(), 10);
 
-    if(clickedNode) {        
+    if(clickedNode) {
         Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
         if(keyMod.testFlag(Qt::ShiftModifier)) {
             if(keyMod.testFlag(Qt::ControlModifier)) {
@@ -145,7 +122,7 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
                 // Pressed SHIFT and CTRL
             } else {
                 // Delete segment between clicked and active node
-                if(state->skeletonState->activeNode) {                   
+                if(state->skeletonState->activeNode) {
                     if(findSegmentByNodeIDSignal(state->skeletonState->activeNode->nodeID,
                                             clickedNode)) {
                         emit delSegmentSignal(CHANGE_MANUAL,
@@ -191,36 +168,39 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     }
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
-    switch(state->skeletonState->workMode) {
-    case SKELETONIZER_ON_CLICK_DROP_NODE:
+    switch (state->viewer->skeletonizer->getTracingMode()) {
+    case Skeletonizer::TracingMode::unlinkedNodes:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        emit workModeDropSignal();
         break;
-    case SKELETONIZER_ON_CLICK_ADD_NODE:
+    case Skeletonizer::TracingMode::skipNextLink:
         newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
-        emit workModeLinkSignal();
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::linkedNodes);//as we only wanted to skip one link
         break;
-    case SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE:
-        if(state->skeletonState->activeNode == NULL) {
-            //1. no node to link with
+    case Skeletonizer::TracingMode::linkedNodes:
+        if (state->skeletonState->activeNode == nullptr || state->skeletonState->activeTree->firstNode == nullptr) {
+            //no node to link with or no empty tree
             newNode = addSkeletonNodeSignal(clickedCoordinate, state->viewerState->vpConfigs[VPfound].type);
             break;
-        }
-
-
-        Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
-
-        if(keyMod.testFlag(Qt::ControlModifier)) {
-            //2. Add a "stump", a branch node to which we don't automatically move.
+        } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
+            //Add a "stump", a branch node to which we don't automatically move.
+            emit unselectNodesSignal();
             if((newNodeID = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                                 state->viewerState->vpConfigs[VPfound].type,
                                                                 false))) {
                 emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, NULL, newNodeID, true);
+                if(state->skeletonState->activeNode) {
+                    if(state->skeletonState->activeNode->selected == false) {
+                        state->skeletonState->activeNode->selected = true;
+                        state->skeletonState->selectedNodes.push_back(state->skeletonState->activeNode);
+                        emit updateTreeviewSignal();
+                    }
+                }
             }
             break;
         }
-        //3. Add a node and apply tracing modes
+        //Add a node and apply tracing modes
         lastPos = state->skeletonState->activeNode->position; //remember last active for movement calculation
+        emit unselectNodesSignal();
         newNode = addSkeletonNodeAndLinkWithActiveSignal(clickedCoordinate,
                                                          state->viewerState->vpConfigs[VPfound].type,
                                                          true);
@@ -277,7 +257,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
         if ((state->viewerState->autoTracingMode == AUTOTRACING_TRACING)
             || (state->viewerState->autoTracingMode == AUTOTRACING_MIRROR)) {
-            FloatCoordinate walkingVector;
+            floatCoordinate walkingVector;
             walkingVector.x = movement.x;
             walkingVector.y = movement.y;
             walkingVector.z = movement.z;
@@ -322,13 +302,12 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
+bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) {
     // pull selection square
-    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
+    if (state->viewerState->nodeSelectSquareVpId != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
     }
-
 
     uint i;
     for(i = 0; i < state->viewerState->numberViewports; i++) {
@@ -347,7 +326,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                         / ((float)state->viewerState->vpConfigs[i].edgeLength);
                     break;
                 case VIEWPORT_XY:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x())
                         / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
@@ -365,7 +344,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                     }
                     break;
                 case VIEWPORT_XZ:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
                     state->viewerState->vpConfigs[i].userMouseSlideY -=
@@ -381,7 +360,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                     }
                     break;
                 case VIEWPORT_YZ:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) break;
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) break;
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
                             ((float)xrel(event->x()) / state->viewerState->vpConfigs[i].screenPxXPerDataPx);
                     state->viewerState->vpConfigs[i].userMouseSlideY -=
@@ -397,7 +376,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
                     }
                     break;
                 case VIEWPORT_ARBITRARY:
-                    if(state->viewerState->workMode != ON_CLICK_DRAG) {
+                    if(state->viewerState->clickReaction != ON_CLICK_DRAG) {
                         break;
                     }
                     state->viewerState->vpConfigs[i].userMouseSlideX -=
@@ -434,7 +413,7 @@ bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
+bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int /*VPfound*/) {
 
     Coordinate newDraggedNodePos;
 
@@ -552,7 +531,7 @@ bool EventModel::handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
+bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/) {
     if((state->viewerState->vpConfigs[VIEWPORT_SKELETON].motionTracking == true) && (state->skeletonState->rotationcounter == 0)) {
            state->skeletonState->rotdx += xrel(event->x());
            state->skeletonState->rotdy += yrel(event->y());
@@ -561,60 +540,41 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
-    if(QApplication::keyboardModifiers() == Qt::ControlModifier) {
-        NodeListElement *selectedNode = NULL;
-        int diffX = state->viewerState->nodeSelectionSquare.first.x - event->pos().x();
-        int diffY = state->viewerState->nodeSelectionSquare.first.y - event->pos().y();
-        if((diffX < 5 and diffX > -5) and (diffY < 5 and diffY > -5)) { // interpreted as click instead of drag
-            // mouse released on same spot on which it was pressed down: single node selection
-            int nodeID = retrieveVisibleObjectBeneathSquareSignal(VPfound, event->pos().x(), event->pos().y(), 10);
-            if(nodeID) {
-                selectedNode = findNodeByNodeIDSignal(nodeID);
-            }
-
-            if(selectedNode) {
-                std::vector<NodeListElement*>::iterator iter;
+void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
+    int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
+    int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
+    if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag
+        // mouse released on same spot on which it was pressed down: single node selection
+        int nodeID = state->viewer->renderer->retrieveVisibleObjectBeneathSquare(VPfound, event->pos().x(), event->pos().y(), 10);
+        if (nodeID != 0) {
+            nodeListElement *selectedNode = findNodeByNodeIDSignal(nodeID);
+            if (selectedNode != nullptr) {
                 //check if already in buffer
-                if((iter = std::find(state->skeletonState->selectedNodes.begin(),
-                             state->skeletonState->selectedNodes.end(),
-                             selectedNode)) == state->skeletonState->selectedNodes.end()) {
+                auto iter = std::find(std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes), selectedNode);
+                if (iter == std::end(state->skeletonState->selectedNodes)) {//clicked node was not selected
                     selectedNode->selected = true;
-                    state->skeletonState->selectedNodes.push_back(selectedNode);
-                }
-                else {
+                    state->skeletonState->selectedNodes.emplace_back(selectedNode);
+                    if(state->skeletonState->selectedNodes.size() == 1) {
+                        emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                                 state->skeletonState->selectedNodes[0]->nodeID);
+                    }
+                    emit updateTreeviewSignal();
+                } else if (state->skeletonState->selectedNodes.size() != 1) {
+                    //clicked node was selected → unselect, but one shall not unselect the active node
                     selectedNode->selected = false;
                     state->skeletonState->selectedNodes.erase(iter);
+                    // whenever exactly one node is selected, it is the active node
+                    if(state->skeletonState->selectedNodes.size() == 1) {
+                        emit setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                                           state->skeletonState->selectedNodes[0]->nodeID);
+                    }
+                    emit updateTreeviewSignal();
                 }
-                emit updateTreeviewSignal();
-                return true;
             }
-            return false; // no selected node, do nothing
         }
-
-        // node selection square
-        for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-            state->skeletonState->selectedNodes[i]->selected = false;
-        }
-        state->skeletonState->selectedNodes.clear();
-        emit unselectNodesSignal();
-
-        state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
-        state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
-        Coordinate first = state->viewerState->nodeSelectionSquare.first;
-        Coordinate second = state->viewerState->nodeSelectionSquare.second;
-        // create square
-        int minX, maxX, minY, maxY;
-        minX = std::min(first.x, second.x);
-        maxX = std::max(first.x, second.x);
-        minY = std::min(first.y, second.y);
-        maxY = std::max(first.y, second.y);
-        emit retrieveAllObjectsBeneathSquareSignal(VPfound, minX, minY, maxX - minX, maxY - minY);
-        emit updateTreeviewSignal();
+    } else if (state->viewerState->nodeSelectSquareVpId != -1) {
+        nodeSelection(event->pos().x(), event->pos().y(), VPfound);
     }
-    state->viewerState->drawNodeSelectSquare = -1;
-
-    return true;
 }
 
 void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
@@ -624,196 +584,54 @@ void EventModel::handleMouseReleaseMiddle(QMouseEvent*, int) {
     }
 }
 
-bool EventModel::handleMouseWheelForward(QWheelEvent *event, int VPfound) {
+void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
+    const int directionSign = event->delta() > 0 ? -1 : 1;
 
-    const bool SHIFT = QApplication::keyboardModifiers() == Qt::ShiftModifier;
-    const bool CONTROL = QApplication::keyboardModifiers() == Qt::ControlModifier;
+    if((state->skeletonState->activeNode) and (event->modifiers() == Qt::SHIFT)) {//change node radius
+        float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
 
-    float radius;
-
-    if(VPfound == -1)
-        return true;
-
-#ifdef Q_OS_MAC
-    if((state->skeletonState->activeNode) and (state->modShift)) {
-#endif
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_LINUX
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-        radius = state->skeletonState->activeNode->radius - 0.2 * state->skeletonState->activeNode->radius;
-
-        emit editNodeSignal(CHANGE_MANUAL,
-                 0,
-                 state->skeletonState->activeNode,
-                 radius,
-                 state->skeletonState->activeNode->position.x,
-                 state->skeletonState->activeNode->position.y,
-                 state->skeletonState->activeNode->position.z,
-                 state->magnification);
-        if(radius > 0.) {
-            emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
-        }
-
-        if(gui::useLastActNodeRadiusAsDefault)
-           state->skeletonState->defaultNodeRadius = radius;
-
-
-    } else {
-        // Skeleton VP
-        if(VPfound == VIEWPORT_SKELETON) {
-            emit zoomInSkeletonVPSignal();
-        }
-        // Orthogonal VP or outside VP
-        else {
-#ifdef Q_OS_MAC
-            // Zoom when CTRL is pressed
-            if(state->modCtrl) {
-#endif
-#ifdef Q_OS_WIN
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-#ifdef Q_OS_LINUX
-            if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-                emit zoomOrthoSignal(-0.1);
-            } else { // move otherwiese
-                switch(state->viewerState->vpConfigs[VPfound].type) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(0, 0, state->viewerState->dropFrames
-                            * state->magnification,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(0, state->viewerState->dropFrames
-                            * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(state->viewerState->dropFrames
-                            * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                         emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x * state->viewerState->dropFrames * state->magnification,
-                         state->viewerState->vpConfigs[VPfound].n.y * state->viewerState->dropFrames * state->magnification,
-                         state->viewerState->vpConfigs[VPfound].n.z * state->viewerState->dropFrames * state->magnification,
-                         TELL_COORDINATE_CHANGE);
-
-                    break;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-bool EventModel::handleMouseWheelBackward(QWheelEvent *event, int VPfound) {
-
-    float radius;
-    state->directionSign = -1;
-
-    if(VPfound == -1)
-        return true;
-
-#ifdef Q_OS_WIN
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_LINUX
-    if((state->skeletonState->activeNode) and (QApplication::keyboardModifiers() == Qt::SHIFT)) {
-#endif
-#ifdef Q_OS_MAC
-        if((state->skeletonState->activeNode) and (state->modShift)) {
-#endif
-
-        radius = state->skeletonState->activeNode->radius + 0.2 * state->skeletonState->activeNode->radius;
-
-        emit editNodeSignal(CHANGE_MANUAL,
-                 0,
-                 state->skeletonState->activeNode,
-                 radius,
-                 state->skeletonState->activeNode->position.x,
-                 state->skeletonState->activeNode->position.y,
-                 state->skeletonState->activeNode->position.z,
-                 state->magnification);
+        emit editNodeSignal(CHANGE_MANUAL, 0, state->skeletonState->activeNode, radius
+                 , state->skeletonState->activeNode->position.x
+                 , state->skeletonState->activeNode->position.y
+                 , state->skeletonState->activeNode->position.z
+                 , state->magnification);
 
         emit nodeRadiusChangedSignal(state->skeletonState->activeNode);
 
-        if(gui::useLastActNodeRadiusAsDefault)
+        if(state->viewerState->gui->useLastActNodeRadiusAsDefault) {
            state->skeletonState->defaultNodeRadius = radius;
-    } else {
-        // Skeleton VP
-        if(VPfound == VIEWPORT_SKELETON) {
+        }
+    } else if (VPfound == VIEWPORT_SKELETON) {
+        if (directionSign == -1) {
+            emit zoomInSkeletonVPSignal();
+        } else {
             emit zoomOutSkeletonVPSignal();
         }
-        // Orthogonal VP or outside VP
-        else {
-#ifdef Q_OS_MAC
-            // Zoom when CTRL is pressed
-            if(state->modCtrl) {
-#endif
-#ifdef Q_OS_WIN
-                if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-#ifdef Q_OS_LINUX
-                if(QApplication::keyboardModifiers() == Qt::CTRL) {
-#endif
-                emit zoomOrthoSignal(+0.1);
-            }
-            // Move otherwise
-            else {
-                switch(state->viewerState->vpConfigs[VPfound].type) {
-                    case VIEWPORT_XY:
-                        emit userMoveSignal(0, 0, -state->viewerState->dropFrames
-                            * state->magnification,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_XZ:
-                        emit userMoveSignal(0, -state->viewerState->dropFrames
-                            * state->magnification, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_YZ:
-                        emit userMoveSignal(-state->viewerState->dropFrames
-                            * state->magnification, 0, 0,
-                            TELL_COORDINATE_CHANGE);
-                        break;
-                    case VIEWPORT_ARBITRARY:
-                        /* @arb */
-                        emit userMoveArbSignal(-state->viewerState->vpConfigs[VPfound].n.x * state->viewerState->dropFrames * state->magnification,
-                         -state->viewerState->vpConfigs[VPfound].n.y * state->viewerState->dropFrames * state->magnification,
-                         -state->viewerState->vpConfigs[VPfound].n.z * state->viewerState->dropFrames * state->magnification,
-                         TELL_COORDINATE_CHANGE);
-
-
-                    break;
-                }
-            }
+    } else if (event->modifiers() == Qt::CTRL) {// Orthogonal VP or outside VP
+        emit zoomOrthoSignal(directionSign * 0.1);
+    } else {
+        const auto multiplier = directionSign * state->viewerState->dropFrames * state->magnification;
+        const auto type = state->viewerState->vpConfigs[VPfound].type;
+        if (type == VIEWPORT_XY) {
+            emit userMoveSignal(0, 0, multiplier, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_XZ) {
+            emit userMoveSignal(0, multiplier, 0, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_YZ) {
+            emit userMoveSignal(multiplier, 0, 0, TELL_COORDINATE_CHANGE);
+        } else if (type == VIEWPORT_ARBITRARY) {
+            emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x * multiplier
+                , state->viewerState->vpConfigs[VPfound].n.y * multiplier
+                , state->viewerState->vpConfigs[VPfound].n.z * multiplier
+                , TELL_COORDINATE_CHANGE);
         }
     }
-
-    return true;
 }
 
 void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
-
-    TreeListElement *prevTree;
-    TreeListElement *nextTree;
-    NodeListElement *prevNode;
-    Color4F treeCol;
-
-    Qt::KeyboardModifiers keyMod = QApplication::keyboardModifiers();
+    Qt::KeyboardModifiers keyMod = event->modifiers();
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
     bool alt     = keyMod.testFlag(Qt::AltModifier);
-
-    state->modShift = shift;
-    state->modCtrl = control;
-    state->modAlt = alt;
 
     // new qt version
     if(event->key() == Qt::Key_Left) {
@@ -1061,130 +879,40 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             Knossos::sendRemoteSignal();
             break;
         }
-    } else if(event->key() == Qt::Key_F) {
-        state->keyF = true;
-        state->directionSign = -1;
-        if(shift) {
+    } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_F) {
+        state->keyD = event->key() == Qt::Key_D;
+        state->keyF = event->key() == Qt::Key_F;
+        if (!state->viewerKeyRepeat) {
+            const float directionSign = event->key() == Qt::Key_D ? -1 : 1;
+            const float shiftMultiplier = shift? 10 : 1;
+            const float multiplier = directionSign * state->viewerState->dropFrames * state->magnification * shiftMultiplier;
             switch(state->viewerState->vpConfigs[VPfound].type) {
             case VIEWPORT_XY:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * 10 * state->magnification;
+                state->repeatDirection = {{0, 0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XY]}};
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
                 break;
             case VIEWPORT_XZ:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * 10 * state->magnification;
-                state->newCoord[2] = 0;
+                state->repeatDirection = {{0, multiplier * state->viewerState->vpKeyDirection[VIEWPORT_XZ], 0}};
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
                 break;
             case VIEWPORT_YZ:
-                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * 10 * state->magnification;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = 0;
+                state->repeatDirection = {{multiplier * state->viewerState->vpKeyDirection[VIEWPORT_YZ], 0, 0}};
+                emit userMoveSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
                 break;
             case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(
-                    state->viewerState->vpConfigs[VPfound].n.x * 10.0 * (float)state->magnification,
-                    state->viewerState->vpConfigs[VPfound].n.y * 10.0 * (float)state->magnification,
-                    state->viewerState->vpConfigs[VPfound].n.z * 10.0 * (float)state->magnification,
-                    TELL_COORDINATE_CHANGE);
-                break;
-            }
-        } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
-            case VIEWPORT_XY:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * state->viewerState->dropFrames
-                                     * state->magnification;
-                break;
-            case VIEWPORT_XZ:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * state->viewerState->dropFrames
-                                     * state->magnification;
-                state->newCoord[2] = 0;
-                break;
-            case VIEWPORT_YZ:
-                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * state->viewerState->dropFrames
-                                     * state->magnification;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = 0;
-                break;
-            case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x
-                                       * (float)state->viewerState->dropFrames * (float)state->magnification,
-                                state->viewerState->vpConfigs[VPfound].n.y * (float)state->viewerState->dropFrames
-                                       * (float)state->magnification,
-                                state->viewerState->vpConfigs[VPfound].n.z * (float)state->viewerState->dropFrames
-                                       * (float)state->magnification,
-                                TELL_COORDINATE_CHANGE);
-                 break;
-            }
-        }
-    } else if(event->key() == Qt::Key_D) {
-        state->directionSign = -1;
-        state->keyD = true;
-        if(shift) {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
-            case VIEWPORT_XY:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * -10 * state->magnification;
-                break;
-            case VIEWPORT_XZ:
-                 state->newCoord[0] = 0;
-                 state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -10 * state->magnification;
-                 state->newCoord[2] = 0;
-                 break;
-            case VIEWPORT_YZ:
-                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -10 * state->magnification;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = 0;
-                break;
-            case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(
-                    state->viewerState->vpConfigs[VPfound].n.x
-                        * (float)state->viewerState->vpKeyDirection[VPfound]
-                        * -10.0 * (float)state->magnification,
-                    state->newCoord[1] = state->viewerState->vpConfigs[VPfound].n.y
-                        * (float)state->viewerState->vpKeyDirection[VPfound]
-                        * -10.0 * (float)state->magnification,
-                    state->newCoord[2] = state->viewerState->vpConfigs[VPfound].n.z
-                        * (float)state->viewerState->vpKeyDirection[VPfound]
-                        * -10.0 * (float)state->magnification,
-                    TELL_COORDINATE_CHANGE);
-                break;
-            }
-        } else {
-            switch(state->viewerState->vpConfigs[VPfound].type) {
-            case VIEWPORT_XY:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = state->viewerState->vpKeyDirection[VIEWPORT_XY] * -state->viewerState->dropFrames
-                                     * state->magnification;
-                break;
-            case VIEWPORT_XZ:
-                state->newCoord[0] = 0;
-                state->newCoord[1] = state->viewerState->vpKeyDirection[VIEWPORT_XZ] * -state->viewerState->dropFrames
-                                     * state->magnification;
-                state->newCoord[2] = 0;
-            break;
-            case VIEWPORT_YZ:
-                state->newCoord[0] = state->viewerState->vpKeyDirection[VIEWPORT_YZ] * -state->viewerState->dropFrames
-                                     * state->magnification;
-                state->newCoord[1] = 0;
-                state->newCoord[2] = 0;
-            break;
-            case VIEWPORT_ARBITRARY:
-                emit userMoveArbSignal(state->viewerState->vpConfigs[VPfound].n.x
-                        * -(float)state->viewerState->dropFrames * (float)state->magnification,
-                    state->viewerState->vpConfigs[VPfound].n.y * -(float)state->viewerState->dropFrames
-                        * (float)state->magnification,
-                    state->viewerState->vpConfigs[VPfound].n.z * -(float)state->viewerState->dropFrames
-                        * (float)state->magnification,
-                    TELL_COORDINATE_CHANGE);
+                state->repeatDirection = {{
+                    multiplier * state->viewerState->vpConfigs[VPfound].n.x
+                    , multiplier * state->viewerState->vpConfigs[VPfound].n.y
+                    , multiplier * state->viewerState->vpConfigs[VPfound].n.z
+                }};
+                emit userMoveArbSignal(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
                 break;
             }
         }
+    } else if (event->key() == Qt::Key_Shift) {
+        state->repeatDirection[0] *= 10;
+        state->repeatDirection[1] *= 10;
+        state->repeatDirection[2] *= 10;
     } else if(event->key() == Qt::Key_K) {
         if(state->viewerState->vpOrientationLocked == false) {
             state->viewerState->alphaCache += 1;
@@ -1248,7 +976,7 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         else {
            state->viewerState->drawVPCrosshairs = true;
         }
-        emit updateSlicePlaneWidgetSignal();    
+        emit updateSlicePlaneWidgetSignal();
 
     } else if(event->key() == Qt::Key_I) {
         if(VPfound != VIEWPORT_SKELETON) {
@@ -1263,61 +991,55 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         }
         else if (state->skeletonState->zoomLevel >= SKELZOOMMIN) {
             emit zoomOutSkeletonVPSignal();
-        }    
-    } else if(event->key() == Qt::Key_A) {
-        emit workModeAddSignal();
-    } else if(event->key() == Qt::Key_W) {
-        emit workModeLinkSignal();
-
+        }
     } else if(event->key() == Qt::Key_V) {
        if(control) {
            emit pasteCoordinateSignal();
        }
     } else if(event->key() == Qt::Key_1) { // !
-        /* @todo very ugly
-        const auto & spvp = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
-        const auto skeletonVisibiliy = spvp->enableSkeletonOverlayCheckBox->isChecked();
-        spvp->enableSkeletonOverlayCheckBox->setChecked(!skeletonVisibiliy);
-        spvp->enableSkeletonOverlayCheckBox->clicked(!skeletonVisibiliy);
+        const auto & vpSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->generalTabWidget;
+        const auto hideSkeletonOrtho = vpSettings->hideSkeletonOrthoVPsCheckBox.isChecked();
+        vpSettings->hideSkeletonOrthoVPsCheckBox.setChecked(!hideSkeletonOrtho);
+        vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
         state->skeletonState->skeletonChanged = true;//idk
-        */
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
-            QMessageBox prompt;
-            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-            prompt.setIcon(QMessageBox::Question);
-            prompt.setWindowTitle("Cofirmation required");
-            prompt.setText("Delete selected nodes?");
-            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-            prompt.addButton("No", QMessageBox::ActionRole);
-            prompt.exec();
-            if(prompt.clickedButton() == confirmButton) {
-                emit deleteSelectedNodesSignal();//skeletonizer
-                emit updateTreeviewSignal();//annotation->treeview
+            bool deleteNodes = true;
+            if(state->skeletonState->selectedNodes.size() != 1) {
+                QMessageBox prompt;
+                prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+                prompt.setIcon(QMessageBox::Question);
+                prompt.setWindowTitle("Cofirmation required");
+                prompt.setText("Delete selected nodes?");
+                QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+                prompt.addButton("No", QMessageBox::ActionRole);
+                prompt.exec();
+                deleteNodes = prompt.clickedButton() == confirmButton;
             }
-        }
-        else {
-            if(state->skeletonState->activeNode) {
-                emit deleteActiveNodeSignal();//skeletonizer
+            if(deleteNodes) {
+                emit deleteSelectedNodesSignal();//skeletonizer
                 emit updateTreeviewSignal();//annotation->treeview
             }
         }
     }
     else if(event->key() == Qt::Key_Escape) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Question);
-        prompt.setWindowTitle("Cofirmation required");
-        prompt.setText("Unselect current node selection?");
-        QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
-        prompt.addButton("No", QMessageBox::ActionRole);
-        prompt.exec();
-        if(prompt.clickedButton() == confirmButton) {
-            for(int i = 0; i < state->skeletonState->selectedNodes.size(); ++i) {
-                state->skeletonState->selectedNodes[i]->selected = false;
+        if(state->skeletonState->selectedNodes.size() == 1
+           && state->skeletonState->activeNode->selected) {
+            // active node must always be selected if nothing else is selected.
+            return;
+        }
+        if(state->skeletonState->selectedNodes.empty() == false) {
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Question);
+            prompt.setWindowTitle("Cofirmation required");
+            prompt.setText("Unselect current node selection?");
+            QPushButton *confirmButton = prompt.addButton("Yes", QMessageBox::ActionRole);
+            prompt.addButton("No", QMessageBox::ActionRole);
+            prompt.exec();
+            if(prompt.clickedButton() == confirmButton) {
+                emit unselectNodesSignal();
             }
-            state->skeletonState->selectedNodes.clear();
-            emit unselectNodesSignal();
         }
     }
     else if(event->key() == Qt::Key_F4) {
@@ -1408,6 +1130,50 @@ Coordinate *EventModel::getCoordinateFromOrthogonalClick(QMouseEvent *event, int
 
     free(foundCoordinate);
     return NULL;
+}
+
+void EventModel::startNodeSelection(int x, int y, int vpId) {
+    state->viewerState->nodeSelectionSquare.first.x = x;
+    state->viewerState->nodeSelectionSquare.first.y = y;
+
+    // reset second point from a possible previous selection square.
+    CPY_COORDINATE(state->viewerState->nodeSelectionSquare.second,
+                   state->viewerState->nodeSelectionSquare.first);
+    state->viewerState->nodeSelectSquareVpId = vpId;
+}
+
+void EventModel::nodeSelection(int x, int y, int vpId) {
+    // node selection square
+    state->viewerState->nodeSelectionSquare.second.x = x;
+    state->viewerState->nodeSelectionSquare.second.y = y;
+    Coordinate first = state->viewerState->nodeSelectionSquare.first;
+    Coordinate second = state->viewerState->nodeSelectionSquare.second;
+    // create square
+    int minX, maxX, minY, maxY;
+    minX = std::min(first.x, second.x);
+    maxX = std::max(first.x, second.x);
+    minY = std::min(first.y, second.y);
+    maxY = std::max(first.y, second.y);
+    //unselect all nodes before retrieving new selection
+    for (auto & elem : state->skeletonState->selectedNodes) {
+        elem->selected = false;
+    }
+    state->skeletonState->selectedNodes = state->viewer->renderer->retrieveAllObjectsBeneathSquare(vpId, minX, minY, maxX - minX, maxY - minY);
+    //mark all found nodes as selected
+    for (auto & elem : state->skeletonState->selectedNodes) {
+        elem->selected = true;
+    }
+    if(state->skeletonState->selectedNodes.size() == 1) {
+        setActiveNodeSignal(CHANGE_MANUAL, state->skeletonState->selectedNodes[0],
+                                           state->skeletonState->selectedNodes[0]->nodeID);
+    }
+    else if (state->skeletonState->selectedNodes.empty() && state->skeletonState->activeNode) {
+        // at least one must always be selected
+        state->skeletonState->activeNode->selected = true;
+        state->skeletonState->selectedNodes.emplace_back(state->skeletonState->activeNode);
+    }
+    emit updateTreeviewSignal();
+    state->viewerState->nodeSelectSquareVpId = -1;
 }
 
 int EventModel::xrel(int x) {

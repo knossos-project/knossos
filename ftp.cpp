@@ -33,14 +33,12 @@ static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
 }
 
 CURLM *curlm = NULL;
-int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], int currentCubeCount, int max_connections, int pipelines_per_connection, int max_downloads, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int *hadErrors/*, DWORD beginTickCount*/)
+int downloadFiles(CURL **eh_array, int /*totalCubeCount*/, C_Element *cubeArray[], int currentCubeCount, int /*max_connections*/, int /*pipelines_per_connection*/, int /*max_downloads*/, QSemaphore *ftpThreadSem, QSemaphore *loaderThreadSem, int *hadErrors/*, DWORD beginTickCount*/)
 {
     C_Element *currentCube;
     CURLMsg *msg;
     CURL *eh;
-    CURLcode res;
     long L;
-    unsigned int C=0;
     int M, Q, U = -1;
     fd_set R, W, E;
     struct timeval T;
@@ -62,7 +60,7 @@ int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], i
     curl_multi_setopt(curlm, CURLMOPT_PIPELINING, (long)0);
     curl_multi_setopt(curlm, CURLMOPT_MAXCONNECTS, (long)currentCubeCount);
 
-    for (C = 0; C < currentCubeCount; ++C) {
+    for (std::size_t C = 0; C < currentCubeCount; ++C) {
         eh = eh_array[C];
         currentCube = cubeArray[C];
         snprintf(remoteURL, MAX_PATH, "http://%s:%s@%s%s", state->ftpUsername, state->ftpPassword, state->ftpHostName, currentCube->fullpath_filename);
@@ -163,7 +161,7 @@ int downloadFiles(CURL **eh_array, int totalCubeCount, C_Element *cubeArray[], i
           }
         }
     }
-    for (C = 0; C < currentCubeCount; C++) {
+    for (std::size_t C = 0; C < currentCubeCount; C++) {
         currentCube = cubeArray[C];
         if (currentCube->isFinished) {
             continue;
@@ -226,8 +224,6 @@ int ftpthreadfunc(ftp_thread_struct *fts) {
     CURL **eh_array = NULL;
     FILE *fh = NULL;
     int i;
-    int C;
-    int isBreak = false;
     int retVal = true;
     int MAX_DOWNLOADS;
     int max_connections, pipelines_per_connection;

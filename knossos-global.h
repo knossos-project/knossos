@@ -31,12 +31,22 @@
 #ifndef KNOSSOS_GLOBAL_H
 #define KNOSSOS_GLOBAL_H
 
+/** The includes in this header has to be part of a qt module and only C header. Otherwise the Python C API can´t use it  */
+#include <curl/curl.h>
+
+#include <array>
 #include <cmath>
+
 #include <QtOpenGL/qgl.h>
 #include <QtCore/QTime>
 #include <QtCore/qmutex.h>
 #include <QtCore/qwaitcondition.h>
+#include <QtNetwork/qhostinfo.h>
+#include <QtNetwork/qtcpsocket.h>
+#include <QtNetwork/qhostaddress.h>
+#include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
+
 #define KVERSION "4.0"
 
 #define FAIL    -1
@@ -218,10 +228,6 @@ values. The XY vp always used. */
 
 //  For the skeletonizer
 
-#define SKELETONIZER_ON_CLICK_ADD_NODE 0
-#define SKELETONIZER_ON_CLICK_LINK_WITH_ACTIVE_NODE 1
-#define SKELETONIZER_ON_CLICK_DEL_NODE 2
-#define SKELETONIZER_ON_CLICK_DROP_NODE 3
 #define SEGMENT_FORWARD 1
 #define SEGMENT_BACKWARD 2
 
@@ -236,11 +242,11 @@ values. The XY vp always used. */
 #define NODE_VISITED 1
 #define NODE_PRISTINE 0
 
-#define DSP_SKEL_VP_WHOLE       1
-#define DSP_SKEL_VP_CURRENTCUBE 2
+#define DSP_WHOLE           1
+#define DSP_CURRENTCUBE      2
 #define DSP_SKEL_VP_HIDE        4
 #define DSP_SLICE_VP_HIDE       8
-#define DSP_ACTIVETREE          16
+#define DSP_SELECTED_TREES      16
 #define DSP_LINES_POINTS        32
 
 #define CATCH_RADIUS            10
@@ -291,16 +297,6 @@ values. The XY vp always used. */
 #define SLOW 1000
 #define FAST 10
 
-class FloatCoordinate;
-class Coordinate;
-class Color4F;
-class TreeListElement;
-class NodeListElement;
-class SegmentListElement;
-class commentListElement;
-class Mesh;
-
-
 //Structures and custom types
 typedef uint8_t Byte;
 
@@ -314,50 +310,47 @@ constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t r
     return val < base ? res : int_log(val/base, base, res+1);
 }
 
-/** It would be better to add a template parameter T to the class Coordinate. I receive a lot of compiler error because both types are frequently used.
-    I delay this until trunk and branch are completely merged.
-*/
-class FloatCoordinate {
-public:
-    FloatCoordinate() {}
-    FloatCoordinate(float x, float y, float z) { this->x = x; this->y = y; this->z = z; }
+struct floatCoordinate {
     float x;
     float y;
     float z;
 };
 
-Q_DECLARE_METATYPE(FloatCoordinate)
-
-
 #define HASH_COOR(k) ((k.x << 20) | (k.y << 10) | (k.z))
-class Coordinate {
+class Coordinate{
 public:
-    Coordinate();
-    Coordinate(int x, int y, int z);
+    Coordinate() { }
+    Coordinate(int x, int y, int z) { this->x = x; this->y = y; this->z = z; }
     int x;
     int y;
     int z;
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
-    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, FloatCoordinate scale, Coordinate offset);
+    static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
     static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
 
 };
 
-Q_DECLARE_METATYPE(Coordinate)
+class CoordinateDecorator : public QObject {
+    Q_OBJECT
+public slots:
+    Coordinate *new_Coordinate() { return new Coordinate(); }
+    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
+    int x(Coordinate *self) { return self->x; }
+    void setX(Coordinate *self, int x) { self->x = x; }
+    int y(Coordinate *self) { return self->y; }
+    void setY(Coordinate *self, int y) { self->y = y; }
+    int z(Coordinate *self) { return self->z; }
+    void setZ(Coordinate *self, int z) { self->z = z; }
+};
 
-
-class Color4F {
-public:
-    Color4F();
-    Color4F(float r, float g, float b, float a);
+typedef struct {
         GLfloat r;
         GLfloat g;
         GLfloat b;
         GLfloat a;
-};
-
+} color4F;
 
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
@@ -395,7 +388,7 @@ struct C2D_Element {
 // * table is a pointer to a table of pointers to elements in the linked list
 //   (of which listEntry is one).
 
-typedef struct Hashtable {
+typedef struct Hashtable{
     C2D_Element *listEntry;
     uint tablesize;
     C2D_Element **table;
@@ -441,7 +434,11 @@ struct stack {
     int size;
 };
 
-
+struct dynArray {
+    void **elements;
+    int end;
+    int firstSize;
+};
 
 struct assignment {
     char *lval;
@@ -458,14 +455,13 @@ struct assignment {
 #ifdef QT_DEBUG
 #include "widgets/console.h"
 #endif
-
-
-struct stateInfo {
-
-    stateInfo() {}
+class stateInfo : public QObject {
+    Q_OBJECT
+public:
+    stateInfo();
     uint svnRevision;
 #ifdef QT_DEBUG
-    //Console *console;
+    Console *console;
 #endif
     float alpha, beta; // alpha = rotation around z axis, beta = rotation around new rotated y axis
     //  Info about the data
@@ -515,6 +511,7 @@ struct stateInfo {
     // state->magnification should only be used by the viewer,
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
+    // do not change to uint, it causes bugs in the display of higher mag datasets
     int magnification;
 
     uint compressionRatio;
@@ -528,7 +525,7 @@ struct stateInfo {
     uint loaderMagnification;
 
     // Bytes in one datacube: 2^3N
-    uint cubeBytes;
+    std::size_t cubeBytes;
 
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength;
@@ -538,12 +535,12 @@ struct stateInfo {
 
     // Supercube edge length in datacubes.
     int M;
-    uint cubeSetElements;
+    std::size_t cubeSetElements;
 
 
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
-    uint cubeSetBytes;
+    std::size_t cubeSetBytes;
 
 
     // Edge length of the current data set in data pixels.
@@ -552,7 +549,7 @@ struct stateInfo {
     Coordinate *magBoundaries[int_log(NUM_MAG_DATASETS)+1];
 
     // pixel-to-nanometer scale
-    FloatCoordinate scale;
+    floatCoordinate scale;
 
     // offset for synchronization between datasets
     Coordinate offset;
@@ -620,7 +617,6 @@ struct stateInfo {
     // This gives the current direction whenever userMove is called
     Coordinate currentDirections[LL_CURRENT_DIRECTIONS_SIZE];
     int currentDirectionsIndex;
-    int directionSign;
 
     // This gives the current position ONLY when the reload
     // boundary has been crossed. Change it through
@@ -649,14 +645,15 @@ struct stateInfo {
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    class skeletonState *skeletonState;
-    struct trajectory *trajectories;    
-    bool keyD, keyR, keyE, keyF;
-    bool modCtrl, modAlt, modShift;
-    int newCoord[3];
-    bool autorepeat;
+    class Viewer *viewer;
+    struct clientState *clientState;
+    struct skeletonState *skeletonState;
+    struct trajectory *trajectories;
+    struct taskState *taskState;
+    bool keyD, keyF;
+    std::array<float, 3> repeatDirection;
+    bool viewerKeyRepeat;
 
-    /*
 signals:
 public slots:
     uint getSvnRevision();
@@ -686,17 +683,47 @@ public slots:
     uint getCubeSetElements();
     uint getCubeSetBytes();
     Coordinate getBoundary();
-*/
+
+
+
+
 
 };
 
+struct httpResponse {
+    char *content;
+    size_t length;
+};
+
+struct taskState {
+    QString host;
+    QString cookieFile;
+    QString taskFile;
+    QString taskName;
+
+    static bool httpGET(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpPOST(char *url, char *postdata, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpDELETE(char *url, struct httpResponse *response, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static bool httpFileGET(char *url, char *postdata, httpResponse *response, struct httpResponse *header, long *httpCode, char *cookiePath, CURLcode *code, long timeout);
+    static size_t writeHttpResponse(void *ptr, size_t size, size_t nmemb, struct httpResponse *s);
+    static size_t readFile(char *ptr, size_t size, size_t nmemb, void *stream);
+    static int copyInfoFromHeader(char *dest, struct httpResponse *header, const char *info);
+    static void removeCookie();
+    static QString CSRFToken();
+    static QString getCategory();
+    static QString getTask();
+};
+
+struct trajectory {
+		char name[64];
+		char *source;
+};
 
 /**
   * @struct viewportTexture
   * @brief TODO
   */
 
-// to viewer
 struct viewportTexture {
     //Handles for OpenGl
     uint texHandle;
@@ -725,11 +752,51 @@ struct viewportTexture {
     //Coordinates of crosshair inside VP
     float xOffset, yOffset;
 
-    // Current zoom level. 1: no zoom; near 0: maximum zoom.
-    float zoomLevel;
+	// Current zoom level. 1: no zoom; near 0: maximum zoom.
+	float zoomLevel;
 
 };
 
+/**
+  * @struct guiConfig
+  * @brief TODO
+  *
+  */
+struct guiConfig {
+    char settingsFile[2048];
+    char titleString[2048];
+
+    // Current position of the user crosshair,
+    //starting at 1 instead 0. This is shown to the user,
+    //KNOSSOS works internally with 0 start indexing.
+    Coordinate oneShiftedCurrPos;
+    Coordinate activeNodeCoord;
+
+    QString lockComment;
+    char *commentBuffer;
+    char *commentSearchBuffer;
+    char *treeCommentBuffer;
+
+    int useLastActNodeRadiusAsDefault;
+    float actNodeRadius;
+
+    // dataset navigation settings win buffer variables
+    uint stepsPerSec;
+    uint recenteringTime;
+    uint dropFrames;
+
+    char *comment1;
+    char *comment2;
+    char *comment3;
+    char *comment4;
+    char *comment5;
+
+    // substrings for comment node highlighting
+    QStringList *commentSubstr;
+    //char **commentSubstr;
+    // colors of color-dropdown in comment node highlighting
+    char **commentColors;
+};
 
 /**
   * @struct vpConfig
@@ -738,11 +805,11 @@ struct viewportTexture {
   */
 struct vpConfig {
     // s*v1 + t*v2 = px
-    FloatCoordinate n;
-    FloatCoordinate v1; // vector in x direction
-    FloatCoordinate v2; // vector in y direction
-    FloatCoordinate leftUpperPxInAbsPx_float;
-    FloatCoordinate leftUpperDataPxOnScreen_float;
+    floatCoordinate n;
+    floatCoordinate v1; // vector in x direction
+    floatCoordinate v2; // vector in y direction
+    floatCoordinate leftUpperPxInAbsPx_float;
+    floatCoordinate leftUpperDataPxOnScreen_float;
     int s_max;
     int t_max;
     int x_offset;
@@ -796,7 +863,7 @@ struct vpConfig {
     //necessary because the mouse can be outside the VP while the user still wants e.g. to drag the panel
     Byte motionTracking;
 
-    NodeListElement *draggedNode;
+    struct nodeListElement *draggedNode;
 
     /* Stores the current view frustum planes */
     float frustum[6][4];
@@ -817,8 +884,8 @@ struct vpConfig {
 struct viewerState {
 
     //Cache for Movements smaller than pixel coordinate
-    FloatCoordinate moveCache;
-	//Orientation
+    floatCoordinate moveCache;
+    //Orientation
     float alphaCache;
     float betaCache;
 
@@ -846,7 +913,7 @@ struct viewerState {
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-    //Flag to indicate user repositioning
+	//Flag to indicate user repositioning
 	uint userRepositioning;
 
 	float depthCutOff;
@@ -854,7 +921,7 @@ struct viewerState {
     //Flag to indicate active mouse motion tracking: 0 off, 1 on
     int motionTracking;
 
-	//Stores the current window size in screen pixels
+    //Stores the current window size in screen pixels
     uint screenSizeX;
     uint screenSizeY;
 
@@ -863,7 +930,7 @@ struct viewerState {
     // Current position of the user crosshair.
     //   Given in pixel coordinates of the current local dataset (whatever magnification
     //   is currently loaded.)
-	Coordinate currentPosition;
+    Coordinate currentPosition;
     Coordinate lastRecenteringPosition;
 
     uint recenteringTime;
@@ -874,14 +941,14 @@ struct viewerState {
 
     //Keyboard repeat rate
     uint stepsPerSec;
-	GLint filterType;
+    GLint filterType;
     int multisamplingOnOff;
     int lightOnOff;
 
     // Draw the colored lines that highlight the orthogonal VP intersections with each other.
     bool drawVPCrosshairs;
     // flag to indicate if user has pulled/is pulling a selection square in a viewport, which should be displayed
-    int drawNodeSelectSquare;
+    int nodeSelectSquareVpId;
     std::pair<Coordinate, Coordinate> nodeSelectionSquare;
 
     //Show height/width-labels inside VPs
@@ -900,9 +967,10 @@ struct viewerState {
     float voxelXYtoZRatio;
 
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
-    uint workMode;
+    uint clickReaction;
     bool superCubeChanged;
 
+    struct guiConfig *gui;
 
     int luminanceBias;
     int luminanceRangeDelta;
@@ -941,36 +1009,50 @@ struct viewerState {
     uint renderInterval;
 };
 
+struct commentListElement {
+    struct commentListElement *next;
+    struct commentListElement *previous;
 
-class TreeListElement {
+    char *content;
+
+    struct nodeListElement *node;
+};
+
+struct treeListElement {
 public:
-    TreeListElement();
-    TreeListElement(int treeID, QString comment, Color4F color);
-    TreeListElement(int treeID, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
-
-    TreeListElement *next;
-    TreeListElement *previous;
-    NodeListElement *firstNode;
+    struct treeListElement *next;
+    struct treeListElement *previous;
+    struct nodeListElement *firstNode;
 
     int treeID;
-    Color4F color;
+    color4F color;
+    bool selected;
     int colorSetManually;
 
     char comment[8192];
-    QList<NodeListElement *> *getNodes();
-
 };
 
-class NodeListElement  {
-public:
-    NodeListElement();
-    NodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+//class TreeListElementDecorator : public QObject {
+//    Q_OBJECT
+//public slots:
+//    treeListElement *new_treeListElement() { return new treeListElement(); }
+//    void next(treeListElement *self) { return self->next; }
+//    void
+//    void setNext(treeListElement *self, treeListElement *next) { self->next = next; }
+//    void setPrevious(treeListElement *self, treeListElement *previous) { self->previous = previous; }
+//    void setFirstNode(treeListElement *self, treeListElement *first) { self->firstNode = first; }
 
-    NodeListElement *next;
-    NodeListElement *previous;
+//    int treeID(treeListElement *self) { return self->treeID; }
 
-    SegmentListElement *firstSegment;
-    TreeListElement *correspondingTree;
+//};
+
+struct nodeListElement {
+    struct nodeListElement *next;
+    struct nodeListElement *previous;
+
+    struct segmentListElement *firstSegment;
+
+    struct treeListElement *correspondingTree;
 
     float radius;
 
@@ -979,7 +1061,7 @@ public:
     Byte createdInMag;
     int timestamp;
 
-    commentListElement *comment;
+    struct commentListElement *comment;
 
     // counts forward AND backward segments!!!
     int numSegs;
@@ -991,23 +1073,15 @@ public:
     Coordinate position;
     bool isBranchNode;
     bool selected;
-
-
-
-    QList<SegmentListElement *> *getSegments();
-
 };
 
 
-
-class SegmentListElement {
-public:
-    SegmentListElement();
-    SegmentListElement *next;
-    SegmentListElement *previous;
+struct segmentListElement {
+    struct segmentListElement *next;
+    struct segmentListElement *previous;
 
     //Contains the reference to the segment inside the target node
-    SegmentListElement *reverseSegment;
+    struct segmentListElement *reverseSegment;
 
     // 1 signals forward segment 2 signals backwards segment.
     // Use SEGMENT_FORWARD and SEGMENT_BACKWARD.
@@ -1022,33 +1096,52 @@ public:
     //Coordinate pos1;
     //Coordinate pos2;
 
-    NodeListElement *source;
-    NodeListElement *target;
-
-
+    struct nodeListElement *source;
+    struct nodeListElement *target;
 };
 
-class commentListElement {
-public:
-    commentListElement();
-
-    commentListElement *next;
-    commentListElement *previous;
-
-    char *content;
-
-    NodeListElement *node;
+struct serialSkeletonListElement {
+    struct serialSkeletonListElement *next;
+    struct serialSkeletonListElement *previous;
+    Byte* content;
 };
 
-class Mesh {
-public:
-    Mesh();
-    Mesh(int mode); /* GL_POINTS, GL_TRIANGLES, etc. */
-    FloatCoordinate *vertices;
-    FloatCoordinate *normals;
-    Color4F *colors;
+struct skeletonDC {
+    struct skeletonDCsegment *firstSkeletonDCsegment;
+    struct skeletonDCnode *firstSkeletonDCnode;
+};
 
-    /* useful for flexible Mesh manipulations */
+struct skeletonDCnode {
+    struct nodeListElement *node;
+    struct skeletonDCnode *next;
+};
+
+struct skeletonDCsegment {
+    struct segmentListElement *segment;
+    struct skeletonDCsegment *next;
+};
+
+struct peerListElement {
+    uint id;
+    char *name;
+    floatCoordinate scale;
+    Coordinate offset;
+
+    struct peerListElement *next;
+};
+
+struct IOBuffer {
+    uint size;      // The current maximum size
+    uint length;    // The current amount of data in the buffer
+    Byte *data;
+};
+
+typedef struct {
+    floatCoordinate *vertices;
+    floatCoordinate *normals;
+    color4F *colors;
+
+    /* useful for flexible mesh manipulations */
     uint vertsBuffSize;
     uint normsBuffSize;
     uint colsBuffSize;
@@ -1056,12 +1149,8 @@ public:
     uint vertsIndex;
     uint normsIndex;
     uint colsIndex;
-    uint mode;
-    uint size;
+} mesh;
 
-};
-
-// unused ?
 typedef struct {
         GLbyte r;
         GLbyte g;
@@ -1069,10 +1158,10 @@ typedef struct {
         GLbyte a;
 } color4B;
 
-
-class skeletonState {
-public:
-    skeletonState() {}
+/**
+  * @struct skeletonState
+  */
+struct skeletonState {
     uint skeletonRevision;
 
     //    skeletonTime is the time spent on the current skeleton in all previous
@@ -1091,13 +1180,12 @@ public:
     int idleTimeLast;
 
     Hashtable *skeletonDCs;
-    TreeListElement *firstTree;
-    TreeListElement *activeTree;
-    NodeListElement *activeNode;
+    struct treeListElement *firstTree;
+    struct treeListElement *activeTree;
+    struct nodeListElement *activeNode;
 
-
-    std::vector<TreeListElement *> selectedTrees;
-    std::vector<NodeListElement *> selectedNodes;
+    std::vector<treeListElement *> selectedTrees;
+    std::vector<nodeListElement *> selectedNodes;
 
     struct serialSkeletonListElement *firstSerialSkeleton;
     struct serialSkeletonListElement *lastSerialSkeleton;
@@ -1108,11 +1196,11 @@ public:
     char *filterCommentBuffer;
 
     struct stack *branchStack;
+
     struct dynArray *nodeCounter;
     struct dynArray *nodesByNodeID;
 
     uint skeletonDCnumber;
-    uint workMode;
     uint volBoundary;
 
     uint totalComments;
@@ -1130,7 +1218,9 @@ public:
     float rotdx;
     float rotdy;
     int rotationcounter;
+
     int definedSkeletonVpView;
+
     float translateX, translateY;
 
     // Display list,
@@ -1185,9 +1275,9 @@ public:
     int greatestNodeID;
     int greatestTreeID;
 
-    Color4F commentColors[NUM_COMMSUBSTR];
+    color4F commentColors[NUM_COMMSUBSTR];
     float commentNodeRadii[NUM_COMMSUBSTR];
-    NodeListElement *selectedCommentNode;
+    nodeListElement *selectedCommentNode;
 
     //If true, loadSkeleton merges the current skeleton with the provided
     int mergeOnLoadFlag;
@@ -1208,9 +1298,8 @@ public:
 
     // temporary vertex buffers that are available for rendering, get cleared
     // every frame */
-    Mesh lineVertBuffer; /* ONLY for lines */
-    Mesh pointVertBuffer; /* ONLY for points */
-    QList<Mesh *> *userGeometry;
+    mesh lineVertBuffer; /* ONLY for lines */
+    mesh pointVertBuffer; /* ONLY for points */
 
     bool branchpointUnresolved;
 
@@ -1225,9 +1314,30 @@ public:
     uint serialSkeletonCounter;
     uint maxUndoSteps;
 
-    QString skeletonFileAsQString;    
-
+    QString skeletonFileAsQString;
 };
+
+struct clientState {
+    bool connectAsap;
+    int remotePort;
+    bool connected;
+    Byte synchronizePosition;
+    Byte synchronizeSkeleton;
+    int connectionTimeout;
+    bool connectionTried;
+    char serverAddress[1024];
+
+    QHostAddress *remoteServer;
+    QTcpSocket *remoteSocket;
+    QSet<QTcpSocket *> *socketSet;
+    uint myId;
+    bool saveMaster;
+
+    struct peerListElement *firstPeer;
+    struct IOBuffer *inBuffer;
+    struct IOBuffer *outBuffer;
+};
+
 
 /* global functions */
 

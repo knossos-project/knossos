@@ -406,7 +406,7 @@ opj_image_t* tgatoimage(const char *filename, opj_cparameters_t *parameters) {
 int imagetotga(opj_image_t * image, const char *outfile) {
 	int width, height, bpp, x, y;
 	OPJ_BOOL write_alpha;
-	int i, adjustR, adjustG, adjustB;
+    int i, adjustR, adjustG, adjustB;
 	unsigned int alpha_channel;
 	float r,g,b,a;
 	unsigned char value;
@@ -420,7 +420,7 @@ int imagetotga(opj_image_t * image, const char *outfile) {
 		return 1;
 	}
 
-	for (i = 0; i < image->numcomps-1; i++)	{
+    for (i = 0; i < image->numcomps-1; i++)	{
 		if ((image->comps[0].dx != image->comps[i+1].dx)
 			||(image->comps[0].dy != image->comps[i+1].dy)
 			||(image->comps[0].prec != image->comps[i+1].prec))	{
@@ -1399,10 +1399,10 @@ opj_image_t* pgxtoimage(const char *filename, opj_cparameters_t *parameters) {
 
 int imagetopgx(opj_image_t * image, const char *outfile) {
 	int w, h;
-	int i, j, compno;
+    int i, j, compno;
 	FILE *fdest = NULL;
 
-	for (compno = 0; compno < image->numcomps; compno++) {
+    for (compno = 0; compno < image->numcomps; compno++) {
 		opj_image_comp_t *comp = &image->comps[compno];
 		char bname[256]; /* buffer for name */
     char *name = bname; /* pointer */
@@ -2925,7 +2925,7 @@ static int imagetoraw_common(opj_image_t * image, const char *outfile, OPJ_BOOL 
 {
 	FILE *rawFile = NULL;
   size_t res;
-	int compno;
+    int compno;
 	int w, h;
 	int line, row;
 	int *ptr;
@@ -2944,7 +2944,7 @@ static int imagetoraw_common(opj_image_t * image, const char *outfile, OPJ_BOOL 
 
 	fprintf(stdout,"Raw image characteristics: %d components\n", image->numcomps);
 
-	for(compno = 0; compno < image->numcomps; compno++)
+    for(compno = 0; compno < image->numcomps; compno++)
 	{
 		fprintf(stdout,"Component %d characteristics: %dx%dx%d %s\n", compno, image->comps[compno].w,
 			image->comps[compno].h, image->comps[compno].prec, image->comps[compno].sgnd==1 ? "signed": "unsigned");

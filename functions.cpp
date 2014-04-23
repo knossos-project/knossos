@@ -13,7 +13,7 @@ float scalarProduct(FloatCoordinate *v1, FloatCoordinate *v2) {
 }
 
 float euclidicNorm(FloatCoordinate *v) {
-    return ((float)sqrt((double)scalarProduct(v, v)));
+    return sqrt(scalarProduct(v, v));
 }
 
 bool normalizeVector(FloatCoordinate *v) {

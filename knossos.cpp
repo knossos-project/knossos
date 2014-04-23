@@ -25,6 +25,7 @@
 
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
+#include <QTest>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
@@ -42,17 +43,20 @@
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
-#include "scriptengine/scripting.h"
-#include "scriptengine/proxies/skeletonproxy.h"
+#include "scripting.h"
 #include "ftp.h"
-#include "widgets/gui.h"
+
+#include "test/knossostestrunner.h"
+#include "test/testcommentswidget.h"
+#include "test/testnavigationwidget.h"
+#include "test/testorthogonalviewport.h"
 
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_WIN
 #include <GL/glut.h>
-#include <windows.h>
+#include "windows.h"
 #endif
 #ifdef Q_OS_LINUX
 #include <GL/freeglut_std.h>
@@ -60,13 +64,39 @@
 
 #define NUMTHREADS 4
 
-stateInfo *state = NULL;
+stateInfo * state = nullptr;//state lives here
 char logFilename[MAX_PATH] = {0};
 std::unique_ptr<Loader> loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 std::unique_ptr<Knossos> knossos;
 
+class myEventFilter: public QObject
+{
+  public:
+  myEventFilter():QObject()
+  {};
+  ~myEventFilter(){};
+
+  bool eventFilter(QObject* object,QEvent* event)
+  {
+      // update idle time to current time on any user actions except just moving the mouse
+      int type = event->type();
+      if(type == QEvent::MouseButtonPress
+            || type == QEvent::KeyPress
+            || type == QEvent::Wheel) {
+          if (state != NULL
+                  && state->viewer != NULL
+                  && state->viewer->window != NULL
+                  && state->viewer->window->widgetContainer != NULL
+                  && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
+              state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
+          }
+      }
+
+      return QObject::eventFilter(object,event);
+  }
+};
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
@@ -74,6 +104,7 @@ Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QP
     QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
     timer.start(timeout_msec);
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -95,16 +126,18 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication a(argc, argv);
-    QCoreApplication::setOrganizationDomain("MPI");
-    QCoreApplication::setOrganizationName("Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.");
-    QCoreApplication::setApplicationName("Knossos QT");
+    /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
+       I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
+       As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
+    */
+    //Splash splash(":/images/splash.png", 1500);
+    QCoreApplication::setOrganizationDomain("knossostool.org");
+    QCoreApplication::setOrganizationName("MPIMF");
+    QCoreApplication::setApplicationName(QString("Knossos %1 Beta").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Splash splash(":/images/splash.png", 1500);
     knossos.reset(new Knossos);
 
-
-    //Knossos::loadStyleSheet();
 
     // The idea behind all this is that we have four sources of
     // configuration data:
@@ -148,19 +181,17 @@ int main(int argc, char *argv[])
     }
     bool datasetLoaded = knossos->initStates();
 
-    Knossos::printConfigValues();
-    Viewer viewer;    
+    Viewer viewer;
     loader.reset(new Loader);
     Remote remote;
     Client client;
     
     Scripting scripts;
-
-
+    scripts.skeletonReference = viewer.skeletonizer;
+     //scripts.stateReference = state;
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
-    QObject::connect(knossos.get(), &Knossos::lockDatasetMag, viewer.window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::lockDatasetMagChecked);
 
     QObject::connect(&viewer, &Viewer::broadcastPosition, &Client::broadcastPosition);
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
@@ -199,7 +230,7 @@ int main(int argc, char *argv[])
     QObject::connect(&client, &Client::delCommentSignal, &Skeletonizer::delComment);
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
     QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-    //QObject::connect(scripts.skeletonDecorator, &SkeletonDecorator::clearSkeletonSignal, viewer.window, &MainWindow::clearSkeletonWithoutConfirmation);
+
 
     knossos->loadDefaultTreeLUT();
 
@@ -212,20 +243,50 @@ int main(int argc, char *argv[])
     client.start();
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
+    Knossos::printConfigValues();
 
-    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
-    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(TreeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
-    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
-    QObject::connect(signalDelegate, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
-    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
-    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
-    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    a.installEventFilter(new myEventFilter());
 
-    //QObject::connect(signalDelegate, SIGNAL(renderTextSignal(Coordinate*,char *,uint,uint)), viewer.renderer, SLOT(renderText(Coordinate*,char*,uint,uint)));
-    //connect(state->skeletonState, SIGNAL(sliceExtractSignal(Byte*,Byte*,vpConfig*)), this, SLOT(sliceExtract_standard(Byte*,Byte*,vpConfig*)));
-    scripts.start();
-    //QObject::connect(viewer.window->pythonButton, SIGNAL(clicked()), scripts.console, SLOT(showNormal()));
+    //scripts.run();
+
+    /* TEST */
+    /*
+    TestOrthogonalViewport ortho;
+    ortho.reference = viewer;
+    QTest::qExec(&ortho);
+    */
+
+    /*
+    TestToolsWidget tools;
+    tools.reference = viewer;
+    QTest::qExec(&tools);
+    */
+
+
+//    KnossosTestRunner runner;
+//    runner.reference = viewer;
+//    runner.addTestClasses();
+//    runner.show();
+
+
+
+    /*
+    QStringList args;
+    args << "-silent" << "-o" << "RESULT.xml" << "-xml";
+
+    TestCommentsWidget test;
+    test.reference = viewer;
+
+    QTest::qExec(&test, args);
+    */
+
+
+    /*
+    TestNavigationWidget navigation;
+    navigation.viewerReference = viewer;
+    navigation.remoteReference = remote;
+    QTest::qExec(&navigation);
+    */
 
     return a.exec();
 }
@@ -266,11 +327,6 @@ bool Knossos::commonInitStates() {
 bool Knossos::initStates() {
    state->time.start();
 
-   //General stuff   
-   if(state->M % 2 == 0) {
-       state->M = state->M - 1;
-   }
-
    // For the viewer  
    state->viewerState->autoTracingMode = 0;
    state->viewerState->autoTracingDelay = 50;
@@ -287,7 +343,7 @@ bool Knossos::initStates() {
    /* @arb */
    state->alpha = 0;
    state->beta = 0;
-   FloatCoordinate v1, v2, v3;
+   floatCoordinate v1, v2, v3;
    Viewer::getDirectionalVectors(state->alpha, state->beta, &v1, &v2, &v3);
 
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_XY].v1 , v1);
@@ -300,60 +356,45 @@ bool Knossos::initStates() {
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].v2 , v2);
    CPY_COORDINATE(state->viewerState->vpConfigs[VIEWPORT_YZ].n , v1);
 
-   for(uint i = 0; i < state->viewerState->numberViewports; i++) {
-
-       state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx =
-           state->viewerState->vpConfigs[i].texture.texUnitsPerDataPx
-           / (float)state->magnification;       
-       state->viewerState->vpConfigs[i].texture.usedTexLengthDc = state->M;
-
-   }
-
-   if(state->M * state->cubeEdgeLength >= TEXTURE_EDGE_LEN) {
-       LOG("Please choose smaller values for M or N. Your choice exceeds the KNOSSOS texture size!")
-       return false;
-   }
-
    /* @todo todo emitting signals out of class seems to be problematic
    emit knossos->calcDisplayedEdgeLengthSignal();
    */
 
-
    // For the client
 
-   clientState::inBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
-   if(clientState::inBuffer == NULL) {
-       LOG("Out of memory.")
-       return false;
+   state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+   if(state->clientState->inBuffer == NULL) {
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->inBuffer malloc fail");
    }
-   memset(clientState::inBuffer, '\0', sizeof(struct clientState::IOBuffer));
+   memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
 
-   clientState::inBuffer->data = (Byte *)malloc(128);
-   if(clientState::inBuffer->data == NULL) {
-       LOG("Out of memory.")
-       return false;
+   state->clientState->inBuffer->data = (Byte *)malloc(128);
+   if(state->clientState->inBuffer->data == NULL) {
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->inBuffer->data malloc fail");
    }
-   memset(clientState::inBuffer->data, '\0', 128);
+   memset(state->clientState->inBuffer->data, '\0', 128);
 
-   clientState::inBuffer->size = 128;
-   clientState::inBuffer->length = 0;
+   state->clientState->inBuffer->size = 128;
+   state->clientState->inBuffer->length = 0;
 
-   clientState::outBuffer = (clientState::IOBuffer *)malloc(sizeof(struct clientState::IOBuffer));
-   if(clientState::outBuffer == NULL) {
-       LOG("Out of memory.")
-       return false;
+   state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
+   if(state->clientState->outBuffer == NULL) {
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->outBuffer malloc fail");
    }
-   memset(clientState::outBuffer, '\0', sizeof(struct clientState::IOBuffer));
+   memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
 
-   clientState::outBuffer->data = (Byte *) malloc(128);
-   if(clientState::outBuffer->data == NULL) {
-       LOG("Out of memory.")
-       return false;
+   state->clientState->outBuffer->data = (Byte *) malloc(128);
+   if(state->clientState->outBuffer->data == NULL) {
+       LOG("Out of memory.");
+       throw std::runtime_error("state->clientState->outBuffer->data malloc fail");
    }
-   memset(clientState::outBuffer->data, '\0', 128);
+   memset(state->clientState->outBuffer->data, '\0', 128);
 
-   clientState::outBuffer->size = 128;
-   clientState::outBuffer->length = 0;
+   state->clientState->outBuffer->size = 128;
+   state->clientState->outBuffer->length = 0;
 
    // For the skeletonizer   
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
@@ -385,24 +426,6 @@ bool Knossos::initStates() {
     GetTempPathA(MAX_PATH, state->loadFtpCachePath);
     state->loadLocalSystem = LS_WINDOWS;
 #endif
-
-   // We're not doing stuff in parallel, yet. So we skip the locking
-   // part.
-   // This *10 thing is completely arbitrary. The larger the table size,
-   // the lower the chance of getting collisions and the better the loading
-   // order will be respected. *10 doesn't seem to have much of an effect
-   // on performance but we should try to find the optimal value some day.
-   // Btw: A more clever implementation would be to use an array exactly the
-   // size of the supercube and index using the modulo operator.
-   // sadly, that realization came rather late. ;)
-
-   // creating the hashtables is cheap, keeping the datacubes is
-   // memory expensive..
-   for(int i = 0; i <= NUM_MAG_DATASETS; i = i * 2) {
-       state->Dc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       state->Oc2Pointer[int_log(i)] = Hashtable::ht_new(state->cubeSetElements * 10);
-       if(i == 0) i = 1;
-   }
 
    return commonInitStates();
 
@@ -442,7 +465,7 @@ bool Knossos::lockSkeleton(uint targetRevision) {
     }
     return true;
 }
-bool Knossos::unlockSkeleton(int increment) {
+bool Knossos::unlockSkeleton(int) {
     /* We cannot increment the revision count if the skeleton change was
      * not successfully commited (i.e. the skeleton changing function encountered
      * an error). In that case, the connection has to be closed and the user
@@ -483,15 +506,19 @@ bool Knossos::sendRemoteSignal() {
 bool Knossos::sendQuitSignal() {
 
     state->quitSignal = true;
-
-    Knossos::sendRemoteSignal();
-    Knossos::sendClientSignal();
+    QApplication::processEvents(); //ensure everything’s done
 
     state->protectLoadSignal->lock();
     state->loadSignal = true;
     state->protectLoadSignal->unlock();
 
     state->conditionLoadSignal->wakeOne();
+    loader->wait();//wait for the loader to terminate
+
+    Knossos::sendRemoteSignal();
+    Knossos::sendClientSignal();
+
+
     return true;
 }
 
@@ -587,24 +614,23 @@ bool Knossos::readConfigFile(const char *path) {
 }
 
 bool Knossos::printConfigValues() {
-    qDebug("Configuration:\n\tExperiment:\n\t\tPath: %s\n\t\tName: %s\n\t\tBoundary (x): %d\n\t\tBoundary (y): %d\n\t\tBoundary (z): %d\n\t\tScale (x): %f\n\t\tScale (y): %f\n\t\tScale (z): %f\n\n\tData:\n\t\tCube bytes: %d\n\t\tCube edge length: %d\n\t\tCube slice area: %d\n\t\tM (cube set edge length): %d\n\t\tCube set elements: %d\n\t\tCube set bytes: %d\n\t\tZ-first cube order: %d\n",
-               state->path,
-               state->name,
-               state->boundary.x,
-               state->boundary.y,
-               state->boundary.z,
-               state->scale.x,
-               state->scale.y,
-               state->scale.z,
-               state->cubeBytes,
-               state->cubeEdgeLength,
-               state->cubeSliceArea,
-               state->M,
-               state->cubeSetElements,
-               state->cubeSetBytes,
-               state->boergens);
-
-        return true;
+    qDebug() << QString("Configuration:\n\tExperiment:\n\t\tPath: %0\n\t\tName: %1\n\t\tBoundary (x): %2\n\t\tBoundary (y): %3\n\t\tBoundary (z): %4\n\t\tScale (x): %5\n\t\tScale (y): %6\n\t\tScale (z): %7\n\n\tData:\n\t\tCube bytes: %8\n\t\tCube edge length: %9\n\t\tCube slice area: %10\n\t\tM (cube set edge length): %11\n\t\tCube set elements: %12\n\t\tCube set bytes: %13\n\t\tZ-first cube order: %14\n")
+               .arg(state->path)
+               .arg(state->name)
+               .arg(state->boundary.x)
+               .arg(state->boundary.y)
+               .arg(state->boundary.z)
+               .arg(state->scale.x)
+               .arg(state->scale.y)
+               .arg(state->scale.z)
+               .arg(state->cubeBytes)
+               .arg(state->cubeEdgeLength)
+               .arg(state->cubeSliceArea)
+               .arg(state->M)
+               .arg(state->cubeSetElements)
+               .arg(state->cubeSetBytes)
+               .arg(state->boergens);
+    return true;
 }
 
 bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
@@ -623,10 +649,13 @@ bool Knossos::loadNeutralDatasetLUT(GLuint *datasetLut) {
 stateInfo *Knossos::emptyState() {
 
     stateInfo *state = new stateInfo();
-    memset(state, 0, sizeof(stateInfo));//initialize memory
 
     state->viewerState = new viewerState();
+    state->viewerState->gui = new guiConfig();
+    state->clientState = new clientState();
+
     state->skeletonState = new skeletonState();
+    state->taskState = new taskState();
     return state;
 }
 
@@ -723,7 +752,7 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             int currMagExists = false;
             if (LM_FTP == state->loadMode) {
                 const char *ftpDirDelim = "/";
-                int confSize = 0;
+                //int confSize = 0;
                 sprintf(currPath, "%smag%d%sknossos.conf", state->ftpBasePath, currMag, ftpDirDelim);
                 /* if (1 == FtpSize(currPath, &confSize, FTPLIB_TEXT, state->ftpConn)) { */
                 if (EXIT_SUCCESS == downloadFile(currPath, NULL)) {
@@ -787,14 +816,6 @@ bool Knossos::findAndRegisterAvailableDatasets() {
             // search the wrong directories or a wrong path was entered
             LOG("Path does not exist or unsupported data path format.");
             return false;
-        }
-
-        /* Do not enable multires by default, even if more than one dataset was found.
-         * Multires might be confusing to untrained tracers! Experts can easily enable it..
-         * The loaded gui config might lock K to the current mag later on, which is fine. */
-        if(state->highestAvailableMag > 1) {
-            qDebug() << "Decided on datasetMagLock = true";
-            emit lockDatasetMag(true);
         }
 
         if(state->highestAvailableMag > NUM_MAG_DATASETS) {
@@ -906,7 +927,7 @@ bool Knossos::configDefaults() {
     state->offset.y = 0;
     state->offset.z = 0;
     state->cubeEdgeLength = 128;
-    state->M = 3;
+    state->M = 0;//invalid M, so the datasetpropertywidget can tell if M was provided by cmdline
     state->magnification = 1;
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
@@ -928,7 +949,7 @@ bool Knossos::configDefaults() {
     state->viewerState->numberViewports = 4;
     state->viewerState->dropFrames = 1;
     state->viewerState->walkFrames = 10;
-    state->viewerState->drawNodeSelectSquare = false;
+    state->viewerState->nodeSelectSquareVpId = -1;
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.first, 0, 0, 0);
     SET_COORDINATE(state->viewerState->nodeSelectionSquare.second, 0, 0, 0);
 
@@ -1005,6 +1026,18 @@ bool Knossos::configDefaults() {
         state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
     }
 
+    // For the GUI
+    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
+
+    // For the client
+    state->clientState->connectAsap = false;
+    state->clientState->connectionTimeout = 3000;
+    state->clientState->remotePort = 7890;
+    strncpy(state->clientState->serverAddress, "localhost", 1024);
+    state->clientState->connected = false;
+    state->clientState->synchronizeSkeleton = true;
+    state->clientState->synchronizePosition = true;
+    state->clientState->saveMaster = false;
 
 
     // For the skeletonizer
@@ -1022,12 +1055,13 @@ bool Knossos::configDefaults() {
 
     //This number is currently arbitrary, but high values ensure a good performance
     state->skeletonState->skeletonDCnumber = 8000;
-    state->skeletonState->workMode = ON_CLICK_DRAG;
 
     state->loadMode = LM_LOCAL;
     state->compressionRatio = 0;
 
-    state->keyD = state->keyE = state->keyF = state->keyR = false;
+    state->keyD = state->keyF = false;
+    state->repeatDirection = {};
+    state->viewerKeyRepeat = false;
 
     return true;
 
@@ -1125,7 +1159,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                     clientState::connectAsap = true;
+                     state->clientState->connectAsap = true;
                      break;
                  case 2:
                      state->scale.x = (float)strtod(rval, NULL);
@@ -1165,8 +1199,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      state->viewerState->overlayVisible = true;
                      break;
                  case 14:
-                     strncpy(gui::settingsFile, rval, 2000);
-                     strcpy(gui::settingsFile + strlen(rval), ".xml");
+                     strncpy(state->viewerState->gui->settingsFile, rval, 2000);
+                     strcpy(state->viewerState->gui->settingsFile + strlen(rval), ".xml");
                      break;
              }
          }
@@ -1190,11 +1224,6 @@ void Knossos::loadDefaultTreeLUT() {
 
     }
 }
-
-void rewire() {
-
-}
-
 
 void Knossos::revisionCheck() {
 
@@ -1228,5 +1257,17 @@ void Knossos::revisionCheck() {
 
 
 #endif
+
+}
+
+void Knossos::loadStyleSheet() {
+    QFile file(":/misc/style.qss");
+    if(!file.open(QIODevice::ReadOnly)) {
+        qErrnoWarning("Error reading the knossos style sheet file");
+    }
+
+    QString design(file.readAll());
+    qApp->setStyleSheet(design);
+    file.close();
 
 }

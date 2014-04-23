@@ -59,20 +59,19 @@ public:
     bool handleMouseMotionLeftHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionMiddleHold(QMouseEvent *event, int VPfound);
     bool handleMouseMotionRightHold(QMouseEvent *event, int VPfound);
-    bool handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
+    void handleMouseReleaseLeft(QMouseEvent *event, int VPfound);
     void handleMouseReleaseMiddle(QMouseEvent *event, int VPfound);
-    bool handleMouseWheelForward(QWheelEvent *event, int VPfound);
-    bool handleMouseWheelBackward(QWheelEvent *event, int VPfound);
+    void handleMouseWheel(QWheelEvent * const event, int VPfound);
     void handleKeyboard(QKeyEvent *event, int VPfound);
     static Coordinate *getCoordinateFromOrthogonalClick(QMouseEvent *event, int VPfound);
 
+    void startNodeSelection(int x, int y, int vpId);
+    void nodeSelection(int x, int y, int vpId);
     int xrel(int x);
     int yrel(int y);
     int mouseX;
     int mouseY;
     bool grap;
-protected:
-
 signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void userMoveArbSignal(float x, float y, float z, int serverMovement);
@@ -85,9 +84,7 @@ signals:
     void showSelectedTreesAndNodesSignal();
 
     void updateWidgetSignal();
-    void workModeAddSignal();
-    void workModeLinkSignal();
-    void workModeDropSignal();
+
     void deleteActiveNodeSignal();
     void genTestNodesSignal(uint number);
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
@@ -120,8 +117,6 @@ signals:
     NodeListElement *findNodeByNodeIDSignal(int nodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
     TreeListElement *addTreeListElement(int sync, int targetRevision, int treeID, Color4F color, int serialize);
-    uint retrieveVisibleObjectBeneathSquareSignal(uint currentVP, uint x, uint y, uint width);
-    void retrieveAllObjectsBeneathSquareSignal(uint currentVP, uint x, uint y, uint width, uint height);
     void undoSignal();
     void setViewportOrientationSignal(int orientation);
     void unselectNodesSignal();
@@ -132,8 +127,6 @@ signals:
     void nodeActivatedSignal();
     void nodeRadiusChangedSignal(NodeListElement *node);
     void nodePositionChangedSignal(NodeListElement *node);
-public slots:
-
 };
 
 #endif // EVENTMODEL_H

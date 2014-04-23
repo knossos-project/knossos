@@ -30,6 +30,10 @@
 #include <sys/stat.h>
 #include "ftp.h"
 
+#ifdef KNOSSOS_USE_TURBOJPEG
+#include <turbojpeg.h>
+#endif
+
 extern stateInfo *state;
 
 C_Element *lll_new()
@@ -116,13 +120,23 @@ uint lll_calculate_filename(C_Element *elem) {
     compressionExtension with ""
     then everthing should be fine as before.
     */
-    if (state->compressionRatio > 0) {
-        strncpy(typeExtension, "jp2", 4);
-        snprintf(compressionExtension, sizeof(compressionExtension), "%d.", state->compressionRatio);
-    }
-    else {
+    switch (state->compressionRatio) {
+    case 0:
         strncpy(typeExtension, "raw", 4);
         snprintf(compressionExtension, 1, "");
+        break;
+    case 1000:
+        strncpy(typeExtension, "jpg", 4);
+        snprintf(compressionExtension, 1, "");
+        break;
+    case 1001:
+        strncpy(typeExtension, "j2k", 4);
+        snprintf(compressionExtension, 1, "");
+        break;
+    default:
+        strncpy(typeExtension, "jp2", 4);
+        snprintf(compressionExtension, sizeof(compressionExtension), "%d.", state->compressionRatio);
+        break;
     }
     /*
     strncpy(typeExtension, "raw", 4);
@@ -440,19 +454,6 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     floatHalfSc = (float)edgeLen / 2.;
     halfSc = (int)floorf(floatHalfSc);
 
-    /*
-    switch (state->viewerState->activeVP) {
-        case VIEWPORT_XY:
-            dz = state->directionSign;
-            break;
-        case VIEWPORT_XZ:
-            dy = state->directionSign;
-            break;
-        case VIEWPORT_YZ:
-            dx = state->directionSign;
-            break;
-    }
-    */
     for (i = 0; i < LL_CURRENT_DIRECTIONS_SIZE; i++) {
         dx += (float)state->currentDirections[i].x;
         dy += (float)state->currentDirections[i].y;
@@ -512,6 +513,12 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     FILE *cubeFile = NULL;
     size_t readBytes = 0;
     Byte *currentDcSlot = NULL;
+#ifdef KNOSSOS_USE_TURBOJPEG
+    tjhandle _jpegDecompressor = NULL;
+    Byte *localCompressedBuf = NULL;
+    size_t localCompressedBufSize = 0;
+    int jpegSubsamp, width, height;
+#endif
     //DWORD tickCount = GetTickCount();
 
     /*
@@ -552,13 +559,8 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
 
     filename = (LM_FTP == state->loadMode) ? lts->currentCube->local_filename : lts->currentCube->fullpath_filename;
 
-    if (state->compressionRatio > 0) {
-        if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
-            LOG("Decompression function failed!");
-            goto loadcube_fail;
-        }
-    }
-    else {
+    switch(state->compressionRatio) {
+    case 0:
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
@@ -576,6 +578,59 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         } else {
             fclose(cubeFile);
         }
+        break;
+    case 1000:
+#ifdef KNOSSOS_USE_TURBOJPEG
+        cubeFile = fopen(filename, "rb");
+        if(cubeFile == NULL) {
+            LOG("fopen failed for %s!\n", filename);
+            goto loadcube_fail;
+        }
+        if (0 != fseek(cubeFile, 0, SEEK_END)) {
+            LOG("fseek END failed for %s!\n", filename);
+            goto loadcube_fail;
+        }
+        localCompressedBufSize = ftell(cubeFile);
+        if (0 != fseek(cubeFile, 0, SEEK_SET)) {
+            LOG("fseek SET failed for %s!\n", filename);
+            goto loadcube_fail;
+        }
+        localCompressedBuf = (Byte*)malloc(localCompressedBufSize);
+        if (NULL == localCompressedBuf) {
+            LOG("malloc failed!\n");
+            goto loadcube_fail;
+        }
+        readBytes = fread(localCompressedBuf, 1, localCompressedBufSize, cubeFile);
+        fclose(cubeFile);
+        if (localCompressedBufSize != readBytes) {
+            LOG("fread failed for %s! (%d instead of %d)\n", filename, readBytes, localCompressedBufSize);
+            goto loadcube_fail;
+        }
+
+        _jpegDecompressor = tjInitDecompress();
+        if (NULL == _jpegDecompressor) {
+            LOG("tjInitDecompress() failed!");
+            goto loadcube_fail;
+        }
+        if (0 != tjDecompressHeader2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, &width, &height, &jpegSubsamp)) {
+            LOG("tjDecompressHeader2() failed!");
+            goto loadcube_fail;
+        }
+        if (0 != tjDecompress2(_jpegDecompressor, localCompressedBuf, localCompressedBufSize, currentDcSlot, width, 0/*pitch*/, height, TJPF_GRAY, TJFLAG_ACCURATEDCT)) {
+            LOG("tjDecompress2() failed!");
+            goto loadcube_fail;
+        }
+#else
+        LOG("JPG disabled, Knossos wasn’t compiled with config »turbojpeg«.");
+#endif
+        break;
+    case 1001:
+    default:
+        if (EXIT_SUCCESS != jp2_decompress_main(filename, reinterpret_cast<char*>(currentDcSlot), state->cubeBytes)) {
+            LOG("Decompression function failed!");
+            goto loadcube_fail;
+        }
+        break;
     }
     goto loadcube_manage;
 
@@ -614,6 +669,15 @@ loadcube_ret:
         lts->thisPtr->freeDcSlots.push_front(currentDcSlot);
         state->protectLoaderSlots->unlock();
     }
+
+#ifdef KNOSSOS_USE_TURBOJPEG
+    if (NULL != _jpegDecompressor) {
+        tjDestroy(_jpegDecompressor);
+    }
+    if (NULL != localCompressedBuf) {
+        free(localCompressedBuf);
+    }
+#endif
 
     if (retVal) {
         //lts->decompTime = GetTickCount() - tickCount;
@@ -773,7 +837,7 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
 uint Loader::loadCubes() {
     int decompThreads = state->loaderDecompThreadsNumber;
 
-    C_Element *currentCube = NULL, *prevCube = NULL, *decompedCube = NULL;
+    C_Element *currentCube = NULL;//, *prevCube = NULL, *decompedCube = NULL;
     uint loadedDc;
     FtpThread *ftpThread;
     ftp_thread_struct fts = {0};
