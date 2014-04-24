@@ -8,7 +8,7 @@ QT += core gui opengl network help# testlib
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11 copydoc turbojpeg
+CONFIG += qt c++11 createdoc turbojpeg
 #CONFIG -= app_bundle
 
 SOURCES += widgets/mainwindow.cpp \
@@ -245,12 +245,12 @@ win32 {
     RC_FILE = knossos.rc
 }
 
-copydoc:!exists($$OUT_PWD/doc) {
-    copydoctarget.target = copydoc
-    copydoctarget.depends = $$PWD/doc
-    copydoctarget.commands = $(COPY_DIR) $$PWD/doc $$OUT_PWD
-    first.depends = copydoctarget
-    QMAKE_EXTRA_TARGETS += first copydoctarget
+createdoc {
+    createdoctarget.target = $$PWD/doc/collection.qhc
+    createdoctarget.depends = $$PWD/doc/collection.qhcp $$PWD/doc/doc.qhp
+    createdoctarget.commands = qcollectiongenerator $$PWD/doc/collection.qhcp -o $$PWD/doc/collection.qhc
+    first.depends = createdoctarget
+    QMAKE_EXTRA_TARGETS += first createdoctarget
 }
 
 turbojpeg {

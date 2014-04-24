@@ -1,4 +1,8 @@
 <RCC>
+    <qresource prefix="/">
+        <file>doc/collection.qhc</file>
+        <file>doc/doc.qch</file>
+    </qresource>
     <qresource prefix="/images">
         <file>logo.ico</file>
         <file>script.py</file>

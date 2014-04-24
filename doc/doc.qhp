@@ -42,17 +42,14 @@
          </toc>
          <files>
              <file>documentation.html</file>
-             <file>images/top.jpg</file>
-             <file>images/Tut_KnossosStarter.jpg</file>
+             <file>images/top.png</file>
              <file>images/Tut_commentsWindow.png</file>
              <file>images/Tut_Coordinates.png</file>
-             <file>images/Tut_KnossosStarter.png</file>
              <file>images/Tut_treeview.png</file>
 			 <file>images/Tut_loadDataset.png</file>
 			 <file>images/Tut_node_selection.png</file>
-             <file>images/Tut_Viewports.png</file>
-             <file>images/Tut_full_LinkNodes.png</file>
-             <file>images/Tut_full_skelVP.jpg</file>
+			 <file>images/Tut_Viewports.png</file>
+			 <file>images/Tut_full_skelVP.png</file>
              <file>images/Tut_full_VPsettings.png</file>
 			 <file>images/Tut_full_skelVPsettings.png</file>
          </files>
