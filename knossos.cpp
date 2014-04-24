@@ -130,14 +130,13 @@ int main(int argc, char *argv[])
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
-    //Splash splash(":/images/splash.png", 1500);
+    Splash splash(":/images/splash.png", 1500);
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     knossos.reset(new Knossos);
-
 
     // The idea behind all this is that we have four sources of
     // configuration data:

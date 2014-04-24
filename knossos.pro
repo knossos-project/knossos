@@ -249,8 +249,8 @@ createdoc {
     createdoctarget.target = $$PWD/doc/collection.qhc
     createdoctarget.depends = $$PWD/doc/collection.qhcp $$PWD/doc/doc.qhp
     createdoctarget.commands = qcollectiongenerator $$PWD/doc/collection.qhcp -o $$PWD/doc/collection.qhc
-    first.depends = createdoctarget
-    QMAKE_EXTRA_TARGETS += first createdoctarget
+    QMAKE_EXTRA_TARGETS += createdoctarget
+    PRE_TARGETDEPS += $$PWD/doc/collection.qhc
 }
 
 turbojpeg {
