@@ -36,17 +36,10 @@ public:
     explicit Remote(QObject *parent = 0);
     void msleep(unsigned long msec);
 
-    bool remoteTrajectory(int trajNumber);
-    bool newTrajectory(char *trajName, char *trajectory);
     bool remoteWalkTo(int x, int y, int z);
     bool remoteWalk(int x, int y, int z);
     void run();
-    bool updateRemoteState();
-    bool remoteDelay(int s);
 
-    int type; // type: REMOTE_TRAJECTORY, REMOTE_RECENTERING
-    int maxTrajectories;
-    int activeTrajectory;
     Coordinate recenteringPosition;
 
 signals:
@@ -55,10 +48,8 @@ signals:
     void userMoveSignal(int x, int y, int z, int serverMovement);
     void updatePositionSignal(int serverMovement);
 public slots:
-    void setRemoteStateType(int type);
     void setRecenteringPosition(int x, int y, int z);
     bool remoteJump(int x, int y, int z);
-
 };
 
 #endif // REMOTE_H

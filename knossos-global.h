@@ -180,11 +180,6 @@ values. The XY vp always used. */
 #define USEREVENT_NOAUTOSAVE 8
 #define USEREVENT_REALQUIT 9
 
-#define REMOTE_TRAJECTORY 5
-#define REMOTE_FOLLOW 6
-#define REMOTE_SYNCHRONIZE 7
-#define REMOTE_RECENTERING 8
-
 //  For the client / server protocol
 
 // CHANGE_MANUAL is the revision count used to signal a skeleton change on behalf of the
@@ -564,8 +559,6 @@ public:
 
     int datasetChangeSignal;
 
-    int maxTrajectories;
-
     // Tell the loading thread to wake up.
 
     QWaitCondition *conditionLoadSignal;
@@ -648,7 +641,6 @@ public:
     class Viewer *viewer;
     struct clientState *clientState;
     struct skeletonState *skeletonState;
-    struct trajectory *trajectories;
     struct taskState *taskState;
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;
@@ -712,11 +704,6 @@ struct taskState {
     static QString CSRFToken();
     static QString getCategory();
     static QString getTask();
-};
-
-struct trajectory {
-        char name[64];
-        char *source;
 };
 
 /**

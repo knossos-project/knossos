@@ -90,7 +90,6 @@ signals:
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
     void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-    void setRemoteStateTypeSignal(int type);
     void setRecenteringPositionSignal(int x, int y, int z);
     void nextCommentlessNodeSignal();
     void previousCommentlessNodeSignal();

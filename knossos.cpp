@@ -199,10 +199,8 @@ int main(int argc, char *argv[])
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::userMoveSignal, &viewer, &Viewer::userMove);
 
-    QObject::connect(viewer.skeletonizer, &Skeletonizer::setRemoteStateTypeSignal, &remote, &Remote::setRemoteStateType);
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
-    QObject::connect(viewer.eventModel, &EventModel::setRemoteStateTypeSignal, &remote, &Remote::setRemoteStateType);
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
     QObject::connect(&remote, &Remote::updatePositionSignal, &Viewer::updatePosition);

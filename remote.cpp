@@ -31,13 +31,7 @@
 
 extern stateInfo *state;
 
-Remote::Remote(QObject *parent) :
-    QThread(parent)
-{
-    //activeTrajectory = 0;
-    maxTrajectories = 16;
-    //type = false;
-}
+Remote::Remote(QObject *parent) : QThread(parent) {}
 
 void Remote::run() {
     floatCoordinate currToNext; //distance vector
@@ -62,112 +56,23 @@ void Remote::run() {
             break;
         }
 
-        updateRemoteState();
-
-        switch(this->type) {
-        case REMOTE_TRAJECTORY:
-            remoteTrajectory(this->activeTrajectory);
-            break;
-
-        case REMOTE_RECENTERING:
-            SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
-            state->viewerState->currentPosition.y - this->recenteringPosition.y,
-            state->viewerState->currentPosition.z - this->recenteringPosition.z);
-            if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
-                remoteJump(this->recenteringPosition.x,
-                           this->recenteringPosition.y,
-                           this->recenteringPosition.z);
-                           break;
-            }
-            remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
-                       this->recenteringPosition.y - state->viewerState->currentPosition.y,
-                       this->recenteringPosition.z - state->viewerState->currentPosition.z);
-            break;
-
-        default:
-            LOG("No such remote type (%d)\n", this->type)
+        SET_COORDINATE (currToNext, state->viewerState->currentPosition.x - this->recenteringPosition.x,
+        state->viewerState->currentPosition.y - this->recenteringPosition.y,
+        state->viewerState->currentPosition.z - this->recenteringPosition.z);
+        if(euclidicNorm(&currToNext) > JMP_THRESHOLD) {
+            remoteJump(this->recenteringPosition.x,
+                       this->recenteringPosition.y,
+                       this->recenteringPosition.z);
+                       break;
         }
+        remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
+                   this->recenteringPosition.y - state->viewerState->currentPosition.y,
+                   this->recenteringPosition.z - state->viewerState->currentPosition.z);
+
         if(state->quitSignal == true) {
             break;
         }
     }
-}
-
-bool Remote::newTrajectory(char *trajName, char *trajectory) {
-    int i = 0;
-
-    if(*trajName == '\0') {
-        return false;
-    }
-    if(state->trajectories == NULL) {
-        state->trajectories = (struct trajectory*) malloc(this->maxTrajectories * sizeof(struct trajectory));
-        if(state->trajectories == NULL) {
-            printf("Out of memory.\n");
-            return false;
-        }
-        memset(state->trajectories, '\0', sizeof(struct trajectory) * this->maxTrajectories);
-
-        state->maxTrajectories = this->maxTrajectories;
-    }
-
-    for(i = 0; i < state->maxTrajectories; i++) {
-        if(strncmp(state->trajectories[i].name, trajName, 63) == 0) {
-            if(state->trajectories[i].source != NULL) {
-                free(state->trajectories[i].source);
-                state->trajectories[i].source = NULL;
-            }
-            state->trajectories[i].source = (char*) strdup(trajectory);
-            return true;
-        }
-
-        if(state->trajectories[i].name[0] == '\0') {
-            strncpy(state->trajectories[i].name, trajName, 63);
-            state->trajectories[i].source = (char*) strdup(trajectory);
-            return true;
-        }
-    }
-
-    if(i == state->maxTrajectories)
-        return false;
-
-    return true;
-}
-
-/**
- * @todo lex parser
- */
-bool Remote::remoteTrajectory(int /*trajNumber*/) {
-    // BUG unimplemented method!
-    /*
-    YY_BUFFER_STATE trajBuffer;
-
-    if(state->trajectories != NULL) {
-        trajBuffer = yy_scan_string(state->trajectories[trajNumber].source);
-        yyparse(state);
-        yy_delete_buffer(trajBuffer);
-    } */
-
-    return true;
-}
-
-bool Remote::updateRemoteState() {
-    /* @CMP
-    if(state->trajectories != NULL) {
-        free(state->trajectories);
-        state->trajectories = NULL;
-    }
-
-    if(tempConfig->trajectories != NULL) {
-        state->maxTrajectories = tempConfig->maxTrajectories;
-        for(i = 0; i < state->maxTrajectories; i++)
-            newTrajectory(tempConfig->trajectories[i].name, tempConfig->trajectories[i].source);
-    }
-    */
-
-    for(int i = 0; i < state->maxTrajectories; i++) {
-        newTrajectory(state->trajectories[i].name, state->trajectories[i].source);
-    }
-    return true;
 }
 
 /**
@@ -287,8 +192,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
     else
         eventDelay = 50;
 
-    if(this->type == REMOTE_RECENTERING)
-        eventDelay = timePerStep;
+    eventDelay = timePerStep;
 
     if(abs(x) >= abs(y) && abs(x) >= abs(z)) {
         totalMoves = abs(x) / state->magnification;
@@ -427,17 +331,9 @@ bool Remote::remoteWalk(int x, int y, int z) {
     return true;
 }
 
-void Remote::setRemoteStateType(int type) {
-    this->type = type;
-}
-
 void Remote::setRecenteringPosition(int x, int y, int z) {
     this->recenteringPosition.x = x;
     this->recenteringPosition.y = y;
     this->recenteringPosition.z = z;
 }
 
-/*
-bool Remote::remoteDelay(int s) {
-}
-*/

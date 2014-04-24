@@ -3980,7 +3980,6 @@ bool Skeletonizer::moveToPrevTree() {
         }
         else {
             setActiveNode(CHANGE_MANUAL, node, node->nodeID);
-            emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
             emit setRecenteringPositionSignal(node->position.x,
                                          node->position.y,
                                          node->position.z);
@@ -4020,7 +4019,6 @@ bool Skeletonizer::moveToNextTree() {
         } else {
             setActiveNode(CHANGE_MANUAL, node, node->nodeID);
 
-                emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
                 emit setRecenteringPositionSignal(node->position.x,
                                              node->position.y,
                                              node->position.z);
@@ -4045,7 +4043,6 @@ bool Skeletonizer::moveToPrevNode() {
     struct nodeListElement *prevNode = getNodeWithPrevID(state->skeletonState->activeNode, true);
     if(prevNode) {
         setActiveNode(CHANGE_MANUAL, prevNode, prevNode->nodeID);
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
         emit setRecenteringPositionSignal(prevNode->position.x,
                                      prevNode->position.y,
                                      prevNode->position.z);
@@ -4061,7 +4058,6 @@ bool Skeletonizer::moveToNextNode() {
     struct nodeListElement *nextNode = getNodeWithNextID(state->skeletonState->activeNode, true);
     if(nextNode) {
         setActiveNode(CHANGE_MANUAL, nextNode, nextNode->nodeID);
-        emit setRemoteStateTypeSignal(REMOTE_RECENTERING);
         emit setRecenteringPositionSignal(nextNode->position.x,
                                      nextNode->position.y,
                                      nextNode->position.z);
