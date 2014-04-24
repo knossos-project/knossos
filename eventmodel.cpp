@@ -162,7 +162,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     active and do the appropriate operation */
     clickedCoordinate = getCoordinateFromOrthogonalClick(event, VPfound);
 
-    /* could not find any Coordinate... */
+    /* could not find any coordinate... */
     if(clickedCoordinate == NULL) {
         return true;
     }

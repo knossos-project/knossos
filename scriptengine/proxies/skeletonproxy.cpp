@@ -107,8 +107,8 @@ void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
         return;
     }
 
-    Coordinate Coordinate(x, y, z);
-    if(Skeletonizer::addNode(CHANGE_MANUAL, node_id, radius, parent_tree_id, &Coordinate, inVp, inMag, time, false, false)) {
+    Coordinate coordinate(x, y, z);
+    if(Skeletonizer::addNode(CHANGE_MANUAL, node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false, false)) {
         Skeletonizer::setActiveNode(CHANGE_MANUAL, state->skeletonState->activeNode, node_id);
         emit signalDelegate->nodeAddedSignal();
     } else {

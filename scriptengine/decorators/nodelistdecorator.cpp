@@ -102,7 +102,7 @@ void NodeListDecorator::set_coordinate(nodeListElement *self, int x, int y, int 
     self->position.z = z;
 }
 
-void NodeListDecorator::set_coordinate(nodeListElement *self, Coordinate Coordinate) {
+void NodeListDecorator::set_coordinate(nodeListElement *self, Coordinate coordinate) {
     self->position = Coordinate;
 }
 

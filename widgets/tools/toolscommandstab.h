@@ -64,7 +64,7 @@ signals:
     bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
                               nodeListElement *branchNode, int branchNodeID, int serialize);
     bool popBranchNodeSignal();
-    void lockPositionSignal(Coordinate Coordinate);
+    void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();
 
     void treeActivatedSignal();

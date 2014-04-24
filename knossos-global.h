@@ -377,10 +377,10 @@ public:
 // the hash table. The linked is circular, but has one entry element that is
 // defined by the pointer in the hash table structure below.
 //
-// * Coordinate is of type Coordinate (as defined in Coordinate.h) and i used
+// * Coordinate is of type Coordinate (as defined in coordinate.h) and i used
 //   as the key in the hash table.
 // * datacube is a pointer to the datacube that is to be associated with the
-//   Coordinate Coordinate.
+//   Coordinate coordinate.
 // * next is a pointer to another structure of the same type.
 //   someElement->next->previous = someElement should always hold true.
 // * previous should behave in analogy to next
@@ -390,7 +390,7 @@ public:
 //   NULL else.
 
 struct C2D_Element {
-        Coordinate Coordinate;
+        Coordinate coordinate;
         Byte *datacube;
         C2D_Element *previous;
         C2D_Element *next;

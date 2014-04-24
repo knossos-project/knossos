@@ -52,7 +52,7 @@ C_Element *lll_new()
 
     /* This is a dummy element used only for entry into the linked list. */
 
-    SET_COORDINATE(lll->Coordinate, 0, 0, 0);
+    SET_COORDINATE(lll->coordinate, 0, 0, 0);
 
     return lll;
 }
@@ -88,9 +88,9 @@ uint lll_calculate_filename(C_Element *elem) {
     char *boergens_param_1_name = "", *boergens_param_2_name = "", *boergens_param_3_name = "";
     char *local_cache_path_builder = NULL, *local_cache_path_total = NULL;
     int filenameSize = 1000;
-    Coordinate Coordinate;
+    Coordinate coordinate;
 
-    Coordinate = elem->Coordinate;
+    coordinate = elem->coordinate;
 
     switch (state->loadLocalSystem) {
     case LS_UNIX:
@@ -162,18 +162,18 @@ uint lll_calculate_filename(C_Element *elem) {
     }
     memset(elem->fullpath_filename, '\0', filenameSize);
 
-    boergens_param_2 = Coordinate.y;
+    boergens_param_2 = coordinate.y;
     boergens_param_2_name = "y";
     if(state->boergens) {
-        boergens_param_1 = Coordinate.z;
+        boergens_param_1 = coordinate.z;
         boergens_param_1_name = "z";
-        boergens_param_3 = Coordinate.x;
+        boergens_param_3 = coordinate.x;
         boergens_param_3_name = "x";
     }
     else {
-        boergens_param_1 = Coordinate.x;
+        boergens_param_1 = coordinate.x;
         boergens_param_1_name = "x";
-        boergens_param_3 = Coordinate.z;
+        boergens_param_3 = coordinate.z;
         boergens_param_3_name = "z";
     }
     magnificationStr = (char*)malloc(filenameSize);
@@ -200,9 +200,9 @@ uint lll_calculate_filename(C_Element *elem) {
     snprintf(elem->filename, filenameSize,
              "%s_x%.4d_y%.4d_z%.4d.%s%s",
              state->loaderName,
-             Coordinate.x,
-             Coordinate.y,
-             Coordinate.z,
+             coordinate.x,
+             coordinate.y,
+             coordinate.z,
              compressionExtension,
              typeExtension);
     snprintf(elem->fullpath_filename, filenameSize,
@@ -317,7 +317,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
         return LLL_FAILURE;
     }
 
-    putElement->Coordinate = key;
+    putElement->coordinate = key;
 
     putElement->filename = NULL;
     putElement->path = NULL;
@@ -342,7 +342,7 @@ uint lll_put(C_Element *destElement, Hashtable *currentLoadedHash, Coordinate ke
     destElement->next->previous = putElement;
     destElement->next = putElement;
 
-    destElement->Coordinate.x++;
+    destElement->coordinate.x++;
 
     /* LOG("(%d, %d, %d)", key.x, key.y, key.z); */
 
@@ -482,7 +482,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     for (x = -halfSc; x < halfSc + 1; x++) {
         for (y = -halfSc; y < halfSc + 1; y++) {
             for (z = -halfSc; z < halfSc + 1; z++) {
-                SET_COORDINATE(DcArray[i].Coordinate, currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z);
+                SET_COORDINATE(DcArray[i].coordinate, currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z);
                 SET_COORDINATE(DcArray[i].offset, x, y, z);
                 SET_COORDINATE(currentMetricPos, (float)x, (float)y, (float)z);
                 CalcLoadOrderMetric(floatHalfSc, currentMetricPos, direction, &DcArray[i].loadOrderMetrics[0]);
@@ -493,7 +493,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     extern void _quicksort(void *pbase, size_t total_elems, size_t size, int (*cmp)(const void*, const void*, const void *), const void *ctx);
     _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric_LoaderWrapper, (const void*)this);
     for (i = 0; i < cubeElemCount; i++) {
-        if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].Coordinate)) {
+        if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
             return false;
         }
     }
@@ -539,9 +539,9 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
     state->protectLoaderSlots->unlock();
     if (NULL == currentDcSlot) {
         LOG("Error getting a slot for the next Dc, wanted to load (%d, %d, %d), mag %d dataset.",
-            lts->currentCube->Coordinate.x,
-            lts->currentCube->Coordinate.y,
-            lts->currentCube->Coordinate.z,
+            lts->currentCube->coordinate.x,
+            lts->currentCube->coordinate.y,
+            lts->currentCube->coordinate.z,
             state->magnification);
         retVal = false;
         goto loadcube_ret;
@@ -646,11 +646,11 @@ loadcube_manage:
         goto loadcube_ret;
     }
     state->protectCube2Pointer->lock();
-    if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->Coordinate, currentDcSlot) != HT_SUCCESS) {
+    if(Hashtable::ht_put(state->Dc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentDcSlot) != HT_SUCCESS) {
         LOG("Error inserting new Dc (%d, %d, %d) with slot %p into Dc2Pointer[%d].",
-            lts->currentCube->Coordinate.x,
-            lts->currentCube->Coordinate.y,
-            lts->currentCube->Coordinate.z,
+            lts->currentCube->coordinate.x,
+            lts->currentCube->coordinate.y,
+            lts->currentCube->coordinate.z,
             currentDcSlot,
             state->loaderMagnification);
         retVal = false;
@@ -790,12 +790,12 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          * Process Dc2Pointer if the current cube is in Dc2Pointer.
          *
          */
-        if((delCubePtr = Hashtable::ht_get(state->Dc2Pointer[prevLoaderMagnification], currentCube->Coordinate)) != HT_FAILURE) {
-            if(Hashtable::ht_del(state->Dc2Pointer[prevLoaderMagnification], currentCube->Coordinate) != HT_SUCCESS) {
+        if((delCubePtr = Hashtable::ht_get(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if(Hashtable::ht_del(state->Dc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                 LOG("Error deleting cube (%d, %d, %d) from Dc2Pointer[%d].",
-                    currentCube->Coordinate.x,
-                    currentCube->Coordinate.y,
-                    currentCube->Coordinate.z,
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z,
                     prevLoaderMagnification);
                 return false;
             }
@@ -803,9 +803,9 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
             freeDcSlots.emplace_back(delCubePtr);
             /*
             LOG("Added %d, %d, %d => %d available",
-                    currentCube->Coordinate.x,
-                    currentCube->Coordinate.y,
-                    currentCube->Coordinate.z,
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z,
                     state->loaderState->freeDcSlots->elements);
             */
         }
@@ -814,12 +814,12 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
          *
          */
 
-        if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->Coordinate)) != HT_FAILURE) {
-            if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->Coordinate) != HT_SUCCESS) {
+        if((delCubePtr = Hashtable::ht_get(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate)) != HT_FAILURE) {
+            if(Hashtable::ht_del(state->Oc2Pointer[prevLoaderMagnification], currentCube->coordinate) != HT_SUCCESS) {
                 LOG("Error deleting cube (%d, %d, %d) from Oc2Pointer.",
-                    currentCube->Coordinate.x,
-                    currentCube->Coordinate.y,
-                    currentCube->Coordinate.z);
+                    currentCube->coordinate.x,
+                    currentCube->coordinate.y,
+                    currentCube->coordinate.z);
                 return false;
             }
 
@@ -924,7 +924,7 @@ uint Loader::loadCubes() {
             break;
         }
         /*
-         * Load the datacube for the current Coordinate.
+         * Load the datacube for the current coordinate.
          *
          */
         lts_current = &lts_array[thread_index];

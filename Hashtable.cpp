@@ -161,7 +161,7 @@ Hashtable *Hashtable::ht_new(uint tablesize) {
     // This is a dummy element used only for entry into the linked list.
 
     new_ht->listEntry->datacube = NULL;
-    SET_COORDINATE(new_ht->listEntry->Coordinate, -1, -1, -1);
+    SET_COORDINATE(new_ht->listEntry->coordinate, -1, -1, -1);
 
     return new_ht;
 }
@@ -174,7 +174,7 @@ uint Hashtable::ht_del(Hashtable *hashtable, Coordinate key) {
     curElement = hashtable->table[hashIndex];
 
     while(curElement) {
-        if(COMPARE_COORDINATE(key, curElement->Coordinate)) {
+        if(COMPARE_COORDINATE(key, curElement->coordinate)) {
             // We have the element that we want! Delete it.
             if(!curElement->previous->ht_next) {
                  // This is the first element in the chain, so
@@ -203,7 +203,7 @@ C2D_Element *Hashtable::ht_get_element(Hashtable *hashtable, Coordinate key) {
     curElement = hashtable->table[hashIndex];
 
     while(curElement) {
-        if(COMPARE_COORDINATE(key, curElement->Coordinate)) {
+        if(COMPARE_COORDINATE(key, curElement->coordinate)) {
             // This is the element we're looking for!
             return curElement;
         }
@@ -234,7 +234,7 @@ uint Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
         printf("Out of memory\n");
         return HT_FAILURE;
     }
-    putElement->Coordinate = key;
+    putElement->coordinate = key;
     putElement->datacube = value;
 
     // Compute the hash for the key and retrieve the corresponding entry
@@ -252,7 +252,7 @@ uint Hashtable::ht_put(Hashtable *hashtable, Coordinate key, Byte *value) {
         // Go through the chain to see if the key is the same, too.
 
         do {
-            if(COMPARE_COORDINATE(curElement->Coordinate, putElement->Coordinate)) {
+            if(COMPARE_COORDINATE(curElement->coordinate, putElement->coordinate)) {
                 // We already have an element for that key.
                 // Update the value, only.
 
@@ -301,14 +301,14 @@ uint Hashtable::ht_union(Hashtable *target, Hashtable *h1, Hashtable *h2) {
     cur = h1->listEntry->next;
     while(cur != h1->listEntry) {
         next = cur->next;
-        ht_put(target, cur->Coordinate, NULL);
+        ht_put(target, cur->coordinate, NULL);
         cur = next;
     }
 
     cur = h2->listEntry->next;
     while(cur != h2->listEntry) {
         next = cur->next;
-        ht_put(target, cur->Coordinate, NULL);
+        ht_put(target, cur->coordinate, NULL);
         cur = next;
     }
 

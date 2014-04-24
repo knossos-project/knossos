@@ -54,7 +54,7 @@ For Loader file loader
 #define LM_FTP      1
 
 struct C_Element {
-    Coordinate Coordinate;
+    Coordinate coordinate;
 
     char *filename;
     char *path;
@@ -110,7 +110,7 @@ protected:
 };
 
 struct LO_Element {
-        Coordinate Coordinate;
+        Coordinate coordinate;
         class Coordinate offset;
         float loadOrderMetrics[LL_METRIC_NUM];
 };
