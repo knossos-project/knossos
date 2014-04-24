@@ -256,7 +256,7 @@ copydoc:!exists($$OUT_PWD/doc) {
 }
 
 turbojpeg {
-    #DEFINES += KNOSSOS_USE_TURBOJPEG
+    DEFINES += KNOSSOS_USE_TURBOJPEG
     mac {
         INCLUDEPATH += /opt/libjpeg-turbo/include
         LIBS += -L/opt/libjpeg-turbo/lib

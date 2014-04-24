@@ -38,7 +38,6 @@ treeListElement *SkeletonProxy::first_tree() {
     return state->skeletonState->firstTree;
 }
 
-/** @notyetimplemented */
 void SkeletonProxy::export_converter(const QString &path) {
     QDir dir(path);
     if(!dir.exists()) {
@@ -66,7 +65,6 @@ void SkeletonProxy::export_converter(const QString &path) {
     targetFile.close();
 
     emit signalDelegate->echo("exported to (" + targetFile.fileName() + ")");
-
 
 }
 

@@ -44,6 +44,7 @@
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
 #include "scriptengine/scripting.h"
+#include "scriptengine/proxies/skeletonproxy.h"
 #include "ftp.h"
 
 #include "test/knossostestrunner.h"
@@ -71,32 +72,6 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 std::unique_ptr<Knossos> knossos;
 
-class myEventFilter: public QObject
-{
-  public:
-  myEventFilter():QObject()
-  {};
-  ~myEventFilter(){};
-
-  bool eventFilter(QObject* object,QEvent* event)
-  {
-      // update idle time to current time on any user actions except just moving the mouse
-      int type = event->type();
-      if(type == QEvent::MouseButtonPress
-            || type == QEvent::KeyPress
-            || type == QEvent::Wheel) {
-          if (state != NULL
-                  && state->viewer != NULL
-                  && state->viewer->window != NULL
-                  && state->viewer->window->widgetContainer != NULL
-                  && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
-              state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
-          }
-      }
-
-      return QObject::eventFilter(object,event);
-  }
-};
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
@@ -231,6 +206,15 @@ int main(int argc, char *argv[])
     QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
     QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
 
+    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(TreeListElement *)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(TreeListElement*)));
+    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    QObject::connect(signalDelegate, SIGNAL(addNodeSignal(Coordinate*,Byte)), viewer.skeletonizer, SLOT(UI_addSkeletonNode(Coordinate*,Byte)));
+    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
+    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+
 
     knossos->loadDefaultTreeLUT();
 
@@ -245,48 +229,8 @@ int main(int argc, char *argv[])
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
 
-    a.installEventFilter(new myEventFilter());
 
-    //scripts.run();
-
-    /* TEST */
-    /*
-    TestOrthogonalViewport ortho;
-    ortho.reference = viewer;
-    QTest::qExec(&ortho);
-    */
-
-    /*
-    TestToolsWidget tools;
-    tools.reference = viewer;
-    QTest::qExec(&tools);
-    */
-
-
-//    KnossosTestRunner runner;
-//    runner.reference = viewer;
-//    runner.addTestClasses();
-//    runner.show();
-
-
-
-    /*
-    QStringList args;
-    args << "-silent" << "-o" << "RESULT.xml" << "-xml";
-
-    TestCommentsWidget test;
-    test.reference = viewer;
-
-    QTest::qExec(&test, args);
-    */
-
-
-    /*
-    TestNavigationWidget navigation;
-    navigation.viewerReference = viewer;
-    navigation.remoteReference = remote;
-    QTest::qExec(&navigation);
-    */
+    scripts.start();
 
     return a.exec();
 }

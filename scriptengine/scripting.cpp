@@ -1,4 +1,7 @@
 #include <QSettings>
+#include <QDir>
+#include <QFileInfoList>
+
 #include "scripting.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
@@ -9,7 +12,6 @@
 #include "decorators/meshdecorator.h"
 #include "decorators/transformdecorator.h"
 #include "decorators/pointdecorator.h"
-
 #include "proxies/skeletonproxy.h"
 
 #include "geometry/render.h"
@@ -21,33 +23,8 @@
 #include "knossos-global.h"
 #include "sleeper.h"
 #include "widgets/mainwindow.h"
-#include <PythonQt/PythonQtStdIn.h>
-#include <QDir>
-#include <QFileInfoList>
 
 extern stateInfo *state;
-static QString message;
-
-static QString f(void *data) {
-    qDebug() << "from stdin";
-
-
-    QFile file;
-    if(file.open(stdout, QIODevice::ReadWrite | QIODevice::Unbuffered)) {
-        qDebug() << file.readAll();
-
-        uint l = file.write("unger");
-        if(l == -1) {
-            qDebug() << "error";
-        }
-        file.close();
-        return QString("unger");
-    }
-
-    return message;
-}
-
-
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -61,13 +38,9 @@ Scripting::Scripting(QObject *parent) :
     nodeListDecorator = new NodeListDecorator();
     segmentListDecorator = new SegmentListDecorator();
     meshDecorator = new MeshDecorator();
-
-
     transformDecorator = new TransformDecorator();
     pointDecorator = new PointDecorator();
     skeletonProxy = new SkeletonProxy();
-
-
 }
 
 void Scripting::executeFromUserDirectory(PythonQtObjectPtr &ctx) {
@@ -77,8 +50,6 @@ void Scripting::executeFromUserDirectory(PythonQtObjectPtr &ctx) {
     endings << "*.py";
     scriptDir.setNameFilters(endings);
     QFileInfoList entries = scriptDir.entryInfoList();
-
-
 
     foreach(const QFileInfo &script, entries) {
         QString path = script.absolutePath();
@@ -136,10 +107,11 @@ void Scripting::run() {
 
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    //PythonQt_QtAll::init();
 
+#ifndef Q_OS_MACX
+    PythonQt_QtAll::init();
+#endif
 
-    //ctx.addObject("app", qApp);
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");
     ctx.evalScript("from PythonQt import *");
@@ -164,7 +136,6 @@ void Scripting::run() {
     ctx.addVariable("GL_QUADS", GL_QUADS);
     ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
     ctx.addVariable("GL_POLYGON", GL_POLYGON);
-
 
     QString module("internal");
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
@@ -191,25 +162,17 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
 
     /*
-
     connect(signalDelegate, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
     connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
 
     connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
     connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
-
     */
-
-
 
     //PythonQt::self()->setRedirectStdInCallback(f, &message);
 
-
-
-
     //addDoc();
-   // executeFromUserDirectory(ctx);
-
+    executeFromUserDirectory(ctx);
 
     ctx.evalScript("sys.stdout.close()");
     ctx.evalScript("sys.stderr.close()");

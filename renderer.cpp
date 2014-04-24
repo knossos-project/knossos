@@ -77,6 +77,7 @@ Renderer::Renderer(QObject *parent) : QObject(parent) {
     initmesh(&(state->skeletonState->lineVertBuffer), 1024);
     initmesh(&(state->skeletonState->pointVertBuffer), 1024);
 
+    state->skeletonState->userGeometry = new QList<mesh *>();
 }
 
 uint Renderer::renderCylinder(Coordinate *base, float baseRadius, Coordinate *top, float topRadius, color4F color, uint currentVP, uint /*viewportType*/) {
@@ -2310,19 +2311,6 @@ void Renderer::renderSkeleton(uint currentVP, uint viewportType) {
 }
 
 
-bool Renderer::doublemeshCapacity(mesh *toDouble) {
-
-    (*toDouble).vertices = (floatCoordinate *)realloc((*toDouble).vertices, 2 * (*toDouble).vertsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).normals = (floatCoordinate *)realloc((*toDouble).normals, 2 * (*toDouble).normsBuffSize * sizeof(floatCoordinate));
-    (*toDouble).colors = (color4F *)realloc((*toDouble).colors, 2 * (*toDouble).colsBuffSize * sizeof(color4F));
-
-    (*toDouble).vertsBuffSize = 2 * (*toDouble).vertsBuffSize;
-    (*toDouble).normsBuffSize = 2 * (*toDouble).normsBuffSize;
-    (*toDouble).colsBuffSize = 2 * (*toDouble).colsBuffSize;
-
-
-    return true;
-}
 
 bool Renderer::initmesh(mesh *toInit, uint initialSize) {
 
@@ -2341,6 +2329,25 @@ bool Renderer::initmesh(mesh *toInit, uint initialSize) {
 
 
     return true;
+}
+
+bool Renderer::resizemeshCapacity(mesh *toResize, uint n) {
+    (*toResize).vertices = (floatCoordinate *)realloc((*toResize).vertices, n * (*toResize).vertsBuffSize * sizeof(floatCoordinate));
+    (*toResize).normals = (floatCoordinate *)realloc((*toResize).normals, n * (*toResize).normsBuffSize * sizeof(floatCoordinate));
+    (*toResize).colors = (color4F *)realloc((*toResize).colors, n * (*toResize).colsBuffSize * sizeof(color4F));
+
+    (*toResize).vertsBuffSize = n * (*toResize).vertsBuffSize;
+    (*toResize).normsBuffSize = n * (*toResize).normsBuffSize;
+    (*toResize).colsBuffSize = n * (*toResize).colsBuffSize;
+
+    return true;
+
+}
+
+bool Renderer::doublemeshCapacity(mesh *toDouble) {
+
+    return Renderer::resizemeshCapacity(toDouble, 2);
+
 }
 
 

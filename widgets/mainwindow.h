@@ -119,6 +119,7 @@ protected:
     void becomeFirstEntry(const QString &entry);
     QString openFileDirectory;
     QString saveFileDirectory;
+    bool eventFilter(QObject *object, QEvent *event);
 public:
     Ui::MainWindow *ui;
 

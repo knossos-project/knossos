@@ -4,13 +4,16 @@
 #include <QObject>
 #include <QThread>
 #include <PythonQt/PythonQt.h>
-//#include <PythonQt_QtAll/PythonQt_QtAll.h>
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
 #include <QProcess>
 #include <PythonQt/PythonQtPythonInclude.h>
 #include <PythonQt/PythonQtStdIn.h>
 #include <QSocketNotifier>
+
+#ifndef Q_OS_MACX
+   #include <PythonQt_QtAll/PythonQt_QtAll.h>
+#endif
 
 
 class ColorDecorator;
@@ -34,9 +37,6 @@ class Scripting : public QThread
     Q_OBJECT
 public:
     explicit Scripting(QObject *parent = 0);
-
-
-
     PythonQtScriptingConsole *console;
     CoordinateDecorator *coordinateDecorator;
     FloatCoordinateDecorator *floatCoordinateDecorator;
@@ -45,12 +45,9 @@ public:
     NodeListDecorator *nodeListDecorator;
     SegmentListDecorator *segmentListDecorator;
     MeshDecorator *meshDecorator;
-
     SkeletonProxy *skeletonProxy;
-
     TransformDecorator *transformDecorator;
     PointDecorator *pointDecorator;
-
     Highlighter *highlighter;
 
     void run();
@@ -71,10 +68,8 @@ public slots:
     void err(const QString &err);    
     void read();
 
-
 protected:
     QSettings *settings;   
-
 };
 
 #endif // SCRIPTING_H

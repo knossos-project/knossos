@@ -128,6 +128,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     createViewports();
     setAcceptDrops(true);
+
+    qApp->installEventFilter(this);
 }
 
 void MainWindow::createViewports() {
@@ -1468,4 +1470,15 @@ void MainWindow::resizeViewports(int width, int height) {
             viewports[i]->resize(height-DEFAULT_VP_MARGIN, height-DEFAULT_VP_MARGIN);
         }
     }
+}
+
+bool MainWindow::eventFilter(QObject* object,QEvent* event)
+{
+    // update idle time to current time on any user actions except just moving the mouse
+    int type = event->type();
+    if(type == QEvent::MouseButtonPress || type == QEvent::KeyPress || type == QEvent::Wheel) {
+        widgetContainer->tracingTimeWidget->checkIdleTime();
+    }
+
+    return QObject::eventFilter(object,event);
 }

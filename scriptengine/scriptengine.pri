@@ -60,11 +60,16 @@ macx {
 linux {
     LIBS += -lPythonQt \
             -lPythonQt_QtAll \
-            -L/home/amos/anaconda/lib/python2.7 -lpython2.7
+            -L/usr/lib/python2.7 -lpython2.7
 
-    INCLUDEPATH += /usr/local/include/PythonQt/ \
-                   /usr/include/python2.7/
+    INCLUDEPATH += $(QTDIR)/include \
+                   /usr/include/python2.7/ \
 
+
+    # copy the content of the python folder to the build-dir
+    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc \
+    scripts.files = $$PWD/python/* \
+    INSTALLS += scripts \
 }
 
 win32 {
