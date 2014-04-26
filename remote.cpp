@@ -63,11 +63,11 @@ void Remote::run() {
             remoteJump(this->recenteringPosition.x,
                        this->recenteringPosition.y,
                        this->recenteringPosition.z);
-                       break;
+        } else {
+            remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
+                       this->recenteringPosition.y - state->viewerState->currentPosition.y,
+                       this->recenteringPosition.z - state->viewerState->currentPosition.z);
         }
-        remoteWalk(this->recenteringPosition.x - state->viewerState->currentPosition.x,
-                   this->recenteringPosition.y - state->viewerState->currentPosition.y,
-                   this->recenteringPosition.z - state->viewerState->currentPosition.z);
 
         if(state->quitSignal == true) {
             break;
