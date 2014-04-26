@@ -100,11 +100,6 @@ Skeletonizer::Skeletonizer(QObject *parent) : QObject(parent) {
     state->skeletonState->totalComments = 0;
     state->skeletonState->totalBranchpoints = 0;
 
-    state->skeletonState->skeletonFile = (char*) malloc(8192 * sizeof(char));
-    memset(state->skeletonState->skeletonFile, '\0', 8192 * sizeof(char));
-
-    state->skeletonState->prevSkeletonFile = (char*) malloc(8192 * sizeof(char));
-    memset(state->skeletonState->prevSkeletonFile, '\0', 8192 * sizeof(char));
 
     state->skeletonState->commentBuffer = (char*) malloc(10240 * sizeof(char));
     memset(state->skeletonState->commentBuffer, '\0', 10240 * sizeof(char));
@@ -720,10 +715,6 @@ bool Skeletonizer::updateSkeletonFileName(int targetRevision, int increment, cha
         else {
             state->skeletonState->saveCnt = 0;
         }
-
-        sprintf(state->skeletonState->skeletonFile, "%s.%.3d.nml",
-                skeletonFileBase,
-                state->skeletonState->saveCnt);
     }
 
     state->skeletonState->skeletonRevision++;
@@ -3773,8 +3764,6 @@ bool Skeletonizer::delSkelState(struct skeletonState *skelState) {
     delTreesFromState(skelState);
     Hashtable::ht_rmtable(skelState->skeletonDCs);
     free(skelState->searchStrBuffer);
-    free(skelState->prevSkeletonFile);
-    free(skelState->skeletonFile);
     free(skelState);
     skelState = NULL;
 

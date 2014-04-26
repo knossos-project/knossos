@@ -1273,8 +1273,6 @@ struct skeletonState {
     bool autoSaveBool;
     uint autoSaveInterval;
     uint saveCnt;
-    char *skeletonFile;
-    char * prevSkeletonFile;
 
     char *deleteSegment;
 
