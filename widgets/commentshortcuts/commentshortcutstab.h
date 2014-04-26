@@ -30,10 +30,8 @@ class QLineEdit;
 class QLabel;
 class QPushButton;
 class QEvent;
-class CommentShortCutsTab : public QWidget
-{
+class CommentShortCutsTab : public QWidget {
     friend class CommentsWidget;
-    friend class TestCommentsWidget;
     Q_OBJECT
 public:
     explicit CommentShortCutsTab(QWidget *parent = 0);
