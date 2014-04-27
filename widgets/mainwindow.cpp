@@ -55,19 +55,13 @@
 #include "GuiConstants.h"
 #include "mainwindow.h"
 #include "skeletonizer.h"
-#include "ui_mainwindow.h"
 #include "viewer.h"
 #include "viewport.h"
 #include "widgetcontainer.h"
 
 extern  stateInfo *state;
 
-// -- Constructor and destroyer -- //
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     updateTitlebar();
     this->setWindowIcon(QIcon(":/images/logo.ico"));
 
@@ -139,10 +133,6 @@ void MainWindow::createViewports() {
     viewports[VP_LOWERLEFT]->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_UPPERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, 0, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
     viewports[VP_LOWERRIGHT]->setGeometry(DEFAULT_VP_MARGIN*2 + DEFAULT_VP_SIZE, DEFAULT_VP_SIZE + DEFAULT_VP_MARGIN, DEFAULT_VP_SIZE, DEFAULT_VP_SIZE);
-}
-
-MainWindow::~MainWindow() {
-    delete ui;
 }
 
 void MainWindow:: createToolBar() {
@@ -790,8 +780,7 @@ void MainWindow::clearSkeletonSlotGUI() {
 }
 
 void MainWindow::clearSkeletonSlotNoGUI() {
-
-    emit clearSkeletonSignal(CHANGE_MANUAL, false);
+    emit clearSkeletonSignal(false);
     state->skeletonState->skeletonFileAsQString = "";//unload skeleton file
     updateTitlebar();
     emit updateToolsSignal();
@@ -867,15 +856,6 @@ void MainWindow::defaultPreferencesSlot() {
     }
 }
 
-void MainWindow::synchronizationSlot()
-{
-    this->widgetContainer->synchronizationWidget->show();
-    this->widgetContainer->synchronizationWidget->adjustSize();
-    if(this->widgetContainer->synchronizationWidget->pos().x() <= 0 or this->widgetContainer->synchronizationWidget->pos().y() <= 0)
-        this->widgetContainer->synchronizationWidget->move(QWidget::mapToGlobal(centralWidget()->pos()));
-    this->widgetContainer->synchronizationWidget->move(QWidget::mapFromGlobal(centralWidget()->pos()));
-}
-
 /* window menu functionality */
 
 void MainWindow::logSlot()
@@ -919,8 +899,7 @@ void MainWindow::pasteClipboardCoordinates(){
 
             emit userMoveSignal(extractedCoords->x - 1 - state->viewerState->currentPosition.x,
                                 extractedCoords->y - 1 - state->viewerState->currentPosition.y,
-                                extractedCoords->z - 1 - state->viewerState->currentPosition.z,
-                                TELL_COORDINATE_CHANGE);
+                                extractedCoords->z - 1 - state->viewerState->currentPosition.z);
 
             free(extractedCoords);
 
@@ -936,8 +915,7 @@ void MainWindow::pasteClipboardCoordinates(){
 void MainWindow::coordinateEditingFinished() {
     emit userMoveSignal(xField->value()- 1 - state->viewerState->currentPosition.x,
                         yField->value()- 1 - state->viewerState->currentPosition.y,
-                        zField->value()- 1 - state->viewerState->currentPosition.z,
-                        TELL_COORDINATE_CHANGE);
+                        zField->value()- 1 - state->viewerState->currentPosition.z);
 }
 
 void MainWindow::saveSettings() {
@@ -1134,7 +1112,6 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
 */
 void MainWindow::updateSkeletonFileName(QString & fileName) {
     const QRegExp versionRegEx("(\\.)([0-9]{3})\\.nml$");
-    ++state->skeletonState->skeletonRevision;
     if (versionRegEx.indexIn(fileName) != -1) {
         const auto versionIndex = versionRegEx.pos(2);//get second regex aka version without dot and nml
         const auto incrementedVersion = fileName.midRef(versionIndex, 3).toInt() + 1;//3 chars following the dot
@@ -1308,7 +1285,7 @@ void MainWindow::showVPDecorationClicked() {
 void MainWindow::newTreeSlot() {
     color4F treeCol;
     treeCol.r = -1.;
-    treeListElement *tree = addTreeListElementSignal(true, CHANGE_MANUAL, 0, treeCol);
+    treeListElement *tree = addTreeListElementSignal(0, treeCol);
     emit updateToolsSignal();
     treeAddedSignal(tree);
 }
@@ -1322,7 +1299,7 @@ void MainWindow::previousCommentNodeSlot() {
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    emit pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0);
+    emit pushBranchNodeSignal(true, true, state->skeletonState->activeNode, 0);
     if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->isBranchNode) {//active node was successfully marked as branch
         emit branchPushedSignal();
     }
@@ -1370,11 +1347,11 @@ void MainWindow::F1Slot() {
     QString comment(state->viewerState->gui->comment1);
 
     if((!state->skeletonState->activeNode->comment) && (!comment.isEmpty())) {
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment1),
+        emit addCommentSignal(QString(state->viewerState->gui->comment1),
                               state->skeletonState->activeNode, 0);
     } else{
         if (!comment.isEmpty()) {
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
                                    QString(state->viewerState->gui->comment1), state->skeletonState->activeNode, 0);
         }
     }
@@ -1386,12 +1363,12 @@ void MainWindow::F2Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment2, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment2),
+        emit addCommentSignal(QString(state->viewerState->gui->comment2),
                               state->skeletonState->activeNode, 0);
     }
     else{
         if(strncmp(state->viewerState->gui->comment2, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
                                    QString(state->viewerState->gui->comment2), state->skeletonState->activeNode, 0);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
@@ -1402,12 +1379,12 @@ void MainWindow::F3Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment3, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment3),
+        emit addCommentSignal(QString(state->viewerState->gui->comment3),
                               state->skeletonState->activeNode, 0);
     }
     else{
        if(strncmp(state->viewerState->gui->comment3, "", 1) != 0)
-            emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+            emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
                                    QString(state->viewerState->gui->comment3), state->skeletonState->activeNode, 0);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
@@ -1418,12 +1395,12 @@ void MainWindow::F4Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment4, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment4),
+        emit addCommentSignal(QString(state->viewerState->gui->comment4),
                               state->skeletonState->activeNode, 0);
     }
     else{
        if (strncmp(state->viewerState->gui->comment4, "", 1) != 0)
-        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+        emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
                                QString(state->viewerState->gui->comment4), state->skeletonState->activeNode, 0);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);
@@ -1434,12 +1411,12 @@ void MainWindow::F5Slot() {
         return;
     }
     if((!state->skeletonState->activeNode->comment) && (strncmp(state->viewerState->gui->comment5, "", 1) != 0)){
-        emit addCommentSignal(CHANGE_MANUAL, QString(state->viewerState->gui->comment5),
+        emit addCommentSignal(QString(state->viewerState->gui->comment5),
                               state->skeletonState->activeNode, 0);
     }
     else {
         if (strncmp(state->viewerState->gui->comment5, "", 1) != 0)
-        emit editCommentSignal(CHANGE_MANUAL, state->skeletonState->activeNode->comment, 0,
+        emit editCommentSignal(state->skeletonState->activeNode->comment, 0,
                                QString(state->viewerState->gui->comment5), state->skeletonState->activeNode, 0);
     }
     emit nodeCommentChangedSignal(state->skeletonState->activeNode);

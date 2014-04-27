@@ -139,11 +139,6 @@ values. The XY vp always used. */
 #define CUBE_DATA       0
 #define CUBE_OVERLAY    1
 
-// Those are used to determine if the coordinate change should be passed on to
-// clients by the server.
-#define SILENT_COORDINATE_CHANGE 0
-#define TELL_COORDINATE_CHANGE 1
-
 #define ON_CLICK_RECENTER 1
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_SELECT   2
@@ -179,43 +174,6 @@ values. The XY vp always used. */
 #define USEREVENT_REDRAW 7
 #define USEREVENT_NOAUTOSAVE 8
 #define USEREVENT_REALQUIT 9
-
-//  For the client / server protocol
-
-// CHANGE_MANUAL is the revision count used to signal a skeleton change on behalf of the
-// user to lockSkeleton().
-#define CHANGE_MANUAL 0
-#define CHANGE_NOSYNC -1
-
-#define KIKI_REPEAT 0
-#define KIKI_CONNECT 1
-#define KIKI_DISCONNECT 2
-#define KIKI_HI 3
-#define KIKI_HIBACK 4
-#define KIKI_BYE 5
-#define KIKI_ADVERTISE 6
-#define KIKI_WITHDRAW 7
-#define KIKI_POSITION 8
-#define KIKI_ADDCOMMENT 9
-#define KIKI_EDITCOMMENT 10
-#define KIKI_DELCOMMENT 11
-#define KIKI_ADDNODE 12
-#define KIKI_EDITNODE 13
-#define KIKI_DELNODE 14
-#define KIKI_ADDSEGMENT 15
-#define KIKI_DELSEGMENT 16
-#define KIKI_ADDTREE 17
-#define KIKI_DELTREE 18
-#define KIKI_MERGETREE 19
-#define KIKI_SPLIT_CC 20
-#define KIKI_PUSHBRANCH 21
-#define KIKI_POPBRANCH 22
-#define KIKI_CLEARSKELETON 23
-#define KIKI_SETACTIVENODE 24
-#define KIKI_SETSKELETONMODE 25
-#define KIKI_SAVEMASTER 26
-#define KIKI_SKELETONFILENAME 27
-#define KIKI_ADDTREECOMMENT 28
 
 //  For custom key bindings
 
@@ -453,7 +411,6 @@ struct assignment {
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-    stateInfo();
     uint svnRevision;
 #ifdef QT_DEBUG
     Console *console;
@@ -479,10 +436,6 @@ public:
 
     // These signals are used to communicate with the remote.
     bool remoteSignal;
-
-    // Same for the client. The client threading code is basically
-    // copy-pasted from the remote.
-    bool clientSignal;
 
     // Cube hierarchy mode
     bool boergens;
@@ -569,8 +522,6 @@ public:
     // Tell the remote to wake up.
     QWaitCondition *conditionRemoteSignal;
 
-    QWaitCondition *conditionClientSignal;
-
     // Any signalling to the loading thread needs to be protected
     // by this mutex. This is done by sendLoadSignal(), so always
     // use sendLoadSignal() to signal to the loading thread.
@@ -583,10 +534,6 @@ public:
     // This should be accessed through sendRemoteSignal() only.
 
     QMutex *protectRemoteSignal;
-
-    // Access through sendClientSignal()
-
-    QMutex *protectClientSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
@@ -639,47 +586,11 @@ public:
 
     struct viewerState *viewerState;
     class Viewer *viewer;
-    struct clientState *clientState;
     struct skeletonState *skeletonState;
     struct taskState *taskState;
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;
     bool viewerKeyRepeat;
-
-signals:
-public slots:
-    uint getSvnRevision();
-    float getAlpha();
-    float getBeta();
-    bool isOverlay();
-    bool isLoaderBusy();
-    bool isLoaderDummy();
-    bool isQuitSignal();
-    bool isClientSignal();
-    bool isRemoteSignal();
-    bool isBoergens();
-    char *getPath();
-    char *getLoaderPath();
-    char **getMagNames();
-    char **getMagPaths();
-    char *getDatasetBaseExpName();
-    int getMagnification();
-    uint getCompressionRatio();
-    uint getHighestAvailableMag();
-    uint getLowestAvailableMag();
-    uint getLoaderMagnification();
-    uint getCubeBytes();
-    int getCubeEdgeLength();
-    int getCubeSliceArea();
-    int getM();
-    uint getCubeSetElements();
-    uint getCubeSetBytes();
-    Coordinate getBoundary();
-
-
-
-
-
 };
 
 struct httpResponse {
@@ -1301,28 +1212,6 @@ struct skeletonState {
 
     QString skeletonFileAsQString;
 };
-
-struct clientState {
-    bool connectAsap;
-    int remotePort;
-    bool connected;
-    Byte synchronizePosition;
-    Byte synchronizeSkeleton;
-    int connectionTimeout;
-    bool connectionTried;
-    char serverAddress[1024];
-
-    QHostAddress *remoteServer;
-    QTcpSocket *remoteSocket;
-    QSet<QTcpSocket *> *socketSet;
-    uint myId;
-    bool saveMaster;
-
-    struct peerListElement *firstPeer;
-    struct IOBuffer *inBuffer;
-    struct IOBuffer *outBuffer;
-};
-
 
 /* global functions */
 

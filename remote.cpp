@@ -23,10 +23,8 @@
  */
 #include "knossos-global.h"
 #include "remote.h"
-#include "sleeper.h"
 #include "functions.h"
 #include <QDebug>
-//#include <QTest>
 #include <math.h>
 
 extern stateInfo *state;
@@ -81,11 +79,9 @@ void Remote::run() {
 bool Remote::remoteJump(int x, int y, int z) {
     // is not threadsafe
 
-
     emit userMoveSignal(x - state->viewerState->currentPosition.x,
                         y - state->viewerState->currentPosition.y,
-                        z - state->viewerState->currentPosition.z,
-                        SILENT_COORDINATE_CHANGE);
+                        z - state->viewerState->currentPosition.z);
 
     return true;
 }
@@ -321,7 +317,7 @@ bool Remote::remoteWalk(int x, int y, int z) {
             if(z == 0) {
                 sendMove.z = 0;
             }
-            emit userMoveSignal(sendMove.x, sendMove.y, sendMove.z, TELL_COORDINATE_CHANGE);
+            emit userMoveSignal(sendMove.x, sendMove.y, sendMove.z);
         }
         // This is, of course, not really correct as the time of running
         // the loop body would need to be accounted for. But SDL_Delay()

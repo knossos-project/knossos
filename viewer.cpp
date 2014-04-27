@@ -30,7 +30,6 @@
 #include "renderer.h"
 #include "widgets/widgetcontainer.h"
 
-#include "sleeper.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewport.h"
 #include "functions.h"
@@ -983,12 +982,6 @@ bool Viewer::loadTreeColorTable(QString path, float *table, int type) {
     return true;
 }
 
-bool Viewer::updatePosition(int) {
-    Coordinate jump;
-
-    return true;
-}
-
 bool Viewer::calcDisplayedEdgeLength() {
     uint i;
     float FOVinDCs;
@@ -1074,7 +1067,6 @@ bool Viewer::changeDatasetMag(uint upOrDownFlag) {
 
     /* set flags to trigger the necessary renderer updates */
     state->skeletonState->skeletonChanged = true;
-    skeletonizer->skeletonChanged = true;
 
     emit updateZoomAndMultiresWidgetSignal();
 
@@ -1111,9 +1103,9 @@ void Viewer::run() {
         if (baseTime.elapsed() >= interval) {
             baseTime.restart();
             if (state->viewerState->vpConfigs[0].type != VIEWPORT_ARBITRARY) {
-                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
+                userMove(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
             } else {
-                userMove_arb(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2], TELL_COORDINATE_CHANGE);
+                userMove_arb(state->repeatDirection[0], state->repeatDirection[1], state->repeatDirection[2]);
             }
         }
     }
@@ -1289,7 +1281,7 @@ bool Viewer::updateZoomCube() {
     return true;
 }
 
-bool Viewer::userMove(int x, int y, int z, int serverMovement) {
+bool Viewer::userMove(int x, int y, int z) {
     struct viewerState *viewerState = state->viewerState;
 
     Coordinate lastPosition_dc;
@@ -1297,7 +1289,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
 
     //The skeleton VP view has to be updated after a current pos change
     state->skeletonState->viewChanged = true;
-    skeletonizer->viewChanged = true;
     /* @todo case decision for skeletonizer */
     if(state->skeletonState->showIntersections) {
         state->skeletonState->skeletonSliceVPchanged = true;
@@ -1333,17 +1324,6 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     recalcTextureOffsets();
     newPosition_dc = Coordinate::Px2DcCoord(viewerState->currentPosition);
 
-    if(state->clientState) {
-        if(serverMovement == TELL_COORDINATE_CHANGE &&
-            state->clientState->connected == true &&
-            state->clientState->synchronizePosition) {
-            emit broadcastPosition(viewerState->currentPosition.x,
-                                      viewerState->currentPosition.y,
-                                      viewerState->currentPosition.z);
-        }
-    }
-
-
     if(!COMPARE_COORDINATE(newPosition_dc, lastPosition_dc)) {
         state->viewerState->superCubeChanged = true;
 
@@ -1359,7 +1339,7 @@ bool Viewer::userMove(int x, int y, int z, int serverMovement) {
     return true;
 }
 
-bool Viewer::userMove_arb(float x, float y, float z, int serverMovement) {
+bool Viewer::userMove_arb(float x, float y, float z) {
     Coordinate step;
     state->viewerState->moveCache.x += x;
     state->viewerState->moveCache.y += y;
@@ -1368,7 +1348,7 @@ bool Viewer::userMove_arb(float x, float y, float z, int serverMovement) {
     step.y = roundFloat(state->viewerState->moveCache.y);
     step.z = roundFloat(state->viewerState->moveCache.z);
     SUB_COORDINATE(state->viewerState->moveCache, step);
-    return userMove(step.x, step.y, step.z, serverMovement);
+    return userMove(step.x, step.y, step.z);
 }
 
 
@@ -1857,14 +1837,12 @@ void Viewer::rewire() {
     QObject::connect(eventModel, &EventModel::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
     QObject::connect(eventModel, &EventModel::pasteCoordinateSignal, window, &MainWindow::pasteClipboardCoordinates);
     QObject::connect(eventModel, &EventModel::updateViewerStateSignal, this, &Viewer::updateViewerState);
-    QObject::connect(eventModel, &EventModel::updatePositionSignal, &Viewer::updatePosition);
     QObject::connect(eventModel, &EventModel::updateWidgetSignal, window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
     QObject::connect(eventModel, &EventModel::deleteActiveNodeSignal, &Skeletonizer::delActiveNode);
     QObject::connect(eventModel, &EventModel::genTestNodesSignal, skeletonizer, &Skeletonizer::genTestNodes);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeSignal, skeletonizer, &Skeletonizer::UI_addSkeletonNode);
     QObject::connect(eventModel, &EventModel::addSkeletonNodeAndLinkWithActiveSignal, skeletonizer, &Skeletonizer::addSkeletonNodeAndLinkWithActive);
     QObject::connect(eventModel, &EventModel::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(eventModel, &EventModel::previousCommentlessNodeSignal, skeletonizer, &Skeletonizer::previousCommentlessNode);
     QObject::connect(eventModel, &EventModel::saveSkeletonSignal, window, &MainWindow::saveSlot);
     QObject::connect(eventModel, &EventModel::delSegmentSignal, &Skeletonizer::delSegment);
     QObject::connect(eventModel, &EventModel::addSegmentSignal, &Skeletonizer::addSegment);
@@ -1896,7 +1874,6 @@ void Viewer::rewire() {
     QObject::connect(window, &MainWindow::nextCommentSignal, skeletonizer, &Skeletonizer::nextComment);
     QObject::connect(window, &MainWindow::previousCommentSignal, skeletonizer, &Skeletonizer::previousComment);
     QObject::connect(window, &MainWindow::clearSkeletonSignal, &Skeletonizer::clearSkeleton);
-    QObject::connect(window, &MainWindow::updateSkeletonFileNameSignal, skeletonizer, &Skeletonizer::updateSkeletonFileName);
     QObject::connect(window, &MainWindow::moveToNextNodeSignal, skeletonizer, &Skeletonizer::moveToNextNode);
     QObject::connect(window, &MainWindow::moveToPrevNodeSignal, skeletonizer, &Skeletonizer::moveToPrevNode);
     QObject::connect(window, &MainWindow::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
@@ -1952,13 +1929,8 @@ void Viewer::rewire() {
     //  -- end tools widget signals
     //  viewport settings widget signals --
     //  general vp settings tab signals
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::overrideNodeRadiusSignal, skeletonizer, &Skeletonizer::setOverrideNodeRadius);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::segRadiusToNodeRadiusSignal, skeletonizer, &Skeletonizer::setSegRadiusToNodeRadius);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::skeletonChangedSignal, skeletonizer, &Skeletonizer::setSkeletonChanged);
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::showNodeID, skeletonizer, &Skeletonizer::setShowNodeIDs);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->generalTabWidget, &VPGeneralTabWidget::updateViewerStateSignal, this, &Viewer::updateViewerState);
     //  slice plane vps tab signals
-    QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::showIntersectionsSignal, skeletonizer, &Skeletonizer::setShowIntersections);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::treeColorAdjustmentsChangedSignal, window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadTreeColorTableSignal, this, &Viewer::loadTreeColorTable);
     QObject::connect(window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget, &VPSlicePlaneViewportWidget::loadDataSetColortableSignal, &Viewer::loadDatasetColorTable);
@@ -1968,7 +1940,6 @@ void Viewer::rewire() {
     //  zoom and multires signals --
     QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomInSkeletonVPSignal, vpLowerRight, &Viewport::zoomInSkeletonVP);
     QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomOutSkeletonVPSignal, vpLowerRight, &Viewport::zoomOutSkeletonVP);
-    QObject::connect(window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::zoomLevelSignal, skeletonizer, &Skeletonizer::setZoomLevel);
     //  -- end zoom and multires signals
     // dataset property signals --
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalNoGUI, window, &MainWindow::clearSkeletonSlotNoGUI);

@@ -27,7 +27,6 @@
 #include <dirent.h>
 #include "loader.h"
 #include "knossos.h"
-#include "sleeper.h"
 #include <sys/stat.h>
 #include "ftp.h"
 

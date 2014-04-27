@@ -43,12 +43,7 @@ public:
     QCheckBox *showVPDecorationCheckBox;
     QCheckBox hideSkeletonOrthoVPsCheckBox{"Hide Skeleton in Ortho VPs"};
 signals:
-    void highlightActiveTreeSignal(bool on);
-    void overrideNodeRadiusSignal(bool on);
-    void segRadiusToNodeRadiusSignal(float value);
     void setViewportDecorations(bool);
-    void showNodeID(bool on);
-    void skeletonChangedSignal(bool on);
     void resetViewportPositions();
     void updateViewerStateSignal();
 

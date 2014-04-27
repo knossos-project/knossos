@@ -245,7 +245,7 @@ void ToolsTreeviewTab::mergeTreesAction() {
     if (prompt.clickedButton() == confirmButton) {
         int treeID1 = state->skeletonState->selectedTrees[0]->treeID;
         int treeID2 = state->skeletonState->selectedTrees[1]->treeID;
-        Skeletonizer::mergeTrees(CHANGE_MANUAL, treeID1, treeID2);
+        Skeletonizer::mergeTrees(treeID1, treeID2);
         treesMerged(treeID1, treeID2);
     }
 }
@@ -285,7 +285,7 @@ void ToolsTreeviewTab::setTreeCommentAction() {
     if (applied) {
         auto treeCommentBuffer = text;
         if (activeTreeTable->hasFocus()) {
-            Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, treeCommentBuffer.toLocal8Bit().data());
+            Skeletonizer::addTreeComment(state->skeletonState->activeTree->treeID, treeCommentBuffer.toLocal8Bit().data());
             setText(activeTreeTable, activeTreeTable->item(0, TreeTable::TREE_COMMENT), treeCommentBuffer);
             int row = getActiveTreeRow();
             if (row != -1) {
@@ -293,7 +293,7 @@ void ToolsTreeviewTab::setTreeCommentAction() {
             }
         } else {
             for (auto tree : state->skeletonState->selectedTrees) {
-                Skeletonizer::addTreeComment(CHANGE_MANUAL, tree->treeID, treeCommentBuffer);
+                Skeletonizer::addTreeComment(tree->treeID, treeCommentBuffer);
             }
             recreateTreesTable();
         }
@@ -393,7 +393,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
         radiusBuffer = value;
 
         if (activeNodeTable->hasFocus()) {
-            Skeletonizer::editNode(CHANGE_MANUAL, 0, state->skeletonState->activeNode, radiusBuffer,
+            Skeletonizer::editNode(0, state->skeletonState->activeNode, radiusBuffer,
                                    state->skeletonState->activeNode->position.x,
                                    state->skeletonState->activeNode->position.y,
                                    state->skeletonState->activeNode->position.z,
@@ -408,7 +408,7 @@ void ToolsTreeviewTab::setNodeRadiusAction() {
                 if(node == state->skeletonState->activeNode) {
                     setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_RADIUS), QString::number(radiusBuffer));
                 }
-                Skeletonizer::editNode(CHANGE_MANUAL, 0, node, radiusBuffer,
+                Skeletonizer::editNode(0, node, radiusBuffer,
                                        node->position.x, node->position.y, node->position.z, node->createdInMag);
             }
             recreateNodesTable();
@@ -421,11 +421,11 @@ void ToolsTreeviewTab::linkNodesAction() {
     const auto node1 = state->skeletonState->selectedNodes[1]->nodeID;
     //segments are only stored and searched in one direction so we have to search for both
     if (Skeletonizer::findSegmentByNodeIDs(node0, node1) != nullptr) {
-        emit delSegmentSignal(CHANGE_MANUAL, node0, node1, nullptr);
+        emit delSegmentSignal(node0, node1, nullptr);
     } else if (Skeletonizer::findSegmentByNodeIDs(node1, node0) != nullptr) {
-        emit delSegmentSignal(CHANGE_MANUAL, node1, node0, nullptr);
+        emit delSegmentSignal(node1, node0, nullptr);
     } else{
-        emit addSegmentSignal(CHANGE_MANUAL, node0, node1);
+        emit addSegmentSignal(node0, node1);
     }
 }
 
@@ -440,7 +440,7 @@ void ToolsTreeviewTab::splitComponentAction() {
     prompt.exec();
     if(prompt.clickedButton() == confirmButton) {
         treeListElement *prevActive = state->skeletonState->activeTree;
-        Skeletonizer::splitConnectedComponent(CHANGE_MANUAL, state->skeletonState->selectedNodes.front()->nodeID);
+        Skeletonizer::splitConnectedComponent(state->skeletonState->selectedNodes.front()->nodeID);
         if(prevActive != state->skeletonState->activeTree) { // if the active tree changes, the splitting was successful
             // when a tree is split, a new tree has been created and made active
             treeActivated();//add new tree to active tree table
@@ -477,16 +477,16 @@ void ToolsTreeviewTab::setNodeCommentAction() {
         if (activeNodeTable->hasFocus()) {
             if (nodeCommentBuffer.length() > 0) {
                 if(state->skeletonState->activeNode->comment == nullptr) {
-                    Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(),
+                    Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(),
                                              state->skeletonState->activeNode, 0);
                 } else {
-                    Skeletonizer::editComment(CHANGE_MANUAL,
+                    Skeletonizer::editComment(
                                               state->skeletonState->activeNode->comment, 0,
                                               nodeCommentBuffer.toLocal8Bit().data(),
                                               state->skeletonState->activeNode, 0);
                 }
             } else if(state->skeletonState->activeNode->comment != nullptr) {
-                Skeletonizer::delComment(CHANGE_MANUAL, state->skeletonState->activeNode->comment,
+                Skeletonizer::delComment(state->skeletonState->activeNode->comment,
                                          state->skeletonState->activeNode->nodeID);
             }
             setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), nodeCommentBuffer);
@@ -501,13 +501,13 @@ void ToolsTreeviewTab::setNodeCommentAction() {
                 }
                 if(nodeCommentBuffer.length() > 0) {
                     if (node->comment == nullptr) {
-                        Skeletonizer::addComment(CHANGE_MANUAL, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
+                        Skeletonizer::addComment(nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     } else {
-                        Skeletonizer::editComment(CHANGE_MANUAL,
+                        Skeletonizer::editComment(
                                                   node->comment, 0, nodeCommentBuffer.toLocal8Bit().data(), node, 0);
                     }
                 } else if (node-> comment != nullptr) {
-                    Skeletonizer::delComment(CHANGE_MANUAL, node->comment, node->nodeID);
+                    Skeletonizer::delComment(node->comment, node->nodeID);
                 }
             }
             recreateNodesTable();
@@ -565,7 +565,7 @@ void ToolsTreeviewTab::actTreeItemChanged(QTableWidgetItem *item) {
         return;
     }
     if (item->column() == TreeTable::TREE_COMMENT) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, state->skeletonState->activeTree->treeID, item->text().toUtf8().data());
+        Skeletonizer::addTreeComment(state->skeletonState->activeTree->treeID, item->text().toUtf8().data());
         recreateTreesTable();
         treeActivated();
     }
@@ -586,7 +586,7 @@ void ToolsTreeviewTab::treeItemChanged(QTableWidgetItem* item) {
 
     switch(item->column()) {
     case TreeTable::TREE_COMMENT: {
-            Skeletonizer::addTreeComment(CHANGE_MANUAL, selectedTree->treeID, item->text().toLocal8Bit().data());
+            Skeletonizer::addTreeComment(selectedTree->treeID, item->text().toLocal8Bit().data());
             // check if tree will still be displayed in list
             if(treeSearchField->text().isEmpty() == false) {
                 if(matchesSearchString(treeSearchField->text(),
@@ -636,7 +636,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
                 setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
             }
             if(item->text().length() == 0) {
-                Skeletonizer::delComment(CHANGE_MANUAL, activeNode->comment, 0);
+                Skeletonizer::delComment(activeNode->comment, 0);
                 if(activeRow == -1) {
                     break;
                 }
@@ -648,7 +648,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
                 }
                 break;
             }
-            Skeletonizer::editComment(CHANGE_MANUAL, activeNode->comment, 0,
+            Skeletonizer::editComment(activeNode->comment, 0,
                                       item->text().toLocal8Bit().data(), activeNode, 0);
             if(activeRow != -1) {
                 if(nodeSearchField->text().isEmpty() == false) {
@@ -665,7 +665,7 @@ void ToolsTreeviewTab::actNodeItemChanged(QTableWidgetItem *item) {
             if(item->text().length() == 0) {
                 break;
             }
-            Skeletonizer::addComment(CHANGE_MANUAL, item->text().toLocal8Bit().data(), activeNode, 0);
+            Skeletonizer::addComment(item->text().toLocal8Bit().data(), activeNode, 0);
             if(activeRow != -1) {
                 setText(nodeTable, nodeTable->item(activeRow, NodeTable::NODE_COMMENT), item->text());
             }
@@ -734,14 +734,14 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
         }
         if(selectedNode->comment) {
             if(item->text().length() == 0) {
-                Skeletonizer::delComment(CHANGE_MANUAL, selectedNode->comment, 0);
+                Skeletonizer::delComment(selectedNode->comment, 0);
                 if(commentNodesChckBx->isChecked() or nodeSearchField->text().isEmpty() == false) {
                     // since node has no comment anymore, it should be filtered out
                     nodeTable->removeRow(item->row());
                 }
                 break;
             }
-            Skeletonizer::editComment(CHANGE_MANUAL, selectedNode->comment, 0,
+            Skeletonizer::editComment(selectedNode->comment, 0,
                                       item->text().toLocal8Bit().data(), selectedNode, 0);
             if(nodeSearchField->text().isEmpty() == false) {
                 if(matchesSearchString(nodeSearchField->text(),
@@ -756,7 +756,7 @@ void ToolsTreeviewTab::nodeItemChanged(QTableWidgetItem* item) {
             if(item->text().length() == 0) {
                 break;
             }
-            Skeletonizer::addComment(CHANGE_MANUAL, item->text().toLocal8Bit().data(), selectedNode, 0);
+            Skeletonizer::addComment(item->text().toLocal8Bit().data(), selectedNode, 0);
             if(selectedNode == state->skeletonState->activeNode) {
                 if(activeNodeTable->item(0, NodeTable::NODE_COMMENT)) {
                     setText(activeNodeTable, activeNodeTable->item(0, NodeTable::NODE_COMMENT), item->text());
@@ -978,7 +978,7 @@ void ToolsTreeviewTab::nodeSelectionChanged() {
 
 void ToolsTreeviewTab::activateFirstSelectedNode() {
     if (state->skeletonState->selectedNodes.size() == 1) {
-        emit setActiveNodeSignal(CHANGE_MANUAL, nullptr, state->skeletonState->selectedNodes.front()->nodeID);
+        emit setActiveNodeSignal(nullptr, state->skeletonState->selectedNodes.front()->nodeID);
         emit JumpToActiveNodeSignal();
         nodeActivated();
     }

@@ -31,7 +31,6 @@
 #include "functions.h"
 #include "knossos-global.h"
 #include "renderer.h"
-#include "sleeper.h"
 #include "viewer.h"
 #include "viewport.h"
 

@@ -55,10 +55,7 @@ public:
     bool commonInitStates();
     static void revisionCheck();
 
-    static bool unlockSkeleton(int increment);
-    static bool lockSkeleton(uint targetRevision);
     static bool sendRemoteSignal();
-    static bool sendClientSignal();
     static bool sendQuitSignal();
     static bool sendServerSignal();
     static void loadStyleSheet();

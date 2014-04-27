@@ -25,6 +25,7 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 
+#include "viewport.h"
 #include "knossos-global.h"
 
 #include <array>
@@ -39,10 +40,6 @@
 #include <QComboBox>
 #include <QUndoStack>
 
-namespace Ui {
-    class MainWindow;
-}
-
 class QLabel;
 class QToolBar;
 class QToolButton;
@@ -52,15 +49,12 @@ class QCheckBox;
 class QMessageBox;
 class QGridLayout;
 class QFile;
-class Viewport;
 class WidgetContainer;
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
 
+class MainWindow : public QMainWindow {
+    Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
 
     void updateSkeletonFileName(QString &fileName);
 
@@ -71,24 +65,23 @@ public:
     static void datasetColorAdjustmentsChanged();
 
 signals:
-    bool changeDatasetMagSignal(uint serverMovement);
+    bool changeDatasetMagSignal(uint upOrDownFlag);
     void recalcTextureOffsetsSignal();
-    void clearSkeletonSignal(int targetRevision, int loadingSkeleton);
-    void updateSkeletonFileNameSignal(int targetRevision, int increment, char *filename);
+    void clearSkeletonSignal(int loadingSkeleton);
     bool loadSkeletonSignal(QString fileName);
     bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();
     void updateTreeviewSignal();
     void updateCommentsTableSignal();
-    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void userMoveSignal(int x, int y, int z);
 
     void stopRenderTimerSignal();
     void startRenderTimerSignal(int frequency);
     void updateTreeColorsSignal();
     void loadTreeLUTFallback();
 
-    treeListElement *addTreeListElementSignal(int sync, int targetRevision, int treeID, color4F color);
+    treeListElement *addTreeListElementSignal(int treeID, color4F color);
     void nextCommentSignal(QString searchString);
     void previousCommentSignal(QString searchString);
     /* */
@@ -97,11 +90,11 @@ signals:
     void moveToPrevTreeSignal();
     void moveToNextTreeSignal();
     bool popBranchNodeSignal();
-    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
+    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     void jumpToActiveNodeSignal();
 
-    bool addCommentSignal(int targetRevision, QString content, nodeListElement *node, int nodeID);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
+    bool addCommentSignal(QString content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(commentListElement *currentComment, int nodeID, QString newContent, nodeListElement *newNode, int newNodeID);
 
     void updateTaskDescriptionSignal(QString description);
     void updateTaskCommentSignal(QString comment);
@@ -120,8 +113,6 @@ protected:
     QString openFileDirectory;
     QString saveFileDirectory;
 public:
-    Ui::MainWindow *ui;
-
     QSpinBox *xField, *yField, *zField;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
 
@@ -181,7 +172,6 @@ public slots:
     void loadCustomPreferencesSlot();
     void saveCustomPreferencesSlot();
     void defaultPreferencesSlot();
-    void synchronizationSlot();
 
     /* window menu */
     void taskSlot();

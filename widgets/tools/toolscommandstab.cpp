@@ -188,7 +188,7 @@ void ToolsCommandsTab::activeNodeIDSpinChanged(int value) {
 //        }
     }
     if(node) {
-        setActiveNodeSignal(CHANGE_MANUAL, node, 0);
+        setActiveNodeSignal(node, 0);
         emit nodeActivatedSignal();
     }
     return;
@@ -204,12 +204,12 @@ void ToolsCommandsTab::newTreeButtonClicked() {
     treeCol.g = -1;
     treeCol.b = -1;
     treeCol.a = 1;
-    treeListElement *tree = addTreeListElement(true, CHANGE_MANUAL, 0, treeCol);
+    treeListElement *tree = addTreeListElement(0, treeCol);
     emit treeAddedSignal(tree);
 }
 
 void ToolsCommandsTab::pushBranchButtonClicked() {
-    if(pushBranchNodeSignal(CHANGE_MANUAL, true, true, state->skeletonState->activeNode, 0)) {
+    if(pushBranchNodeSignal(true, true, state->skeletonState->activeNode, 0)) {
         branchesOnStackLabel->setText(QString("On Stack: %1").arg(state->skeletonState->totalBranchpoints));
         emit branchPushedSignal();
     }

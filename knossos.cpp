@@ -29,10 +29,8 @@
 #include <QWaitCondition>
 #include <QSettings>
 #include <QFile>
-#include "sleeper.h"
 #include "knossos-global.h"
 #include "knossos.h"
-#include "client.h"
 #include "remote.h"
 #include "loader.h"
 #include "viewer.h"
@@ -177,7 +175,6 @@ int main(int argc, char *argv[])
     Viewer viewer;
     loader.reset(new Loader);
     Remote remote;
-    Client client;
 
     Scripting scripts;
     scripts.skeletonReference = viewer.skeletonizer;
@@ -186,7 +183,6 @@ int main(int argc, char *argv[])
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
 
-    QObject::connect(&viewer, &Viewer::broadcastPosition, &Client::broadcastPosition);
     QObject::connect(&viewer, &Viewer::loadSignal, loader.get(), &Loader::load);
     QObject::connect(viewer.window, &MainWindow::loadTreeLUTFallback, knossos.get(), &Knossos::loadTreeLUTFallback);
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
@@ -197,31 +193,8 @@ int main(int argc, char *argv[])
 
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
 
-    QObject::connect(&remote, &Remote::updatePositionSignal, &Viewer::updatePosition);
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
-
-    QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
-    QObject::connect(&client, &Client::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(&client, &Client::addTreeCommentSignal, &Skeletonizer::addTreeComment);
-
-    QObject::connect(&client, &Client::remoteJumpSignal, &remote, &Remote::remoteJump);
-
-    QObject::connect(&client, &Client::updateSkeletonFileNameSignal, viewer.skeletonizer, &Skeletonizer::updateSkeletonFileName);
-    QObject::connect(&client, &Client::setActiveNodeSignal, &Skeletonizer::setActiveNode);
-    QObject::connect(&client, &Client::addTreeCommentSignal, &Skeletonizer::addTreeComment);
-    QObject::connect(&client, &Client::skeletonWorkModeSignal, viewer.skeletonizer, &Skeletonizer::setSkeletonWorkMode);
-    QObject::connect(&client, &Client::clearSkeletonSignal, &Skeletonizer::clearSkeleton);
-    QObject::connect(&client, &Client::delSegmentSignal, &Skeletonizer::delSegment);
-    QObject::connect(&client, &Client::editNodeSignal, &Skeletonizer::editNode);
-    QObject::connect(&client, &Client::delNodeSignal, &Skeletonizer::delNode);
-    QObject::connect(&client, &Client::delTreeSignal, &Skeletonizer::delTree);
-    QObject::connect(&client, &Client::addCommentSignal, &Skeletonizer::addComment);
-    QObject::connect(&client, &Client::editCommentSignal, &Skeletonizer::editComment);
-    QObject::connect(&client, &Client::delCommentSignal, &Skeletonizer::delComment);
-    QObject::connect(&client, &Client::popBranchNodeSignal, viewer.skeletonizer, &Skeletonizer::UI_popBranchNode);
-    QObject::connect(&client, &Client::pushBranchNodeSignal, &Skeletonizer::pushBranchNode);
-
 
     knossos->loadDefaultTreeLUT();
 
@@ -231,7 +204,6 @@ int main(int argc, char *argv[])
     }
     viewer.run();
     remote.start();
-    client.start();
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
@@ -310,42 +282,6 @@ bool Knossos::initStates() {
    emit knossos->calcDisplayedEdgeLengthSignal();
    */
 
-   // For the client
-
-   state->clientState->inBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->inBuffer == NULL) {
-       LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->inBuffer malloc fail");
-   }
-   memset(state->clientState->inBuffer, '\0', sizeof(struct IOBuffer));
-
-   state->clientState->inBuffer->data = (Byte *)malloc(128);
-   if(state->clientState->inBuffer->data == NULL) {
-       LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->inBuffer->data malloc fail");
-   }
-   memset(state->clientState->inBuffer->data, '\0', 128);
-
-   state->clientState->inBuffer->size = 128;
-   state->clientState->inBuffer->length = 0;
-
-   state->clientState->outBuffer = (IOBuffer *)malloc(sizeof(struct IOBuffer));
-   if(state->clientState->outBuffer == NULL) {
-       LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->outBuffer malloc fail");
-   }
-   memset(state->clientState->outBuffer, '\0', sizeof(struct IOBuffer));
-
-   state->clientState->outBuffer->data = (Byte *) malloc(128);
-   if(state->clientState->outBuffer->data == NULL) {
-       LOG("Out of memory.");
-       throw std::runtime_error("state->clientState->outBuffer->data malloc fail");
-   }
-   memset(state->clientState->outBuffer->data, '\0', 128);
-
-   state->clientState->outBuffer->size = 128;
-   state->clientState->outBuffer->length = 0;
-
    // For the skeletonizer
    strcpy(state->skeletonState->skeletonCreatedInVersion, "3.2");
    state->skeletonState->idleTime = 0;
@@ -381,68 +317,6 @@ bool Knossos::initStates() {
 
 }
 
-bool Knossos::lockSkeleton(uint targetRevision) {
-    /*
-     * If a skeleton modifying function is called on behalf of the network client,
-     * targetRevision should be set to the appropriate remote value and lockSkeleton()
-     * will decide whether to commit the change or if the skeletons have gone out of sync.
-     * (This means that the return value of this function if very important and always
-     * has to be checked. If the function returns a failure, the skeleton change cannot
-     * proceed.)
-     * If the function is being called on behalf of the user, targetRevision should be
-     * set to CHANGE_MANUAL (== 0).
-     *
-     */
-
-    state->protectSkeleton->lock();
-
-    if(targetRevision != CHANGE_MANUAL) {
-        // We can only commit a remote skeleton change if the remote revision count
-        // is exactly the local revision count plus 1.
-        // If the function changing the skeleton encounters an error, unlockSkeleton() has
-        // to be called without incrementing the local revision count and the skeleton
-        // synchronization has to be cancelled
-
-        // printf("Recieved skeleton delta to revision %d, local revision is %d.\n",
-        //       targetRevision, state->skeletonState->skeletonRevision);
-        //
-
-       if(targetRevision != state->skeletonState->skeletonRevision + 1) {
-           // Local and remote skeletons have gone out of sync.
-           Client::skeletonSyncBroken();
-           return false;
-       }
-    }
-    return true;
-}
-bool Knossos::unlockSkeleton(int) {
-    /* We cannot increment the revision count if the skeleton change was
-     * not successfully commited (i.e. the skeleton changing function encountered
-     * an error). In that case, the connection has to be closed and the user
-     * must be notified. */
-
-     /*
-      * Increment signals either success or failure of the operation that made
-      * locking the skeleton necessary.
-      * It's here as a parameter for historical reasons and will be removed soon
-      * unless it turns out to be useful for something else...
-      *
-      */
-    state->protectSkeleton->unlock();
-    return true;
-}
-
-bool Knossos::sendClientSignal() {
-    qDebug() << "sending the client signal";
-    state->protectClientSignal->lock();
-    state->clientSignal = true;
-    state->protectClientSignal->unlock();
-
-    state->conditionClientSignal->wakeOne();
-
-    return true;
-}
-
 bool Knossos::sendRemoteSignal() {
     state->protectRemoteSignal->lock();
     state->remoteSignal = true;
@@ -466,8 +340,6 @@ bool Knossos::sendQuitSignal() {
     loader->wait();//wait for the loader to terminate
 
     Knossos::sendRemoteSignal();
-    Knossos::sendClientSignal();
-
 
     return true;
 }
@@ -602,7 +474,6 @@ stateInfo *Knossos::emptyState() {
 
     state->viewerState = new viewerState();
     state->viewerState->gui = new guiConfig();
-    state->clientState = new clientState();
 
     state->skeletonState = new skeletonState();
     state->taskState = new taskState();
@@ -851,16 +722,13 @@ bool Knossos::configDefaults() {
     state->loaderDecompThreadsNumber = QThread::idealThreadCount();
     state->remoteSignal = false;
     state->quitSignal = false;
-    state->clientSignal = false;
     state->conditionLoadSignal = new QWaitCondition();
     state->conditionLoadFinished = new QWaitCondition();
     state->conditionRemoteSignal = new QWaitCondition();
-    state->conditionClientSignal = new QWaitCondition();
     state->protectSkeleton = new QMutex(QMutex::Recursive);
     state->protectLoadSignal = new QMutex();
     state->protectLoaderSlots = new QMutex();
     state->protectRemoteSignal = new QMutex();
-    state->protectClientSignal = new QMutex();
     state->protectCube2Pointer = new QMutex();
     state->protectPeerList = new QMutex();
     state->protectOutBuffer = new QMutex();
@@ -979,17 +847,6 @@ bool Knossos::configDefaults() {
     // For the GUI
     snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
 
-    // For the client
-    state->clientState->connectAsap = false;
-    state->clientState->connectionTimeout = 3000;
-    state->clientState->remotePort = 7890;
-    strncpy(state->clientState->serverAddress, "localhost", 1024);
-    state->clientState->connected = false;
-    state->clientState->synchronizeSkeleton = true;
-    state->clientState->synchronizePosition = true;
-    state->clientState->saveMaster = false;
-
-
     // For the skeletonizer
     state->skeletonState->lockRadius = 100;
     state->skeletonState->lockPositions = false;
@@ -1052,7 +909,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
  int i = 0, j = 0, llen = 0;
  const char *lvals[NUM_PARAMS] = {
                              "--data-path",       // 0  Do not forget
-                             "--connect-asap",    // 1  to also modify
+                             "--connect-asap",    // 1  to also modify, client is no more
                              "--scale-x",         // 2  NUM_PARAMS
                              "--scale-y",         // 3  above when adding
                              "--scale-z",         // 4  switches!
@@ -1109,7 +966,7 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      strncpy(state->path, rval, 1023);
                      break;
                  case 1:
-                     state->clientState->connectAsap = true;
+                    LOG("switch not applicable anymore");
                      break;
                  case 2:
                      state->scale.x = (float)strtod(rval, NULL);

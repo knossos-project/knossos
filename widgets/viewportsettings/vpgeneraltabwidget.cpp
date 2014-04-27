@@ -153,23 +153,16 @@ void VPGeneralTabWidget::lightEffectsChecked(bool on) {
 }
 
 void VPGeneralTabWidget::hightlightActiveTreeChecked(bool on) {
-    emit highlightActiveTreeSignal(on);
-    emit skeletonChangedSignal(true);
-
     state->skeletonState->highlightActiveTree = on;
     state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::showAllNodeIdsChecked(bool on) {
-    emit showNodeID(on);
-    emit skeletonChangedSignal(true);
-
     state->skeletonState->showNodeIDs = on;
     state->skeletonState->skeletonChanged = true;
 }
 
 void VPGeneralTabWidget::overrideNodeRadiusChecked(bool on) {
-    emit overrideNodeRadiusSignal(on);
     state->skeletonState->overrideNodeRadiusBool = on;
     overrideNodeRadiusSpinBox->setEnabled(on);
 }
@@ -181,7 +174,6 @@ void VPGeneralTabWidget::overrideNodeRadiusChanged(double value) {
 
 
 void VPGeneralTabWidget::edgeNodeRadiusRatioChanged(double value) {
-    emit segRadiusToNodeRadiusSignal(value);
     state->skeletonState->segRadiusToNodeRadius = value;
 }
 

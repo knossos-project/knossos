@@ -12,7 +12,6 @@ CONFIG += qt c++11 createdoc turbojpeg
 
 SOURCES += widgets/mainwindow.cpp \
     eventmodel.cpp \
-    client.cpp \
     loader.cpp \
     viewer.cpp \
     remote.cpp \
@@ -21,7 +20,6 @@ SOURCES += widgets/mainwindow.cpp \
     knossos.cpp \
     coordinate.cpp \
     Hashtable.cpp \
-    sleeper.cpp \
     widgets/viewport.cpp \
     treeLUT_fallback.cpp \
     widgets/console.cpp \
@@ -36,7 +34,6 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
-    widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
     widgets/datasetpropertywidget.cpp \
     widgets/task/taskloginwidget.cpp \
@@ -82,8 +79,7 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
     widgets/tools/nodetable.cpp \
-    widgets/tools/treetable.cpp \
-    stateInfo.cpp
+    widgets/tools/treetable.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -124,14 +120,12 @@ PRECOMPILED_HEADERS += openjpeg/tgt.h \
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
     eventmodel.h \
-    client.h \
     loader.h \
     viewer.h \
     remote.h \
     skeletonizer.h \
     renderer.h \
     knossos.h\
-    sleeper.h \
     widgets/GuiConstants.h \
     widgets/viewport.h \
     widgets/console.h \
@@ -146,7 +140,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/viewportsettings/vpsliceplaneviewportwidget.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
-    widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
     widgets/datasetpropertywidget.h \
     widgets/task/taskloginwidget.h \
@@ -167,8 +160,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
     widgets/tools/treetable.h
-
-FORMS    += mainwindow.ui
 
 OTHER_FILES += \
     doc/* \

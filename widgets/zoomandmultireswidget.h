@@ -73,7 +73,6 @@ protected:
 signals:
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
-    void zoomLevelSignal(float value);
     void visibilityChanged(bool);
 private:
     void showEvent(QShowEvent *) override {

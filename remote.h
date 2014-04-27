@@ -45,8 +45,7 @@ public:
 signals:
     void finished();
     void updateViewerStateSignal();
-    void userMoveSignal(int x, int y, int z, int serverMovement);
-    void updatePositionSignal(int serverMovement);
+    void userMoveSignal(int x, int y, int z);
 public slots:
     void setRecenteringPosition(int x, int y, int z);
     bool remoteJump(int x, int y, int z);
