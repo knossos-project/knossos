@@ -8,54 +8,10 @@ QT       += core gui opengl network testlib help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11 copydoc turbojpeg
-#CONFIG -= app_bundle
+CONFIG += qt c++11 copydoc turbojpeg app_bundle
 
-SOURCES += widgets/mainwindow.cpp \
-    eventmodel.cpp \
-    client.cpp \
-    loader.cpp \
-    viewer.cpp \
-    remote.cpp \
-    mesh.cpp \
-    skeletonizer.cpp \
-    renderer.cpp \
-    knossos.cpp \
-    coordinate.cpp \
-    Hashtable.cpp \
-    sleeper.cpp \
-    treeListElement.cpp \
-    nodeListElement.cpp \
-    color4F.cpp \
-    widgets/viewport.cpp \
-    treeLUT_fallback.cpp \
-    widgets/console.cpp \
-    widgets/gui.cpp \
-    widgets/tracingtimewidget.cpp \
-    widgets/commentswidget.cpp \
-    widgets/commentshortcuts/commentshortcutstab.cpp \
-    widgets/commentshortcuts/commentshighlightingtab.cpp \
-    widgets/zoomandmultireswidget.cpp \
-    widgets/datasavingwidget.cpp \
-    widgets/navigationwidget.cpp \
-    widgets/viewportsettingswidget.cpp \
-    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
-    widgets/viewportsettings/vpskeletonviewportwidget.cpp \
-    widgets/viewportsettings/vpgeneraltabwidget.cpp \
-    widgets/synchronizationwidget.cpp \
-    widgets/splashscreenwidget.cpp \
-    widgets/datasetpropertywidget.cpp \
-    widgets/task/task.cpp \
-    widgets/task/taskloginwidget.cpp \
-    widgets/task/taskmanagementwidget.cpp \
-    widgets/task/taskmanagementmaintab.cpp \
-    widgets/task/taskmanagementdetailstab.cpp \
-    functions.cpp \
-    widgets/widgetcontainer.cpp \    
-    widgets/commentshortcuts/commentsnodecommentstab.cpp \
-    qsort.cpp \
-    ftp.cpp \
-    openjpeg/cio.c \
+
+SOURCES += openjpeg/cio.c \
     openjpeg/bio.c \
     openjpeg/color.c \
     openjpeg/convert.c \
@@ -79,22 +35,59 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/t2.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
-    test/testcommentswidget.cpp \
-    test/testskeletonviewport.cpp \
-    test/testnavigationwidget.cpp \
-    test/testzoomandmultireswidget.cpp \
-    test/testorthogonalviewport.cpp \
-    test/testdatasavingwidget.cpp \
-    test/testskeletonloadandsave.cpp \
-    test/knossostestrunner.cpp \
+    eventmodel.cpp \
+    client.cpp \
+    loader.cpp \
+    viewer.cpp \
+    remote.cpp \
+    skeletonizer.cpp \
+    renderer.cpp \
+    knossos.cpp \
+    coordinate.cpp \
+    Hashtable.cpp \
+    sleeper.cpp \
+    functions.cpp \
+    qsort.cpp \
+    ftp.cpp \
+    stateInfo.cpp \
+    color4F.cpp \
+    nodeListElement.cpp \ #segmentListElement.cpp \
+    treeListElement.cpp \
+    treeLUT_fallback.cpp \
     sha256.cpp \
+    widgets/viewport.cpp \
+    widgets/mainwindow.cpp \
+    widgets/console.cpp \
+    widgets/tracingtimewidget.cpp \
+    widgets/commentswidget.cpp \
+    widgets/commentshortcuts/commentshortcutstab.cpp \
+    widgets/commentshortcuts/commentshighlightingtab.cpp \
+    widgets/zoomandmultireswidget.cpp \
+    widgets/datasavingwidget.cpp \
+    widgets/navigationwidget.cpp \
+    widgets/viewportsettingswidget.cpp \
+    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
+    widgets/viewportsettings/vpskeletonviewportwidget.cpp \
+    widgets/viewportsettings/vpgeneraltabwidget.cpp \
+    widgets/synchronizationwidget.cpp \
+    widgets/splashscreenwidget.cpp \
+    widgets/datasetpropertywidget.cpp \
+    widgets/task/task.cpp \
+    widgets/task/taskloginwidget.cpp \
+    widgets/task/taskmanagementwidget.cpp \
+    widgets/task/taskmanagementmaintab.cpp \
+    widgets/task/taskmanagementdetailstab.cpp \
+    widgets/widgetcontainer.cpp \
+    widgets/commentshortcuts/commentsnodecommentstab.cpp \
     widgets/documentationwidget.cpp \
     widgets/annotationwidget.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
     widgets/tools/nodetable.cpp \
     widgets/tools/treetable.cpp \
-    stateInfo.cpp
+    mesh.cpp \
+    widgets/gui.cpp \
+
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -143,6 +136,9 @@ HEADERS  += widgets/mainwindow.h \
     renderer.h \
     knossos.h\
     sleeper.h \
+    functions.h \
+    ftp.h \
+    sha256.h \
     widgets/GuiConstants.h \
     widgets/viewport.h \
     widgets/console.h \
@@ -159,31 +155,20 @@ HEADERS  += widgets/mainwindow.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
     widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
-    widgets/datasetpropertywidget.h \   
+    widgets/datasetpropertywidget.h \
     widgets/task/taskloginwidget.h \
     widgets/task/taskmanagementwidget.h \
     widgets/task/taskmanagementmaintab.h \
     widgets/task/taskmanagementdetailstab.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
-    widgets/gui.h \
-    functions.h \
-    widgets/widgetcontainer.h \    
-    ftp.h \
-    test/testcommentswidget.h \    
-    test/testskeletonviewport.h \
-    test/testnavigationwidget.h \
-    test/testzoomandmultireswidget.h \
-    test/testorthogonalviewport.h \
-    test/testdatasavingwidget.h \
-    test/testskeletonloadandsave.h \
-    test/knossostestrunner.h \
-    sha256.h \
+    widgets/widgetcontainer.h \
     widgets/documentationwidget.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
     widgets/tools/treetable.h \
+    widgets/gui.h \
 
 FORMS    += mainwindow.ui
 
@@ -203,8 +188,6 @@ OTHER_FILES += \
     ChangeLog_v4.txt \
     style.qss
 
-include(scriptengine/scriptengine.pri)
-
 exists(.svn) {
     #stringify (svnversion ouput maybe not integer)
     SVNREV = \\\"$$system(svnversion)\\\"
@@ -218,22 +201,26 @@ exists(.git) {
     message(git svn revision: $$GITREV)
 }
 
-macx:QMAKE_MAC_SDK = macosx10.8
-macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
+include(scriptengine/scriptengine.pri)
+
+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
 macx {
-    INCLUDEPATH += /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/usr/include/curl \
-    LIBS += -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks -framework GLUT \
-            -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/usr/lib -lcurl \
+    INCLUDEPATH += $(QTDIR)/include
+    LIBS += -framework GLUT \
+            -lcurl \
+            $(QTDIR)/lib/libPythonQt.dylib \
+            $(QTDIR)/lib/libPythonQt_QtAll.dylib \
 
 
 
     # copy the content of the doc folder to the build-dir
-    doc.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc \
-    doc.files = $$PWD/doc/* \
-    INSTALLS += doc \
-
+    script.path = $$OUT_PWD/knossos.app/Contents/MacOS/python \
+    script.files = scriptengine/python/* \
+    # INSTALLS += doc \
     ICON += knossos.icns \
 }
+
+
 
 linux {
     LIBS += -lcurl
@@ -270,7 +257,6 @@ turbojpeg {
 
 RESOURCES += Resources.qrc
 
-
-include(test/config.pri)
-
 QMAKE_CXXFLAGS_RELEASE += -O3
+
+

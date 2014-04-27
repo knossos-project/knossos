@@ -28,8 +28,7 @@
 #include <math.h>
 
 #include <qgl.h>
-#ifdef Q_OS_MAC
-    #include <glu.h>
+#ifdef Q_OS_MACX
     #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_LINUX

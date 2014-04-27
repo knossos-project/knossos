@@ -1,4 +1,4 @@
-HEADERS += scriptengine/scripting.h \
+HEADERS +=  \
     scriptengine/decorators/treelistdecorator.h \
     scriptengine/decorators/nodelistdecorator.h \
     scriptengine/decorators/mainwindowdecorator.h \
@@ -14,10 +14,11 @@ HEADERS += scriptengine/scripting.h \
     scriptengine/geometry/shape.h \
     scriptengine/geometry/point.h \
     scriptengine/geometry/render.h \
-    scriptengine/proxies/skeletonproxy.h
+    scriptengine/proxies/skeletonproxy.h \
+    scriptengine/scripting.h
 
 
-SOURCES += scriptengine/scripting.cpp \
+SOURCES += \
     scriptengine/decorators/treelistdecorator.cpp \
     scriptengine/decorators/nodelistdecorator.cpp \
     scriptengine/decorators/mainwindowdecorator.cpp \
@@ -33,29 +34,16 @@ SOURCES += scriptengine/scripting.cpp \
     scriptengine/geometry/shape.cpp \
     scriptengine/geometry/point.cpp \
     scriptengine/geometry/render.cpp \
-    scriptengine/proxies/skeletonproxy.cpp
+    scriptengine/proxies/skeletonproxy.cpp \
+    scriptengine/scripting.cpp
 
 
 OTHER_FILES += \
-    python/converter.py \
-    python/examples/pathes.py \
-    python/user/custom_graphics_view.py \
-    python/user/images/* \
+    scriptengine/python/converter.py \
+    scriptengine/python/examples/pathes.py \
+    scriptengine/python/user/custom_graphics_view.py \
+    scriptengine/python/user/images/* \
 
-macx:QMAKE_MAC_SDK = macosx10.8
-macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.8
-macx {
-    INCLUDEPATH += /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Python.framework/Headers \
-                   $(QTDIR)/include \
-    LIBS += -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Python.framework/Versions/2.7/lib -lpython2.7 \
-            -L$(QTDIR)/lib/ -lPythonQt \
-
-
-    # copy the content of the python folder to the build-dir
-    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc \
-    scripts.files = $$PWD/python/* \
-    INSTALLS += scripts \
-}
 
 linux {
     LIBS += -lPythonQt \
@@ -67,8 +55,8 @@ linux {
 
 
     # copy the content of the python folder to the build-dir
-    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/doc \
-    scripts.files = $$PWD/python/* \
+    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/python \
+    scripts.files = scriptengine/python/* \
     INSTALLS += scripts \
 }
 
@@ -89,7 +77,7 @@ win32 {
 
     # copy the content of the python folder to the build-dir
     scripts.path = $$OUT_PWD/python
-    scripts.files = $$PWD/python/*
+    scripts.files = scriptengine/python/*
     INSTALLS += scripts
 
 }

@@ -65,7 +65,6 @@ void Scripting::executeFromUserDirectory(PythonQtObjectPtr &ctx) {
         QString content =  stream.readAll();
         ctx.evalScript(content);
     }
-
 }
 
 
@@ -102,15 +101,9 @@ void Scripting::addDoc() {
 
 void Scripting::run() {
 
-    QFont font("Courier");
-    font.setPixelSize(12);    
-
     PythonQt::init();
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-
-#ifndef Q_OS_MACX
-    PythonQt_QtAll::init();
-#endif
+    //PythonQt_QtAll::init();
 
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");
@@ -169,7 +162,7 @@ void Scripting::run() {
     connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
     */
 
-    //PythonQt::self()->setRedirectStdInCallback(f, &message);
+
 
     //addDoc();
     executeFromUserDirectory(ctx);
@@ -204,6 +197,4 @@ void Scripting::err(const QString &err) {
 
 }
 
-void Scripting::read() {
-   console->consoleMessage(QString(process->readAll()));
-}
+

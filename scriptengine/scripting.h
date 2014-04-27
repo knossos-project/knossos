@@ -3,17 +3,13 @@
 
 #include <QObject>
 #include <QThread>
+
 #include <PythonQt/PythonQt.h>
 #include <PythonQt/PythonQtClassInfo.h>
 #include <PythonQt/gui/PythonQtScriptingConsole.h>
-#include <QProcess>
 #include <PythonQt/PythonQtPythonInclude.h>
 #include <PythonQt/PythonQtStdIn.h>
-#include <QSocketNotifier>
-
-#ifndef Q_OS_MACX
-   #include <PythonQt_QtAll/PythonQt_QtAll.h>
-#endif
+#include <PythonQt/PythonQt_QtAll.h>
 
 
 class ColorDecorator;
@@ -23,22 +19,21 @@ class TreeListDecorator;
 class NodeListDecorator;
 class SegmentListDecorator;
 class MeshDecorator;
-
 class SkeletonProxy;
 class TransformDecorator;
 class PointDecorator;
-
 class Highlighter;
 class QSettings;
+class PythonQtObjectPtr;
 
 /** This class intializes the python qt engine */
 class Scripting : public QThread
 {
     Q_OBJECT
 public:
-    explicit Scripting(QObject *parent = 0);
-    PythonQtScriptingConsole *console;
+    explicit Scripting(QObject *parent = 0);   
     CoordinateDecorator *coordinateDecorator;
+    PythonQtScriptingConsole *console;
     FloatCoordinateDecorator *floatCoordinateDecorator;
     ColorDecorator *colorDecorator;
     TreeListDecorator *treeListDecorator;
@@ -51,11 +46,6 @@ public:
     Highlighter *highlighter;
 
     void run();
-    QTextStream *stream;
-    QProcess *process;
-    bool first;
-
-
 
 signals:
 
@@ -66,7 +56,7 @@ public slots:
     void executeFromUserDirectory(PythonQtObjectPtr &ctx);
     void out(const QString &out);
     void err(const QString &err);    
-    void read();
+
 
 protected:
     QSettings *settings;   

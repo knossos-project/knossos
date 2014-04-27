@@ -52,7 +52,7 @@
 #include "test/testnavigationwidget.h"
 #include "test/testorthogonalviewport.h"
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
 #include <GLUT/glut.h>
 #endif
 #ifdef Q_OS_WIN

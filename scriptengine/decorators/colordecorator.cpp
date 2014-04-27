@@ -10,11 +10,11 @@ ColorDecorator::ColorDecorator(QObject *parent) :
 }
 
 
-color4F *ColorDecorator::new_Color4F() {
+color4F *ColorDecorator::new_color4F() {
     return new color4F();
 }
 
-color4F *ColorDecorator::new_Color4F(float r, float g, float b, float a) {
+color4F *ColorDecorator::new_color4F(float r, float g, float b, float a) {
     return new color4F(r, g, b, a);
 }
 

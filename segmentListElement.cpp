@@ -2,7 +2,7 @@
 #include "functions.h"
 #include "skeletonizer.h"
 
-SegmentListElement::SegmentListElement() {
+segmentListElement::segmentListElement() {
 
 }
 

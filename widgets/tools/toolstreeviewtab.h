@@ -5,8 +5,8 @@
 #include <QRadioButton>
 #include <QTableWidget>
 
-#include "widgets/tools/nodetable.h"
-#include "widgets/tools/treetable.h"
+#include "nodetable.h"
+#include "treetable.h"
 
 class QTableWidgetItem;
 class QHBoxLayout;
