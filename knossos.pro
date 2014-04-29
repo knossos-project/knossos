@@ -173,6 +173,10 @@ HEADERS  += widgets/mainwindow.h \
 FORMS    += mainwindow.ui
 
 OTHER_FILES += \
+    python/* \
+    installer/osx/setup.sh \
+    installer/linux/setup.sh \
+    installer/* \
     doc/* \
     doc/images/* \
     LICENSE \
@@ -216,7 +220,7 @@ macx {
     # copy the content of the doc folder to the build-dir
     script.path = $$OUT_PWD/knossos.app/Contents/MacOS/python \
     script.files = scriptengine/python/* \
-    # INSTALLS += doc \
+    INSTALLS += script \
     ICON += knossos.icns \
 }
 

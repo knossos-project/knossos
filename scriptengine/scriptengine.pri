@@ -45,6 +45,7 @@ OTHER_FILES += \
     scriptengine/python/user/images/* \
 
 
+
 linux {
     LIBS += -lPythonQt \
             -lPythonQt_QtAll \

@@ -101,22 +101,22 @@ void Scripting::addDoc() {
 
 void Scripting::run() {
 
-    PythonQt::init();
+    PythonQt::init(PythonQt::RedirectStdOut);
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    //PythonQt_QtAll::init();
+    PythonQt_QtAll::init();
+
+
+    connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
+    connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
 
     ctx.evalScript("import sys");
-    ctx.evalScript("sys.argv = ['']");
-    ctx.evalScript("from PythonQt import *");
+    ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
+#ifdef Q_OS_OSX
+    // as ipython does not export it's sys paths after the installation we refer to that site-package
+    ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
+#endif
+    ctx.evalScript("from PythonQt import *");    
     ctx.evalScript("execfile('includes.py')");
-
-    ctx.evalScript("sys.stdout = open('/home/amos/log.txt', 'w')");
-    ctx.evalScript("sys.stdout.write('created')");
-    ctx.evalScript("sys.stderr = open('/home/amos/error.txt', 'w')");
-
-    ctx.evalScript("import IPython");
-    ctx.evalScript("IPython.embed_kernel()");
-    ctx.evalScript("python/terminal.py");
 
     ctx.addObject("knossos", skeletonProxy);
     ctx.addVariable("GL_POINTS", GL_POINTS);
@@ -157,18 +157,14 @@ void Scripting::run() {
     /*
     connect(signalDelegate, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));
     connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
-
-    connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
-    connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
     */
 
-
+    ctx.evalScript("import IPython");
+    ctx.evalScript("IPython.embed_kernel()");
 
     //addDoc();
     executeFromUserDirectory(ctx);
 
-    ctx.evalScript("sys.stdout.close()");
-    ctx.evalScript("sys.stderr.close()");
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
@@ -181,18 +177,18 @@ void Scripting::saveSettings(const QString &key, const QVariant &value) {
 }
 
 void Scripting::out(const QString &out) {
-    qDebug() << "from stdout";
     qDebug() << out;
 
+    /*
     QFile file;
     if(file.open(stdout, QIODevice::ReadOnly)) {
         qDebug() << file.readAll();
     }
+    */
 
 }
 
-void Scripting::err(const QString &err) {
-    qDebug() << "from stderr";
+void Scripting::err(const QString &err) {    
     qDebug() << err;
 
 }
