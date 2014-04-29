@@ -40,7 +40,7 @@ protected:
 signals:
     void hideSignal();
     void saveSkeletonSignal();
-    bool loadSkeletonSignal(const QString &fileName);
+    bool loadSkeletonSignal(QString fileNames);
     void setDescriptionSignal(QString description);
     void setCommentSignal(QString comment);
 

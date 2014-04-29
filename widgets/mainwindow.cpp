@@ -370,7 +370,7 @@ void MainWindow::recentFileSelected() {
     QAction *action = (QAction *)sender();
 
     QString fileName = action->text();
-    if(!fileName.isNull()) {
+    if(fileName.isNull() == false) {
         this->loadSkeletonAfterUserDecision(fileName);
 
     }
@@ -557,7 +557,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 //file menu functionality
-
 bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
     if(!fileName.isEmpty()) {
         QApplication::processEvents();
@@ -566,7 +565,10 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
             QMessageBox prompt;
             prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
             prompt.setIcon(QMessageBox::Question);
-            prompt.setText("Which Action do you like to choose?<ul><li>Merge the new Skeleton into the current one ?</li><li>Override the current Skeleton</li><li>Cancel</li></ul>");
+            prompt.setText("Which Action do you like to choose?<ul>\
+                           <li>Merge the new Skeleton into the current one ?</li>\
+                           <li>Override the current Skeleton</li>\
+                           </ul>");
             QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
             QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
             prompt.addButton("Cancel", QMessageBox::ActionRole);
@@ -585,10 +587,7 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
         state->skeletonState->skeletonFileAsQString = fileName;
 
         bool result = loadSkeletonSignal(fileName);
-        //QFuture<bool> future = QtConcurrent::run(this, &MainWindow::loadSkeletonSignal, fileName);
-        //future.waitForFinished();
 
-        //emit updateCommentsTableSignal();
         updateTitlebar();
 
         if(!alreadyInMenu(fileName)) {
@@ -596,12 +595,80 @@ bool MainWindow::loadSkeletonAfterUserDecision(const QString &fileName) {
         } else {
             becomeFirstEntry(fileName);
         }
-        //emit updateToolsSignal();
+
         emit updateTreeviewSignal();
         state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
         return result;
     }
     return false;
+}
+
+bool MainWindow::loadSkeletonAfterUserDecision(QStringList fileNames) {
+    if(fileNames.empty()) {
+        return false;
+    }
+    QApplication::processEvents();
+    bool result = false;
+
+    if(state->skeletonState->treeElements > 0) {
+        QMessageBox prompt;
+        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setText("Which Action do you like to choose?<ul>\
+                       <li>Merge the new Skeleton into the current one ?</li>\
+                       <li>Override the current Skeleton</li>\
+                       </ul>");
+        QPushButton *merge = prompt.addButton("Merge", QMessageBox::ActionRole);
+        QPushButton *override = prompt.addButton("Override", QMessageBox::ActionRole);
+        prompt.addButton("Cancel", QMessageBox::ActionRole);
+        prompt.exec();
+
+        if(prompt.clickedButton() == merge) {
+            state->skeletonState->mergeOnLoadFlag = true;
+        } else if(prompt.clickedButton() == override) {
+            state->skeletonState->mergeOnLoadFlag = false;
+        } else {
+            return false;
+        }
+
+    }
+
+    if(fileNames.size() == 1) {
+        state->skeletonState->skeletonFileAsQString = fileNames.at(0);
+
+        result = loadSkeletonSignal(fileNames.at(0));
+
+        updateTitlebar();
+
+        if(!alreadyInMenu(fileNames.at(0))) {
+            addRecentFile(fileNames.at(0));
+        } else {
+            becomeFirstEntry(fileNames.at(0));
+        }
+
+        emit updateTreeviewSignal();
+    }
+
+    else { // multiple files to load
+        for(QString file : fileNames) {
+            state->skeletonState->skeletonFileAsQString = file;
+            if((result = loadSkeletonSignal(file))) {
+                updateTitlebar();
+
+                if(alreadyInMenu(file) == false) {
+                    addRecentFile(file);
+                }
+                else {
+                    becomeFirstEntry(file);
+                }
+                emit updateTreeviewSignal();
+            }
+            state->skeletonState->mergeOnLoadFlag = true; // merge next file
+        }
+    }
+
+    state->skeletonState->unsavedChanges = false;//finished loading, clear dirty-flag
+    return result;
 }
 
 /** if a queue´s entry is reused and not more at position zero it will moved to the first entry (most recent) and the
@@ -624,21 +691,20 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
-    if(!fileName.isEmpty()) {
-        QFileInfo info(fileName);
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
+    if(fileNames.empty() == false) {
+        QFileInfo info(fileNames.at(0));
         openFileDirectory = info.dir().absolutePath();
-        state->skeletonState->skeletonFileAsQString = fileName;
-        loadSkeletonAfterUserDecision(fileName);
+        loadSkeletonAfterUserDecision(fileNames);
     }
 
     state->viewerState->renderInterval = FAST;
 }
 
 /** So far this variant is needed only for drag n drop skeleton files */
-void MainWindow::openSlot(const QString &fileName) {
+void MainWindow::openSlot(QStringList fileNames) {
     state->viewerState->renderInterval = SLOW;
-    loadSkeletonAfterUserDecision(fileName);
+    loadSkeletonAfterUserDecision(fileNames);
     state->viewerState->renderInterval = FAST;
 
 }
@@ -1132,20 +1198,41 @@ void MainWindow::resizeEvent(QResizeEvent *) {
 void MainWindow::dropEvent(QDropEvent *event) {
     if(event->mimeData()->hasFormat("text/uri-list")) {
         QList<QUrl> urls = event->mimeData()->urls();
-        if(urls.size() != 1) {
-            return;
+        QStringList fileNames;
+        QStringList skippedFiles;
+        for(QUrl url : urls) {
+            QString fileName(url.toLocalFile());
+
+            if(fileName.endsWith(".nml") == false) {
+                skippedFiles.append(fileName);
+            }
+            else {
+                fileNames.append(fileName);
+            }
         }
-
-        QUrl url = urls.first();
-        QString fileName(url.toLocalFile());
-
-        if(!fileName.endsWith(".nml")) {
-            return;
-        } else {
-           openSlot(fileName);
-           event->accept();
+        if(skippedFiles.empty() == false) {
+            QString info = "Skipped following files with invalid type (must be .nml):<ul>";
+            int count = 0;
+            for(QString file : skippedFiles) {
+                if(count == 10) {
+                    info += "...";
+                    break;
+                }
+                count++;
+                info += "<li>" + file + "</li>";
+            }
+            info += "</ul>";
+            QMessageBox prompt;
+            prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setWindowTitle("Information");
+            prompt.setText(info);
+            prompt.exec();
         }
-
+        if(fileNames.empty() == false) {
+            openSlot(fileNames);
+            event->accept();
+        }
     }
 }
 

@@ -146,6 +146,7 @@ public:
 
 public slots:
     // for the recent file menu
+    bool loadSkeletonAfterUserDecision(QStringList fileNames);
     bool loadSkeletonAfterUserDecision(const QString &fileName);
     void updateFileHistoryMenu();
     bool alreadyInMenu(const QString &path);
@@ -154,7 +155,7 @@ public slots:
 
     /* skeleton menu */
     void openSlot();
-    void openSlot(const QString &fileName); // for the drag n drop version
+    void openSlot(QStringList fileNames); // for the drag n drop version
     void saveSlot();
     void saveAsSlot();
 

@@ -1946,7 +1946,8 @@ void Viewer::rewire() {
     QObject::connect(window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::clearSkeletonSignalGUI, window, &MainWindow::clearSkeletonSlotGUI);
     // -- end dataset property signals
     // task management signals --
-    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal, window, &MainWindow::loadSkeletonAfterUserDecision);
+    QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::loadSkeletonSignal,
+                     window, static_cast<bool(MainWindow::*)(const QString&)>(&MainWindow::loadSkeletonAfterUserDecision));
     QObject::connect(window->widgetContainer->taskManagementWidget->mainTab, &TaskManagementMainTab::saveSkeletonSignal, window, &MainWindow::saveSlot);
     // -- end task management signals
     // --- end widget signals

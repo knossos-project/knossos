@@ -820,14 +820,14 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 neuronColor.a = -1;
             }
 
-            if(merge == false) {
-                currentTree = addTreeListElement(neuronID, neuronColor);
-                setActiveTreeByID(neuronID);
-            } else {
+            if(merge) {
                 neuronID += greatestTreeIDbeforeLoading;
                 currentTree = addTreeListElement(neuronID, neuronColor);
                 setActiveTreeByID(currentTree->treeID);
                 neuronID = currentTree->treeID;
+            } else {
+                currentTree = addTreeListElement(neuronID, neuronColor);
+                setActiveTreeByID(neuronID);
             }
 
             attribute = attributes.value("comment"); // the three comment

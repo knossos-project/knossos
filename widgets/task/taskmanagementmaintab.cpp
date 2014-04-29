@@ -143,6 +143,7 @@ void TaskManagementMainTab::loadLastSubmitButtonClicked() {
         tmpfile.rename(taskDir.absolutePath() + "/" + filename);
         state->skeletonState->skeletonFileAsQString = tmpfile.fileName();
     }
+
     if (loadSkeletonSignal(state->skeletonState->skeletonFileAsQString) == false) {//BUG signals shall not be used to return something
         statusLabel->setText("<font color='red'>Failed to load skeleton.</font>");
     } else {
