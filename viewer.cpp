@@ -279,9 +279,11 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
                               = slice[sliceIndex + 2]
                               = state->viewerState->defaultTexData[dcIndex];
         }
-        slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
-        slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
-        slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
+        else {
+            slice[sliceIndex] = state->viewerState->datasetAdjustmentTable[0][datacube[dcIndex]];
+            slice[sliceIndex + 1] = state->viewerState->datasetAdjustmentTable[1][datacube[dcIndex]];
+            slice[sliceIndex + 2] = state->viewerState->datasetAdjustmentTable[2][datacube[dcIndex]];
+        }
 
         (*t)++;
         if(*t >= viewPort->t_max) {
