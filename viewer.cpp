@@ -1814,7 +1814,7 @@ bool Viewer::moveVPonTop(uint currentVP) {
 /** Global interfaces  */
 void Viewer::rewire() {
     // viewer signals
-    QObject::connect(this, &Viewer::updateZoomAndMultiresWidgetSignal,window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
+    connect(this, &Viewer::updateZoomAndMultiresWidgetSignal,window->widgetContainer->zoomAndMultiresWidget, &ZoomAndMultiresWidget::update);
     QObject::connect(this, &Viewer::updateCoordinatesSignal, window, &MainWindow::updateCoordinateBar);
     // end viewer signals
     // skeletonizer signals
