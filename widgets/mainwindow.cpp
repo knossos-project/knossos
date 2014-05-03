@@ -935,53 +935,35 @@ void MainWindow::logSlot()
 /* toolbar slots */
 
 void MainWindow::copyClipboardCoordinates() {
-   char copyString[8192];
-
-   memset(copyString, '\0', 8192);
-
-   snprintf(copyString,
-                 8192,
-                 "%d, %d, %d",
-                 this->xField->value(),
-                 this->yField->value(),
-                 this->zField->value());
-   QString coords(copyString);
-   QApplication::clipboard()->setText(coords);
+    const auto content = QString("%0, %1, %2").arg(xField->value()).arg(yField->value()).arg(zField->value());
+    QApplication::clipboard()->setText(content);
 }
 
 void MainWindow::pasteClipboardCoordinates(){
-    QString text = QApplication::clipboard()->text();
+    QString clipboardContent = QApplication::clipboard()->text();
 
-    if(text.size() > 0) {
-      std::string text_stdstr = text.toStdString();
-      char *pasteBuffer = const_cast<char *> (text_stdstr.c_str());
+    //match 3 groups of digits separated by 1 or 2 non-digits (as opposed to exactly », «, because the old parse was also lax)
+    const QRegExp clipboardRegEx("^([0-9]+)[^0-9]{1,2}([0-9]+)[^0-9]{1,2}([0-9]+)$");
+    if (clipboardRegEx.exactMatch(clipboardContent)) {//also fails if clipboard is empty
+        const auto x = clipboardRegEx.cap(1).toInt();//index 0 is the whole matched text
+        const auto y = clipboardRegEx.cap(2).toInt();
+        const auto z = clipboardRegEx.cap(3).toInt();
 
-      Coordinate *extractedCoords = NULL;
-      if((extractedCoords = Coordinate::parseRawCoordinateString(pasteBuffer))) {
+        xField->setValue(x);
+        yField->setValue(y);
+        zField->setValue(z);
 
-            this->xField->setValue(extractedCoords->x);
-            this->yField->setValue(extractedCoords->y);
-            this->zField->setValue(extractedCoords->z);
-
-            emit userMoveSignal(extractedCoords->x - 1 - state->viewerState->currentPosition.x,
-                                extractedCoords->y - 1 - state->viewerState->currentPosition.y,
-                                extractedCoords->z - 1 - state->viewerState->currentPosition.z);
-
-            free(extractedCoords);
-
-      } else {
-          LOG("Unexpected Error in MainWindow::pasteCliboardCoordinates");
-      }
-
+        coordinateEditingFinished();
     } else {
-       LOG("Unable to fetch text from clipboard")
+        LOG("Unable to fetch text from clipboard");
     }
 }
 
 void MainWindow::coordinateEditingFinished() {
-    emit userMoveSignal(xField->value()- 1 - state->viewerState->currentPosition.x,
-                        yField->value()- 1 - state->viewerState->currentPosition.y,
-                        zField->value()- 1 - state->viewerState->currentPosition.z);
+    const auto viewer_offset_x = xField->value() - 1 - state->viewerState->currentPosition.x;
+    const auto viewer_offset_y = yField->value() - 1 - state->viewerState->currentPosition.y;
+    const auto viewer_offset_z = zField->value() - 1 - state->viewerState->currentPosition.z;
+    emit userMoveSignal(viewer_offset_x, viewer_offset_y, viewer_offset_z);
 }
 
 void MainWindow::saveSettings() {

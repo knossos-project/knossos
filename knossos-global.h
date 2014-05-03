@@ -280,7 +280,6 @@ public:
     static Coordinate Px2DcCoord(Coordinate pxCoordinate);
     static bool transCoordinate(Coordinate *outCoordinate, int x, int y, int z, floatCoordinate scale, Coordinate offset);
     static Coordinate *transNetCoordinate(uint id, uint x, uint y, uint z);
-    static Coordinate *parseRawCoordinateString(char *string);
     void operator=(Coordinate const&rhs);
 
 };
