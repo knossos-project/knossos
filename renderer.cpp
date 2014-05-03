@@ -1209,14 +1209,13 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                      (float)state->skeletonState->volBoundary / -2.);
         glRotatef(-90, 1., 0., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
-
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
-        state->skeletonState->translateY = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
+        state->skeletonState->translateX = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
+        state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
 
         glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
                 state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
@@ -1226,26 +1225,22 @@ bool Renderer::renderSkeletonVP(uint currentVP) {
                 10 * state->skeletonState->volBoundary);
         setRotationState(ROTATIONSTATEXZ);
         break;
-    //float minrotation[16];
-    //float da;
     case SKELVP_YZ_VIEW:
         state->skeletonState->definedSkeletonVpView = -1;
-
         glLoadIdentity();
-
         glTranslatef((float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / 2.,
                      (float)state->skeletonState->volBoundary / -2.);
-
-        glRotatef(90, 0., 1., 0.);
+        glRotatef(-90, 1., 0., 0.);
         glScalef(1., 1., 1./state->viewerState->voxelXYtoZRatio);
+
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        state->skeletonState->translateX = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
-        state->skeletonState->translateY = ((float)state->boundary.y / -2.) + (float)state->viewerState->currentPosition.y;
+        state->skeletonState->translateX = ((float)state->boundary.x / -2.) + (float)state->viewerState->currentPosition.x;
+        state->skeletonState->translateY = ((float)state->boundary.z / -2.) + (float)state->viewerState->currentPosition.z;
 
         glOrtho(state->skeletonState->volBoundary * state->skeletonState->zoomLevel + state->skeletonState->translateX,
                 state->skeletonState->volBoundary - (state->skeletonState->volBoundary * state->skeletonState->zoomLevel) + state->skeletonState->translateX,
@@ -1963,7 +1958,7 @@ bool Renderer::setRotationState(uint setTo) {
             state->skeletonState->rotationState[5] = -1.0;
             state->skeletonState->rotationState[6] = 0.0;
             state->skeletonState->rotationState[7] = 0.0;
-            state->skeletonState->rotationState[8] = -1.0;
+            state->skeletonState->rotationState[8] = 1.0;
             state->skeletonState->rotationState[9] = 0.0;
             state->skeletonState->rotationState[10] = 0.0;
             state->skeletonState->rotationState[11] = 0.0;
