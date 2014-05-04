@@ -28,6 +28,7 @@
 #include "task/taskmanagementwidget.h"
 #include "documentationwidget.h"
 #include "annotationwidget.h"
+#include "pythonpropertywidget.h"
 
 class Viewport;
 class MainWindow;
@@ -54,7 +55,9 @@ public:
     void createTaskWidgets(QWidget *parent);
     void createDocumentationWidget(QWidget *parent);
     void createAnnotationWidget(QWidget *parent);
+    void createPythonPropertyWidget(QWidget *parent);
     void createWidgets(QWidget *parent);
+
 
     Console *console;
     TracingTimeWidget *tracingTimeWidget;
@@ -70,6 +73,7 @@ public:
     TaskManagementWidget *taskManagementWidget;
     DocumentationWidget *docWidget;
     AnnotationWidget *annotationWidget;
+    PythonPropertyWidget *pythonPropertyWidget;
 
 signals:
 

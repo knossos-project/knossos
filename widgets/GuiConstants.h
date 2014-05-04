@@ -12,6 +12,7 @@ const QString VIEWPORT_SETTINGS_WIDGET = "viewport_settings_widget";
 const QString NAVIGATION_WIDGET = "navigation_widget";
 const QString TOOLS_WIDGET = "tools_widget";
 const QString TRACING_TIME_WIDGET = "tracing_time_widget";
+const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 
 /* General attributes appropriate for most widgets */
 const QString WIDTH  = "width";
@@ -174,5 +175,10 @@ const QString LOADED_FILE10 = "loaded_file10";
 const QString OPEN_FILE_DIALOG_DIRECTORY = "open_file_dialog_directory";
 const QString SAVE_FILE_DIALOG_DIRECTORY = "save_file_dialog_directory";
 const QString WORK_MODE = "work_mode";
+
+/* Python Property Widget */
+const QString PYTHON_INTERPRETER = "python_interpreter";
+const QString PYTHON_AUTOSTART_FOLDER = "python_autostart_folder";
+const QString PYTHON_AUTOSTART_TERMINAL = "python_autostart_terminal";
 
 #endif // GUICONSTANTS_H

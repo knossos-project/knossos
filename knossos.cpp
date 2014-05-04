@@ -73,6 +73,12 @@ Knossos::Knossos(QObject *parent) : QObject(parent) {}
 std::unique_ptr<Knossos> knossos;
 
 
+static void openTerminal() {
+
+    system("/opt/X11/bin/xterm -e '/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing ' &");
+}
+
+
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
     //the splashscreen is hidden after a timeout, it could also wait for the mainwindow
@@ -156,14 +162,16 @@ int main(int argc, char *argv[])
     }
     bool datasetLoaded = knossos->initStates();
 
+    Scripting scripts;
+    scripts.start();
+
     Viewer viewer;
     loader.reset(new Loader);
     Remote remote;
     Client client;
     
-    Scripting scripts;
-    //scripts.skeletonReference = viewer.skeletonizer;
-     //scripts.stateReference = state;
+
+
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);
@@ -214,6 +222,7 @@ int main(int argc, char *argv[])
     QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
     QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
     QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, SIGNAL(executeUserScriptsSignal()), &scripts, SLOT(executeFromUserDirectory));
 
 
     knossos->loadDefaultTreeLUT();
@@ -229,8 +238,6 @@ int main(int argc, char *argv[])
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
 
-
-    scripts.start();
 
     return a.exec();
 }

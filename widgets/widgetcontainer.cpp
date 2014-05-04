@@ -181,7 +181,22 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createSplashScreenWidget(parent);
     createDocumentationWidget(parent);
     createAnnotationWidget(parent);
+    createPythonPropertyWidget(parent);
     rewire();
 
     connect(this->datasetPropertyWidget, SIGNAL(datasetSwitchZoomDefaults()), this->zoomAndMultiresWidget, SLOT(zoomDefaultsClicked()));
+}
+
+void WidgetContainer::createPythonPropertyWidget(QWidget *parent) {
+    pythonPropertyWidget = new PythonPropertyWidget(parent);
+#ifdef Q_OS_UNIX
+    pythonPropertyWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
+#endif
+
+    pythonPropertyWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    pythonPropertyWidget->setFixedSize(pythonPropertyWidget->sizeHint());
+
+    pythonPropertyWidget->layout()->update();
+    pythonPropertyWidget->layout()->activate();
+
 }

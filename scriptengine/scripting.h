@@ -53,7 +53,7 @@ public slots:
     static void addScriptingObject(const QString &name, QObject *obj);
     void saveSettings(const QString &key, const QVariant &value);
     void addDoc();   
-    void executeFromUserDirectory(PythonQtObjectPtr &ctx);
+    void executeFromUserDirectory();
     void out(const QString &out);
     void err(const QString &err);    
 

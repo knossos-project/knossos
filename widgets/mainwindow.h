@@ -218,6 +218,8 @@ public slots:
     void F3Slot();
     void F4Slot();
     void F5Slot();
+    void pythonSlot();
+    void pythonPropertiesSlot();
 };
 
 #endif // MAINWINDOW_H

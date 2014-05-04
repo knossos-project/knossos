@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QFileInfoList>
 
+#include "widgets/GuiConstants.h"
 #include "scripting.h"
 #include "decorators/floatcoordinatedecorator.h"
 #include "decorators/coordinatedecorator.h"
@@ -29,7 +30,6 @@ extern stateInfo *state;
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
 {
-    settings = new QSettings("python_api", "Knossos QT");
 
     floatCoordinateDecorator = new FloatCoordinateDecorator();
     coordinateDecorator = new CoordinateDecorator();
@@ -42,31 +42,6 @@ Scripting::Scripting(QObject *parent) :
     pointDecorator = new PointDecorator();
     skeletonProxy = new SkeletonProxy();
 }
-
-void Scripting::executeFromUserDirectory(PythonQtObjectPtr &ctx) {
-
-    QDir scriptDir("./python/user");
-    QStringList endings;
-    endings << "*.py";
-    scriptDir.setNameFilters(endings);
-    QFileInfoList entries = scriptDir.entryInfoList();
-
-    foreach(const QFileInfo &script, entries) {
-        QString path = script.absolutePath();
-        QFile file(script.canonicalFilePath());
-
-        qDebug() << script.canonicalFilePath();
-
-        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
-            continue;
-        }
-
-        QTextStream stream(&file);
-        QString content =  stream.readAll();
-        ctx.evalScript(content);
-    }
-}
-
 
 void Scripting::addDoc() {
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
@@ -105,7 +80,6 @@ void Scripting::run() {
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
     PythonQt_QtAll::init();
 
-
     connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
     connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
 
@@ -115,6 +89,7 @@ void Scripting::run() {
     // as ipython does not export it's sys paths after the installation we refer to that site-package
     ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
+
     ctx.evalScript("from PythonQt import *");    
     ctx.evalScript("execfile('includes.py')");
 
@@ -159,11 +134,10 @@ void Scripting::run() {
     connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
     */
 
+    ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
+
     ctx.evalScript("import IPython");
     ctx.evalScript("IPython.embed_kernel()");
-
-    //addDoc();
-    executeFromUserDirectory(ctx);
 
 }
 
@@ -177,15 +151,7 @@ void Scripting::saveSettings(const QString &key, const QVariant &value) {
 }
 
 void Scripting::out(const QString &out) {
-    qDebug() << out;
-
-    /*
-    QFile file;
-    if(file.open(stdout, QIODevice::ReadOnly)) {
-        qDebug() << file.readAll();
-    }
-    */
-
+    qDebug() << out;  
 }
 
 void Scripting::err(const QString &err) {    
@@ -193,4 +159,32 @@ void Scripting::err(const QString &err) {
 
 }
 
+void Scripting::executeFromUserDirectory() {
+    QSettings settings;
+    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
+    QString path = settings.value(PYTHON_AUTOSTART_FOLDER).toString();
+    settings.endGroup();
 
+    QDir scriptDir(path);
+    QStringList endings;
+    endings << "*.py";
+    scriptDir.setNameFilters(endings);
+    QFileInfoList entries = scriptDir.entryInfoList();
+
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    foreach(const QFileInfo &script, entries) {
+        QString path = script.absolutePath();
+        QFile file(script.canonicalFilePath());
+
+        qDebug() << script.canonicalFilePath();
+
+        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
+            continue;
+        }
+
+        QTextStream stream(&file);
+        QString content =  stream.readAll();
+
+        ctx.evalScript(content);
+    }
+}

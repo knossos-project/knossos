@@ -24,7 +24,6 @@
 
 #include <curl/curl.h>
 
-
 #include <QEvent>
 #include <QMenu>
 #include <QAction>
@@ -189,16 +188,36 @@ void MainWindow:: createToolBar() {
     toolBar->addSeparator();
 
 
+
+
+
     toolBar->addAction(QIcon(":/images/icons/task.png"), "Task Management", this, SLOT(taskSlot()));
 
     auto createToolToogleButton = [&](const QString & icon, const QString & tooltip){
         auto button = new QToolButton();
         button->setIcon(QIcon(icon));
         button->setToolTip(tooltip);
-        button->setCheckable(true);
+        button->setCheckable(false);
         toolBar->addWidget(button);
         return button;
     };
+
+
+    QToolButton *pythonButton = new QToolButton();
+    QMenu *menu = new QMenu();
+    QAction *pythonAction = menu->addAction(QIcon(":/images/python.png"), "Python", this, SLOT(pythonSlot()));
+    QAction *pythonPropertiesAction = menu->addAction(QIcon(":/images/python.png"), "Python Properties", this, SLOT(pythonPropertiesSlot()));
+    menu->setDefaultAction(pythonAction);
+    menu->setIcon(QIcon(":/images/python.png"));
+
+    pythonButton->setMenu(menu);
+    pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
+    pythonButton->addAction(pythonAction);
+    pythonButton->addAction(pythonPropertiesAction);
+    pythonButton->setIcon(QIcon(":/images/python.png"));
+    toolBar->addWidget(pythonButton);
+
+    //auto pythonPropertiesButton = createToolToogleButton(":images/python.png", "Python Properties");
     auto tracingTimeButton = createToolToogleButton(":/images/icons/appointment.png", "Tracing Time");
     auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Zoom and Multiresolution");
     auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
@@ -991,6 +1010,7 @@ void MainWindow::saveSettings() {
     widgetContainer->viewportSettingsWidget->saveSettings();
     widgetContainer->navigationWidget->saveSettings();
     widgetContainer->annotationWidget->saveSettings();
+    widgetContainer->pythonPropertyWidget->saveSettings();
     //widgetContainer->toolsWidget->saveSettings();
 }
 
@@ -1102,6 +1122,7 @@ void MainWindow::loadSettings() {
     widgetContainer->viewportSettingsWidget->loadSettings();
     widgetContainer->navigationWidget->loadSettings();
     widgetContainer->annotationWidget->loadSettings();
+    widgetContainer->pythonPropertyWidget->loadSettings();
     //widgetContainer->tracingTimeWidget->loadSettings();
 
 
@@ -1481,4 +1502,12 @@ bool MainWindow::eventFilter(QObject* object,QEvent* event)
     }
 
     return QObject::eventFilter(object,event);
+}
+
+void MainWindow::pythonSlot() {
+    widgetContainer->pythonPropertyWidget->openTerminal();
+}
+
+void MainWindow::pythonPropertiesSlot() {
+    widgetContainer->pythonPropertyWidget->show();
 }

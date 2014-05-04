@@ -87,6 +87,7 @@ SOURCES += openjpeg/cio.c \
     widgets/tools/treetable.cpp \
     mesh.cpp \
     widgets/gui.cpp \
+    widgets/pythonpropertywidget.cpp
 
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
@@ -169,6 +170,7 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/nodetable.h \
     widgets/tools/treetable.h \
     widgets/gui.h \
+    widgets/pythonpropertywidget.h
 
 FORMS    += mainwindow.ui
 
