@@ -14,8 +14,6 @@
 #include <QDesktopWidget>
 #include "GuiConstants.h"
 #include "knossos-global.h"
-#include "sleeper.h"
-
 #include <stdio.h>
 #include <unistd.h>
 

@@ -26,7 +26,6 @@
  */
 
 #include "eventmodel.h"
-#include "renderer.h"
 
 #include <QWidget>
 #include <QtOpenGL/QGLWidget>
@@ -48,6 +47,7 @@ signals:
     void vpResize(QMouseEvent * event);
 };
 
+class Renderer;
 class Viewport : public QGLWidget
 {
     Q_OBJECT

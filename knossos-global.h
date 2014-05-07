@@ -47,7 +47,7 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.0"
+#define KVERSION "4.0 Beta 2"
 
 #define FAIL    -1
 
@@ -139,11 +139,6 @@ values. The XY vp always used. */
 #define CUBE_DATA       0
 #define CUBE_OVERLAY    1
 
-// Those are used to determine if the Coordinate change should be passed on to
-// clients by the server.
-#define SILENT_COORDINATE_CHANGE 0
-#define TELL_COORDINATE_CHANGE 1
-
 #define ON_CLICK_RECENTER 1
 #define ON_CLICK_DRAG    0
 #define ON_CLICK_SELECT   2
@@ -179,48 +174,6 @@ values. The XY vp always used. */
 #define USEREVENT_REDRAW 7
 #define USEREVENT_NOAUTOSAVE 8
 #define USEREVENT_REALQUIT 9
-
-#define REMOTE_TRAJECTORY 5
-#define REMOTE_FOLLOW 6
-#define REMOTE_SYNCHRONIZE 7
-#define REMOTE_RECENTERING 8
-
-//  For the client / server protocol
-
-// CHANGE_MANUAL is the revision count used to signal a skeleton change on behalf of the
-// user to lockSkeleton().
-#define CHANGE_MANUAL 0
-#define CHANGE_NOSYNC -1
-
-#define KIKI_REPEAT 0
-#define KIKI_CONNECT 1
-#define KIKI_DISCONNECT 2
-#define KIKI_HI 3
-#define KIKI_HIBACK 4
-#define KIKI_BYE 5
-#define KIKI_ADVERTISE 6
-#define KIKI_WITHDRAW 7
-#define KIKI_POSITION 8
-#define KIKI_ADDCOMMENT 9
-#define KIKI_EDITCOMMENT 10
-#define KIKI_DELCOMMENT 11
-#define KIKI_ADDNODE 12
-#define KIKI_EDITNODE 13
-#define KIKI_DELNODE 14
-#define KIKI_ADDSEGMENT 15
-#define KIKI_DELSEGMENT 16
-#define KIKI_ADDTREE 17
-#define KIKI_DELTREE 18
-#define KIKI_MERGETREE 19
-#define KIKI_SPLIT_CC 20
-#define KIKI_PUSHBRANCH 21
-#define KIKI_POPBRANCH 22
-#define KIKI_CLEARSKELETON 23
-#define KIKI_SETACTIVENODE 24
-#define KIKI_SETSKELETONMODE 25
-#define KIKI_SAVEMASTER 26
-#define KIKI_SKELETONFILENAME 27
-#define KIKI_ADDTREECOMMENT 28
 
 //  For custom key bindings
 
@@ -347,21 +300,6 @@ public:
 };
 
 Q_DECLARE_METATYPE(Coordinate)
-
-/*
-class CoordinateDecorator : public QObject {
-    Q_OBJECT
-public slots:
-    Coordinate *new_Coordinate() { return new Coordinate(); }
-    Coordinate *new_Coordinate(int x, int y, int z) { return new Coordinate(x, y, z); }
-    int x(Coordinate *self) { return self->x; }
-    void setX(Coordinate *self, int x) { self->x = x; }
-    int y(Coordinate *self) { return self->y; }
-    void setY(Coordinate *self, int y) { self->y = y; }
-    int z(Coordinate *self) { return self->z; }
-    void setZ(Coordinate *self, int z) { self->z = z; }
-};
-*/
 
 class color4F {
 public:
@@ -506,10 +444,6 @@ public:
     // These signals are used to communicate with the remote.
     bool remoteSignal;
 
-    // Same for the client. The client threading code is basically
-    // copy-pasted from the remote.
-    bool clientSignal;
-
     // Cube hierarchy mode
     bool boergens;
 
@@ -558,11 +492,9 @@ public:
     int M;
     std::size_t cubeSetElements;
 
-
     // Bytes in one supercube (This is pretty much the memory
     // footprint of KNOSSOS): M^3 * 2^3M
     std::size_t cubeSetBytes;
-
 
     // Edge length of the current data set in data pixels.
     Coordinate boundary;
@@ -585,8 +517,6 @@ public:
 
     int datasetChangeSignal;
 
-    int maxTrajectories;
-
     // Tell the loading thread to wake up.
 
     QWaitCondition *conditionLoadSignal;
@@ -596,8 +526,6 @@ public:
 
     // Tell the remote to wake up.
     QWaitCondition *conditionRemoteSignal;
-
-    QWaitCondition *conditionClientSignal;
 
     // Any signalling to the loading thread needs to be protected
     // by this mutex. This is done by sendLoadSignal(), so always
@@ -611,10 +539,6 @@ public:
     // This should be accessed through sendRemoteSignal() only.
 
     QMutex *protectRemoteSignal;
-
-    // Access through sendClientSignal()
-
-    QMutex *protectClientSignal;
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
@@ -666,13 +590,14 @@ public:
     Hashtable *Oc2Pointer[int_log(NUM_MAG_DATASETS)+1];
 
     struct viewerState *viewerState;
-    class Viewer *viewer;    
+
+    class Viewer *viewer;
     struct skeletonState *skeletonState;
-    struct trajectory *trajectories;
 
     bool keyD, keyF;
     std::array<float, 3> repeatDirection;
     bool viewerKeyRepeat;
+
 
 signals:
 public slots:
@@ -705,10 +630,6 @@ public slots:
     uint getCubeSetBytes();
     Coordinate getBoundary();
     */
-
-
-
-
 };
 
 
@@ -747,51 +668,11 @@ struct viewportTexture {
     //Coordinates of crosshair inside VP
     float xOffset, yOffset;
 
-	// Current zoom level. 1: no zoom; near 0: maximum zoom.
-	float zoomLevel;
+    // Current zoom level. 1: no zoom; near 0: maximum zoom.
+    float zoomLevel;
 
 };
 
-/**
-  * @struct guiConfig
-  * @brief TODO
-  *
-  */
-struct guiConfig {
-    char settingsFile[2048];
-    char titleString[2048];
-
-    // Current position of the user crosshair,
-    //starting at 1 instead 0. This is shown to the user,
-    //KNOSSOS works internally with 0 start indexing.
-    Coordinate oneShiftedCurrPos;
-    Coordinate activeNodeCoord;
-
-    QString lockComment;
-    char *commentBuffer;
-    char *commentSearchBuffer;
-    char *treeCommentBuffer;
-
-    int useLastActNodeRadiusAsDefault;
-    float actNodeRadius;
-
-    // dataset navigation settings win buffer variables
-    uint stepsPerSec;
-    uint recenteringTime;
-    uint dropFrames;
-
-    char *comment1;
-    char *comment2;
-    char *comment3;
-    char *comment4;
-    char *comment5;
-
-    // substrings for comment node highlighting
-    QStringList *commentSubstr;
-    //char **commentSubstr;
-    // colors of color-dropdown in comment node highlighting
-    char **commentColors;
-};
 
 /**
   * @struct vpConfig
@@ -908,10 +789,10 @@ struct viewerState {
     // don't jump between mags on zooming
     bool datasetMagLock;
 
-	//Flag to indicate user repositioning
-	uint userRepositioning;
+    //Flag to indicate user repositioning
+    uint userRepositioning;
 
-	float depthCutOff;
+    float depthCutOff;
 
     //Flag to indicate active mouse motion tracking: 0 off, 1 on
     int motionTracking;
@@ -964,8 +845,6 @@ struct viewerState {
     // allowed are: ON_CLICK_RECENTER 1, ON_CLICK_DRAG 0
     uint clickReaction;
     bool superCubeChanged;
-
-    struct guiConfig *gui;
 
     int luminanceBias;
     int luminanceRangeDelta;
@@ -1035,20 +914,6 @@ public:
     char comment[8192];
     QList<nodeListElement *> *getNodes();
 };
-
-//class treeListElementDecorator : public QObject {
-//    Q_OBJECT
-//public slots:
-//    treeListElement *new_treeListElement() { return new treeListElement(); }
-//    void next(treeListElement *self) { return self->next; }
-//    void
-//    void setNext(treeListElement *self, treeListElement *next) { self->next = next; }
-//    void setPrevious(treeListElement *self, treeListElement *previous) { self->previous = previous; }
-//    void setFirstNode(treeListElement *self, treeListElement *first) { self->firstNode = first; }
-
-//    int treeID(treeListElement *self) { return self->treeID; }
-
-//};
 
 class nodeListElement {
 public:
@@ -1298,8 +1163,6 @@ struct skeletonState {
     bool autoSaveBool;
     uint autoSaveInterval;
     uint saveCnt;
-    char *skeletonFile;
-    char * prevSkeletonFile;
 
     char *deleteSegment;
 
@@ -1404,11 +1267,11 @@ struct skeletonState {
     )
 
 #define ADD_COORDINATE(c1, c2) \
-	{ \
-			(c1).x += (c2).x; \
-			(c1).y += (c2).y; \
-			(c1).z += (c2).z; \
-	}
+    { \
+            (c1).x += (c2).x; \
+            (c1).y += (c2).y; \
+            (c1).z += (c2).z; \
+    }
 
 #define MUL_COORDINATE(c1, f) \
     {\
@@ -1418,25 +1281,25 @@ struct skeletonState {
     }
 
 #define SUB_COORDINATE(c1, c2) \
-	{ \
-			(c1).x -= (c2).x; \
-			(c1).y -= (c2).y; \
-			(c1).z -= (c2).z; \
-	}
+    { \
+            (c1).x -= (c2).x; \
+            (c1).y -= (c2).y; \
+            (c1).z -= (c2).z; \
+    }
 
 #define DIV_COORDINATE(c1, c2) \
-	{ \
-			(c1).x /= (c2); \
-			(c1).y /= (c2); \
-			(c1).z /= (c2); \
-	}
+    { \
+            (c1).x /= (c2); \
+            (c1).y /= (c2); \
+            (c1).z /= (c2); \
+    }
 
 #define CPY_COORDINATE(c1, c2) \
-	{ \
-			(c1).x = (c2).x; \
-			(c1).y = (c2).y; \
-			(c1).z = (c2).z; \
-	}
+    { \
+            (c1).x = (c2).x; \
+            (c1).y = (c2).y; \
+            (c1).z = (c2).z; \
+    }
 
 // This is used by the hash function. It rotates the bits by n to the left. It
 // works analogously to the 8086 assembly instruction ROL and should actually

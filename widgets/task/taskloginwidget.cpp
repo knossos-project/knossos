@@ -138,12 +138,10 @@ void TaskLoginWidget::loginButtonClicked() {
             taskManagementWidget->mainTab->setActiveUser(username);
             taskManagementWidget->show();
             return;
-        }
-        else if (httpCode == 400) {
+        } else {
             serverStatus->setText(QString("<font color='red'>%1</font>").arg(response.content));
         }
-    }
-    else { // !CURLE_OK
+    } else { // !CURLE_OK
         serverStatus->setText("<font color='red'>Request failed. Please check your connection.</font>");
     }
     free(response.content);

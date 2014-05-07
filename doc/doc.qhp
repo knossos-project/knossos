@@ -20,7 +20,7 @@
             </section>
             <section title="Full Documentation" ref="documentation.html#full">
               <section title="1 Preparing your dataset" ref="documentation.html#Dataset_Preparation"/>
-              <section title="2 KNOSSOS Starter" ref="documentation.html#Knossos_Starter"/>
+              <section title="2 Launching Knossos" ref="documentation.html#Launching_Knossos"/>
               <section title="3 KNOSSOS" ref="documentation.html#Knossos">
                 <section title="3.1 Branchpoints" ref="documentation.html#Branch_points_.5Bbranchpoints.5D"/>
                 <section title="3.2 Coordinates" ref="documentation.html#Coordinates_.5Benter_coordinates.2C_enter_seedpoint.2C_paste_seedpoint.2C_paste_coordinates.5D"/>
@@ -42,17 +42,14 @@
          </toc>
          <files>
              <file>documentation.html</file>
-             <file>images/top.jpg</file>
-             <file>images/Tut_KnossosStarter.jpg</file>
+             <file>images/top.png</file>
              <file>images/Tut_commentsWindow.png</file>
              <file>images/Tut_Coordinates.png</file>
-             <file>images/Tut_KnossosStarter.png</file>
              <file>images/Tut_treeview.png</file>
 			 <file>images/Tut_loadDataset.png</file>
 			 <file>images/Tut_node_selection.png</file>
-             <file>images/Tut_Viewports.png</file>
-             <file>images/Tut_full_LinkNodes.png</file>
-             <file>images/Tut_full_skelVP.jpg</file>
+			 <file>images/Tut_Viewports.png</file>
+			 <file>images/Tut_full_skelVP.png</file>
              <file>images/Tut_full_VPsettings.png</file>
 			 <file>images/Tut_full_skelVPsettings.png</file>
          </files>

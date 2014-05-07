@@ -14,7 +14,7 @@
               <tbody>
                 <tr bgcolor="#FFFFFF">
                   <td valign="top" height="195" align="center"><img
-                  border="0" src="images/top.jpg" usemap="#Map" /></td>
+                  border="0" src="images/top.png" usemap="#Map" /></td>
                 </tr>
                 <tr bgcolor="#FFFFFF">
                   <td valign="top" height="1286" align="left" class="box">
@@ -44,21 +44,25 @@
                               neurons, and displays a three dimensional model of
                               it.<br />
                               <hr style="color: black;" />
-                              <div style="text-align: center;">
-                                <h3 id="start"><span style="font-weight: bold;">Launching KNOSSOS</span></h3>
-                                <span style="color: red;"></span></div>
-                              <ul>
-                                <li>Execute KNOSSOS 4.0.</li>
-                                <li>Choose the desired dataset at the top-left menu entry: "Dataset" -&gt; "Open".</li>
-                                <li>Load a dataset with "Select Dataset Path" or choose from previously used datasets in the drop down menu.</li>
-                                <li>On exit, Knossos remembers the last used dataset and automatically loads it on next start.</li>
-                              </ul>
+							  <div style="text-align: center;">
+								<h3 id="start"><span style="font-weight: bold;">Launching KNOSSOS</span></h3>
+								<span style="color: red;"></span></div>
+							  <ul>
+								<li>Execute KNOSSOS 4.0.</li>
+								<li>Choose the desired dataset at the top-left menu entry: "File" -&gt; "Load Dataset...".</li>
+								<li>Load a dataset with "Select Dataset Path" or choose from previously used datasets in the drop down menu.</li>
+								<li>The <b>Data cache cube edge length</b> option sets the <b>Supercube Edge</b>, i.e. the number of cubes to be loaded per viewport. Higher numbers require more memory.
+									<ul>
+										<li>A supercube edge size of 5 is optimal for tracing (requires 250 MB RAM).
+										The settings 7 (686 MB RAM-Speicher) or 3 (54 MB RAM) are also sensible.</li>
+										<li>When changing the supercube edge size, a newstart of Knossos is required.</li>
+									</ul></li>
+								<li>On exit, Knossos remembers the last used dataset and automatically loads it on next start.</li>
+							  </ul>
                               <div style="text-align: center;"><img alt="Launching Knossos"
 
                                   src="images/Tut_loadDataset.png" /><br />
                               </div>
-                              <ul>
-                              </ul>
                               <div style="text-align: center;">
                                 <div style="text-align: left;">
                                   <hr style="height: 1px; margin-top: 7px;" />
@@ -449,18 +453,7 @@
                               <ul>
                                 <li><a href="#Dataset_Preparation">1 Preparing
                                     your Dataset</a></li>
-                                <li><a href="#Knossos_Starter">2 Knossos Starter</a>
-                                  <ul>
-                                    <li><a href="#Add_Dataset">2.1 Add Dataset</a></li>
-                                    <li><a href="#Profile">2.2 Profile</a></li>
-                                    <li><a href="#Remove_Dataset">2.3 Remove
-                                        Dataset</a></li>
-                                    <li><a href="#Select_dataset">2.4 Select
-                                        dataset</a></li>
-                                    <li><a href="#Supercube_edge">2.5 Supercube
-                                        edge</a></li>
-                                  </ul>
-                                </li>
+                                <li><a href="#Launching_Knossos">2 Launching Knossos</a></li>
                                 <li><a href="#Knossos">3 Knossos</a>
                                   <ul>
                                     <li><a href="#Branch_points_.5Bbranchpoints.5D">3.1
@@ -677,6 +670,8 @@
                                                 Skeleton Visualization</a></li>
                                             <li><a href="#Skeleton_Rendering_Model">3.16.1.2
                                                 Rendering Quality</a></li>
+											<li><a href="#Skeleton_Display_Modes">3.16.1.3
+                                                Skeleton Display Modes</a></li>
                                           </ul>
                                         </li>
                                         <li><a href="#Slice_Plane_Viewports">3.16.2
@@ -697,8 +692,8 @@
                                         <li><a href="#Skeleton_Viewport">3.16.3
                                             Skeleton Viewport</a>
                                           <ul>
-                                            <li><a href="#Skeleton_Display_Modes">3.16.3.1
-                                                Skeleton Display Modes</a></li>
+                                            <li><a href="#Dataset_Visualization">3.16.3.1
+                                                Dataset Visualization</a></li>
                                             <li><a href="#3D_View">3.16.3.3 3D
                                                 View</a></li>
                                           </ul>
@@ -775,77 +770,26 @@
                       nanometers. Set magnification to 1 unless you have
                       multiple downscaled versions of the same dataset that you
                       want to work with simultaneously.
-                      <hr style="color: black;" />
-                      <a name="Knossos_Starter" id="Knossos_Starter"></a>
-                      <h1>Knossos Starter </h1>
-                      When starting Knossos, you are asked in the Knossos
-                      Starter window to select a dataset, give a profile name
-                      and choose a value for Supercube edge, before you <b>run</b>
-                      Knossos.<br />
-                      <img width="247" height="354" border="0" alt="" src="images/Tut_KnossosStarter.jpg" />
-                      <a name="Add_Dataset" id="Add_Dataset"></a>
-                      <h3>Add Dataset</h3>
-                      <ul>
-                        <li> You can add a new dataset by clicking on the
-                          "+"-Button.
-                          <ul>
-                            <li> A window opens where you are asked to choose
-                              the dataset folder. Click on "Ok" after you
-                              selected the folder. </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <a name="Profile" id="Profile"></a>
-                      <h3>Profile</h3>
-                      <ul>
-                        <li> You can put in your name below "Profile" to load
-                          your Knossos profile (or to create it if the name has
-                          not been used before).
-                          <ul>
-                            <li> Knossos saves all your settings in Knossos
-                              under this name (assuming you close Knossos
-                              appropriately). </li>
-                            <li> You can reload them with this name the next
-                              time you start Knossos. </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <a name="Remove_Dataset" id="Remove_Dataset"></a>
-                      <h3>Remove Dataset</h3>
-                      <ul>
-                        <li> If you want to remove a dataset from the Knossos
-                          starter menue, simply select it and click on the
-                          "-"-Button to remove it. </li>
-                      </ul>
-                      <a name="Select_dataset" id="Select_dataset"></a>
-                      <h3>Select dataset</h3>
-                      <ul>
-                        <li> In order to run Knossos you have to select a
-                          dataset which will then be loaded.
-                          <ul>
-                            <li> Select a dataset in the upper field (if you
-                              started Knossos for the first time or if your
-                              directories have changed, you first have to add a
-                              dataset) and then press the "Run"-Button to load
-                              Knossos with the selected dataset. </li>
-                          </ul>
-                        </li>
-                      </ul>
-                      <a name="Supercube_edge" id="Supercube_edge"></a>
-                      <h3>Supercube edge</h3>
-                      <ul>
-                        <li> Here you can optionally choose how many cubes there
-                          will be loaded per viewport. </li>
-                        <li> The higher the number, the more cubes will be
-                          loaded. However this will then require more memory.
-                          <ul>
-                            <li> Change the Supercube Edge to 5 (requires 250 MB
-                              RAM) at each start. The setting 7 (686 MB
-                              RAM-Speicher) or 3 (54 MB RAM) is also possible,
-                              but 5 is optimal for tracing. </li>
-                          </ul>
-                        </li>
-                      </ul>
+                      
+					  <hr style="color: black;" />
+					  <div style="text-align: center;">
+						<a name="Launching Knossos" id="Launching_Knossos"/>
+						<h3 id="start"><span style="font-weight: bold;">Launching KNOSSOS</span></h3>
+						<span style="color: red;"></span></div>
+					  <ul>
+						<li>Execute KNOSSOS 4.0.</li>
+						<li>Choose the desired dataset at the top-left menu entry: "File" -&gt; "Load Dataset...".</li>
+						<li>Load a dataset with "Select Dataset Path" or choose from previously used datasets in the drop down menu.</li>
+						<li>The <b>Data cache cube edge length</b> option sets the <b>Supercube Edge</b>, i.e. the number of cubes to be loaded per viewport. Higher numbers require more memory.
+							<ul>
+								<li>A supercube edge size of 5 is optimal for tracing (requires 250 MB RAM).
+								The settings 7 (686 MB RAM-Speicher) or 3 (54 MB RAM) are also sensible.</li>
+								<li>When changing the supercube edge size, a newstart of Knossos is required.</li>
+							</ul></li>
+						<li>On exit, Knossos remembers the last used dataset and automatically loads it on next start.</li>
+					  </ul>
+					  <div style="text-align: center;"><img alt="Launching Knossos" src="images/Tut_loadDataset.png" /><br /></div>
+                      
                       <hr style="color: black;" />
                       <a name="Knossos" id="Knossos"></a>
                       <h1>Knossos </h1>
@@ -1494,6 +1438,9 @@
                             on the node list in the Tree View opens a context menu where
                             you can perform many operations on the selected nodes (see <a href="#Tree_View"
                             title="#Tree_View" rel="nofollow">here</a>).</li>
+						<li>If you have exactly one node selected, it becomes the active node. I.e. the next placed node will be connected to this one.</li>
+						<li>Also, when you place a new node, it becomes the next active node, so that the tracing can be continued.</li> 
+						<li><b>If no nodes are selected, the last annotated or edited node is automatically selected and made active.</b></li>
                       </ul>
                       <div style="text-align: center;"><img width="800" src="images/Tut_node_selection.png" alt="node selection" /><br /></div>
                       <a name="Tree_section" id="Tree_section"></a>
@@ -1650,7 +1597,6 @@
 							Select multiple entries not in a row by CTRL+clicking.</li>
 						<li>Perform operations on selected nodes by opening the context menu on them with a right click. The context menu includes:
 							<ul>
-							  <li>Set as active node (needs exactly one selected node)</li>
 							  <li>Split component from tree (splits the component containing this node from the tree, see
 								<a href="#Split_Trees_By_Connected_Components"
 								title="#Split_Trees_By_Connected_Components" rel="nofollow">Split Component from tree</a>)</li>
@@ -1911,7 +1857,7 @@
                       </ul>
                       <a name="3D_Viewport" id="3D_Viewport"></a>
                       <h3>3D Viewport</h3>
-                      <img width="500" height="488" border="0" alt="" src="images/Tut_full_skelVP.jpg" />
+                      <img width="500" height="488" border="0" alt="" src="images/Tut_full_skelVP.png" />
                       <ul>
                         <li> The lower right viewport (with a black border)
                           represents the 3D viewport. </li>
@@ -1968,15 +1914,26 @@
                           A higher quality reduces speed and vice versa, where a value of 1
                           ensures best quality and a value of 20 yields fastest rendering.</li>
                       </ul>
+					  <a name="Skeleton_Display_Modes" id="Skeleton_Display_Modes"></a>
+                      <h4>Skeleton Display Modes</h4>
+                      <ul>
+                        <li> Under "Skeleton Display Modes" you can configure how the skeleton should be displayed.
+                          <ul>
+                            <li> <b>Whole Skeleton</b> allows the whole loaded/traced skeleton to be displayed.</li>
+                            <li> <b>Only Selected Trees</b> allows only the trees to be displayed that are currently selected in the treeview (they are highlighted in green).</li>
+							<li> <b>Hide Skeleton in Ortho VPs</b> hides the skeleton in the three orthogonal viewports, but still shows it in the 3D View.</li>
+                            <li> <b>Hide Skeleton in Skeleton VP (fast)</b> hides the skeleton in the 3D viewport. This option is recommended, if your skeletons become very large
+                              and your computer gets slower and slower. Switching the trees off significantly improves the performance. </li>
+							<li>Note that if "Hide Skeleton in Ortho/Skeleton VP" are not checked and you still cannot see the whole skeleton, it might be that you have "Only Selected Trees" checked.</li>
+                          </ul>
+                        </li>
+                      </ul>
+					  
                       <a name="Slice_Plane_Viewports" id="Slice_Plane_Viewports"></a>
                       <h3>Slice Plane Viewports</h3>
                       <a name="Skeleton_Overlay" id="Skeleton_Overlay"></a>
                       <h4>Skeleton Overlay</h4>
                       <ul>
-                        <li> The option <b>Enable Overlay</b> turns the
-                          skeleton rendering in the 3 slice plane viewports on (default)
-                          and off.
-                        </li>
                         <li> If you enable <b>Highlight Intersections</b> then
                           the points at the skeleton where it intersects one of
                           the other slice planes will be highlighted in black. </li>
@@ -2049,27 +2006,11 @@
                       <a name="Skeleton_Viewport" id="Skeleton_Viewport"></a>
                       <h3>Skeleton Viewport</h3>
                       <img width="482" height="307" border="0" alt="" src="images/Tut_full_skelVPsettings.png" />
-                      <a name="Skeleton_Display_Modes" id="Skeleton_Display_Modes"></a>
-                      <h4>Skeleton Display Modes</h4>
-                      <ul>
-                        <li> Under "Skeleton Viewport" in the "Viewport
-                          Settings" you have the option to change the rendering
-                          of the skeleotn in the 3D viewport.
-                          <ul>
-                            <li> <b>Whole Skeleton</b> displays all
-                              loaded/traced skeletons at full length in the 3D
-                              viewport. </li>
-                            <li> <b>Only Active Tree</b> displays the complete
-                              tree of the skeleton which is currently active. </li>
-                            <li> <b>Hide Skeleton (fast)</b> does not render
-                              any skeleton in the 3D viewport. This option is
-                              recommended, if your skeletons become very large
-                              and your computer gets slower and slower.
-                              Switching the trees off significantly improves the
-                              performance. </li>
-                          </ul>
-                        </li>
-                      </ul>
+					  <a name="Dataset_Visualization" id="Dataset_Visualization"></a>
+                      <h4>Dataset Visualization</h4>
+					  <ul>
+                      <li>The buttons Show XY Plane, Show XZ Plane and Show YZ Plane switch the rendering of the grey planes in the 3D viewport around the current center of view on or off.</li>
+					  </ul>
                       <a name="3D_View" id="3D_View"></a>
                       <h4>3D View</h4>
                       <ul>

@@ -30,9 +30,7 @@
 class QSpinBox;
 class QRadioButton;
 class QLabel;
-class NavigationWidget : public QDialog
-{
-    friend class TestNavigationWidget;
+class NavigationWidget : public QDialog {
     Q_OBJECT
 public:
     explicit NavigationWidget(QWidget *parent = 0);

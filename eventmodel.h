@@ -73,9 +73,8 @@ public:
     int mouseY;
     bool grap;
 signals:
-    void userMoveSignal(int x, int y, int z, int serverMovement);
-    void userMoveArbSignal(float x, float y, float z, int serverMovement);
-    void updatePositionSignal(int serverMovement);
+    void userMoveSignal(int x, int y, int z);
+    void userMoveArbSignal(float x, float y, float z);
     void pasteCoordinateSignal();
     void zoomOrthoSignal(float step);
     void zoomInSkeletonVPSignal();
@@ -89,22 +88,19 @@ signals:
     void genTestNodesSignal(uint number);
     bool addSkeletonNodeSignal(Coordinate *clickedCoordinate, Byte VPtype);
 
-    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
-    void setRemoteStateTypeSignal(int type);
+    void setActiveNodeSignal(nodeListElement *node, int nodeID);
     void setRecenteringPositionSignal(int x, int y, int z);
-    void nextCommentlessNodeSignal();
-    void previousCommentlessNodeSignal();
-    void delSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, segmentListElement *segToDel, int serialize);
-    void editNodeSignal(int targetRevision, int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
-    void addCommentSignal(int targetRevision, const char *content, nodeListElement *node, int nodeID, int serialize);
-    bool editCommentSignal(int targetRevision, commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID, int serialize);
-    void addSegmentSignal(int targetRevision, int sourceNodeID, int targetNodeID, int serialize);
+    void delSegmentSignal(int sourceNodeID, int targetNodeID, segmentListElement *segToDel);
+    void editNodeSignal(int nodeID, nodeListElement *node, float newRadius, int newXPos, int newYPos, int newZPos, int inMag);
+    void addCommentSignal(const char *content, nodeListElement *node, int nodeID);
+    bool editCommentSignal(commentListElement *currentComment, int nodeID, char *newContent, nodeListElement *newNode, int newNodeID);
+    void addSegmentSignal(int sourceNodeID, int targetNodeID);
     void jumpToActiveNodeSignal();
     void saveSkeletonSignal();
     void updateTreeviewSignal();
     void updateCommentsTable();
     void updateSlicePlaneWidgetSignal();
-    void pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID, int serialize);
+    void pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
     void popBranchNodeSignal();
 
     void moveToNextTreeSignal();
@@ -116,8 +112,8 @@ signals:
     segmentListElement *findSegmentByNodeIDSignal(int sourceNodeID, int targetNodeID);
     nodeListElement *findNodeByNodeIDSignal(int nodeID);
     uint addSkeletonNodeAndLinkWithActiveSignal(Coordinate *clickedCoordinate, Byte VPtype, int makeNodeActive);
-    treeListElement *addtreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    void undoSignal();
+    treeListElement *addTreeListElement(int treeID, color4F color);
+
     void setViewportOrientationSignal(int orientation);
     void unselectNodesSignal();
 

@@ -36,9 +36,7 @@ class QPushButton;
 
 #define LOCK_DATASET_ORIENTATION_DEFAULT (false)
 
-class ZoomAndMultiresWidget : public QDialog
-{
-    friend class TestZoomAndMultiresWidget;
+class ZoomAndMultiresWidget : public QDialog {
     friend class MainWindow;
     Q_OBJECT
 public:
@@ -75,7 +73,6 @@ protected:
 signals:
     void zoomInSkeletonVPSignal();
     void zoomOutSkeletonVPSignal();
-    void zoomLevelSignal(float value);
     void visibilityChanged(bool);
 private:
     void showEvent(QShowEvent *) override {

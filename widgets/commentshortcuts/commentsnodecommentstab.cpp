@@ -163,6 +163,6 @@ void CommentsNodeCommentsTab::doubleClicked(QTableWidgetItem *item) {
     if(!state->skeletonState->selectedCommentNode)
        return;
 
-    emit setActiveNodeSignal(CHANGE_MANUAL, NULL, state->skeletonState->selectedCommentNode->nodeID);
+    emit setActiveNodeSignal(NULL, state->skeletonState->selectedCommentNode->nodeID);
     emit setJumpToActiveNodeSignal();
 }

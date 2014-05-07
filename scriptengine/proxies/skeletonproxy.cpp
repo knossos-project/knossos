@@ -73,7 +73,7 @@ bool SkeletonProxy::has_unsaved_changes() {
 }
 
 void SkeletonProxy::delete_tree(int tree_id) {
-   if(!Skeletonizer::delTree(CHANGE_MANUAL, tree_id, true)) {
+   if(!Skeletonizer::delTree(tree_id)) {
        emit signalDelegate->echo(QString("could not delete the tree with id %1").arg(tree_id));
    } else {
        emit signalDelegate->updateTreeViewSignal();
@@ -85,7 +85,7 @@ void SkeletonProxy::delete_skeleton() {
 }
 
 void SkeletonProxy::set_active_node(int node_id) {
-    if(!Skeletonizer::setActiveNode(CHANGE_MANUAL, 0, node_id)) {
+    if(!Skeletonizer::setActiveNode( 0, node_id)) {
         emit signalDelegate->echo(QString("could not set the node with id %1 to active node").arg(node_id));
     }
 }
@@ -105,9 +105,17 @@ void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
         return;
     }
 
+    if(!state->skeletonState->activeTree) {
+        this->add_tree(1);
+    }
+
+    if(parent_tree_id == 0) {
+        parent_tree_id = 1;
+    }
+
     Coordinate coordinate(x, y, z);
-    if(Skeletonizer::addNode(CHANGE_MANUAL, node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false, false)) {
-        Skeletonizer::setActiveNode(CHANGE_MANUAL, state->skeletonState->activeNode, node_id);
+    if(Skeletonizer::addNode(node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false)) {
+        Skeletonizer::setActiveNode( state->skeletonState->activeNode, node_id);
         emit signalDelegate->nodeAddedSignal();
     } else {
         emit signalDelegate->echo(QString("could not add the node with node id %1").arg(node_id));
@@ -126,14 +134,14 @@ QList<treeListElement *> *SkeletonProxy::trees() {
 
 void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float g, float b, float a) {
     color4F color(r, g, b, a);
-    treeListElement *theTree = Skeletonizer::addtreeListElement(true, CHANGE_MANUAL, tree_id, color, false);
+    treeListElement *theTree = Skeletonizer::addTreeListElement(tree_id, color);
     if(!theTree) {
         emit signalDelegate->echo(QString("could not add the tree with tree id %1").arg(tree_id));
         return;
     }
 
     if(comment.isEmpty() == false) {
-        Skeletonizer::addTreeComment(CHANGE_MANUAL, tree_id, comment.toLocal8Bit().data());
+        Skeletonizer::addTreeComment( tree_id, comment.toLocal8Bit().data());
     }
 
     Skeletonizer::setActiveTreeByID(tree_id);
@@ -145,7 +153,7 @@ void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float
 void SkeletonProxy::add_comment(int node_id, char *comment) {
     nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
     if(node) {
-        if(!Skeletonizer::addComment(CHANGE_MANUAL, QString(comment), node, 0, false)) {
+        if(!Skeletonizer::addComment( QString(comment), node, 0)) {
             emit signalDelegate->echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
         }
     } else {
@@ -154,7 +162,7 @@ void SkeletonProxy::add_comment(int node_id, char *comment) {
 }
 
 void SkeletonProxy::add_segment(int source_id, int target_id) {
-    if(Skeletonizer::addSegment(CHANGE_MANUAL, source_id, target_id, false)) {
+    if(Skeletonizer::addSegment(source_id, target_id)) {
 
     } else {
        emit signalDelegate->echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
@@ -164,7 +172,7 @@ void SkeletonProxy::add_segment(int source_id, int target_id) {
 void SkeletonProxy::add_branch_node(int node_id) {
     nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
     if(currentNode) {
-        if(Skeletonizer::pushBranchNode(CHANGE_MANUAL, true, false, currentNode, 0, false)) {
+        if(Skeletonizer::pushBranchNode(true, false, currentNode, 0)) {
             emit signalDelegate->updateToolsSignal();
         } else {
             emit signalDelegate->echo(QString("An unexpected error occured while adding a branch node"));
@@ -175,6 +183,7 @@ void SkeletonProxy::add_branch_node(int node_id) {
     }
 
 }
+
 
 QList<int> *SkeletonProxy::cube_data_at(int x, int y, int z) {
     Coordinate position(x / state->cubeEdgeLength, y / state->cubeEdgeLength, z / state->cubeEdgeLength);
@@ -210,20 +219,14 @@ void SkeletonProxy::render_mesh(mesh *mesh) {
     }
 
     // it's ok if no normals are passed. This has to be checked in render method anyway
-
-
     if(mesh->mode < GL_POINTS or mesh->mode > GL_POLYGON) {
         emit signalDelegate->echo("mesh contains an unknown vertex mode");
         return;
 
     }
 
-
     // lots of additional checks could be done
-
     state->skeletonState->userGeometry->append(mesh);
-
-
 }
 
 

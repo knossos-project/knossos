@@ -31,9 +31,7 @@
 class QLabel;
 class QCheckBox;
 class QLineEdit;
-class CommentsHighlightingTab : public QWidget
-{
-    friend class TestCommentsWidget;
+class CommentsHighlightingTab : public QWidget {
     friend class CommentsWidget;
     Q_OBJECT
 public:

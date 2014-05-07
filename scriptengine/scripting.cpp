@@ -22,7 +22,6 @@
 
 #include "highlighter.h"
 #include "knossos-global.h"
-#include "sleeper.h"
 #include "widgets/mainwindow.h"
 
 extern stateInfo *state;

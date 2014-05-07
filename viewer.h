@@ -73,7 +73,6 @@ signals:
     void loadSignal();
     void updateCoordinatesSignal(int x, int y, int z);
     void updateZoomAndMultiresWidgetSignal();
-    bool broadcastPosition(uint x, uint y, uint z);
 protected:
     bool resetViewPortData(vpConfig *viewport);
     bool vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState);
@@ -86,13 +85,12 @@ protected:
     bool ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig);
     void rewire();
 public slots:
-    bool changeDatasetMag(uint upOrDownFlag);
-    bool userMove(int x, int y, int z, int serverMovement); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
-    bool userMove_arb(float x, float y, float z, int serverMovement);
-    static bool updatePosition(int serverMovement);
+    bool changeDatasetMag(uint upOrDownFlag); /* upOrDownFlag can take the values: MAG_DOWN, MAG_UP */
+    bool userMove(int x, int y, int z);
+    bool userMove_arb(float x, float y, float z);
     bool recalcTextureOffsets();
-    bool calcDisplayedEdgeLength();    
-    bool updateViewerState();    
+    bool calcDisplayedEdgeLength();
+    bool updateViewerState();
     void run();
     bool sendLoadSignal(uint x, uint y, uint z, int magChanged);
     bool loadTreeColorTable(QString path, float *table, int type);

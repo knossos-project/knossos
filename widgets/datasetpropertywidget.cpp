@@ -240,7 +240,7 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     state->viewerState->currentPosition.x =
             state->viewerState->currentPosition.y =
             state->viewerState->currentPosition.z = 0;
-    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength, TELL_COORDINATE_CHANGE);
+    emit userMoveSignal(state->cubeEdgeLength, state->cubeEdgeLength, state->cubeEdgeLength);
 
     this->waitForLoader();
 
@@ -288,8 +288,7 @@ void DatasetPropertyWidget::changeDataSet(bool isGUI) {
     emit userMoveSignal(
                 state->cubeEdgeLength,
                 state->cubeEdgeLength,
-                state->cubeEdgeLength,
-                TELL_COORDINATE_CHANGE);
+                state->cubeEdgeLength);
     // reset skeleton viewport
     if(state->skeletonState->rotationcounter == 0) {
         state->skeletonState->definedSkeletonVpView = SKELVP_RESET;

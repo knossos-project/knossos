@@ -31,7 +31,6 @@
 #include "functions.h"
 #include "knossos-global.h"
 #include "renderer.h"
-#include "sleeper.h"
 #include "viewport.h"
 
 extern stateInfo *state;

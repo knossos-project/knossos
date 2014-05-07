@@ -33,7 +33,7 @@ signals:
     void clearSkeletonSignalGUI();
     void clearSkeletonSignalNoGUI();
     void changeDatasetMagSignal(uint upOrDownFlag);
-    void userMoveSignal(int x, int y, int z, int serverMovement);
+    void userMoveSignal(int x, int y, int z);
     void datasetSwitchZoomDefaults();
     void startLoaderSignal();
 public slots:

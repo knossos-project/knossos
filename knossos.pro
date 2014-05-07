@@ -4,12 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl network testlib help
+QT       += core gui opengl network help
 
 TARGET = knossos
 TEMPLATE = app
 CONFIG += qt c++11 copydoc turbojpeg app_bundle
-
 
 SOURCES += openjpeg/cio.c \
     openjpeg/bio.c \
@@ -36,7 +35,6 @@ SOURCES += openjpeg/cio.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
     eventmodel.cpp \
-    client.cpp \
     loader.cpp \
     viewer.cpp \
     remote.cpp \
@@ -45,11 +43,9 @@ SOURCES += openjpeg/cio.c \
     knossos.cpp \
     coordinate.cpp \
     Hashtable.cpp \
-    sleeper.cpp \
     functions.cpp \
     qsort.cpp \
     ftp.cpp \
-    stateInfo.cpp \
     color4F.cpp \
     nodeListElement.cpp \ #segmentListElement.cpp \
     treeListElement.cpp \
@@ -69,7 +65,6 @@ SOURCES += openjpeg/cio.c \
     widgets/viewportsettings/vpsliceplaneviewportwidget.cpp \
     widgets/viewportsettings/vpskeletonviewportwidget.cpp \
     widgets/viewportsettings/vpgeneraltabwidget.cpp \
-    widgets/synchronizationwidget.cpp \
     widgets/splashscreenwidget.cpp \
     widgets/datasetpropertywidget.cpp \
     widgets/task/task.cpp \
@@ -88,7 +83,6 @@ SOURCES += openjpeg/cio.c \
     mesh.cpp \
     widgets/gui.cpp \
     widgets/pythonpropertywidget.cpp
-
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -129,14 +123,12 @@ PRECOMPILED_HEADERS += openjpeg/tgt.h \
 HEADERS  += widgets/mainwindow.h \
     knossos-global.h \
     eventmodel.h \
-    client.h \
     loader.h \
     viewer.h \
     remote.h \
     skeletonizer.h \
     renderer.h \
     knossos.h\
-    sleeper.h \
     functions.h \
     ftp.h \
     sha256.h \
@@ -154,7 +146,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/viewportsettings/vpsliceplaneviewportwidget.h \
     widgets/viewportsettings/vpskeletonviewportwidget.h \
     widgets/viewportsettings/vpgeneraltabwidget.h \
-    widgets/synchronizationwidget.h \
     widgets/splashscreenwidget.h \
     widgets/datasetpropertywidget.h \
     widgets/task/taskloginwidget.h \
@@ -171,8 +162,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/treetable.h \
     widgets/gui.h \
     widgets/pythonpropertywidget.h
-
-FORMS    += mainwindow.ui
 
 OTHER_FILES += \
     python/* \

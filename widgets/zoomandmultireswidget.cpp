@@ -166,7 +166,6 @@ void ZoomAndMultiresWidget::skeletonSpinBoxChanged(double value) {
         lastZoomSkel = skeletonViewportSpinBox->value();
         userZoomSkel = true;
     }
-    emit zoomLevelSignal(value);
 }
 
 void ZoomAndMultiresWidget::lockDatasetMagChecked(bool on) {
@@ -183,8 +182,6 @@ void ZoomAndMultiresWidget::zoomDefaultsClicked() {
     skeletonViewportSpinBox->setValue(100*SKELZOOMMIN/SKELZOOMMAX);
     state->skeletonState->zoomLevel = SKELZOOMMIN;
     userZoomSkel = true;
-
-    emit zoomLevelSignal(0.0);
 }
 
 void ZoomAndMultiresWidget::update() {

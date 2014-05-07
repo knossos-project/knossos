@@ -105,15 +105,6 @@ void WidgetContainer::createDataSavingWidget(QWidget *parent) {
     dataSavingWidget->setFixedSize(dataSavingWidget->size());
 }
 
-void WidgetContainer::createSychronizationWidget(QWidget *parent) {
-    synchronizationWidget = new SynchronizationWidget(parent);
-#ifdef Q_OS_UNIX
-    synchronizationWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
-#endif
-    synchronizationWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-
-}
-
 void WidgetContainer::createDatasetPropertyWidget(QWidget *parent) {
     datasetPropertyWidget = new DatasetPropertyWidget(parent);
 #ifdef Q_OS_UNIX
@@ -173,9 +164,7 @@ void WidgetContainer::createWidgets(QWidget *parent) {
     createViewportSettingsWidget(parent);
     createZoomAndMultiresWidget(parent);
     createNavigationWidget(parent);
-    //createToolWidget(parent);
     createDataSavingWidget(parent);
-    createSychronizationWidget(parent);
     createDatasetPropertyWidget(parent);
     createTaskWidgets(parent);
     createSplashScreenWidget(parent);

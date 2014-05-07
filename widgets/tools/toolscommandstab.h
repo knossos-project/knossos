@@ -57,16 +57,14 @@ signals:
     treeListElement *findTreeByTreeIDSignal(int value);
     nodeListElement *findNodeByNodeIDSignal(int value);
     void setActiveTreeSignal(int id);
-    void setActiveNodeSignal(int revision, nodeListElement *node, int id);
-
+    void setActiveNodeSignal(nodeListElement *node, int id);
     void jumpToNodeSignal();
-    treeListElement *addtreeListElement(int sync, int targetRevision, int treeID, color4F color, int serialize);
-    bool pushBranchNodeSignal(int targetRevision, int setBranchNodeFlag, int checkDoubleBranchpoint,
-                              nodeListElement *branchNode, int branchNodeID, int serialize);
+    treeListElement *addTreeListElement(int treeID, color4F color);
+    bool pushBranchNodeSignal(int setBranchNodeFlag, int checkDoubleBranchpoint,
+                              nodeListElement *branchNode, int branchNodeID);
     bool popBranchNodeSignal();
     void lockPositionSignal(Coordinate coordinate);
     void unlockPositionSignal();
-
     void treeActivatedSignal();
     void treeAddedSignal(treeListElement *tree);
     void nodeActivatedSignal();

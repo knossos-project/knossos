@@ -7,7 +7,6 @@
 
 #include "console.h"
 #include "tracingtimewidget.h"
-#include "synchronizationwidget.h"
 #include "datasavingwidget.h"
 #include "splashscreenwidget.h"
 
@@ -66,7 +65,6 @@ public:
     NavigationWidget *navigationWidget;
     ViewportSettingsWidget *viewportSettingsWidget;
     DataSavingWidget *dataSavingWidget;
-    SynchronizationWidget *synchronizationWidget;
     SplashScreenWidget *splashWidget;
     DatasetPropertyWidget *datasetPropertyWidget;
     TaskLoginWidget *taskLoginWidget;

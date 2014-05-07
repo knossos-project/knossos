@@ -11,15 +11,13 @@ class QLineEdit;
 class QPushButton;
 class QTableWidget;
 class QTableWidgetItem;
-class CommentsNodeCommentsTab : public QWidget
-{
-    friend class TestCommentsWidget;
+class CommentsNodeCommentsTab : public QWidget {
     Q_OBJECT
 public:
     explicit CommentsNodeCommentsTab(QWidget *parent = 0);    
 signals:
     void updateCommentsTableSignal();
-    void setActiveNodeSignal(int targetRevision, nodeListElement *node, int nodeID);
+    void setActiveNodeSignal(nodeListElement *node, int nodeID);
     void setJumpToActiveNodeSignal();
     nodeListElement *findNodeByNodeIDSignal(int id);
     void updateToolsSignal();
