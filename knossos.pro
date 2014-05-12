@@ -8,9 +8,10 @@ QT       += core gui opengl network help
 
 TARGET = knossos
 TEMPLATE = app
-CONFIG += qt c++11 copydoc turbojpeg app_bundle
+CONFIG += qt c++11 createdoc turbojpeg app_bundle
 
-SOURCES += openjpeg/cio.c \
+SOURCES += widgets/mainwindow.cpp \
+    openjpeg/cio.c \
     openjpeg/bio.c \
     openjpeg/color.c \
     openjpeg/convert.c \
@@ -51,8 +52,7 @@ SOURCES += openjpeg/cio.c \
     treeListElement.cpp \
     treeLUT_fallback.cpp \
     sha256.cpp \
-    widgets/viewport.cpp \
-    widgets/mainwindow.cpp \
+    widgets/viewport.cpp \    
     widgets/console.cpp \
     widgets/tracingtimewidget.cpp \
     widgets/commentswidget.cpp \
@@ -220,6 +220,7 @@ macx {
 linux {
     LIBS += -lcurl
     LIBS += -lGLU -lglut
+
 }
 
 win32 {
@@ -229,15 +230,16 @@ win32 {
     RC_FILE = knossos.rc
 }
 
-copydoc:!exists($$OUT_PWD/doc) {
-    copydoctarget.target = copydoc
-    copydoctarget.depends = $$PWD/doc
-    copydoctarget.commands = $(COPY_DIR) $$PWD/doc $$OUT_PWD
-    first.depends = copydoctarget
-    QMAKE_EXTRA_TARGETS += first copydoctarget
+createdoc {
+    message(building createdoc)
+    createdoctarget.target = $$PWD/doc/collection.qhc
+    createdoctarget.depends = $$PWD/doc/collection.qhcp $$PWD/doc/doc.qhp
+    createdoctarget.commands = qcollectiongenerator $$PWD/doc/collection.qhcp -o $$PWD/doc/collection.qhc
+    QMAKE_EXTRA_TARGETS += createdoctarget
+    PRE_TARGETDEPS += $$PWD/doc/collection.qhc
 }
 
-turbojpeg {
+turbojpeg {    
     DEFINES += KNOSSOS_USE_TURBOJPEG
     mac {
         INCLUDEPATH += /opt/libjpeg-turbo/include
@@ -250,7 +252,9 @@ turbojpeg {
     LIBS += -lturbojpeg
 }
 
-RESOURCES += Resources.qrc
+
+    RESOURCES += Resources.qrc
+
 
 QMAKE_CXXFLAGS_RELEASE += -O3
 

@@ -56,8 +56,8 @@ linux {
 
 
     # copy the content of the python folder to the build-dir
-    scripts.path = $$OUT_PWD/knossos.app/Contents/MacOS/python \
-    scripts.files = scriptengine/python/* \
+    scripts.path = $$OUT_PWD/python \
+    scripts.files = $$PWD/python/* \
     INSTALLS += scripts \
 }
 

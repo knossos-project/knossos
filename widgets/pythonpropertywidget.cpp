@@ -77,7 +77,8 @@ void PythonPropertyWidget::autoConf() {
     QString command;
 #ifdef Q_OS_UNIX
     command = QString("/bin/sh -c 'which python'");
-#elif Q_OS_WIN
+#endif
+#ifdef Q_OS_WIN
     command = QString("where python");
 #endif
     pipe = popen(command.toUtf8().data(), "r");
@@ -99,7 +100,8 @@ void PythonPropertyWidget::autoConf() {
 
 #ifdef Q_OS_UNIX
     command = QString("/bin/sh -c 'python -V'"); // where in windows
-#elif Q_OS_WIN
+#endif
+#ifdef Q_OS_WIN
     command = QString("python -V");
 #endif
 
@@ -128,17 +130,24 @@ void PythonPropertyWidget::openTerminal() {
         return;
     }
 
-    QString command(QString("%1%2").arg(home).arg("/.ipython/profile_default/security"));
+    QString path(QString("%1%2").arg(home).arg("/.ipython/profile_default/security"));
 
 
-    QDirIterator it(command);
+    QDirIterator it(path);
     while(it.hasNext()) {
         QString filename = it.next();
         if(filename.contains(QString("%1").arg(pid))) {
-           QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
-#ifdef Q_OS_UNIX
-           system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
-#elif Q_OS_WIN
+        QFileInfo info(filename);
+        filename = info.fileName();
+#ifdef Q_OS_OSX
+        QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
+        system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+#endif
+#ifdef Q_OS_LINUX
+        QString args = QString("ipython console --existing '%1'").arg(filename);
+        system(QString("/usr/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+#endif
+#ifdef Q_OS_WIN
            system(QString("'%1' &").arg(args).toUtf8().data());
 #endif
         }

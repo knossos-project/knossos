@@ -1,6 +1,7 @@
 #include <QSettings>
 #include <QDir>
 #include <QFileInfoList>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include "widgets/GuiConstants.h"
 #include "scripting.h"
@@ -25,6 +26,7 @@
 #include "widgets/mainwindow.h"
 
 extern stateInfo *state;
+
 
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
@@ -77,7 +79,7 @@ void Scripting::run() {
 
     PythonQt::init(PythonQt::RedirectStdOut);
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    PythonQt_QtAll::init();
+    //PythonQt_QtAll::init();
 
     connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
     connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
@@ -127,6 +129,17 @@ void Scripting::run() {
 
     PythonQt::self()->addDecorators(meshDecorator);
     PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
+
+    executeFromUserDirectory();
+
+    ctx.evalScript("import IPython");
+    ctx.evalScript("IPython.embed_kernel()");
+
+    //KernelStarter starter;
+    //starter.start();
+
+
+    ctx.evalScript("python/terminal.py");
 
     /*
     connect(signalDelegate, SIGNAL(echo(QString)), console, SLOT(consoleMessage(QString)));

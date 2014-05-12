@@ -26,6 +26,7 @@
  */
 
 #include <QDialog>
+#include <QDebug>
 
 class QLabel;
 class QTableWidgetItem;
@@ -37,7 +38,9 @@ public:
 signals:
     void visibilityChanged(bool);
 private:
+
     void showEvent(QShowEvent *) override {
+        qDebug() << "changed";
         emit visibilityChanged(true);
     }
     void hideEvent(QHideEvent *) override {

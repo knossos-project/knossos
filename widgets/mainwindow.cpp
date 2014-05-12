@@ -139,6 +139,7 @@ void MainWindow::createViewports() {
 }
 
 void MainWindow:: createToolBar() {
+
     auto toolBar = new QToolBar();
     toolBar->setMovable(false);
     toolBar->setFloatable(false);
@@ -191,13 +192,14 @@ void MainWindow:: createToolBar() {
     };
 
 
-    //auto pythonPropertiesButton = createToolToogleButton(":images/python.png", "Python Properties");
+
     auto tracingTimeButton = createToolToogleButton(":/images/icons/appointment.png", "Tracing Time");
     auto zoomAndMultiresButton = createToolToogleButton(":/images/icons/zoom-in.png", "Zoom and Multiresolution");
     auto viewportSettingsButton = createToolToogleButton(":/images/icons/view-list-icons-symbolic.png", "Viewport Settings");
     auto commentShortcutsButton = createToolToogleButton(":/images/icons/insert-text.png", "Comment Shortcuts");
     auto annotationButton = createToolToogleButton(":/images/icons/graph.png", "Annotation");
 
+    connect(tracingTimeButton, &QToolButton::toggled, widgetContainer->tracingTimeWidget, &TracingTimeWidget::setVisible);
     //button → visibility
     QObject::connect(tracingTimeButton, &QToolButton::toggled, widgetContainer->tracingTimeWidget, &TracingTimeWidget::setVisible);
     QObject::connect(annotationButton, &QToolButton::toggled, widgetContainer->annotationWidget, &AnnotationWidget::setVisible);

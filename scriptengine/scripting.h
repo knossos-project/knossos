@@ -26,6 +26,21 @@ class Highlighter;
 class QSettings;
 class PythonQtObjectPtr;
 
+
+class KernelStarter : public QThread {
+ Q_OBJECT
+public:
+    explicit KernelStarter(QObject *parent = 0) { }
+
+
+    void run() {
+        PythonQt::init();
+        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+        ctx.evalScript("import IPython");
+        ctx.evalScript("IPython.embed_kernel()");
+    }
+};
+
 /** This class intializes the python qt engine */
 class Scripting : public QThread
 {
@@ -47,6 +62,7 @@ public:
 
     void run();
 
+    PythonQtObjectPtr ctx;
 signals:
 
 public slots:
@@ -55,7 +71,8 @@ public slots:
     void addDoc();   
     void executeFromUserDirectory();
     void out(const QString &out);
-    void err(const QString &err);    
+    void err(const QString &err);
+
 
 
 protected:
