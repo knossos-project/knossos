@@ -52,6 +52,7 @@ class QFile;
 class WidgetContainer;
 
 class MainWindow : public QMainWindow {
+    friend class Scripting;
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -113,6 +114,9 @@ protected:
     QString openFileDirectory;
     QString saveFileDirectory;
     bool eventFilter(QObject *object, QEvent *event);
+
+    QMenu *fileMenu;
+
 public:
     QSpinBox *xField, *yField, *zField;
     std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;

@@ -91,6 +91,7 @@ void Scripting::run() {
     ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
 
+
     ctx.evalScript("from PythonQt import *");    
     ctx.evalScript("execfile('includes.py')");
 
@@ -130,13 +131,18 @@ void Scripting::run() {
     PythonQt::self()->addDecorators(meshDecorator);
     PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
 
+
+    QWidgetList list = QApplication::allWidgets();
+    foreach(QWidget *widget, list) {
+        ctx.addObject(widget->metaObject()->className(), widget);
+    }
+
     executeFromUserDirectory();
 
     ctx.evalScript("import IPython");
     ctx.evalScript("IPython.embed_kernel()");
 
-    //KernelStarter starter;
-    //starter.start();
+
 
 
     ctx.evalScript("python/terminal.py");

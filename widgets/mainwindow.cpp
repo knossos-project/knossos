@@ -399,7 +399,7 @@ void MainWindow::recentFileSelected() {
 }
 
 void MainWindow::createMenus() {
-    auto fileMenu = menuBar()->addMenu("File");
+    this->fileMenu = menuBar()->addMenu("File");
     fileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...", widgetContainer->datasetPropertyWidget, SLOT(show()));
     fileMenu->addSeparator();
     fileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));

@@ -41,5 +41,6 @@
     </qresource>
     <qresource prefix="/misc">
         <file>style.qss</file>
+        <file>python/converter.py</file>
     </qresource>
 </RCC>
