@@ -506,7 +506,32 @@ extern "C" {
     int jp2_decompress_main(char *infile, char *buf, int bufsize);
 }
 
+#include <fstream>
+
 void Loader::loadCube(loadcube_thread_struct *lts) {
+    if (state->overlay) {
+        state->protectLoaderSlots->lock();
+        if (!lts->thisPtr->freeOcSlots.empty()) {
+            auto currentOcSlot = lts->thisPtr->freeOcSlots.front();
+
+            const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
+            std::ifstream inFile(inFilePath, std::ios_base::binary);
+            if (inFile) {
+            //if (inFile.read(reinterpret_cast<char * const>(currentOcSlot), state->cubeBytes * sizeof(uint64_t)) {
+                std::copy(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), currentOcSlot);
+
+                state->protectCube2Pointer->lock();
+                if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
+                    lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+                } else {
+                    LOG("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+                }
+                state->protectCube2Pointer->unlock();
+            }
+        }
+        state->protectLoaderSlots->unlock();
+    }
+
     bool retVal = true;
     bool isPut = false;
     char *filename;
@@ -564,7 +589,7 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
         cubeFile = fopen(filename, "rb");
 
         if(cubeFile == NULL) {
-            LOG("fopen failed for %s!", filename);
+            //LOG("fopen failed for %s!", filename);
             goto loadcube_fail;
         }
 
@@ -654,8 +679,7 @@ loadcube_manage:
             currentDcSlot,
             state->loaderMagnification);
         retVal = false;
-    }
-    else {
+    } else {
         isPut = true;
     }
     state->protectCube2Pointer->unlock();

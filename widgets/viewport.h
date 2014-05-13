@@ -60,7 +60,7 @@ public:
 
 protected:
     void initializeGL();
-    void initializeOverlayGL();
+    void createOverlayTextures();
     void resizeGL(int w, int h);
     void paintGL();
     void enterEvent(QEvent * event);

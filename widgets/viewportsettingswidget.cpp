@@ -176,9 +176,9 @@ void ViewportSettingsWidget::loadSettings() {
     slicePlaneViewportWidget->rangeDeltaSpinBox->setValue(luminanceRangeDelta);
     slicePlaneViewportWidget->rangeDeltaSpinBox->valueChanged(luminanceRangeDelta);
 
-    const auto colorOverlay = settings.value(ENABLE_COLOR_OVERLAY, false).toBool();
-    slicePlaneViewportWidget->enableColorOverlayCheckBox->setChecked(colorOverlay);
-    slicePlaneViewportWidget->enableColorOverlayCheckBox->clicked(colorOverlay);
+    const auto segmentationOverlayAlpha = settings.value(SEGMENTATION_OVERLAY_ALPHA, 127).toInt();
+    slicePlaneViewportWidget->segmenationOverlaySlider.setValue(segmentationOverlayAlpha);
+    slicePlaneViewportWidget->segmenationOverlaySlider.valueChanged(segmentationOverlayAlpha);
 
     const auto drawVPCrosshairs = settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool();
     slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->setChecked(drawVPCrosshairs);
@@ -245,7 +245,7 @@ void ViewportSettingsWidget::saveSettings() {
     settings.setValue(DEPTH_CUTOFF, slicePlaneViewportWidget->depthCutoffSpinBox->value());
     settings.setValue(BIAS, slicePlaneViewportWidget->biasSpinBox->value());
     settings.setValue(RANGE_DELTA, slicePlaneViewportWidget->rangeDeltaSpinBox->value());
-    settings.setValue(ENABLE_COLOR_OVERLAY, slicePlaneViewportWidget->enableColorOverlayCheckBox->isChecked());
+    settings.setValue(SEGMENTATION_OVERLAY_ALPHA, slicePlaneViewportWidget->segmenationOverlaySlider.value());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, slicePlaneViewportWidget->drawIntersectionsCrossHairCheckBox->isChecked());
     settings.setValue(SHOW_VIEWPORT_SIZE, slicePlaneViewportWidget->showViewPortsSizeCheckBox->isChecked());
     settings.setValue(DATASET_LUT_FILE, slicePlaneViewportWidget->datasetLutFile->text());

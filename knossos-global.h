@@ -78,7 +78,7 @@
 #define MAX_BOUNDARY    9999
 
 // Bytes for an object ID.
-#define OBJID_BYTES  3
+#define OBJID_BYTES sizeof(uint64_t)
 
 //	For the hashtable.
 #define HT_SUCCESS  1
@@ -407,6 +407,7 @@ struct assignment {
 #ifdef QT_DEBUG
 #include "widgets/console.h"
 #endif
+
 class stateInfo : public QObject {
     Q_OBJECT
 public:
@@ -884,10 +885,6 @@ struct viewerState {
     float treeAdjustmentTable[RGB_LUTSIZE];
     float defaultTreeTable[RGB_LUTSIZE];
 
-     // This array holds the table for overlay coloring.
-     // The colors should be "maximally different".
-    GLuint overlayColorMap[4][256];
-    bool overlayVisible;
     // Advanced Tracing Modes Stuff
 
     bool autoTracingEnabled;

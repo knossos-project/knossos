@@ -749,14 +749,13 @@ bool Knossos::configDefaults() {
     state->magnification = 1;
     state->lowestAvailableMag = 1;
     state->highestAvailableMag = 1;
-    state->overlay = false;
+    state->overlay = true;
 
     // For the viewer
     state->viewerState->highlightVp = VIEWPORT_UNDEFINED;
     state->viewerState->vpKeyDirection[VIEWPORT_XY] = 1;
     state->viewerState->vpKeyDirection[VIEWPORT_XZ] = 1;
     state->viewerState->vpKeyDirection[VIEWPORT_YZ] = 1;
-    state->viewerState->overlayVisible = false;
     state->viewerState->datasetColortableOn = false;
     state->viewerState->datasetAdjustmentOn = false;
     state->viewerState->treeColortableOn = false;
@@ -1003,7 +1002,6 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                      break;
                  case 13:
                      state->overlay = true;
-                     state->viewerState->overlayVisible = true;
                      break;
                  case 14:
                      strncpy(state->viewerState->gui->settingsFile, rval, 2000);

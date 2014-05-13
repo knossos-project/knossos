@@ -182,6 +182,10 @@ void Viewport::initializeGL() {
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LIGHT_MODEL_LOCAL_VIEWER);
 
+    if (state->overlay && viewportType != VIEWPORT_SKELETON) {
+        createOverlayTextures();
+    }
+
     if(viewportType == VIEWPORT_SKELETON) {//we want only one output
         qDebug() << reinterpret_cast<const char*>(glGetString(GL_VERSION));
     }
@@ -199,34 +203,23 @@ bool Viewport::setOrientation(int orientation) {
     return true;
 }
 
-void Viewport::initializeOverlayGL() {
-    if(viewportType != VIEWPORT_SKELETON) {
-        if(state->overlay) {
-            glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+void Viewport::createOverlayTextures() {
+    glGenTextures(1, &state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[id].texture.overlayHandle);
 
-            //Set the parameters for the texture.
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //Set the parameters for the texture.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
 
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-            glTexImage2D(GL_TEXTURE_2D,
-                         0,
-                         GL_RGBA,
-                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                         state->viewerState->vpConfigs[id].texture.edgeLengthPx,
-                         0,
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         state->viewerState->defaultOverlayData);
-        }
-    }
+    const auto size = state->viewerState->vpConfigs[id].texture.edgeLengthPx;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, state->viewerState->defaultOverlayData);
 }
 
 void Viewport::resizeGL(int w, int h) {

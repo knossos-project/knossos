@@ -79,7 +79,8 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/tools/toolscommandstab.cpp \
     widgets/tools/toolstreeviewtab.cpp \
     widgets/tools/nodetable.cpp \
-    widgets/tools/treetable.cpp
+    widgets/tools/treetable.cpp \
+    widgets/tools/segmentationtab.cpp
 
 PRECOMPILED_HEADERS += openjpeg/tgt.h \
     openjpeg/tcd.h \
@@ -159,7 +160,9 @@ HEADERS  += widgets/mainwindow.h \
     widgets/tools/toolscommandstab.h \
     widgets/tools/toolstreeviewtab.h \
     widgets/tools/nodetable.h \
-    widgets/tools/treetable.h
+    widgets/tools/treetable.h \
+    segmentation.h \
+    widgets/tools/segmentationtab.h
 
 OTHER_FILES += \
     doc/* \

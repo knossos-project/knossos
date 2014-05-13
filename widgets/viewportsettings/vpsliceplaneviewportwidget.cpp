@@ -23,6 +23,7 @@
  */
 #include "vpsliceplaneviewportwidget.h"
 
+#include "segmentation.h"
 #include "widgets/mainwindow.h"
 
 #include <QLabel>
@@ -79,12 +80,18 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     rangeDeltaSpinBox->setMaximum(255);
     rangeDeltaSpinBox->setSingleStep(1);
 
-    objectIDOverlayLabel = new QLabel("Object ID Overlay");
     viewportObjectsLabel = new QLabel("Viewport Objects");
     treeLutFile = new QLabel();
     datasetLutFile = new QLabel();
 
-    enableColorOverlayCheckBox = new QCheckBox("Enable Color Overlay");
+    segmenationOverlaySpinBox.setMaximum(255);
+    segmenationOverlaySpinBox.setSingleStep(1);
+    segmenationOverlaySlider.setMaximum(255);
+    segmenationOverlaySlider.setSingleStep(1);
+    segmentationOverlayLayout.addWidget(&segmenationOverlayLabel);
+    segmentationOverlayLayout.addWidget(&segmenationOverlaySlider);
+    segmentationOverlayLayout.addWidget(&segmenationOverlaySpinBox);
+
     drawIntersectionsCrossHairCheckBox = new QCheckBox("Draw Intersections Crosshairs");
     showViewPortsSizeCheckBox = new QCheckBox("Show Viewport Size");
 
@@ -134,11 +141,11 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     gridLayout->addWidget(rangeDeltaLabel, 10, 3);
     gridLayout->addWidget(rangeDeltaSlider, 10, 4);
     gridLayout->addWidget(rangeDeltaSpinBox, 10, 5);
-    gridLayout->addWidget(objectIDOverlayLabel, 11, 0);
+    gridLayout->addWidget(&segmenationOverlayGroupLabel, 11, 0);
     gridLayout->addWidget(viewportObjectsLabel, 11, 3);
     gridLayout->addWidget(line5, 12, 0, 1, 2);
     gridLayout->addWidget(line6, 12, 3, 1, 3);
-    gridLayout->addWidget(enableColorOverlayCheckBox, 13, 0);
+    gridLayout->addLayout(&segmentationOverlayLayout, 13, 0, 1, 2);
     gridLayout->addWidget(drawIntersectionsCrossHairCheckBox, 13, 3);
     gridLayout->addWidget(showViewPortsSizeCheckBox, 14, 3);
 
@@ -156,7 +163,14 @@ VPSlicePlaneViewportWidget::VPSlicePlaneViewportWidget(QWidget *parent) :
     connect(biasSpinBox, SIGNAL(valueChanged(int)), this, SLOT(biasChanged(int)));
     connect(rangeDeltaSlider, SIGNAL(sliderMoved(int)), this, SLOT(rangeDeltaSliderMoved(int)));
     connect(rangeDeltaSpinBox, SIGNAL(valueChanged(int)), this, SLOT(rangeDeltaChanged(int)));
-    connect(enableColorOverlayCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableColorOverlayChecked(bool)));
+    QObject::connect(&segmenationOverlaySlider, &QSlider::valueChanged, [&](int value){
+        segmenationOverlaySpinBox.setValue(value);
+        Segmentation::singleton().alpha = value;
+    });
+    QObject::connect(&segmenationOverlaySpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+        segmenationOverlaySlider.setValue(value);
+        Segmentation::singleton().alpha = value;
+    });
     connect(drawIntersectionsCrossHairCheckBox, SIGNAL(clicked(bool)), this, SLOT(drawIntersectionsCrossHairChecked(bool)));
     connect(showViewPortsSizeCheckBox, SIGNAL(clicked(bool)), this, SLOT(showViewPortsSizeChecked(bool)));
 }
@@ -274,10 +288,6 @@ void VPSlicePlaneViewportWidget::rangeDeltaChanged(int value) {
     state->viewerState->luminanceRangeDelta = value;
     rangeDeltaSlider->setValue(value);
     MainWindow::datasetColorAdjustmentsChanged();
-}
-
-void VPSlicePlaneViewportWidget::enableColorOverlayChecked(bool on) {
-    state->viewerState->overlayVisible = on;
 }
 
 void VPSlicePlaneViewportWidget::drawIntersectionsCrossHairChecked(bool on) {

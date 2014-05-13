@@ -22,19 +22,21 @@
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
 #include <cmath>
+#include <fstream>
 
-#include "viewer.h"
 #include <QDebug>
-#include "knossos.h"
-#include "skeletonizer.h"
-#include "renderer.h"
-#include "widgets/widgetcontainer.h"
-
-#include "widgets/mainwindow.h"
-#include "widgets/viewport.h"
-#include "functions.h"
 #include <qopengl.h>
 #include <QtConcurrent/QtConcurrentRun>
+
+#include "functions.h"
+#include "knossos.h"
+#include "renderer.h"
+#include "segmentation.h"
+#include "skeletonizer.h"
+#include "viewer.h"
+#include "widgets/mainwindow.h"
+#include "widgets/viewport.h"
+#include "widgets/widgetcontainer.h"
 
 extern stateInfo *state;
 
@@ -327,35 +329,35 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
 }
 
 bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
-    int i, j;
-    int objId, *objIdP;
-
-    objIdP = &objId;
     datacube += dcOffset;
 
     switch(vpConfig->type) {
     case SLICE_XY:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            memcpy(objIdP, datacube, OBJID_BYTES);
-            slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-            slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-            slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-            slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            //printf("(%d, %d, %d, %d)", slice[0], slice[1], slice[2], slice[3]);
+            const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
             datacube += OBJID_BYTES;
             slice += 4;
         }
         break;
     case SLICE_XZ:
-        for(j = 0; j < state->cubeEdgeLength; j++) {
-            for(i = 0; i < state->cubeEdgeLength; i++) {
-                memcpy(objIdP, datacube, OBJID_BYTES);
-                slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-                slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-                slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-                slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int j = 0; j < state->cubeEdgeLength; j++) {
+            for(int i = 0; i < state->cubeEdgeLength; i++) {
+                uint64_t subObjectID;
+                memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+                const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
+                slice[0] = std::get<0>(color);
+                slice[1] = std::get<1>(color);
+                slice[2] = std::get<2>(color);
+                slice[3] = std::get<3>(color);
 
                 datacube += OBJID_BYTES;
                 slice += 4;
@@ -367,17 +369,19 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
         }
         break;
     case SLICE_YZ:
-        for(i = 0; i < state->cubeSliceArea; i++) {
-            memcpy(objIdP, datacube, OBJID_BYTES);
-            slice[0] = state->viewerState->overlayColorMap[0][objId % 256];
-            slice[1] = state->viewerState->overlayColorMap[1][objId % 256];
-            slice[2] = state->viewerState->overlayColorMap[2][objId % 256];
-            slice[3] = state->viewerState->overlayColorMap[3][objId % 256];
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+            const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
             datacube += state->cubeEdgeLength * OBJID_BYTES;
             slice += 4;
         }
-
         break;
     }
     return true;
@@ -779,13 +783,13 @@ bool Viewer::calcLeftUpperTexAbsPx() {
 bool Viewer::initViewer() {
     calcLeftUpperTexAbsPx();
 
-    if(state->overlay) {
-        LOG("overlayColorMap at %p\n", &(state->viewerState->overlayColorMap[0][0]))
-        if(loadDatasetColorTable("stdOverlay.lut",
-                          &(state->viewerState->overlayColorMap[0][0]),
-                          GL_RGBA) == false) {
-            LOG("Overlay color map stdOverlay.lut does not exist.")
-            state->overlay = false;
+    if (state->overlay) {
+        std::ifstream overlayLutFile("stdOverlay.lut");
+        if (overlayLutFile) {
+            std::copy(std::istreambuf_iterator<char>(overlayLutFile), std::istreambuf_iterator<char>{}, &Segmentation::singleton().overlayColorMap[0][0]);
+        }
+        if (!overlayLutFile) {
+            LOG("Failed to load Overlay color map »stdOverlay.lut«.");
         }
     }
 
