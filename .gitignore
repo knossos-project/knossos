@@ -1,0 +1,6 @@
+#knossos binary
+knossos
+
+#generated documentation files
+doc/collection.qhc
+doc/doc.qch

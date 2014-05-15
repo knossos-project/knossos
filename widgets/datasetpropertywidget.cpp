@@ -1,5 +1,7 @@
 #include "datasetpropertywidget.h"
 
+#include <stdexcept>
+
 #include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>

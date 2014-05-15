@@ -23,6 +23,7 @@
  */
 
 #include <cmath>
+#include <stdexcept>
 
 #include <dirent.h>
 #include "loader.h"
