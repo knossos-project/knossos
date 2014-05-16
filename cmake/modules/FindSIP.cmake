@@ -24,7 +24,10 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
-FIND_PACKAGE(PythonInterp REQUIRED)
+
+## FIXME: make generic
+#find_package(PythonInterp 3 REQUIRED)
+set(PYTHON_EXECUTABLE /usr/bin/python3)
 
 IF(SIP_VERSION)
     # Already in cache, be silent
