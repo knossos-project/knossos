@@ -30,12 +30,15 @@ Q_OBJECT
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
+    bool selectionProtection;
 public:
     explicit SegmentationTab(QWidget & parent);
+    void selectionChanged();
     void updateLabels();
+signals:
+    void clearSegObjSelectionSignal();
 public slots:
     void contextMenu(QPoint pos);
-    void mergeObjects();
 };
 
 #endif // SEGMENTATIONTAB_H

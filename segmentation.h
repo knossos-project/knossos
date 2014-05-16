@@ -18,6 +18,7 @@ Q_OBJECT
     friend class SegmentationObjectModel;
     friend class SegmentationTab;
     friend class Viewer;
+
     class Object;
     class SubObject {
         friend class Object;
@@ -30,12 +31,16 @@ Q_OBJECT
         SubObject(SubObject &&) = default;
         SubObject(const SubObject &) = delete;
     };
+
     class Object {
         friend class SegmentationObjectModel;
         friend class Segmentation;
+
         QString category;
-        //http://coliru.stacked-crooked.com/a/aba85777991b4425
+
+        //see http://coliru.stacked-crooked.com/a/aba85777991b4425
         std::vector<std::reference_wrapper<SubObject>> subobjects;
+
         Object & merge(Object && other) {
             //replace reference
             for (auto & elem : other.subobjects) {
@@ -49,7 +54,8 @@ Q_OBJECT
         }
     public:
         uint64_t id;
-        Object() : id(0) {}
+        bool selected;
+        Object() : id(0), selected(false) {}
         Object(Object &&) = delete;
         Object(const Object &) = delete;
         Object(SubObject & initialVolume) : id(initialVolume.id) {
@@ -60,8 +66,17 @@ Q_OBJECT
             return id == other.id;
         }
     };
+
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
+    std::vector<std::reference_wrapper<Object>> selectedObjects;
+
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) {
+        const uint8_t red   = overlayColorMap[0][subObjectID % 256];
+        const uint8_t green = overlayColorMap[1][subObjectID % 256];
+        const uint8_t blue  = overlayColorMap[2][subObjectID % 256];
+        return std::make_tuple(red, green, blue, alpha);
+    }
 public:
     static Segmentation & singleton() {
         static Segmentation segmentation;
@@ -120,12 +135,7 @@ public:
         }
         emit dataChanged();
     }
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) {
-        const uint8_t red   = overlayColorMap[0][subObjectID % 256];
-        const uint8_t green = overlayColorMap[1][subObjectID % 256];
-        const uint8_t blue  = overlayColorMap[2][subObjectID % 256];
-        return std::make_tuple(red, green, blue, alpha);
-    }
+
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) {
         if (subobjects.empty()) {
             return subobjectColor(subObjectID);
@@ -144,16 +154,6 @@ public:
         return std::make_tuple(red, green, blue, alpha);
     }
 
-    Object & merge(std::vector<uint64_t> objIDs) {
-        std::unordered_map<uint64_t, Object>::iterator iter1 = objects.find(objIDs.at(0));
-        while(objIDs.size() > 1) {
-            std::unordered_map<uint64_t, Object>::iterator iter2 = objects.find(objIDs.back());
-            merge(iter1->second, std::move(iter2->second));
-            objIDs.pop_back();
-        }
-        return iter1->second;
-    }
-
     Object & merge(Object & one, Object && other) {
         one.merge(std::move(other));
         //remove object
@@ -161,8 +161,23 @@ public:
         emit dataChanged();
         return one;
     }
+
+    void clearObjectSelection() {
+        for(auto & obj : selectedObjects) {
+            obj.get().selected = false;
+        }
+        selectedObjects.clear();
+    }
+
 signals:
     void dataChanged();
+
+public slots:
+    void mergeSelectedObjects() {
+        for(auto iter = selectedObjects.rbegin(); iter != selectedObjects.rend() - 1; ++iter) {
+            merge(selectedObjects.front().get(), std::move(iter->get()));
+        }
+    }
 };
 
 #endif // SEGEMENTATION_H

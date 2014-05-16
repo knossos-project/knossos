@@ -76,7 +76,7 @@ void SegmentationObjectModel::recreate() {
     endResetModel();
 }
 
-SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
+SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selectionProtection(false) {
     objectsTable.setModel(&objectModel);
 
     bottomHLayout.addWidget(&objectCountLabel);
@@ -92,9 +92,29 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
+    QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
+    QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     objectModel.recreate();
     updateLabels();
+}
+
+void SegmentationTab::selectionChanged() {
+    if(selectionProtection) {
+        selectionProtection = false;
+        return;
+    }
+
+    emit clearSegObjSelectionSignal();
+
+    QModelIndexList selected = objectsTable.selectionModel()->selectedRows();
+    foreach(QModelIndex index, selected) {
+        auto iter = Segmentation::singleton().objects.find(index.data().toInt());
+        if(iter != Segmentation::singleton().objects.end()) {
+            iter->second.selected = true;
+            Segmentation::singleton().selectedObjects.push_back(iter->second);
+        }
+    }
 }
 
 void SegmentationTab::updateLabels() {
@@ -104,16 +124,7 @@ void SegmentationTab::updateLabels() {
 
 void SegmentationTab::contextMenu(QPoint pos) {
     QMenu contextMenu;
-    QObject::connect(contextMenu.addAction("merge"), &QAction::triggered, this, &SegmentationTab::mergeObjects);
+    QObject::connect(contextMenu.addAction("merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
     contextMenu.exec(objectsTable.viewport()->mapToGlobal(pos));
 }
 
-void SegmentationTab::mergeObjects() {
-    QModelIndexList selected = objectsTable.selectionModel()->selectedRows();
-    std::vector<uint64_t> selectedIDs;
-    foreach(QModelIndex index, selected) {
-        selectedIDs.push_back(index.data().toInt());
-    }
-
-    Segmentation::singleton().merge(selectedIDs);
-}
