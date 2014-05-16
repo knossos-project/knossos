@@ -620,7 +620,7 @@ void EventModel::handleMouseWheel(QWheelEvent * const event, int VPfound) {
     }
 }
 
-void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
+void EventModel::handleKeyPress(QKeyEvent *event, int VPfound) {
     Qt::KeyboardModifiers keyMod = event->modifiers();
     bool shift   = keyMod.testFlag(Qt::ShiftModifier);
     bool control = keyMod.testFlag(Qt::ControlModifier);
@@ -979,6 +979,26 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
         vpSettings->hideSkeletonOrthoVPsCheckBox.setChecked(!hideSkeletonOrtho);
         vpSettings->hideSkeletonOrthoVPsCheckBox.clicked(!hideSkeletonOrtho);
         state->skeletonState->skeletonChanged = true;//idk
+    } else if(event->key() == Qt::Key_Plus) {
+        if(Segmentation::singleton().alpha + 10 > 255) {
+            Segmentation::singleton().alpha = 255;
+        }
+        else {
+            Segmentation::singleton().alpha += 10;
+        }
+        const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
+        sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+    } else if(event->key() == Qt::Key_Minus) {
+        if(Segmentation::singleton().alpha - 10 < 0) {
+            Segmentation::singleton().alpha = 0;
+        }
+        else {
+            Segmentation::singleton().alpha -= 10;
+        }
+        const auto & sliceVPSettings = state->viewer->window->widgetContainer->viewportSettingsWidget->slicePlaneViewportWidget;
+        sliceVPSettings->segmenationOverlaySlider.setValue(Segmentation::singleton().alpha);
+    } else if(event->key() == Qt::Key_Space) {
+        state->overlay = false;
     } else if(event->key() == Qt::Key_Delete) {
         if(state->skeletonState->selectedNodes.size() > 0) {
             bool deleteNodes = true;
@@ -1024,6 +1044,12 @@ void EventModel::handleKeyboard(QKeyEvent *event, int VPfound) {
             QApplication::closeAllWindows();
             QApplication::quit();
         }
+    }
+}
+
+void EventModel::handleKeyRelease(QKeyEvent *event) {
+    if(event->key() == Qt::Key_Space) {
+        state->overlay = true;
     }
 }
 

@@ -413,7 +413,7 @@ void Viewport::keyPressEvent(QKeyEvent *event) {
             state->viewerKeyRepeat = timeBase.restart() < 150;
         }
     }
-    eventDelegate->handleKeyboard(event, id);
+    eventDelegate->handleKeyPress(event, id);
 }
 
 void Viewport::keyReleaseEvent(QKeyEvent *event) {
@@ -437,6 +437,9 @@ void Viewport::keyReleaseEvent(QKeyEvent *event) {
         state->repeatDirection[0] /= 10;
         state->repeatDirection[1] /= 10;
         state->repeatDirection[2] /= 10;
+    }
+    else {
+        eventDelegate->handleKeyRelease(event);
     }
 }
 
