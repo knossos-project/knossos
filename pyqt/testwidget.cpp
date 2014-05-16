@@ -4,7 +4,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-TestingWidget::TestingWidget(QWidget* parent = 0)
+TestingWidget::TestingWidget(QWidget* parent)
     : QWidget(parent)
 {
     QVBoxLayout* l = new QVBoxLayout();
