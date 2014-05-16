@@ -177,6 +177,16 @@ int main(int argc, char *argv[])
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
 
+    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement*)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &viewer, SLOT(userMove(int,int,int)));
+    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(recreateTreesTable())); // @todo check
+    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
+
+
     knossos->loadDefaultTreeLUT();
 
     if(datasetLoaded) {
