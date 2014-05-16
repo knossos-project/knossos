@@ -56,8 +56,9 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
         case 3: {
             QString output;
             for (const auto & elem : obj.subobjects) {
-                output += ", " + QString::number(elem.get().id);
+                output += QString::number(elem.get().id) + ", ";
             }
+            output.chop(2);
             return output;
         }
         }

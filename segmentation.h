@@ -40,7 +40,7 @@ Q_OBJECT
             //replace reference
             for (auto & elem : other.subobjects) {
                 std::replace_if(std::begin(elem.get().objects), std::end(elem.get().objects), [&](const std::reference_wrapper<Object> obj){
-                    return obj.get().id == this->id;
+                    return obj.get().id == other.id;
                 } , std::ref(*this));
             }
             //move subobjects
