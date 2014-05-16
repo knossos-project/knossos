@@ -26,13 +26,16 @@ class SegmentationTab : public QWidget {
 Q_OBJECT
     QVBoxLayout layout;
     SegmentationObjectModel objectModel;
-    QTableView objectesTable;
+    QTableView objectsTable;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
 public:
     explicit SegmentationTab(QWidget & parent);
     void updateLabels();
+public slots:
+    void contextMenu(QPoint pos);
+    void mergeObjects();
 };
 
 #endif // SEGMENTATIONTAB_H

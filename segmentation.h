@@ -102,10 +102,10 @@ public:
     uint8_t alpha;
     Segmentation() {
         //generate meta data from raw segmentation
-        //parseCube("G:/reload/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation");
-        //parseCube("G:/reload/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation");
-        //parseCube("/home/mobile/Dokumente/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation.raw");
-        //parseCube("/home/mobile/Dokumente/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation.raw");
+        parseCube("E:/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation");
+        parseCube("E:/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation");
+        parseCube("E:/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation.raw");
+        parseCube("E:/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation.raw");
     }
     void parseCube(std::string path) {
         std::ifstream cubeFile(path, std::ios_base::binary);
@@ -143,6 +143,17 @@ public:
         }
         return std::make_tuple(red, green, blue, alpha);
     }
+
+    Object & merge(std::vector<uint64_t> objIDs) {
+        std::unordered_map<uint64_t, Object>::iterator iter1 = objects.find(objIDs.at(0));
+        while(objIDs.size() > 1) {
+            std::unordered_map<uint64_t, Object>::iterator iter2 = objects.find(objIDs.back());
+            merge(iter1->second, std::move(iter2->second));
+            objIDs.pop_back();
+        }
+        return iter1->second;
+    }
+
     Object & merge(Object & one, Object && other) {
         one.merge(std::move(other));
         //remove object

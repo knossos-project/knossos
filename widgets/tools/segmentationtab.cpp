@@ -1,9 +1,10 @@
-#include "segmentationtab.h"
-
 #include <chrono>
-
 #include <QString>
 
+#include <QMenu>
+#include <QHeaderView>
+
+#include "segmentationtab.h"
 #include "knossos-global.h"
 
 extern stateInfo *state;
@@ -75,17 +76,22 @@ void SegmentationObjectModel::recreate() {
 }
 
 SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
-    objectesTable.setModel(&objectModel);
+    objectsTable.setModel(&objectModel);
 
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
 
-    layout.addWidget(&objectesTable);
+    objectsTable.verticalHeader()->setVisible(false);
+    objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
+    objectsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    layout.addWidget(&objectsTable);
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
+    QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     objectModel.recreate();
     updateLabels();
 }
@@ -93,4 +99,20 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
 void SegmentationTab::updateLabels() {
     objectCountLabel.setText(QString("Obects: %0").arg(Segmentation::singleton().objects.size()));
     subobjectCountLabel.setText(QString("Subobects: %0").arg(Segmentation::singleton().subobjects.size()));
+}
+
+void SegmentationTab::contextMenu(QPoint pos) {
+    QMenu contextMenu;
+    QObject::connect(contextMenu.addAction("merge"), &QAction::triggered, this, &SegmentationTab::mergeObjects);
+    contextMenu.exec(objectsTable.viewport()->mapToGlobal(pos));
+}
+
+void SegmentationTab::mergeObjects() {
+    QModelIndexList selected = objectsTable.selectionModel()->selectedRows();
+    std::vector<uint64_t> selectedIDs;
+    foreach(QModelIndex index, selected) {
+        selectedIDs.push_back(index.data().toInt());
+    }
+
+    Segmentation::singleton().merge(selectedIDs);
 }
