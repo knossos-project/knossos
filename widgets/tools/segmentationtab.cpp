@@ -1,10 +1,11 @@
+#include "segmentationtab.h"
+
 #include <chrono>
 #include <QString>
 
 #include <QMenu>
 #include <QHeaderView>
 
-#include "segmentationtab.h"
 #include "knossos-global.h"
 
 extern stateInfo *state;
