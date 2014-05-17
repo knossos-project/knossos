@@ -87,6 +87,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selection
     objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     objectsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    layout.addWidget(&showAllChck);
     layout.addWidget(&objectsTable);
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
@@ -96,6 +97,9 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selection
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
+    QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
+        Segmentation::singleton().allObjs = value;
+    });
     objectModel.recreate();
     updateLabels();
 }

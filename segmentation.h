@@ -67,7 +67,7 @@ Q_OBJECT
         Object() : id(0), selected(false) {}
         Object(Object &&) = delete;
         Object(const Object &) = delete;
-        Object(SubObject & initialVolume) : id(initialVolume.id) {
+        Object(SubObject & initialVolume) : id(initialVolume.id), selected(false) {
             initialVolume.objects.emplace_back(*this);//register parent
             subobjects.emplace_back(initialVolume);//add child
         }
@@ -79,6 +79,7 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
+    bool allObjs; // show all segmentations as opposed to only a selected one
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) {
         const uint8_t red   = overlayColorMap[0][subObjectID % 256];
@@ -124,7 +125,7 @@ public:
         return lut;
     }();
     uint8_t alpha;
-    Segmentation() {
+    Segmentation() : allObjs(false) {
         //generate meta data from raw segmentation
         parseCube("E:/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation");
         parseCube("E:/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation");
@@ -149,18 +150,33 @@ public:
         if (subobjects.empty()) {
             return subobjectColor(subObjectID);
         }
+
         uint8_t red = 0;
         uint8_t green = 0;
         uint8_t blue = 0;
-
+        uint8_t currAlpha = alpha;
+        bool selected = false;
         const auto objectCount = subobjects[subObjectID].objects.size();
         for (const auto & object : subobjects[subObjectID].objects) {
+            if(object.get().selected) {
+                selected = true;
+                if(allObjs) {
+                    red = 255;
+                    green = 0;
+                    blue = 0;
+                    currAlpha = 255;
+                    break;
+                }
+            }
             const auto objectID = object.get().id;
             red += overlayColorMap[0][objectID % 256] / objectCount;
             green += overlayColorMap[1][objectID % 256] / objectCount;
             blue += overlayColorMap[2][objectID % 256] / objectCount;
         }
-        return std::make_tuple(red, green, blue, alpha);
+        if(allObjs == false && selected == false) {
+            currAlpha = 0;
+        }
+        return std::make_tuple(red, green, blue, currAlpha);
     }
 
     Object & merge(Object & one, Object && other) {

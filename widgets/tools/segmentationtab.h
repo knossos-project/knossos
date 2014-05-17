@@ -8,6 +8,7 @@
 #include <QTableView>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QCheckBox>
 
 #include "segmentation.h"
 
@@ -26,6 +27,7 @@ class SegmentationTab : public QWidget {
 Q_OBJECT
     QVBoxLayout layout;
     SegmentationObjectModel objectModel;
+    QCheckBox showAllChck{"Show all objects"};
     QTableView objectsTable;
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
