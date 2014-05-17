@@ -203,8 +203,10 @@ signals:
 
 public slots:
     void mergeSelectedObjects() {
-        for(auto iter = selectedObjects.rbegin(); iter != selectedObjects.rend() - 1; ++iter) {
-            merge(selectedObjects.front().get(), std::move(iter->get()));
+        while (selectedObjects.size() > 1) {
+            auto & obj = selectedObjects.back().get();
+            selectedObjects.pop_back();
+            merge(selectedObjects.front().get(), std::move(obj));
         }
     }
 };
