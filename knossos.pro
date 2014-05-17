@@ -43,7 +43,6 @@ SOURCES += widgets/mainwindow.cpp \
     functions.cpp \
     widgets/widgetcontainer.cpp \
     widgets/commentshortcuts/commentsnodecommentstab.cpp \
-    qsort.cpp \
     ftp.cpp \
     task.cpp \
     openjpeg/cio.c \

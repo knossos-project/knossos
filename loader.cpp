@@ -496,8 +496,10 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
             }
         }
     }
-    extern void _quicksort(void *pbase, size_t total_elems, size_t size, int (*cmp)(const void*, const void*, const void *), const void *ctx);
-    _quicksort(DcArray, cubeElemCount, sizeof(DcArray[0]), CompareLoadOrderMetric_LoaderWrapper, (const void*)this);
+    //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
+    std::sort(DcArray, DcArray+cubeElemCount, [&](LO_Element & lhs, LO_Element & rhs){
+        return this->CompareLoadOrderMetric(reinterpret_cast<void*>(&lhs), reinterpret_cast<void*>(&rhs)) >= 0;
+    });
     for (i = 0; i < cubeElemCount; i++) {
         if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
             return false;
