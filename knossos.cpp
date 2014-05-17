@@ -25,6 +25,7 @@
 
 #define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
+#include <QFuture>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSettings>
@@ -104,7 +105,7 @@ int main(int argc, char *argv[])
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
     */
-    Splash splash(":/images/splash.png", 1500);
+    //Splash splash(":/images/splash.png", 1500);
     QCoreApplication::setOrganizationDomain("knossostool.org");
     QCoreApplication::setOrganizationName("MPIMF");
     QCoreApplication::setApplicationName(QString("Knossos %1").arg(KVERSION));
@@ -154,8 +155,9 @@ int main(int argc, char *argv[])
     }
     bool datasetLoaded = knossos->initStates();
 
-    Scripting scripts;
-    scripts.start();
+
+    //scripts.run();
+
 
     Viewer viewer;
     loader.reset(new Loader);
@@ -177,27 +179,36 @@ int main(int argc, char *argv[])
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
 
-    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement*)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
-    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
-    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
-    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &viewer, SLOT(userMove(int,int,int)));
-    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
-    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
-    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(recreateTreesTable())); // @todo check
-    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
-
-
     knossos->loadDefaultTreeLUT();
 
     if(datasetLoaded) {
         // don't start loader, when there is no dataset, yet.
         loader->start();
     }
+
+    Scripting scripts;
     viewer.run();
     remote.start();
 
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
+
+    QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement*)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
+    QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
+    QObject::connect(signalDelegate, SIGNAL(userMoveSignal(int,int,int)), &remote, SLOT(remoteJump(int,int,int)));
+    QObject::connect(signalDelegate, SIGNAL(loadSkeleton(QString)), viewer.skeletonizer, SLOT(loadXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(saveSkeleton(QString)), viewer.skeletonizer, SLOT(saveXmlSkeleton(QString)));
+    QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(recreateTreesTable())); // @todo check
+    QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
+    QObject::connect(signalDelegate, SIGNAL(toolBarSignal()), viewer.window, SLOT(getToolBar()));
+    QObject::connect(signalDelegate, SIGNAL(menuBarSignal()), viewer.window, SLOT(getMenuBar()));
+    emit signalDelegate->toolBarSignal();
+    emit signalDelegate->menuBarSignal();
+    //
+    scripts.start();
+    //scripts.run();
+    //scripts.console->show();
 
 
 

@@ -31,6 +31,22 @@ QList<nodeListElement *> *treeListElement::getNodes() {
     return nodes;
 }
 
+QList<segmentListElement *> treeListElement::getSegments() {
+    QSet<segmentListElement *> *complete_segments = new QSet<segmentListElement *>();
 
+    QList<nodeListElement *> *nodes = this->getNodes();
+    for(int i = 0; i < nodes->size(); i++) {
+        QList<segmentListElement *> *segments = nodes->at(i)->getSegments();
+        for(int j = 0; j < segments->size(); j++) {
+            segmentListElement *segment = segments->at(i);
+            if(!complete_segments->contains(segment)) {
+                complete_segments->insert(segment);
+            }
+        }
+    }
+
+
+    return complete_segments->toList();
+}
 
 

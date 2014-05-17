@@ -35,7 +35,8 @@ SOURCES += \
     scriptengine/geometry/point.cpp \
     scriptengine/geometry/render.cpp \
     scriptengine/proxies/skeletonproxy.cpp \
-    scriptengine/scripting.cpp
+    scriptengine/scripting.cpp \
+    scriptengine/cwidget.cpp
 
 
 OTHER_FILES += \

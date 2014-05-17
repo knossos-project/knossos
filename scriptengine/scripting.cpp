@@ -137,6 +137,9 @@ void Scripting::run() {
     connect(signalDelegate, SIGNAL(echo(QString)), this, SLOT(out(QString)));
     connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
 
+    //PythonQtScriptingConsole *console = new PythonQtScriptingConsole(0, ctx);
+    //console->show();
+
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
     ctx.evalScript("import IPython");
     ctx.evalScript("IPython.embed_kernel()");

@@ -5,6 +5,9 @@
 #include <QList>
 #include "knossos-global.h"
 
+class QMenuBar;
+class QToolBar;
+
 /** Actually this class it not really needed. It only hides the SIGNALS from the SkeletonProxy */
 class SkeletonProxySignalDelegate : public QObject  {
     Q_OBJECT
@@ -22,6 +25,8 @@ signals:
     bool sliceExtractSignal(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     void saveSettingsSignal(const QString &key, const QVariant &value);
     uint renderTextSignal(Coordinate *pos, char *string, uint currentVP, uint viewportType);
+    QToolBar *toolBarSignal();
+    QMenuBar *menuBarSignal();
 };
 
 extern SkeletonProxySignalDelegate *signalDelegate;
@@ -61,9 +66,7 @@ public slots:
     void loadStyleSheet(const QString &path);
     QList<mesh *> *user_geom_list();
     void move_to(int x, int y, int z);
-    void render_text(const QString &path, int x, int y, int z);
-
-
+    void render_text(const QString &path, int x, int y, int z);    
     static QString help();
 };
 

@@ -913,7 +913,10 @@ public:
 
     char comment[8192];
     QList<nodeListElement *> *getNodes();
+    QList<segmentListElement *> getSegments();
+
 };
+
 
 class nodeListElement {
 public:

@@ -40,6 +40,7 @@
 #include <QComboBox>
 #include <QUndoStack>
 
+
 class QLabel;
 class QToolBar;
 class QToolButton;
@@ -50,6 +51,8 @@ class QMessageBox;
 class QGridLayout;
 class QFile;
 class WidgetContainer;
+class ToolBar;
+
 
 class MainWindow : public QMainWindow {
     friend class Scripting;
@@ -114,8 +117,8 @@ protected:
     QString openFileDirectory;
     QString saveFileDirectory;
     bool eventFilter(QObject *object, QEvent *event);
-
-    QMenu *fileMenu;
+    QMenu *fileMenu;    
+    QToolBar *toolBar;
 
 public:
     QSpinBox *xField, *yField, *zField;
@@ -214,6 +217,9 @@ public slots:
     void F5Slot();
     void pythonSlot();
     void pythonPropertiesSlot();
+
+    QToolBar *getToolBar();
+    QMenuBar *getMenuBar();
 };
 
 #endif // MAINWINDOW_H

@@ -109,8 +109,9 @@ void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
         this->add_tree(1);
     }
 
+
     if(parent_tree_id == 0) {
-        parent_tree_id = 1;
+        parent_tree_id = state->skeletonState->activeTree ? (state->skeletonState->activeTree->treeID) : 1;
     }
 
     Coordinate coordinate(x, y, z);

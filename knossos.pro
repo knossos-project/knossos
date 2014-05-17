@@ -208,11 +208,16 @@ macx {
 
 
 
+
     # copy the content of the doc folder to the build-dir
     script.path = $$OUT_PWD/knossos.app/Contents/MacOS/python \
     script.files = scriptengine/python/* \
+
     INSTALLS += script \
     ICON += knossos.icns \
+
+    QMAKE_LFLAGS += $$system(python$${PYTHON_VERSION}-config --ldflags)
+    QMAKE_CXXFLAGS += $$system(python$${PYTHON_VERSION}-config --includes)
 }
 
 

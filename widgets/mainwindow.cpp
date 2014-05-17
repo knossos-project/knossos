@@ -220,6 +220,11 @@ void MainWindow:: createToolBar() {
     menu->setDefaultAction(pythonAction);
     menu->setIcon(QIcon(":/images/python.png"));
 
+    QToolButton *toolBoxButton = new QToolButton();
+    toolBoxButton->setToolTip("ToolBox");
+    toolBoxButton->setIcon(QIcon(":/images/icons/configure-toolbars.png"));
+    toolBar->addWidget(toolBoxButton);
+
     pythonButton->setMenu(menu);
     pythonButton->setPopupMode(QToolButton::MenuButtonPopup);
     pythonButton->addAction(pythonAction);
@@ -398,7 +403,7 @@ void MainWindow::recentFileSelected() {
     }
 }
 
-void MainWindow::createMenus() {
+void MainWindow::createMenus() {    
     this->fileMenu = menuBar()->addMenu("File");
     fileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...", widgetContainer->datasetPropertyWidget, SLOT(show()));
     fileMenu->addSeparator();
@@ -1487,4 +1492,12 @@ void MainWindow::pythonSlot() {
 
 void MainWindow::pythonPropertiesSlot() {
     widgetContainer->pythonPropertyWidget->show();
+}
+
+QMenuBar *MainWindow::getMenuBar() {
+    return menuBar();
+}
+
+QToolBar *MainWindow::getToolBar() {
+    return this->toolBar;
 }
