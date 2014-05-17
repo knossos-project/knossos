@@ -30,6 +30,14 @@ Q_OBJECT
         SubObject(const uint64_t id = 0) : id(id) {}
         SubObject(SubObject &&) = default;
         SubObject(const SubObject &) = delete;
+        bool selected() {
+            for(const auto & obj : objects) {
+                if(obj.get().selected) {
+                    return true;
+                }
+            }
+            return false;
+        }
     };
 
     friend bool operator<(const std::reference_wrapper<SubObject> & lhs, const std::reference_wrapper<SubObject> & rhs) {
@@ -163,13 +171,6 @@ public:
         for (const auto & object : subobjects[subObjectID].objects) {
             if(object.get().selected) {
                 selected = true;
-                if(allObjs) {
-                    red = 255;
-                    green = 0;
-                    blue = 0;
-                    currAlpha = 255;
-                    break;
-                }
             }
             const auto objectID = object.get().id;
             red += overlayColorMap[0][objectID % 256] / objectCount;
