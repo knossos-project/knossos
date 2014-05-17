@@ -21,14 +21,20 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "loader.h"
 
 #include <cmath>
+#include <fstream>
+
+extern "C" {
+    int jp2_decompress_main(char *infile, char *buf, int bufsize);
+}
 
 #include <dirent.h>
-#include "loader.h"
-#include "knossos.h"
 #include <sys/stat.h>
+
 #include "ftp.h"
+#include "knossos.h"
 
 #ifdef KNOSSOS_USE_TURBOJPEG
 #include <turbojpeg.h>
@@ -502,12 +508,6 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     return true;
 }
 
-extern "C" {
-    int jp2_decompress_main(char *infile, char *buf, int bufsize);
-}
-
-#include <fstream>
-
 void Loader::loadCube(loadcube_thread_struct *lts) {
     if (state->overlay) {
         state->protectLoaderSlots->lock();
@@ -517,17 +517,24 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
             const auto inFilePath = std::string(lts->currentCube->fullpath_filename) + ".segmentation.raw";
             std::ifstream inFile(inFilePath, std::ios_base::binary);
             if (inFile) {
-            //if (inFile.read(reinterpret_cast<char * const>(currentOcSlot), state->cubeBytes * sizeof(uint64_t)) {
-                std::copy(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), currentOcSlot);
+                std::vector<char> buffer(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>{});
 
-                state->protectCube2Pointer->lock();
-                if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
-                    lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+                const auto expectedSize = state->cubeBytes * sizeof(uint64_t);
+                if (buffer.size() == expectedSize) {
+                    std::move(std::begin(buffer), std::end(buffer), currentOcSlot);
                 } else {
-                    LOG("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+                    qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
+                    std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
-                state->protectCube2Pointer->unlock();
             }
+
+            state->protectCube2Pointer->lock();
+            if (Hashtable::ht_put(state->Oc2Pointer[state->loaderMagnification], lts->currentCube->coordinate, currentOcSlot) == HT_SUCCESS) {
+                lts->thisPtr->freeOcSlots.remove(currentOcSlot);
+            } else {
+                LOG("Error inserting new Oc (%d, %d, %d) with slot %p into Oc2Pointer[%d].", lts->currentCube->coordinate.x, lts->currentCube->coordinate.y, lts->currentCube->coordinate.z, currentOcSlot, state->loaderMagnification);
+            }
+            state->protectCube2Pointer->unlock();
         }
         state->protectLoaderSlots->unlock();
     }
@@ -823,7 +830,6 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
                     prevLoaderMagnification);
                 return false;
             }
-
             freeDcSlots.emplace_back(delCubePtr);
             /*
             LOG("Added %d, %d, %d => %d available",
@@ -846,8 +852,6 @@ uint Loader::removeLoadedCubes(Hashtable *currentLoadedHash, uint prevLoaderMagn
                     currentCube->coordinate.z);
                 return false;
             }
-
-            memset(delCubePtr, 0, state->cubeSetBytes * OBJID_BYTES);
             freeOcSlots.emplace_back(delCubePtr);
         }
 
