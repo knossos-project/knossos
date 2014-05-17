@@ -32,6 +32,10 @@ Q_OBJECT
         SubObject(const SubObject &) = delete;
     };
 
+    friend bool operator<(const std::reference_wrapper<SubObject> & lhs, const std::reference_wrapper<SubObject> & rhs) {
+        return &lhs.get() < &rhs.get();
+    }
+    
     class Object {
         friend class SegmentationObjectModel;
         friend class Segmentation;
@@ -49,7 +53,12 @@ Q_OBJECT
                 } , std::ref(*this));
             }
             //move subobjects
-            std::copy(std::make_move_iterator(std::begin(other.subobjects)), std::make_move_iterator(std::end(other.subobjects)), std::back_inserter(this->subobjects));
+            decltype(subobjects) tmp;
+            tmp.reserve(subobjects.size() + other.subobjects.size());
+            std::sort(std::begin(subobjects), std::end(subobjects));
+            std::sort(std::begin(other.subobjects), std::end(other.subobjects));
+            std::merge(std::begin(subobjects), std::end(subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
+            std::swap(subobjects, tmp);
             return *this;
         }
     public:
