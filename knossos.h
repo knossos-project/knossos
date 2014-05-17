@@ -50,10 +50,9 @@ public:
     static stateInfo *emptyState();
     bool findAndRegisterAvailableDatasets();
     static bool configDefaults();
-    static bool configFromCli(int argCount, char *arguments[]);   
+    static bool configFromCli(int argCount, char *arguments[]);
     bool initStates();
     bool commonInitStates();
-    static void revisionCheck();
 
     static bool sendRemoteSignal();
     static bool sendQuitSignal();
