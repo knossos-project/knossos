@@ -147,7 +147,10 @@ public:
     }
 
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) {
-        if (subobjects.empty()) {
+        if (subObjectID == 0) {
+            return std::make_tuple(0, 0, 0, 0);
+        }
+        if (subobjects.find(subObjectID) == std::end(subobjects)) {
             return subobjectColor(subObjectID);
         }
 
