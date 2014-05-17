@@ -40,7 +40,6 @@
 #include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
-#include "scripting.h"
 #include "ftp.h"
 
 #ifdef Q_OS_MAC
@@ -175,10 +174,6 @@ int main(int argc, char *argv[])
     Viewer viewer;
     loader.reset(new Loader);
     Remote remote;
-
-    Scripting scripts;
-    scripts.skeletonReference = viewer.skeletonizer;
-     //scripts.stateReference = state;
 
     QObject::connect(knossos.get(), &Knossos::treeColorAdjustmentChangedSignal, viewer.window, &MainWindow::treeColorAdjustmentsChanged);
     QObject::connect(knossos.get(), &Knossos::loadTreeColorTableSignal, &viewer, &Viewer::loadTreeColorTable);

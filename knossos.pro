@@ -42,10 +42,7 @@ SOURCES += widgets/mainwindow.cpp \
     widgets/task/taskmanagementdetailstab.cpp \
     functions.cpp \
     widgets/widgetcontainer.cpp \
-    decorators/skeletonizerdecorator.cpp \
-    decorators/mainwindowdecorator.cpp \
     widgets/commentshortcuts/commentsnodecommentstab.cpp \
-    scripting.cpp \
     qsort.cpp \
     ftp.cpp \
     task.cpp \
@@ -149,9 +146,6 @@ HEADERS  += widgets/mainwindow.h \
     widgets/commentshortcuts/commentsnodecommentstab.h \
     functions.h \
     widgets/widgetcontainer.h \
-    decorators/skeletonizerdecorator.h \
-    decorators/mainwindowdecorator.h \
-    scripting.h \
     ftp.h \
     sha256.h \
     widgets/documentationwidget.h \
