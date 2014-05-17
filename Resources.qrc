@@ -5,7 +5,6 @@
     </qresource>
     <qresource prefix="/images">
         <file>logo.ico</file>
-        <file>script.py</file>
         <file>arrow</file>
         <file>arrow2</file>
         <file alias="python.png">icons/text-x-python.png</file>
