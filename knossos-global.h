@@ -47,7 +47,7 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.0 Beta 2"
+#define KVERSION "4.1 Pre Alpha"
 
 #define FAIL    -1
 
@@ -411,7 +411,6 @@ struct assignment {
 class stateInfo : public QObject {
     Q_OBJECT
 public:
-    uint svnRevision;
 #ifdef QT_DEBUG
     Console *console;
 #endif
@@ -661,7 +660,6 @@ struct viewportTexture {
   *
   */
 struct guiConfig {
-    char settingsFile[2048];
     char titleString[2048];
 
     // Current position of the user crosshair,

@@ -5,8 +5,6 @@
     </qresource>
     <qresource prefix="/images">
         <file>logo.ico</file>
-        <file>arrow</file>
-        <file>arrow2</file>
         <file alias="python.png">icons/text-x-python.png</file>
         <file>icons/application-exit.png</file>
         <file>icons/appointment.png</file>
@@ -37,8 +35,5 @@
         <file>icons/open-dataset.png</file>
         <file>icons/open-skeleton.png</file>
         <file>icons/knossos.png</file>
-    </qresource>
-    <qresource prefix="/misc">
-        <file>style.qss</file>
     </qresource>
 </RCC>

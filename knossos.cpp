@@ -105,7 +105,6 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_LINUX
     glutInit(&argc, argv);
 #endif
-    //Knossos::revisionCheck();
 #ifdef Q_OS_WIN
     char tempPath[MAX_PATH] = {0};
     GetTempPathA(sizeof(tempPath), tempPath);
@@ -838,9 +837,6 @@ bool Knossos::configDefaults() {
         state->viewerState->vpConfigs[i].texture.zoomLevel = VPZOOMMIN;
     }
 
-    // For the GUI
-    snprintf(state->viewerState->gui->settingsFile, 2048, "defaultSettings.xml");
-
     // For the skeletonizer
     state->skeletonState->lockRadius = 100;
     state->skeletonState->lockPositions = false;
@@ -896,7 +892,7 @@ bool Knossos::readDataConfAndLocalConf() {
 
 bool Knossos::configFromCli(int argCount, char *arguments[]) {
 
- #define NUM_PARAMS 15
+ #define NUM_PARAMS 14
 
  char *lval = NULL, *rval = NULL;
  char *equals = NULL;
@@ -916,7 +912,6 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                              "--config-file",     // 11
                              "--magnification",   // 12
                              "--overlay",         // 13
-                             "--profile"          // 14
                            };
 
  for(i = 1; i < argCount; i++) {
@@ -998,10 +993,6 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
                  case 13:
                      state->overlay = true;
                      break;
-                 case 14:
-                     strncpy(state->viewerState->gui->settingsFile, rval, 2000);
-                     strcpy(state->viewerState->gui->settingsFile + strlen(rval), ".xml");
-                     break;
              }
          }
      }
@@ -1017,57 +1008,8 @@ bool Knossos::configFromCli(int argCount, char *arguments[]) {
   */
 
 void Knossos::loadDefaultTreeLUT() {
-
     if(loadTreeColorTableSignal("default.lut", &(state->viewerState->defaultTreeTable[0]), GL_RGB) == false) {
         Knossos::loadTreeLUTFallback();
         emit treeColorAdjustmentChangedSignal();
-
     }
-}
-
-void Knossos::revisionCheck() {
-
-    system("cd ..\n");
-    system("svn info | grep Revision > revision");
-#ifdef Q_OS_MAC
-
-    QFile file("revision");
-    if(!file.exists()) {
-        return;
-    }
-
-    if(!file.open(QIODevice::ReadOnly)) {
-        return;
-    }
-
-    QTextStream stream(&file);
-    QString content = stream.readLine();
-    QStringList list = content.split(":");
-    if(list.size() != 2) {
-        file.close();
-        return;
-    }
-
-    QVariant variant = list.at(1).trimmed();
-    if(variant.canConvert(QVariant::UInt))
-        state->svnRevision = list.at(1).trimmed().toUInt();
-
-    file.close();
-
-
-
-#endif
-
-}
-
-void Knossos::loadStyleSheet() {
-    QFile file(":/misc/style.qss");
-    if(!file.open(QIODevice::ReadOnly)) {
-        qErrnoWarning("Error reading the knossos style sheet file");
-    }
-
-    QString design(file.readAll());
-    qApp->setStyleSheet(design);
-    file.close();
-
 }
