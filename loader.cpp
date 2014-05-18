@@ -528,6 +528,8 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
                     qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
                     std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
+            } else {
+                std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
             }
 
             state->protectCube2Pointer->lock();
