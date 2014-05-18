@@ -18,17 +18,17 @@ find_path(_sip_include_path
 set(PYQT5_SIP_INCLUDES ${_sip_include_path}
     CACHE STRING "Path to PyQt SIP includes"
 )
+message(STATUS "  PyQt5 SIP includes: ${PYQT5_SIP_INCLUDES}")
 
 find_file(_find_pyqt_py FindPyQt5.py PATHS ${CMAKE_MODULE_PATH})
 execute_process(COMMAND ${PYTHON_EXECUTABLE} ${_find_pyqt_py} OUTPUT_VARIABLE pyqt_config)
 if(pyqt_config)
     string(REGEX REPLACE "pyqt_sip_flags:([^\n;]+).*$" "\\1" PYQT5_SIP_FLAGS ${pyqt_config})
 endif(pyqt_config)
+message(STATUS "  PyQt5 SIP flags: ${PYQT5_SIP_FLAGS}")
 
 if(PYQT5_SIP_INCLUDES AND PYQT5_SIP_FLAGS)
     set(PYQT5_FOUND TRUE)
-else()
-    message(STATUS ${PyQt5_FIND_REQUIRED} asdfadsfdsaf)
 endif()
 
 if(PYQT5_FOUND)

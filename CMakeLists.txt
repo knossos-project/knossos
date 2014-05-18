@@ -130,4 +130,7 @@ qt5_use_modules(knossos OpenGL Network Xml Test Help Widgets)
 #     ${KNOSSOS_UIS}
 # )
 
+# example of how to wrap a widget using PyQt5 and sip
+
+add_subdirectory(pyqt)
 add_subdirectory(openjpeg)
