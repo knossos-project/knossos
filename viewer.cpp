@@ -172,13 +172,30 @@ bool Viewer::sliceExtract_standard_arb(Byte *datacube, struct vpConfig *viewPort
     SET_COORDINATE(currentPxInDc, roundFloat(currentPxInDc_float->x),
                                   roundFloat(currentPxInDc_float->y),
                                   roundFloat(currentPxInDc_float->z));
-    // rounding may lead to values outside of cube edge, i.e.  values >= cubeEdgeLength + 0.5 or values <= -0.5
-    if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
-    if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
-    if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
-    if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
-    if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
-    if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
+
+    if (
+            (currentPxInDc.x < 0) ||
+            (currentPxInDc.y < 0) ||
+            (currentPxInDc.z < 0) ||
+            (currentPxInDc.x >= state->cubeEdgeLength) ||
+            (currentPxInDc.y >= state->cubeEdgeLength) ||
+            (currentPxInDc.z >= state->cubeEdgeLength)
+            )
+    {
+        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        slice[sliceIndex] = slice[sliceIndex + 1]
+                          = slice[sliceIndex + 2]
+                          = state->viewerState->defaultTexData[0];
+        (*t)++;
+        if(*t < viewPort->t_max) {
+            // Actually, although currentPxInDc_float is passed by reference and updated here,
+            // it is totally ignored (i.e. not read, then overwritten) by the calling function.
+            // But to keep the functionality here compatible after this bugfix, we also replicate
+            // this update here - from the originial below
+            ADD_COORDINATE(*currentPxInDc_float, *v2);
+        }
+        return true;
+    }
 
     while((0 <= currentPxInDc.x && currentPxInDc.x < state->cubeEdgeLength)
           && (0 <= currentPxInDc.y && currentPxInDc.y < state->cubeEdgeLength)
@@ -261,13 +278,30 @@ bool Viewer::sliceExtract_adjust_arb(Byte *datacube, vpConfig *viewPort, floatCo
     SET_COORDINATE(currentPxInDc, (roundFloat(currentPxInDc_float->x)),
                                   (roundFloat(currentPxInDc_float->y)),
                                   (roundFloat(currentPxInDc_float->z)));
-    // rounding may lead to values outside of cube edge, i.e.  values >= cubeEdgeLength + 0.5 or values <= -0.5
-    if(currentPxInDc.x < 0) { currentPxInDc.x = 0; }
-    if(currentPxInDc.y < 0) { currentPxInDc.y = 0; }
-    if(currentPxInDc.z < 0) { currentPxInDc.z = 0; }
-    if(currentPxInDc.x == state->cubeEdgeLength) { currentPxInDc.x = state->cubeEdgeLength - 1; }
-    if(currentPxInDc.y == state->cubeEdgeLength) { currentPxInDc.y = state->cubeEdgeLength - 1; }
-    if(currentPxInDc.z == state->cubeEdgeLength) { currentPxInDc.z = state->cubeEdgeLength - 1; }
+
+    if (
+            (currentPxInDc.x < 0) ||
+            (currentPxInDc.y < 0) ||
+            (currentPxInDc.z < 0) ||
+            (currentPxInDc.x >= state->cubeEdgeLength) ||
+            (currentPxInDc.y >= state->cubeEdgeLength) ||
+            (currentPxInDc.z >= state->cubeEdgeLength)
+            )
+    {
+        sliceIndex = 3 * ( s + *t  *  state->cubeEdgeLength * state->M);
+        slice[sliceIndex] = slice[sliceIndex + 1]
+                          = slice[sliceIndex + 2]
+                          = state->viewerState->defaultTexData[0];
+        (*t)++;
+        if(*t < viewPort->t_max) {
+            // Actually, although currentPxInDc_float is passed by reference and updated here,
+            // it is totally ignored (i.e. not read, then overwritten) by the calling function.
+            // But to keep the functionality here compatible after this bugfix, we also replicate
+            // this update here - from the originial below
+            ADD_COORDINATE(*currentPxInDc_float, *v2);
+        }
+        return true;
+    }
 
     while((0 <= currentPxInDc.x && currentPxInDc.x < state->cubeEdgeLength)
           && (0 <= currentPxInDc.y && currentPxInDc.y < state->cubeEdgeLength)

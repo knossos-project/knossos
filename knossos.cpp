@@ -857,7 +857,7 @@ bool Knossos::configDefaults() {
     state->compressionRatio = 0;
 
     state->keyD = state->keyF = false;
-    state->repeatDirection = {};
+    state->repeatDirection = {{}};
     state->viewerKeyRepeat = false;
 
     return true;

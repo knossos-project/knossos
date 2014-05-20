@@ -25,6 +25,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <stdexcept>
 
 extern "C" {
     int jp2_decompress_main(char *infile, char *buf, int bufsize);
@@ -497,8 +498,8 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
         }
     }
     //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
-    std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs) {
-        return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&(rhs))) >= 0;
+    std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs){
+        return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) >= 0;
     });
     for (i = 0; i < cubeElemCount; i++) {
         if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {
