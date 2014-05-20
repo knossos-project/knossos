@@ -47,7 +47,7 @@
 #include <QtCore/qset.h>
 #include <QtCore/qdatetime.h>
 
-#define KVERSION "4.1 Pre Alpha"
+#define KVERSION "4.0"
 
 #define FAIL    -1
 

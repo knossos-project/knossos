@@ -1,6 +1,10 @@
-#knossos binary
-knossos
-
 #generated documentation files
 doc/collection.qhc
 doc/doc.qch
+
+#qtcreator settings
+CMakeLists.txt.user
+knossos.pro.user
+
+#system depended settings
+CustomLibraryLocations.cmake

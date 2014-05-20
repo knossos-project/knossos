@@ -1,133 +1,108 @@
-project(knossos)
+project(Knossos)
+cmake_minimum_required(VERSION 2.8.11)
 
-cmake_minimum_required(VERSION 2.8.9)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
+    set(CMAKE_BUILD_TYPE "RELEASE")
+endif()
 
-add_definitions(-DREVISION="\\"git-svn\\"")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+include(CustomLibraryLocations.cmake)
 
-set(CMAKE_AUTOMOC ON)
+#the *.cpp file (why ever its named *.cpp) is skipped because it causes problems
+file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
+
+file(GLOB root *.cpp *.h)
+file(GLOB_RECURSE widgets ./widgets/*.cpp ./widgets/*.h)
+set(SRC_LIST ${openjpeg} ${root} ${widgets})
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
 
+find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(CURL REQUIRED)
 
-include_directories(
-    ${GLUT_INCLUDE_DIR}
-    ${OPENGL_INCLUDE_DIR}
-    ${CURL_INCLUDE_DIRS}
-    ${GLUT_INCLUDE_DIR}
-)
+if(WIN32)
+    #statically link to curl
+    add_definitions(-DCURL_STATICLIB)
+    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)
+    #statically link to glut
+    string(REGEX REPLACE "\\.dll" "" GLUT_LIBRARIES ${GLUT_LIBRARIES})
+    add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
+    set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+endif()
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Xml REQUIRED)
-find_package(Qt5Test REQUIRED)
-find_package(Qt5Help REQUIRED)
-find_package(Qt5Widgets REQUIRED)
+#i refrained from creating an external FindTurboJPEG.cmake
+#a TurboJPEG-config.cmake in the install directory would be nice
+find_path(TURBOJPEG_INCLUDE_DIR turbojpeg.h REQUIRED)
+set(turbojpeg_static "libturbojpeg.a")#prefer static lib
+find_library(TURBOJPEG_LIBRARY NAMES ${turbojpeg_static} turbojpeg PATHS "C:/libjpeg-turbo-gcc" "C:/libjpeg-turbo-gcc64")
 
-SET(KNOSSOS_SOURCES
-    widgets/mainwindow.cpp
-    eventmodel.cpp
-    loader.cpp
-    viewer.cpp
-    remote.cpp
-    skeletonizer.cpp
-    renderer.cpp
-    knossos.cpp
-    coordinate.cpp
-    Hashtable.cpp
-    scripting.cpp
-    qsort.cpp
-    ftp.cpp
-    task.cpp
-    sha256.cpp
-    treeLUT_fallback.cpp
-    functions.cpp
-#
-    widgets/viewport.cpp
-    widgets/splashscreenwidget.cpp
-    widgets/datasetpropertywidget.cpp
-    widgets/documentationwidget.cpp
-    widgets/annotationwidget.cpp
-    widgets/console.cpp
-    widgets/tracingtimewidget.cpp
-    widgets/commentswidget.cpp
-    widgets/commentshortcuts/commentshortcutstab.cpp
-    widgets/commentshortcuts/commentshighlightingtab.cpp
-    widgets/zoomandmultireswidget.cpp
-    widgets/datasavingwidget.cpp
-    widgets/navigationwidget.cpp
-    widgets/viewportsettingswidget.cpp
-    widgets/widgetcontainer.cpp
-    widgets/commentshortcuts/commentsnodecommentstab.cpp
-#
-    widgets/tools/treetable.cpp
-    widgets/tools/toolstreeviewtab.cpp
-    widgets/tools/nodetable.cpp
-    widgets/tools/toolscommandstab.cpp
-    widgets/tools/toolstreeviewtab.cpp
-#
-    widgets/viewportsettings/vpsliceplaneviewportwidget.cpp
-    widgets/viewportsettings/vpskeletonviewportwidget.cpp
-    widgets/viewportsettings/vpgeneraltabwidget.cpp
-#
-    widgets/task/taskloginwidget.cpp
-    widgets/task/taskmanagementwidget.cpp
-    widgets/task/taskmanagementmaintab.cpp
-    widgets/task/taskmanagementdetailstab.cpp
-#
-    decorators/skeletonizerdecorator.cpp
-    decorators/mainwindowdecorator.cpp
-)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(TURBOJPEG REQUIRED_VARS TURBOJPEG_INCLUDE_DIR TURBOJPEG_LIBRARY)
 
-qt5_add_resources(KNOSSOS_RESOURCES_SOURCES
-    Resources.qrc
-)
+add_library(TurboJPEG STATIC IMPORTED)
+set_property(TARGET TurboJPEG PROPERTY IMPORTED_LOCATION ${TURBOJPEG_LIBRARY})
+include_directories(TURBOJPEG_INCLUDE_DIR)
+#enable turbojpeg inside knossos
+add_definitions(-DKNOSSOS_USE_TURBOJPEG)
 
+
+find_package(Qt5Core 5.1 REQUIRED)
+find_package(Qt5Gui 5.1 REQUIRED)
+find_package(Qt5Help 5.1 REQUIRED)
+find_package(Qt5OpenGL 5.1 REQUIRED)
+find_package(Qt5Widgets 5.1 REQUIRED)
+#qt resources
+qt5_add_resources(CompiledResourceFiles Resources.qrc)
+#platform dependent resources
+if(WIN32)
+    set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/knossos.rc")#add windows icon
+elseif(APPLE)
+    set_source_files_properties("knossos.icns" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+#generate docs
 add_custom_command(
     OUTPUT
-        ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc
-        ${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qhc
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qch"
     PRE_BUILD
-    COMMAND qcollectiongenerator
-        ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp
-        -o ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc
+    COMMAND qcollectiongenerator ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp -o ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc
+    DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhcp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc/doc.qhp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc/documentation.html"
 )
 
-qt5_generate_moc(knossos-global.h ${CMAKE_CURRENT_BINARY_DIR}/moc_knossos-global.cpp)
 
-add_executable(knossos
-    ${KNOSSOS_SOURCES}
-    ${KNOSSOS_RESOURCES_SOURCES}
-    ${KNOSSOS_UIS}
-    ${CMAKE_CURRENT_BINARY_DIR}/moc_knossos-global.cpp
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${CompiledResourceFiles})
+add_dependencies(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/doc/collection.qhc)
+include_directories(
+    ${CURL_INCLUDE_DIRS}
+    ${GLUT_INCLUDE_DIR}
+    ${OPENGL_INCLUDE_DIR}
 )
-get_property(location TARGET knossos PROPERTY LOCATION)
-add_custom_command(TARGET knossos
-    POST_BUILD        
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different  
-        ${location}
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_link_libraries(knossos
-    ${OPENGL_LIBRARIES}
+target_link_libraries(${PROJECT_NAME}
     ${CURL_LIBRARIES}
     ${GLUT_LIBRARIES}
-    openjpeg_knossos
+    ${OPENGL_LIBRARIES}
+    #configs add includes and other settings automatically
+    TurboJPEG
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Help
+    Qt5::OpenGL
+    Qt5::Widgets
 )
 
-qt5_use_modules(knossos OpenGL Network Xml Test Help Widgets)
 
-# currently no UI files...
-#
-# set(KNOSSOS_UIS mainwindow.ui)
-# qt5_wrap_ui(KNOSSOS_UIS_HEADERS
-#     ${KNOSSOS_UIS}
-# )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
-add_subdirectory(openjpeg)
+
+#set(CMAKE_CXX_COMPILER "clang++")#for convenience: switch to clang if you wish
+if(CMAKE_CXX_COMPILER MATCHES "clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
+    target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
+endif()
