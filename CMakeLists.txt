@@ -102,7 +102,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 
 
 #set(CMAKE_CXX_COMPILER "clang++")#for convenience: switch to clang if you wish
-if(CMAKE_CXX_COMPILER MATCHES "clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
-    target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
-endif()
+#if(CMAKE_CXX_COMPILER MATCHES "clang")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")#use clangs own std library
+#    target_link_libraries(${PROJECT_NAME} c++abi)#available abi implementation differs per system
+#endif()
