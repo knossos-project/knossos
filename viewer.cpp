@@ -362,50 +362,46 @@ bool Viewer::dcSliceExtract_arb(Byte *datacube, vpConfig *viewPort, floatCoordin
     return true;
 }
 
-bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+
+/**
+ * @brief Viewer::ocSliceExtract extracts subObject IDs from datacube
+ *      and paints slice at the corresponding position with a color depending on the ID.
+ * @param datacube pointer to the datacube for data extraction
+ * @param slice pointer to a slice in which to draw the overlay
+ *
+ * In the first pass all pixels are filled with the color corresponding the subObject-ID.
+ * In the second pass the datacube is traversed again to find edge voxels, i.e. all voxels
+ * where at least one of their neighbors (left, right, top, bot) have a different ID than their own.
+ * The opacity of these voxels is slightly increased to highlight the edges.
+ *
+ */
+void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
     Byte *cubePtr = datacube + dcOffset;
     Byte *slicePtr = slice;
-
+    // configure variable increments depending on viewport type. Note that additional outer loop only exists for xz vp!
+    // configuration for xy vp
+    int innerLoopBoundary = state->cubeSliceArea;
+    int outerLoopBoundary = 1;
+    int outerCubeIncrement = 0;
+    int innerCubeIncrement = OBJID_BYTES;
+    int horizNBdistance = OBJID_BYTES;
+    int vertNBdistance = state->cubeEdgeLength * OBJID_BYTES;
     switch(vpConfig->type) {
-    case SLICE_XY:
-        for(int i = 0; i < state->cubeSliceArea; i++) {
-            uint64_t subObjectID;
-            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
-
-            const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
-            slicePtr[0] = std::get<0>(color);
-            slicePtr[1] = std::get<1>(color);
-            slicePtr[2] = std::get<2>(color);
-            slicePtr[3] = std::get<3>(color);
-
-            cubePtr += OBJID_BYTES;
-            slicePtr += 4;
-        }
-
-        break;
     case SLICE_XZ:
-        for(int j = 0; j < state->cubeEdgeLength; j++) {
-            for(int i = 0; i < state->cubeEdgeLength; i++) {
-                uint64_t subObjectID;
-                memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
-
-                const auto color = Segmentation::singleton().objectColorFromSubobject(subObjectID);
-                slicePtr[0] = std::get<0>(color);
-                slicePtr[1] = std::get<1>(color);
-                slicePtr[2] = std::get<2>(color);
-                slicePtr[3] = std::get<3>(color);
-
-                cubePtr += OBJID_BYTES;
-                slicePtr += 4;
-            }
-
-            cubePtr = cubePtr
-                       + state->cubeSliceArea * OBJID_BYTES
-                       - state->cubeEdgeLength * OBJID_BYTES;
-        }
+        outerLoopBoundary = state->cubeEdgeLength;
+        innerLoopBoundary = state->cubeEdgeLength;
+        outerCubeIncrement = state->cubeSliceArea*OBJID_BYTES - state->cubeEdgeLength*OBJID_BYTES;
+        vertNBdistance = state->cubeSliceArea*OBJID_BYTES;
         break;
     case SLICE_YZ:
-        for(int i = 0; i < state->cubeSliceArea; i++) {
+        horizNBdistance = state->cubeEdgeLength * OBJID_BYTES;
+        vertNBdistance = state->cubeSliceArea * OBJID_BYTES;
+        innerCubeIncrement = state->cubeEdgeLength * OBJID_BYTES;
+        break;
+    }
+    // draw overlay in first pass
+    for(int j = 0; j < outerLoopBoundary; j++) { // for xy and yz vp outer loop is only visited once
+        for(int i = 0; i < innerLoopBoundary; i++) {
             uint64_t subObjectID;
             memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
 
@@ -415,97 +411,50 @@ bool Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
             slicePtr[2] = std::get<2>(color);
             slicePtr[3] = std::get<3>(color);
 
-            cubePtr += state->cubeEdgeLength * OBJID_BYTES;
+            cubePtr += innerCubeIncrement;
             slicePtr += 4;
         }
-        break;
+        cubePtr += outerCubeIncrement;
     }
-
+    // highlight edges in a second pass
     cubePtr = datacube + dcOffset;
     slicePtr = slice;
-    // highlight edges
-    switch(vpConfig->type) {
-    case SLICE_XY:
-        for(int i = 0; i < state->cubeSliceArea; i++) {
+    Byte *datacubeEnd = datacube + state->cubeEdgeLength * state->cubeSliceArea * OBJID_BYTES;
+
+    for(int j = 0; j < outerLoopBoundary; j++) {
+        for(int i = 0; i < innerLoopBoundary; i++) {
             uint64_t subObjectID;
             memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
             const auto iter = Segmentation::singleton().subobjects.find(subObjectID);
             if(iter != std::end(Segmentation::singleton().subobjects)) {
                 if(iter->second.selected()) {
-                    uint64_t left;
-                    uint64_t right;
-                    uint64_t top;
-                    uint64_t bot;
+                    uint64_t left = subObjectID;
+                    uint64_t right = subObjectID;
+                    uint64_t top = subObjectID;
+                    uint64_t bot = subObjectID;;
 
-                    if(cubePtr - OBJID_BYTES - datacube < 0) {
-                        left = !subObjectID;
+                    if(cubePtr - horizNBdistance - datacube >= 0) {
+                        memcpy(&left, cubePtr - horizNBdistance, sizeof(left));
                     }
-                    else {
-                        memcpy(&left, cubePtr - OBJID_BYTES, sizeof(left));
+                    if(cubePtr + horizNBdistance - datacubeEnd <= 0) {
+                        memcpy(&right, cubePtr + horizNBdistance, sizeof(right));
                     }
-
-                    memcpy(&right, cubePtr + OBJID_BYTES, sizeof(right));
-
-                    if(cubePtr - state->cubeEdgeLength*OBJID_BYTES - datacube < 0) {
-                        top = !subObjectID;
+                    if(cubePtr - vertNBdistance - datacube >= 0) {
+                        memcpy(&top, cubePtr - vertNBdistance, sizeof(top));
                     }
-                    else {
-                        memcpy(&top, cubePtr - state->cubeEdgeLength*OBJID_BYTES, sizeof(top));
+                    if(cubePtr + vertNBdistance - datacubeEnd <= 0) {
+                        memcpy(&bot, cubePtr + vertNBdistance, sizeof(bot));
                     }
-                    memcpy(&bot, cubePtr + state->cubeEdgeLength*OBJID_BYTES, sizeof(bot));
                     if(subObjectID !=left || subObjectID != right || subObjectID != top || subObjectID != bot) {
                         slicePtr[3] = (slicePtr[3]*4 > 255)? 255 : slicePtr[3]*4;
                     }
                 }
             }
-
-            cubePtr += OBJID_BYTES;
+            cubePtr += innerCubeIncrement;
             slicePtr += 4;
         }
-        break;
-    case SLICE_XZ:
-        break;
-    case SLICE_YZ:
-//        for(int i = 0; i < state->cubeSliceArea; i++) {
-//            uint64_t subObjectID;
-//            memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
-//            const auto iter = Segmentation::singleton().subobjects.find(subObjectID);
-//            if(iter != std::end(Segmentation::singleton().subobjects)) {
-//                if(iter->second.selected()) {
-//                    uint64_t left;
-//                    uint64_t right;
-//                    uint64_t top;
-//                    uint64_t bot;
-
-//                    if(cubePtr - state->cubeEdgeLength * OBJID_BYTES - OBJID_BYTES - datacube < 0) {
-//                        left = !subObjectID;
-//                    }
-//                    else {
-//                        memcpy(&left, cubePtr - state->cubeEdgeLength * OBJID_BYTES - OBJID_BYTES, sizeof(left));
-//                    }
-
-//                    memcpy(&right, cubePtr + state->cubeEdgeLength * OBJID_BYTES + OBJID_BYTES, sizeof(right));
-
-//                    if(cubePtr - state->cubeEdgeLength*OBJID_BYTES - datacube < 0) {
-//                        top = !subObjectID;
-//                    }
-//                    else {
-//                        memcpy(&top, cubePtr - state->cubeEdgeLength*OBJID_BYTES, sizeof(top));
-//                    }
-//                    memcpy(&bot, cubePtr + state->cubeEdgeLength*OBJID_BYTES, sizeof(bot));
-//                    if(subObjectID !=left || subObjectID != right || subObjectID != top || subObjectID != bot) {
-//                        slicePtr[3] = (slicePtr[3]*4 > 255)? 255 : slicePtr[3]*4;
-//                    }
-//                }
-//            }
-
-//            cubePtr += state->cubeEdgeLength * OBJID_BYTES;
-//            slicePtr += 4;
-//        }
-        break;
+        cubePtr += outerCubeIncrement;
     }
-
-    return true;
 }
 
 static int texIndex(uint x,
