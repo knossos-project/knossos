@@ -15,8 +15,8 @@ signals:
     
 public slots:
     /*
-    nodeListElement *new_NodeListElement();
-    nodeListElement *new_NodeListElement(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+    nodeListElement *new_Node();
+    nodeListElement *new_Node(int nodeID, int x, int y, int z, int parentID = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
     */
 
     int node_id(nodeListElement *self);
@@ -29,7 +29,7 @@ public slots:
     Coordinate coordinate(nodeListElement *self);
     int mag(nodeListElement *self);
     int viewport(nodeListElement *self);
-    QString static_nodeListElement_help();
+    QString static_Node_help();
     /*
     void set_node_id(nodeListElement *self, int node_id);
     void set_comment(nodeListElement *self, char *comment);

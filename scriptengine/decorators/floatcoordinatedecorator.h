@@ -13,8 +13,8 @@ public:
 signals:
 
 public slots:
-    floatCoordinate *new_floatCoordinate();
-    floatCoordinate *new_floatCoordinate(float x, float y, float z);
+    floatCoordinate *new_FCoordinate();
+    floatCoordinate *new_FCoordinate(float x, float y, float z);
     float x(floatCoordinate *self);
     float y(floatCoordinate *self);
     float z(floatCoordinate *self);
@@ -23,7 +23,7 @@ public slots:
     void sety(floatCoordinate *self, float y);
     void setz(floatCoordinate *self, float z);
 
-    QString static_floatCoordinate_help();
+    QString static_FCoordinate_help();
 
 
 };

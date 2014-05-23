@@ -311,6 +311,7 @@ public:
         GLfloat a;
 };
 
+
 // This structure makes up the linked list that is used to store the data for
 // the hash table. The linked is circular, but has one entry element that is
 // defined by the pointer in the hash table structure below.

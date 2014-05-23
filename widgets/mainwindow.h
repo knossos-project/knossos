@@ -220,6 +220,7 @@ public slots:
 
     QToolBar *getToolBar();
     QMenuBar *getMenuBar();
+
 };
 
 #endif // MAINWINDOW_H

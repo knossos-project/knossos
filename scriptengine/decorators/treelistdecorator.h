@@ -15,9 +15,9 @@ signals:
     
 public slots:
     /*
-    treeListElement *new_TreeListElement();
-    treeListElement *new_TreeListElement(int tree_id, QString comment, color4F color);
-    treeListElement *new_TreeListElement(int tree_id, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
+    treeListElement *new_Tree();
+    treeListElement *new_Tree(int tree_id, QString comment, color4F color);
+    treeListElement *new_Tree(int tree_id, QString comment, float r = -1, float g = -1, float b = -1, float a = 1);
     */
 
     color4F color(treeListElement *self);
@@ -25,7 +25,7 @@ public slots:
     QList<nodeListElement *> *nodes(treeListElement *self);
     int tree_id(treeListElement *self);
     char *comment(treeListElement *self);
-    static QString static_treeListElement_help();
+    static QString static_Tree_help();
 
 
     /*

@@ -10,14 +10,13 @@ ColorDecorator::ColorDecorator(QObject *parent) :
 }
 
 
-color4F *ColorDecorator::new_color4F() {
+color4F *ColorDecorator::new_Color() {
     return new color4F();
 }
 
-color4F *ColorDecorator::new_color4F(float r, float g, float b, float a) {
+color4F *ColorDecorator::new_Color(float r, float g, float b, float a) {
     return new color4F(r, g, b, a);
 }
-
 
 float ColorDecorator::red(color4F *self) {
     return self->r;
@@ -35,11 +34,11 @@ float ColorDecorator::alpha(color4F *self) {
     return self->a;
 }
 
-QString ColorDecorator::static_Color4F_help() {
+QString ColorDecorator::static_Color_help() {
     return QString("An instanteable class which stores rgba channels in float coordinates in range [0..1]. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
-                   "\n color4F() : creates an empty color object." \
-                   "\n color4F(red, green, blue, alpha) : creates a color object by specifying all color channels. Excepts a float value in range [0..1]"
+                   "\n Color() : creates an empty color object." \
+                   "\n Color(red, green, blue, alpha) : creates a color object by specifying all color channels. Excepts whether float values in range [0..1]"
                    "\n\n GETTER: " \
                    "\n red() : returns the red channel of the color" \
                    "\n green() : returns the green channel of the color" \

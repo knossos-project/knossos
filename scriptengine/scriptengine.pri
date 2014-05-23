@@ -1,7 +1,6 @@
 HEADERS +=  \
     scriptengine/decorators/treelistdecorator.h \
     scriptengine/decorators/nodelistdecorator.h \
-    scriptengine/decorators/mainwindowdecorator.h \
     scriptengine/decorators/colordecorator.h \
     scriptengine/decorators/segmentlistdecorator.h \
     scriptengine/decorators/transformdecorator.h \
@@ -21,7 +20,6 @@ HEADERS +=  \
 SOURCES += \
     scriptengine/decorators/treelistdecorator.cpp \
     scriptengine/decorators/nodelistdecorator.cpp \
-    scriptengine/decorators/mainwindowdecorator.cpp \
     scriptengine/decorators/pointdecorator.cpp \
     scriptengine/decorators/floatcoordinatedecorator.cpp \
     scriptengine/decorators/coordinatedecorator.cpp \
@@ -35,17 +33,13 @@ SOURCES += \
     scriptengine/geometry/point.cpp \
     scriptengine/geometry/render.cpp \
     scriptengine/proxies/skeletonproxy.cpp \
-    scriptengine/scripting.cpp \
-    scriptengine/cwidget.cpp
-
+    scriptengine/scripting.cpp     
 
 OTHER_FILES += \
     scriptengine/python/converter.py \
     scriptengine/python/examples/pathes.py \
     scriptengine/python/user/custom_graphics_view.py \
     scriptengine/python/user/images/* \
-
-
 
 linux {
     LIBS += -lPythonQt \

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QVBoxLayout>
 #include "knossos-global.h"
 
 class QMenuBar;
@@ -19,14 +20,14 @@ signals:
     void nodeAddedSignal();
     void updateToolsSignal();
     void clearSkeletonSignal();
-    void userMoveSignal(int x, int y, int z);
-    void echo(QString message);
+    void userMoveSignal(int x, int y, int z);    
     void updateTreeViewSignal();
     bool sliceExtractSignal(Byte *datacube, Byte *slice, vpConfig *vpConfig);
     void saveSettingsSignal(const QString &key, const QVariant &value);
     uint renderTextSignal(Coordinate *pos, char *string, uint currentVP, uint viewportType);
     QToolBar *toolBarSignal();
     QMenuBar *menuBarSignal();
+
 };
 
 extern SkeletonProxySignalDelegate *signalDelegate;
@@ -38,7 +39,7 @@ public:
     explicit SkeletonProxy(QObject *parent = 0);
 
 signals:
-
+    void echo(QString message);
 public slots:
     int skeleton_time();
     QString skeleton_file();
@@ -68,6 +69,7 @@ public slots:
     void move_to(int x, int y, int z);
     void render_text(const QString &path, int x, int y, int z);    
     static QString help();
+
 };
 
 #endif // SKELETONPROXY_H

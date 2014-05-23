@@ -8,11 +8,11 @@ NodeListDecorator::NodeListDecorator(QObject *parent) :
 
 }
 /*
-nodeListElement *NodeListDecorator::new_NodeListElement() {
+nodeListElement *NodeListDecorator::new_Node() {
     return new nodeListElement();
 }
 
-nodeListElement *NodeListDecorator::new_NodeListElement(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time) {
+nodeListElement *NodeListDecorator::new_Node(int nodeID, int x, int y, int z, int parentID, float radius, int inVp, int inMag, int time) {
     return new nodeListElement(nodeID, x, y, z, parentID, radius, inVp, inMag, time);
 }
 */
@@ -62,7 +62,7 @@ int NodeListDecorator::viewport(nodeListElement *self) {
     return self->createdInVp;
 }
 
-QString NodeListDecorator::static_nodeListElement_help() {
+QString NodeListDecorator::static_Node_help() {
     return QString("A read-only class representing a tree node of the KNOSSOS skeleton. Access to attributes only via getter." \
             "\n node_id() : returns the id of the current node" \
             "\n radius() : returns the radius of the current node" \

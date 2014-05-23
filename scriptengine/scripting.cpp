@@ -1,7 +1,8 @@
 #include <QSettings>
 #include <QDir>
 #include <QFileInfoList>
-#include <QtConcurrent/QtConcurrentRun>
+#include <QToolBar>
+#include <QMenu>
 
 #include "widgets/GuiConstants.h"
 #include "scripting.h"
@@ -27,7 +28,6 @@
 
 extern stateInfo *state;
 
-
 Scripting::Scripting(QObject *parent) :
     QThread(parent)
 {
@@ -45,45 +45,10 @@ Scripting::Scripting(QObject *parent) :
 
 }
 
-void Scripting::addDoc() {
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-
-    ctx.evalScript("import knossos_python_api");
-    ctx.evalScript("knossos_python_api.__doc__ = 'this is the root module of the knossos python api.'");
-
-    ctx.evalScript("from knossos_python_api import *");
-    ctx.evalScript("internal.__doc__ = 'This module contains internal data structures which are used in knossos. They are constrained to read-only access in python'");
-
-    ctx.evalScript("import sys");
-    ctx.evalScript("import os");
-
-    // here is simply the convention : Those keys are first available after pathes were saved.
-    if(!settings->value("sys_path").isNull()) {
-        console->consoleMessage("loaded the following sys_pathes:");
-        QStringList pathList;
-        pathList = settings->value("sys_path").toStringList();
-        foreach(const QString &path, pathList) {
-           PythonQt::self()->addSysPath(settings->value("sys_path").toString());
-           console->consoleMessage(path);
-        }
-
-    }
-
-    if(!settings->value("working_directory").isNull()) {
-        ctx.evalScript(QString("os.chdir(%1)").arg(settings->value("working_dir").toString()));
-        console->consoleMessage(QString("changed working directory according to the saved path: %").arg(settings->value("working_dir").toString()));
-    }
-
-}
-
 void Scripting::run() {
-
     PythonQt::init(PythonQt::RedirectStdOut);
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
     PythonQt_QtAll::init();
-
-    //connect(PythonQt::self(), SIGNAL(pythonStdOut(QString)), this, SLOT(out(QString)));
-    //connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)), this, SLOT(err(QString)));
+    PythonQtObjectPtr ctx = PythonQt::self()->createModuleFromScript("knossos_python_api");
 
     ctx.evalScript("import sys");
     ctx.evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
@@ -91,9 +56,6 @@ void Scripting::run() {
     // as ipython does not export it's sys paths after the installation we refer to that site-package
     ctx.evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
-
-    ctx.evalScript("from PythonQt import *");
-    ctx.evalScript("execfile('includes.py')");
 
     ctx.addObject("knossos", skeletonProxy);
     ctx.addVariable("GL_POINTS", GL_POINTS);
@@ -107,38 +69,35 @@ void Scripting::run() {
     ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
     ctx.addVariable("GL_POLYGON", GL_POLYGON);
 
+    ctx.addObject("tool_bar", signalDelegate->toolBarSignal());
+    ctx.addObject("menu_bar", signalDelegate->menuBarSignal());
+
     QString module("internal");
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("FCoordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Color", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
-    PythonQt::self()->registerCPPClass("segmentListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Segment", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(treeListDecorator);
-    PythonQt::self()->registerCPPClass("treeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Tree", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(nodeListDecorator);
-    PythonQt::self()->registerCPPClass("nodeListElement", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("mesh", "",  module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("Mesh", "", module.toLocal8Bit().data());
 
     executeFromUserDirectory();
-
-
-    connect(signalDelegate, SIGNAL(echo(QString)), this, SLOT(out(QString)));
-    connect(signalDelegate, SIGNAL(saveSettingsSignal(QString,QVariant)), this, SLOT(saveSettings(QString,QVariant)));
-
-    //PythonQtScriptingConsole *console = new PythonQtScriptingConsole(0, ctx);
-    //console->show();
+    ctx.evalFile("/Users/amos/Desktop/test.py");
 
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
     ctx.evalScript("import IPython");
@@ -155,18 +114,6 @@ void Scripting::saveSettings(const QString &key, const QVariant &value) {
     settings->setValue(key, value);
 }
 
-void Scripting::out(const QString &out) {
-    PythonQt::init(PythonQt::RedirectStdOut);
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-
-
-}
-
-void Scripting::err(const QString &err) {
-    qDebug() << err;
-
-}
-
 void Scripting::executeFromUserDirectory() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
@@ -180,11 +127,8 @@ void Scripting::executeFromUserDirectory() {
     QFileInfoList entries = scriptDir.entryInfoList();
 
     PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    foreach(const QFileInfo &script, entries) {
-        QString path = script.absolutePath();
+    foreach(const QFileInfo &script, entries) {        
         QFile file(script.canonicalFilePath());
-
-        qDebug() << script.canonicalFilePath();
 
         if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
             continue;
@@ -193,6 +137,7 @@ void Scripting::executeFromUserDirectory() {
         QTextStream stream(&file);
         QString content =  stream.readAll();
 
-        ctx.evalScript(content);
+        ctx.evalFile(script.canonicalFilePath());
+
     }
 }

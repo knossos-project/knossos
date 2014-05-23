@@ -7,15 +7,15 @@ TreeListDecorator::TreeListDecorator(QObject *parent) :
 }
 
 /*
-treeListElement *TreeListDecorator::new_TreeListElement() {
+treeListElement *TreeListDecorator::new_Tree() {
     return new treeListElement();
 }
 
-treeListElement *TreeListDecorator::new_TreeListElement(int tree_id, QString comment, color4F color) {
+treeListElement *TreeListDecorator::new_Tree(int tree_id, QString comment, color4F color) {
     return new treeListElement(tree_id, comment, color);
 }
 
-treeListElement *TreeListDecorator::new_TreeListElement(int tree_id, QString comment, float r, float g, float b, float a) {
+treeListElement *TreeListDecorator::new_Tree(int tree_id, QString comment, float r, float g, float b, float a) {
     return new treeListElement(tree_id, comment, r, g, b, a);
 }
 */
@@ -40,7 +40,7 @@ nodeListElement *TreeListDecorator::first_node(treeListElement *self) {
     return self->firstNode;
 }
 
-QString TreeListDecorator::static_treeListElement_help() {
+QString TreeListDecorator::static_Tree_help() {
     return QString("A read-only class representing a tree of the KNOSSOS skeleton. Access to attributes only via getter."
                    "\n tree_id() : returns the id of the current tree"
                    "\n first_node() : returns the first node object of the current tree"

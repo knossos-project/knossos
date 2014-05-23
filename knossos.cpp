@@ -68,10 +68,8 @@ std::unique_ptr<Knossos> knossos;
 
 
 static void openTerminal() {
-
     system("/opt/X11/bin/xterm -e '/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing ' &");
 }
-
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
     screen.show();
@@ -79,7 +77,6 @@ Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QP
     QObject::connect(&timer, &QTimer::timeout, &screen, &QSplashScreen::close);
     timer.start(timeout_msec);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -155,10 +152,6 @@ int main(int argc, char *argv[])
     }
     bool datasetLoaded = knossos->initStates();
 
-
-    //scripts.run();
-
-
     Viewer viewer;
     loader.reset(new Loader);
     Remote remote;
@@ -203,15 +196,8 @@ int main(int argc, char *argv[])
     QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
     QObject::connect(signalDelegate, SIGNAL(toolBarSignal()), viewer.window, SLOT(getToolBar()));
     QObject::connect(signalDelegate, SIGNAL(menuBarSignal()), viewer.window, SLOT(getMenuBar()));
-    emit signalDelegate->toolBarSignal();
-    emit signalDelegate->menuBarSignal();
-    //
+
     scripts.start();
-    //scripts.run();
-    //scripts.console->show();
-
-
-
 
     return a.exec();
 }

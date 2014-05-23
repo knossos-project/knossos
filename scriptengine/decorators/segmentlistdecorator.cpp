@@ -7,15 +7,15 @@ SegmentListDecorator::SegmentListDecorator(QObject *parent) :
 }
 
 /*
-segmentListElement *SegmentListDecorator::new_SegmentListElement() {
+segmentListElement *SegmentListDecorator::new_Segment() {
     return new segmentListElement();
 }
 
-segmentListElement *SegmentListDecorator::new_SegmentListElement(int sourceID, int targetID) {
+segmentListElement *SegmentListDecorator::new_Segment(int sourceID, int targetID) {
     return new segmentListElement(sourceID, targetID);
 }
 
-segmentListElement *SegmentListDecorator::new_SegmentListElement(nodeListElement *source, nodeListElement *target) {
+segmentListElement *SegmentListDecorator::new_Segment(nodeListElement *source, nodeListElement *target) {
     return new segmentListElement(source, target);
 }
 */
@@ -43,7 +43,7 @@ int SegmentListDecorator::target_id(segmentListElement *self) {
     return 0;
 }
 
-QString SegmentListDecorator::static_SegmentListElement_help() {
+QString SegmentListDecorator::static_Segment_help() {
     return QString("the read-only class representing a connection between tree nodes of the KNOSSOS skeleton. Access to attributes only via getter and setter." \
                    "source() : returns the source node of the segment" \
                    "source_id() : returns the source node id of the segment" \

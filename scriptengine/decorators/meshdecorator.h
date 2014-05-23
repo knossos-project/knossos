@@ -14,7 +14,7 @@ public:
 signals:
 
 public slots:
-    mesh *new_mesh(uint mode);
+    mesh *new_Mesh(uint mode);
     QList<floatCoordinate *> *vertices(mesh *self);
     QList<floatCoordinate *> *normals(mesh *self);
     QList<color4F *> *colors(mesh *self);
@@ -24,7 +24,7 @@ public slots:
     void set_colors (mesh *self, QList<QVariant> &vertices);
     void set_size(mesh *self, uint size);
 
-    QString static_mesh_help();
+    QString static_Mesh_help();
 
 
     /*

@@ -13,7 +13,7 @@ Coordinate *CoordinateDecorator::new_Coordinate() {
     return new Coordinate();
 }
 
-Coordinate *CoordinateDecorator::new_Coordinate(int x, int y, int z) {
+Coordinate *CoordinateDecorator::new_Coordinate(int x, int y, int z) {    
     return new Coordinate(x, y, z);
 }
 
