@@ -70,7 +70,6 @@ public slots:
     void deleteSelectedTrees();
     void deleteSelectedNodes();
 
-    static char *integerChecksum(int32_t in);
     static bool isObfuscatedTime(int time);
 
     static void resetSkeletonMeta();

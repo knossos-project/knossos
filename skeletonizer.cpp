@@ -30,7 +30,6 @@
 #include "knossos-global.h"
 #include "knossos.h"
 #include "functions.h"
-#include "sha256.h"
 #include "viewer.h"
 
 extern stateInfo *state;
@@ -344,8 +343,6 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     segmentListElement *currentSegment = NULL;
     commentListElement *currentComment = NULL;
     stack *reverseBranchStack = NULL, *tempReverseStack = NULL;
-    int time;
-    char *checksum;
 
     //  This function should always be called through UI_saveSkeleton
     // for proper error and file name display to the user.
@@ -413,12 +410,12 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
+    const int time = state->skeletonState->skeletonTime - state->skeletonState->skeletonTimeCorrection + state->time.elapsed();
     xml.writeAttribute("ms", tmp.setNum(time));
-    checksum = integerChecksum(time);
-    xml.writeAttribute("checksum", QString(checksum));
+    const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
+    const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
+    xml.writeAttribute("checksum", timeChecksum);
     xml.writeEndElement();
-    free(checksum);
 
     if(state->skeletonState->activeNode) {
         xml.writeStartElement("activeNode");
@@ -453,9 +450,9 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
 
     xml.writeStartElement("idleTime");
     xml.writeAttribute("ms", tmp.setNum(state->skeletonState->idleTime));
-    checksum = integerChecksum(state->skeletonState->idleTime);
-    xml.writeAttribute("checksum", QString(checksum));
-    free(checksum);
+    const auto idleTimeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&state->skeletonState->idleTime), sizeof(state->skeletonState->idleTime));
+    const QString idleTimeChecksum = QCryptographicHash::hash(idleTimeData, QCryptographicHash::Sha256).toHex().constData();
+    xml.writeAttribute("checksum", idleTimeChecksum);
     xml.writeEndElement();
 
     xml.writeEndElement(); // end parameters
@@ -3272,29 +3269,6 @@ bool Skeletonizer::isObfuscatedTime(int time) {
         return true;
     }
     return false;
-}
-
-char *Skeletonizer::integerChecksum(int32_t in) {
-    unsigned char hash[32];
-    char *checksum;
-    int i;
-    sha256_context ctx;
-
-    checksum = (char*)malloc(65 * sizeof(char));
-    if(checksum == NULL) {
-        qDebug("Out of memory");
-        _Exit(false);
-    }
-    memset(checksum, '\0', 65);
-
-    sha256::sha256_starts(&ctx);
-    sha256::sha256_update(&ctx, (uint8 *)&in, 4);
-    sha256::sha256_finish(&ctx, hash);
-
-    for(i = 0; i < 32; i++) {
-        sprintf(&checksum[i * 2], "%02x", hash[i]);
-    }
-    return checksum;
 }
 
 void Skeletonizer::resetSkeletonMeta() {
