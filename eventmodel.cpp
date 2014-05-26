@@ -27,6 +27,7 @@
 #include "knossos.h"
 #include "skeletonizer.h"
 #include "renderer.h"
+#include "segmentation.h"
 #include "viewer.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/viewport.h"
@@ -43,6 +44,17 @@ EventModel::EventModel(QObject *parent) :
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
     uint clickedNode;
+
+    state->viewerState->uniqueColorMode = true;
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[VPfound], state->viewerState);
+
+    auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(VPfound, event->x(), event->y());
+
+    state->viewerState->uniqueColorMode = false;
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[VPfound], state->viewerState);
+
+    qDebug() << "color picking hit at x=" << (event->x()) << " y=" << (event->y()) << "id=" << Segmentation::singleton().subobjectFromUniqueColor(color);
+
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {

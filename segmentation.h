@@ -153,7 +153,18 @@ public:
         }
         emit dataChanged();
     }
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColorUnique(const uint64_t subObjectID) {
+        const uint8_t red   =  subObjectID        & 0xFF;
+        const uint8_t green = (subObjectID >> 8)  & 0xFF;
+        const uint8_t blue  = (subObjectID >> 16) & 0xFF;
 
+        return std::make_tuple(red, green, blue, 255);
+    }
+    uint64_t subobjectFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) {
+        return std::get<0>(color)
+        +  8 * std::get<1>(color)
+        + 16 * std::get<2>(color);
+    }
     std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) {
         if (subObjectID == 0) {
             return std::make_tuple(0, 0, 0, 0);
@@ -162,9 +173,9 @@ public:
             return subobjectColor(subObjectID);
         }
 
-        uint8_t red = 0;
+        uint8_t   red = 0;
         uint8_t green = 0;
-        uint8_t blue = 0;
+        uint8_t  blue = 0;
         uint8_t currAlpha = alpha;
         bool selected = false;
         const auto objectCount = subobjects[subObjectID].objects.size();
@@ -173,9 +184,9 @@ public:
                 selected = true;
             }
             const auto objectID = object.get().id;
-            red += overlayColorMap[0][objectID % 256] / objectCount;
+            red   += overlayColorMap[0][objectID % 256] / objectCount;
             green += overlayColorMap[1][objectID % 256] / objectCount;
-            blue += overlayColorMap[2][objectID % 256] / objectCount;
+            blue  += overlayColorMap[2][objectID % 256] / objectCount;
         }
         if(allObjs == false && selected == false) {
             currAlpha = 0;

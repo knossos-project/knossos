@@ -241,12 +241,11 @@ void Viewport::resizeGL(int w, int h) {
 void Viewport::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-
     if(state->viewerState->viewerReady) {
-        if(this->viewportType != VIEWPORT_SKELETON) {
+        if (this->viewportType != VIEWPORT_SKELETON) {
            this->drawViewport(id);
-        }  else {
-            this->drawSkeletonViewport();
+        } else {
+           this->drawSkeletonViewport();
         }
     }
 }

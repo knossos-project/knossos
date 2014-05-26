@@ -61,8 +61,8 @@ public:
 protected:
     void initializeGL();
     void createOverlayTextures();
+    void paintGL() override;
     void resizeGL(int w, int h);
-    void paintGL();
     void enterEvent(QEvent * event);
     void leaveEvent(QEvent *event);
     void mouseMoveEvent(QMouseEvent *event);

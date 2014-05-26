@@ -1777,6 +1777,33 @@ std::vector<nodeListElement *> Renderer::retrieveAllObjectsBeneathSquare(uint cu
     return foundNodes;
 }
 
+std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y) {
+    GLdouble vp_height;
+
+    if(currentVP == VIEWPORT_XY) {
+        refVPXY->makeCurrent();
+        vp_height = refVPXY->height();
+    } else if(currentVP == VIEWPORT_XZ) {
+        refVPXZ->makeCurrent();
+        vp_height = refVPXZ->height();
+    } else if(currentVP == VIEWPORT_YZ) {
+        refVPYZ->makeCurrent();
+        vp_height = refVPYZ->height();
+    } else if(currentVP == VIEWPORT_SKELETON) {
+        refVPSkel->makeCurrent();
+        vp_height = refVPSkel->height();
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
+    renderOrthogonalVP(currentVP);
+
+    GLubyte pixel[3];
+    glReadBuffer(GL_BACK);
+    glReadPixels(x, vp_height-y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, (void *)pixel);
+
+    return std::make_tuple(pixel[0], pixel[1], pixel[2]);
+}
+
 bool Renderer::updateRotationStateMatrix(float M1[16], float M2[16]){
     //multiply matrix m2 to matrix m1 and save result in rotationState matrix
     int i;

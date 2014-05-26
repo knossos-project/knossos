@@ -59,6 +59,7 @@ protected:
 public slots:
     uint retrieveVisibleObjectBeneathSquare(uint currentVP, uint x, uint y, uint width);
     std::vector<nodeListElement *> retrieveAllObjectsBeneathSquare(uint currentVP, uint x, uint y, uint width, uint height);
+    std::tuple<uint8_t, uint8_t, uint8_t> retrieveUniqueColorFromPixel(uint currentVP, uint x, uint y);
     bool renderOrthogonalVP(uint currentVP);
     bool renderSkeletonVP(uint currentVP);
 };

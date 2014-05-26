@@ -457,6 +457,64 @@ void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
     }
 }
 
+void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, vpConfig *vpConfig) {
+    datacube += dcOffset;
+
+    switch(vpConfig->type) {
+    case SLICE_XY:
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+            const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
+
+            datacube += OBJID_BYTES;
+            slice += 4;
+        }
+        break;
+    case SLICE_XZ:
+        for(int j = 0; j < state->cubeEdgeLength; j++) {
+            for(int i = 0; i < state->cubeEdgeLength; i++) {
+                uint64_t subObjectID;
+                memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+                const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+                slice[0] = std::get<0>(color);
+                slice[1] = std::get<1>(color);
+                slice[2] = std::get<2>(color);
+                slice[3] = std::get<3>(color);
+
+                datacube += OBJID_BYTES;
+                slice += 4;
+            }
+
+            datacube = datacube
+                       + state->cubeSliceArea * OBJID_BYTES
+                       - state->cubeEdgeLength * OBJID_BYTES;
+        }
+        break;
+    case SLICE_YZ:
+        for(int i = 0; i < state->cubeSliceArea; i++) {
+            uint64_t subObjectID;
+            memcpy(&subObjectID, datacube, sizeof(subObjectID));
+
+            const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
+
+            datacube += state->cubeEdgeLength * OBJID_BYTES;
+            slice += 4;
+        }
+        break;
+    }
+}
+
 static int texIndex(uint x,
                         uint y,
                         uint colorMultiplicationFactor,
@@ -572,7 +630,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             index = texIndex(x_dc, y_dc, 3, &(currentVp.texture));
 
-            if(datacube == HT_FAILURE) {
+            if(datacube == HT_FAILURE || viewerState->uniqueColorMode) {
                 glTexSubImage2D(GL_TEXTURE_2D,
                                 0,
                                 x_px,
@@ -619,11 +677,18 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                     viewerState->defaultOverlayData);
                 }
                 else {
-                    ocSliceExtract(overlayCube,
-                                   &(viewerState->overlayData[index]),
-                                   dcOffset * OBJID_BYTES,
-                                   &currentVp);
-
+                    if(viewerState->uniqueColorMode) {
+                        ocSliceExtractUnique(overlayCube,
+                                             &(viewerState->overlayData[index]),
+                                             dcOffset * OBJID_BYTES,
+                                             &currentVp);
+                    } else {
+                        ocSliceExtract(overlayCube,
+                                       &(viewerState->overlayData[index]),
+                                       dcOffset * OBJID_BYTES,
+                                       &currentVp);
+                    }
+                    
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
