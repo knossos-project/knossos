@@ -38,8 +38,11 @@ class Converter:
 	    		knossos.set_branch_node(branch_node_id) 
 
 		    
-    def load_annotation(self, annotation):	
-		knossos.add_tree(annotation.annotation_ID, annotation.comment)	
+    def load_annotation(self, annotation):
+        if(annotation.annotation_ID):
+                knossos.add_tree(annotation.annotation_ID, annotation.comment)
+        else:
+                knossos.add_tree(0, annotation.comment)
 
 		# load nodes	
 		for node in annotation.nodes:
@@ -52,7 +55,7 @@ class Converter:
    	    		
 
     def load_skeleton_node(self, skeleton_node):	
-		if(not isinstance(skeleton_node, SkeletonNode)):
+        if(not isinstance(skeleton_node, ns.SkeletonNode)):
 	    		print ("this node is no instance of SkeletonNode")
 	    		return
 
@@ -62,6 +65,8 @@ class Converter:
 
 		node_id = skeleton_node.ID
 		tree_id = skeleton_node.annotation.annotation_ID	
+        if not tree_id:
+                tree_id = 0
 
 		if 'radius' in skeleton_node.data:
 	    		radius = skeleton_node.data['radius']
