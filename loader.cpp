@@ -33,13 +33,13 @@ extern "C" {
 
 #include <dirent.h>
 #include <sys/stat.h>
-
-#include "ftp.h"
-#include "knossos.h"
-
 #ifdef KNOSSOS_USE_TURBOJPEG
 #include <turbojpeg.h>
 #endif
+
+#include "ftp.h"
+#include "knossos.h"
+#include "segmentation.h"
 
 extern stateInfo *state;
 
@@ -529,6 +529,11 @@ void Loader::loadCube(loadcube_thread_struct *lts) {
                     qDebug() << "cube at" << QString::fromStdString(inFilePath) << "corrupted: expected" << expectedSize << "bytes got" << buffer.size() << "bytes";
                     std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
                 }
+
+                //read ids
+                const auto idFilePath = std::string(lts->currentCube->fullpath_filename) + ".idlist.raw";
+                Segmentation::singleton().parseIdList(idFilePath);
+
             } else {
                 std::fill(currentOcSlot, currentOcSlot + state->cubeBytes * OBJID_BYTES, 0);
             }

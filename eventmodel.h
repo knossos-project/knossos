@@ -70,6 +70,8 @@ public:
     void nodeSelection(int x, int y, int vpId);
     int xrel(int x);
     int yrel(int y);
+    int mouseDownX;
+    int mouseDownY;
     int mouseX;
     int mouseY;
     bool grap;

@@ -15,12 +15,14 @@
 
 class Segmentation : public QObject {
 Q_OBJECT
+    friend void segmentationColorPicking(const int, const int, const int);
     friend class SegmentationObjectModel;
     friend class SegmentationTab;
     friend class Viewer;
 
     class Object;
     class SubObject {
+        friend void segmentationColorPicking(const int, const int, const int);
         friend class Object;
         friend class Segmentation;
         friend class Viewer;
@@ -37,6 +39,13 @@ Q_OBJECT
                 }
             }
             return false;
+        }
+        void unmerge() {
+            for (auto & obj : objects) {
+                std::remove_if(std::begin(obj.get().subobjects), std::end(obj.get().subobjects), [&](const SubObject & subobj){
+                    return subobj.id == this->id;
+                });
+            }
         }
     };
 
@@ -87,9 +96,9 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
-    bool allObjs; // show all segmentations as opposed to only a selected one
+    bool renderAllObjs; // show all segmentations as opposed to only a selected one
 
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) {
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const {
         const uint8_t red   = overlayColorMap[0][subObjectID % 256];
         const uint8_t green = overlayColorMap[1][subObjectID % 256];
         const uint8_t blue  = overlayColorMap[2][subObjectID % 256];
@@ -133,44 +142,62 @@ public:
         return lut;
     }();
     uint8_t alpha;
-    Segmentation() : allObjs(false) {
-        //generate meta data from raw segmentation
-        parseCube("E:/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation");
-        parseCube("E:/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation");
-        parseCube("E:/segmentation test dataset/x0000/y0000/z0000/segmentation_x0000_y0000_z0000.raw.segmentation.raw");
-        parseCube("E:/segmentation test dataset/x0001/y0000/z0000/segmentation_x0001_y0000_z0000.raw.segmentation.raw");
+    Segmentation() : renderAllObjs(true) {}
+    void createObjectFromSubobjectId(const uint64_t id) {
+        if (subobjects.find(id) == std::end(subobjects)) {//insert only if not already present
+            auto & newKeyValuePair = *subobjects.emplace(id, id).first;//first is iterator to the newly inserted key-value pair
+            objects.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(newKeyValuePair.second));//create object from supervoxel
+        }
+        emit dataChanged();
     }
-    void parseCube(std::string path) {
+    void parseCube(const std::string & path) {
         std::ifstream cubeFile(path, std::ios_base::binary);
         std::vector<uint64_t> cube(128 * 128 * 128);
         cubeFile.read(reinterpret_cast<char * const>(cube.data()), cube.size() * sizeof(cube[0]));
         cube = decltype(cube)(std::begin(cube), std::unique(std::begin(cube), std::end(cube)));
         for (const auto & id : cube) {
-            if (subobjects.find(id) == std::end(subobjects)) {//insert only if not already present
-                auto & newKeyValuePair = *subobjects.emplace(id, id).first;//first is iterator to the newly inserted key-value pair
-                objects.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(newKeyValuePair.second));//create object from supervoxel
-            }
+            createObjectFromSubobjectId(id);
         }
         emit dataChanged();
     }
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColorUnique(const uint64_t subObjectID) {
+    void parseIdList(const std::string & path) {
+        static std::unordered_map<std::string, bool> idFiles;
+        if (idFiles.find(path) != std::end(idFiles)) {
+            return;//file already loaded
+        }
+        idFiles.emplace(path, true);
+
+        std::ifstream idFile(path, std::ios_base::binary);
+
+        std::size_t idCounter = 0;
+        uint64_t readValue;
+        while (idFile.read(reinterpret_cast<char * const>(&readValue), sizeof(readValue))) {
+            ++idCounter;
+            createObjectFromSubobjectId(readValue);
+        }
+        emit dataChanged();
+    }
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColorUnique(const uint64_t subObjectID) const {
         const uint8_t red   =  subObjectID        & 0xFF;
         const uint8_t green = (subObjectID >> 8)  & 0xFF;
         const uint8_t blue  = (subObjectID >> 16) & 0xFF;
 
         return std::make_tuple(red, green, blue, 255);
     }
-    uint64_t subobjectFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) {
-        return std::get<0>(color)
-        +  8 * std::get<1>(color)
-        + 16 * std::get<2>(color);
+    uint64_t subobjectFromUniqueColor(std::tuple<uint8_t, uint8_t, uint8_t> color) const {
+        return std::get<0>(color) + (std::get<1>(color) << 8) + (std::get<2>(color) << 16);
     }
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) {
+    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> objectColorFromSubobject(const uint64_t subObjectID) const {
         if (subObjectID == 0) {
             return std::make_tuple(0, 0, 0, 0);
         }
-        if (subobjects.find(subObjectID) == std::end(subobjects)) {
+        const auto subobjectIt = subobjects.find(subObjectID);
+        if (subobjectIt == std::end(subobjects)) {
             return subobjectColor(subObjectID);
+        }
+        const auto & subobject = subobjectIt->second;
+        if (subobject.objects.front().get().id == 0) {
+            return std::make_tuple(0, 0, 0, 0);
         }
 
         uint8_t   red = 0;
@@ -178,8 +205,8 @@ public:
         uint8_t  blue = 0;
         uint8_t currAlpha = alpha;
         bool selected = false;
-        const auto objectCount = subobjects[subObjectID].objects.size();
-        for (const auto & object : subobjects[subObjectID].objects) {
+        const auto objectCount = subobject.objects.size();
+        for (const auto & object : subobject.objects) {
             if(object.get().selected) {
                 selected = true;
             }
@@ -188,12 +215,11 @@ public:
             green += overlayColorMap[1][objectID % 256] / objectCount;
             blue  += overlayColorMap[2][objectID % 256] / objectCount;
         }
-        if(allObjs == false && selected == false) {
+        if(renderAllObjs == false && selected == false) {
             currAlpha = 0;
         }
         return std::make_tuple(red, green, blue, currAlpha);
     }
-
     Object & merge(Object & one, Object && other) {
         one.merge(std::move(other));
         //remove object
@@ -201,12 +227,25 @@ public:
         emit dataChanged();
         return one;
     }
-
+    void unmerge(SubObject & subobject) {
+        subobject.unmerge();
+        subobjects.erase(subobject.id);
+    }
     void clearObjectSelection() {
         for(auto & obj : selectedObjects) {
             obj.get().selected = false;
         }
         selectedObjects.clear();
+    }
+    void selectObject(const uint64_t objectId) {
+        auto iter = objects.find(objectId);
+        if (iter != std::end(objects)) {
+            iter->second.selected = true;
+            selectedObjects.push_back(iter->second);
+        }
+    }
+    std::size_t selectedObjectsCount() {
+        return selectedObjects.size();
     }
 
 signals:
@@ -216,9 +255,15 @@ public slots:
     void mergeSelectedObjects() {
         while (selectedObjects.size() > 1) {
             auto & obj = selectedObjects.back().get();
+            obj.selected = false;
             selectedObjects.pop_back();
-            merge(selectedObjects.front().get(), std::move(obj));
+            if (obj.id != 0) {//don’t merge void into another object
+                merge(selectedObjects.front().get(), std::move(obj));
+            }
         }
+        selectedObjects.back().get().selected = false;
+        selectedObjects.pop_back();
+        emit dataChanged();
     }
 };
 

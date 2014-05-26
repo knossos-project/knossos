@@ -42,19 +42,47 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
-bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
-    uint clickedNode;
-
+void segmentationColorPicking(const int x, const int y, const int viewportId) {
     state->viewerState->uniqueColorMode = true;
-    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[VPfound], state->viewerState);
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[viewportId], state->viewerState);
 
-    auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(VPfound, event->x(), event->y());
+    const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
 
     state->viewerState->uniqueColorMode = false;
-    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[VPfound], state->viewerState);
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[viewportId], state->viewerState);
 
-    qDebug() << "color picking hit at x=" << (event->x()) << " y=" << (event->y()) << "id=" << Segmentation::singleton().subobjectFromUniqueColor(color);
+    auto & segmentation = Segmentation::singleton();
 
+    const auto subobjectId = segmentation.subobjectFromUniqueColor(color);
+
+    if (subobjectId != 0) {//don’t select the unsegmented area as object
+        //check if subobject exists
+        auto it = segmentation.subobjects.find(subobjectId);
+        if (it == std::end(segmentation.subobjects)) {//create an object for the selected subobject
+            segmentation.createObjectFromSubobjectId(subobjectId);
+            it = segmentation.subobjects.find(subobjectId);
+        }
+        //selected if not selected, unselect if selected
+        auto objId = it->second.objects.front().get().id;
+        auto selectIt = std::find_if(std::begin(segmentation.selectedObjects), std::end(segmentation.selectedObjects), [&](const Segmentation::Object & obj){
+            return obj.id == objId;
+        });
+        if (selectIt != std::end(segmentation.selectedObjects)) {
+            segmentation.clearObjectSelection();
+        } else {
+            segmentation.selectObject(objId);//select first object
+        }
+        //if ther’re 2 selected objects, merge them
+        if (segmentation.selectedObjectsCount() == 2) {
+            segmentation.mergeSelectedObjects();
+        }
+    }
+}
+
+bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
+    mouseDownX = event->x();
+    mouseDownY = event->y();
+    uint clickedNode;
 
     //new active node selected
     if(QApplication::keyboardModifiers() == Qt::ShiftModifier) {
@@ -547,6 +575,10 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/)
 }
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
+    if (event->x() == mouseDownX && event->y() == mouseDownY) {
+        segmentationColorPicking(event->x(), event->y(), VPfound);
+    }
+
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());
     int diffY = std::abs(state->viewerState->nodeSelectionSquare.first.y - event->pos().y());
     if (diffX < 5 && diffY < 5) { // interpreted as click instead of drag

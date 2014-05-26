@@ -78,14 +78,15 @@ void SegmentationObjectModel::recreate() {
 }
 
 SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selectionProtection(false) {
+    showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
+
     objectsTable.setModel(&objectModel);
-
-    bottomHLayout.addWidget(&objectCountLabel);
-    bottomHLayout.addWidget(&subobjectCountLabel);
-
     objectsTable.verticalHeader()->setVisible(false);
     objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     objectsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    bottomHLayout.addWidget(&objectCountLabel);
+    bottomHLayout.addWidget(&subobjectCountLabel);
 
     layout.addWidget(&showAllChck);
     layout.addWidget(&objectsTable);
@@ -98,7 +99,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selection
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
-        Segmentation::singleton().allObjs = value;
+        Segmentation::singleton().renderAllObjs = value;
     });
     objectModel.recreate();
     updateLabels();
@@ -112,19 +113,14 @@ void SegmentationTab::selectionChanged() {
 
     emit clearSegObjSelectionSignal();
 
-    QModelIndexList selected = objectsTable.selectionModel()->selectedRows();
-    foreach(QModelIndex index, selected) {
-        auto iter = Segmentation::singleton().objects.find(index.data().toInt());
-        if(iter != Segmentation::singleton().objects.end()) {
-            iter->second.selected = true;
-            Segmentation::singleton().selectedObjects.push_back(iter->second);
-        }
+    for(const auto & index : objectsTable.selectionModel()->selectedRows()) {
+        Segmentation::singleton().selectObject(index.data().toInt());
     }
 }
 
 void SegmentationTab::updateLabels() {
-    objectCountLabel.setText(QString("Obects: %0").arg(Segmentation::singleton().objects.size()));
-    subobjectCountLabel.setText(QString("Subobects: %0").arg(Segmentation::singleton().subobjects.size()));
+    objectCountLabel.setText(QString("Objects: %0").arg(Segmentation::singleton().objects.size()));
+    subobjectCountLabel.setText(QString("Subobjects: %0").arg(Segmentation::singleton().subobjects.size()));
 }
 
 void SegmentationTab::contextMenu(QPoint pos) {
