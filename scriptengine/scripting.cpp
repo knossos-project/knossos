@@ -69,8 +69,8 @@ void Scripting::run() {
     ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
     ctx.addVariable("GL_POLYGON", GL_POLYGON);
 
-    ctx.addObject("tool_bar", signalDelegate->toolBarSignal());
-    ctx.addObject("menu_bar", signalDelegate->menuBarSignal());
+    //ctx.addObject("tool_bar", signalDelegate->toolBarSignal());
+    //ctx.addObject("menu_bar", signalDelegate->menuBarSignal());
 
     QString module("internal");
     PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());

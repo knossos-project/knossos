@@ -68,6 +68,22 @@ void SkeletonProxy::export_converter(const QString &path) {
 
 }
 
+void SkeletonProxy::edit_tree_comment(int tree_id, const QString &comment) {
+    if(!Skeletonizer::addTreeComment(tree_id, comment)) {
+        emit echo(QString("could not find a tree with id %1").arg(tree_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+void SkeletonProxy::edit_node_comment(int node_id, const QString &comment) {
+    if(!Skeletonizer::addComment(comment, 0, node_id)) {
+        emit echo(QString("could not find a node with id %1").arg(node_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
 bool SkeletonProxy::has_unsaved_changes() {
     return state->skeletonState->unsavedChanges;
 }
@@ -80,13 +96,47 @@ void SkeletonProxy::delete_tree(int tree_id) {
    }
 }
 
-void SkeletonProxy::delete_skeleton() {
+void SkeletonProxy::delete_active_tree() {
+    if(!Skeletonizer::delActiveTree()) {
+        emit echo (QString("there is no active tree to delete"));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+void SkeletonProxy::delete_skeleton() {    
     emit signalDelegate->clearSkeletonSignal();
 }
 
+void SkeletonProxy::delete_segment(int source_id, int target_id) {
+    if(!Skeletonizer::delSegment(source_id, target_id, NULL)) {
+        emit echo(QString("could not delete the segment with source id %1 and target id %2").arg(source_id).arg(target_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+void SkeletonProxy::delete_node(int node_id) {
+    if(!Skeletonizer::delNode(node_id, NULL)) {
+        emit echo(QString("could not delete the node with id %1").arg(node_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+void SkeletonProxy::delete_active_node() {
+    if(!Skeletonizer::delActiveNode()) {
+        emit echo(QString("there is no active node to delete"));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
 void SkeletonProxy::set_active_node(int node_id) {
-    if(!Skeletonizer::setActiveNode( 0, node_id)) {
+    if(!Skeletonizer::setActiveNode(0, node_id)) {
         emit echo(QString("could not set the node with id %1 to active node").arg(node_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
     }
 }
 
@@ -114,7 +164,7 @@ void SkeletonProxy::add_node(int node_id, int x, int y, int z, int parent_tree_i
         parent_tree_id = state->skeletonState->activeTree ? (state->skeletonState->activeTree->treeID) : 1;
     }
 
-    Coordinate coordinate(x, y, z);
+    Coordinate coordinate(x-1, y-1, z-1);
     if(Skeletonizer::addNode(node_id, radius, parent_tree_id, &coordinate, inVp, inMag, time, false)) {
         Skeletonizer::setActiveNode( state->skeletonState->activeNode, node_id);
         emit signalDelegate->nodeAddedSignal();
@@ -134,7 +184,12 @@ QList<treeListElement *> *SkeletonProxy::trees() {
 }
 
 void SkeletonProxy::add_tree(int tree_id, const QString &comment, float r, float g, float b, float a) {
+    if(tree_id < 0) {
+        emit echo("no tree id in negative range is allowed. tree is rejected");
+    }
+
     color4F color(r, g, b, a);
+
     treeListElement *theTree = Skeletonizer::addTreeListElement(tree_id, color);
     if(!theTree) {
         emit echo(QString("could not add the tree with tree id %1").arg(tree_id));
@@ -156,6 +211,8 @@ void SkeletonProxy::add_comment(int node_id, char *comment) {
     if(node) {
         if(!Skeletonizer::addComment( QString(comment), node, 0)) {
             emit echo(QString("An unexpected error occured while adding a comment for node id %1").arg(node_id));
+        } else {
+            emit signalDelegate->updateTreeViewSignal();
         }
     } else {
         emit echo(QString("no node id id %1 found").arg(node_id));
@@ -164,13 +221,13 @@ void SkeletonProxy::add_comment(int node_id, char *comment) {
 
 void SkeletonProxy::add_segment(int source_id, int target_id) {
     if(Skeletonizer::addSegment(source_id, target_id)) {
-
+        emit signalDelegate->updateTreeViewSignal();
     } else {
        emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
     }
 }
 
-void SkeletonProxy::add_branch_node(int node_id) {
+void SkeletonProxy::set_branch_node(int node_id) {
     nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
     if(currentNode) {
         if(Skeletonizer::pushBranchNode(true, false, currentNode, 0)) {
@@ -285,8 +342,10 @@ QString SkeletonProxy::help() {
                    "\n first_tree() : returns the first tree of the knossos skeleton" \
                    "\n export_converter(path) : creates a python class in the path which can be used to convert between the NewSkeleton class and KNOSSOS."
                    "\n\n SETTER:" \
-                   "\n add_branch_node(node_id) : sets the node with node_id to branch_node" \
-                   "\n add_segment(source_id, target_id) : adds a segment for the nodes. Both nodes must be added before"
+                   "\n set_branch_node(node_id) : sets the node with node_id to branch_node" \
+                   "\n add_segment(source_id, target_id) : adds a segment for the nodes. Both nodes must be added before" \
+                   "\n delete_active_node() : deletes the active node or informs about that no active node could be deleted" \
+                   "\n delete_segment(source_id, target_id) : deletes a segment with source" \
                    "\n add_comment(node_id) : adds a comment for the node. Must be added before" \
                    "\n add_tree(tree_id, comment, r (opt), g (opt), b (opt), a (opt)) : adds a new tree" \
                    "\n\t If does not mind if no color is specified. The lookup table sets this automatically." \
@@ -294,11 +353,12 @@ QString SkeletonProxy::help() {
                    "\n\t adds a node for a parent tree where a couple of parameter are optional. " \
                    "\n\t if no parent_id is set then the current active node will be chosen." \
                    "\n delete_tree(tree_id) : deletes the tree with the passed id. Returns a message if no such tree exists." \
+                   "\n delete_active_tree() : deletes the active tree or informs about that no active tree could be deleted." \
                    "\n delete_skeleton() : deletes the entire skeleton." \
                    "\n from_xml(filename) : loads a skeleton from a .nml file" \
                    "\n to_xml(filename) : saves a skeleton to a .nml file" \
                    "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
-                   "\n render_Mesh(mesh) : renders the mesh. Call mesh.help() for additional information." \
+                   "\n render_mesh(mesh) : renders the mesh. Call mesh.help() for additional information." \
                    "\n save_sys_path(path) : saves the python sys_path from the console" \
                    "\n move_to(x, y, z) : recenters the viewport coordinates to (x, y, z)" \
                    "\n save_working_directory(path) : saves the working directory from the console");
