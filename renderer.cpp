@@ -473,7 +473,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     //glClear(GL_DEPTH_BUFFER_BIT); /* better place? TDitem */
 
-    if(state->viewerState->selectModeFlag == false) {
+    if(!state->viewerState->selectModeFlag && !state->viewerState->uniqueColorMode) {
         if(state->viewerState->multisamplingOnOff) glEnable(GL_MULTISAMPLE);
 
         if(state->viewerState->lightOnOff) {
@@ -623,7 +623,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(0., 1., 0., 0.3);
@@ -755,7 +755,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -874,7 +874,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glDisable(GL_DEPTH_TEST);
-            if(state->viewerState->drawVPCrosshairs) {
+            if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
                 glLineWidth(1.);
                 glBegin(GL_LINES);
                     glColor4f(1., 0., 0., 0.3);
@@ -1016,7 +1016,7 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
 
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_DEPTH_TEST);
-        if(state->viewerState->drawVPCrosshairs) {
+        if(state->viewerState->drawVPCrosshairs && !state->viewerState->uniqueColorMode) {
             glLineWidth(1.);
             glBegin(GL_LINES);
                 glColor4f(v2->z, v2->y, v2->x, 0.3);
@@ -1051,7 +1051,8 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
         break;
     }
     glDisable(GL_BLEND);
-    renderViewportBorders(currentVP);
+    if(!state->viewerState->uniqueColorMode)
+        renderViewportBorders(currentVP);
     return true;
 }
 
