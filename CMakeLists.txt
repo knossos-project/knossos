@@ -7,9 +7,9 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(CustomLibraryLocations.cmake)
+include(CustomLibraryLocations.cmake)#prefill variables
 
-#the *.cpp file (why ever its named *.cpp) is skipped because it causes problems
+#the *.cpp file of openjpeg (why ever its named *.cpp) is skipped because it causes problems
 file(GLOB openjpeg ./openjpeg/*.c ./openjpeg/*.h)
 
 file(GLOB root *.cpp *.h)
@@ -19,32 +19,37 @@ set(SRC_LIST ${openjpeg} ${root} ${widgets})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(KNOSSOS_STATIC_LIBRARIES OFF CACHE BOOL "try to find static versions of all libraries")
+if(KNOSSOS_STATIC_LIBRARIES)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES})#prefer static (*.a) over import (*.dll.a) libraries
+endif()
+
 find_package(CURL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 
 if(WIN32)
-    #statically link to curl
-    add_definitions(-DCURL_STATICLIB)
-    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)
-    #statically link to glut
-    string(REGEX REPLACE "\\.dll" "" GLUT_LIBRARIES ${GLUT_LIBRARIES})
-    add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
-    set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+    set(CURL_LIBRARIES ${CURL_LIBRARIES} -lWs2_32)#this is apparently always neccessary
+    if(KNOSSOS_STATIC_LIBRARIES)
+        #these definitions remove the dllimport directives from the includes
+        add_definitions(-DCURL_STATICLIB)
+        add_definitions(-DFREEGLUT_STATIC -DGLUT_STATIC_LIB)
+        #satisfy additional dependecies
+        set(GLUT_LIBRARIES ${GLUT_LIBRARIES} -lWinmm)
+    endif()
 endif()
 
 #i refrained from creating an external FindTurboJPEG.cmake
-#a TurboJPEG-config.cmake in the install directory would be nice
+#but a TurboJPEG-config.cmake in the install directory would be nice
 find_path(TURBOJPEG_INCLUDE_DIR turbojpeg.h REQUIRED)
-set(turbojpeg_static "libturbojpeg.a")#prefer static lib
-find_library(TURBOJPEG_LIBRARY NAMES ${turbojpeg_static} turbojpeg PATHS "C:/libjpeg-turbo-gcc" "C:/libjpeg-turbo-gcc64")
+find_library(TURBOJPEG_LIBRARY turbojpeg)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(TURBOJPEG REQUIRED_VARS TURBOJPEG_INCLUDE_DIR TURBOJPEG_LIBRARY)
+find_package_handle_standard_args(TURBOJPEG DEFAULT_MSG TURBOJPEG_INCLUDE_DIR TURBOJPEG_LIBRARY)
 
 add_library(TurboJPEG STATIC IMPORTED)
 set_property(TARGET TurboJPEG PROPERTY IMPORTED_LOCATION ${TURBOJPEG_LIBRARY})
-include_directories(TURBOJPEG_INCLUDE_DIR)
+include_directories(${TURBOJPEG_INCLUDE_DIR})
 #enable turbojpeg inside knossos
 add_definitions(-DKNOSSOS_USE_TURBOJPEG)
 

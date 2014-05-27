@@ -40,8 +40,8 @@ before_script:
 
 script:
   - cd build_debug
-  - ninja -j2
+  - ninja -j3
   - cd ..
   - cd build_release
-  - ninja -j2
+  - ninja -j3
   - cd ..
