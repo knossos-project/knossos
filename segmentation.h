@@ -5,6 +5,8 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <istream>
 #include <functional>
 #include <tuple>
 #include <unordered_map>
@@ -85,6 +87,7 @@ Q_OBJECT
         uint64_t id;
         bool selected;
         Object() : id(0), selected(false) {}
+        Object(uint64_t id) : id(id), selected(false) {}
         Object(Object &&) = delete;
         Object(const Object &) = delete;
         Object(SubObject & initialVolume) : id(initialVolume.id), selected(false) {
@@ -93,6 +96,10 @@ Q_OBJECT
         }
         bool operator==(const Object & other) {
             return id == other.id;
+        }
+        void addSubObject(SubObject & sub) {
+            subobjects.emplace_back(sub);
+            sub.objects.emplace_back(*this);
         }
     };
 
@@ -162,13 +169,19 @@ public:
             localTime->tm_year -= 100;
         }
         filename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-                + "/segmentationFiles/segmentation-%1%2%3-%4%5.000")
+                + "/segmentationFiles/segmentation-%1%2%3-%4%5.000.mrg")
                 //value, right aligned padded to width 2, base 10, filled with '0'
                 .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
                 .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
                 .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
                 .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
                 .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
+    }
+
+    Object &addObject(const uint64_t id) {
+        // emplace returns pair of iterator (first) and bool (second)
+        Object &obj = objects.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(id)).first->second;
+        return obj;
     }
 
     void createObjectFromSubobjectId(const uint64_t id) {
@@ -178,6 +191,15 @@ public:
         }
         emit dataChanged();
     }
+
+    /**
+     * @brief newSubObject create new subobject and add to given object
+     */
+    void newSubObject(Object & obj, uint64_t subObjID) {
+        auto & newSubObjIt = *subobjects.emplace(subObjID, subObjID).first;
+        obj.addSubObject(newSubObjIt.second);
+    }
+
     void parseCube(const std::string & path) {
         std::ifstream cubeFile(path, std::ios_base::binary);
         std::vector<uint64_t> cube(128 * 128 * 128);
@@ -276,7 +298,7 @@ public:
         return selectedObjects.size();
     }
 
-    void saveObjects(QString toFile=Segmentation::singleton().filename) {
+    void saveMergelist(QString toFile=Segmentation::singleton().filename) {
         std::string objString;
         for(const auto & obj : objects) {
             objString += std::to_string(obj.first) + " ";
@@ -290,6 +312,51 @@ public:
         std::ofstream file(toFile.toStdString());
         file << objString;
         file.close();
+    }
+
+    void loadMergelist(std::string fileName) {
+        std::ifstream file;
+        file.open(fileName, std::ifstream::in);
+        if(file.good()) {
+            while(file.eof() == false) {
+                std::string line;
+                std::getline(file, line);
+
+                std::stringstream lineStrm(line);
+                std::vector<std::string> elems;
+                std::string elem;
+                while(std::getline(lineStrm, elem, ' ')) {
+                    elems.push_back(elem);
+                }
+                if(elems.size() == 0) {
+                    continue;
+                }
+                uint64_t objID;
+                std::stringstream strstream(elems[0]);
+                strstream >> objID;
+                if(strstream.fail()) {
+                    qDebug("invalid entry");
+                    continue;
+                }
+                elems.erase(elems.begin());
+                Object &obj = addObject(objID);
+                for(const std::string & elem : elems) {
+                    uint64_t id;
+                    std::stringstream subObjStrStream(elem);
+                    subObjStrStream >> id;
+                    if(subObjStrStream.fail()) {
+                        qDebug("invalid subobj entry");
+                        continue;
+                    }
+                    newSubObject(obj, id);
+                }
+            }
+        }
+        else {
+            qDebug("File not found!");
+        }
+        file.close();
+        emit dataChanged();
     }
 
 signals:

@@ -412,9 +412,11 @@ void MainWindow::createMenus() {
     segFileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...",
                         widgetContainer->datasetPropertyWidget, SLOT(show()));
     segFileMenu->addSeparator();
-    segFileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Object List",
+    segFileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Mergelist...",
+                        this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    segFileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Mergelist",
                            this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    segFileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Object List As...", this, SLOT(saveAsSlot()));
+    segFileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Mergelist As...", this, SLOT(saveAsSlot()));
     segFileMenu->addSeparator();
     segFileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
@@ -745,13 +747,22 @@ void MainWindow::becomeFirstEntry(const QString &entry) {
   */
 void MainWindow::openSlot() {
     state->viewerState->renderInterval = SLOW;
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
-    if(fileNames.empty() == false) {
-        QFileInfo info(fileNames.at(0));
-        openFileDirectory = info.dir().absolutePath();
-        loadSkeletonAfterUserDecision(fileNames);
+    if(Segmentation::singleton().segmentationMode) {
+        QString fileName = QFileDialog::getOpenFileName(this, "Open Mergelist", openSegFileDirectory, "KNOSSOS Merge list (*.mrg)");
+        if(fileName.isEmpty() == false) {
+            QFileInfo info(fileName);
+            openSegFileDirectory = info.dir().absolutePath();
+            Segmentation::singleton().loadMergelist(fileName.toStdString());
+        }
     }
-
+    else {
+        QStringList fileNames = QFileDialog::getOpenFileNames(this, "Open Skeleton File", openFileDirectory, "KNOSSOS Skeleton file(*.nml)");
+        if(fileNames.empty() == false) {
+            QFileInfo info(fileNames.at(0));
+            openFileDirectory = info.dir().absolutePath();
+            loadSkeletonAfterUserDecision(fileNames);
+        }
+    }
     state->viewerState->renderInterval = FAST;
 }
 
@@ -809,7 +820,7 @@ void MainWindow::saveSlot() {
             if(state->skeletonState->autoFilenameIncrementBool) {
                updateFileName(Segmentation::singleton().filename);
             }
-            Segmentation::singleton().saveObjects();
+            Segmentation::singleton().saveMergelist();
             updateTitlebar();
         }
         return;
@@ -864,12 +875,12 @@ void MainWindow::saveAsSlot() {
             seg->setDefaultFilename();
         }
         auto suggestedFile = saveSegFileDirectory + '/' + QFileInfo(seg->filename).fileName();
-        QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Segmentation file",
-                                                        suggestedFile, "KNOSSOS Segmentation file (*)");
+        QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Mergelist file",
+                                                        suggestedFile, "KNOSSOS Mergelist file (*.mrg)");
         if(!fileName.isEmpty()) {
             seg->filename = fileName;
             saveSegFileDirectory = QFileInfo(fileName).absolutePath();
-            seg->saveObjects();
+            seg->saveMergelist();
 
             updateTitlebar();
         }
@@ -1283,7 +1294,7 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
 void MainWindow::updateFileName(QString & fileName) {
     QRegExp versionRegEx;
     if(Segmentation::singleton().segmentationMode) {
-        versionRegEx = QRegExp("(\\.)([0-9]{3})$");
+        versionRegEx = QRegExp("(\\.)([0-9]{3})\\.mrg$");
     }
     else {
         versionRegEx = QRegExp("(\\.)([0-9]{3})\\.nml$");

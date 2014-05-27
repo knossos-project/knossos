@@ -66,6 +66,7 @@ protected:
     QMenu *skelEditMenu;
     QMenu *segEditMenu;
     QString openFileDirectory;
+    QString openSegFileDirectory;
     QString saveSkelFileDirectory;
     QString saveSegFileDirectory;
 public:
