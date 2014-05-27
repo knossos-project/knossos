@@ -33,12 +33,15 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
     autoStartFolder->setToolTip("Scripts in this folder were automatically started with KNOSSOS");
     autoStartFolderButton = new QPushButton("Select Autostart Folder");
     autoStartTerminal = new QCheckBox("Open Terminal On Start");
+    workingDirectoryButton = new QPushButton("Select working directory");
+    workingDirectory = new QLineEdit();
 
     saveButton = new QPushButton("save");
 
     layout->addRow(pythonInterpreterField, pythonInterpreterButton);
     layout->addRow(autoStartFolder, autoStartFolderButton);
     layout->addWidget(autoStartTerminal);
+    layout->addRow(workingDirectory, workingDirectoryButton);
 
 
     setLayout(layout);
@@ -46,7 +49,7 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
 
     connect(pythonInterpreterButton, SIGNAL(clicked()), this, SLOT(pythonInterpreterButtonClicked()));
     connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
-
+    connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
 }
 
 void PythonPropertyWidget::closeEvent(QCloseEvent *e) {
@@ -131,25 +134,28 @@ void PythonPropertyWidget::openTerminal() {
     }
 
     QString path(QString("%1%2").arg(home).arg("/.ipython/profile_default/security"));
-
+    QRegExp regex("[-.]");
 
     QDirIterator it(path);
     while(it.hasNext()) {
         QString filename = it.next();
-        if(filename.contains(QString("%1").arg(pid))) {
-        QFileInfo info(filename);
-        filename = info.fileName();
-#ifdef Q_OS_OSX
-        QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
-        system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
-#endif
-#ifdef Q_OS_LINUX
-        QString args = QString("ipython console --existing '%1'").arg(filename);
-        system(QString("/usr/bin/xterm -e '%1' &").arg(args).toUtf8().data());
-#endif
-#ifdef Q_OS_WIN
-           system(QString("'%1' &").arg(args).toUtf8().data());
-#endif
+
+        QStringList list = filename.split(regex);
+        if(list.at(2).toInt() == pid) {
+
+            QFileInfo info(filename);
+            filename = info.fileName();
+    #ifdef Q_OS_OSX
+            QString args = QString("/Library/Frameworks/Python.framework/Versions/2.7/bin/ipython console --existing %1").arg(filename);
+            system(QString("/opt/X11/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+    #endif
+    #ifdef Q_OS_LINUX
+            QString args = QString("ipython console --existing '%1'").arg(filename);
+            system(QString("/usr/bin/xterm -e '%1' &").arg(args).toUtf8().data());
+    #endif
+    #ifdef Q_OS_WIN
+               system(QString("'%1' &").arg(args).toUtf8().data());
+    #endif
         }
     }
 
@@ -166,6 +172,8 @@ void PythonPropertyWidget::saveSettings() {
 
     if(!this->pythonInterpreterField->text().isEmpty())
         settings.setValue(PYTHON_INTERPRETER, this->pythonInterpreterField->text());
+    if(!this->workingDirectory->text().isEmpty())
+        settings.setValue(PYTHON_WORKING_DIRECTORY, this->workingDirectory->text());
     if(!this->autoStartFolder->text().isEmpty())
         settings.setValue(PYTHON_AUTOSTART_FOLDER, this->autoStartFolder->text());
     settings.setValue(PYTHON_AUTOSTART_TERMINAL, this->autoStartTerminal->isChecked());
@@ -213,6 +221,11 @@ void PythonPropertyWidget::loadSettings() {
         emit executeUserScriptsSignal();
     }
 
+    if(!settings.value(PYTHON_WORKING_DIRECTORY).isNull() and !settings.value(PYTHON_WORKING_DIRECTORY).toString().isEmpty()) {
+        workingDirectory->setText(settings.value(PYTHON_WORKING_DIRECTORY).toString());
+        emit changeWorkingDirectory();
+    }
+
     if(!settings.value(PYTHON_AUTOSTART_TERMINAL).isNull() and settings.value(PYTHON_AUTOSTART_TERMINAL).toBool()) {
         autoStartTerminal->setChecked(settings.value(PYTHON_AUTOSTART_TERMINAL).toBool());
         openTerminal();
@@ -226,4 +239,14 @@ void PythonPropertyWidget::autoStartTerminalClicked(bool on) {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     settings.setValue(PYTHON_AUTOSTART_TERMINAL, on);
     settings.endGroup();
+}
+
+void PythonPropertyWidget::workingDirectoryButtonClicked() {
+    state->viewerState->renderInterval = SLOW;
+     QString selection = QFileDialog::getExistingDirectory(this, "select a working directory", QDir::homePath());
+     if(!selection.isEmpty()) {
+         workingDirectory->setText(selection);
+     }
+
+     state->viewerState->renderInterval = FAST;
 }

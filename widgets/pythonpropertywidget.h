@@ -18,14 +18,17 @@ protected:
     QPushButton *autoStartFolderButton;
     QPushButton *saveButton;
     QPushButton *defaultPreferences;
+    QPushButton *workingDirectoryButton;
     QLineEdit *pythonInterpreterField;
     QLineEdit *autoStartFolder;
     QCheckBox *autoStartTerminal;
+    QLineEdit *workingDirectory;
 
     void closeEvent(QCloseEvent *e);
 
 signals:
     void executeUserScriptsSignal();
+    void changeWorkingDirectory();
 public slots:
     void pythonInterpreterButtonClicked();
     void autoStartFolderButtonClicked();
@@ -34,6 +37,8 @@ public slots:
     void saveSettings();
     void loadSettings();
     void autoStartTerminalClicked(bool on);
+    void workingDirectoryButtonClicked();
+
 
 
 };

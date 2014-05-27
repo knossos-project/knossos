@@ -49,9 +49,10 @@ signals:
 
 public slots:
     static void addScriptingObject(const QString &name, QObject *obj);
-    void saveSettings(const QString &key, const QVariant &value); 
+    void saveSettings(const QString &key, const QVariant &value);     
     void executeFromUserDirectory();
-
+    void changeWorkingDirectory();
+    void addWidgets(PythonQtObjectPtr &context);
 protected:
     QSettings *settings;   
 };

@@ -14,6 +14,97 @@ SkeletonProxy::SkeletonProxy(QObject *parent) :
 
 }
 
+treeListElement *SkeletonProxy::tree_with_previous_id(int tree_id) {
+    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    return Skeletonizer::getTreeWithPrevID(tree);
+}
+
+treeListElement *SkeletonProxy::tree_with_next_id(int tree_id) {
+    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    return Skeletonizer::getTreeWithNextID(tree);
+}
+
+bool SkeletonProxy::move_to_next_tree() {
+    return signalDelegate->moveToNextTreeSignal();
+}
+
+bool SkeletonProxy::move_to_previous_tree() {
+    return signalDelegate->moveToPreviousTreeSignal();
+}
+
+treeListElement *SkeletonProxy::find_tree_by_id(int tree_id) {
+    return SkeletonProxy::find_tree_by_id(tree_id);
+}
+
+treeListElement *SkeletonProxy::first_tree() {
+    return state->skeletonState->firstTree;
+}
+
+void SkeletonProxy::add_tree_comment(int tree_id, const QString &comment) {
+    if(!Skeletonizer::addTreeComment(tree_id, comment)) {
+        emit echo(QString("could not find a tree with id %1").arg(tree_id));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+void SkeletonProxy::delete_tree(int tree_id) {
+   if(!Skeletonizer::delTree(tree_id)) {
+       emit echo(QString("could not delete the tree with id %1").arg(tree_id));
+   } else {
+       emit signalDelegate->updateTreeViewSignal();
+   }
+}
+
+void SkeletonProxy::delete_active_tree() {
+    if(!Skeletonizer::delActiveTree()) {
+        emit echo (QString("there is no active tree to delete"));
+    } else {
+        emit signalDelegate->updateTreeViewSignal();
+    }
+}
+
+bool SkeletonProxy::merge_trees(int tree_id, int other_tree_id) {
+    return Skeletonizer::mergeTrees(tree_id, other_tree_id);
+}
+
+//
+
+nodeListElement *SkeletonProxy::find_node_by_id(int node_id) {
+    return Skeletonizer::findNodeByNodeID(node_id);
+}
+
+bool SkeletonProxy::move_node_to_tree(int node_id, int tree_id) {
+    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    return Skeletonizer::moveNodeToTree(node, tree_id);
+}
+
+nodeListElement *SkeletonProxy::find_nearby_node_from_tree(int tree_id, int x, int y, int z) {
+    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    Coordinate coord(x, y, z);
+    return Skeletonizer::findNearbyNode(tree, coord);
+}
+
+nodeListElement *SkeletonProxy::find_node_in_radius(int x, int y, int z) {
+    Coordinate coord(x, y, z);
+    return Skeletonizer::findNodeInRadius(coord);
+}
+
+nodeListElement *SkeletonProxy::node_with_prev_id(int node_id, bool same_tree) {
+    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    return Skeletonizer::getNodeWithPrevID(node, same_tree);
+}
+
+nodeListElement *SkeletonProxy::node_with_next_id(int node_id, bool same_tree) {
+    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    return Skeletonizer::getNodeWithNextID(node, same_tree);
+}
+
+bool SkeletonProxy::edit_node(int node_id, float radius, int x, int y, int z, int in_mag) {
+    return Skeletonizer::editNode(node_id, 0, radius, x, y, z, in_mag);
+}
+
+
 int SkeletonProxy::skeleton_time() {
     return state->skeletonState->skeletonTime;
 }
@@ -34,9 +125,6 @@ void SkeletonProxy::to_xml(const QString &filename) {
     }
 }
 
-treeListElement *SkeletonProxy::first_tree() {
-    return state->skeletonState->firstTree;
-}
 
 void SkeletonProxy::export_converter(const QString &path) {
     QDir dir(path);
@@ -68,41 +156,20 @@ void SkeletonProxy::export_converter(const QString &path) {
 
 }
 
-void SkeletonProxy::edit_tree_comment(int tree_id, const QString &comment) {
-    if(!Skeletonizer::addTreeComment(tree_id, comment)) {
-        emit echo(QString("could not find a tree with id %1").arg(tree_id));
-    } else {
-        emit signalDelegate->updateTreeViewSignal();
-    }
+segmentListElement *SkeletonProxy::find_segment(int source_id, int target_id) {
+    return Skeletonizer::findSegmentByNodeIDs(source_id, target_id);
 }
 
-void SkeletonProxy::edit_node_comment(int node_id, const QString &comment) {
-    if(!Skeletonizer::addComment(comment, 0, node_id)) {
-        emit echo(QString("could not find a node with id %1").arg(node_id));
-    } else {
-        emit signalDelegate->updateTreeViewSignal();
-    }
+bool SkeletonProxy::jump_to_active_node() {
+    return signalDelegate->jumpToActiveNodeSignal();
 }
+
 
 bool SkeletonProxy::has_unsaved_changes() {
     return state->skeletonState->unsavedChanges;
 }
 
-void SkeletonProxy::delete_tree(int tree_id) {
-   if(!Skeletonizer::delTree(tree_id)) {
-       emit echo(QString("could not delete the tree with id %1").arg(tree_id));
-   } else {
-       emit signalDelegate->updateTreeViewSignal();
-   }
-}
 
-void SkeletonProxy::delete_active_tree() {
-    if(!Skeletonizer::delActiveTree()) {
-        emit echo (QString("there is no active tree to delete"));
-    } else {
-        emit signalDelegate->updateTreeViewSignal();
-    }
-}
 
 void SkeletonProxy::delete_skeleton() {    
     emit signalDelegate->clearSkeletonSignal();
@@ -332,6 +399,8 @@ void SkeletonProxy::loadStyleSheet(const QString &filename) {
     qApp->setStyleSheet(design);
     file.close();
 }
+
+
 
 QString SkeletonProxy::help() {
     return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \

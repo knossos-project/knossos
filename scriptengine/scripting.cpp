@@ -68,6 +68,7 @@ void Scripting::run() {
     ctx.addVariable("GL_QUADS", GL_QUADS);
     ctx.addVariable("GL_QUAD_STRIP", GL_QUAD_STRIP);
     ctx.addVariable("GL_POLYGON", GL_POLYGON);
+    addWidgets(ctx);
 
     //ctx.addObject("tool_bar", signalDelegate->toolBarSignal());
     //ctx.addObject("menu_bar", signalDelegate->menuBarSignal());
@@ -114,6 +115,18 @@ void Scripting::saveSettings(const QString &key, const QVariant &value) {
     settings->setValue(key, value);
 }
 
+void Scripting::changeWorkingDirectory() {
+    QSettings settings;
+    settings.beginGroup(PYTHON_PROPERTY_WIDGET);
+    QString path = settings.value(PYTHON_WORKING_DIRECTORY).toString();
+    settings.endGroup();
+
+    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+    ctx.evalScript("import os");
+    ctx.evalScript(QString("os.chdir('%1')").arg(path));
+
+}
+
 void Scripting::executeFromUserDirectory() {
     QSettings settings;
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
@@ -139,5 +152,32 @@ void Scripting::executeFromUserDirectory() {
 
         ctx.evalFile(script.canonicalFilePath());
 
+    }
+}
+
+/** This methods create a pep8-style object name for all knossos widget and
+ *  adds them to the python-context. Widgets with a leading Q are ignored
+*/
+void Scripting::addWidgets(PythonQtObjectPtr &context) {
+    QWidgetList list = QApplication::allWidgets();
+    foreach(QWidget *widget, list) {
+        QString name = widget->metaObject()->className();
+        QByteArray array;
+
+        for(int i = 0; i < name.size(); i++) {
+            if(name.at(i).isLower()) {
+                array.append(name.at(i));
+            } else if(name.at(i).isUpper()) {
+                if(i == 0 and name.at(i) == 'Q') {
+                    continue;
+                } else if(i == 0 and name.at(i) != 'Q') {
+                    array.append(name.at(i).toLower());
+                } else {
+                    array.append(QString("_%1").arg(name.at(i).toLower()));
+                }
+            }
+        }
+
+        context.addObject(QString(array), widget);
     }
 }

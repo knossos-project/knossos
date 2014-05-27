@@ -164,11 +164,8 @@ int main(int argc, char *argv[])
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::changeDatasetMagSignal, &viewer, &Viewer::changeDatasetMag, Qt::DirectConnection);
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::startLoaderSignal, knossos.get(), &Knossos::startLoader);
     QObject::connect(viewer.window->widgetContainer->datasetPropertyWidget, &DatasetPropertyWidget::userMoveSignal, &viewer, &Viewer::userMove);
-
     QObject::connect(viewer.skeletonizer, &Skeletonizer::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-
     QObject::connect(viewer.eventModel, &EventModel::setRecenteringPositionSignal, &remote, &Remote::setRecenteringPosition);
-
     QObject::connect(&remote, &Remote::userMoveSignal, &viewer, &Viewer::userMove);
     QObject::connect(&remote, &Remote::updateViewerStateSignal, &viewer, &Viewer::updateViewerState);
 
@@ -186,6 +183,8 @@ int main(int argc, char *argv[])
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
 
+    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, SIGNAL(changeWorkingDirectory()), &scripts, SLOT(changeWorkingDirectory()));
+
     QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement*)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
     QObject::connect(signalDelegate, SIGNAL(updateTreeViewSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(update()));
@@ -196,6 +195,9 @@ int main(int argc, char *argv[])
     QObject::connect(signalDelegate, SIGNAL(clearSkeletonSignal()), viewer.window, SLOT(clearSkeletonWithoutConfirmation()));
     QObject::connect(signalDelegate, SIGNAL(toolBarSignal()), viewer.window, SLOT(getToolBar()));
     QObject::connect(signalDelegate, SIGNAL(menuBarSignal()), viewer.window, SLOT(getMenuBar()));
+    QObject::connect(signalDelegate, SIGNAL(moveToNextTreeSignal()), viewer.skeletonizer, SLOT(moveToNextTree()));
+    QObject::connect(signalDelegate, SIGNAL(moveToPreviousTreeSignal()), viewer.skeletonizer, SLOT(moveToPrevTree()));
+    QObject::connect(signalDelegate, SIGNAL(jumpToActiveNodeSignal()), viewer.skeletonizer, SLOT(jumpToActiveNode()));
 
     scripts.start();
 
