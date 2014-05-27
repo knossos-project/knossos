@@ -4,9 +4,8 @@
 #include <QDebug>
 
 Q_DECLARE_METATYPE(color4F)
+
 Q_DECLARE_METATYPE(mesh)
-
-
 
 MeshDecorator::MeshDecorator(QObject *parent) :
     QObject(parent)
@@ -15,7 +14,7 @@ MeshDecorator::MeshDecorator(QObject *parent) :
 
 }
 
-mesh *MeshDecorator::new_Mesh(uint mode) {
+mesh *MeshDecorator::new_mesh(uint mode) {
     mesh *instance = new mesh(mode);
     Renderer::initmesh(instance, 2);
     return instance;
@@ -92,10 +91,10 @@ void MeshDecorator::set_size(mesh *self, uint size) {
 }
 
 /** @todo check the size-commands for the other modes */
-QString MeshDecorator::static_Mesh_help() {
+QString MeshDecorator::static_mesh_help() {
     return QString("An instanceable class for rendering geometry from python. Access to the attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS:" \
-                   "\n Mesh(mode) : Creates a mesh object. The constructor expects an openGL vertex mode constant:" \
+                   "\n mesh(mode) : Creates a mesh object. The constructor expects an openGL vertex mode constant:" \
                    "\n\t GL_POINTS, GL_LINES, GL_TRIANGLES, GL_QUADS, GL_POLYGON" \
                    "\n\n GETTER: " \
                    "\n vertices() : returns a list of float coordinates of the current mesh" \

@@ -11,11 +11,11 @@ FloatCoordinateDecorator::FloatCoordinateDecorator(QObject *parent) :
     qRegisterMetaType<floatCoordinate>();
 }
 
-floatCoordinate *FloatCoordinateDecorator::new_FCoordinate() {
+floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate() {
     return new floatCoordinate();
 }
 
-floatCoordinate *FloatCoordinateDecorator::new_FCoordinate(float x, float y, float z) {
+floatCoordinate *FloatCoordinateDecorator::new_floatCoordinate(float x, float y, float z) {
     return new floatCoordinate(x, y, z);
 }
 
@@ -31,7 +31,7 @@ float FloatCoordinateDecorator::z(floatCoordinate *self) {
     return self->z;
 }
 
-QString FloatCoordinateDecorator::static_FCoordinate_help() {
+QString FloatCoordinateDecorator::static_floatCoordinate_help() {
     return QString("An instanceable class storing 3D coordinates as float. Access to attributes only via getter and setter." \
                    "\n\n CONSTRUCTORS: " \
                    "\n FCoordinate() : creates an empty floatCoordinate object. " \

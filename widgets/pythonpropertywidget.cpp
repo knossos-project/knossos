@@ -28,20 +28,21 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
 
     pythonInterpreterField = new QLineEdit();
     pythonInterpreterButton = new QPushButton("Select Python Interpreter");
-    pythonInterpreterField->setToolTip("The complete path to ./python. This will be checked on save");
+    pythonInterpreterField->setToolTip("The complete path to ./python. This will be checked on save");    
+    workingDirectoryButton = new QPushButton("Select working directory");
+    workingDirectory = new QLineEdit();
     autoStartFolder = new QLineEdit();
     autoStartFolder->setToolTip("Scripts in this folder were automatically started with KNOSSOS");
     autoStartFolderButton = new QPushButton("Select Autostart Folder");
     autoStartTerminal = new QCheckBox("Open Terminal On Start");
-    workingDirectoryButton = new QPushButton("Select working directory");
-    workingDirectory = new QLineEdit();
 
     saveButton = new QPushButton("save");
 
     layout->addRow(pythonInterpreterField, pythonInterpreterButton);
+    layout->addRow(workingDirectory, workingDirectoryButton);
     layout->addRow(autoStartFolder, autoStartFolderButton);
     layout->addWidget(autoStartTerminal);
-    layout->addRow(workingDirectory, workingDirectoryButton);
+
 
 
     setLayout(layout);
@@ -141,6 +142,7 @@ void PythonPropertyWidget::openTerminal() {
         QString filename = it.next();
 
         QStringList list = filename.split(regex);
+        // 0 = /Users .. 1 = .ipython/... 2 = pid 3 = json
         if(list.at(2).toInt() == pid) {
 
             QFileInfo info(filename);

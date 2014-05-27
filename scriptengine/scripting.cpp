@@ -74,16 +74,16 @@ void Scripting::run() {
     //ctx.addObject("menu_bar", signalDelegate->menuBarSignal());
 
     QString module("internal");
-    PythonQt::init(PythonQt::RedirectStdOut, module.toLocal8Bit());
+    PythonQt::init(PythonQt::RedirectStdOut);
 
     PythonQt::self()->addDecorators(floatCoordinateDecorator);
-    PythonQt::self()->registerCPPClass("FCoordinate", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("floatCoordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(coordinateDecorator);
     PythonQt::self()->registerCPPClass("Coordinate", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(colorDecorator);
-    PythonQt::self()->registerCPPClass("Color", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("color4F", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(segmentListDecorator);
     PythonQt::self()->registerCPPClass("Segment", "", module.toLocal8Bit().data());
@@ -95,15 +95,14 @@ void Scripting::run() {
     PythonQt::self()->registerCPPClass("Node", "", module.toLocal8Bit().data());
 
     PythonQt::self()->addDecorators(meshDecorator);
-    PythonQt::self()->registerCPPClass("Mesh", "", module.toLocal8Bit().data());
+    PythonQt::self()->registerCPPClass("mesh", "", module.toLocal8Bit().data());
 
+    changeWorkingDirectory();
     executeFromUserDirectory();
-    ctx.evalFile("/Users/amos/Desktop/test.py");
 
     ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
     ctx.evalScript("import IPython");
     ctx.evalScript("IPython.embed_kernel()");
-
 }
 
 void Scripting::addScriptingObject(const QString &name, QObject *obj) {
@@ -121,11 +120,13 @@ void Scripting::changeWorkingDirectory() {
     QString path = settings.value(PYTHON_WORKING_DIRECTORY).toString();
     settings.endGroup();
 
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    ctx.evalScript("import os");
-    ctx.evalScript(QString("os.chdir('%1')").arg(path));
-
+    if(!path.isEmpty()) {
+        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+        ctx.evalScript("import os");
+        ctx.evalScript(QString("os.chdir('%1')").arg(path));
+    }
 }
+
 
 void Scripting::executeFromUserDirectory() {
     QSettings settings;
@@ -133,25 +134,25 @@ void Scripting::executeFromUserDirectory() {
     QString path = settings.value(PYTHON_AUTOSTART_FOLDER).toString();
     settings.endGroup();
 
-    QDir scriptDir(path);
-    QStringList endings;
-    endings << "*.py";
-    scriptDir.setNameFilters(endings);
-    QFileInfoList entries = scriptDir.entryInfoList();
+    if(!path.isEmpty()) {
+        qDebug() << path;
+        QDir scriptDir(path);
+        QStringList endings;
+        endings << "*.py";
+        scriptDir.setNameFilters(endings);
+        QFileInfoList entries = scriptDir.entryInfoList();
 
-    PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
-    foreach(const QFileInfo &script, entries) {        
-        QFile file(script.canonicalFilePath());
+        PythonQtObjectPtr ctx = PythonQt::self()->getMainModule();
+        foreach(const QFileInfo &script, entries) {
+            QFile file(script.canonicalFilePath());
 
-        if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
-            continue;
+            if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
+                continue;
+            }
+
+            ctx.evalFile(script.canonicalFilePath());
+
         }
-
-        QTextStream stream(&file);
-        QString content =  stream.readAll();
-
-        ctx.evalFile(script.canonicalFilePath());
-
     }
 }
 

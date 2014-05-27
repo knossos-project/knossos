@@ -404,28 +404,38 @@ void SkeletonProxy::loadStyleSheet(const QString &filename) {
 
 QString SkeletonProxy::help() {
     return QString("This is the unique main interface between python and knossos. You can't create a separate instance of this object:" \
-                   "\n\n GETTER:" \
-                   "\n trees() : returns a list of trees" \
+                   "\n\n skeleton_time() : return the skeleton time" \
+                   "\n\n skeleton_file() : returns the file from which the current skeleton is loaded" \
+                   "\n from_xml(filename) : loads a skeleton from a .nml file" \
+                   "\n to_xml(filename) : saves a skeleton to a .nml file" \
+                   "\n has_unsaved_changes() : self-explaining" \
                    "\n active_node() : returns the active node object" \
-                   "\n skeleton_file() : returns the file from which the current skeleton is loaded" \
+                   "\n delete_skeleton() : deletes the entire skeleton." \
+                   "\n delete_tree(tree_id) : deletes the tree with the passed id. Returns a message if no such tree exists." \
+                   "\n delete_active_tree() : deletes the active tree or informs about that no active tree could be deleted." \
+                   "\n find_tree_by_id(tree_id) : returns the searched tree or returns None" \
                    "\n first_tree() : returns the first tree of the knossos skeleton" \
-                   "\n export_converter(path) : creates a python class in the path which can be used to convert between the NewSkeleton class and KNOSSOS."
-                   "\n\n SETTER:" \
+                   "\n tree_with_previous_id(tree_id) : returns the tree with a previous id or None" \
+                   "\n tree_with_next_id(tree_id) : returns the tree with the next id or None" \
+                   "\n trees() : returns a list of trees" \
+                   "\n add_tree(tree_id, comment, r, g, b, a) : adds a new tree. All parameter are optional." \
+                   "\n knossos will give the next free tree id and uses the color lookup table to determine a color" \
+                   "\n add_tree_comment(tree_id, comment) : Adds a comment for an existing tree." \
+                   "\n merge_trees(id1, id2) : merges two different trees to a single one. " \
+                   "\n move_to_next_tree() : moves the viewer to the next tree" \
+                   "\n move_to_prev_tree() : moves the viewer to the previosu tree" \
+                   "\n export_converter(path) : creates a python class in the path which can be used to convert between the NewSkeleton class and KNOSSOS." \
                    "\n set_branch_node(node_id) : sets the node with node_id to branch_node" \
                    "\n add_segment(source_id, target_id) : adds a segment for the nodes. Both nodes must be added before" \
                    "\n delete_active_node() : deletes the active node or informs about that no active node could be deleted" \
                    "\n delete_segment(source_id, target_id) : deletes a segment with source" \
                    "\n add_comment(node_id) : adds a comment for the node. Must be added before" \
-                   "\n add_tree(tree_id, comment, r (opt), g (opt), b (opt), a (opt)) : adds a new tree" \
+
                    "\n\t If does not mind if no color is specified. The lookup table sets this automatically." \
                    "\n\n add_node(node_id, x, y, z, parent_id (opt), radius (opt), viewport (opt), mag (opt), time (opt))" \
                    "\n\t adds a node for a parent tree where a couple of parameter are optional. " \
                    "\n\t if no parent_id is set then the current active node will be chosen." \
-                   "\n delete_tree(tree_id) : deletes the tree with the passed id. Returns a message if no such tree exists." \
-                   "\n delete_active_tree() : deletes the active tree or informs about that no active tree could be deleted." \
-                   "\n delete_skeleton() : deletes the entire skeleton." \
-                   "\n from_xml(filename) : loads a skeleton from a .nml file" \
-                   "\n to_xml(filename) : saves a skeleton to a .nml file" \
+
                    "\n cube_data_at(x, y, z) : returns the data cube at the viewport position (x, y, z) as a string containing 128 * 128 * 128 bytes (2MB) of grayscale values. " \
                    "\n render_mesh(mesh) : renders the mesh. Call mesh.help() for additional information." \
                    "\n save_sys_path(path) : saves the python sys_path from the console" \

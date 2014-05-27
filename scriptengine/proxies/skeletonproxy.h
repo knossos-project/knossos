@@ -65,7 +65,6 @@ public slots:
     bool merge_trees(int tree_id, int other_tree_id);
     bool move_to_next_tree();
     bool move_to_previous_tree();
-    // edit_tree_comment ?
 
     nodeListElement *find_node_by_id(int node_id);
     nodeListElement *find_node_in_radius(int x, int y, int z);
@@ -79,17 +78,14 @@ public slots:
     void delete_active_node();
     void set_active_node(int node_id);
     nodeListElement *active_node();
-    void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0, float radius = 1.5, int inVp = 0, int inMag = 1, int time = 0);
+    void add_node(int node_id, int x, int y, int z, int parent_tree_id = 0,
+                  float radius = 1.5, int inVp = 0, int inMag = 1,
+                  int time = 0);
     void set_branch_node(int node_id);
-
     void add_segment(int source_id, int target_id);
     void delete_segment(int source_id, int target_id);
     segmentListElement *find_segment(int source_id, int target_id);
-
-
     void add_comment(int node_id, char *comment);
-
-
     QList<int> *cube_data_at(int x, int y, int z);
     void render_mesh(mesh *mesh);
 

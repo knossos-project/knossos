@@ -14,8 +14,8 @@ public:
 signals:
     
 public slots:
-    color4F *new_Color();
-    color4F *new_Color(float r, float g, float b, float a = 1.0);
+    color4F *new_color4F();
+    color4F *new_color4F(float r, float g, float b, float a = 1.0);
 
     float red(color4F *self);
     float blue(color4F *self);
@@ -27,7 +27,7 @@ public slots:
     void set_blue(color4F *self, float blue);
     void set_alpha(color4F *self, float alpha);
 
-    QString static_Color_help();
+    QString static_color4F_help();
 };
 
 #endif // Color4FDECORATOR_H

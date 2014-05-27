@@ -2492,13 +2492,13 @@ bool Renderer::sphereInFrustum(floatCoordinate pos, float radius, uint viewportT
 
 void Renderer::renderUserGeometry() {
     glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    //qDebug() << state->skeletonState->userGeometry->size();
+
 
     for(int i = 0; i < state->skeletonState->userGeometry->size(); i++) {
-
+        qDebug() << state->skeletonState->userGeometry->size();
         mesh *currentMesh = state->skeletonState->userGeometry->at(i);
         if(currentMesh->mode == GL_POINTS) {
             glPointSize(currentMesh->size);
@@ -2507,8 +2507,10 @@ void Renderer::renderUserGeometry() {
 
         }
 
+        qDebug() << currentMesh->vertices->x << " " << currentMesh->vertices->y << " " << currentMesh->vertices->z;
+
         glVertexPointer(3, GL_FLOAT, 0, currentMesh->vertices);
-        //glNormalPointer(3, GL_FLOAT, 0, currentMesh->normals);
+        glNormalPointer(GL_FLOAT, 0, currentMesh->normals);
         glColorPointer(4, GL_FLOAT, 0, currentMesh->colors);
 
         glDrawArrays(currentMesh->mode, 0, currentMesh->vertsIndex);
@@ -2518,6 +2520,6 @@ void Renderer::renderUserGeometry() {
     }
 
     glDisableClientState(GL_COLOR_ARRAY);
-    //glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }

@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     viewer.window->widgetContainer->datasetPropertyWidget->changeDataSet(false);
     Knossos::printConfigValues();
 
-    QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, SIGNAL(changeWorkingDirectory()), &scripts, SLOT(changeWorkingDirectory()));
+    //QObject::connect(viewer.window->widgetContainer->pythonPropertyWidget, SIGNAL(changeWorkingDirectory()), &scripts, SLOT(changeWorkingDirectory()));
 
     QObject::connect(signalDelegate, SIGNAL(treeAddedSignal(treeListElement*)), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(treeAdded(treeListElement*)));
     QObject::connect(signalDelegate, SIGNAL(nodeAddedSignal()), viewer.window->widgetContainer->annotationWidget->treeviewTab, SLOT(nodeAdded()));
