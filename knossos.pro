@@ -69,7 +69,6 @@ SOURCES += widgets/mainwindow.cpp \
     openjpeg/t2.c \
     openjpeg/tcd.c \
     openjpeg/tgt.c \
-    sha256.cpp \
     widgets/documentationwidget.cpp \
     widgets/annotationwidget.cpp \
     widgets/tools/toolscommandstab.cpp \
@@ -147,7 +146,6 @@ HEADERS  += widgets/mainwindow.h \
     functions.h \
     widgets/widgetcontainer.h \
     ftp.h \
-    sha256.h \
     widgets/documentationwidget.h \
     widgets/annotationwidget.h \
     widgets/tools/toolscommandstab.h \

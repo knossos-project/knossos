@@ -53,10 +53,60 @@ class WidgetContainer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
+
+protected:
+    void resizeEvent(QResizeEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void dropEvent(QDropEvent *event);
+    void resizeViewports(int width, int height);
+    void becomeFirstEntry(const QString &entry);
+    QMenu *skelFileMenu;
+    QMenu *segFileMenu;
+    QMenu *skelEditMenu;
+    QMenu *segEditMenu;
+    QString openFileDirectory;
+    QString saveSkelFileDirectory;
+    QString saveSegFileDirectory;
 public:
+    QSpinBox *xField, *yField, *zField;
+    std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
+
+    // contains all widgets
+    WidgetContainer *widgetContainer;
+
+    QAction **historyEntryActions;
+
+    QAction *segEditSegModeAction;
+    QAction *segEditSkelModeAction;
+    QAction *skelEditSegModeAction;
+    QAction *skelEditSkelModeAction;
+    QAction *addNodeAction;
+    QAction *linkWithActiveNodeAction;
+    QAction *dropNodesAction;
+
+    QAction *dragDatasetAction;
+    QAction *recenterOnClickAction;
+
+    QQueue<QString> *skeletonFileHistory;
+    QFile *loadedFile;
+
+    QCheckBox *lockVPOrientationCheckbox;
+
+    void createViewports();
+
+    // for creating action, menus and the toolbar
+    void createMenus();
+    void createToolBar();
+
+    // for save, load and clear settings
+    void saveSettings();
+    void loadSettings();
+    void clearSettings();
+
     explicit MainWindow(QWidget *parent = 0);
 
-    void updateSkeletonFileName(QString &fileName);
+    void updateFileName(QString &fileName);
 
     void closeEvent(QCloseEvent *event);
     void updateTitlebar();
@@ -103,46 +153,6 @@ signals:
     void branchPushedSignal();
     void branchPoppedSignal();
     void nodeCommentChangedSignal(nodeListElement *node);
-protected:
-    void resizeEvent(QResizeEvent *event);
-    void dragEnterEvent(QDragEnterEvent *event);
-    void dragLeaveEvent(QDragLeaveEvent *event);
-    void dropEvent(QDropEvent *event);
-    void resizeViewports(int width, int height);
-    void becomeFirstEntry(const QString &entry);
-    QString openFileDirectory;
-    QString saveFileDirectory;
-public:
-    QSpinBox *xField, *yField, *zField;
-    std::array<std::unique_ptr<Viewport>, NUM_VP> viewports;
-
-    // contains all widgets
-    WidgetContainer *widgetContainer;
-
-    QAction **historyEntryActions;
-
-    QAction *addNodeAction;
-    QAction *linkWithActiveNodeAction;
-    QAction *dropNodesAction;
-
-    QAction *dragDatasetAction;
-    QAction *recenterOnClickAction;
-
-    QQueue<QString> *skeletonFileHistory;
-    QFile *loadedFile;
-
-    QCheckBox *lockVPOrientationCheckbox;
-
-    void createViewports();
-
-    // for creating action, menus and the toolbar
-    void createMenus();
-    void createToolBar();
-
-    // for save, load and clear settings
-    void saveSettings();
-    void loadSettings();
-    void clearSettings();
 
 public slots:
     // for the recent file menu
@@ -160,6 +170,8 @@ public slots:
     void saveAsSlot();
 
     /* edit skeleton menu*/
+    void segModeSelected();
+    void skelModeSelected();
     void skeletonStatisticsSlot();
     void clearSkeletonSlotNoGUI();
     void clearSkeletonSlotGUI();

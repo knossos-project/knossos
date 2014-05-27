@@ -4,14 +4,17 @@
 #include <algorithm>
 #include <array>
 #include <fstream>
+#include <iostream>
 #include <functional>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <time.h>
 
 #include <QDebug>
 #include <QString>
 #include <QObject>
+#include <QStandardPaths>
 
 class Segmentation : public QObject {
 Q_OBJECT
@@ -142,7 +145,32 @@ public:
         return lut;
     }();
     uint8_t alpha;
-    Segmentation() : renderAllObjs(true) {}
+    bool segmentationMode;
+    QString filename;
+
+    Segmentation() : renderAllObjs(true), segmentationMode(true) {}
+
+    bool hasObjects() {
+        return !this->objects.empty();
+    }
+
+    void setDefaultFilename() {
+        // Generate a default file name based on date and time.
+        auto currentTime = time(nullptr);
+        auto localTime = localtime(&currentTime);
+        if(localTime->tm_year >= 100) {
+            localTime->tm_year -= 100;
+        }
+        filename = QString(QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+                + "/segmentationFiles/segmentation-%1%2%3-%4%5.000")
+                //value, right aligned padded to width 2, base 10, filled with '0'
+                .arg(localTime->tm_mday, 2, 10, QLatin1Char('0'))
+                .arg(localTime->tm_mon + 1, 2, 10, QLatin1Char('0'))
+                .arg(localTime->tm_year, 2, 10, QLatin1Char('0'))
+                .arg(localTime->tm_hour, 2, 10, QLatin1Char('0'))
+                .arg(localTime->tm_min, 2, 10, QLatin1Char('0'));
+    }
+
     void createObjectFromSubobjectId(const uint64_t id) {
         if (subobjects.find(id) == std::end(subobjects)) {//insert only if not already present
             auto & newKeyValuePair = *subobjects.emplace(id, id).first;//first is iterator to the newly inserted key-value pair
@@ -246,6 +274,22 @@ public:
     }
     std::size_t selectedObjectsCount() {
         return selectedObjects.size();
+    }
+
+    void saveObjects(QString toFile=Segmentation::singleton().filename) {
+        std::string objString;
+        for(const auto & obj : objects) {
+            objString += std::to_string(obj.first) + " ";
+            for(const auto & subObj : obj.second.subobjects) {
+                objString += std::to_string(subObj.get().id) + " ";
+            }
+            objString.pop_back();
+            objString += "\n";
+        }
+        objString.pop_back();
+        std::ofstream file(toFile.toStdString());
+        file << objString;
+        file.close();
     }
 
 signals:

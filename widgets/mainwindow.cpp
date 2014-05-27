@@ -229,13 +229,23 @@ void MainWindow:: createToolBar() {
 
 void MainWindow::updateTitlebar() {
     QString title = qApp->applicationDisplayName() + " showing ";
-    if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
-        title.append(state->skeletonState->skeletonFileAsQString);
-    } else {
-        title.append("no skeleton file");
+    if(Segmentation::singleton().segmentationMode) {
+        if(Segmentation::singleton().filename.isEmpty()) {
+            title.append("no segmentation file");
+        }
+        else {
+            title.append(Segmentation::singleton().filename);
+        }
     }
-    if (state->skeletonState->unsavedChanges) {
-        title.append("*");
+    else {
+        if (!state->skeletonState->skeletonFileAsQString.isEmpty()) {
+            title.append(state->skeletonState->skeletonFileAsQString);
+        } else {
+            title.append("no skeleton file");
+        }
+        if (state->skeletonState->unsavedChanges) {
+            title.append("*");
+        }
     }
     setWindowTitle(title);
 }
@@ -377,28 +387,68 @@ void MainWindow::recentFileSelected() {
 }
 
 void MainWindow::createMenus() {
-    auto fileMenu = menuBar()->addMenu("File");
-    fileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...", widgetContainer->datasetPropertyWidget, SLOT(show()));
-    fileMenu->addSeparator();
-    fileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton...", this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
-    auto recentFileMenu = fileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"), QString("Recent Skeleton File(s)"));
-
+    skelFileMenu = new QMenu("File");
+    skelFileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...",
+                        widgetContainer->datasetPropertyWidget, SLOT(show()));
+    skelFileMenu->addSeparator();
+    skelFileMenu->addAction(QIcon(":/images/icons/open-skeleton.png"), "Open Skeleton...",
+                        this, SLOT(openSlot()), QKeySequence(tr("CTRL+O", "File|Open")));
+    auto recentFileMenu = skelFileMenu->addMenu(QIcon(":/images/icons/document-open-recent.png"),
+                                            QString("Recent Skeleton File(s)"));
     historyEntryActions = new QAction*[FILE_DIALOG_HISTORY_MAX_ENTRIES];
     for(int i = 0; i < FILE_DIALOG_HISTORY_MAX_ENTRIES; i++) {
         historyEntryActions[i] = recentFileMenu->addAction(QIcon(":/images/icons/document-open-recent.png"), "");
         historyEntryActions[i]->setVisible(false);
         QObject::connect(historyEntryActions[i], &QAction::triggered, this, &MainWindow::recentFileSelected);
     }
+    skelFileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Skeleton",
+                            this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    skelFileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Skeleton As...", this, SLOT(saveAsSlot()));
+    skelFileMenu->addSeparator();
+    skelFileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
 
-    fileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Skeleton", this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
-    fileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Skeleton As...", this, SLOT(saveAsSlot()));
-    fileMenu->addSeparator();
-    fileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+    Segmentation *seg = &Segmentation::singleton();
+    segFileMenu = new QMenu("File");
+    segFileMenu->addAction(QIcon(":/images/icons/open-dataset.png"), "Load Dataset...",
+                        widgetContainer->datasetPropertyWidget, SLOT(show()));
+    segFileMenu->addSeparator();
+    segFileMenu->addAction(QIcon(":/images/icons/document-save.png"), "Save Object List",
+                           this, SLOT(saveSlot()), QKeySequence(tr("CTRL+S", "File|Save")));
+    segFileMenu->addAction(QIcon(":/images/icons/document-save-as.png"), "Save Object List As...", this, SLOT(saveAsSlot()));
+    segFileMenu->addSeparator();
+    segFileMenu->addAction(QIcon(":/images/icons/system-shutdown.png"), "Quit", this, SLOT(close()), QKeySequence(tr("CTRL+Q", "File|Quit")));
+
+    if(seg->segmentationMode) {
+        menuBar()->addMenu(segFileMenu);
+    }
+    else {
+        menuBar()->addMenu(skelFileMenu);
+    }
+
+    segEditMenu = new QMenu("Edit Segmentation");
+    auto segAnnotationModeGroup = new QActionGroup(this);
+    segEditSegModeAction = segAnnotationModeGroup->addAction(tr("Segmentation Mode"));
+    segEditSegModeAction->setCheckable(true);
+    segEditSegModeAction->setChecked(true);
+    segEditSkelModeAction = segAnnotationModeGroup->addAction(tr("Skeletonization Mode"));
+    segEditSkelModeAction->setCheckable(true);
+    connect(segEditSegModeAction, &QAction::triggered, this, &MainWindow::segModeSelected);
+    connect(segEditSkelModeAction, &QAction::triggered, this, &MainWindow::skelModeSelected);
+    segEditMenu->addActions({segEditSegModeAction, segEditSkelModeAction});
 
 
-    auto editMenu = menuBar()->addMenu("Edit Skeleton");
+    skelEditMenu = new QMenu("Edit Skeleton");
+    auto skelAnnotationModeGroup = new QActionGroup(this);
+    skelEditSegModeAction = skelAnnotationModeGroup->addAction(tr("Segmentation Mode"));
+    skelEditSegModeAction->setCheckable(true);
+    skelEditSegModeAction->setChecked(true);
+    skelEditSkelModeAction = skelAnnotationModeGroup->addAction(tr("Skeletonization Mode"));
+    skelEditSkelModeAction->setCheckable(true);
+    connect(skelEditSegModeAction, &QAction::triggered, this, &MainWindow::segModeSelected);
+    connect(skelEditSkelModeAction, &QAction::triggered, this, &MainWindow::skelModeSelected);
+    skelEditMenu->addActions({skelEditSegModeAction, skelEditSkelModeAction});
 
-    editMenu->addSeparator();
+    skelEditMenu->addSeparator();
     auto workModeEditMenuGroup = new QActionGroup(this);
     addNodeAction = workModeEditMenuGroup->addAction(tr("Add one unlinked Node"));
     addNodeAction->setCheckable(true);
@@ -421,23 +471,27 @@ void MainWindow::createMenus() {
         state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode::unlinkedNodes);
     });
 
-    editMenu->addActions({addNodeAction, linkWithActiveNodeAction, dropNodesAction});//can’t add the group, must add all actions separately
+    skelEditMenu->addActions({addNodeAction, linkWithActiveNodeAction, dropNodesAction});//can’t add the group, must add all actions separately
+    skelEditMenu->addSeparator();
 
-    editMenu->addSeparator();
-
-    auto newTreeAction = editMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()), QKeySequence(tr("C")));
+    auto newTreeAction = skelEditMenu->addAction(QIcon(""), "New Tree", this, SLOT(newTreeSlot()), QKeySequence(tr("C")));
     newTreeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto pushBranchNodeAction = editMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()), QKeySequence(tr("B")));
+    auto pushBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Push Branch Node", this, SLOT(pushBranchNodeSlot()), QKeySequence(tr("B")));
     pushBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    auto popBranchNodeAction = editMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()), QKeySequence(tr("J")));
+    auto popBranchNodeAction = skelEditMenu->addAction(QIcon(""), "Pop Branch Node", this, SLOT(popBranchNodeSlot()), QKeySequence(tr("J")));
     popBranchNodeAction->setShortcutContext(Qt::ApplicationShortcut);
 
-    editMenu->addSeparator();
+    skelEditMenu->addSeparator();
+    skelEditMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
 
-    editMenu->addAction(QIcon(":/images/icons/user-trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlotGUI()));
-
+    if(seg->segmentationMode) {
+        menuBar()->addMenu(segEditMenu);
+    }
+    else {
+        menuBar()->addMenu(skelEditMenu);
+    }
 
     auto viewMenu = menuBar()->addMenu("Navigation");
 
@@ -744,13 +798,31 @@ void MainWindow::updateFileHistoryMenu() {
 }
 
 void MainWindow::saveSlot() {
+    if(Segmentation::singleton().segmentationMode) {
+        if(Segmentation::singleton().filename.isEmpty()) {
+            saveAsSlot();
+        }
+        else {
+            if(Segmentation::singleton().hasObjects() == false) {
+                return;
+            }
+            if(state->skeletonState->autoFilenameIncrementBool) {
+               updateFileName(Segmentation::singleton().filename);
+            }
+            Segmentation::singleton().saveObjects();
+            updateTitlebar();
+        }
+        return;
+    }
+    // skeletonization mode
     if (state->skeletonState->skeletonFileAsQString.isEmpty()) {//no skeleton file is loaded, go ask for one
         saveAsSlot();
-    } else if (state->skeletonState->firstTree != nullptr) {
+    }
+    else if (state->skeletonState->firstTree != nullptr) {
         if (state->skeletonState->autoFilenameIncrementBool) {
             int index = skeletonFileHistory->indexOf(state->skeletonState->skeletonFileAsQString);
 
-            updateSkeletonFileName(state->skeletonState->skeletonFileAsQString);
+            updateFileName(state->skeletonState->skeletonFileAsQString);
 
             if(state->skeletonState->autoSaveBool and state->skeletonState->skeletonChanged) {
                 if(index != -1) {//replace old filename with updated one
@@ -766,7 +838,6 @@ void MainWindow::saveSlot() {
             addRecentFile(state->skeletonState->skeletonFileAsQString);
         }
         becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
-
         updateTitlebar();
         state->skeletonState->unsavedChanges = false;
     }
@@ -776,42 +847,92 @@ void MainWindow::saveSlot() {
 void MainWindow::saveAsSlot() {
     state->viewerState->renderInterval = SLOW;
     QApplication::processEvents();
-    if(!state->skeletonState->firstTree) {
-        QMessageBox prompt;
-        prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
-        prompt.setIcon(QMessageBox::Information);
-        prompt.setWindowTitle("Information");
-        prompt.setText("No skeleton was found. Not saving!");
-        prompt.exec();
-        return;
-    }
 
-    auto file = state->skeletonState->skeletonFileAsQString;
-    if (file.isEmpty()) {
-        file = Skeletonizer::getDefaultSkelFileName();
-    }
-    auto suggestedFile = saveFileDirectory + '/' + QFileInfo(file).fileName();//append filename to last saving dir
+    QMessageBox prompt;
+    prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+    prompt.setIcon(QMessageBox::Information);
+    prompt.setWindowTitle("Information");
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file", suggestedFile, "KNOSSOS Skeleton file(*.nml)");
-    if (!fileName.isEmpty()) {
-        state->skeletonState->skeletonFileAsQString = fileName;//file was actually chosen, save its path
-        saveFileDirectory = QFileInfo(fileName).absolutePath();//remeber last saving dir
-
-        emit saveSkeletonSignal(fileName);
-
-        if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
-            addRecentFile(state->skeletonState->skeletonFileAsQString);
+    auto *seg = &Segmentation::singleton();
+    if(seg->segmentationMode) {
+        if(seg->hasObjects() == false) {
+            prompt.setText("No objects were found. Not saving!");
+            prompt.exec();
+            return;
         }
-        becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+        if(seg->filename.isEmpty()) {
+            seg->setDefaultFilename();
+        }
+        auto suggestedFile = saveSegFileDirectory + '/' + QFileInfo(seg->filename).fileName();
+        QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Segmentation file",
+                                                        suggestedFile, "KNOSSOS Segmentation file (*)");
+        if(!fileName.isEmpty()) {
+            seg->filename = fileName;
+            saveSegFileDirectory = QFileInfo(fileName).absolutePath();
+            seg->saveObjects();
 
-        updateTitlebar();
-        state->skeletonState->unsavedChanges = false;
+            updateTitlebar();
+        }
+    }
+    else {
+        if(!state->skeletonState->firstTree) {
+            prompt.setText("No skeleton was found. Not saving!");
+            prompt.exec();
+            return;
+        }
+
+        auto file = state->skeletonState->skeletonFileAsQString;
+        if (file.isEmpty()) {
+            file = Skeletonizer::getDefaultSkelFileName();
+        }
+        auto suggestedFile = saveSkelFileDirectory + '/' + QFileInfo(file).fileName();//append filename to last saving dir
+
+        QString fileName = QFileDialog::getSaveFileName(this, "Save the KNOSSOS Skeleton file",
+                                                        suggestedFile, "KNOSSOS Skeleton file(*.nml)");
+        if (!fileName.isEmpty()) {
+            state->skeletonState->skeletonFileAsQString = fileName;//file was actually chosen, save its path
+            saveSkelFileDirectory = QFileInfo(fileName).absolutePath();//remeber last saving dir
+
+            emit saveSkeletonSignal(fileName);
+
+            if (!alreadyInMenu(state->skeletonState->skeletonFileAsQString)) {
+                addRecentFile(state->skeletonState->skeletonFileAsQString);
+            }
+            becomeFirstEntry(state->skeletonState->skeletonFileAsQString);
+
+            updateTitlebar();
+            state->skeletonState->unsavedChanges = false;
+        }
+        state->skeletonState->skeletonChanged = false;
     }
     state->viewerState->renderInterval = FAST;
-    state->skeletonState->skeletonChanged = false;
 }
 
 /* edit skeleton functionality */
+void MainWindow::segModeSelected() {
+    if(Segmentation::singleton().segmentationMode) {
+        return;
+    }
+    segEditSegModeAction->setChecked(true);
+    skelEditSegModeAction->setChecked(true);
+    Segmentation::singleton().segmentationMode = true;
+    menuBar()->insertMenu(skelFileMenu->menuAction(), segFileMenu);
+    menuBar()->removeAction(skelFileMenu->menuAction());
+    menuBar()->insertMenu(skelEditMenu->menuAction(), segEditMenu);
+    menuBar()->removeAction(skelEditMenu->menuAction());
+}
+void MainWindow::skelModeSelected() {
+    if(Segmentation::singleton().segmentationMode == false) {
+        return;
+    }
+    segEditSkelModeAction->setChecked(true);
+    skelEditSkelModeAction->setChecked(true);
+    Segmentation::singleton().segmentationMode = false;
+    menuBar()->insertMenu(segFileMenu->menuAction(), skelFileMenu);
+    menuBar()->removeAction(segFileMenu->menuAction());
+    menuBar()->insertMenu(segEditMenu->menuAction(), skelEditMenu);
+    menuBar()->removeAction(segEditMenu->menuAction());
+}
 
 void MainWindow::skeletonStatisticsSlot()
 {
@@ -1000,7 +1121,7 @@ void MainWindow::saveSettings() {
     }
 
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
-    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
+    settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveSkelFileDirectory);
 
     settings.endGroup();
 
@@ -1064,13 +1185,14 @@ void MainWindow::loadSettings() {
     }
 
     if(!settings.value(SAVE_FILE_DIALOG_DIRECTORY).isNull() and !settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString().isEmpty()) {
-        saveFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString();
+        saveSkelFileDirectory = settings.value(SAVE_FILE_DIALOG_DIRECTORY).toString();
     } else {
-        saveFileDirectory = autosaveLocation;
+        saveSkelFileDirectory = autosaveLocation;
     }
-
-    const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
-    state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(skeletonizerWorkMode));
+    if(Segmentation::singleton().segmentationMode == false) {
+        const auto skeletonizerWorkMode = settings.value(WORK_MODE, Skeletonizer::TracingMode::linkedNodes).toUInt();
+        state->viewer->skeletonizer->setTracingMode(Skeletonizer::TracingMode(skeletonizerWorkMode));
+    }
 
     if(!settings.value(LOADED_FILE1).toString().isNull() and !settings.value(LOADED_FILE1).toString().isEmpty()) {
         this->skeletonFileHistory->enqueue(settings.value(LOADED_FILE1).toString());
@@ -1152,14 +1274,20 @@ void MainWindow::updateCoordinateBar(int x, int y, int z) {
     zField->setValue(z + 1);
 }
 
-/** This is a replacement for the old updateSkeletonFileName
+/** This is a replacement for the old updateFileName
     It decides if a skeleton file has a revision(case 1) or not(case2).
     if case1 the revision substring is extracted, incremented and will be replaced.
     if case2 an initial revision will be inserted.
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
-void MainWindow::updateSkeletonFileName(QString & fileName) {
-    const QRegExp versionRegEx("(\\.)([0-9]{3})\\.nml$");
+void MainWindow::updateFileName(QString & fileName) {
+    QRegExp versionRegEx;
+    if(Segmentation::singleton().segmentationMode) {
+        versionRegEx = QRegExp("(\\.)([0-9]{3})$");
+    }
+    else {
+        versionRegEx = QRegExp("(\\.)([0-9]{3})\\.nml$");
+    }
     if (versionRegEx.indexIn(fileName) != -1) {
         const auto versionIndex = versionRegEx.pos(2);//get second regex aka version without dot and nml
         const auto incrementedVersion = fileName.midRef(versionIndex, 3).toInt() + 1;//3 chars following the dot
