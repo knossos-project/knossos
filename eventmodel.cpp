@@ -42,7 +42,7 @@ EventModel::EventModel(QObject *parent) :
 
 }
 
-void segmentationColorPicking(const int x, const int y, const int viewportId) {
+uint64_t segmentationColorPicking(const int x, const int y, const int viewportId) {
     state->viewerState->uniqueColorMode = true;
     state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[viewportId], state->viewerState);
 
@@ -53,30 +53,7 @@ void segmentationColorPicking(const int x, const int y, const int viewportId) {
 
     auto & segmentation = Segmentation::singleton();
 
-    const auto subobjectId = segmentation.subobjectFromUniqueColor(color);
-
-    if (subobjectId != 0) {//don’t select the unsegmented area as object
-        //check if subobject exists
-        auto it = segmentation.subobjects.find(subobjectId);
-        if (it == std::end(segmentation.subobjects)) {//create an object for the selected subobject
-            segmentation.createObjectFromSubobjectId(subobjectId);
-            it = segmentation.subobjects.find(subobjectId);
-        }
-        //selected if not selected, unselect if selected
-        auto objId = it->second.objects.front().get().id;
-        auto selectIt = std::find_if(std::begin(segmentation.selectedObjects), std::end(segmentation.selectedObjects), [&](const Segmentation::Object & obj){
-            return obj.id == objId;
-        });
-        if (selectIt != std::end(segmentation.selectedObjects)) {
-            segmentation.clearObjectSelection();
-        } else {
-            segmentation.selectObject(objId);//select first object
-        }
-        //if ther’re 2 selected objects, merge them
-        if (segmentation.selectedObjectsCount() == 2) {
-            segmentation.mergeSelectedObjects();
-        }
-    }
+    return segmentation.subobjectIdFromUniqueColor(color);
 }
 
 bool EventModel::handleMouseButtonLeft(QMouseEvent *event, int VPfound) {
@@ -189,7 +166,26 @@ bool EventModel::handleMouseButtonMiddle(QMouseEvent *event, int VPfound) {
     return true;
 }
 
-bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
+void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
+    auto & segmentation = Segmentation::singleton();
+    if (segmentation.segmentationMode) {
+        auto & segmentation = Segmentation::singleton();
+        const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+        if (subobjectId != 0) {//don’t select the unsegmented area as object
+            auto & subobject = segmentation.subobjectFromId(subobjectId);
+            //find largest object
+            auto & obj = segmentation.largestObjectContainingSubobject(subobject);
+            //select if not selected and merge
+            if (!segmentation.isSelected(obj)) {
+                segmentation.selectObject(obj);//select largest object
+                if (segmentation.selectedObjectsCount() >= 2) {
+                    segmentation.mergeSelectedObjects();
+                }
+            }
+        }
+        return;
+    }
+
     int newNodeID;
     Coordinate *clickedCoordinate = NULL, movement, lastPos;
 
@@ -203,7 +199,7 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
 
     /* could not find any coordinate... */
     if(clickedCoordinate == NULL) {
-        return true;
+        return;
     }
     bool newNode = false;
     bool newTree = state->skeletonState->activeTree == nullptr;//if there was no active tree, a new node will create one
@@ -337,7 +333,6 @@ bool EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     Knossos::sendRemoteSignal();
 
     free(clickedCoordinate);
-    return true;
 }
 
 bool EventModel::handleMouseMotionLeftHold(QMouseEvent *event, int /*VPfound*/) {
@@ -576,7 +571,18 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/)
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
     if (event->x() == mouseDownX && event->y() == mouseDownY) {
-        segmentationColorPicking(event->x(), event->y(), VPfound);
+        auto & segmentation = Segmentation::singleton();
+        const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+        if (subobjectId != 0) {//don’t select the unsegmented area as object
+            auto & subobject = segmentation.subobjectFromId(subobjectId);
+            if (subobject.selected) {//unselect if selected
+                segmentation.clearObjectSelection();
+            } else {//select largest object
+                auto & obj = segmentation.largestObjectContainingSubobject(subobject);
+                segmentation.clearObjectSelection();
+                segmentation.selectObject(obj);
+            }
+        }
     }
 
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());

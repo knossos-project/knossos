@@ -425,13 +425,14 @@ void Viewer::ocSliceExtract(Byte *datacube, Byte *slice, size_t dcOffset, vpConf
         for(int i = 0; i < innerLoopBoundary; i++) {
             uint64_t subObjectID;
             memcpy(&subObjectID, cubePtr, sizeof(subObjectID));
-            const auto iter = Segmentation::singleton().subobjects.find(subObjectID);
-            if(iter != std::end(Segmentation::singleton().subobjects)) {
-                if(iter->second.selected()) {
+            auto & segmentation = Segmentation::singleton();
+            if (segmentation.subobjectExists(subObjectID)) {//don’t create objects from subobjects here
+                const auto & subobject = segmentation.subobjectFromId(subObjectID);
+                if (segmentation.isSelected(subobject)) {
                     uint64_t left = subObjectID;
                     uint64_t right = subObjectID;
                     uint64_t top = subObjectID;
-                    uint64_t bot = subObjectID;;
+                    uint64_t bot = subObjectID;
 
                     if(cubePtr - horizNBdistance - datacube >= 0) {
                         memcpy(&left, cubePtr - horizNBdistance, sizeof(left));
@@ -466,7 +467,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
             uint64_t subObjectID;
             memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+            const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
             slice[0] = std::get<0>(color);
             slice[1] = std::get<1>(color);
             slice[2] = std::get<2>(color);
@@ -482,7 +483,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
                 uint64_t subObjectID;
                 memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-                const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+                const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
                 slice[0] = std::get<0>(color);
                 slice[1] = std::get<1>(color);
                 slice[2] = std::get<2>(color);
@@ -502,7 +503,7 @@ void Viewer::ocSliceExtractUnique(Byte *datacube, Byte *slice, size_t dcOffset, 
             uint64_t subObjectID;
             memcpy(&subObjectID, datacube, sizeof(subObjectID));
 
-            const auto color = Segmentation::singleton().subobjectColorUnique(subObjectID);
+            const auto color = Segmentation::singleton().subobjectColorUniqueFromId(subObjectID);
             slice[0] = std::get<0>(color);
             slice[1] = std::get<1>(color);
             slice[2] = std::get<2>(color);
@@ -688,7 +689,7 @@ bool Viewer::vpGenerateTexture(vpConfig &currentVp, viewerState *viewerState) {
                                        dcOffset * OBJID_BYTES,
                                        &currentVp);
                     }
-                    
+
                     glTexSubImage2D(GL_TEXTURE_2D,
                                     0,
                                     x_px,
