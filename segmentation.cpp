@@ -121,9 +121,10 @@ Segmentation::Object & Segmentation::createObject(const uint64_t objectId, const
 
 void Segmentation::removeObject(Object & object) {
     unselectObject(object);
+    selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::cref(object)));
     for (auto & elem : object.subobjects) {
         auto & subobject = elem.get();
-        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), std::cref(object)), std::end(subobject.objects));
+        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), std::cref(object)));
         if (subobject.objects.empty()) {
             subobjects.erase(subobject.id);
         }
@@ -233,7 +234,6 @@ void Segmentation::unselectObject(Object & object) {
             }
         }
     }
-    selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::cref(object)));
 }
 
 void Segmentation::unmerge(Segmentation::Object & object, Segmentation::SubObject & subobject) {
