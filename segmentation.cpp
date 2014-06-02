@@ -25,25 +25,28 @@ void Segmentation::Object::addSubObject(Segmentation::SubObject & sub) {
 }
 
 Segmentation::Object & Segmentation::Object::merge(const Segmentation::Object & other) {
-    decltype(subobjects) tmp;
-    tmp.reserve(subobjects.size() + other.subobjects.size());
-    decltype(subobjects) otherSubobjects = other.subobjects;
-    for (auto & elem : otherSubobjects) {
+    auto otherSubobjects = other.subobjects;//copy
+    for (auto & elem : otherSubobjects) {//add parent
         auto & objects = elem.get().objects;
-        objects.push_back(*this);
-        std::sort(std::begin(objects), std::end(objects));
-        std::inplace_merge(std::begin(objects), std::end(objects)-1, std::end(objects));
+        //don’t insert twice
+        if (std::find(std::begin(objects), std::end(objects), std::cref(*this)) == std::end(objects)) {
+            objects.push_back(*this);
+        }
     }
+
     std::sort(std::begin(subobjects), std::end(subobjects));
     std::sort(std::begin(otherSubobjects), std::end(otherSubobjects));
+
+    decltype(subobjects) tmp;
     std::merge(std::begin(subobjects), std::end(subobjects), std::begin(otherSubobjects), std::end(otherSubobjects), std::back_inserter(tmp));
     std::swap(subobjects, tmp);
     return *this;
 }
+
 Segmentation::Object & Segmentation::Object::moveFrom(Segmentation::Object & other) {
-    //replace reference
-    for (auto & elem : other.subobjects) {
-        std::replace(std::begin(elem.get().objects), std::end(elem.get().objects), std::ref(other), std::ref(*this));
+    for (auto & elem : other.subobjects) {//remove parent
+        auto & objects = elem.get().objects;
+        objects.erase(std::remove(std::begin(objects), std::end(objects), std::cref(other)));
     }
     merge(other);
     return *this;
@@ -111,7 +114,7 @@ Segmentation::Object & Segmentation::createObject(const uint64_t objectId, const
         auto & subobject = subobjects.emplace(std::piecewise_construct, std::forward_as_tuple(initialSubobjectId), std::forward_as_tuple(initialSubobjectId)).first->second;
         return objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, immutable, subobject)).first->second;//create object from supervoxel
     } else {
-        qDebug() << "tried to create object with id " << objectId << "which already exists";
+        qDebug() << "tried to create object with id" << objectId << "which already exists";
         return objectIt->second;
     }
 }
@@ -120,7 +123,7 @@ void Segmentation::removeObject(Object & object) {
     unselectObject(object);
     for (auto & elem : object.subobjects) {
         auto & subobject = elem.get();
-        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), std::ref(object)), std::end(subobject.objects));
+        subobject.objects.erase(std::remove(std::begin(subobject.objects), std::end(subobject.objects), std::cref(object)), std::end(subobject.objects));
         if (subobject.objects.empty()) {
             subobjects.erase(subobject.id);
         }
@@ -229,7 +232,34 @@ void Segmentation::unselectObject(Object & object) {
             }
         }
     }
-    selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::ref(object)));
+    selectedObjects.erase(std::remove(std::begin(selectedObjects), std::end(selectedObjects), std::cref(object)));
+}
+
+void Segmentation::unmerge(Segmentation::Object & object, Segmentation::SubObject & subobject) {
+    if (subobject.objects.size() == 1) {//create object to unmerge if there’s none except the currently selected one
+        auto objectId = ++highestObjectId;
+        objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobject));
+    }
+    //find object with lowest subobject count
+    const auto & other = std::min_element(std::begin(subobject.objects), std::end(subobject.objects)
+        , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
+            return lhs.subobjects.size() < rhs.subobjects.size();
+        })->get();
+    auto otherSubobjects = other.subobjects;//copy
+    for (auto & elem : otherSubobjects) {
+        auto & objects = elem.get().objects;
+        objects.erase(std::remove(std::begin(objects), std::end(objects), std::cref(object)));//remove parent
+        //WARNING this could break if there’s another selected object
+        elem.get().selected = false;//the removed content shall no longer be selected
+    }
+
+    std::sort(std::begin(object.subobjects), std::end(object.subobjects));
+    std::sort(std::begin(otherSubobjects), std::end(otherSubobjects));
+
+    decltype(object.subobjects) tmp;
+    std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(otherSubobjects), std::end(otherSubobjects), std::back_inserter(tmp));
+    std::swap(object.subobjects, tmp);
+    emit dataChanged();
 }
 
 void Segmentation::selectObject(const uint64_t & objectId) {

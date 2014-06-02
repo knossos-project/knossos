@@ -132,6 +132,7 @@ public:
     void clearObjectSelection();
     void selectObject(Object & object);
     void unselectObject(Object & object);
+    void unmerge(Object & object, SubObject & subobject);
     void selectObject(const uint64_t & objectId);
     std::size_t selectedObjectsCount();
     void saveMergelist(const QString & toFile = Segmentation::singleton().filename);

@@ -174,12 +174,16 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         if (subobjectId != 0) {//don’t select the unsegmented area as object
             auto & subobject = segmentation.subobjectFromId(subobjectId);
             //find largest object
-            auto & obj = segmentation.largestObjectContainingSubobject(subobject);
+            auto & object = segmentation.largestObjectContainingSubobject(subobject);
             //select if not selected and merge
-            if (!segmentation.isSelected(obj)) {
-                segmentation.selectObject(obj);//select largest object
-                if (segmentation.selectedObjectsCount() >= 2) {
-                    segmentation.mergeSelectedObjects();
+            if (segmentation.selectedObjectsCount() == 1) {
+                if (!segmentation.isSelected(object)) {
+                    segmentation.selectObject(object);//select largest object
+                    if (segmentation.selectedObjectsCount() >= 2) {
+                        segmentation.mergeSelectedObjects();
+                    }
+                } else {
+                    segmentation.unmerge(object, subobject);
                 }
             }
         }
