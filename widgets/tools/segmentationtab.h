@@ -14,6 +14,7 @@
 
 class SegmentationObjectModel : public QAbstractTableModel {
 Q_OBJECT
+    static const std::vector<QString> header;
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
 public:
     int rowCount(const QModelIndex & parent = QModelIndex()) const override;

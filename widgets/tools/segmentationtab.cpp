@@ -10,26 +10,22 @@
 
 extern stateInfo *state;
 
+const std::vector<QString> SegmentationObjectModel::header = {"Object ID", "selected", "category", "color", "subobject IDs"};
+
 int SegmentationObjectModel::rowCount(const QModelIndex &) const {
     return Segmentation::singleton().objects.size();
 }
 
 int SegmentationObjectModel::columnCount(const QModelIndex &) const {
-    return 4;
+    return header.size();
 }
 
 QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
-        switch (section) {
-        case 0: return "Object ID";
-        case 1: return "category";
-        case 2: return "color";
-        case 3: return "subobject IDs";
-        default:
-            break;
-        }
+        return header[section];
+    } else {
+        return QVariant();//return invalid QVariant
     }
-    return QVariant();//return invalid QVariant
 }
 
 QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) const {
@@ -42,7 +38,7 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
         //const auto & obj = Segmentation::singleton().objects[objectCache[index.row()]];
         const auto & obj = objectCache[index.row()].get();
-        if (role == Qt::BackgroundRole && index.column() == 2) {
+        if (role == Qt::BackgroundRole && index.column() == 3) {
             const auto colorIndex = obj.id % 256;
             const auto red = Segmentation::singleton().overlayColorMap[0][colorIndex];
             const auto green = Segmentation::singleton().overlayColorMap[1][colorIndex];
@@ -51,8 +47,9 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
         } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch (index.column()) {
             case 0: return static_cast<quint64>(obj.id);
-            case 1: return obj.category;
-            case 3: {
+            case 1: return obj.selected;
+            case 2: return obj.category;
+            case 4: {
                 QString output;
                 for (const auto & elem : obj.subobjects) {
                     output += QString::number(elem.get().id) + ", ";
