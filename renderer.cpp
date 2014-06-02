@@ -862,13 +862,13 @@ bool Renderer::renderOrthogonalVP(uint currentVP) {
                     glVertex3f(-0.1, -dataPxX, -dataPxY);
                     glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRUx,
                                  state->viewerState->vpConfigs[currentVP].texture.texRUy);
-                glVertex3f(-0.1, dataPxX, -dataPxY);
-                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
-                             state->viewerState->vpConfigs[currentVP].texture.texRLy);
-                glVertex3f(-0.1, dataPxX, dataPxY);
-                glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
-                             state->viewerState->vpConfigs[currentVP].texture.texLLy);
-                glVertex3f(-0.1, -dataPxX, dataPxY);
+                    glVertex3f(-0.1, dataPxX, -dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texRLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texRLy);
+                    glVertex3f(-0.1, dataPxX, dataPxY);
+                    glTexCoord2f(state->viewerState->vpConfigs[currentVP].texture.texLLx,
+                                 state->viewerState->vpConfigs[currentVP].texture.texLLy);
+                    glVertex3f(-0.1, -dataPxX, dataPxY);
                 glEnd();
             }
 
@@ -1795,8 +1795,20 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
         vp_height = refVPSkel->height();
     }
 
+    // disable any special filtering
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
     renderOrthogonalVP(currentVP);
+
+    // reset filtering
+    glBindTexture(GL_TEXTURE_2D, state->viewerState->vpConfigs[currentVP].texture.overlayHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, state->viewerState->filterType);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     GLubyte pixel[3];
     glReadBuffer(GL_BACK);
