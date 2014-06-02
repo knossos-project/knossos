@@ -139,6 +139,7 @@ public:
     void loadMergelist(const std::string & fileName);
 signals:
     void dataChanged();
+    void selectionChanged();
 public slots:
     void deleteSelectedObjects();
     void mergeSelectedObjects();

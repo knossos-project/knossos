@@ -69,6 +69,7 @@ void SegmentationObjectModel::recreate() {
     for (auto & pair : Segmentation::singleton().objects) {
         objectCache.emplace_back(pair.second);
     }
+
     emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
     endResetModel();
 }
@@ -91,6 +92,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selection
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateSelection);
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
@@ -103,7 +105,6 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selection
 
 void SegmentationTab::selectionChanged() {
     if(selectionProtection) {
-        selectionProtection = false;
         return;
     }
 
@@ -112,6 +113,33 @@ void SegmentationTab::selectionChanged() {
     for(const auto & index : objectsTable.selectionModel()->selectedRows()) {
         Segmentation::singleton().selectObject(index.data().toInt());
     }
+}
+
+void SegmentationTab::updateSelection() {
+    QItemSelection selectedItems;// = objectsTable.selectionModel()->selection();
+    bool blockSelection = false;
+    std::size_t startIndex;
+    std::size_t objIndex = 0;
+    for (auto & pair : Segmentation::singleton().objects) {
+        if (!blockSelection && pair.second.selected) { //start block selection
+            blockSelection = true;
+            startIndex = objIndex;
+        }
+        if (blockSelection && !pair.second.selected) {//end block selection
+            selectedItems.select(objectModel.index(startIndex, 0), objectModel.index(objIndex-1, objectModel.columnCount()-1));
+            blockSelection = false;
+        }
+        ++objIndex;
+    }
+    //finish last blockselection – if any
+    if (blockSelection) {
+        selectedItems.select(objectModel.index(startIndex, 0), objectModel.index(objIndex-1, objectModel.columnCount()-1));
+    }
+
+    selectionProtection = true;
+    objectsTable.clearSelection();
+    objectsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    selectionProtection = false;
 }
 
 void SegmentationTab::updateLabels() {

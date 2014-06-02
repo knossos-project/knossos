@@ -37,6 +37,7 @@ Q_OBJECT
 public:
     explicit SegmentationTab(QWidget & parent);
     void selectionChanged();
+    void updateSelection();
     void updateLabels();
 signals:
     void clearSegObjSelectionSignal();

@@ -219,6 +219,7 @@ void Segmentation::selectObject(Object & object) {
         subobj.get().selected = true;
     }
     selectedObjects.push_back(object);
+    emit selectionChanged();
 }
 
 void Segmentation::unselectObject(Object & object) {

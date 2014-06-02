@@ -1800,7 +1800,7 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
 
     GLubyte pixel[3];
     glReadBuffer(GL_BACK);
-    glReadPixels(x, vp_height-y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, (void *)pixel);
+    glReadPixels(x, vp_height-y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pixel);
 
     return std::make_tuple(pixel[0], pixel[1], pixel[2]);
 }

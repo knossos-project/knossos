@@ -47,9 +47,10 @@ uint64_t segmentationColorPicking(const int x, const int y, const int viewportId
     state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[viewportId], state->viewerState);
 
     const auto color = state->viewer->renderer->retrieveUniqueColorFromPixel(viewportId, x, y);
-
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     state->viewerState->uniqueColorMode = false;
     state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[viewportId], state->viewerState);
+    glFlush();
 
     auto & segmentation = Segmentation::singleton();
 
