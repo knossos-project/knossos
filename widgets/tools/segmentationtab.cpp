@@ -140,6 +140,9 @@ void SegmentationTab::updateSelection() {
     objectsTable.clearSelection();
     objectsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
     selectionProtection = false;
+
+    if(!selectedItems.indexes().isEmpty()) // scroll to first selected entry
+        objectsTable.scrollTo(selectedItems.indexes()[0]);
 }
 
 void SegmentationTab::updateLabels() {
