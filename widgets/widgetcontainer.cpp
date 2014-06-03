@@ -53,7 +53,7 @@ void WidgetContainer::createCommentsWidget(QWidget *parent) {
     commentsWidget->layout()->activate();
     commentsWidget->move(QApplication::desktop()->screen()->rect().topRight().x() - commentsWidget->width() - 20,
                          QApplication::desktop()->screen()->rect().topRight().y() + 50);
-    commentsWidget->setFixedSize(commentsWidget->size());
+    commentsWidget->setFixedHeight(commentsWidget->height());
 }
 
 void WidgetContainer::createZoomAndMultiresWidget(QWidget *parent) {
@@ -110,6 +110,7 @@ void WidgetContainer::createDatasetPropertyWidget(QWidget *parent) {
 #ifdef Q_OS_UNIX
     datasetPropertyWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
+    datasetPropertyWidget->setFixedHeight(datasetPropertyWidget->sizeHint().height());
 }
 
 void WidgetContainer::createTaskWidgets(QWidget *parent) {
@@ -118,7 +119,7 @@ void WidgetContainer::createTaskWidgets(QWidget *parent) {
     taskLoginWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
     taskLoginWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-
+    taskLoginWidget->setFixedHeight(taskLoginWidget->height());
     taskManagementWidget = new TaskManagementWidget(taskLoginWidget, parent);
 #ifdef Q_OS_UNIX
     taskManagementWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
@@ -133,6 +134,7 @@ void WidgetContainer::createSplashScreenWidget(QWidget *parent) {
 #ifdef Q_OS_UNIX
     splashWidget->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::Tool);
 #endif
+    splashWidget->setFixedSize(splashWidget->sizeHint());
 }
 
 void WidgetContainer::createDocumentationWidget(QWidget *parent) {
