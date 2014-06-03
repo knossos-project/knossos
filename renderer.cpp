@@ -42,6 +42,7 @@
     #include <GL/glut.h>
 #endif
 #include "skeletonizer.h"
+#include "viewer.h"
 
 extern stateInfo *state;
 
@@ -1793,6 +1794,7 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     } else if(currentVP == VIEWPORT_SKELETON) {
         refVPSkel->makeCurrent();
         vp_height = refVPSkel->height();
+        return std::make_tuple(0, 0, 0); // disable skeleton viewport until segmentation works in it
     }
 
     // disable any special filtering
@@ -1800,6 +1802,10 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // set and generate unique color segmentation texture
+    state->viewerState->uniqueColorMode = true;
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
     renderOrthogonalVP(currentVP);
@@ -1810,9 +1816,17 @@ std::tuple<uint8_t, uint8_t, uint8_t> Renderer::retrieveUniqueColorFromPixel(uin
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, state->viewerState->filterType);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    // color picking
     GLubyte pixel[3];
     glReadBuffer(GL_BACK);
     glReadPixels(x, vp_height-y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)pixel);
+
+    // restore normal segmentation texture
+    state->viewerState->uniqueColorMode = false;
+    state->viewer->vpGenerateTexture(state->viewerState->vpConfigs[currentVP], state->viewerState);
+
+    glFlush();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     return std::make_tuple(pixel[0], pixel[1], pixel[2]);
 }

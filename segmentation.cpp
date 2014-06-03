@@ -342,4 +342,5 @@ void Segmentation::mergeSelectedObjects() {
         }
     }
     emit dataChanged();
+    emit selectionChanged();
 }
