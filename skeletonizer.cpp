@@ -547,7 +547,7 @@ bool Skeletonizer::saveXmlSkeleton(QString fileName) {
     return true;
 }
 
-bool Skeletonizer::loadXmlSkeleton(QString fileName) {
+bool Skeletonizer::loadXmlSkeleton(QString fileName, bool multiple=false) {
     int merge = false;
     int activeNodeID = 0, greatestNodeIDbeforeLoading = 0, greatestTreeIDbeforeLoading = 0;
     int inMag, magnification = 0;
@@ -827,9 +827,12 @@ bool Skeletonizer::loadXmlSkeleton(QString fileName) {
                 setActiveTreeByID(neuronID);
             }
 
-            attribute = attributes.value("comment"); // the three comment
-            if(attribute.isNull() == false) {
+            attribute = attributes.value("comment"); // the tree comment
+            if(attribute.isNull() == false && attribute.length() > 0) {
                 addTreeComment(currentTree->treeID, attribute.toLocal8Bit().data());
+            }
+            else if(multiple) {
+                addTreeComment(currentTree->treeID, fileName);
             }
 
             while (xml.readNextStartElement()) {

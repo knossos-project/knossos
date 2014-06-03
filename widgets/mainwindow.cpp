@@ -652,7 +652,7 @@ bool MainWindow::loadSkeletonAfterUserDecision(QStringList fileNames) {
     else { // multiple files to load
         for(QString file : fileNames) {
             state->skeletonState->skeletonFileAsQString = file;
-            if((result = loadSkeletonSignal(file))) {
+            if((result = loadSkeletonSignal(file, true))) {
                 updateTitlebar();
 
                 if(alreadyInMenu(file) == false) {
