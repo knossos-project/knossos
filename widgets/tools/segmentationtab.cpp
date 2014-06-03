@@ -5,12 +5,69 @@
 
 #include <QMenu>
 #include <QHeaderView>
+#include <QSplitter>
 
 #include "knossos-global.h"
 
 extern stateInfo *state;
 
 const std::vector<QString> SegmentationObjectModel::header = {"Object ID", "selected", "category", "color", "subobject IDs"};
+const std::vector<QString> TouchedObjectModel::header = {"Object ID", "selected", "category", "color", "subobject IDs"};
+
+int TouchedObjectModel::rowCount(const QModelIndex &) const {
+    return Segmentation::singleton().touchedObjects.size();
+}
+
+int TouchedObjectModel::columnCount(const QModelIndex &) const {
+    return header.size();
+}
+
+QVariant TouchedObjectModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
+        return header[section];
+    } else {
+        return QVariant(); //return invalid QVariant
+    }
+}
+
+QVariant TouchedObjectModel::data(const QModelIndex & index, int role) const {
+    if (index.isValid()) {
+        const auto & obj = objectCache[index.row()].get();
+        if (role == Qt::BackgroundRole && index.column() == 2) {
+            const auto colorIndex = obj.id % 256;
+            const auto red = Segmentation::singleton().overlayColorMap[0][colorIndex];
+            const auto green = Segmentation::singleton().overlayColorMap[1][colorIndex];
+            const auto blue = Segmentation::singleton().overlayColorMap[2][colorIndex];
+            return QColor(red, green, blue);
+        } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
+            switch (index.column()) {
+            case 0: return static_cast<quint64>(obj.id);
+            case 1: return obj.selected;
+            case 2: return obj.category;
+            case 4: {
+                QString output;
+                for (const auto & elem : obj.subobjects) {
+                    output += QString::number(elem.get().id) + ", ";
+                }
+                output.chop(2);
+                return output;
+            }
+            }
+        }
+    }
+    return QVariant();//return invalid QVariant
+}
+
+void TouchedObjectModel::recreate() {
+    beginResetModel();
+    objectCache.clear();
+    for (auto & obj : Segmentation::singleton().touchedObjects) {
+        objectCache.emplace_back(obj);
+    }
+
+    emit dataChanged(index(0, 0), index(rowCount(), columnCount()));
+    endResetModel();
+}
 
 int SegmentationObjectModel::rowCount(const QModelIndex &) const {
     return Segmentation::singleton().objects.size();
@@ -77,28 +134,42 @@ void SegmentationObjectModel::recreate() {
 SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent), selectionProtection(false) {
     showAllChck.setChecked(Segmentation::singleton().renderAllObjs);
 
+    touchedObjsTable.setModel(&touchedObjectModel);
+    touchedObjsTable.verticalHeader()->setVisible(false);
+    touchedObjsTable.horizontalHeader()->setStretchLastSection(true);
+    touchedObjsTable.setContextMenuPolicy(Qt::CustomContextMenu);
+    touchedObjsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
+
     objectsTable.setModel(&objectModel);
     objectsTable.verticalHeader()->setVisible(false);
+    objectsTable.horizontalHeader()->setStretchLastSection(true);
     objectsTable.setContextMenuPolicy(Qt::CustomContextMenu);
     objectsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
 
     bottomHLayout.addWidget(&objectCountLabel);
     bottomHLayout.addWidget(&subobjectCountLabel);
 
+    splitter.setOrientation(Qt::Vertical);
+    splitter.addWidget(&touchedObjsTable);
+    splitter.addWidget(&objectsTable);
+
     layout.addWidget(&showAllChck);
-    layout.addWidget(&objectsTable);
+    layout.addWidget(&splitter);
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &objectModel, &SegmentationObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, this, &SegmentationTab::updateSelection);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
         Segmentation::singleton().renderAllObjs = value;
     });
+
+    touchedObjectModel.recreate();
     objectModel.recreate();
     updateLabels();
 }

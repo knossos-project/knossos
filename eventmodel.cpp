@@ -575,19 +575,22 @@ bool EventModel::handleMouseMotionRightHold(QMouseEvent *event, int /*VPfound*/)
 }
 
 void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
-    if (event->x() == mouseDownX && event->y() == mouseDownY) {
+    if (Segmentation::singleton().segmentationMode
+        && event->x() == mouseDownX && event->y() == mouseDownY) {
         auto & segmentation = Segmentation::singleton();
         const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
-        if (subobjectId != 0) {//don’t select the unsegmented area as object
+        if (subobjectId != 0) {// don’t select the unsegmented area as object
             auto & subobject = segmentation.subobjectFromId(subobjectId);
-            if (subobject.selected) {//unselect if selected
+            if (subobject.selected) {// unselect if selected
                 segmentation.clearObjectSelection();
-            } else {//select largest object
+            } else { // select largest object and touch other objects containing this subobject
+                segmentation.touchObjects(subobject);
                 auto & obj = segmentation.largestObjectContainingSubobject(subobject);
                 segmentation.clearObjectSelection();
                 segmentation.selectObject(obj);
             }
         }
+        return;
     }
 
     int diffX = std::abs(state->viewerState->nodeSelectionSquare.first.x - event->pos().x());

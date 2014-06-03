@@ -21,6 +21,7 @@
 class Segmentation : public QObject {
 Q_OBJECT
     friend class SegmentationObjectModel;
+    friend class TouchedObjectModel;
     friend class SegmentationTab;
 
     class Object;
@@ -46,6 +47,7 @@ Q_OBJECT
 
     class Object {
         friend class SegmentationObjectModel;
+        friend class TouchedObjectModel;
         friend class Segmentation;
 
         QString category;
@@ -70,6 +72,9 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
+    // Selection via subobjects selects the biggest object (i.e. the one with the most subobjects) containing it.
+    // The other objects are touched.
+    std::vector<std::reference_wrapper<Object>> touchedObjects;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     static uint64_t highestObjectId;
 
@@ -127,6 +132,7 @@ public:
     bool subobjectExists(const uint64_t & subobjectId);
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
+    void touchObjects(const Segmentation::SubObject & subobject);
     bool isSelected(const SubObject & rhs);
     bool isSelected(const Object & rhs);
     void clearObjectSelection();

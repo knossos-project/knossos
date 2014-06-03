@@ -199,6 +199,10 @@ Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segm
         })->get();
 }
 
+void Segmentation::touchObjects(const Segmentation::SubObject & subobject)  {
+    touchedObjects.assign(subobject.objects.begin(), subobject.objects.end());
+}
+
 bool Segmentation::isSelected(const SubObject & rhs) {
     return rhs.selected;
 }
