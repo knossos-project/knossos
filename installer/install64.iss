@@ -1,8 +1,8 @@
 #define MyAppName "Knossos"
-#define MyAppVersion "4.0 Beta 2"
+#define MyAppVersion "4.0"
 #define MyAppPublisher "Knossos"
 #define MyAppURL "http://www.KnossosTool.org"
-#define MyAppExeName "knossos.exe"
+#define MyAppExeName "knossos64.exe"
 #define KNOSSOS_SRC_PATH ""
 #define License "LICENSE"
 
@@ -22,8 +22,8 @@ DefaultDirName={pf}\{#MyAppName} {#MyAppVersion}
 DefaultGroupName={#MyAppName} {#MyAppVersion}
 LicenseFile={#License}
 OutputBaseFilename=win64-Setup-Knossos {#MyAppVersion}
-SetupIconFile=logo.ico
-WizardSmallImageFile=logo.bmp
+SetupIconFile=../logo.ico
+WizardSmallImageFile=logo_small.bmp
 WizardImageFile=bar.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -37,17 +37,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#KNOSSOS_SRC_PATH}knossos.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#KNOSSOS_SRC_PATH}logo.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#KNOSSOS_SRC_PATH}{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 [UninstallDelete]
 Type: files; Name: "{app}"
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\knossos.exe" ; IconFilename: "{app}\logo.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Uninstall"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\knossos.exe"; Tasks: desktopicon ; IconFilename: "{app}\logo.ico"
+Name: "{commondesktop}\{#MyAppName} {#MyAppVersion}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall skipifsilent nowait
