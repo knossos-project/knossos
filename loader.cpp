@@ -413,11 +413,6 @@ int Loader::CompareLoadOrderMetric(const void * a, const void * b)
     return 0;
 }
 
-int CompareLoadOrderMetric_LoaderWrapper(const void *a, const void *b, const void *ctx) {
-    Loader *thisPtr = (Loader*)ctx;
-    return thisPtr->CompareLoadOrderMetric(a, b);
-}
-
 floatCoordinate Loader::find_close_xyz(floatCoordinate direction) {
     floatCoordinate xyz[3];
     float dot_products[3];
@@ -499,7 +494,7 @@ uint Loader::DcoiFromPos(C_Element *Dcoi, Hashtable *currentLoadedHash) {
     }
     //TODO i just wanted to get rid of qsort.cpp, feel free to merge the comparitor into this lambda (and add const to the arguments)
     std::sort(DcArray, DcArray+cubeElemCount, [&](const LO_Element & lhs, const LO_Element & rhs){
-        return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) >= 0;
+        return this->CompareLoadOrderMetric(reinterpret_cast<const void*>(&lhs), reinterpret_cast<const void*>(&rhs)) < 0;
     });
     for (i = 0; i < cubeElemCount; i++) {
         if (LLL_SUCCESS != lll_put(Dcoi, currentLoadedHash, DcArray[i].coordinate)) {

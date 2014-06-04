@@ -119,7 +119,7 @@ signals:
     bool changeDatasetMagSignal(uint upOrDownFlag);
     void recalcTextureOffsetsSignal();
     void clearSkeletonSignal(int loadingSkeleton);
-    bool loadSkeletonSignal(QString fileName);
+    bool loadSkeletonSignal(QString fileName, bool multiple=false);
     bool saveSkeletonSignal(QString fileName);
     void recentFileSelectSignal(int index);
     void updateToolsSignal();

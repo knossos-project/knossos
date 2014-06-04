@@ -99,7 +99,7 @@ public slots:
     bool jumpToActiveNode();
     static bool setActiveTreeByID(int treeID);
 
-    bool loadXmlSkeleton(QString fileName);
+    bool loadXmlSkeleton(QString fileName, bool multiple);
     bool saveXmlSkeleton(QString fileName);
 
     static bool pushBranchNode(int setBranchNodeFlag, int checkDoubleBranchpoint, nodeListElement *branchNode, int branchNodeID);
