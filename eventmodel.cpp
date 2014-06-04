@@ -162,19 +162,26 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
     if (segmentation.segmentationMode) {
         auto & segmentation = Segmentation::singleton();
         const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+        segmentation.touchObjects(subobjectId);
         if (subobjectId != 0) {//don’t select the unsegmented area as object
-            auto & subobject = segmentation.subobjectFromId(subobjectId);
-            //find largest object
-            auto & object = segmentation.largestObjectContainingSubobject(subobject);
-            //select if not selected and merge
             if (segmentation.selectedObjectsCount() == 1) {
+                auto & subobject = segmentation.subobjectFromId(subobjectId);
+                //find largest object
+                auto & object = segmentation.largestObjectContainingSubobject(subobject);
+                //select if not selected and merge
                 if (!segmentation.isSelected(object)) {
-                    segmentation.selectObject(object);//select largest object
+                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                        segmentation.selectObjectFromSubObject(subobject);
+                    } else {
+                        segmentation.selectObject(object);//select largest object
+                    }
                     if (segmentation.selectedObjectsCount() >= 2) {
                         segmentation.mergeSelectedObjects();
                     }
+                } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                    segmentation.unmergeSubObject(object, subobject);
                 } else {
-                    segmentation.unmerge(object, subobject);
+                    segmentation.unmergeObject(object, subobject);
                 }
             }
         }
@@ -569,14 +576,14 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         && event->x() == mouseDownX && event->y() == mouseDownY) {
         auto & segmentation = Segmentation::singleton();
         const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
+        segmentation.touchObjects(subobjectId);
         if (subobjectId != 0) {// don’t select the unsegmented area as object
             auto & subobject = segmentation.subobjectFromId(subobjectId);
             if (subobject.selected) {// unselect if selected
                 segmentation.clearObjectSelection();
             } else { // select largest object and touch other objects containing this subobject
-                segmentation.touchObjects(subobject);
-                auto & obj = segmentation.largestObjectContainingSubobject(subobject);
                 segmentation.clearObjectSelection();
+                auto & obj = segmentation.largestObjectContainingSubobject(subobject);
                 segmentation.selectObject(obj);
             }
         }

@@ -57,14 +57,15 @@ Q_OBJECT
     public:
         const uint64_t id;
         const bool immutable;
-        bool selected;
+        bool selected = false;
         Object(Object &&) = delete;
         Object(const Object &) = delete;
         explicit Object(SubObject & initialVolume);
         explicit Object(const uint64_t id, const bool & immutable, SubObject & initialVolume);
+        explicit Object(const uint64_t id, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
         explicit Object(const uint64_t, const Object &, const Object &);
         bool operator==(const Object & other) const;
-        void addSubObject(SubObject & sub);
+        void addExistingSubObject(SubObject & sub);
         Object & merge(const Object & other);
         Object & moveFrom(Object & other);
     };
@@ -74,7 +75,7 @@ Q_OBJECT
     std::vector<std::reference_wrapper<Object>> selectedObjects;
     // Selection via subobjects selects the biggest object (i.e. the one with the most subobjects) containing it.
     // The other objects are touched.
-    std::vector<std::reference_wrapper<Object>> touchedObjects;
+    uint64_t touched_subobject_id = 0;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     static uint64_t highestObjectId;
 
@@ -132,20 +133,22 @@ public:
     bool subobjectExists(const uint64_t & subobjectId);
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
-    void touchObjects(const Segmentation::SubObject & subobject);
+    void touchObjects(const uint64_t subobject_id);
+    std::vector<std::reference_wrapper<Object>> touchedObjects();
     bool isSelected(const SubObject & rhs);
     bool isSelected(const Object & rhs);
     void clearObjectSelection();
     void selectObject(Object & object);
     void unselectObject(Object & object);
-    void unmerge(Object & object, SubObject & subobject);
+    void unmergeObject(Object & object, SubObject & subobject);
+    void unmergeSubObject(Object & object, SubObject & subobject);
+    void selectObjectFromSubObject(SubObject &subobject);
     void selectObject(const uint64_t & objectId);
     std::size_t selectedObjectsCount();
     void saveMergelist(const QString & toFile = Segmentation::singleton().filename);
     void loadMergelist(const std::string & fileName);
 signals:
     void dataChanged();
-    void selectionChanged();
 public slots:
     void deleteSelectedObjects();
     void mergeSelectedObjects();

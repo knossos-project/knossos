@@ -15,7 +15,8 @@
 
 class SegmentationObjectModel : public QAbstractTableModel {
 Q_OBJECT
-    static const std::vector<QString> header;
+protected:
+    const std::vector<QString> header{"Object ID", "immutable", "category", "color", "subobject IDs"};
     std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
 public:
     int rowCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -25,15 +26,10 @@ public:
     void recreate();
 };
 
-class TouchedObjectModel : public QAbstractTableModel {
+class TouchedObjectModel : public SegmentationObjectModel {
 Q_OBJECT
-    static const std::vector<QString> header;
-    std::vector<std::reference_wrapper<Segmentation::Object>> objectCache;
-public:
     int rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+public:
     void recreate();
 };
 
@@ -49,7 +45,6 @@ Q_OBJECT
     QLabel objectCountLabel;
     QLabel subobjectCountLabel;
     QHBoxLayout bottomHLayout;
-    bool selectionProtection;
 public:
     explicit SegmentationTab(QWidget & parent);
     void selectionChanged();
