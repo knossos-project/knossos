@@ -202,6 +202,10 @@ void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
 }
 
+void Segmentation::untouchObjects() {
+    touched_subobject_id = 0;
+}
+
 std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::touchedObjects() {
     auto it = subobjects.find(touched_subobject_id);
     if (it != std::end(subobjects)) {
@@ -220,9 +224,13 @@ bool Segmentation::isSelected(const Object & rhs) {
 }
 
 void Segmentation::clearObjectSelection() {
-    for (auto & obj : selectedObjects) {
-        unselectObject(obj.get());
+    bool blockState = this->signalsBlocked();
+    this->blockSignals(true);
+    while (!selectedObjects.empty()) {
+        unselectObject(selectedObjects.front());
     }
+    this->blockSignals(blockState);
+    emit dataChanged();
 }
 
 void Segmentation::selectObject(Object & object) {

@@ -576,12 +576,13 @@ void EventModel::handleMouseReleaseLeft(QMouseEvent *event, int VPfound) {
         && event->x() == mouseDownX && event->y() == mouseDownY) {
         auto & segmentation = Segmentation::singleton();
         const auto subobjectId = segmentationColorPicking(event->x(), event->y(), VPfound);
-        segmentation.touchObjects(subobjectId);
         if (subobjectId != 0) {// don’t select the unsegmented area as object
             auto & subobject = segmentation.subobjectFromId(subobjectId);
             if (subobject.selected) {// unselect if selected
+                segmentation.untouchObjects();
                 segmentation.clearObjectSelection();
             } else { // select largest object and touch other objects containing this subobject
+                segmentation.touchObjects(subobjectId);
                 segmentation.clearObjectSelection();
                 auto & obj = segmentation.largestObjectContainingSubobject(subobject);
                 segmentation.selectObject(obj);

@@ -94,7 +94,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     touchedObjsTable.setModel(&touchedObjectModel);
     touchedObjsTable.verticalHeader()->setVisible(false);
     touchedObjsTable.horizontalHeader()->setStretchLastSection(true);
-    touchedObjsTable.setSelectionMode(QAbstractItemView::NoSelection);
+    touchedObjsTable.setSelectionBehavior(QAbstractItemView::SelectRows);
 
     objectsTable.setModel(&objectModel);
     objectsTable.verticalHeader()->setVisible(false);
@@ -118,6 +118,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, &touchedObjectModel, &TouchedObjectModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateLabels);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateSelection);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, this, &SegmentationTab::updateTouchedObjSelection);
     QObject::connect(this, &SegmentationTab::clearSegObjSelectionSignal, &Segmentation::singleton(), &Segmentation::clearObjectSelection);
     QObject::connect(&objectsTable, &QTableView::customContextMenuRequested, this, &SegmentationTab::contextMenu);
     QObject::connect(&Segmentation::singleton(), &Segmentation::dataChanged, [&](){
@@ -125,6 +126,7 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
         touchedObjsTable.resizeColumnToContents(4);
     });
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::selectionChanged);
+    QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationTab::touchedObjSelectionChanged);
     QObject::connect(&showAllChck, &QCheckBox::clicked, [&](bool value){
         Segmentation::singleton().renderAllObjs = value;
     });
@@ -134,14 +136,62 @@ SegmentationTab::SegmentationTab(QWidget & parent) : QWidget(&parent) {
     updateLabels();
 }
 
-void SegmentationTab::selectionChanged() {
+void SegmentationTab::touchedObjSelectionChanged() {
     Segmentation::singleton().blockSignals(true);//prevent ping pong
     emit clearSegObjSelectionSignal();
-    for (const auto & index : objectsTable.selectionModel()->selectedRows()) {
+    for (const auto & index : touchedObjsTable.selectionModel()->selectedRows()) {
         Segmentation::singleton().selectObject(index.data().toInt());
     }
     updateSelection();
     Segmentation::singleton().blockSignals(false);
+}
+
+void SegmentationTab::selectionChanged() {
+    Segmentation::singleton().blockSignals(true);//prevent ping pong
+    emit clearSegObjSelectionSignal();
+
+    for (const auto & index : objectsTable.selectionModel()->selectedRows()) {
+        Segmentation::singleton().selectObject(index.data().toInt());
+    }
+    touchedObjectModel.recreate();
+    Segmentation::singleton().untouchObjects();
+    updateTouchedObjSelection();
+    Segmentation::singleton().blockSignals(false);
+}
+
+void SegmentationTab::updateTouchedObjSelection() {
+    QItemSelection selectedItems;
+    bool blockSelection = false;
+    std::size_t startIndex;
+    std::size_t objIndex = 0;
+
+    for (auto & elem : Segmentation::singleton().touchedObjects()) {
+        if (!blockSelection && elem.get().selected) { //start block selection
+            blockSelection = true;
+            startIndex = objIndex;
+        }
+        if (blockSelection && !elem.get().selected) { //end block selection
+            selectedItems.select(touchedObjectModel.index(startIndex, 0),
+                                 touchedObjectModel.index(objIndex-1, touchedObjectModel.columnCount()-1));
+            blockSelection = false;
+        }
+        ++objIndex;
+    }
+
+    //finish last blockselection – if any
+    if (blockSelection) {
+        selectedItems.select(touchedObjectModel.index(startIndex, 0),
+                             touchedObjectModel.index(objIndex-1, touchedObjectModel.columnCount()-1));
+    }
+
+    touchedObjsTable.selectionModel()->blockSignals(true);
+    touchedObjsTable.clearSelection();
+    touchedObjsTable.selectionModel()->select(selectedItems, QItemSelectionModel::Select);
+    touchedObjsTable.selectionModel()->blockSignals(false);
+
+//    if (!selectedItems.indexes().isEmpty()) { // scroll to first selected entry
+//        touchedObjsTable.scrollTo(selectedItems.indexes().front());
+//    }
 }
 
 void SegmentationTab::updateSelection() {
@@ -149,20 +199,24 @@ void SegmentationTab::updateSelection() {
     bool blockSelection = false;
     std::size_t startIndex;
     std::size_t objIndex = 0;
-    for (auto & pair : Segmentation::singleton().objects) {
-        if (!blockSelection && pair.second.selected) { //start block selection
+
+    for (auto & elem : Segmentation::singleton().objects) {
+        if (!blockSelection && elem.second.selected) { //start block selection
             blockSelection = true;
             startIndex = objIndex;
         }
-        if (blockSelection && !pair.second.selected) {//end block selection
-            selectedItems.select(objectModel.index(startIndex, 0), objectModel.index(objIndex-1, objectModel.columnCount()-1));
+        if (blockSelection && !elem.second.selected) {//end block selection
+            selectedItems.select(objectModel.index(startIndex, 0),
+                                 objectModel.index(objIndex-1, objectModel.columnCount()-1));
             blockSelection = false;
         }
         ++objIndex;
     }
+
     //finish last blockselection – if any
     if (blockSelection) {
-        selectedItems.select(objectModel.index(startIndex, 0), objectModel.index(objIndex-1, objectModel.columnCount()-1));
+        selectedItems.select(objectModel.index(startIndex, 0),
+                             objectModel.index(objIndex-1, objectModel.columnCount()-1));
     }
 
     objectsTable.selectionModel()->blockSignals(true);

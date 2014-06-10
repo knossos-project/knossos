@@ -73,8 +73,8 @@ Q_OBJECT
     std::unordered_map<uint64_t, SubObject> subobjects;
     std::unordered_map<uint64_t, Object> objects;
     std::vector<std::reference_wrapper<Object>> selectedObjects;
-    // Selection via subobjects selects the biggest object (i.e. the one with the most subobjects) containing it.
-    // The other objects are touched.
+    // Selection via subobjects touches all objects containing the subobject.
+    // The biggest touched object, i.e. the one with the most subobjects, is selected.
     uint64_t touched_subobject_id = 0;
     bool renderAllObjs; // show all segmentations as opposed to only a selected one
     static uint64_t highestObjectId;
@@ -134,6 +134,7 @@ public:
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
     void touchObjects(const uint64_t subobject_id);
+    void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
     bool isSelected(const SubObject & rhs);
     bool isSelected(const Object & rhs);
