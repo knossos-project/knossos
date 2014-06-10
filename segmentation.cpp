@@ -2,21 +2,27 @@
 
 uint64_t Segmentation::highestObjectId = 1;
 
-Segmentation::Object::Object(Segmentation::SubObject & initialVolume) : id(initialVolume.id), immutable(false) {
+Segmentation::Object::Object(Segmentation::SubObject & initialVolume)
+    : id(initialVolume.id), immutable(false), comment("") {
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const uint64_t id, const bool & immutable, Segmentation::SubObject & initialVolume) : id(id), immutable(immutable) {
+Segmentation::Object::Object(const uint64_t id, const bool & immutable, Segmentation::SubObject & initialVolume)
+    : id(id), immutable(immutable), comment("") {
     addExistingSubObject(initialVolume);
 }
 
-Segmentation::Object::Object(const uint64_t id, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes) : id(id), immutable(immutable) {
+Segmentation::Object::Object(const uint64_t id, const bool & immutable,
+                             std::vector<std::reference_wrapper<SubObject>> initialVolumes)
+    : id(id), immutable(immutable), comment("") {
     for (auto & elem : initialVolumes) {
         addExistingSubObject(elem);
     }
 }
 
-Segmentation::Object::Object(const uint64_t id, const Segmentation::Object & first, const Segmentation::Object & second) : id(id), immutable(false) {
+Segmentation::Object::Object(const uint64_t id, const Object & first,
+                             const Segmentation::Object & second)
+    : id(id), immutable(false), comment("") {
     merge(first);
     merge(second);
 }
@@ -334,26 +340,41 @@ void Segmentation::saveMergelist(const QString & toFile) {
         for (const auto & subObj : obj.second.subobjects) {
             file << " " << subObj.get().id;
         }
-        file << std::endl;
+        file << std::endl << obj.second.category.toStdString() << std::endl << obj.second.comment.toStdString()
+             << std::endl;
     }
 }
 
 void Segmentation::loadMergelist(const std::string & fileName) {
     std::ifstream file(fileName);
     std::string line;
+    int lineCount = 0;
     while (std::getline(file, line)) {
-        std::istringstream lineIss(line);
-        uint64_t objID;
-        bool immutable;
-        uint64_t initialVolume;
+        Object *obj;
+        if(lineCount == 0) {
+            std::istringstream lineIss(line);
+            uint64_t objID;
+            bool immutable;
+            uint64_t initialVolume;
 
-        if (lineIss >> objID && lineIss >> immutable && lineIss >> initialVolume) {
-            auto & obj = createObject(objID, initialVolume, immutable);
-            while (lineIss >> objID) {
-                newSubObject(obj, objID);
+            if (lineIss >> objID && lineIss >> immutable && lineIss >> initialVolume) {
+                obj = &createObject(objID, initialVolume, immutable);
+                while (lineIss >> objID) {
+                    newSubObject(*obj, objID);
+                }
+                lineCount++;
             }
-        } else {
-            qDebug() << "loadMergelist fail";
+            else {
+                qDebug() << "loadMergelist fail";
+            }
+        }
+        else if(lineCount == 1) {
+            obj->category = QString::fromStdString(line);
+            lineCount++;
+        }
+        else if(lineCount == 2) {
+            obj->comment = QString::fromStdString(line);
+            lineCount = 0;
         }
     }
     emit dataChanged();

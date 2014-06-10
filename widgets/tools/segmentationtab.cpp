@@ -52,7 +52,7 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
         //const auto & obj = Segmentation::singleton().objects[objectCache[index.row()]];
         const auto & obj = objectCache[index.row()].get();
-        if (role == Qt::BackgroundRole && index.column() == 3) {
+        if (role == Qt::BackgroundRole && index.column() == 4) {
             const auto colorIndex = obj.id % 256;
             const auto red = Segmentation::singleton().overlayColorMap[0][colorIndex];
             const auto green = Segmentation::singleton().overlayColorMap[1][colorIndex];
@@ -63,7 +63,8 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
             case 0: return static_cast<quint64>(obj.id);
             case 1: return obj.immutable;
             case 2: return obj.category;
-            case 4: {
+            case 3: return obj.comment;
+            case 5: {
                 QString output;
                 for (const auto & elem : obj.subobjects) {
                     output += QString::number(elem.get().id) + ", ";
@@ -75,6 +76,44 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
         }
     }
     return QVariant();//return invalid QVariant
+}
+
+bool SegmentationObjectModel::setData(const QModelIndex & index, const QVariant & value, int role) {
+    if(index.isValid()) {
+        auto & obj = objectCache[index.row()].get();
+        if (role == Qt::BackgroundRole && index.column() == 4) {
+            return false;
+        } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
+            switch (index.column()) {
+            case 0:
+            case 1:
+            case 5:
+                return false;
+            case 2:
+                obj.category = value.toString();
+                break;
+            case 3:
+                obj.comment = value.toString();
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+Qt::ItemFlags SegmentationObjectModel::flags(const QModelIndex & index) const {
+    Qt::ItemFlags flags = QAbstractItemModel::flags(index);
+    switch(index.column()) {
+    case 0:
+    case 1:
+    case 5:
+        flags &= ~Qt::ItemIsEditable;
+        break;
+    case 2:
+    case 3:
+        flags |= Qt::ItemIsEditable;
+    }
+    return flags;
 }
 
 void SegmentationObjectModel::recreate() {

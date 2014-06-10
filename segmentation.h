@@ -57,13 +57,14 @@ Q_OBJECT
     public:
         const uint64_t id;
         const bool immutable;
+        QString comment;
         bool selected = false;
         Object(Object &&) = delete;
         Object(const Object &) = delete;
         explicit Object(SubObject & initialVolume);
         explicit Object(const uint64_t id, const bool & immutable, SubObject & initialVolume);
         explicit Object(const uint64_t id, const bool & immutable, std::vector<std::reference_wrapper<SubObject>> initialVolumes);
-        explicit Object(const uint64_t, const Object &, const Object &);
+        explicit Object(const uint64_t id, const Object & first, const Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
         Object & merge(const Object & other);
