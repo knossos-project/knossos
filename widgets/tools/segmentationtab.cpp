@@ -4,7 +4,9 @@
 #include <QString>
 
 #include <QMenu>
+#include <QMessageBox>
 #include <QHeaderView>
+#include <QPushButton>
 #include <QSplitter>
 
 #include "knossos-global.h"
@@ -52,7 +54,9 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 
         //const auto & obj = Segmentation::singleton().objects[objectCache[index.row()]];
         const auto & obj = objectCache[index.row()].get();
-        if (role == Qt::BackgroundRole && index.column() == 4) {
+        if (index.column() == 1 && role == Qt::CheckStateRole) {
+            return (obj.immutable ? Qt::Checked : Qt::Unchecked);
+        } else if (index.column() == 4 && role == Qt::BackgroundRole) {
             const auto colorIndex = obj.id % 256;
             const auto red = Segmentation::singleton().overlayColorMap[0][colorIndex];
             const auto green = Segmentation::singleton().overlayColorMap[1][colorIndex];
@@ -61,7 +65,6 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
         } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch (index.column()) {
             case 0: return static_cast<quint64>(obj.id);
-            case 1: return obj.immutable;
             case 2: return obj.category;
             case 3: return obj.comment;
             case 5: {
@@ -79,22 +82,28 @@ QVariant SegmentationObjectModel::data(const QModelIndex & index, int role) cons
 }
 
 bool SegmentationObjectModel::setData(const QModelIndex & index, const QVariant & value, int role) {
-    if(index.isValid()) {
+    if (index.isValid()) {
         auto & obj = objectCache[index.row()].get();
-        if (role == Qt::BackgroundRole && index.column() == 4) {
-            return false;
+        if (index.column() == 1 && role == Qt::CheckStateRole) {
+            if (!obj.immutable) {//don’t remove immutability
+                QMessageBox prompt;
+                prompt.setWindowFlags(Qt::WindowStaysOnTopHint);
+                prompt.setIcon(QMessageBox::Question);
+                prompt.setWindowTitle(tr("Lock Object"));
+                prompt.setText(tr("Lock the object with id %0?").arg(obj.id));
+                const auto & lockButton = prompt.addButton(tr("Lock"), QMessageBox::YesRole);
+                prompt.addButton(tr("Cancel"), QMessageBox::NoRole);
+                prompt.exec();
+                if (prompt.clickedButton() == lockButton) {
+                    obj.immutable = value.toBool();
+                }
+            }
         } else if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch (index.column()) {
-            case 0:
-            case 1:
-            case 5:
+            case 2: obj.category = value.toString(); break;
+            case 3: obj.comment  = value.toString(); break;
+            default:
                 return false;
-            case 2:
-                obj.category = value.toString();
-                break;
-            case 3:
-                obj.comment = value.toString();
-                break;
             }
         }
     }
@@ -102,16 +111,13 @@ bool SegmentationObjectModel::setData(const QModelIndex & index, const QVariant 
 }
 
 Qt::ItemFlags SegmentationObjectModel::flags(const QModelIndex & index) const {
-    Qt::ItemFlags flags = QAbstractItemModel::flags(index);
+    Qt::ItemFlags flags = QAbstractItemModel::flags(index);//not editable
     switch(index.column()) {
-    case 0:
     case 1:
-    case 5:
-        flags &= ~Qt::ItemIsEditable;
-        break;
+        return flags | Qt::ItemIsUserCheckable;
     case 2:
     case 3:
-        flags |= Qt::ItemIsEditable;
+        return flags | Qt::ItemIsEditable;
     }
     return flags;
 }

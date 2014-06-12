@@ -56,7 +56,7 @@ Q_OBJECT
         std::vector<std::reference_wrapper<SubObject>> subobjects;
     public:
         const uint64_t id;
-        const bool immutable;
+        bool immutable;
         QString comment;
         bool selected = false;
         Object(Object &&) = delete;
