@@ -21,72 +21,57 @@
  *     Joergen.Kornfeld@mpimf-heidelberg.mpg.de or
  *     Fabian.Svara@mpimf-heidelberg.mpg.de
  */
+#include "knossos.h"
+
 #include <cmath>
 
-#define GLUT_DISABLE_ATEXIT_HACK
 #include <QApplication>
-#include <QMutex>
-#include <QWaitCondition>
-#include <QSettings>
-#include <QFile>
+
 #include "knossos-global.h"
-#include "knossos.h"
 #include "remote.h"
 #include "loader.h"
 #include "viewer.h"
-#include "widgets/mainwindow.h"
 #include "skeletonizer.h"
-#include "eventmodel.h"
-#include "widgets/viewport.h"
 #include "widgets/widgetcontainer.h"
 #include "widgets/tracingtimewidget.h"
 #include "ftp.h"
 
+#define GLUT_DISABLE_ATEXIT_HACK
 #ifdef Q_OS_MAC
 #include <GLUT/glut.h>
-#endif
-#ifdef Q_OS_WIN
+#else
 #include <GL/glut.h>
-#include "windows.h"
-#endif
-#ifdef Q_OS_LINUX
-#include <GL/freeglut_std.h>
 #endif
 
 #define NUMTHREADS 4
 
 stateInfo * state = nullptr;//state lives here
-char logFilename[MAX_PATH] = {0};
 std::unique_ptr<Loader> loader;
 Knossos::Knossos(QObject *parent) : QObject(parent) {}
 
 std::unique_ptr<Knossos> knossos;
 
-class myEventFilter: public QObject
-{
-  public:
-  myEventFilter():QObject()
-  {};
-  ~myEventFilter(){};
+class myEventFilter: public QObject {
+public:
+    myEventFilter() : QObject() {};
+    ~myEventFilter() {};
 
-  bool eventFilter(QObject* object,QEvent* event)
-  {
-      // update idle time to current time on any user actions except just moving the mouse
-      int type = event->type();
-      if(type == QEvent::MouseButtonPress
-            || type == QEvent::KeyPress
-            || type == QEvent::Wheel) {
-          if (state != NULL
-                  && state->viewer != NULL
-                  && state->viewer->window != NULL
-                  && state->viewer->window->widgetContainer != NULL
-                  && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
-              state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
-          }
-      }
-
-      return QObject::eventFilter(object,event);
-  }
+    bool eventFilter(QObject* object,QEvent* event) {
+        // update idle time to current time on any user actions except just moving the mouse
+        int type = event->type();
+        if (type == QEvent::MouseButtonPress
+                || type == QEvent::KeyPress
+                || type == QEvent::Wheel) {
+            if (state != NULL
+                    && state->viewer != NULL
+                    && state->viewer->window != NULL
+                    && state->viewer->window->widgetContainer != NULL
+                    && state->viewer->window->widgetContainer->tracingTimeWidget != NULL) {
+                state->viewer->window->widgetContainer->tracingTimeWidget->checkIdleTime();
+            }
+        }
+        return QObject::eventFilter(object,event);
+    }
 };
 
 Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QPixmap(img_filename), Qt::WindowStaysOnTopHint) {
@@ -96,26 +81,29 @@ Splash::Splash(const QString & img_filename, const int timeout_msec) : screen(QP
     timer.start(timeout_msec);
 }
 
+void debugMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & msg) {
+    QString intro;
+    switch (type) {
+    case QtDebugMsg:    intro = QString("Debug: ");    break;
+    case QtWarningMsg:  intro = QString("Warning: ");  break;
+    case QtCriticalMsg: intro = QString("Critical: "); break;
+    case QtFatalMsg:    intro = QString("Fatal: ");    break;
+    }
+    QString txt = QString("[%1:%2 %3] \t%4%5").arg(context.file).arg(context.line).arg(context.function).arg(intro).arg(msg);
+    //open the file once
+    static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
+    outFile   << txt.toStdString() << std::endl;
+    std::cout << txt.toStdString() << std::endl;
 
-int main(int argc, char *argv[])
-{
-#ifdef Q_OS_WIN
-    glutInit(&argc, argv);
-#endif
-#ifdef Q_OS_LINUX
-    glutInit(&argc, argv);
-#endif
-#ifdef Q_OS_WIN
-    char tempPath[MAX_PATH] = {0};
-    GetTempPathA(sizeof(tempPath), tempPath);
-    GetTempFileNameA(tempPath, "KNL", 0, logFilename);
-#endif
-#ifdef Q_OS_UNIX
-    const char *file = "/tmp/log.txt";
-    strcpy(logFilename, file);
-#endif
+    if (type == QtFatalMsg) {
+        std::abort();
+    }
+}
 
+int main(int argc, char *argv[]) {
+    glutInit(&argc, argv);
     QApplication a(argc, argv);
+    qInstallMessageHandler(debugMessageHandler);
     /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
        I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
        As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)

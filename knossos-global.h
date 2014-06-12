@@ -1329,41 +1329,27 @@ struct skeletonState {
 // of b (if b is a power of two).
 
 #define MODULO_POW2(a, b)   (a) & ((b) - 1)
-#define COMP_STATE_VAL(val) (state->val == tempConfig->val)
-#define FPRINTF_STR_FILE(fh, str) \
-    { \
-    if (NULL != fh) {fprintf(fh, "%s", str);} \
-    }
-#define FILE_FLUSH(fh) \
-    { \
-    if (NULL != fh) { fflush(fh);} \
-    }
-#define FILE_CLOSE(fh) \
-    { \
-    if (NULL != fh) { fclose(fh); fh = NULL;} \
-    }
-extern char logFilename[];
 
-#define LOG(...) \
-{ \
-    char msg[1024]; \
-    FILE *logFile = NULL; \
-    logFile = fopen(logFilename, "a+"); \
-    sprintf(msg, "[%s\t%d ] ", __FILE__, __LINE__);  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    sprintf(msg, __VA_ARGS__); FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    sprintf(msg, "\n");  FPRINTF_STR_FILE(stdout, msg); FPRINTF_STR_FILE(logFile, msg); \
-    FILE_FLUSH(stdout); \
-    FILE_CLOSE(logFile); \
+#include <QTextStream>
+
+template<typename T>
+void log(QTextStream & oss, T t) {
+    oss << t;
 }
 
-// New log implementation, merge old one into new once the new doesn't crash anymore
-/*
-#define LOG(...) \
-extern stateInfo *state; \
-if(state->console) { \
-    state->console->log(__VA_ARGS__); \
-} \
-*/
+template<typename T, typename... Ts>
+void log(QTextStream & oss, T t, Ts... ts) {
+    oss << t;
+    log(oss, ts...);
+}
 
+//TODO replace all occurences of the LOG macro with qDebug calls and remove this macro
+#define LOG(...)\
+{\
+    QString data;\
+    QTextStream oss(&data);\
+    log(oss, __VA_ARGS__);\
+    qDebug() << data;\
+}\
 
 #endif
