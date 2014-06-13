@@ -204,6 +204,13 @@ Segmentation::Object & Segmentation::largestObjectContainingSubobject(const Segm
         })->get();
 }
 
+Segmentation::Object & Segmentation::largestImmutableObjectContainingSubobject(const Segmentation::SubObject & subobject) const {
+    return std::max_element(std::begin(subobject.objects), std::end(subobject.objects)
+        , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
+            return (!lhs.immutable && rhs.immutable) || (lhs.immutable == rhs.immutable && lhs.subobjects.size() < rhs.subobjects.size());
+        })->get();
+}
+
 void Segmentation::touchObjects(const uint64_t subobject_id) {
     touched_subobject_id = subobject_id;
 }
@@ -263,13 +270,8 @@ void Segmentation::unselectObject(Object & object) {
     emit dataChanged();
 }
 
-void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::SubObject & subobject) {
-    //find object with lowest subobject count
-    auto & smallestObject = std::min_element(std::begin(subobject.objects), std::end(subobject.objects)
-        , [](const Segmentation::Object & lhs, const Segmentation::Object & rhs){
-            return lhs.subobjects.size() < rhs.subobjects.size();
-        })->get();
-    auto & otherSubobjects = smallestObject.subobjects;
+void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other) {
+    auto & otherSubobjects = other.subobjects;
 
     std::sort(std::begin(object.subobjects), std::end(object.subobjects));
     std::sort(std::begin(otherSubobjects), std::end(otherSubobjects));
@@ -296,16 +298,18 @@ void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Su
 }
 
 void Segmentation::unmergeSubObject(Segmentation::Object & object, Segmentation::SubObject & subobject) {
-    const auto & other = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
+    const auto & otherIt = std::find_if(std::begin(subobject.objects), std::end(subobject.objects)
         , [&](const Segmentation::Object & elem){
             return elem.subobjects.size() == 1 && elem.subobjects.front().get().id == subobject.id;
         });
     //create object to unmerge if there’s none except the currently selected one
-    if (other == std::end(subobject.objects)) {
+    if (otherIt == std::end(subobject.objects)) {
         auto objectId = ++highestObjectId;
-        objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobject)).first->second;
+        auto & other = objects.emplace(std::piecewise_construct, std::forward_as_tuple(objectId), std::forward_as_tuple(objectId, false, subobject)).first->second;
+        unmergeObject(object, other);
+    } else {
+        unmergeObject(object, otherIt->get());
     }
-    unmergeObject(object, subobject);
 }
 
 void Segmentation::selectObjectFromSubObject(Segmentation::SubObject & subobject) {

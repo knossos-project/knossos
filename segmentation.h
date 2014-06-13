@@ -134,6 +134,7 @@ public:
     bool subobjectExists(const uint64_t & subobjectId);
     SubObject & subobjectFromId(const uint64_t & subobjectId);
     Object & largestObjectContainingSubobject(const SubObject & subobject) const;
+    Object & largestImmutableObjectContainingSubobject(const SubObject & subobject) const;
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
@@ -142,7 +143,7 @@ public:
     void clearObjectSelection();
     void selectObject(Object & object);
     void unselectObject(Object & object);
-    void unmergeObject(Object & object, SubObject & subobject);
+    void unmergeObject(Object & object, Object & other);
     void unmergeSubObject(Object & object, SubObject & subobject);
     void selectObjectFromSubObject(SubObject &subobject);
     void selectObject(const uint64_t & objectId);

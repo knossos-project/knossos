@@ -166,22 +166,25 @@ void EventModel::handleMouseButtonRight(QMouseEvent *event, int VPfound) {
         if (subobjectId != 0) {//don’t select the unsegmented area as object
             if (segmentation.selectedObjectsCount() == 1) {
                 auto & subobject = segmentation.subobjectFromId(subobjectId);
-                //find largest object
-                auto & object = segmentation.largestObjectContainingSubobject(subobject);
                 //select if not selected and merge
-                if (!segmentation.isSelected(object)) {
+                if (segmentation.isSelected(subobject)) {
+                    auto & tracingObject = segmentation.largestObjectContainingSubobject(subobject);
+                    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+                        segmentation.unmergeSubObject(tracingObject, subobject);
+                    } else if (event->modifiers().testFlag(Qt::ShiftModifier)) {
+                        auto & objectToMerge = segmentation.largestImmutableObjectContainingSubobject(subobject);
+                        segmentation.unmergeObject(tracingObject, objectToMerge);
+                    }
+                } else {
                     if (event->modifiers().testFlag(Qt::ControlModifier)) {
                         segmentation.selectObjectFromSubObject(subobject);
                     } else {
-                        segmentation.selectObject(object);//select largest object
+                        auto & objectToMerge = segmentation.largestImmutableObjectContainingSubobject(subobject);
+                        segmentation.selectObject(objectToMerge);//select largest object
                     }
                     if (segmentation.selectedObjectsCount() >= 2) {
                         segmentation.mergeSelectedObjects();
                     }
-                } else if (event->modifiers().testFlag(Qt::ControlModifier)) {
-                    segmentation.unmergeSubObject(object, subobject);
-                } else {
-                    segmentation.unmergeObject(object, subobject);
                 }
             }
         }
